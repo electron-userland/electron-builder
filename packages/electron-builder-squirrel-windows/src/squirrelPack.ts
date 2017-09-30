@@ -180,9 +180,7 @@ async function releasify(options: SquirrelOptions, nupkgPath: string, outputDire
     "--releasify", nupkgPath,
     "--releaseDir", outputDirectory
   ]
-  const out = (await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")), {
-    maxBuffer: 4 * 1024000,
-  })).trim()
+  const out = (await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")))).trim()
   if (debug.enabled) {
     debug(`Squirrel output: ${out}`)
   }

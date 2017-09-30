@@ -63,11 +63,13 @@ Parallels Windows 10 VM will be used automatically to build AppX on macOS. No ne
 
 #### How do create VirtualBox Windows 10 Virtual Machine?
 
-If you are not on macOS or don't want to buy [http://www.parallels.com/products/desktop/](Parallels Desktop), you can use free [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+If you are not on macOS or don't want to buy [Parallels Desktop](https://www.parallels.com/products/desktop/), you can use free [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
 1. Open [Download virtual machines](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/).
 2. Select "MSEdge on Win10 (x64) Stable".
 3. Select "VirtualBox" platform.
 4. Download. See [installation instructions](https://az792536.vo.msecnd.net/vms/release_notes_license_terms_8_1_15.pdf).
+
+The password to your VM is `Passw0rd!`.
 
 VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).

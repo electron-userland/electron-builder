@@ -18,6 +18,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
+* [Docker](/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
 
 | Question | Answer |
 |--------|-------|
@@ -43,6 +44,8 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
 
 ## Quick Setup Guide
+
+[electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application.
 
 1. Specify the standard fields in the application `package.json` — [name](/configuration/configuration.md#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
@@ -70,9 +73,9 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration#Configuration-nodeGypRebuild) to `true`.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
    
-6. Install the [required system packages](multi-platform-build.md) if you are not on macOS 10.12+.
+6. Install the [required system packages](/multi-platform-build.md) if you are not on macOS 10.12+.
 
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 

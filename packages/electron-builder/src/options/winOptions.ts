@@ -46,11 +46,11 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly certificatePassword?: string | null
   /**
-   * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
+   * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
    */
   readonly certificateSubjectName?: string | null
   /**
-   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows.
+   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
    */
   readonly certificateSha1?: string | null
   /**

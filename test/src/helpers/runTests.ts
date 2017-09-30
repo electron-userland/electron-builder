@@ -53,11 +53,9 @@ async function runTests() {
       args.push("nsisUpdaterTest")
       args.push("macArchiveTest")
       args.push("macCodeSignTest")
-      args.push("extraMetadataTest")
     }
     else if (circleNodeIndex === 1) {
       args.push("oneClickInstallerTest")
-      args.push("portableTest")
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
@@ -65,6 +63,7 @@ async function runTests() {
       args.push("mainEntryTest")
       args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
       args.push("macPackagerTest")
+      args.push("portableTest")
     }
     else {
       args.push("BuildTest")
@@ -74,6 +73,7 @@ async function runTests() {
       args.push("globTest")
       args.push("ignoreTest")
       args.push("webInstallerTest")
+      args.push("extraMetadataTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

@@ -1,4 +1,4 @@
-import { exec, isMacOsSierra, warn } from "builder-util"
+import { isMacOsSierra, warn, asArray, debug } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
 import { rename } from "fs-extra-p"
@@ -9,19 +9,11 @@ import { WindowsConfiguration } from "./options/winOptions"
 import { resolveFunction } from "./platformPackager"
 import { isUseSystemSigncode } from "./util/flags"
 import { VmManager } from "./parallels"
-import { Lazy } from "lazy-val"
+import { WinPackager } from "./winPackager"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub("winCodeSign", "1.9.0", "cyhO9Mv5MTP2o9dwk/+qs0KvuO9CbDhjEJXA2ujpvhcsk5zmc+zY9iqiWXVzOuibTLYNC3qZiuFlJrrCT2kldw==")
-}
-
-export interface FileCodeSigningInfo {
-  readonly file?: string | null
-  readonly password?: string | null
-
-  readonly subjectName?: string | null
-  readonly certificateSha1?: string | null
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>
@@ -29,10 +21,8 @@ export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfigurati
 export interface WindowsSignOptions {
   readonly path: string
 
-  readonly cert?: string | null
-
   readonly name?: string | null
-  readonly password?: string | null
+  readonly cscInfo?: FileCodeSigningInfo | CertificateFromStoreInfo | null
   readonly site?: string | null
 
   readonly options: WindowsConfiguration
@@ -50,7 +40,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
   computeSignToolArgs(isWin: boolean): Array<string>
 }
 
-export async function sign(options: WindowsSignOptions, vm?: Lazy<VmManager>) {
+export async function sign(options: WindowsSignOptions, packager: WinPackager) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -67,7 +57,7 @@ export async function sign(options: WindowsSignOptions, vm?: Lazy<VmManager>) {
   }
 
   function defaultExecutor(configuration: CustomWindowsSignTaskConfiguration) {
-    return doSign(configuration, vm)
+    return doSign(configuration, packager)
   }
 
   const executor = resolveFunction(options.options.sign) || defaultExecutor
@@ -85,24 +75,87 @@ export async function sign(options: WindowsSignOptions, vm?: Lazy<VmManager>) {
   }
 }
 
-async function doSign(configuration: CustomWindowsSignTaskConfiguration, vmPromise?: Lazy<VmManager>) {
+export interface FileCodeSigningInfo {
+  readonly file: string
+  readonly password: string | null
+}
+
+export interface CertificateFromStoreInfo {
+  thumbprint: string
+  subject: string
+  store: string
+  isLocalMachineStore: boolean
+}
+
+export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
+  const certificateSubjectName = options.certificateSubjectName
+  const certificateSha1 = options.certificateSha1
+  // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
+  // powershell can return object if the only item
+  const certList = asArray<CertInfo>(JSON.parse(await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint,IssuerName | ConvertTo-Json -Compress"])))
+  for (const certInfo of certList) {
+    if (certificateSubjectName != null) {
+      if (!certInfo.IssuerName.Name.includes(certificateSubjectName)) {
+        continue
+      }
+    }
+    else if (certInfo.Thumbprint !== certificateSha1) {
+      continue
+    }
+
+    const parentPath = certInfo.PSParentPath
+    const store = parentPath.substring(parentPath.lastIndexOf("\\") + 1)
+    debug(`Auto-detect certificate store ${store} (PSParentPath: ${parentPath})`)
+    // https://github.com/electron-userland/electron-builder/issues/1717
+    const isLocalMachineStore = (parentPath.includes("Certificate::LocalMachine"))
+    debug(`Auto-detect using of LocalMachine store`)
+    return {
+      thumbprint: certInfo.Thumbprint,
+      subject: certInfo.Subject,
+      store,
+      isLocalMachineStore
+    }
+  }
+
+  throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}`)
+}
+
+async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
 
-  if (configuration.path.endsWith(".appx")) {
-    const vm = await vmPromise!!.value
+  let tool: string
+  let args: Array<string>
+  let env = process.env
+  let vm: VmManager
+  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!!) /* certificateSubjectName and other such options */) {
+    vm = await packager.vm.value
     const vendorPath = await getSignVendorPath()
-    await vm.exec(path.join(vendorPath, "windows-10", process.arch, "signtool.exe"), computeSignToolArgs(configuration, true, vm), {
-      timeout,
-    })
-    return
+    tool = path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+    args = computeSignToolArgs(configuration, true, vm)
+  }
+  else {
+    vm = new VmManager()
+    const toolInfo = await getToolPath()
+    tool = toolInfo.path
+    args = configuration.computeSignToolArgs(process.platform === "win32")
+    if (toolInfo.env != null) {
+      env = toolInfo.env
+    }
   }
 
-  const toolInfo = await getToolPath()
-  await exec(toolInfo.path, configuration.computeSignToolArgs(process.platform === "win32"), {
-    timeout,
-    env: toolInfo.env || process.env
-  })
+  await vm.exec(tool, args, {timeout, env})
+}
+
+interface IssuerName {
+  Name: string
+}
+
+interface CertInfo {
+  IssuerName: IssuerName
+  Subject: string
+  Thumbprint: string
+  PSParentPath: string
 }
 
 // on windows be aware of http://stackoverflow.com/a/32640183/1910191
@@ -125,18 +178,18 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
     }
   }
 
-  const certificateFile = options.cert
+  const certificateFile = (options.cscInfo as FileCodeSigningInfo).file
   if (certificateFile == null) {
-    const subjectName = options.options.certificateSubjectName
+    const cscInfo = (options.cscInfo as CertificateFromStoreInfo)
+    const subjectName = cscInfo.thumbprint
     if (!isWin) {
       throw new Error(`${subjectName == null ? "certificateSha1" : "certificateSubjectName"} supported only on Windows`)
     }
 
-    if (subjectName == null) {
-      args.push("/sha1", options.options.certificateSha1!)
-    }
-    else {
-      args.push("/n", subjectName)
+    args.push("/sha1", cscInfo.thumbprint)
+    args.push("/s", cscInfo.store)
+    if (cscInfo.isLocalMachineStore) {
+      args.push("/sm")
     }
   }
   else {
@@ -169,8 +222,9 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
     args.push(isWin ? "/as" : "-nest")
   }
 
-  if (options.password) {
-    args.push(isWin ? "/p" : "-pass", options.password)
+  const password = options.cscInfo == null ? null : (options.cscInfo as FileCodeSigningInfo).password
+  if (password) {
+    args.push(isWin ? "/p" : "-pass", password)
   }
 
   if (options.options.additionalCertificateFile) {

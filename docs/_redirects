@@ -1,3 +1,4 @@
 /publishing-artifacts /configuration/publish
 /configuration/linux-other /configuration/linux
+/configuration/deb /configuration/linux
 /docker /multi-platform-build

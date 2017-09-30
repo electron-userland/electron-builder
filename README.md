@@ -45,6 +45,8 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
 ## Quick Setup Guide
 
+[electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application.
+
 1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration/configuration#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
 2. Specify the [build](https://electron.build/configuration/configuration#build) configuration in the `package.json` as follows:

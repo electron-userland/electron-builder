@@ -81,15 +81,17 @@ let mainWindow;
 let tray = null
 
 function createWindow () {
-  tray = new Tray(path.join(process.resourcesPath, "32x32.png"))
-  const contextMenu = Menu.buildFromTemplate([
-    {label: 'Item1', type: 'radio'},
-    {label: 'Item2', type: 'radio'},
-    {label: 'Item3', type: 'radio', checked: true},
-    {label: 'Item4', type: 'radio'}
-  ])
-  tray.setToolTip('This is my application.')
-  tray.setContextMenu(contextMenu)
+  if (process.platform === "linux") {
+    tray = new Tray(path.join(process.resourcesPath, "32x32.png"))
+    const contextMenu = Menu.buildFromTemplate([
+      {label: 'Item1', type: 'radio'},
+      {label: 'Item2', type: 'radio'},
+      {label: 'Item3', type: 'radio', checked: true},
+      {label: 'Item4', type: 'radio'}
+    ])
+    tray.setToolTip('This is my application.')
+    tray.setContextMenu(contextMenu)
+  }
 
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 800, height: 600});

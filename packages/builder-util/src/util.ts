@@ -39,6 +39,10 @@ export interface ExecOptions extends BaseExecOptions {
 
 export function removePassword(input: string) {
   return input.replace(/(-String |-P |pass:| \/p |-pass )([^ ]+)/g, (match, p1, p2) => {
+    if (p1.trim() === "/p" && p2.startsWith("\\\\Mac\\Host\\\\")) {
+      // appx /p
+      return `${p1}${p2}`
+    }
     return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
 }
@@ -61,7 +65,10 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
-    execFile(file, args as any, options, (error, stdout, stderr) => {
+    execFile(file, args as any, {
+      ...options,
+      maxBuffer: 10 * 1024 * 1024,
+    }, (error, stdout, stderr) => {
       if (error == null) {
         if (isLogOutIfDebug && debug.enabled) {
           if (stderr.length !== 0) {

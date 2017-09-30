@@ -255,6 +255,7 @@
       <w>progexe</w>
       <w>proguard</w>
       <w>promisify</w>
+      <w>psexec</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>
       <w>pythonpath</w>
@@ -324,6 +325,7 @@
       <w>volid</w>
       <w>volname</w>
       <w>welcomefinishpage</w>
+      <w>whoami</w>
       <w>winedlloverrides</w>
       <w>winemenubuilder</w>
       <w>winstaller</w>

@@ -50,6 +50,11 @@ Default assets will be used for `Logo`, `Square150x150Logo`, `Square44x44Logo` a
    ```
 5. The rest should be pretty straight forward — upload the appx to the store and wait for approval.
 
-## How to build AppX on macOS
+## Building AppX on macOS
 
 The only solution for now — using [Parallels Desktop for Mac](http://www.parallels.com/products/desktop/) ([Pro Edition](https://forum.parallels.com/threads/prlctl-is-now-a-pro-or-business-version-tool-only.330290/) is required). Create Windows 10 virtual machine and start it. It will be detected and used automatically to build AppX on your macOS machine. Nothing is required to setup on Windows. It allows you to not copy project to Windows and to not setup build environment on Windows.
+
+## Common Questions
+#### How do install AppX without trusted certificate?
+
+If you use self-signed certificate, you need to add it to "Trusted People". See [Install the certificate](https://stackoverflow.com/a/24372483/1910191).

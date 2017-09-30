@@ -83,6 +83,10 @@ async function render2(files, jsdoc2MdOptions) {
         return ""
       }
 
+      if (context.typeItem.name === "LinuxTargetSpecificOptions" && context.object.name === "DebOptions") {
+        return null
+      }
+
       // looks strange when on LinuxConfiguration page "Inherited from `CommonLinuxOptions`:" - no configuration inheritance in this case
       if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && context.typeItem.name === "CommonNsisOptions")) {
         return ""
@@ -172,10 +176,10 @@ async function render2(files, jsdoc2MdOptions) {
       return "[AppImageOptions](/configuration/linux.md#appimageoptions)"
     }
     if (types.some(it => it.endsWith("DebOptions"))) {
-      return "[DebOptions](deb.md)"
+      return "[DebOptions](/configuration/linux.md#de)"
     }
     if (types.some(it => it.endsWith("LinuxTargetSpecificOptions"))) {
-      return "[LinuxTargetSpecificOptions](/configuration/linux.md)"
+      return "[LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)"
     }
 
     return originalRenderTypeName.call(this, context)
@@ -197,7 +201,6 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/squirrel-windows.md", "SquirrelWindowsOptions"),
 
     new Page("configuration/linux.md", "LinuxConfiguration"),
-    new Page("configuration/deb.md", "DebOptions"),
     new Page("configuration/snap.md", "SnapOptions"),
 
     new Page("configuration/publish.md", null, {
@@ -213,6 +216,7 @@ async function render2(files, jsdoc2MdOptions) {
     }),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),
+    new Page("generated/DebOptions.md", "DebOptions"),
     new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
 
     // new Page("auto-update.md", null, {

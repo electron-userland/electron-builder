@@ -21,20 +21,17 @@ import { createCommonTarget } from "./targets/targetFactory"
 import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
-import { FileCodeSigningInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
-import { parseVmList, VmManager, ParallelsVmManager } from "./parallels"
+import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
+import { VmManager, getWindowsVm } from "./parallels"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-  readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
+  readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
     const platformSpecificBuildOptions = this.platformSpecificBuildOptions
-    const subjectName = platformSpecificBuildOptions.certificateSubjectName
-    if (subjectName != null) {
-      return BluebirdPromise.resolve({subjectName})
-    }
-
-    const certificateSha1 = platformSpecificBuildOptions.certificateSha1
-    if (certificateSha1 != null) {
-      return BluebirdPromise.resolve({certificateSha1})
+    if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+      if (platformSpecificBuildOptions.sign != null) {
+        return BluebirdPromise.resolve(null)
+      }
+      return this.vm.value.then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
     }
 
     const certificateFile = platformSpecificBuildOptions.certificateFile
@@ -45,33 +42,24 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         password: certificatePassword == null ? null : certificatePassword.trim(),
       })
     }
-    else {
-      const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
-      if (cscLink != null) {
-        return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-          .then(path => {
-            return {
-              file: path,
-              password: this.getCscPassword(),
-            }
-          })
-      }
-      else {
-        return BluebirdPromise.resolve(null)
-      }
+
+    const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
+    if (cscLink == null) {
+      return BluebirdPromise.resolve(null)
     }
+
+    return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+      .then(path => {
+        return {
+          file: path!!,
+          password: this.getCscPassword(),
+        }
+      })
   })
 
   private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
 
-  readonly parallelsVm = new Lazy<VmManager>(async () => {
-    const vmList = (await parseVmList(this.debugLogger)).filter(it => it.os === "win-10")
-    if (vmList.length === 0) {
-      throw new Error("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
-    }
-    this.debugLogger.add("parallelsVm", vmList)
-    return new ParallelsVmManager(vmList[0])
-  })
+  readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? BluebirdPromise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
 
   readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
     const cscInfo = await this.cscInfo.value
@@ -79,12 +67,15 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return null
     }
 
-    const isMac = process.platform === "darwin"
+    if ("subject" in cscInfo) {
+      return (cscInfo as CertificateFromStoreInfo).subject
+    }
 
-    const vm = isMac ? await this.parallelsVm.value : new VmManager()
-    const certFile = vm.toVmFile(cscInfo.file!)
+    const vm = await this.vm.value
+    const info = cscInfo as FileCodeSigningInfo
+    const certFile = vm.toVmFile(info.file)
     // https://github.com/electron-userland/electron-builder/issues/1735
-    const args = cscInfo.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${cscInfo.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
+    const args = info.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${info.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
     return await vm.exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
   })
 
@@ -99,7 +90,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return null
     }
 
-    const cscFile = cscInfo.file
+    if ("subject" in cscInfo) {
+      return asArray(parseDn((cscInfo as CertificateFromStoreInfo).subject).get("CN"))
+    }
+
+    const cscFile = (cscInfo as FileCodeSigningInfo).file
     if (publisherName == null && cscFile != null) {
       if (process.platform === "win32") {
         try {
@@ -115,7 +110,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
 
       try {
-        publisherName = await extractCommonNameUsingOpenssl(cscInfo.password || "", cscFile)
+        publisherName = await extractCommonNameUsingOpenssl((cscInfo as FileCodeSigningInfo).password || "", cscFile)
       }
       catch (e) {
         throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
@@ -228,7 +223,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.platformSpecificBuildOptions.sign != null) {
-        await sign(signOptions)
+        await sign(signOptions, this)
       }
       else if (this.forceCodeSigning) {
         throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
@@ -236,31 +231,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return
     }
 
-    const certFile = cscInfo.file
-
     if (logMessagePrefix == null) {
       logMessagePrefix = `Signing ${path.basename(file)}`
     }
-    if (certFile == null) {
-      if (cscInfo.subjectName == null) {
-        log(`${logMessagePrefix} (certificate SHA1: "${cscInfo.certificateSha1}")`)
-      }
-      else {
-        log(`${logMessagePrefix} (certificate subject name: "${cscInfo.subjectName}")`)
-      }
+
+    if ("file" in cscInfo) {
+      log(`${logMessagePrefix} (certificate file: "${(cscInfo as FileCodeSigningInfo).file}")`)
     }
     else {
-      log(`${logMessagePrefix} (certificate file: "${certFile}")`)
+      const info = cscInfo as CertificateFromStoreInfo
+      log(`${logMessagePrefix} (subject: "${info.subject}", thumbprint: "${info.thumbprint}", store: ${info.store} (${info.isLocalMachineStore ? "local machine" : "current user"}))`)
     }
 
     await this.doSign({
       ...signOptions,
-      cert: certFile,
-      password: cscInfo.password,
+      cscInfo,
       options: {
         ...this.platformSpecificBuildOptions,
-        certificateSubjectName: cscInfo.subjectName,
-        certificateSha1: cscInfo.certificateSha1
       },
     })
   }
@@ -268,7 +255,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   private async doSign(options: WindowsSignOptions) {
     for (let i = 0; i < 3; i++) {
       try {
-        await sign(options, this.parallelsVm)
+        await sign(options, this)
         break
       }
       catch (e) {
@@ -321,8 +308,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {
-      if (cscInfoForCacheDigest.file != null) {
-        files.push(cscInfoForCacheDigest.file)
+      const cscFile = (cscInfoForCacheDigest as FileCodeSigningInfo).file
+      if (cscFile != null) {
+        files.push(cscFile)
       }
 
       const timer = time("executable cache")
@@ -331,8 +319,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       hash.update(config.muonVersion || "no muonVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
-      hash.update(cscInfoForCacheDigest.certificateSha1 || "no certificateSha1")
-      hash.update(cscInfoForCacheDigest.subjectName || "no subjectName")
+      hash.update(this.platformSpecificBuildOptions.certificateSha1 || "no certificateSha1")
+      hash.update(this.platformSpecificBuildOptions.certificateSubjectName || "no subjectName")
 
       buildCacheManager = new BuildCacheManager(outDir, file, arch)
       if (await buildCacheManager.copyIfValid(await digest(hash, files))) {
@@ -414,7 +402,7 @@ function isIco(buffer: Buffer): boolean {
 
 const debugOpenssl = _debug("electron-builder:openssl")
 async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
-  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024}, debugOpenssl.enabled)
+  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000}, debugOpenssl.enabled)
   const match = result.match(/^subject.*\/CN=([^\/\n]+)/m)
   if (match == null || match[1] == null) {
     throw new Error(`Cannot extract common name from p12: ${result}`)

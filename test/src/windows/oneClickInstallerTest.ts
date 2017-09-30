@@ -31,18 +31,18 @@ test("one-click", app({
   }
 }))
 
-test.ifAll("one-click - differential package", app({
-  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
-  config: {
-    publish: null,
-    nsis: {
-      differentialPackage: true,
-    },
-  }
-}, {
-  // test that 7za is signed
-  signedWin: true,
-}))
+// test.ifAll("one-click - differential package", app({
+//   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+//   config: {
+//     publish: null,
+//     nsis: {
+//       differentialPackage: true,
+//     },
+//   }
+// }, {
+//   // test that 7za is signed
+//   signedWin: true,
+// }))
 
 test.ifAll.ifNotCiMac("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),

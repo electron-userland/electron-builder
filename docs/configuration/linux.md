@@ -22,7 +22,16 @@ The top-level `appImage` key contains set of options instructing electron-builde
 
 {% include "/generated/appimage-options.md" %}
 
-## APK, FreeBSD, Pacman, P5P and RPM Options
+## Debian Package Options
+
+The top-level [deb](configuration.md#Configuration-deb) key contains set of options instructing electron-builder on how it should build Debian package.
+
+{% include "/generated/DebOptions.md" %}
+
+All `LinuxTargetSpecificOptions` can be also specified in the `deb` to customize Debian package. 
+
+## `LinuxTargetSpecificOptions` APK, FreeBSD, Pacman, P5P and RPM Options
+<a name="LinuxTargetSpecificOptions"></a>
 
 The top-level `apk`, `freebsd`, `pacman`, `p5p` and `rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.
 

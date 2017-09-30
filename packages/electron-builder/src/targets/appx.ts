@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, getArchSuffix, use } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, getArchSuffix, use, log } from "builder-util"
 import { copyDir, copyFile } from "builder-util/out/fs"
 import _debug from "debug"
 import { emptyDir, mkdir, readdir, readFile, writeFile } from "fs-extra-p"
@@ -10,7 +10,6 @@ import { AppXOptions } from "../options/winOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
-import { VmManager } from "../parallels"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -38,24 +37,6 @@ export default class AppXTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    const cscInfo = await this.packager.cscInfo.value
-    if (cscInfo == null) {
-      throw new Error("AppX package must be signed, but certificate is not set, please see https://electron.build/code-signing\n\nYou can use `electron-builder create-self-signed-cert -p YourName` to create self-signed certificate")
-    }
-
-    let publisher = this.options.publisher
-    if (publisher == null) {
-      const cscFile = cscInfo.file
-      if (cscFile == null) {
-        throw new Error("Please specify appx.publisher: cannot get publisher from your code signing certificate if EV cert is used")
-      }
-
-      publisher = await packager.computedPublisherSubjectOnWindowsOnly.value
-      if (!publisher) {
-        throw new Error("Please specify appx.publisher, cannot compute from p12 file")
-      }
-    }
-
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
@@ -80,30 +61,30 @@ export default class AppXTarget extends Target {
       }
       return null
     }))
-    taskManager.addTask(this.writeManifest(getTemplatePath("appx"), preAppx, arch, publisher!, userAssets))
+
+    const publisher = await this.computePublisherName()
+    taskManager.addTask(this.writeManifest(getTemplatePath("appx"), preAppx, arch, publisher, userAssets))
     taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
     await taskManager.awaitTasks()
 
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    const vm = process.platform === "win32" ? new VmManager() : await packager.parallelsVm.value
-
+    const vm = await packager.vm.value
     const makeAppXArgs = ["pack", "/o", "/d", vm.toVmFile(preAppx), "/p", vm.toVmFile(artifactPath)]
 
     // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
     if (isScaledAssetsProvided(userAssets)) {
       const priConfigPath = vm.toVmFile(path.join(preAppx, "priconfig.xml"))
       const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
-      await vm.spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, {isDebugEnabled: debug.enabled})
-      await vm.spawn(makePriPath, ["new", "/pr", vm.toVmFile(preAppx), "/cf", priConfigPath, "/of", vm.toVmFile(preAppx)], undefined, {isDebugEnabled: debug.enabled})
+      await vm.exec(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, debug.enabled)
+      await vm.exec(makePriPath, ["new", "/pr", vm.toVmFile(preAppx), "/cf", priConfigPath, "/of", vm.toVmFile(preAppx)], undefined, debug.enabled)
 
       makeAppXArgs.push("/l")
     }
 
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
-    // wine supports only ia32 binary in any case makeappx crashed on wine
-    await vm.spawn(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs, undefined, debug.enabled)
     await packager.sign(artifactPath)
 
     packager.info.dispatchArtifactCreated({
@@ -114,6 +95,20 @@ export default class AppXTarget extends Target {
       target: this,
       isWriteUpdateInfo: this.options.electronUpdaterAware,
     })
+  }
+
+  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+  private async computePublisherName() {
+    if (await this.packager.cscInfo.value == null) {
+      log("AppX is not signed (Windows Store only build)")
+      return this.options.publisher || "CN=ms"
+    }
+
+    const publisher = await this.packager.computedPublisherSubjectOnWindowsOnly.value
+    if (!publisher) {
+      throw new Error("Internal error: cannot compute subject using certificate info")
+    }
+    return publisher
   }
 
   private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {

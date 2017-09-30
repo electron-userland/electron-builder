@@ -10,7 +10,6 @@
     * [AppX](configuration/appx.md)
     * [Squirrel.Windows](configuration/squirrel-windows.md)
   * [Linux](configuration/linux.md)
-    * [Debian Package](configuration/deb.md)
     * [Snap](configuration/snap.md)
   * [Target](configuration/target.md)
   * [Publish](configuration/publish.md)

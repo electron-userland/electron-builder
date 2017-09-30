@@ -96,14 +96,14 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ---
 
 * <code id="Configuration-linux">linux</code> [LinuxConfiguration](linux.md) - Options related to how build Linux targets.
-* <code id="Configuration-deb">deb</code> [DebOptions](deb.md) - Debian package options.
+* <code id="Configuration-deb">deb</code> [DebOptions](/configuration/linux.md#de) - Debian package options.
 * <code id="Configuration-snap">snap</code> [SnapOptions](snap.md) - Snap options.
 * <code id="Configuration-appImage">appImage</code> [AppImageOptions](/configuration/linux.md#appimageoptions) - AppImage options.
-* <code id="Configuration-pacman">pacman</code> [LinuxTargetSpecificOptions](/configuration/linux.md)
-* <code id="Configuration-rpm">rpm</code> [LinuxTargetSpecificOptions](/configuration/linux.md)
-* <code id="Configuration-freebsd">freebsd</code> [LinuxTargetSpecificOptions](/configuration/linux.md)
-* <code id="Configuration-p5p">p5p</code> [LinuxTargetSpecificOptions](/configuration/linux.md)
-* <code id="Configuration-apk">apk</code> [LinuxTargetSpecificOptions](/configuration/linux.md)
+* <code id="Configuration-pacman">pacman</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
+* <code id="Configuration-rpm">rpm</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
+* <code id="Configuration-freebsd">freebsd</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
+* <code id="Configuration-p5p">p5p</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
+* <code id="Configuration-apk">apk</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
 
 ---
 

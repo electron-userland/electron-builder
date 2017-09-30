@@ -24,7 +24,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
   }
 
   args.push(dmgPath)
-  const attachResult = await exec("hdiutil", args, {maxBuffer: 2 * 1024 * 1024})
+  const attachResult = await exec("hdiutil", args)
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {

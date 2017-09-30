@@ -104,6 +104,11 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
   readonly compression?: "gz" | "bzip2" | "xz" | null
 
   /**
+   * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
+   */
+  readonly depends?: Array<string> | null
+
+  /**
    * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
    */
   readonly packageCategory?: string | null
@@ -112,11 +117,6 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
    */
   readonly priority?: string | null
-
-  /**
-   * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
-   */
-  readonly depends?: Array<string> | null
 }
 
 export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptions {

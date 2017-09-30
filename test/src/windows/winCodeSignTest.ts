@@ -6,15 +6,6 @@ import { app, appThrows } from "../helpers/packTester"
 describe.ifAll("sign", () => {
   const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-  test.ifNotWindows("ev", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      win: {
-        certificateSubjectName: "ev",
-      }
-    }
-  }))
-
   function testCustomSign(sign: any) {
     return app({
       targets: Platform.WINDOWS.createTarget(DIR_TARGET),
@@ -55,15 +46,6 @@ describe.ifAll("sign", () => {
       }
     })()
   })
-
-  test.ifNotWindows("certificateSha1", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      win: {
-        certificateSha1: "boo",
-      }
-    }
-  }))
 
   test.ifNotCiMac("forceCodeSigning", appThrows({
     targets: windowsDirTarget,
