@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, getArchSuffix, use, log } from "builder-util"
-import { copyDir, copyFile } from "builder-util/out/fs"
+import { Arch, asArray, AsyncTaskManager, use, log } from "builder-util"
+import {  walk } from "builder-util/out/fs"
 import _debug from "debug"
-import { emptyDir, mkdir, readdir, readFile, writeFile } from "fs-extra-p"
+import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Target } from "../core"
@@ -10,6 +10,7 @@ import { AppXOptions } from "../options/winOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
+import { VmManager } from "../parallels"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -34,54 +35,41 @@ export default class AppXTarget extends Target {
     }
   }
 
+  // https://docs.microsoft.com/en-us/windows/uwp/packaging/create-app-package-with-makeappx-tool#mapping-files
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
-
-    const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
-    await emptyDir(preAppx)
-
-    const assetOutDir = path.join(preAppx, "assets")
-    await mkdir(assetOutDir)
-
-    const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
-    let userAssets: Array<string>
-    if (userAssetDir == null) {
-      userAssets = []
-    }
-    else {
-      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
-      await BluebirdPromise.map(userAssets, it => copyFile(path.join(userAssetDir, it), path.join(assetOutDir, it), false))
-    }
-
     const vendorPath = await getSignVendorPath()
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
-    taskManager.addTask(BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
-      if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        return copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(assetOutDir, defaultAsset), false)
-      }
-      return null
-    }))
+    const vm = await packager.vm.value
 
-    const publisher = await this.computePublisherName()
-    taskManager.addTask(this.writeManifest(getTemplatePath("appx"), preAppx, arch, publisher, userAssets))
-    taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
-    await taskManager.awaitTasks()
-
+    const mappingFile = path.join(this.outDir, `.__appx-mapping-${Arch[arch]}.txt`)
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-
-    const vm = await packager.vm.value
-    const makeAppXArgs = ["pack", "/o", "/d", vm.toVmFile(preAppx), "/p", vm.toVmFile(artifactPath)]
-
-    // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
-    if (isScaledAssetsProvided(userAssets)) {
-      const priConfigPath = vm.toVmFile(path.join(preAppx, "priconfig.xml"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
-      await vm.exec(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, debug.enabled)
-      await vm.exec(makePriPath, ["new", "/pr", vm.toVmFile(preAppx), "/cf", priConfigPath, "/of", vm.toVmFile(preAppx)], undefined, debug.enabled)
-
-      makeAppXArgs.push("/l")
+    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */, "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
+    if (packager.config.compression === "store") {
+      makeAppXArgs.push("/nc")
     }
+
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+    taskManager.addTask(BluebirdPromise.map(walk(appOutDir), file => {
+      let appxPath = file.substring(appOutDir.length + 1)
+      if (path.sep !== "\\") {
+        appxPath = appxPath.replace(/\//g, "\\")
+      }
+      return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
+    }))
+    taskManager.add(async () => {
+      const manifestFile = path.join(this.outDir, `.__AppxManifest-${Arch[arch]}.xml`)
+      const {userAssets, mappings: userAssetMappings } = await this.computeUserAssets(vm, vendorPath, arch, makeAppXArgs)
+      await this.writeManifest(getTemplatePath("appx"), manifestFile, arch, await this.computePublisherName(), userAssets)
+      return userAssetMappings.concat(`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`)
+    })
+
+    let mapping = "[Files]"
+    for (const list of (await taskManager.awaitTasks()) as Array<Array<string>>) {
+      mapping += "\r\n" + list.join("\r\n")
+    }
+    await writeFile(mappingFile, mapping)
+    packager.debugLogger.add("appx.mapping", mapping)
 
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs, undefined, debug.enabled)
@@ -95,6 +83,40 @@ export default class AppXTarget extends Target {
       target: this,
       isWriteUpdateInfo: this.options.electronUpdaterAware,
     })
+  }
+
+  private async computeUserAssets(vm: VmManager, vendorPath: string, arch: Arch, makeAppXArgs: Array<string>) {
+    const mappings: Array<string> = []
+    const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
+    let userAssets: Array<string>
+    if (userAssetDir == null) {
+      userAssets = []
+    }
+    else {
+      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
+      for (const name of userAssets) {
+        mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${it}"`)
+      }
+    }
+
+    for (const defaultAsset of Object.keys(vendorAssetsForDefaultAssets)) {
+      if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
+        mappings.push(`"${vm.toVmFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]))}" "assets\\${defaultAsset}"`)
+      }
+    }
+
+    // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
+    if (isScaledAssetsProvided(userAssets)) {
+      const tempDir = path.join(this.outDir, `.__appx-${Arch[arch]}`)
+      await emptyDir(tempDir)
+      const priConfigPath = vm.toVmFile(path.join(tempDir, "priconfig.xml"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
+      await vm.exec(makePriPath, ["createconfig", "/ConfigXml", priConfigPath, "/Default", "en-US", "/pv", "10.0.0", "/o"], undefined, debug.enabled)
+      await vm.exec(makePriPath, ["new", "/Overwrite", "/ProjectRoot", vm.toVmFile(userAssetDir!), "/ConfigXml", priConfigPath, "/OutputFile", vm.toVmFile(tempDir)], undefined, debug.enabled)
+
+      makeAppXArgs.push("/l")
+    }
+    return {userAssets, mappings}
   }
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
@@ -111,7 +133,7 @@ export default class AppXTarget extends Target {
     return publisher
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {
+  private async writeManifest(templatePath: string, outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
     const appInfo = this.packager.appInfo
     const options = this.options
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
@@ -184,7 +206,7 @@ export default class AppXTarget extends Target {
             throw new Error(`Macro ${p1} is not defined`)
         }
       })
-    await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
+    await writeFile(outFile, manifest)
   }
 }
 

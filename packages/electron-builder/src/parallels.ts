@@ -1,5 +1,6 @@
 import { exec, spawn, ExecOptions, DebugLogger, ExtraSpawnOptions } from "builder-util"
 import { SpawnOptions, execFileSync } from "child_process"
+import * as path from "path"
 
 async function parseVmList(debugLogger: DebugLogger) {
   // do not log output if debug - it is huge, logged using debugLogger
@@ -39,6 +40,10 @@ export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager>
 }
 
 export class VmManager {
+  get pathSep(): string {
+    return path.sep
+  }
+
   exec(file: string, args: Array<string>, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
     return exec(file, args, options, isLogOutIfDebug)
   }
@@ -61,6 +66,10 @@ class ParallelsVmManager extends VmManager {
     super()
 
     this.startPromise = this.doStartVm()
+  }
+
+  get pathSep(): string {
+    return "/"
   }
 
   private handleExecuteError(error: Error): any {

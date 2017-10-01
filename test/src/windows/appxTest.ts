@@ -12,7 +12,7 @@ it.ifDevOrWinCi("AppX", app({
   signedWin: true,
 }))
 
-it.ifDevOrWinCi("certificateSubjectName", app({
+it.ifNotCi("certificateSubjectName", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
   config: {
     win: {
@@ -21,12 +21,8 @@ it.ifDevOrWinCi("certificateSubjectName", app({
   },
 }))
 
-it.ifDevOrWinCi("not signed (windows store only)", app({
-  targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
-}))
-
 // todo - check manifest
-test.ifWindows("languages", app({
+it("languages and not signed (windows store only)", app({
   targets: Platform.WINDOWS.createTarget(["appx"]),
   cscLink: protectedCscLink,
   cscKeyPassword: "test",
