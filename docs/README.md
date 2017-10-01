@@ -8,7 +8,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * [Auto Update](auto-update.md) ready application packaging.
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-  * [macOS](configuration/mac.md#MacConfiguration-target): `dmg`, `pkg`, `mas`.
+  * [macOS](configuration/mac.md#MacConfiguration-target): `dmg`, `pkg`, `mas`, `mas-dev`.
   * [Linux](configuration/linux.md#LinuxConfiguration-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](configuration/win.md#WindowsConfiguration-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
 * [Two package.json structure](tutorials/two-package-structure.md) is supported, but you are not forced to use it even if you have native production dependencies.  
