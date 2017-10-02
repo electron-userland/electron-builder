@@ -184,11 +184,11 @@ export default class FpmTarget extends Target {
     use(options.fpm, it => args.push(...it as any))
 
     args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
-    for (const mapping of (await this.helper.icons)) {
-      args.push(mapping.join("=/usr/share/icons/hicolor/"))
+    for (const icon of (await this.helper.icons)) {
+      args.push(`${icon.file}=/usr/share/icons/hicolor/${icon.size}x${icon.size}/apps/${packager.executableName}.png`)
     }
 
-    const desktopFilePath = await this.helper.computeDesktopEntry(this.options)
+    const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
     args.push(`${desktopFilePath}=/usr/share/applications/${this.packager.executableName}.desktop`)
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath])) {

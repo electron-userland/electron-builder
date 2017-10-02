@@ -10,7 +10,7 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # yasm is required to build p7zip
   # rpm is required for FPM to build rpm package
   # libpng16-16 is required for libicns1_0.8.1-3.1 (on xenial)
-  apt-get install --no-install-recommends -y libsecret-1-0 locales git snapcraft qtbase5-dev xorriso bsdtar build-essential autoconf libssl-dev icnsutils libopenjp2-7 graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm python libcurl3 git ssh libpng16-16 && \
+  apt-get install --no-install-recommends -y libsecret-1-0 locales git snapcraft qtbase5-dev bsdtar build-essential autoconf libssl-dev icnsutils libopenjp2-7 graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm python libcurl3 git ssh libpng16-16 && \
   # libicns
   curl -O http://mirrors.kernel.org/ubuntu/pool/universe/libi/libicns/libicns1_0.8.1-3.1_amd64.deb && dpkg --install libicns1_0.8.1-3.1_amd64.deb && unlink libicns1_0.8.1-3.1_amd64.deb && \
   # we don't use our bundled 7za because it is better to build for specific platform - not generic
@@ -31,7 +31,6 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 ENV USE_SYSTEM_7ZA true
-ENV USE_SYSTEM_XORRISO true
 
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true

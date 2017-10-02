@@ -9,8 +9,13 @@ import { getTemplatePath } from "../util/pathManager"
 
 export const installPrefix = "/opt"
 
+export interface IconInfo {
+  file: string
+  size: number
+}
+
 export class LinuxTargetHelper {
-  readonly icons: Promise<Array<Array<string>>>
+  readonly icons: Promise<Array<IconInfo>>
 
   maxIconPath: string | null = null
 
@@ -19,7 +24,7 @@ export class LinuxTargetHelper {
   }
 
   // must be name without spaces and other special characters, but not product name used
-  private async computeDesktopIcons(): Promise<Array<Array<string>>> {
+  private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
     const customIconSetDir = packager.platformSpecificBuildOptions.icon
     if (customIconSetDir != null) {
@@ -55,7 +60,7 @@ export class LinuxTargetHelper {
   }
 
   private async iconsFromDir(iconDir: string) {
-    const mappings: Array<Array<string>> = []
+    const mappings: Array<IconInfo> = []
     let maxSize = 0
     for (const file of (await readdir(iconDir))) {
       if (file.endsWith(".png") || file.endsWith(".PNG")) {
@@ -66,7 +71,10 @@ export class LinuxTargetHelper {
           const size = sizeString == null ? 0 : parseInt(sizeString[0], 10)
           if (size > 0) {
             const iconPath = `${iconDir}/${file}`
-            mappings.push([iconPath, `${size}x${size}/apps/${this.packager.executableName}.png`])
+            mappings.push({
+              file: iconPath,
+              size,
+            })
 
             if (size > maxSize) {
               maxSize = size
@@ -100,7 +108,14 @@ export class LinuxTargetHelper {
     return options.description || this.packager.appInfo.description
   }
 
-  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
+  async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
+    const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
+    const tempFile = destination || await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`)
+    await outputFile(tempFile, data)
+    return tempFile
+  }
+
+  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is emptyd")
     }
@@ -115,7 +130,9 @@ export class LinuxTargetHelper {
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}" %U` : exec,
       Terminal: "false",
       Type: "Application",
-      Icon: this.packager.executableName, ...extra, ...targetSpecificOptions.desktop
+      Icon: this.packager.executableName,
+      ...extra,
+      ...targetSpecificOptions.desktop,
     }
 
     let category = targetSpecificOptions.category
@@ -143,13 +160,10 @@ export class LinuxTargetHelper {
       data += `\n${name}=${value}`
     }
     data += "\n"
-
-    const tempFile = destination || await this.packager.getTempFile(`${productFilename}.desktop`)
-    await outputFile(tempFile, data)
-    return tempFile
+    return data
   }
 
-  private async createFromIcns(tempDir: string): Promise<Array<Array<string>>> {
+  private async createFromIcns(tempDir: string): Promise<Array<IconInfo>> {
     const iconPath = await this.getIcns()
     if (iconPath == null) {
       return await this.iconsFromDir(path.join(getTemplatePath("linux"), "electron-icons"))
@@ -210,22 +224,23 @@ export class LinuxTargetHelper {
   }
 
   private createMappings(tempDir: string) {
-    const name = this.packager.executableName
-
-    function createMapping(size: string) {
-      return [process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`, `${size}x${size}/apps/${name}.png`]
+    function createMapping(size: number): IconInfo {
+      return {
+        file: process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`,
+        size,
+      }
     }
 
     return [
-      createMapping("16"),
-      createMapping("24"),
-      createMapping("32"),
-      createMapping("48"),
-      createMapping("64"),
-      createMapping("96"),
-      createMapping("128"),
-      createMapping("256"),
-      createMapping("512"),
+      createMapping(16),
+      createMapping(24),
+      createMapping(32),
+      createMapping(48),
+      createMapping(64),
+      createMapping(96),
+      createMapping(128),
+      createMapping(256),
+      createMapping(512),
     ]
   }
 }

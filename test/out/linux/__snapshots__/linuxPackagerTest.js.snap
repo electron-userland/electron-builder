@@ -8,7 +8,7 @@ Exec=AppRun
 Terminal=true
 Type=Application
 Icon=Foo
-Foo=bar
+X-Foo=bar
 Categories=Development;
 "
 `;

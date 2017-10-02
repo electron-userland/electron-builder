@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { readFile, remove, rename } from "fs-extra-p"
+import { remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
@@ -27,17 +27,17 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
     linux: {
       executableName: "Foo",
       desktop: {
-        Foo: "bar",
+        "X-Foo": "bar",
         Terminal: "true",
       },
     },
     appImage: {
-      // tslint:disable:no-invalid-template-strings
+      // tslint:disable-next-line:no-invalid-template-strings
       artifactName: "boo-${productName}",
     }
   },
   effectiveOptionComputed: async it => {
-    const content = await readFile(it[1], "utf-8")
+    const content: string = it.desktop
     expect(content.split("\n").filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version")).join("\n")).toMatchSnapshot()
     return false
   },

@@ -16,6 +16,7 @@
       <w>appdmg</w>
       <w>appimage</w>
       <w>appimagekit</w>
+      <w>appimagetool</w>
       <w>appleid</w>
       <w>appveyor</w>
       <w>appx</w>
@@ -92,6 +93,8 @@
       <w>eperm</w>
       <w>epipe</w>
       <w>evolvehq</w>
+      <w>exdev</w>
+      <w>extname</w>
       <w>faroese</w>
       <w>fcopy</w>
       <w>ffmpeg</w>
@@ -221,6 +224,7 @@
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
+      <w>noupdate</w>
       <w>npmrc</w>
       <w>nsis</w>
       <w>nsisdir</w>

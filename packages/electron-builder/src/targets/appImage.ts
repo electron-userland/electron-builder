@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, exec, log } from "builder-util"
+import { Arch, exec, log, debug } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
-import { unlinkIfExists } from "builder-util/out/fs"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { unlinkIfExists, copyFile, copyOrLinkFile } from "builder-util/out/fs"
 import * as ejs from "ejs"
-import { chmod, close, createReadStream, createWriteStream, open, outputFile, readFile, write } from "fs-extra-p"
+import { emptyDir, readFile, remove, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
@@ -13,28 +13,22 @@ import { AppImageOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
-const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" : "AppImage-09-07-16-linux"
-//noinspection SpellCheckingInspection
-const appImagePathPromise = process.platform === "darwin" ?
-  getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") :
-  getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
-
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
 })
 
 export default class AppImageTarget extends Target {
   readonly options: AppImageOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
-  private readonly desktopEntry: Promise<string>
+  private readonly desktopEntry: Lazy<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed
-    this.desktopEntry = helper.computeDesktopEntry(this.options, "AppRun", null, {
+    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
       "X-AppImage-BuildId": UUID.v1(),
-    })
+    }))
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -46,78 +40,91 @@ export default class AppImageTarget extends Target {
     // https://github.com/electron-userland/electron-builder/issues/1726
     const artifactName = this.options.artifactName == null ? packager.computeSafeArtifactName(null, "AppImage", arch, false)!! : packager.expandArtifactNamePattern(this.options, "AppImage", arch)
     const resultFile = path.join(this.outDir, artifactName)
-    await unlinkIfExists(resultFile)
+
+    // pax doesn't like dir with leading dot (e.g. `.__appimage`)
+    const stageDir = path.join(this.outDir, `__appimage-${Arch[arch]}`)
+    const appInStageDir = path.join(stageDir, "app")
+    await emptyDir(stageDir)
+    await copyDirUsingHardLinks(appOutDir, appInStageDir)
+
+    const iconNames = await BluebirdPromise.map(this.helper.icons, it => {
+      const filename = `icon-${it.size}.png`
+      return copyOrLinkFile(it.file, path.join(stageDir, filename), null, true)
+        .then(() => ({filename, size: it.size}))
+    })
+
+    const resourceName = `appimagekit-${this.packager.executableName}`
+
+    let installIcons = ""
+    for (const icon of iconNames) {
+      installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${icon.filename}" "${resourceName}"\n`
+    }
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
-
-    const appRunData = (await appRunTemplate.value)({
-      systemIntegration: this.options.systemIntegration || "ask",
-      desktopFileName: finalDesktopFilename,
-      executableName: this.packager.executableName,
-      resourceName: `appimagekit-${this.packager.executableName}`,
-    })
-    const appRunFile = await packager.getTempFile(".sh")
-    await outputFile(appRunFile, appRunData, {
-      mode: "0755",
-    })
-
-    const desktopFile = await this.desktopEntry
-    const appImagePath = await appImagePathPromise
-    const args = [
-      "-joliet", "on",
-      "-volid", "AppImage",
-      "-dev", resultFile,
-      "-padding", "0",
-      "-map", appOutDir, "/usr/bin",
-      "-map", appRunFile, "/AppRun",
-      // we get executable name in the AppRun by desktop file name, so, must be named as executable
-      "-map", desktopFile, `/${finalDesktopFilename}`,
-    ]
-    for (const [from, to] of (await this.helper.icons)) {
-      args.push("-map", from, `/usr/share/icons/default/${to}`)
-    }
+    await BluebirdPromise.all([
+      unlinkIfExists(resultFile),
+      writeFile(path.join(stageDir, "/AppRun"), (await appRunTemplate.value)({
+        systemIntegration: this.options.systemIntegration || "ask",
+        desktopFileName: finalDesktopFilename,
+        executableName: this.packager.executableName,
+        resourceName,
+        installIcons,
+      }), {
+        mode: "0755",
+      }),
+      writeFile(path.join(stageDir, finalDesktopFilename), await this.desktopEntry.value),
+    ])
 
     // must be after this.helper.icons call
     if (this.helper.maxIconPath == null) {
       throw new Error("Icon is not provided")
     }
-    args.push("-map", this.helper.maxIconPath, "/.DirIcon")
+    await copyFile(this.helper.maxIconPath, path.join(stageDir, `${this.packager.executableName}${path.extname(this.helper.maxIconPath)}`))
+
+    //noinspection SpellCheckingInspection
+    const vendorDir = await getBinFromGithub("appimage", "9.0.1", "mcme+7/krXSYb5C+6BpSt9qgajFYpn9dI1rjxzSW3YB5R/KrGYYrpZbVflEMG6pM7k9CL52poiOpGLBDG/jW3Q==")
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
-      // noinspection SpellCheckingInspection
-      args.push("-map", path.join(await getBinFromGithub("appimage-packages", "29-09-17", "sMMu1L1tL4QbzvGDxh1pNiIFC+ARnIOVvVdM0d6FBRtSDl0rHXgZMVLiuIAEz6+bJ+daHvYfLlPo1Y8zS6FXaQ=="), arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), "/usr/lib")
+      await copyDirUsingHardLinks(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"))
     }
 
-    args.push("-chown_r", "0", "/", "--")
-    args.push("-zisofs", `level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || (packager.config.compression === "store" ? "0" : "9")}:block_size=128k:by_magic=off`)
-    args.push("set_filter_r", "--zisofs", "/")
-
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFile])) {
+    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
       return
     }
 
-    await exec(process.arch !== "x64" || (process.env.USE_SYSTEM_XORRISO === "true" || process.env.USE_SYSTEM_XORRISO === "") ? "xorriso" : path.join(appImagePath, "xorriso"), args)
-
-    await new BluebirdPromise((resolve, reject) => {
-      const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
-      rd.on("error", reject)
-      const wr = createWriteStream(resultFile, {flags: "r+"})
-      wr.on("error", reject)
-      wr.on("close", resolve)
-      rd.pipe(wr)
+    const vendorToolDir = path.join(vendorDir, process.platform === "darwin" ? "darwin" : `linux-${process.arch}`)
+    // default gzip compression - 51.9, xz - 50.4 difference is negligible, start time - well, it seems, a little bit longer (but on Parallels VM on external SSD disk)
+    // so, to be decided later, is it worth to use xz by default
+    const args = ["--runtime-file", path.join(vendorDir, `runtime-${(arch === Arch.ia32 ? "i686" : (arch === Arch.x64 ? "x86_64" : "armv7l"))}`)]
+    if (debug.enabled) {
+      args.push("--verbose")
+    }
+    args.push(stageDir, resultFile)
+    await exec(path.join(vendorToolDir, "appimagetool"), args, {
+      env: {
+        ...process.env,
+        PATH: `${vendorToolDir}:${process.env.PATH}`,
+        // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
+        ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
+      }
     })
-
-    const fd = await open(resultFile, "r+")
-    try {
-      const magicData = Buffer.from([0x41, 0x49, 0x01])
-      await write(fd, magicData, 0, magicData.length, 8)
+    if (!debug.enabled) {
+      await remove(stageDir)
     }
-    finally {
-      await close(fd)
-    }
-
-    await chmod(resultFile, "0755")
-
     packager.dispatchArtifactCreated(resultFile, this, arch, packager.computeSafeArtifactName(artifactName, "AppImage", arch, false))
   }
+}
+
+// https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
+function copyDirUsingHardLinks(source: string, destination: string) {
+  // pax and cp requires created dir
+  const promise = emptyDir(destination)
+  if (process.platform !== "darwin") {
+    return promise.then(() => exec("cp", ["-d", "--recursive", "--preserve=mode", source, destination]))
+  }
+
+  return promise
+    .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
+      cwd: source,
+    }))
 }

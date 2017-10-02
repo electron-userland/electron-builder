@@ -10,4 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
 ENV WINEDEBUG -all,err+all
 ENV WINEDLLOVERRIDES winemenubuilder.exe=d
 
-RUN wineboot --init || true
+RUN (wineboot --init || true) && \
+    rm -rf ~/.wine/drive_c/windows/Installer && \
+    rm -rf ~/.wine/drive_c/windows/Microsoft.NET && \
+    rm -rf ~/.wine/drive_c/windows/mono && \
+    rm -rf ~/.wine/drive_c/windows/system32/gecko && \
+    rm -rf ~/.wine/drive_c/windows/syswow64/gecko && \

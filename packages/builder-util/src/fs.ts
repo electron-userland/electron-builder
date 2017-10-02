@@ -137,7 +137,7 @@ export function copyFile(src: string, dest: string, isEnsureDir = true) {
  *
  * ensureDir is not called, dest parent dir must exists
  */
-export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink): Promise<any> {
+export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink, exDevErrorHandler?: (() => boolean) | null): Promise<any> {
   if (stats != null) {
     const originalModeNumber = stats.mode
     const mode = new Mode(stats)
@@ -167,8 +167,23 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
   if (isUseHardLink) {
     return link(src, dest)
+      .catch(e => {
+        if (e.code === "EXDEV") {
+          const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
+          if (isLog && debug.enabled) {
+            debug(`Cannot copy using hard link: ${e.message}`)
+          }
+          return doCopyFile(src, dest, stats)
+        }
+        else {
+          throw e
+        }
+      })
   }
+  return doCopyFile(src, dest, stats)
+}
 
+function doCopyFile(src: string, dest: string, stats: Stats | null | undefined): Promise<any> {
   if (_nodeCopyFile == null) {
     return new BluebirdPromise((resolve, reject) => {
       const reader = createReadStream(src)
@@ -181,16 +196,15 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       writer.once("close", resolve)
     })
   }
-  else {
-    // node 8.5.0
-    return _nodeCopyFile(src, dest)
-      .then((): any => {
-        if (stats != null) {
-          return chmod(dest, stats.mode)
-        }
-        return null
-      })
+
+  // node 8.5.0+
+  const promise = _nodeCopyFile(src, dest)
+  if (stats == null) {
+    return promise
   }
+
+  return promise
+    .then(() => chmod(dest, stats.mode))
 }
 
 export class FileCopier {
@@ -201,37 +215,29 @@ export class FileCopier {
   }
 
   async copy(src: string, dest: string, stat: Stats | undefined) {
-    try {
-      if (this.transformer != null && stat != null && stat.isFile()) {
-        let data = this.transformer(src)
-        if (data != null) {
-          if (typeof (data as any).then === "function") {
-            data = await data
-          }
+    if (this.transformer != null && stat != null && stat.isFile()) {
+      let data = this.transformer(src)
+      if (data != null) {
+        if (typeof (data as any).then === "function") {
+          data = await data
+        }
 
-          if (data != null) {
-            await writeFile(dest, data)
-            return
-          }
+        if (data != null) {
+          await writeFile(dest, data)
+          return
         }
       }
-      await copyOrLinkFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
     }
-    catch (e) {
+    await copyOrLinkFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest), this.isUseHardLink ? () => {
       // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
-      if (e.code === "EXDEV") {
-        // ...but here we want to avoid excess debug log message
-        if (this.isUseHardLink) {
-          debug(`Cannot copy using hard link: ${e}`)
-          this.isUseHardLink = false
-        }
-
-        await copyOrLinkFile(src, dest, stat, false)
+      if (this.isUseHardLink) {
+        this.isUseHardLink = false
+        return true
       }
       else {
-        throw e
+        return false
       }
-    }
+    } : null)
   }
 }
 

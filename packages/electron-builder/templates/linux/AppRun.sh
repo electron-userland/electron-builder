@@ -33,14 +33,14 @@ if [ -z $APPDIR ] ; then
   APPDIR=$(find-up "AppRun")
 fi
 
-export PATH="${APPDIR}/usr/bin:${APPDIR}/usr/sbin:${PATH}"
+export PATH="${APPDIR}/app:${APPDIR}/usr/sbin:${PATH}"
 export XDG_DATA_DIRS="./share/:/usr/share/gnome:/usr/local/share/:/usr/share/:${XDG_DATA_DIRS}"
 export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${APPDIR}"/usr/share/:"${XDG_DATA_DIRS}":/usr/share/gnome/:/usr/local/share/:/usr/share/
 export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
 
 DESKTOP_FILE="$APPDIR/<%= desktopFileName %>"
-BIN="$APPDIR/usr/bin/<%= executableName %>"
+BIN="$APPDIR/app/<%= executableName %>"
 
 trap atexit EXIT
 
@@ -194,11 +194,7 @@ if [ -z "$SKIP" ] ; then
   xdg-icon-resource uninstall --noupdate --size 1024 "<%= resourceName %>"
 
   # Install the icon files for the application
-  ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/apps/<%= executableName %>.png" 2>/dev/null || true)
-  for ICON in $ICONS ; do
-    ICON_SIZE=$(echo "${ICON}" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
-    xdg-icon-resource install --context apps --size ${ICON_SIZE} "${ICON}" "<%= resourceName %>"
-  done
+  <%- installIcons %>
 
   xdg-icon-resource forceupdate
 

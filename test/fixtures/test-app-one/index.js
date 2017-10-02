@@ -81,8 +81,8 @@ let mainWindow;
 let tray = null
 
 function createWindow () {
-  if (process.platform === "linux") {
-    tray = new Tray(path.join(process.resourcesPath, "32x32.png"))
+  if (process.platform === "linux" && process.env.APPDIR != null) {
+    tray = new Tray(path.join(process.env.APPDIR, "testapp.png"))
     const contextMenu = Menu.buildFromTemplate([
       {label: 'Item1', type: 'radio'},
       {label: 'Item2', type: 'radio'},

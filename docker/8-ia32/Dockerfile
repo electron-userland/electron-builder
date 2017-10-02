@@ -1,4 +1,4 @@
-FROM ioft/i386-ubuntu:14.04.3
+FROM i386/ubuntu:trusty
 
 RUN apt-get update \
 && apt-get install -y --no-install-recommends curl ca-certificates curl software-properties-common \
