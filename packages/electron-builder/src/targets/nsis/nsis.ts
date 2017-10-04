@@ -433,8 +433,7 @@ export class NsisTarget extends Target {
     const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-      // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-      env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8", LANG: "en_US.UTF-8"},
+      env: {...process.env, NSISDIR: nsisPath},
       cwd: nsisTemplatesDir,
     }, debug.enabled)
   }

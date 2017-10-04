@@ -32,6 +32,8 @@ export default class S3Publisher extends BaseS3Publisher {
   }
 
   protected configureS3Options(s3Options: S3.CreateMultipartUploadRequest): void {
+    super.configureS3Options(s3Options)
+
     if (this.info.storageClass != null) {
       s3Options.StorageClass = this.info.storageClass as StorageClass
     }

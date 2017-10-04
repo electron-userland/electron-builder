@@ -92,11 +92,11 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   const certificateSha1 = options.certificateSha1
   // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
   // powershell can return object if the only item
-  const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint,IssuerName | ConvertTo-Json -Compress"])
+  const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress"])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
     if (certificateSubjectName != null) {
-      if (!certInfo.IssuerName.Name.includes(certificateSubjectName)) {
+      if (!certInfo.Subject.includes(certificateSubjectName)) {
         continue
       }
     }
@@ -148,12 +148,7 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   await vm.exec(tool, args, {timeout, env})
 }
 
-interface IssuerName {
-  Name: string
-}
-
 interface CertInfo {
-  IssuerName: IssuerName
   Subject: string
   Thumbprint: string
   PSParentPath: string

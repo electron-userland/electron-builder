@@ -83,7 +83,7 @@ export default class SnapTarget extends Target {
     if (process.platform === "darwin" && process.env.USE_SYSTEM_SNAPCAFT) {
       try {
         // http://click.pocoo.org/5/python3/
-        const env: any = {...process.env, LC_ALL: "en_US.UTF-8", LANG: "en_US.UTF-8"}
+        const env: any = {...process.env}
         delete env.VERSIONER_PYTHON_VERSION
         delete env.VERSIONER_PYTHON_PREFER_32_BIT
         await exec("snapcraft", ["--version"], {

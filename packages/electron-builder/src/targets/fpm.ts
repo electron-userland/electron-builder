@@ -197,8 +197,6 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
       FPM_COMPRESS_PROGRAM: path7x,
       SZA_PATH: path7za,
       SZA_COMPRESSION_LEVEL: packager.config.compression === "store" ? "0" : "9",

@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log, debug } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { unlinkIfExists, copyFile, copyOrLinkFile } from "builder-util/out/fs"
+import { unlinkIfExists, copyOrLinkFile } from "builder-util/out/fs"
 import * as ejs from "ejs"
 import { emptyDir, readFile, remove, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -48,7 +48,11 @@ export default class AppImageTarget extends Target {
     await copyDirUsingHardLinks(appOutDir, appInStageDir)
 
     const iconNames = await BluebirdPromise.map(this.helper.icons, it => {
-      const filename = `icon-${it.size}.png`
+      let filename = `icon-${it.size}.png`
+      if (it.file === this.helper.maxIconPath) {
+        // largest icon as package icon
+        filename = `${this.packager.executableName}.png`
+      }
       return copyOrLinkFile(it.file, path.join(stageDir, filename), null, true)
         .then(() => ({filename, size: it.size}))
     })
@@ -79,7 +83,6 @@ export default class AppImageTarget extends Target {
     if (this.helper.maxIconPath == null) {
       throw new Error("Icon is not provided")
     }
-    await copyFile(this.helper.maxIconPath, path.join(stageDir, `${this.packager.executableName}${path.extname(this.helper.maxIconPath)}`))
 
     //noinspection SpellCheckingInspection
     const vendorDir = await getBinFromGithub("appimage", "9.0.1", "mcme+7/krXSYb5C+6BpSt9qgajFYpn9dI1rjxzSW3YB5R/KrGYYrpZbVflEMG6pM7k9CL52poiOpGLBDG/jW3Q==")

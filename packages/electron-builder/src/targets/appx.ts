@@ -1,8 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, use, log } from "builder-util"
-import {  walk } from "builder-util/out/fs"
-import _debug from "debug"
-import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
+import { Arch, asArray, use, log, debug } from "builder-util"
+import { walk, copyOrLinkFile } from "builder-util/out/fs"
+import { emptyDir, readdir, readFile, remove, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Target } from "../core"
@@ -22,7 +21,6 @@ const vendorAssetsForDefaultAssets: { [key: string]: string; } = {
 }
 
 const DEFAULT_RESOURCE_LANG = "en-US"
-const debug = _debug("electron-builder:appx")
 
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
@@ -41,39 +39,79 @@ export default class AppXTarget extends Target {
     const vendorPath = await getSignVendorPath()
     const vm = await packager.vm.value
 
-    const mappingFile = path.join(this.outDir, `.__appx-mapping-${Arch[arch]}.txt`)
+    const tempDir = path.join(this.outDir, `__appx-temp-${Arch[arch]}`)
+    await emptyDir(tempDir)
+
+    function getTempFile(name: string) {
+      return path.join(tempDir, name)
+    }
+
+    const mappingFile = getTempFile("mapping.txt")
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */, "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
+    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */,
+      "/f", vm.toVmFile(mappingFile),
+      "/p", vm.toVmFile(artifactPath),
+    ]
     if (packager.config.compression === "store") {
       makeAppXArgs.push("/nc")
     }
 
-    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
-    taskManager.addTask(BluebirdPromise.map(walk(appOutDir), file => {
+    const mappingList: Array<Array<string>> = []
+    mappingList.push(await BluebirdPromise.map(walk(appOutDir), file => {
       let appxPath = file.substring(appOutDir.length + 1)
       if (path.sep !== "\\") {
         appxPath = appxPath.replace(/\//g, "\\")
       }
       return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
     }))
-    taskManager.add(async () => {
-      const manifestFile = path.join(this.outDir, `.__AppxManifest-${Arch[arch]}.xml`)
-      const {userAssets, mappings: userAssetMappings } = await this.computeUserAssets(vm, vendorPath, arch, makeAppXArgs)
-      await this.writeManifest(getTemplatePath("appx"), manifestFile, arch, await this.computePublisherName(), userAssets)
-      return userAssetMappings.concat(`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`)
-    })
+
+    const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
+    const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath, userAssetDir)
+    const userAssets = assetInfo.userAssets
+
+    const manifestFile = getTempFile("AppxManifest.xml")
+    await this.writeManifest(getTemplatePath("appx"), manifestFile, arch, await this.computePublisherName(), userAssets)
+    mappingList.push(assetInfo.mappings)
+    mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
+
+    if (isScaledAssetsProvided(userAssets)) {
+      const outFile = vm.toVmFile(getTempFile("resources.pri"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
+
+      const assetRoot = path.join(tempDir, "appx/assets")
+      await emptyDir(assetRoot)
+      await BluebirdPromise.map(assetInfo.allAssets, it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it))))
+
+      await vm.exec(makePriPath, ["new",
+        "/Overwrite",
+        "/Manifest", vm.toVmFile(manifestFile),
+        "/ProjectRoot", vm.toVmFile(path.dirname(assetRoot)),
+        "/ConfigXml", vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
+        "/OutputFile", outFile,
+      ])
+
+      // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
+      for (const resourceFile of (await readdir(tempDir)).filter(it => it.startsWith("resources.")).sort()) {
+        mappingList.push([`"${vm.toVmFile(path.join(tempDir, resourceFile))}" "${resourceFile}"`])
+      }
+      makeAppXArgs.push("/l")
+    }
 
     let mapping = "[Files]"
-    for (const list of (await taskManager.awaitTasks()) as Array<Array<string>>) {
+    for (const list of mappingList) {
       mapping += "\r\n" + list.join("\r\n")
     }
     await writeFile(mappingFile, mapping)
     packager.debugLogger.add("appx.mapping", mapping)
 
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs, undefined, debug.enabled)
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs)
     await packager.sign(artifactPath)
+
+    if (!debug.enabled) {
+      await remove(tempDir)
+    }
 
     packager.info.dispatchArtifactCreated({
       file: artifactPath,
@@ -85,38 +123,31 @@ export default class AppXTarget extends Target {
     })
   }
 
-  private async computeUserAssets(vm: VmManager, vendorPath: string, arch: Arch, makeAppXArgs: Array<string>) {
+  private static async computeUserAssets(vm: VmManager, vendorPath: string, userAssetDir: string | null) {
     const mappings: Array<string> = []
-    const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
     let userAssets: Array<string>
+    const allAssets: Array<string> = []
     if (userAssetDir == null) {
       userAssets = []
     }
     else {
       userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
       for (const name of userAssets) {
-        mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${it}"`)
+        mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${name}"`)
+        allAssets.push(path.join(userAssetDir, name))
       }
     }
 
     for (const defaultAsset of Object.keys(vendorAssetsForDefaultAssets)) {
-      if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        mappings.push(`"${vm.toVmFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]))}" "assets\\${defaultAsset}"`)
+      if (userAssets.length === 0 || !isDefaultAssetIncluded(userAssets, defaultAsset)) {
+        const file = path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset])
+        mappings.push(`"${vm.toVmFile(file)}" "assets\\${defaultAsset}"`)
+        allAssets.push(file)
       }
     }
 
     // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
-    if (isScaledAssetsProvided(userAssets)) {
-      const tempDir = path.join(this.outDir, `.__appx-${Arch[arch]}`)
-      await emptyDir(tempDir)
-      const priConfigPath = vm.toVmFile(path.join(tempDir, "priconfig.xml"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
-      await vm.exec(makePriPath, ["createconfig", "/ConfigXml", priConfigPath, "/Default", "en-US", "/pv", "10.0.0", "/o"], undefined, debug.enabled)
-      await vm.exec(makePriPath, ["new", "/Overwrite", "/ProjectRoot", vm.toVmFile(userAssetDir!), "/ConfigXml", priConfigPath, "/OutputFile", vm.toVmFile(tempDir)], undefined, debug.enabled)
-
-      makeAppXArgs.push("/l")
-    }
-    return {userAssets, mappings}
+    return {userAssets, mappings, allAssets}
   }
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711

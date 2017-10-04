@@ -6,7 +6,7 @@ import { getLinuxToolsPath } from "builder-util/out/bundledTool"
 import { copyDir, FileCopier, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target, Configuration } from "electron-builder"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
@@ -390,13 +390,10 @@ async function getTarExecutable() {
 }
 
 async function getContents(packageFile: string) {
-  // without LC_CTYPE dpkg can returns encoded unicode symbols
   const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${path7x}'`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
       SZA_PATH: path7za,
     }
   })
@@ -439,7 +436,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   return packagerOptions
 }
 
-export function createMacTargetTest(target: Array<MacOsTargetName>) {
+export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration) {
   return app({
     targets: Platform.MAC.createTarget(),
     config: {
@@ -448,10 +445,11 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
       } as any,
       mac: {
         target,
-      }
+      },
+      ...config
     }
   }, {
-    signed: target.includes("mas") || target.includes("pkg") || target.includes("mas-dev"),
+    signed: true,
     packed: async context => {
       if (!target.includes("tar.gz")) {
         return

@@ -34,7 +34,7 @@ export class DmgTarget extends Target {
     const backgroundFile = backgroundFilename == null ? null : path.resolve(packager.info.projectDir, specification.background!)
 
     const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
-    await spawn("hdiutil", ["resize", "-size", finalSize.toString(), tempDmg])
+    await exec("hdiutil", ["resize", "-size", finalSize.toString(), tempDmg])
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await exists(volumePath)) {
@@ -269,9 +269,6 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
 
     windowX: window.x,
     windowY: window.y,
-
-    LC_ALL: "en_US.UTF-8",
-    LANG: "en_US.UTF-8",
 
     VERSIONER_PERL_PREFER_32_BIT: "true"
   }

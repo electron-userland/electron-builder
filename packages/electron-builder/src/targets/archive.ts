@@ -44,8 +44,6 @@ export async function tar(compression: CompressionLevel | null | undefined, form
     tarEnv = {
       ...tarEnv,
       PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
-      LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
       SZA_PATH: path7za,
     }
   }

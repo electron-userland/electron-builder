@@ -47,6 +47,23 @@ export function removePassword(input: string) {
   })
 }
 
+function getProcessEnv(env: { [key: string]: string | undefined } | undefined | null) {
+  if (process.platform === "win32") {
+    return env
+  }
+
+  const finalEnv = {
+    ...(env || process.env)
+  }
+
+  // without LC_CTYPE dpkg can returns encoded unicode symbols
+  // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
+  finalEnv.LANG = "en_US.UTF-8"
+  finalEnv.LC_CTYPE = "en_US.UTF-8"
+  finalEnv.LC_ALL = "en_US.UTF-8"
+  return finalEnv
+}
+
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
@@ -66,9 +83,10 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
 
   return new BluebirdPromise<string>((resolve, reject) => {
     execFile(file, args as any, {
-      ...options,
-      maxBuffer: 10 * 1024 * 1024,
-    }, (error, stdout, stderr) => {
+    ...options,
+    maxBuffer: 10 * 1024 * 1024,
+    env: getProcessEnv(options == null ? null : options.env),
+  }, (error, stdout, stderr) => {
       if (error == null) {
         if (isLogOutIfDebug && debug.enabled) {
           if (stderr.length !== 0) {
@@ -118,6 +136,8 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   if (options == null) {
     options = {}
   }
+
+  options.env = getProcessEnv(options.env)
 
   const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
   if (options.stdio == null) {
