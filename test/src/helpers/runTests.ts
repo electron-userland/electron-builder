@@ -64,6 +64,7 @@ async function runTests() {
       args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
       args.push("macPackagerTest")
       args.push("portableTest")
+      args.push("linuxPackagerTest")
     }
     else {
       args.push("BuildTest")

@@ -4,7 +4,7 @@ import { UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists, copyOrLinkFile } from "builder-util/out/fs"
 import * as ejs from "ejs"
-import { emptyDir, readFile, remove, writeFile } from "fs-extra-p"
+import { emptyDir, ensureDir, readFile, remove, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
@@ -45,7 +45,7 @@ export default class AppImageTarget extends Target {
     const stageDir = path.join(this.outDir, `__appimage-${Arch[arch]}`)
     const appInStageDir = path.join(stageDir, "app")
     await emptyDir(stageDir)
-    await copyDirUsingHardLinks(appOutDir, appInStageDir)
+    await copyDirUsingHardLinks(appOutDir, appInStageDir, true)
 
     const iconNames = await BluebirdPromise.map(this.helper.icons, it => {
       let filename = `icon-${it.size}.png`
@@ -88,7 +88,7 @@ export default class AppImageTarget extends Target {
     const vendorDir = await getBinFromGithub("appimage", "9.0.1", "mcme+7/krXSYb5C+6BpSt9qgajFYpn9dI1rjxzSW3YB5R/KrGYYrpZbVflEMG6pM7k9CL52poiOpGLBDG/jW3Q==")
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
-      await copyDirUsingHardLinks(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"))
+      await copyDirUsingHardLinks(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"), false)
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
@@ -119,13 +119,18 @@ export default class AppImageTarget extends Target {
 }
 
 // https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
-function copyDirUsingHardLinks(source: string, destination: string) {
-  // pax and cp requires created dir
-  const promise = emptyDir(destination)
+function copyDirUsingHardLinks(source: string, destination: string, useLink: boolean) {
   if (process.platform !== "darwin") {
-    return promise.then(() => exec("cp", ["-d", "--recursive", "--preserve=mode", source, destination]))
+    const args = ["-d", "--recursive", "--preserve=mode"]
+    if (useLink) {
+      args.push("--link")
+    }
+    args.push(source + "/", destination + "/")
+    return ensureDir(path.dirname(destination)).then(() => exec("cp", args))
   }
 
+  // pax requires created dir
+  const promise = ensureDir(destination)
   return promise
     .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
       cwd: source,
