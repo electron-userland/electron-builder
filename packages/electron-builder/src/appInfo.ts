@@ -20,7 +20,7 @@ export class AppInfo {
       buildVersion = info.config.buildVersion
     }
 
-    this.buildNumber = process.env.BUILD_NUMBER || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
+    this.buildNumber = process.env.BUILD_NUMBER || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_BUILDNUMBER
     if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {
