@@ -95,10 +95,13 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     log(`Custom temp dir used: ${customTmpDir}`)
   }
 
-  await copyDir(projectDir, dir, it => {
-    const basename = path.basename(it)
-    return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
-  }, null, it => path.basename(it) !== "package.json")
+  await copyDir(projectDir, dir, {
+    filter: it => {
+      const basename = path.basename(it)
+      return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
+    },
+    isUseHardLink: it => path.basename(it) !== "package.json",
+  })
   projectDir = dir
 
   await executeFinally((async () => {

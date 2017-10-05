@@ -1,4 +1,4 @@
-import { exists } from "builder-util/out/fs"
+import { exists, statOrNull } from "builder-util/out/fs"
 import { lstat, stat } from "fs-extra-p"
 import * as path from "path"
 
@@ -22,7 +22,10 @@ class Assertions {
   }
 
   async isFile() {
-    const info = await stat(this.actual)
+    const info = await statOrNull(this.actual)
+    if (info == null) {
+      throw new Error(`Path ${this.actual} doesn't exist`)
+    }
     if (!info.isFile()) {
       throw new Error(`Path ${this.actual} is not a file`)
     }

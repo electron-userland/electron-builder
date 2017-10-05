@@ -253,6 +253,6 @@ export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
     if (debug.enabled) {
       debug(`Copying files using pattern: ${matcher}`)
     }
-    return await copyDir(matcher.from, matcher.to, matcher.createFilter())
+    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter()})
   })
 }

@@ -211,7 +211,12 @@ export class FileCopier {
   isUseHardLink: boolean
 
   constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer | null) {
-    this.isUseHardLink = _isUseHardLink && isUseHardLinkFunction !== DO_NOT_USE_HARD_LINKS
+    if (isUseHardLinkFunction === USE_HARD_LINKS) {
+      this.isUseHardLink = true
+    }
+    else {
+      this.isUseHardLink = _isUseHardLink && isUseHardLinkFunction !== DO_NOT_USE_HARD_LINKS
+    }
   }
 
   async copy(src: string, dest: string, stat: Stats | undefined) {
@@ -228,7 +233,8 @@ export class FileCopier {
         }
       }
     }
-    await copyOrLinkFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest), this.isUseHardLink ? () => {
+    const isUseHardLink = (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest)
+    await copyOrLinkFile(src, dest, stat, isUseHardLink, isUseHardLink ? () => {
       // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
       if (this.isUseHardLink) {
         this.isUseHardLink = false
@@ -241,12 +247,18 @@ export class FileCopier {
   }
 }
 
+export interface CopyDirOptions {
+  filter?: Filter | null
+  transformer?: FileTransformer | null
+  isUseHardLink?: (file: string) => boolean
+}
+
 /**
  * Empty directories is never created.
  * Hard links is used if supported and allowed.
  */
-export function copyDir(src: string, destination: string, filter?: Filter | null, transformer?: FileTransformer | null, isUseHardLink?: (file: string) => boolean): Promise<any> {
-  const fileCopier = new FileCopier(isUseHardLink, transformer)
+export function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
+  const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
   if (debug.enabled) {
     debug(`Copying ${src} to ${destination}${fileCopier.isUseHardLink ? " using hard links" : ""}`)
@@ -254,7 +266,7 @@ export function copyDir(src: string, destination: string, filter?: Filter | null
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []
-  return walk(src, filter, {
+  return walk(src, options.filter, {
     consume: async (file, stat, parent) => {
       if (!stat.isFile() && !stat.isSymbolicLink()) {
         return
@@ -278,6 +290,7 @@ export function copyDir(src: string, destination: string, filter?: Filter | null
 }
 
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false
+export const USE_HARD_LINKS = (file: string) => true
 
 export interface Link {
   readonly link: string,

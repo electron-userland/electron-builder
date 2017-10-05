@@ -45,7 +45,7 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
   projectDirCreated: it => remove(path.join(it, "build")),
   packed: async context => {
     const projectDir = context.getContent(Platform.LINUX)
-    await assertThat(path.join(projectDir, "foo")).isFile()
+    await assertThat(path.join(projectDir, "Foo")).isFile()
   },
 }))
 

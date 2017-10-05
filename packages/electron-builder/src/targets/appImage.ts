@@ -2,9 +2,9 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log, debug } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { unlinkIfExists, copyOrLinkFile } from "builder-util/out/fs"
+import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
-import { emptyDir, ensureDir, readFile, remove, writeFile } from "fs-extra-p"
+import { emptyDir, ensureDir, readFile, remove, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
@@ -45,24 +45,10 @@ export default class AppImageTarget extends Target {
     const stageDir = path.join(this.outDir, `__appimage-${Arch[arch]}`)
     const appInStageDir = path.join(stageDir, "app")
     await emptyDir(stageDir)
-    await copyDirUsingHardLinks(appOutDir, appInStageDir, true)
-
-    const iconNames = await BluebirdPromise.map(this.helper.icons, it => {
-      let filename = `icon-${it.size}.png`
-      if (it.file === this.helper.maxIconPath) {
-        // largest icon as package icon
-        filename = `${this.packager.executableName}.png`
-      }
-      return copyOrLinkFile(it.file, path.join(stageDir, filename), null, true)
-        .then(() => ({filename, size: it.size}))
-    })
+    await copyDirUsingHardLinks(appOutDir, appInStageDir)
 
     const resourceName = `appimagekit-${this.packager.executableName}`
-
-    let installIcons = ""
-    for (const icon of iconNames) {
-      installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${icon.filename}" "${resourceName}"\n`
-    }
+    const installIcons = await this.copyIcons(stageDir, resourceName)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await BluebirdPromise.all([
@@ -88,7 +74,9 @@ export default class AppImageTarget extends Target {
     const vendorDir = await getBinFromGithub("appimage", "9.0.1", "mcme+7/krXSYb5C+6BpSt9qgajFYpn9dI1rjxzSW3YB5R/KrGYYrpZbVflEMG6pM7k9CL52poiOpGLBDG/jW3Q==")
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
-      await copyDirUsingHardLinks(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"), false)
+      await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"), {
+        isUseHardLink: USE_HARD_LINKS,
+      })
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
@@ -116,15 +104,41 @@ export default class AppImageTarget extends Target {
     }
     packager.dispatchArtifactCreated(resultFile, this, arch, packager.computeSafeArtifactName(artifactName, "AppImage", arch, false))
   }
+
+  private async copyIcons(stageDir: string, resourceName: string): Promise<string> {
+    const iconDirRelativePath = "usr/share/icons/hicolor"
+    const iconDir = path.join(stageDir, iconDirRelativePath)
+    await ensureDir(iconDir)
+
+    // https://github.com/AppImage/AppImageKit/issues/438#issuecomment-319094239
+    // expects icons in the /usr/share/icons/hicolor
+    const iconNames = await BluebirdPromise.map(this.helper.icons, async icon => {
+      const filename = `${this.packager.executableName}.png`
+      const iconSizeDir = `${icon.size}x${icon.size}/apps`
+      const dir = path.join(iconDir, iconSizeDir)
+      await ensureDir(dir)
+      const finalIconFile = path.join(dir, filename)
+      await copyOrLinkFile(icon.file, finalIconFile, null, true)
+
+      if (icon.file === this.helper.maxIconPath) {
+        await symlink(path.relative(stageDir, finalIconFile), path.join(stageDir, filename))
+      }
+      return {filename, iconSizeDir, size: icon.size}
+    })
+
+    let installIcons = ""
+    for (const icon of iconNames) {
+      installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
+    }
+    return installIcons
+  }
 }
 
 // https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
-function copyDirUsingHardLinks(source: string, destination: string, useLink: boolean) {
+function copyDirUsingHardLinks(source: string, destination: string) {
   if (process.platform !== "darwin") {
     const args = ["-d", "--recursive", "--preserve=mode"]
-    if (useLink) {
-      args.push("--link")
-    }
+    args.push("--link")
     args.push(source + "/", destination + "/")
     return ensureDir(path.dirname(destination)).then(() => exec("cp", args))
   }
