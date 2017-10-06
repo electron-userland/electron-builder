@@ -20,7 +20,11 @@ test.ifAll.ifNotCiMac("web installer (default github)", app({
     publish: {
       provider: "github",
       // test form without owner
-      repo: "foo/bar"
-    }
+      repo: "foo/bar",
+    },
+    nsisWeb: {
+      //tslint:disable-next-line:no-invalid-template-strings
+      artifactName: "${productName}.${ext}",
+    },
   },
 }))

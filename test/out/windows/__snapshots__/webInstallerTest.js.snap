@@ -15,12 +15,12 @@ Object {
             "file": "TestApp-1.1.0-x64.nsis.7z",
           },
         },
-        "path": "Test App ßW Web Setup 1.1.0.exe",
+        "path": "Test App ßW.exe",
         "version": "1.1.0",
       },
     },
     Object {
-      "file": "Test App ßW Web Setup 1.1.0.exe",
+      "file": "Test App ßW.exe",
       "packageFiles": Object {
         "ia32": Object {
           "file": "TestApp-1.1.0-ia32.nsis.7z",

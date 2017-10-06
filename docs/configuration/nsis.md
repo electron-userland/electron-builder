@@ -1,4 +1,6 @@
-The top-level [nsis](configuration.md#Configuration-nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
+The top-level [nsis](/configuration/configuration.md#Configuration-nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
+
+These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
 <!-- do not edit. start of generated block -->
 * <code id="NsisOptions-oneClick">oneClick</code> = `true` Boolean - One-click installation.
@@ -65,6 +67,8 @@ The same applied to web installer (`nsis-web` [target](/configuration/win.md#Win
 ## Web Installer
 
 To build web installer, set [target](/configuration/win.md#WindowsConfiguration-target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
+
+To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
 If for some reasons web installer cannot download (antivirus, offline):
 * Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
