@@ -15,12 +15,12 @@ Object {
             "file": "TestApp-1.1.0-x64.nsis.7z",
           },
         },
-        "path": "Test App ßW.exe",
+        "path": "Test App ßW Web Setup 1.1.0.exe",
         "version": "1.1.0",
       },
     },
     Object {
-      "file": "Test App ßW.exe",
+      "file": "Test App ßW Web Setup 1.1.0.exe",
       "packageFiles": Object {
         "ia32": Object {
           "file": "TestApp-1.1.0-ia32.nsis.7z",
@@ -71,6 +71,40 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer, safe name on github 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "packages": Object {
+          "x64": Object {
+            "file": "TestApp-1.1.0-x64.nsis.7z",
+          },
+        },
+        "path": "WorkFlowy.exe",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.7z",
+    },
+    Object {
+      "arch": "x64",
+      "file": "WorkFlowy.exe",
+      "packageFiles": Object {
+        "x64": Object {
+          "file": "TestApp-1.1.0-x64.nsis.7z",
+        },
+      },
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
   ],
 }

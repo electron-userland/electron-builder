@@ -1,4 +1,4 @@
-Support us with a donation and help us continue our activities. Donation can be used to increase some issue priority.
+We do this open source work in our free time. If you'd like us to invest more time on it, please donate. Donation can be used to increase some issue priority.
 
 Donate with [Donorbox](https://donorbox.org/electron-builder), [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) or [Bitcoin](#bitcoin).
 

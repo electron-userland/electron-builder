@@ -15,4 +15,4 @@ RUN (wineboot --init || true) && \
     rm -rf ~/.wine/drive_c/windows/Microsoft.NET && \
     rm -rf ~/.wine/drive_c/windows/mono && \
     rm -rf ~/.wine/drive_c/windows/system32/gecko && \
-    rm -rf ~/.wine/drive_c/windows/syswow64/gecko && \
+    rm -rf ~/.wine/drive_c/windows/syswow64/gecko

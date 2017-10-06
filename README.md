@@ -134,3 +134,11 @@ Set the [DEBUG](https://github.com/visionmedia/debug#windows-note) environment v
 ```bash
 DEBUG=electron-builder,electron-builder:*
 ```
+
+## Donate
+
+We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/donate). Donation can be used to increase some issue priority.
+
+## Sponsors
+
+<a href="https://workflowy.com"><img src="https://workflowy.com/media/i/wf-icon-android.png" alt="WorkFlowy" title="WorkFlowy" width="75" height="75"/></a>

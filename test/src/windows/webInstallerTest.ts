@@ -22,6 +22,17 @@ test.ifAll.ifNotCiMac("web installer (default github)", app({
       // test form without owner
       repo: "foo/bar",
     },
+  },
+}))
+
+test.ifAll.ifNotCiMac("web installer, safe name on github", app({
+  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+  config: {
+    productName: "WorkFlowy",
+    publish: {
+      provider: "github",
+      repo: "foo/bar",
+    },
     nsisWeb: {
       //tslint:disable-next-line:no-invalid-template-strings
       artifactName: "${productName}.${ext}",
