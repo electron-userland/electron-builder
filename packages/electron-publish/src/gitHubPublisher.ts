@@ -127,7 +127,7 @@ export class GitHubPublisher extends HttpPublisher {
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this.releasePromise
     if (release == null) {
-      debug(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
+      warn(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
       return
     }
 
