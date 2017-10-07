@@ -48,6 +48,7 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
    * `Developer ID Application:` to sign app for macOS.
    * `3rd Party Mac Developer Application:` and `3rd Party Mac Developer Installer:` to sign app for MAS (Mac App Store).
    * `Developer ID Application:` and `Developer ID Installer` to sign app and installer for distribution outside of the Mac App Store.
+   * `Mac Developer:` to sign development builds for testing Mac App Store submissions (`mas-dev` target). You also need a provisioning profile in the working directory that matches this certificated and the device being used for testing.
 
    Please note – you can select as many certificates, as need. No restrictions on electron-builder side.
    All selected certificates will be imported into temporary keychain on CI server.
