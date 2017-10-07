@@ -34,3 +34,5 @@ electron-builder-*.d.ts
 /_book/
 
 /scripts/renderer/out/
+
+__publish.sh

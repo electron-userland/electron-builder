@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { readJson, writeJson } from "fs-extra-p"
+import { readJson, writeJson, readdir, stat, writeFile } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 
@@ -9,9 +9,17 @@ const exec = require("../../../packages/builder-util/out/util").exec
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
 
+async function readProjectMetadata(packageDir: string) {
+  const packageDirs = BluebirdPromise.filter((await readdir(packageDir)).filter(it => !it.includes(".")).sort(), it => {
+    return stat(path.join(packageDir, it, "package.json"))
+      .then(it => it.isFile())
+      .catch(() => false)
+  })
+  return await BluebirdPromise.map(packageDirs, it => readJson(path.join(packageDir, it, "package.json")), {concurrency: 8})
+}
+
 async function main(): Promise<void> {
-  let packageData: Array<any> = await require("ts-babel/out/util").readProjectMetadata(packageDir)
-  packageData = packageData.concat(await BluebirdPromise.map(["electron-installer-appimage", "electron-forge-maker-nsis", "electron-forge-maker-nsis-web", "electron-installer-snap"], it => readJson(path.join(packageDir, it, "package.json"))))
+  const packageData = await readProjectMetadata(packageDir)
   const args = process.argv.slice(2)
   if (args.length > 0 && args[0] === "p") {
     await setPackageVersions(packageData)
@@ -22,22 +30,34 @@ async function main(): Promise<void> {
   }
 }
 
-async function setPackageVersions(packageData: Array<any>) {
-  const versions = await BluebirdPromise.map(packageData, it => exec("yarn", ["info", "--json", it.name, "dist-tags"])
-    .then((it: string) => {
-      if (it === "") {
-        // {"type":"error","data":"Received invalid response from npm."}
-        // not yet published to npm
-        return "0.0.1"
-      }
+function getLatestVersions(packageData: Array<any>) {
+  return BluebirdPromise.map(packageData, packageInfo => {
+    return exec("yarn", ["info", "--json", packageInfo.name, "dist-tags"])
+      .then((it: string) => {
+        if (it === "") {
+          // {"type":"error","data":"Received invalid response from npm."}
+          // not yet published to npm
+          return "0.0.1"
+        }
 
-      try {
-        return JSON.parse(it).data
-      }
-      catch (e) {
-        throw new Error(`Cannot parse ${it}: ${e.stack || e}`)
-      }
-    }))
+        try {
+          return JSON.parse(it).data
+        }
+        catch (e) {
+          throw new Error(`Cannot parse ${it}: ${e.stack || e}`)
+        }
+      })
+  })
+}
+
+async function setPackageVersions(packageData: Array<any>) {
+  const versions = await getLatestVersions(packageData)
+  let publishScript = `#!/usr/bin/env bash
+set -e
+  
+ln -f README.md packages/electron-builder/README.md
+`
+
   for (let i = 0; i < packageData.length; i++) {
     const packageMetadata = packageData[i]
     const packageName = packageMetadata.name
@@ -51,6 +71,17 @@ async function setPackageVersions(packageData: Array<any>) {
     console.log(`Set ${packageName} version to ${latestVersion}`)
     await writeJson(path.join(packageDir, packageName, "package.json"), packageMetadata, {spaces: 2})
   }
+
+  for (let i = 0; i < packageData.length; i++) {
+    const packageMetadata = packageData[i]
+    const versionInfo = versions[i]
+    const latestVersion = versionInfo.next || versionInfo.latest
+    if (latestVersion != null && semver.gt(packageMetadata.version, latestVersion)) {
+      publishScript += `npm publish packages/${packageMetadata.name}\n`
+    }
+  }
+
+  await writeFile(path.join(rootDir, "__publish.sh"), publishScript)
 }
 
 async function setDepVersions(packageData: Array<any>) {

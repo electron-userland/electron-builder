@@ -15,7 +15,7 @@
     "docker-images": "docker/build.sh",
     "update-deps": "npm-check-updates -a -x gitbook-plugin-github && node ./scripts/update-deps.js",
     "set-versions": "node test/out/helpers/setVersions.js",
-    "release": "yarn set-versions && yarn compile && ./scripts/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release": "yarn set-versions && yarn compile && sh ./__publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Configuration --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/electron-updater packages/builder-util packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
