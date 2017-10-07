@@ -280,8 +280,11 @@ function sortOptions(pages) {
 
   const excluded = new Set(["CommonLinuxOptions", "CommonNsisOptions", "LinuxTargetSpecificOptions", "PlatformSpecificBuildOptions", "ForgeOptions", "FileSet"])
   electronBuilderApiPage.data = electronBuilderApiPage.data.filter(member => {
-    if (member.kind === "module" || excluded.has(member.name)) {
+    if (member.kind === "module") {
       return true
+    }
+    if (excluded.has(member.name)) {
+      return false
     }
     return !(isInlinedMember(member) || member.name.endsWith("Options") || member.name.endsWith("Configuration") || member.name === "Configuration" || member.name.startsWith("Metadata") || member.name.startsWith("Dmg"))
   })

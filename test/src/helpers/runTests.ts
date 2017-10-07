@@ -65,6 +65,7 @@ async function runTests() {
       args.push("macPackagerTest")
       args.push("portableTest")
       args.push("linuxPackagerTest")
+      args.push("ignoreTest")
     }
     else {
       args.push("BuildTest")
@@ -72,7 +73,6 @@ async function runTests() {
       args.push("linuxArchiveTest")
       args.push("filesTest")
       args.push("globTest")
-      args.push("ignoreTest")
       args.push("webInstallerTest")
       args.push("extraMetadataTest")
     }

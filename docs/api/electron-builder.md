@@ -10,13 +10,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
     * [`.BeforeBuildContext`](#BeforeBuildContext)
     * [`.BuildResult`](#BuildResult)
     * [`.CertificateFromStoreInfo`](#CertificateFromStoreInfo)
-    * [`.CommonLinuxOptions`](#CommonLinuxOptions)
-    * [`.CommonNsisOptions`](#CommonNsisOptions)
     * [`.FileCodeSigningInfo`](#FileCodeSigningInfo)
-    * [`.FileSet`](#FileSet)
-    * [`.ForgeOptions`](#ForgeOptions)
-    * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
-    * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
     * [`.SourceRepositoryInfo`](#SourceRepositoryInfo)
     * [.AppInfo](#AppInfo)
         * [`.computePackageUrl()`](#module_electron-builder.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; \| String&gt;</code>
@@ -87,84 +81,12 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * **<code id="CertificateFromStoreInfo-store">store</code>** String
 * **<code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code>** Boolean
 
-<a name="CommonLinuxOptions"></a>
-## `CommonLinuxOptions`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Properties**
-* <code id="CommonLinuxOptions-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-* <code id="CommonLinuxOptions-description">description</code> String - As [description](/configuration/configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
-* <code id="CommonLinuxOptions-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
-* <code id="CommonLinuxOptions-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
-
-<a name="CommonNsisOptions"></a>
-## `CommonNsisOptions`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Properties**
-* <code id="CommonNsisOptions-unicode">unicode</code> = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
-* <code id="CommonNsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
-* <code id="CommonNsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
-
 <a name="FileCodeSigningInfo"></a>
 ## `FileCodeSigningInfo`
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
 **Properties**
 * **<code id="FileCodeSigningInfo-file">file</code>** String
 * <code id="FileCodeSigningInfo-password">password</code> String
-
-<a name="FileSet"></a>
-## `FileSet`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Properties**
-* <code id="FileSet-from">from</code> String - The source path relative to the project directory.
-* <code id="FileSet-to">to</code> String - The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
-* <code id="FileSet-filter">filter</code> Array&lt;String&gt; | String - The [glob patterns](/file-patterns.md).
-
-<a name="ForgeOptions"></a>
-## `ForgeOptions`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Properties**
-* **<code id="ForgeOptions-dir">dir</code>** String
-
-<a name="LinuxTargetSpecificOptions"></a>
-## `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>, <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
-**Properties**
-* <code id="LinuxTargetSpecificOptions-depends">depends</code> Array&lt;String&gt; - Package dependencies.
-* <code id="LinuxTargetSpecificOptions-icon">icon</code> String
-* <code id="LinuxTargetSpecificOptions-packageCategory">packageCategory</code> String - The package category.
-* <code id="LinuxTargetSpecificOptions-vendor">vendor</code> String
-* <code id="LinuxTargetSpecificOptions-maintainer">maintainer</code> String
-* <code id="LinuxTargetSpecificOptions-afterInstall">afterInstall</code> String
-* <code id="LinuxTargetSpecificOptions-afterRemove">afterRemove</code> String
-* <code id="LinuxTargetSpecificOptions-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-* <code id="LinuxTargetSpecificOptions-description">description</code> String - As [description](/configuration/configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
-* <code id="LinuxTargetSpecificOptions-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
-* <code id="LinuxTargetSpecificOptions-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
-* <code id="LinuxTargetSpecificOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="LinuxTargetSpecificOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [SpacesOptions](/configuration/publish.md#spacesoptions) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
-
-<a name="PlatformSpecificBuildOptions"></a>
-## `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
-**Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
-**Properties**
-* <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
-* <code id="PlatformSpecificBuildOptions-files">files</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
-* <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
-* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
-* <code id="PlatformSpecificBuildOptions-asar">asar</code> = `true` [AsarOptions](#AsarOptions) | Boolean - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
-  
-  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
-* <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
-* <code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation) - The file associations.
-* <code id="PlatformSpecificBuildOptions-protocols">protocols</code> Array&lt;[Protocol](#Protocol)&gt; | [Protocol](#Protocol) - The URL protocol schemes.
-* <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
-* <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [SpacesOptions](/configuration/publish.md#spacesoptions) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
-* <code id="PlatformSpecificBuildOptions-releaseInfo">releaseInfo</code> [ReleaseInfo](#ReleaseInfo) - The release info. Intended for command line usage:
-  
-  ``` -c.releaseInfo.releaseNotes="new features" ```
-* <code id="PlatformSpecificBuildOptions-target">target</code> Array&lt;String | [TargetConfiguration](#TargetConfiguration)&gt; | String | [TargetConfiguration](#TargetConfiguration)
 
 <a name="SourceRepositoryInfo"></a>
 ## `SourceRepositoryInfo`

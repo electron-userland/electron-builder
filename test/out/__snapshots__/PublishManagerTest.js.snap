@@ -4,6 +4,34 @@ exports[`generic, github and spaces 1`] = `
 Object {
   "mac": Array [
     Object {
+      "file": "alpha-mac.yml",
+      "fileContent": Object {
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "alpha-mac.yml",
+      "fileContent": Object {
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "beta-mac.yml",
+      "fileContent": Object {
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "beta-mac.yml",
+      "fileContent": Object {
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
+    },
+    Object {
       "file": "latest-mac.json",
     },
     Object {

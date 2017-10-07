@@ -23,14 +23,14 @@ exports[`validation 1`] = `
    Configuration Options
 
  - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
+   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, detectUpdateChannel?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
    Options related to how build macOS targets.
    
    Details:
     * configuration.mac has an unknown property 'foo'. These properties are valid:
-      object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? }
+      object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, detectUpdateChannel?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? }
     * configuration.mac should be null:
       {
         \\"type\\": \\"null\\"

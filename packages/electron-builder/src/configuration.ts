@@ -122,18 +122,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly buildVersion?: string | null
 
   /**
-   * Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
-   * @default true
-   */
-  readonly detectUpdateChannel?: boolean
-
-  /**
-   * Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
-   * @default true
-   */
-  readonly generateUpdatesFilesForAllChannels?: boolean
-
-  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean

@@ -8,6 +8,7 @@ const target = Platform.MAC.createTarget("zip")
 test.ifDevOrLinuxCi("generic, github and spaces", app({
   targets: target,
   config: {
+    generateUpdatesFilesForAllChannels: true,
     publish: [
       {
         provider: "generic",

@@ -27,6 +27,8 @@
 
 * <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
 * <code id="PlatformSpecificBuildOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="PlatformSpecificBuildOptions-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+* <code id="PlatformSpecificBuildOptions-generateUpdatesFilesForAllChannels">generateUpdatesFilesForAllChannels</code> = `false` Boolean - Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
 * <code id="PlatformSpecificBuildOptions-releaseInfo">releaseInfo</code><a name="ReleaseInfo"></a> - The release info. Intended for command line usage:
   
   ``` -c.releaseInfo.releaseNotes="new features" ```

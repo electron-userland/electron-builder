@@ -24,6 +24,35 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
   return releaseInfo
 }
 
+function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
+  const value = packager.platformSpecificBuildOptions.generateUpdatesFilesForAllChannels
+  return value == null ? packager.config.generateUpdatesFilesForAllChannels : value
+}
+
+/**
+ if this is an "alpha" version, we need to generate only the "alpha" .yml file
+ if this is a "beta" version, we need to generate both the "alpha" and "beta" .yml file
+ if this is a "stable" version, we need to generate all the "alpha", "beta" and "stable" .yml file
+ */
+function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration) {
+  const currentChannel: string = (publishConfig as GenericServerOptions).channel || "latest"
+  // for GitHub should be pre-release way be used
+  if (currentChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
+    return [currentChannel]
+  }
+
+  switch (currentChannel) {
+    case "beta":
+      return [currentChannel, "alpha"]
+
+    case "latest":
+      return [currentChannel, "alpha", "beta"]
+
+    default:
+      return [currentChannel]
+  }
+}
+
 /** @internal */
 export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<ArtifactCreated>> {
   const packager = event.packager
@@ -40,7 +69,6 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const events: Array<ArtifactCreated> = []
   for (let publishConfig of publishConfigs) {
-    let info = sharedInfo
     if (publishConfig.provider === "bintray") {
       continue
     }
@@ -56,24 +84,15 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     }
 
     // spaces is a new publish provider, no need to keep backward compatibility
-    const isElectronUpdater1xCompatibility = publishConfig.provider !== "spaces"
+    let isElectronUpdater1xCompatibility = publishConfig.provider !== "spaces"
 
-    const channel = (publishConfig as GenericServerOptions).channel || "latest"
-    if (isMac && isElectronUpdater1xCompatibility) {
-      await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
-    }
-
-    const updateInfoFile = path.join(dir, `${channel}${isMac ? "-mac" : ""}.yml`)
-    if (createdFiles.has(updateInfoFile)) {
-      continue
-    }
-
-    createdFiles.add(updateInfoFile)
-
+    let info = sharedInfo
     // noinspection JSDeprecatedSymbols
-    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS && info.sha2 == null) {
-      // backward compatibility
-      (info as any).sha2 = await sha2.value
+    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
+      info = {
+        ...info,
+        sha2: await sha2.value,
+      }
     }
 
     if (event.safeArtifactName != null && publishConfig.provider === "github") {
@@ -82,18 +101,34 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         githubArtifactName: event.safeArtifactName,
       }
     }
-    const fileContent = Buffer.from(safeDump(info))
-    await outputFile(updateInfoFile, fileContent)
 
-    // artifact should be uploaded only to designated publish provider
-    events.push({
-      file: updateInfoFile,
-      fileContent,
-      arch: null,
-      packager,
-      target: null,
-      publishConfig,
-    })
+    for (const channel of computeChannelNames(packager, publishConfig)) {
+      if (isMac && isElectronUpdater1xCompatibility) {
+        // write only for first channel (generateUpdatesFilesForAllChannels is a new functionality, no need to generate old mac update info file)
+        isElectronUpdater1xCompatibility = false
+        await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
+      }
+
+      const updateInfoFile = path.join(dir, `${channel}${isMac ? "-mac" : ""}.yml`)
+      if (createdFiles.has(updateInfoFile)) {
+        continue
+      }
+
+      createdFiles.add(updateInfoFile)
+
+      const fileContent = Buffer.from(safeDump(info))
+      await outputFile(updateInfoFile, fileContent)
+
+      // artifact should be uploaded only to designated publish provider
+      events.push({
+        file: updateInfoFile,
+        fileContent,
+        arch: null,
+        packager,
+        target: null,
+        publishConfig,
+      })
+    }
   }
   return events
 }

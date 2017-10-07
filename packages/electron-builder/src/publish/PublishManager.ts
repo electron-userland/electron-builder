@@ -341,12 +341,17 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
   }
 }
 
+function isDetectUpdateChannel(packager: PlatformPackager<any>) {
+  const value = packager.platformSpecificBuildOptions.detectUpdateChannel
+  return value == null ? packager.config.detectUpdateChannel !== false : value
+}
+
 async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
   options = Object.assign(Object.create(null), options)
   expandPublishConfig(options, packager, arch)
 
   let channelFromAppVersion: string | null = null
-  if ((options as any).channel == null && packager.config.detectUpdateChannel !== false) {
+  if ((options as any).channel == null && isDetectUpdateChannel(packager)) {
     channelFromAppVersion = packager.appInfo.channel
   }
 
