@@ -1,6 +1,5 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
-import { PlatformSpecificBuildOptions } from "../configuration"
-import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../core"
+import { PlatformSpecificBuildOptions, DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../index"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "./ArchiveTarget"
 

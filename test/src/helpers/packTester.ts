@@ -175,7 +175,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   }
 
   function sortKey(a: ArtifactCreated) {
-    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.data!!.toString("hex") : path.basename(a.file)}`
+    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!!.toString("hex") : path.basename(a.file)}`
   }
 
   const objectToCompare: any = {}

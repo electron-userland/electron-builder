@@ -65,7 +65,8 @@ async function render2(files, jsdoc2MdOptions) {
 
   const blockedPropertyName = new Set([
     "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack",
-    "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector", "signingHashAlgorithms", "publisherName"
+    "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector", "signingHashAlgorithms", "publisherName",
+    "forceCodeSigning",
   ])
   renderer.isInsertHorizontalLineBefore = item => {
     return blockedPropertyName.has(item.name)
@@ -129,7 +130,7 @@ async function render2(files, jsdoc2MdOptions) {
     }
 
     if (types.some(it => it.endsWith("TargetConfiguration"))) {
-      return "String | [TargetConfiguration](target.md#targetconfiguration)"
+      return "String | [TargetConfiguration](/configuration/target.md#targetconfiguration)"
     }
     if (types.some(it => it.endsWith(".Configuration") || it === "Configuration")) {
       // description contains link to.
@@ -186,9 +187,7 @@ async function render2(files, jsdoc2MdOptions) {
   }
 
   const pages = [
-    new Page("configuration/configuration.md", "Configuration", {
-      "Metadata": "Some standard fields should be defined in the `package.json`."
-    }),
+    new Page("configuration/configuration.md", "Configuration"),
 
     new Page("configuration/mac.md", "MacConfiguration"),
     new Page("configuration/dmg.md", "DmgOptions"),
@@ -218,11 +217,8 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/appimage-options.md", "AppImageOptions"),
     new Page("generated/DebOptions.md", "DebOptions"),
     new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
-
-    // new Page("auto-update.md", null, {
-    //   "AppUpdater": "",
-    //   "UpdateInfo": "",
-    // }),
+    new Page("generated/PlatformSpecificBuildOptions.md", "PlatformSpecificBuildOptions"),
+    new Page("generated/Metadata.md", "Metadata"),
 
     new Page("configuration/target.md", "TargetConfiguration"),
   ]

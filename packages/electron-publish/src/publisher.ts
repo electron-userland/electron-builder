@@ -25,21 +25,29 @@ const progressBarOptions = {
   width: 20,
 }
 
+export interface UploadTask {
+  file: string
+  fileContent?: Buffer | null
+
+  arch: Arch | null
+  safeArtifactName?: string | null
+}
+
 export abstract class Publisher {
   constructor(protected readonly context: PublishContext) {
   }
 
   abstract get providerName(): string
 
-  abstract upload(file: string, arch: Arch, safeArtifactName?: string | null): Promise<any>
+  abstract upload(task: UploadTask): Promise<any>
 
-  protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
+  protected createProgressBar(fileName: string, size: number): ProgressBar | null {
     if (this.context.progress == null) {
       log(`Uploading ${fileName} to ${this.providerName}`)
       return null
     }
     else {
-      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, {total: fileStat.size, ...progressBarOptions})
+      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, {total: size, ...progressBarOptions})
     }
   }
 
@@ -65,25 +73,24 @@ export abstract class HttpPublisher extends Publisher {
     super(context)
   }
 
-  async upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any> {
-    const fileName = (this.useSafeArtifactName ? safeArtifactName : null) || basename(file)
-    const fileStat = await stat(file)
+  async upload(task: UploadTask): Promise<any> {
+    const fileName = (this.useSafeArtifactName ? task.safeArtifactName : null) || basename(task.file)
 
-    const progressBar = this.createProgressBar(fileName, fileStat)
-    await this.doUpload(fileName, arch, fileStat.size, (request, reject) => {
+    if (task.fileContent != null) {
+      await this.doUpload(fileName, task.arch || Arch.x64, task.fileContent.length, it => it.end(task.fileContent))
+      return
+    }
+
+    const fileStat = await stat(task.file)
+
+    const progressBar = this.createProgressBar(fileName, fileStat.size)
+    await this.doUpload(fileName, task.arch || Arch.x64, fileStat.size, (request, reject) => {
       if (progressBar != null) {
         // reset (because can be called several times (several attempts)
         progressBar.update(0)
       }
-      return this.createReadStreamAndProgressBar(file, fileStat, progressBar, reject).pipe(request)
-    }, file)
-  }
-
-  uploadData(data: Buffer, arch: Arch, fileName: string): Promise<any> {
-    if (data == null || fileName == null) {
-      throw new Error("data or fileName is null")
-    }
-    return this.doUpload(fileName, arch, data.length, it => it.end(data))
+      return this.createReadStreamAndProgressBar(task.file, fileStat, progressBar, reject).pipe(request)
+    }, task.file)
   }
 
   protected abstract doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>

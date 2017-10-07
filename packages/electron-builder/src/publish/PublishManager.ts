@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn } from "builder-util"
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
-import { getCiTag, HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
+import { getCiTag, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
@@ -12,10 +12,8 @@ import { safeDump } from "js-yaml"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { PlatformSpecificBuildOptions } from "../configuration"
-import { Platform, Target } from "../core"
+import { Platform, Target, PlatformSpecificBuildOptions, ArtifactCreated } from "../index"
 import { Packager } from "../packager"
-import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
 import { writeUpdateInfo } from "./updateUnfoBuilder"
@@ -137,12 +135,7 @@ export class PublishManager implements PublishContext {
           continue
         }
 
-        if (eventFile == null) {
-          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, event.arch || Arch.x64, event.safeArtifactName!))
-        }
-        else {
-          this.taskManager.addTask(publisher.upload(eventFile!, event.arch || Arch.x64, event.safeArtifactName))
-        }
+        this.taskManager.addTask(publisher.upload(event))
       }
     }
 

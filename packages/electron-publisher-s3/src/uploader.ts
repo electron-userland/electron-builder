@@ -3,8 +3,9 @@ import { CreateMultipartUploadRequest } from "aws-sdk/clients/s3"
 import BluebirdPromise from "bluebird-lst"
 import { hashFile } from "builder-util"
 import { EventEmitter } from "events"
-import { createReadStream, Stats } from "fs-extra-p"
+import { createReadStream } from "fs-extra-p"
 import { cpus } from "os"
+import { createHash } from "crypto"
 
 const MAX_PUT_OBJECT_SIZE = 5 * 1024 * 1024 * 1024
 const MAX_MULTIPART_COUNT = 10000
@@ -19,8 +20,6 @@ export class Uploader extends EventEmitter {
 
   private cancelled = false
 
-  readonly contentLength: number
-
   readonly s3RetryCount: number
   readonly s3RetryDelay: number
   readonly multipartUploadThreshold: number
@@ -28,7 +27,7 @@ export class Uploader extends EventEmitter {
   readonly multipartDownloadThreshold: number
   readonly multipartDownloadSize: number
 
-  constructor(private readonly s3: S3, private readonly s3Options: CreateMultipartUploadRequest, private readonly localFile: string, localFileStat: Stats) {
+  constructor(private readonly s3: S3, private readonly s3Options: CreateMultipartUploadRequest, private readonly localFile: string, readonly contentLength: number, private readonly fileContent: Buffer | null | undefined) {
     super()
 
     this.s3RetryCount = 3
@@ -51,13 +50,21 @@ export class Uploader extends EventEmitter {
     if (this.multipartUploadSize > MAX_PUT_OBJECT_SIZE) {
       throw new Error("Maximum multipartUploadSize is 5GB.")
     }
-    this.contentLength = localFileStat.size
   }
 
   async upload() {
+    const fileContent = this.fileContent
+    if (fileContent != null) {
+      const hash = createHash("md5")
+      hash.update(fileContent)
+      const md5 = hash.digest("base64")
+      await this.runOrRetry(() => this.putObject(md5))
+      return
+    }
+
     if (this.contentLength < this.multipartUploadThreshold) {
       const md5 = await hashFile(this.localFile, "md5")
-      await this.runOrRetry(this.putObject.bind(this, md5))
+      await this.runOrRetry(() => this.putObject(md5))
       return
     }
 
@@ -82,7 +89,7 @@ export class Uploader extends EventEmitter {
     this.loaded = 0
     return new BluebirdPromise<any>((resolve, reject) => {
       this.s3.putObject({
-        Body: createReadStream(this.localFile),
+        Body: this.fileContent || createReadStream(this.localFile),
         ContentMD5: md5,
         ...this.s3Options,
       })

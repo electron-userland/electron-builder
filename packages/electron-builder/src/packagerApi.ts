@@ -4,6 +4,7 @@ import { Configuration } from "./configuration"
 import { Platform, Target } from "./core"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
+import { UploadTask } from "electron-publish"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, Array<string>>>
@@ -25,13 +26,9 @@ export interface PackagerOptions {
   readonly prepackaged?: string | null
 }
 
-export interface ArtifactCreated {
+export interface ArtifactCreated extends UploadTask {
   readonly packager: PlatformPackager<any>
   readonly target: Target | null
-  readonly arch: Arch | null
-
-  readonly file?: string
-  readonly data?: Buffer
 
   readonly packageFiles?: { [arch: string]: PackageFileInfo } | null
 

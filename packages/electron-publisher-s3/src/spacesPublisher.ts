@@ -2,7 +2,7 @@ import { ClientConfiguration, CreateMultipartUploadRequest } from "aws-sdk/clien
 import { isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
-import { BaseS3Publisher } from "./basePublisher"
+import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "Spaces"

@@ -1,7 +1,7 @@
 import S3, { StorageClass } from "aws-sdk/clients/s3"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
-import { BaseS3Publisher } from "./basePublisher"
+import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class S3Publisher extends BaseS3Publisher {
   readonly providerName = "S3"

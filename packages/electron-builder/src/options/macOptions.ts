@@ -1,5 +1,4 @@
-import { PlatformSpecificBuildOptions } from "../configuration"
-import { TargetConfiguration, TargetSpecificOptions } from "../core"
+import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 

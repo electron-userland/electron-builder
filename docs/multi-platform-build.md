@@ -82,6 +82,10 @@ osx_image: xcode9.0
 
 To build Linux or Windows on any platform. You cannot build for Windows using Docker if you have native dependencies and native dependency doesn't use [prebuild](https://www.npmjs.com/package/prebuild). 
 
+See example Docker usage on a CI server in the [sample .travis.yml](https://github.com/develar/onshape-desktop-shell/blob/master/.travis.yml).
+
+### Build Electron App using Docker on a Local Machine
+
 1. Run docker container:
 
    ```sh
@@ -99,14 +103,10 @@ To build Linux or Windows on any platform. You cannot build for Windows using Do
 2. Type in `yarn && yarn dist`
    
    If you don't have `dist` npm script in your `package.json`, call `./node_modules/.bin/electron-builder` directly.
-
-Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dist"`
+   
+Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dist"` You can use `/test.sh` to install dependencies and run tests.
 
 If you don't need to build Windows, use image `electronuserland/builder` (wine is not installed in this image).
-
-You can use `/test.sh` to install dependencies and run tests.
-
-See example Docker usage on a CI server in the [sample .travis.yml](https://github.com/develar/onshape-desktop-shell/blob/master/.travis.yml).
 
 **NOTICE**: _Do not use Docker Toolbox on macOS._ Only [Docker for Mac](https://docs.docker.com/docker-for-mac/install/) works.
 

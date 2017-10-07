@@ -1,5 +1,4 @@
-import { PlatformSpecificBuildOptions } from "../configuration"
-import { TargetConfigType, TargetSpecificOptions } from "../core"
+import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
 import { CustomWindowsSign } from "../windowsCodeSign"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {

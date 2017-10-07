@@ -4,7 +4,7 @@ import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Configuration, FileSet, PlatformSpecificBuildOptions } from "./configuration"
+import { Configuration, FileSet, PlatformSpecificBuildOptions } from "./index"
 import { Platform } from "./core"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"

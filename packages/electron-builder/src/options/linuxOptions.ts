@@ -1,5 +1,4 @@
-import { PlatformSpecificBuildOptions } from "../configuration"
-import { TargetConfigType, TargetSpecificOptions } from "../core"
+import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "../index"
 
 export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**

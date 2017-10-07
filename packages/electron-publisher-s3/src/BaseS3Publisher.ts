@@ -1,7 +1,7 @@
 import S3, { ClientConfiguration, CreateMultipartUploadRequest, ObjectCannedACL } from "aws-sdk/clients/s3"
-import { Arch, debug } from "builder-util"
+import { debug } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
-import { ProgressCallback, PublishContext, Publisher } from "electron-publish"
+import { ProgressCallback, PublishContext, Publisher, UploadTask } from "electron-publish"
 import { ensureDir, stat, symlink } from "fs-extra-p"
 import mime from "mime"
 import * as path from "path"
@@ -26,9 +26,8 @@ export abstract class BaseS3Publisher extends Publisher {
   }
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
-  async upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any> {
-    const fileName = path.basename(file)
-    const fileStat = await stat(file)
+  async upload(task: UploadTask): Promise<any> {
+    const fileName = path.basename(task.file)
     const cancellationToken = this.context.cancellationToken
 
     const target = (this.options.path == null ? "" : `${this.options.path}/`) + fileName
@@ -36,20 +35,21 @@ export abstract class BaseS3Publisher extends Publisher {
     if (process.env.__TEST_S3_PUBLISHER__ != null) {
       const testFile = path.join(process.env.__TEST_S3_PUBLISHER__!, target)
       await ensureDir(path.dirname(testFile))
-      await symlink(file, testFile)
+      await symlink(task.file, testFile)
       return
     }
 
     const s3Options: CreateMultipartUploadRequest  = {
       Key: target,
       Bucket: this.getBucketName(),
-      ContentType: mime.getType(file) || "application/octet-stream"
+      ContentType: mime.getType(task.file) || "application/octet-stream"
     }
     this.configureS3Options(s3Options)
 
-    const uploader = new Uploader(new S3(this.createClientConfiguration()), s3Options, file, fileStat)
+    const contentLength = task.fileContent == null ? (await stat(task.file)).size : task.fileContent.length
+    const uploader = new Uploader(new S3(this.createClientConfiguration()), s3Options, task.file, contentLength, task.fileContent)
 
-    const progressBar = this.createProgressBar(fileName, fileStat)
+    const progressBar = this.createProgressBar(fileName, uploader.contentLength)
     if (progressBar != null) {
       const callback = new ProgressCallback(progressBar)
       uploader.on("progress", () => {

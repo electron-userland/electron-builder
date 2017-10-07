@@ -1,7 +1,5 @@
-import { AsarIntegrityOptions } from "asar-integrity"
 import { Arch } from "builder-util"
-import { Publish } from "builder-util-runtime"
-import { BeforeBuildContext, CompressionLevel, Target, TargetConfiguration, TargetSpecificOptions } from "./core"
+import { BeforeBuildContext, CompressionLevel, Target } from "./core"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
 import { SnapOptions } from "./options/SnapOptions"
@@ -9,6 +7,7 @@ import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { AppXOptions, WindowsConfiguration } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 
 /**
  * Configuration Options
@@ -27,24 +26,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly productName?: string | null
 
   /**
-   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
-   */
-  readonly artifactName?: string | null
-
-  /**
-   * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
-   *
-   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
-   * @default true
-  */
-  readonly asar?: boolean | AsarOptions | null
-
-  /**
-   * A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
-   */
-  readonly asarUnpack?: Array<string> | string | null
-
-  /**
    * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
    * @default normal
    */
@@ -56,24 +37,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly copyright?: string | null
 
-  publish?: Publish
-
   readonly directories?: MetadataDirectories | null
-
-  readonly files?: Array<FileSet | string> | FileSet | string | null
-
-  readonly extraResources?: Array<FileSet | string> | FileSet | string | null
-
-  readonly extraFiles?: Array<FileSet | string> | FileSet | string | null
-
-  /**
-   * The file associations.
-   */
-  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
-  /**
-   * The URL protocol schemes.
-   */
-  readonly protocols?: Array<Protocol> | Protocol
 
   /**
    * Options related to how build macOS targets.
@@ -165,7 +129,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
-   * @default false
+   * @default true
    */
   readonly generateUpdatesFilesForAllChannels?: boolean
 
@@ -213,15 +177,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly muonVersion?: string | null
 
   /**
-   * The release info. Intended for command line usage:
-   *
-   * ```
-   * -c.releaseInfo.releaseNotes="new features"
-   * ```
-   */
-  readonly releaseInfo?: ReleaseInfo
-
-  /**
    * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
@@ -229,9 +184,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    */
   readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
-
-  /** @private */
-  readonly icon?: string | null
 }
 
 export interface AfterPackContext {
@@ -287,89 +239,6 @@ export interface Protocol {
   readonly role?: "Editor" | "Viewer" | "Shell" | "None"
 }
 
-/**
- * File associations.
- *
- * macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only.
- *
- * On Windows works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.
- */
-export interface FileAssociation {
-  /**
-   * The extension (minus the leading period). e.g. `png`.
-   */
-  readonly ext: string | Array<string>
-
-  /**
-   * The name. e.g. `PNG`. Defaults to `ext`.
-   */
-  readonly name?: string | null
-
-  /**
-   * *windows-only.* The description.
-   */
-  readonly description?: string | null
-
-  /**
-   * The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
-   */
-  readonly icon?: string | null
-
-  /**
-   * *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.
-   * @default Editor
-   */
-  readonly role?: string
-
-  /**
-   * *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
-   */
-  readonly isPackage?: boolean
-}
-
-export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
-  readonly files?: Array<FileSet | string> | FileSet | string | null
-  readonly extraFiles?: Array<FileSet | string> | FileSet | string | null
-  readonly extraResources?: Array<FileSet | string> | FileSet | string | null
-
-  readonly asarUnpack?: Array<string> | string | null
-
-  readonly asar?: AsarOptions | boolean | null
-
-  readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
-
-  readonly icon?: string | null
-
-  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
-
-  readonly forceCodeSigning?: boolean
-}
-
-export interface AsarOptions extends AsarIntegrityOptions {
-  /**
-   * Whether to automatically unpack executables files.
-   * @default true
-   */
-  smartUnpack?: boolean
-
-  ordering?: string | null
-}
-
-export interface FileSet {
-  /**
-   * The source path relative to the project directory.
-   */
-  from?: string
-  /**
-   * The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
-   */
-  to?: string
-  /**
-   * The [glob patterns](/file-patterns.md).
-   */
-  filter?: Array<string> | string
-}
-
 export interface ReleaseInfo {
   /**
    * The release name.
@@ -383,7 +252,7 @@ export interface ReleaseInfo {
   releaseNotes?: string | null
 
   /**
-   * The path to release notes file. Defaults to `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
+   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
    */
   releaseNotesFile?: string | null
 

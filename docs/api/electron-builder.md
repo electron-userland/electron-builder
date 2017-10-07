@@ -6,7 +6,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 
 * [electron-builder](#module_electron-builder)
     * [`.AfterPackContext`](#AfterPackContext)
-    * [`.ArtifactCreated`](#ArtifactCreated)
+    * [`.ArtifactCreated`](#ArtifactCreated) ⇐ <code>module:packages/electron-publish/out/publisher.UploadTask</code>
     * [`.BeforeBuildContext`](#BeforeBuildContext)
     * [`.BuildResult`](#BuildResult)
     * [`.CertificateFromStoreInfo`](#CertificateFromStoreInfo)
@@ -51,14 +51,12 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * **<code id="AfterPackContext-targets">targets</code>** Array&lt;[Target](#Target)&gt;
 
 <a name="ArtifactCreated"></a>
-## `ArtifactCreated`
+## `ArtifactCreated` ⇐ <code>module:packages/electron-publish/out/publisher.UploadTask</code>
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
+**Extends**: <code>module:packages/electron-publish/out/publisher.UploadTask</code>  
 **Properties**
 * **<code id="ArtifactCreated-packager">packager</code>** PlatformPackager&lt;any&gt;
 * <code id="ArtifactCreated-target">target</code> [Target](#Target)
-* <code id="ArtifactCreated-arch">arch</code> [Arch](#Arch)
-* <code id="ArtifactCreated-file">file</code> String
-* <code id="ArtifactCreated-data">data</code> Buffer
 * <code id="ArtifactCreated-packageFiles">packageFiles</code> Object&lt;String, any&gt;
 * <code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String
 * <code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/configuration/publish.md#publishconfiguration)
@@ -151,17 +149,22 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
 **Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
 **Properties**
+* <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
 * <code id="PlatformSpecificBuildOptions-files">files</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
-* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
 * <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
-* <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String
-* <code id="PlatformSpecificBuildOptions-asar">asar</code> [AsarOptions](#AsarOptions) | Boolean
-* <code id="PlatformSpecificBuildOptions-target">target</code> Array&lt;String | [TargetConfiguration](#TargetConfiguration)&gt; | String | [TargetConfiguration](#TargetConfiguration)
-* <code id="PlatformSpecificBuildOptions-icon">icon</code> String
-* <code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)
+* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
+* <code id="PlatformSpecificBuildOptions-asar">asar</code> = `true` [AsarOptions](#AsarOptions) | Boolean - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
+  
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
+* <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+* <code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation) - The file associations.
+* <code id="PlatformSpecificBuildOptions-protocols">protocols</code> Array&lt;[Protocol](#Protocol)&gt; | [Protocol](#Protocol) - The URL protocol schemes.
 * <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
-* <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [SpacesOptions](/configuration/publish.md#spacesoptions) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
+* <code id="PlatformSpecificBuildOptions-releaseInfo">releaseInfo</code> [ReleaseInfo](#ReleaseInfo) - The release info. Intended for command line usage:
+  
+  ``` -c.releaseInfo.releaseNotes="new features" ```
+* <code id="PlatformSpecificBuildOptions-target">target</code> Array&lt;String | [TargetConfiguration](#TargetConfiguration)&gt; | String | [TargetConfiguration](#TargetConfiguration)
 
 <a name="SourceRepositoryInfo"></a>
 ## `SourceRepositoryInfo`

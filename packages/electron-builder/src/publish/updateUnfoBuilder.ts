@@ -10,6 +10,20 @@ import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
 
+async function getReleaseInfo(packager: PlatformPackager<any>) {
+  const releaseInfo: ReleaseInfo = {...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo)}
+  if (releaseInfo.releaseNotes == null) {
+    const releaseNotesFile = await packager.getResource(releaseInfo.releaseNotesFile, `release-notes-${packager.platform.buildConfigurationKey}.md`, `release-notes-${packager.platform.name}.md`, `release-notes-${packager.platform.nodeName}.md`, "release-notes.md")
+    const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
+    // to avoid undefined in the file, check for null
+    if (releaseNotes != null) {
+      releaseInfo.releaseNotes = releaseNotes
+    }
+  }
+  delete releaseInfo.releaseNotesFile
+  return releaseInfo
+}
+
 /** @internal */
 export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>) {
   const packager = event.packager
@@ -18,26 +32,12 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     return
   }
 
-  const target = event.target!
-  const outDir = target.outDir
+  const outDir = event.target!.outDir
   const version = packager.appInfo.version
   const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
   const isMac = packager.platform === Platform.MAC
-
-  const releaseInfo: ReleaseInfo = {...packager.config.releaseInfo}
-  if (releaseInfo.releaseNotes == null) {
-    const releaseNotesFile = await packager.getResource(releaseInfo.releaseNotesFile, "release-notes.md")
-    const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
-    // to avoid undefined in the file, check for null
-    if (releaseNotes != null) {
-      releaseInfo.releaseNotes = releaseNotes
-    }
-  }
-  delete releaseInfo.releaseNotesFile
-
   const createdFiles = new Set<string>()
-
-  const sharedInfo = await createUpdateInfo(version, event, releaseInfo)
+  const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   for (let publishConfig of publishConfigs) {
     let info = sharedInfo
     if (publishConfig.provider === "bintray") {
@@ -49,8 +49,6 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
       delete (publishConfig as GithubOptions).releaseType
     }
 
-    const channel = (publishConfig as GenericServerOptions).channel || "latest"
-
     let dir = outDir
     if (publishConfigs.length > 1 && publishConfig !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfig.provider)
@@ -59,6 +57,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     // spaces is a new publish provider, no need to keep backward compatibility
     const isElectronUpdater1xCompatibility = publishConfig.provider !== "spaces"
 
+    const channel = (publishConfig as GenericServerOptions).channel || "latest"
     if (isMac && isElectronUpdater1xCompatibility) {
       await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
     }
@@ -82,11 +81,13 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         githubArtifactName: event.safeArtifactName,
       }
     }
-    await outputFile(updateInfoFile, safeDump(info))
+    const serializedInfo = safeDump(info)
+    await outputFile(updateInfoFile, serializedInfo)
 
     // artifact should be uploaded only to designated publish provider
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,
+      fileContent: Buffer.from(serializedInfo),
       arch: null,
       packager,
       target: null,
