@@ -89,18 +89,18 @@ To build Linux or Windows on any platform. You cannot build for Windows using Do
      --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') \
      --env ELECTRON_CACHE="/root/.cache/electron" \
      --env ELECTRON_BUILDER_CACHE="/root/.cache/electron-builder" \
+     --env X_RESET_UID=$UID \
      -v ${PWD}:/project \
-     -v ${PWD##*/}-node-modules:/project/node_modules \
      -v ~/.cache/electron:/root/.cache/electron \
      -v ~/.cache/electron-builder:/root/.cache/electron-builder \
      electronuserland/builder:wine
    ```
    
-2. Type in `yarn && yarn dist`
+2. Type in `yarn && yarn dist && chown -R $X_RESET_UID . /root`
    
    If you don't have `dist` npm script in your `package.json`, call `./node_modules/.bin/electron-builder` directly.
 
-Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dist"`
+Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dist && chown -R \$X_RESET_UID . /root"`
 
 If you don't need to build Windows, use image `electronuserland/builder` (wine is not installed in this image).
 
