@@ -25,11 +25,11 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
 }
 
 /** @internal */
-export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>) {
+export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<ArtifactCreated>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
-    return
+    return []
   }
 
   const outDir = event.target!.outDir
@@ -38,6 +38,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   const isMac = packager.platform === Platform.MAC
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
+  const events: Array<ArtifactCreated> = []
   for (let publishConfig of publishConfigs) {
     let info = sharedInfo
     if (publishConfig.provider === "bintray") {
@@ -81,19 +82,20 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         githubArtifactName: event.safeArtifactName,
       }
     }
-    const serializedInfo = safeDump(info)
-    await outputFile(updateInfoFile, serializedInfo)
+    const fileContent = Buffer.from(safeDump(info))
+    await outputFile(updateInfoFile, fileContent)
 
     // artifact should be uploaded only to designated publish provider
-    packager.info.dispatchArtifactCreated({
+    events.push({
       file: updateInfoFile,
-      fileContent: Buffer.from(serializedInfo),
+      fileContent,
       arch: null,
       packager,
       target: null,
       publishConfig,
     })
   }
+  return events
 }
 
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo) {

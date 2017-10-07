@@ -32,7 +32,9 @@ export class PublishManager implements PublishContext {
 
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
-  constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
+  private readonly postponedArtifactCreatedEvents: Array<ArtifactCreated> = []
+
+  constructor(private readonly packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
     this.taskManager = new AsyncTaskManager(cancellationToken)
 
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
@@ -111,7 +113,7 @@ export class PublishManager implements PublishContext {
     const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
 
     if (debug.enabled) {
-      debug(`artifactCreated: ${safeStringifyJson(event, new Set(["packager"]))},\npublishConfigs: ${safeStringifyJson(publishConfigs)},\nisPublish: ${this.isPublish}`)
+      debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfigs: ${safeStringifyJson(publishConfigs)}`)
     }
 
     const eventFile = event.file
@@ -142,7 +144,7 @@ export class PublishManager implements PublishContext {
     if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") ||
         (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target, event))) {
-        this.taskManager.addTask(writeUpdateInfo(event, publishConfigs))
+        this.taskManager.addTask(writeUpdateInfo(event, publishConfigs).then(it => this.postponedArtifactCreatedEvents.push(...it)))
       }
     }
   }
@@ -164,8 +166,16 @@ export class PublishManager implements PublishContext {
     this.nameToPublisher.clear()
   }
 
-  awaitTasks() {
-    return this.taskManager.awaitTasks()
+  async awaitTasks(): Promise<void> {
+    await this.taskManager.awaitTasks()
+    if (!this.cancellationToken.cancelled) {
+      const events = this.postponedArtifactCreatedEvents.slice()
+      this.postponedArtifactCreatedEvents.length = 0
+      for (const event of events) {
+        this.packager.dispatchArtifactCreated(event)
+      }
+      await this.taskManager.awaitTasks()
+    }
   }
 }
 
