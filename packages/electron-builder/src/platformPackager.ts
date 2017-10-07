@@ -356,7 +356,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true): string | null {
     // GitHub only allows the listed characters in file names.
-    if (suggestedName != null && /^[0-9A-Za-z._-]+$/.test(suggestedName)) {
+    if (suggestedName != null && isSafeGithubName(suggestedName)) {
       return null
     }
 
@@ -551,6 +551,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const forceCodeSigningPlatform = this.platformSpecificBuildOptions.forceCodeSigning
     return (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) || false
   }
+}
+
+export function isSafeGithubName(name: string) {
+  return /^[0-9A-Za-z._-]+$/.test(name)
 }
 
 // remove leading dot

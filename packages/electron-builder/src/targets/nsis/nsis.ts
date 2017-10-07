@@ -10,7 +10,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { Target } from "../../core"
-import { normalizeExt } from "../../platformPackager"
+import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
@@ -225,7 +225,7 @@ export class NsisTarget extends Target {
       target: this,
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
-      safeArtifactName: this.generateGitHubInstallerName(),
+      safeArtifactName: isSafeGithubName(installerFilename) ? installerFilename : this.generateGitHubInstallerName(),
       isWriteUpdateInfo: !this.isPortable,
     })
   }

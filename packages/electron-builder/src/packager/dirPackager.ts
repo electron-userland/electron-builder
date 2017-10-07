@@ -60,7 +60,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
     }
     else {
       await spawn(path7za, debug7zArgs("x").concat(zipPath, "-aoa", `-o${out}`))
-      if (process.platform !== "win32") {
+      if (platform === "linux") {
         // https://github.com/electron-userland/electron-builder/issues/786
         // fix dir permissions — opposite to extract-zip, 7za creates dir with no-access for other users, but dir must be readable for non-root users
         await BluebirdPromise.all([

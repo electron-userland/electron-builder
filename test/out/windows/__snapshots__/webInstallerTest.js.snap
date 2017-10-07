@@ -82,7 +82,7 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "githubArtifactName": "WorkFlowy.exe",
         "packages": Object {
           "x64": Object {
             "file": "TestApp-1.1.0-x64.nsis.7z",
@@ -104,7 +104,7 @@ Object {
           "file": "TestApp-1.1.0-x64.nsis.7z",
         },
       },
-      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "safeArtifactName": "WorkFlowy.exe",
     },
   ],
 }
