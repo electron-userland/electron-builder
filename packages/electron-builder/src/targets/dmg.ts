@@ -317,19 +317,16 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
       warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
     }
 
-    let entryPath = c.path || `${packager.appInfo.productFilename}.app`
-    if (entryPath.startsWith("/")) {
-      entryPath = entryPath.substring(1)
-    }
-
+    const entryPath = c.path || `${packager.appInfo.productFilename}.app`
     const entryName = c.name || path.basename(entryPath)
     result += `&makeEntries("${entryName}", Iloc_xy => [ ${c.x}, ${c.y} ]),\n`
 
     if (c.type === "link") {
-      asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
+      asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath.startsWith("/") ? entryPath.substring(1) : entryPath}`, `${volumePath}/${entryName}`]))
     }
-    else if (c.path != null && (c.type === "file" || c.type === "dir")) {
-      const source = await packager.getResource(entryPath)
+    // use c.path instead of entryPath (to be sure that this logic is not applied to .app bundle) https://github.com/electron-userland/electron-builder/issues/2147
+    else if (!isEmptyOrSpaces(c.path) && (c.type === "file" || c.type === "dir")) {
+      const source = await packager.getResource(c.path)
       if (source == null) {
         warn(`${entryPath} doesn't exist`)
         continue
