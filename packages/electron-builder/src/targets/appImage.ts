@@ -90,6 +90,9 @@ export default class AppImageTarget extends Target {
     if (debug.enabled) {
       args.push("--verbose")
     }
+    if (packager.compression === "maximum") {
+      args.push("--comp", "xz")
+    }
     args.push(stageDir, resultFile)
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {

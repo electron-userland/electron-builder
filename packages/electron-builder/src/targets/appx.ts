@@ -53,7 +53,7 @@ export default class AppXTarget extends Target {
       "/f", vm.toVmFile(mappingFile),
       "/p", vm.toVmFile(artifactPath),
     ]
-    if (packager.config.compression === "store") {
+    if (packager.compression === "store") {
       makeAppXArgs.push("/nc")
     }
 

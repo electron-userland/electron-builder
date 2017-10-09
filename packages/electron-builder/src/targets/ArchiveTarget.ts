@@ -21,10 +21,10 @@ export class ArchiveTarget extends Target {
     // tslint:disable:no-invalid-template-strings
     const outFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
     if (format.startsWith("tar.")) {
-      await tar(packager.config.compression, format, outFile, appOutDir, isMac)
+      await tar(packager.compression, format, outFile, appOutDir, isMac)
     }
     else {
-      await archive(packager.config.compression, format, outFile, appOutDir, {withoutDir: !isMac})
+      await archive(packager.compression, format, outFile, appOutDir, {withoutDir: !isMac})
     }
 
     packager.dispatchArtifactCreated(outFile, this, arch, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))

@@ -11,7 +11,7 @@ import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
-import { Platform, Target, TargetSpecificOptions } from "./core"
+import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Packager } from "./packager"
@@ -50,6 +50,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.projectDir = info.projectDir
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
+  }
+
+  get compression(): CompressionLevel {
+    const compression = this.platformSpecificBuildOptions.compression
+    // explicitly set to null - request to use default value instead of parent (in the config)
+    if (compression === null) {
+      return "normal"
+    }
+    return compression || this.config.compression || "normal"
   }
 
   get debugLogger(): DebugLogger {

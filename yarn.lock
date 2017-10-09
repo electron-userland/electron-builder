@@ -453,9 +453,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.128.0:
-  version "2.128.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.128.0.tgz#b9be561c5e3733c0068c6121b587674534662d4b"
+aws-sdk@^2.130.0:
+  version "2.130.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.130.0.tgz#f0c6da7dbda9a15cb0c2beb3030f6da2a4c03c36"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -783,9 +783,19 @@ bluebird-lst@^1.0.2, bluebird-lst@^1.0.3:
   dependencies:
     bluebird "^3.5.0"
 
+bluebird-lst@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/bluebird-lst/-/bluebird-lst-1.0.4.tgz#7fa1e4daaaf9e4e52f6dd0ec5b32e7ed4ca8cd6d"
+  dependencies:
+    bluebird "^3.5.1"
+
 bluebird@^3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.0.tgz#791420d7f551eea2897453a8a77653f96606d67c"
+
+bluebird@^3.5.1:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.1.tgz#d9551f9de98f1fcda1e683d17ee91a0602ee2eb9"
 
 bluebird@~3.4.6:
   version "3.4.7"
@@ -1934,11 +1944,11 @@ fs-extra-p@^4.4.0:
     bluebird-lst "^1.0.2"
     fs-extra "^4.0.0"
 
-fs-extra-p@^4.4.2:
-  version "4.4.2"
-  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-4.4.2.tgz#b6abd882a9b89f41b977771d3da788ce38f085f3"
+fs-extra-p@^4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-4.4.3.tgz#98be363dad570405474e72aecda29f2f4b60b53d"
   dependencies:
-    bluebird-lst "^1.0.2"
+    bluebird-lst "^1.0.4"
     fs-extra "^4.0.2"
 
 fs-extra@^4.0.0, fs-extra@^4.0.1:
@@ -4350,7 +4360,7 @@ sort-array@^1.1.1:
     object-get "^2.1.0"
     typical "^2.6.0"
 
-source-map-support@^0.4.15, source-map-support@^0.4.16:
+source-map-support@^0.4.15:
   version "0.4.16"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.16.tgz#16fecf98212467d017d586a2af68d628b9421cd8"
   dependencies:
@@ -4745,14 +4755,14 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^4.1.5:
-  version "4.1.5"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.1.5.tgz#b9b4f17b07e0aae012e9bca7aa64d43971a67c29"
+ts-babel@^4.1.6:
+  version "4.1.6"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.1.6.tgz#e00d497d4ff7c950c7bc8ace58489cabdb7d6967"
   dependencies:
     babel-core "^6.26.0"
-    bluebird-lst "^1.0.3"
-    fs-extra-p "^4.4.0"
-    source-map-support "^0.4.16"
+    bluebird-lst "^1.0.4"
+    fs-extra-p "^4.4.3"
+    source-map-support "^0.5.0"
     v8-compile-cache "^1.1.0"
 
 ts-jsdoc@^2.0.6:

@@ -1,4 +1,4 @@
-import { TargetConfiguration, TargetSpecificOptions } from "../core"
+import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { Protocol, ReleaseInfo } from "../configuration"
 import { AsarIntegrityOptions } from "asar-integrity"
 import { FileAssociation } from "./FileAssociation"
@@ -34,6 +34,12 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null
+
+  /**
+   * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
+   * @default normal
+   */
+  readonly compression?: CompressionLevel | null
 
   readonly files?: Array<FileSet | string> | FileSet | string | null
   readonly extraResources?: Array<FileSet | string> | FileSet | string | null

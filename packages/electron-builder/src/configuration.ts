@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { BeforeBuildContext, CompressionLevel, Target } from "./core"
+import { BeforeBuildContext, Target } from "./core"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
 import { SnapOptions } from "./options/SnapOptions"
@@ -24,12 +24,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
   readonly productName?: string | null
-
-  /**
-   * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
-   * @default normal
-   */
-  readonly compression?: CompressionLevel | null
 
   /**
    * The human-readable copyright line for the app.

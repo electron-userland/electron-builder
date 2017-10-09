@@ -1,4 +1,5 @@
 * <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
+* <code id="PlatformSpecificBuildOptions-compression">compression</code> = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
 * <code id="PlatformSpecificBuildOptions-files">files</code> The [files](/configuration/contents.md#files) configuration.
 * <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> The [extra resources](/configuration/contents.md#extraresources) configuration.
 * <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> The [extra files](/configuration/contents.md#extrafiles) configuration.

@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "debug": "^3.1.0",
-    "fs-extra-p": "^4.4.2",
-    "bluebird-lst": "^1.0.3"
+    "fs-extra-p": "^4.4.3",
+    "bluebird-lst": "^1.0.4"
   },
   "types": "./out/index.d.ts"
 }

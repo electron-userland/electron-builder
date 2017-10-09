@@ -65,7 +65,7 @@ export class NsisTarget extends Target {
     const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
     const archiveOptions: ArchiveOptions = {withoutDir: true}
-    let compression = packager.config.compression
+    let compression = packager.compression
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     if (isDifferentialPackage) {
@@ -73,7 +73,7 @@ export class NsisTarget extends Target {
       // our reader doesn't support compressed headers
       archiveOptions.isArchiveHeaderCompressed = false
       // do not allow to change compression level to avoid different packages
-      compression = null
+      compression = "normal"
     }
     await archive(compression, format, archiveFile, appOutDir, archiveOptions)
     timer.end()
@@ -195,7 +195,7 @@ export class NsisTarget extends Target {
       await this.configureDefines(oneClick, defines)
     }
 
-    if (packager.config.compression === "store") {
+    if (packager.compression === "store") {
       commands.SetCompress = "off"
     }
     else {

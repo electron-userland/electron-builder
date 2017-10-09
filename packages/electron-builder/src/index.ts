@@ -1,6 +1,6 @@
 export { Packager, BuildResult } from "./packager"
 export { PackagerOptions, ArtifactCreated } from "./packagerApi"
-export { TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET } from "./core"
+export { TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET, CompressionLevel } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { build, CliOptions, createTargets } from "./builder"
 export { Configuration, AfterPackContext, MetadataDirectories, Protocol, ReleaseInfo, ElectronDownloadOptions } from "./configuration"

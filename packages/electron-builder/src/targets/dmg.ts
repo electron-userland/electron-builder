@@ -180,11 +180,11 @@ export class DmgTarget extends Target {
       if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
         (specification as any).format = "UDZO"
       }
-      else if (packager.config.compression === "store") {
+      else if (packager.compression === "store") {
         (specification as any).format = "UDRO"
       }
       else {
-        (specification as any).format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
+        (specification as any).format = packager.compression === "maximum" ? "UDBZ" : "UDZO"
       }
     }
 
