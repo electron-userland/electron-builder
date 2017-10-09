@@ -1,8 +1,0 @@
-{
-  "lang": "English",
-  "agree": "Agree",
-  "disagree": "Disagree",
-  "print": "Print",
-  "save": "Save",
-  "description": "Here is my own description"
-}

@@ -207,13 +207,21 @@ test.ifAll.ifMac("license rtf", app({
   },
 }))
 
-test.ifAll.ifMac("license buttons config", app({targets: Platform.MAC.createTarget("dmg")}, {
+test.ifAll.ifMac("license buttons config", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  effectiveOptionComputed: async it => {
+    if ("licenseData" in it) {
+      expect(it.licenseData).toMatchSnapshot()
+    }
+    return false
+  },
+}, {
   projectDirCreated: projectDir => BluebirdPromise.all([
     copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt")),
     copyTestAsset("license_fr.txt", path.join(projectDir, "build", "license_fr.txt")),
     copyTestAsset("license_ja.txt", path.join(projectDir, "build", "license_ja.txt")),
     copyTestAsset("license_ko.txt", path.join(projectDir, "build", "license_ko.txt")),
-    copyTestAsset("licenseButtons_en.json", path.join(projectDir, "build", "licenseButtons_en.json")),
+    copyTestAsset("licenseButtons_en.yml", path.join(projectDir, "build", "licenseButtons_en.yml")),
     copyTestAsset("licenseButtons_fr.json", path.join(projectDir, "build", "licenseButtons_fr.json")),
     copyTestAsset("licenseButtons_ja.json", path.join(projectDir, "build", "licenseButtons_ja.json")),
     copyTestAsset("licenseButtons_ko.json", path.join(projectDir, "build", "licenseButtons_ko.json"))

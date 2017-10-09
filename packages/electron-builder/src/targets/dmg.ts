@@ -60,7 +60,10 @@ export class DmgTarget extends Target {
       await exec("hdiutil", addVerboseIfNeed(["internet-enable"]).concat(artifactPath))
     }
 
-    await addLicenseToDmg(packager, artifactPath)
+    const licenseData = await addLicenseToDmg(packager, artifactPath)
+    if (packager.packagerOptions.effectiveOptionComputed != null) {
+      await packager.packagerOptions.effectiveOptionComputed({licenseData})
+    }
 
     await this.signDmg(artifactPath)
 

@@ -13,7 +13,8 @@ export async function getLicenseButtonsFile(packager: PackageBuilder): Promise<A
   return getLicenseAssets((await packager.resourceList)
     .filter(it => {
       const name = it.toLowerCase()
-      return name.startsWith("licenseButtons_") && (name.endsWith(".json") || name.endsWith(".yml"))
+      // noinspection SpellCheckingInspection
+      return name.startsWith("licensebuttons_") && (name.endsWith(".json") || name.endsWith(".yml"))
     }), packager)
 }
 

@@ -11,11 +11,11 @@ export const debug = _debug("electron-builder")
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
 const DEFAULT_REGION_CODE = 0
 
-export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string) {
+export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string): Promise<string | null> {
   // http://www.owsiak.org/?p=700
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
-    return
+    return null
   }
 
   const licenseButtonFiles = await getLicenseButtonsFile(packager)
@@ -83,6 +83,8 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   await exec("hdiutil", ["unflatten", dmgPath])
   await exec("Rez", ["-a", tempFile, "-o", dmgPath])
   await exec("hdiutil", ["flatten", dmgPath])
+
+  return data
 }
 
 function getRtfUnicodeEscapedString(text: string) {
