@@ -33,8 +33,9 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
         nsis: {
           differentialPackage: true,
         },
-      }
+      },
     }, {
+      signed: true,
       packed: async context => {
         const outDir = context.outDir
         outDirs.push(outDir)

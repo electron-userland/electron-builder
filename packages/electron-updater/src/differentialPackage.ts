@@ -78,7 +78,7 @@ export class DifferentialDownloader {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
-    this.logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${formatBytes(((newPackageSize - downloadSize) / newPackageSize) * 100, "%")})`)
+    this.logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round((((newPackageSize - downloadSize) / newPackageSize) * 100))}%)`)
 
     await this.downloadFile(operations)
   }

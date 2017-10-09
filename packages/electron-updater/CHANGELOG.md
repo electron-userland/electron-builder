@@ -1,3 +1,9 @@
+# 2.10.2
+
+### Bug Fixes
+
+* Differential updater: fix "To download" in percentage value calculation (cosmetic fix)
+
 # 2.10.1
 
 ### Bug Fixes
