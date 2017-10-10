@@ -33,7 +33,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     // tslint:disable-next-line:no-invalid-template-strings
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
-    const packageFile = `${sanitizedName}-${version}-full.nupkg`
+    const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
 
     const installerOutDir = path.join(this.outDir, `win${getArchSuffix(arch)}`)
     const distOptions = await this.computeEffectiveDistOptions()
