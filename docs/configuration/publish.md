@@ -1,4 +1,4 @@
-The [publish](/configuration/configuration.md#Configuration-publish) key contains set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](/auto-update.md).
+The [publish](/configuration/configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](/auto-update.md).
 
 `String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions), [S3Options](#s3options) or [SpacesOptions](#spacesoptions). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](/configuration/configuration#configuration) or any platform- ([mac](/configuration/mac.md), [linux](/configuration/linux.md), [win](/configuration/win.md)) or target- (e.g. [nsis](/configuration/nsis.md)) specific configuration.
 
