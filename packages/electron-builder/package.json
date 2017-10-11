@@ -74,7 +74,7 @@
     "plist": "^2.1.0",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.4.1",
-    "update-notifier": "^2.2.0",
+    "update-notifier": "^2.3.0",
     "yargs": "^9.0.1",
     "debug": "^3.1.0",
     "asar-integrity": "0.0.0-semantic-release",

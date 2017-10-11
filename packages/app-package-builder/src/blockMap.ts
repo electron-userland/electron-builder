@@ -2,12 +2,12 @@ import BluebirdPromise from "bluebird-lst"
 import { hashFile } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { BlockMap, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
-import { createHash } from "crypto"
-import { appendFile, read, stat } from "fs-extra-p"
+import { appendFile, stat, writeFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Archive } from "./Archive"
 import { SevenZArchiveEntry } from "./SevenZArchiveEntry"
 import { SevenZFile } from "./SevenZFile"
+import { ContentDefinedChunker } from "./ContentDefinedChunker"
 
 const deflateRaw: any = BluebirdPromise.promisify(require("zlib").deflateRaw)
 
@@ -27,6 +27,9 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
     sevenZFile.close()
 
     const blockMapDataString = safeDump(blockMap)
+    if (process.env.DEBUG_BLOCKMAP) {
+      await writeFile(archiveFile + ".blockMap.yml", blockMapDataString)
+    }
     const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
     await appendFile(archiveFile, blockMapFileData)
     const packageFileInfo = await createPackageFileInfo(archiveFile)
@@ -47,25 +50,6 @@ export async function createPackageFileInfo(file: string): Promise<PackageFileIn
     size: (await stat(file)).size,
     sha512: await hashFile(file),
   }
-}
-
-async function computeBlocks(fd: number, start: number, end: number): Promise<Array<string>> {
-  const chunkSize = 64 * 1024
-  const buffer = Buffer.allocUnsafe(chunkSize)
-  const blocks = []
-
-  for (let offset = start; offset < end; offset += chunkSize) {
-    const actualChunkSize = Math.min(end - offset, chunkSize)
-    await read(fd, buffer, 0, actualChunkSize, offset)
-
-    const hash = createHash("md5")
-    hash.update(actualChunkSize === chunkSize ? buffer : buffer.slice(0, actualChunkSize))
-    // node-base91 doesn't make a lot of sense - 29KB vs 30KB Because for base64 string value in the yml never escaped, but node-base91 often escaped (single quotes) and it adds extra 2 symbols.
-    // And in any case data stored as deflated in the package.
-    blocks.push(hash.digest("base64"))
-  }
-
-  return blocks
 }
 
 class BlockMapBuilder {
@@ -129,19 +113,61 @@ export async function computeBlockMap(sevenZFile: SevenZFile): Promise<BlockMap>
     }
   }
 
+  const stats: Array<string> = []
   const blocks = await BluebirdPromise.map(files, async entry => {
-    const blocks = await computeBlocks(sevenZFile.fd, entry.dataStart, entry.dataEnd)
+    const chunker = new ContentDefinedChunker()
+    const blocks = await chunker.computeChunks(sevenZFile.fd, entry.dataStart, entry.dataEnd, entry.name)
+
+    if (process.env.DEBUG_BLOCKMAP) {
+      stats.push(getStat(blocks.sizes, entry.name))
+    }
+
     return {
       name: entry.name.replace(/\\/g, "/"),
       offset: entry.dataStart,
       size: entry.dataEnd - entry.dataStart,
-      blocks,
+      ...blocks,
     }
-  }, {concurrency: 4})
+  }, {concurrency: 2})
+
+  if (process.env.DEBUG_BLOCKMAP) {
+    let duplicate = 0
+    let savedSize = 0
+    // noinspection JSMismatchedCollectionQueryUpdate
+    const checksums: Array<string> = []
+    // noinspection JSMismatchedCollectionQueryUpdate
+    const sizes: Array<number> = []
+    const index = new Map<string, number>()
+    for (const file of blocks) {
+      for (let i = 0; i < file.checksums.length; i++) {
+        const checksum = file.checksums[i]
+        const size = file.sizes[i]
+        if (index.has(checksum)) {
+          duplicate++
+          savedSize += size
+        }
+        else {
+          index.set(checksum, checksums.length)
+          checksums.push(checksum)
+          sizes.push(size)
+        }
+      }
+    }
+
+    console.log(stats.join("\n"))
+    console.log(`duplicates: ${duplicate}, saved: ${savedSize}`)
+  }
+
   return {
-    blockSize: 64,
-    hashMethod: "md5",
-    compressionLevel: 9,
+    version: "2",
     files: blocks,
   }
+}
+
+function getStat(sizes: Array<number>, name: string) {
+  const sortedSizes = sizes.slice().sort((a, b) => a - b)
+  const middle = Math.floor(sortedSizes.length / 2)
+  const isEven = sortedSizes.length % 2 === 0
+  const median = isEven ? (sortedSizes[middle] + sortedSizes[middle - 1]) / 2 : sortedSizes[middle]
+  return `${sizes.length} chunks generated for ${name} (min: ${sortedSizes[0]}, max: ${sortedSizes[sortedSizes.length - 1]}, median: ${median})`
 }

@@ -44,11 +44,14 @@
       <w>checksums</w>
       <w>chipset</w>
       <w>chown</w>
+      <w>chunker</w>
+      <w>chunking</w>
       <w>circleci</w>
       <w>clcerts</w>
       <w>cleanuped</w>
       <w>cleanuper</w>
       <w>codesigning</w>
+      <w>confirmative</w>
       <w>controlfields</w>
       <w>coroutine</w>
       <w>cpus</w>
@@ -349,6 +352,7 @@
       <w>zenity</w>
       <w>zisofs</w>
       <w>zlib</w>
+      <w>zsync</w>
     </words>
   </dictionary>
 </component>

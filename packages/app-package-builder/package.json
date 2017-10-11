@@ -16,7 +16,8 @@
     "int64-buffer": "^0.1.9",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",
-    "js-yaml": "^3.10.0"
+    "js-yaml": "^3.10.0",
+    "rabin-bindings": "~1.7.3"
   },
   "types": "./out/main.d.ts"
 }

@@ -1,20 +1,18 @@
 export const BLOCK_MAP_FILE_NAME = "_blockMap.yml"
 export const SIGNATURE_HEADER_SIZE = 12 /* signature + 2 bytes version + 4 bytes CRC */ + 20
 
+export interface FileChunks {
+  checksums: Array<string>
+  sizes: Array<number>
+}
+
 export interface BlockMap {
-  blockSize: number
-  hashMethod: "sha256" | "md5"
-
-  compressionLevel: 9 | 1
-
+  version: "1" | "2"
   files: Array<BlockMapFile>
 }
 
-export interface BlockMapFile {
+export interface BlockMapFile extends FileChunks {
   name: string
   offset: number
   size: number
-
-  // size of block 64K, last block size `size % (64 * 1024)`
-  blocks: Array<string>
 }

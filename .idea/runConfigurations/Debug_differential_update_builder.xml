@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug differential update builder" type="NodeJSConfigurationType" factoryName="Node.js" path-to-js-file="main.js" working-dir="$PROJECT_DIR$/packages/app-package-builder/out">
+    <envs>
+      <env name="NODE_PATH" value="$PROJECT_DIR$/packages" />
+    </envs>
+    <method />
+  </configuration>
+</component>

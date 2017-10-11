@@ -17,6 +17,16 @@ export class DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 }
 
+function buildChecksumToOffsetMap(file: BlockMapFile, fileOffset: number) {
+  const result = new Map<string, number>()
+  let offset = fileOffset
+  for (let i = 0; i < file.checksums.length; i++) {
+    result.set(file.checksums[i], offset)
+    offset += file.sizes[i]
+  }
+  return result
+}
+
 export class DifferentialDownloader {
   private readonly baseRequestOptions: RequestOptions
 
@@ -49,11 +59,8 @@ export class DifferentialDownloader {
     const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(this.packageInfo.headerSize!!))
 
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
-    if (oldBlockMap.hashMethod !== newBlockMap.hashMethod) {
-      throw new Error(`hashMethod is different (${oldBlockMap.hashMethod} - ${newBlockMap.hashMethod}), full download is required`)
-    }
-    if (oldBlockMap.blockSize !== newBlockMap.blockSize) {
-      throw new Error(`blockSize is different (${oldBlockMap.blockSize} - ${newBlockMap.blockSize}), full download is required`)
+    if (oldBlockMap.version !== newBlockMap.version) {
+      throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
     }
 
     const operations = this.computeOperations(oldBlockMap, newBlockMap)
@@ -78,7 +85,7 @@ export class DifferentialDownloader {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
-    this.logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round((((newPackageSize - downloadSize) / newPackageSize) * 100))}%)`)
+    this.logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newPackageSize / 100))}%)`)
 
     await this.downloadFile(operations)
   }
@@ -178,9 +185,6 @@ export class DifferentialDownloader {
     const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
     const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
 
-    // convert kb to bytes
-    const blockSize = newBlockMap.blockSize * 1024
-
     const oldEntryMap = buildEntryMap(oldBlockMap.files)
 
     const operations: Array<Operation> = []
@@ -205,33 +209,22 @@ export class DifferentialDownloader {
 
       let changedBlockCount = 0
 
+      const checksumToOldOffset = buildChecksumToOffsetMap(oldFile, oldEntry.offset)
+
+      let newOffset = 0
       blockMapLoop:
-      for (let i = 0; i < newFile.blocks.length; i++) {
-        if (i >= oldFile.blocks.length) {
-          break
-        }
+      for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
+        const currentBlockSize = newFile.sizes[i]
 
-        const isFirstBlock = i === 0
-        const isLastBlock = i === (newFile.blocks.length - 1)
-        const currentBlockSize = isLastBlock ? (newFile.size % blockSize) : blockSize
+        const oldOffset = checksumToOldOffset.get(newFile.checksums[i])
+        if (oldOffset == null) {
+          changedBlockCount++
 
-        if (oldFile.blocks[i] === newFile.blocks[i]) {
-          if (lastOperation == null || lastOperation.kind !== OperationKind.COPY) {
-            const start = oldEntry.offset + (i * blockSize)
-            const end = start + currentBlockSize
-            if (isFirstBlock) {
-              if (operations.length > 0) {
-                const prevOperation = operations[operations.length - 1]
-                if (prevOperation.kind === OperationKind.COPY && prevOperation.end === start) {
-                  lastOperation = prevOperation
-                  prevOperation.end = end
-                  continue blockMapLoop
-                }
-              }
-            }
-
+          const start = blockMapFile.offset + newOffset
+          const end = start + currentBlockSize
+          if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD) {
             lastOperation = {
-              kind: OperationKind.COPY,
+              kind: OperationKind.DOWNLOAD,
               start,
               end,
             }
@@ -242,14 +235,20 @@ export class DifferentialDownloader {
           }
         }
         else {
-          changedBlockCount++
+          if (lastOperation == null || lastOperation.kind !== OperationKind.COPY || lastOperation.end !== oldOffset) {
+            const end: number = oldOffset + currentBlockSize
+            if (i === 0 && operations.length > 0) {
+              const prevOperation = operations[operations.length - 1]
+              if (prevOperation.kind === OperationKind.COPY && prevOperation.end === oldOffset) {
+                lastOperation = prevOperation
+                prevOperation.end = end
+                continue blockMapLoop
+              }
+            }
 
-          const start = blockMapFile.offset + (i * blockSize)
-          const end = start + currentBlockSize
-          if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD) {
             lastOperation = {
-              kind: OperationKind.DOWNLOAD,
-              start,
+              kind: OperationKind.COPY,
+              start: oldOffset,
               end,
             }
             operations.push(lastOperation)
