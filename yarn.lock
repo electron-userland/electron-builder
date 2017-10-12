@@ -14,9 +14,9 @@
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/7zip-bin-win/-/7zip-bin-win-2.1.1.tgz#8acfc28bb34e53a9476b46ae85a97418e6035c20"
 
-"7zip-bin@^2.2.4":
-  version "2.2.4"
-  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.2.4.tgz#5d0a7da759258b7fa59121fddcec7cb65938a85c"
+"7zip-bin@^2.2.7":
+  version "2.2.7"
+  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.2.7.tgz#724802b8d6bda0bf2cfe61a4b86a820efc8ece93"
   optionalDependencies:
     "7zip-bin-linux" "^1.1.0"
     "7zip-bin-mac" "^1.0.1"
@@ -453,9 +453,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.131.0:
-  version "2.131.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.131.0.tgz#5b213fa493ce36a88130b50bef0e9a0cb6cd9f72"
+aws-sdk@^2.132.0:
+  version "2.132.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.132.0.tgz#6ece84bf355a6626fc8ba24023809c08ca1ee372"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"

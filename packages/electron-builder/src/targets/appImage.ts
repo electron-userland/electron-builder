@@ -17,6 +17,7 @@ const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
 })
 
+// https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
   readonly options: AppImageOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
   private readonly desktopEntry: Lazy<string>

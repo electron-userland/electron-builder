@@ -21,7 +21,7 @@ export class ArchiveTarget extends Target {
     // tslint:disable:no-invalid-template-strings
     const outFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
     if (format.startsWith("tar.")) {
-      await tar(packager.compression, format, outFile, appOutDir, isMac)
+      await tar(packager.compression, format, outFile, appOutDir, isMac, packager.info.tempDirManager)
     }
     else {
       await archive(packager.compression, format, outFile, appOutDir, {withoutDir: !isMac})

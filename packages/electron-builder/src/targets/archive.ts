@@ -1,58 +1,79 @@
-import { path7x, path7za } from "7zip-bin"
-import { debug7z, debug7zArgs, isMacOsSierra, spawn } from "builder-util"
-import { computeEnv, getLinuxToolsPath } from "builder-util/out/bundledTool"
-import { exists } from "builder-util/out/fs"
-import { unlink } from "fs-extra-p"
+import { path7za } from "7zip-bin"
+import { debug7z, debug7zArgs, exec } from "builder-util"
+import { exists, unlinkIfExists } from "builder-util/out/fs"
 import * as path from "path"
 import { CompressionLevel } from "../core"
-
-class CompressionDescriptor {
-  constructor(readonly flag: string, readonly env: string, readonly minLevel: string, readonly maxLevel: string = "-9") {
-  }
-}
-
-const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
-  "tar.xz": new CompressionDescriptor(`-I'${path7x}'`, "XZ_OPT", "-0", "-9e"),
-  "tar.lz": new CompressionDescriptor("--lzip", "LZOP", "-0"),
-  "tar.gz": new CompressionDescriptor("--gz", "GZIP", "-1"),
-  "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
-}
+import { TmpDir } from "temp-file"
+import BluebirdPromise from "bluebird-lst"
+import { getLinuxToolsPath } from "builder-util/out/bundledTool"
+import { move } from "fs-extra-p"
 
 /** @internal */
-export async function tar(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, isMacApp: boolean = false) {
-  // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on MacOS and often hangs on Linux (even if use pipe-io lib)
-  // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
-  const info = extToCompressionDescriptor[format]
-  let tarEnv = process.env
-  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-    tarEnv = {...tarEnv}
-    tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
-  }
-  else if (compression != null && compression !== "normal") {
-    tarEnv = {...tarEnv}
-    tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
-  }
+export async function tar(compression: CompressionLevel | any | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
+  const tarFile = await tempDirManager.getTempFile({suffix: ".tar"})
+  const tarArgs = debug7zArgs("a")
+  tarArgs.push(tarFile)
+  tarArgs.push(path.basename(dirToArchive))
 
-  const args = [info.flag, "-cf", outFile]
+  await BluebirdPromise.all([
+    exec(path7za, tarArgs, {cwd: path.dirname(dirToArchive)}),
+    // remove file before - 7z doesn't overwrite file, but update
+    unlinkIfExists(outFile),
+  ])
+
   if (!isMacApp) {
-    args.push("--transform", `s,^\\.,${path.basename(outFile, "." + format)},`)
+    await exec(path7za, ["rn", tarFile, path.basename(dirToArchive), path.basename(outFile, `.${format}`)])
   }
-  args.push(isMacApp ? path.basename(dirToArchive) : ".")
 
-  if (await isMacOsSierra()) {
-    const linuxToolsPath = await getLinuxToolsPath()
-    tarEnv = {
-      ...tarEnv,
-      PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
-      SZA_PATH: path7za,
+  if (format === "tar.lz") {
+    // noinspection SpellCheckingInspection
+    let lzipPath = "lzip"
+    if (process.platform === "darwin") {
+      lzipPath = path.join(await getLinuxToolsPath(), "bin", lzipPath)
     }
+    await exec(lzipPath, [compression === "store" ? "-1" : "-9", "--keep" /* keep (don't delete) input files */, tarFile])
+    // bloody lzip creates file in the same dir where input file with postfix `.lz`, option --output doesn't work
+    await move(`${tarFile}.lz`, outFile)
+    return
   }
 
-  await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
-    cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
-    env: tarEnv,
-  })
-  return outFile
+  const args = compute7zCompressArgs(compression, format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), {isRegularFile: true})
+  args.push(outFile, tarFile)
+  await exec(path7za, args, {
+    cwd: path.dirname(dirToArchive),
+  }, debug7z.enabled)
+
+  // const info: CompressionDescriptor | null = extToCompressionDescriptor[format]
+  // const tarEnv: any = {
+  //   ...process.env,
+  //   SZA_PATH: path7za,
+  //   SZA_ARCHIVE_TYPE: format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"),
+  //   SZA_COMPRESSION_LEVEL: process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || (compression === "store" ? "0" : "9")
+  // }
+  //
+  // if (info != null) {
+  //   if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+  //     tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  //   }
+  //   else if (compression != null && compression !== "normal") {
+  //     tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
+  //   }
+  // }
+  //
+  // const args = [info == null ? `-I'${path7x}'` : info.flag, "-cf", outFile]
+  // if (!isMacApp) {
+  //   args.push("--transform", `s,^\\.,${path.basename(outFile, `.${format}`)},`)
+  // }
+  // args.push(isMacApp ? path.basename(dirToArchive) : ".")
+  //
+  // if (await isMacOsSierra()) {
+  //   tarEnv.PATH = computeEnv(process.env.PATH, [path.join(await getLinuxToolsPath(), "bin")])
+  // }
+  //
+  // await exec(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
+  //   cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
+  //   env: tarEnv,
+  // })
 }
 
 export interface ArchiveOptions {
@@ -77,6 +98,8 @@ export interface ArchiveOptions {
   excluded?: Array<string>
 
   method?: "Copy" | "LZMA" | "Deflate"
+
+  isRegularFile?: boolean
 }
 
 export function compute7zCompressArgs(compression: CompressionLevel | any | any, format: string, options: ArchiveOptions = {}) {
@@ -107,7 +130,9 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
   // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
   // tc and ta are off by default, but to be sure, we explicitly set it to off
   // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
-  args.push("-mtc=off")
+  if (!options.isRegularFile) {
+    args.push("-mtc=off")
+  }
 
   if (format === "7z" || format.endsWith(".7z")) {
     if (options.solid === false) {
@@ -126,7 +151,7 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
   if (options.method != null) {
     args.push(`-mm=${options.method}`)
   }
-  else if (format === "zip" || storeOnly) {
+  else if (!options.isRegularFile && (format === "zip" || storeOnly)) {
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
@@ -144,12 +169,7 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
 export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
   const args = compute7zCompressArgs(compression, format, options)
   // remove file before - 7z doesn't overwrite file, but update
-  try {
-    await unlink(outFile)
-  }
-  catch (e) {
-    // ignore
-  }
+  await unlinkIfExists(outFile)
 
   args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)
   if (options.excluded != null) {
@@ -157,9 +177,9 @@ export async function archive(compression: CompressionLevel | null | undefined, 
   }
 
   try {
-    await spawn(path7za, args, {
+    await exec(path7za, args, {
       cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
-    }, {isDebugEnabled: debug7z.enabled})
+    }, debug7z.enabled)
   }
   catch (e) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {

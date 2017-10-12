@@ -38,9 +38,6 @@ async function runTests() {
   const args = []
   if (!isEmptyOrSpaces(testFiles)) {
     args.push(...testFiles!!.split(",").map(it => `${it.trim()}.js`))
-    if (process.platform === "linux") {
-      args.push("httpRequestTest.js", "RepoSlugTest.js")
-    }
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
