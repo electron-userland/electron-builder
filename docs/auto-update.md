@@ -1,4 +1,4 @@
-See [publish configuration](/configuration/publish.md) for more information on how to configure your CI environment for automated deployments.
+See [publish configuration](/configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
 
 Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
 
@@ -7,8 +7,8 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 * It doesn't require a dedicated release server.
 * Code signature validation not only on macOS, but also on Windows.
 * electron-builder produces and publishes all required metadata files and artifacts.
-* Download progress supported on all platforms, including macOS.
-* [Staged rollouts](#staged-rollouts) supported on all platforms, including macOS.
+* Download progress supported on all platforms.
+* [Staged rollouts](#staged-rollouts) supported on all platforms.
 * Actually, built-in autoUpdater is used inside on macOS.
 * Different providers supported out of the box ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Bintray](https://bintray.com) and generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
@@ -24,21 +24,31 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
     ```js
     import { autoUpdater } from "electron-updater"
     ```
-    
+
     Or if you don't use ES6: `const autoUpdater = require("electron-updater").autoUpdater`
 
-4. Implement `electron-updater` events, check examples below.
+4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
-**NOTICE**: 
+**NOTICE**:
 
-1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
+1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
 2. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
 
 ### Examples
 
-* A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 * [Example in Typescript](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts) using system notifications.
+* A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 * An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/master/docs/encapsulated%20manual%20update%20via%20menu.js).
+
+## Debugging
+
+You don't need to listen all events to understand what's wrong. Just set `logger`.
+[electron-log](https://github.com/megahertz/electron-log) is recommended (it is an additional dependency that you can install if needed).
+
+```js
+autoUpdater.logger = require("electron-log")
+autoUpdater.logger.transports.file.level = "info"
+```
 
 ## Staged Rollouts
 
@@ -54,13 +64,13 @@ stagingPercentage: 10
 ```
 
 Update will be shipped to 10% of userbase.
- 
-If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.  
+
+If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.
 Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.
 
 ## File Generated and Uploaded in Addition
 
-`latest.yml` (or `latest-mac.yml` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+`latest.yml` (or `latest-mac.yml` for macOS, or `latest-linux.yml` for Linux) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
 ## Private GitHub Update Repo
 
@@ -70,16 +80,6 @@ If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allow
 Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
 
 **Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
-
-## Debugging
-
-You don't need to listen all events to understand what's wrong. Just set `logger`.
-[electron-log](https://github.com/megahertz/electron-log) is recommended (it is an additional dependency that you can install if needed).
-
-```js
-autoUpdater.logger = require("electron-log")
-autoUpdater.logger.transports.file.level = "info"
-```
 
 ### Events
 
@@ -252,12 +252,11 @@ This is different from the normal quit event sequence.
 **Extends**: <code>[VersionInfo](#VersionInfo)</code>  
 **Properties**
 * **<code id="UpdateInfo-path">path</code>** String
-* <code id="UpdateInfo-packages">packages</code> Object&lt;String, any&gt;
+* **<code id="UpdateInfo-sha512">sha512</code>** String
 * <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
 * <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
 * <code id="UpdateInfo-releaseNotes">releaseNotes</code> String - The release notes.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
-* <code id="UpdateInfo-sha512">sha512</code> String
 * <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
 * **<code id="UpdateInfo-version">version</code>** String - The version.
 

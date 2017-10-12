@@ -1,5 +1,5 @@
 import { hashFile } from "builder-util"
-import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions } from "builder-util-runtime"
+import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -91,8 +91,8 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
       info = {
         ...info,
-        sha2: await sha2.value,
-      }
+      };
+      (info as WindowsUpdateInfo).sha2 = await sha2.value
     }
 
     if (event.safeArtifactName != null && publishConfig.provider === "github") {
@@ -109,7 +109,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, `${channel}${isMac ? "-mac" : ""}.yml`)
+      const updateInfoFile = path.join(dir, `${channel}${packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`}.yml`)
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
@@ -134,29 +134,15 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
 }
 
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo) {
-  const info: UpdateInfo = {
+  const customUpdateInfo = event.updateInfo
+  return {
     version,
     releaseDate: new Date().toISOString(),
     path: path.basename(event.file!),
-    sha512: await hashFile(event.file!),
+    ...customUpdateInfo,
+    sha512: (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!),
     ...releaseInfo as UpdateInfo,
   }
-
-  const packageFiles = event.packageFiles
-  if (packageFiles != null) {
-    const keys = Object.keys(packageFiles)
-    if (keys.length > 0) {
-      info.packages = {}
-      for (const arch of keys) {
-        const packageFileInfo = packageFiles[arch]
-        info.packages[arch] = {
-          ...packageFileInfo,
-          file: path.basename(packageFileInfo.file)
-        }
-      }
-    }
-  }
-  return info
 }
 
 // backward compatibility - write json file

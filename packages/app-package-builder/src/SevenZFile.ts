@@ -1,6 +1,5 @@
-import BluebirdPromise from "bluebird-lst"
 import { SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
-import { close, open, read } from "fs-extra-p"
+import { read } from "fs-extra-p"
 import { Archive, StreamMap } from "./Archive"
 import { BitSet } from "./BitSet"
 import { BindPair, Coder, Folder } from "./Folder"
@@ -37,42 +36,18 @@ const kStartPos = 0x18
 const kDummy = 0x19
 
 export class SevenZFile {
-  fd = -1
-
   archive: Archive
 
-  constructor(private readonly file: string) {
+  constructor(readonly fd: number) {
   }
 
   async read() {
     this.archive = await this.readHeaders()
-    return this.archive
   }
-
-  close() {
-    if (this.fd !== -1) {
-      const fd = this.fd
-      this.fd = -1
-      return close(fd)
-    }
-    else {
-      return BluebirdPromise.resolve()
-    }
-  }
-
-  // get nextEntry() {
-  //   if (this.currentEntryIndex >= this.archive.files.length - 1) {
-  //     return null
-  //   }
-  //   ++this.currentEntryIndex
-  //   return this.archive.files[this.currentEntryIndex]
-  // }
 
   private async readHeaders() {
-    const fd = await open(this.file, "r")
-    this.fd = fd
     let _buf = Buffer.allocUnsafe(SIGNATURE_HEADER_SIZE)
-    await read(fd, _buf, 0, _buf.length, 0)
+    await read(this.fd, _buf, 0, _buf.length, 0)
     const index = sevenZSignature.length
     const signature = _buf.slice(0, index)
     if (!sevenZSignature.equals(signature)) {
@@ -91,7 +66,7 @@ export class SevenZFile {
 
     const startHeader = readStartHeader(startHeaderCrc, buf)
     _buf = Buffer.allocUnsafe(startHeader.nextHeaderSize)
-    await read(fd, _buf, 0, _buf.length, SIGNATURE_HEADER_SIZE + startHeader.nextHeaderOffset)
+    await read(this.fd, _buf, 0, _buf.length, SIGNATURE_HEADER_SIZE + startHeader.nextHeaderOffset)
 
     // if (startHeader.nextHeaderCrc !== crc32(_buf)) {
     //   throw new Error("Header CRC mismatch")

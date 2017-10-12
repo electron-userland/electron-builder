@@ -1959,6 +1959,13 @@ fs-extra-p@^4.4.3:
     bluebird-lst "^1.0.4"
     fs-extra "^4.0.2"
 
+fs-extra-p@^4.4.4:
+  version "4.4.4"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-4.4.4.tgz#396ad6f914eb2954e1700fd0e18288301ed45f04"
+  dependencies:
+    bluebird-lst "^1.0.4"
+    fs-extra "^4.0.2"
+
 fs-extra@^4.0.0, fs-extra@^4.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.1.tgz#7fc0c6c8957f983f57f306a24e5b9ddd8d0dd880"

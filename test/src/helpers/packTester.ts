@@ -144,14 +144,6 @@ export function getFixtureDir() {
   return path.join(__dirname, "..", "..", "fixtures")
 }
 
-function normalizeUpdateInfo(host: any, key: string) {
-  delete host[key].sha512
-  delete host[key].size
-  delete host[key].headerSize
-  delete host[key].blockMapSize
-  host[key].file = path.basename(host[key].file)
-}
-
 async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
@@ -184,38 +176,13 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       const result: any = {...it}
       if (result.file != null) {
         if (result.file.endsWith(".yml")) {
-          const fileContent = safeLoad(await readFile(result.file, "utf-8"))
-          delete fileContent.sha2
-          delete fileContent.sha512
-          delete fileContent.releaseDate
-
-          if (fileContent.packages != null) {
-            const archs = Object.keys(fileContent.packages)
-            if (archs.length === 0) {
-              delete fileContent.packages
-            }
-            else {
-              for (const arch of archs) {
-                normalizeUpdateInfo(fileContent.packages, arch)
-              }
-            }
-          }
-
-          result.fileContent = fileContent
+          result.fileContent = removeUnstableProperties(safeLoad(await readFile(result.file, "utf-8")))
         }
         result.file = path.basename(result.file)
       }
-      const packageFiles = result.packageFiles
-      if (packageFiles != null) {
-        const archs = Object.keys(packageFiles)
-        if (archs.length === 0) {
-          delete result.packageFiles
-        }
-        else {
-          for (const arch of archs) {
-            normalizeUpdateInfo(packageFiles, arch)
-          }
-        }
+      const updateInfo = result.updateInfo
+      if (updateInfo != null) {
+        result.updateInfo = removeUnstableProperties(updateInfo)
       }
 
       // reduce snapshot - avoid noise
@@ -474,4 +441,13 @@ export function convertUpdateInfo(info: any) {
 
 export async function checkDirContents(dir: string) {
   expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => it.substring(dir.length + 1))).toMatchSnapshot()
+}
+
+export function removeUnstableProperties(data: any) {
+  return JSON.parse(JSON.stringify(data, (name, value) => {
+    if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
+      return undefined
+    }
+    return value
+  }))
 }

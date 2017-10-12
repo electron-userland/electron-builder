@@ -5,8 +5,6 @@ import { Rabin } from "rabin-bindings"
 
 export class ContentDefinedChunker {
   async computeChunks(fd: number, start: number, end: number, name: string): Promise<FileChunks> {
-    console.log(name)
-
     const fileSize = end - start
     const buffer = Buffer.allocUnsafe(Math.min(4 * 1024 * 1024, fileSize))
 

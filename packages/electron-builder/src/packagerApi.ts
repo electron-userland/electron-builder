@@ -1,5 +1,5 @@
 import { Arch } from "builder-util"
-import { PackageFileInfo, PublishConfiguration } from "builder-util-runtime"
+import { PublishConfiguration } from "builder-util-runtime"
 import { Configuration } from "./configuration"
 import { Platform, Target } from "./core"
 import { Packager } from "./packager"
@@ -30,7 +30,7 @@ export interface ArtifactCreated extends UploadTask {
   readonly packager: PlatformPackager<any>
   readonly target: Target | null
 
-  readonly packageFiles?: { [arch: string]: PackageFileInfo } | null
+  readonly updateInfo?: any
 
   readonly safeArtifactName?: string | null
 

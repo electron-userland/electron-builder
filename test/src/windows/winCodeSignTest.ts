@@ -2,6 +2,14 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
+import { parseDn } from "builder-util-runtime"
+import { safeLoad } from "js-yaml"
+
+test("parseDn", () => {
+  expect(parseDn("CN=7digital Limited, O=7digital Limited, L=London, C=GB")).toMatchSnapshot()
+
+  expect(safeLoad("publisherName:\n  - 7digital Limited")).toMatchObject({publisherName: ["7digital Limited"]})
+})
 
 describe.ifAll("sign", () => {
   const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])

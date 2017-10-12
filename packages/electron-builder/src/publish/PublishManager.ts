@@ -84,24 +84,10 @@ export class PublishManager implements PublishContext {
         return
       }
 
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, event.arch), event.arch)
-      if (publishConfigs == null || publishConfigs.length === 0) {
-        return
+      const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch)
+      if (publishConfig != null) {
+        await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
       }
-
-      let publishConfig = publishConfigs[0]
-
-      if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
-        const winPackager = packager as WinPackager
-        if (winPackager.isForceCodeSigningVerification) {
-          const publisherName = await winPackager.computedPublisherName.value
-          if (publisherName != null) {
-            publishConfig = {...publishConfig, publisherName}
-          }
-        }
-      }
-
-      await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
     })
 
     packager.artifactCreated(event => this.taskManager.addTask(this.artifactCreated(event)))
@@ -143,7 +129,8 @@ export class PublishManager implements PublishContext {
 
     if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") ||
-        (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target, event))) {
+        (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target, event)) ||
+        (packager.platform === Platform.LINUX && event.isWriteUpdateInfo)) {
         this.taskManager.addTask(writeUpdateInfo(event, publishConfigs).then(it => this.postponedArtifactCreatedEvents.push(...it)))
       }
     }
@@ -177,6 +164,26 @@ export class PublishManager implements PublishContext {
       await this.taskManager.awaitTasks()
     }
   }
+}
+
+export async function getAppUpdatePublishConfiguration(packager: PlatformPackager<any>, arch: Arch) {
+  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch), arch)
+  if (publishConfigs == null || publishConfigs.length === 0) {
+    return null
+  }
+
+  let publishConfig = publishConfigs[0]
+
+  if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
+    const winPackager = packager as WinPackager
+    if (winPackager.isForceCodeSigningVerification) {
+      const publisherName = await winPackager.computedPublisherName.value
+      if (publisherName != null) {
+        publishConfig = {...publishConfig, publisherName}
+      }
+    }
+  }
+  return publishConfig
 }
 
 export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null, arch: Arch | null): Promise<Array<PublishConfiguration> | null> {

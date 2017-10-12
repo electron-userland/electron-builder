@@ -1,4 +1,4 @@
-import { CancellationToken, HttpExecutor, UpdateInfo, VersionInfo } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, UpdateInfo, VersionInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { FileInfo, isUseOldMacProvider } from "./main"
@@ -26,7 +26,7 @@ export abstract class Provider<T extends VersionInfo> {
     }
 
     // noinspection JSDeprecatedSymbols
-    if (info.sha2 == null && info.sha512 == null) {
+    if ((info as WindowsUpdateInfo).sha2 == null && info.sha512 == null) {
       throw new Error(`Update info doesn't contain sha2 or sha512 checksum: ${JSON.stringify(info, null, 2)}`)
     }
     if (info.path == null) {

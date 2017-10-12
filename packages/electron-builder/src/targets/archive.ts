@@ -42,38 +42,6 @@ export async function tar(compression: CompressionLevel | any | any, format: str
   await exec(path7za, args, {
     cwd: path.dirname(dirToArchive),
   }, debug7z.enabled)
-
-  // const info: CompressionDescriptor | null = extToCompressionDescriptor[format]
-  // const tarEnv: any = {
-  //   ...process.env,
-  //   SZA_PATH: path7za,
-  //   SZA_ARCHIVE_TYPE: format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"),
-  //   SZA_COMPRESSION_LEVEL: process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || (compression === "store" ? "0" : "9")
-  // }
-  //
-  // if (info != null) {
-  //   if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-  //     tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
-  //   }
-  //   else if (compression != null && compression !== "normal") {
-  //     tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
-  //   }
-  // }
-  //
-  // const args = [info == null ? `-I'${path7x}'` : info.flag, "-cf", outFile]
-  // if (!isMacApp) {
-  //   args.push("--transform", `s,^\\.,${path.basename(outFile, `.${format}`)},`)
-  // }
-  // args.push(isMacApp ? path.basename(dirToArchive) : ".")
-  //
-  // if (await isMacOsSierra()) {
-  //   tarEnv.PATH = computeEnv(process.env.PATH, [path.join(await getLinuxToolsPath(), "bin")])
-  // }
-  //
-  // await exec(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
-  //   cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
-  //   env: tarEnv,
-  // })
 }
 
 export interface ArchiveOptions {

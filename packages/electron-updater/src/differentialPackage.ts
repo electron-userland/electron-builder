@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, PackageFileInfo, safeGetHeader } from "builder-util-runtime"
+import { configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, BlockMapDataHolder, safeGetHeader, PackageFileInfo } from "builder-util-runtime"
 import { BlockMap, BlockMapFile, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
 import { close, createReadStream, createWriteStream, open, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
@@ -9,10 +9,10 @@ import { Logger } from "./main"
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
 
 export class DifferentialDownloaderOptions {
-  readonly oldBlockMapFile: string
   readonly oldPackageFile: string
+  readonly newUrl: string
   readonly logger: Logger
-  readonly packagePath: string
+  readonly newFile: string
 
   readonly requestHeaders: OutgoingHttpHeaders | null
 }
@@ -34,9 +34,13 @@ export class DifferentialDownloader {
 
   private readonly logger: Logger
 
-  constructor(private readonly packageInfo: PackageFileInfo, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
+  constructor(private readonly packageInfo: BlockMapDataHolder, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
     this.logger = options.logger
-    this.baseRequestOptions = configureRequestOptionsFromUrl(packageInfo.file, {})
+    this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
+  }
+
+  protected get signatureSize() {
+    return 0
   }
 
   private createRequestOptions(method: "head" | "get" = "get"): RequestOptions {
@@ -50,14 +54,24 @@ export class DifferentialDownloader {
     }
   }
 
-  async download() {
-    const packageInfo = this.packageInfo
+  async downloadNsisPackage(oldBlockMapFile: string) {
+    const packageInfo = this.packageInfo as PackageFileInfo
     const offset = packageInfo.size - packageInfo.headerSize!! - packageInfo.blockMapSize!!
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
+    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(packageInfo.headerSize!!))
+    const oldBlockMap = safeLoad(await readFile(oldBlockMapFile, "utf-8"))
+    await this.download(oldBlockMap, newBlockMap)
+  }
 
-    const oldBlockMap = safeLoad(await readFile(this.options.oldBlockMapFile, "utf-8"))
-    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(this.packageInfo.headerSize!!))
+  async downloadAppImage(oldBlockMap: BlockMap) {
+    const packageInfo = this.packageInfo
+    const offset = packageInfo.size - (packageInfo.blockMapSize + 4)
+    this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
+    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
+    await this.download(oldBlockMap, newBlockMap)
+  }
 
+  private async download(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
     if (oldBlockMap.version !== newBlockMap.version) {
       throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
@@ -81,7 +95,7 @@ export class DifferentialDownloader {
     }
 
     const newPackageSize = this.packageInfo.size
-    if ((downloadSize + copySize + this.fileMetadataBuffer.length + 32) !== newPackageSize) {
+    if ((downloadSize + copySize + this.fileMetadataBuffer.length + this.signatureSize) !== newPackageSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
@@ -92,7 +106,7 @@ export class DifferentialDownloader {
 
   private async downloadFile(operations: Array<Operation>) {
     // todo we can avoid download remote and construct manually
-    const signature = await this.readRemoteBytes(0, SIGNATURE_HEADER_SIZE - 1)
+    const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
 
     const oldFileFd = await open(this.options.oldPackageFile, "r")
     await new BluebirdPromise((resolve, reject) => {
@@ -102,7 +116,7 @@ export class DifferentialDownloader {
       digestTransform.isValidateOnEnd = false
       streams.push(digestTransform)
 
-      const fileOut = createWriteStream(this.options.packagePath)
+      const fileOut = createWriteStream(this.options.newFile)
       fileOut.on("finish", () => {
         (fileOut.close as any)(() => {
           try {
@@ -175,13 +189,17 @@ export class DifferentialDownloader {
         }
       }
 
-      firstStream.write(signature, () => w(0))
+      if (signature == null) {
+        w(0)
+      }
+      else {
+        firstStream.write(signature, () => w(0))
+      }
     })
       .finally(() => close(oldFileFd))
   }
 
   private computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
-    // const oldEntryMap: Map<string, Entry>
     const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
     const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
 
@@ -301,6 +319,16 @@ export class DifferentialDownloader {
       this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
       request.end()
     })
+  }
+}
+
+export class SevenZipDifferentialDownloader extends DifferentialDownloader {
+  constructor(packageInfo: BlockMapDataHolder, httpExecutor: HttpExecutor<any>, options: DifferentialDownloaderOptions) {
+    super(packageInfo, httpExecutor, options)
+  }
+
+  protected get signatureSize() {
+    return SIGNATURE_HEADER_SIZE
   }
 }
 

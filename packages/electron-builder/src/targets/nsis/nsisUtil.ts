@@ -51,7 +51,7 @@ export class AppPackageHelper {
     const filesToDelete: Array<string> = []
     for (const [info, isDelete]  of this.infoToIsDelete.entries()) {
       if (isDelete) {
-        filesToDelete.push(info.file)
+        filesToDelete.push(info.path)
       }
     }
 

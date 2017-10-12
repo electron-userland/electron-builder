@@ -7,6 +7,7 @@ Object {
       "arch": "x64",
       "file": "test Setup 1.1.0.exe",
       "safeArtifactName": "test-setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }
@@ -30,6 +31,7 @@ without features",
       "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }
@@ -61,6 +63,7 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }
@@ -78,6 +81,7 @@ Object {
     Object {
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }
@@ -90,6 +94,7 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }

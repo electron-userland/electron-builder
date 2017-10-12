@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { hashFile } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { BlockMap, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
-import { appendFile, stat, writeFile } from "fs-extra-p"
+import { close, open, stat, write, writeFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Archive } from "./Archive"
 import { SevenZArchiveEntry } from "./SevenZArchiveEntry"
@@ -19,35 +19,63 @@ and we don't set even dict size and default 64M is used), but full package size 
 
 // reduce dict size to avoid large block invalidation on change
 export async function createDifferentialPackage(archiveFile: string): Promise<PackageFileInfo> {
-  // compute block map using compressed file data
-  const sevenZFile = new SevenZFile(archiveFile)
+  const fd = await open(archiveFile, "a+")
   try {
-    const archive = await sevenZFile.read()
-    const blockMap = await computeBlockMap(sevenZFile)
-    sevenZFile.close()
-
-    const blockMapDataString = safeDump(blockMap)
-    if (process.env.DEBUG_BLOCKMAP) {
-      await writeFile(archiveFile + ".blockMap.yml", blockMapDataString)
+    if (!archiveFile.endsWith(".7z")) {
+      const blockMap = await doComputeBlockMap([{
+        name: "file",
+        dataStart: 0,
+        dataEnd: (await stat(archiveFile)).size,
+      }], fd)
+      // for AppImage allow to easily detect blockMap data size without update met
+      return await appendBlockMapData(blockMap, archiveFile, fd, null, true)
     }
-    const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
-    await appendFile(archiveFile, blockMapFileData)
-    const packageFileInfo = await createPackageFileInfo(archiveFile)
-    packageFileInfo.headerSize = archive.headerSize
-    packageFileInfo.blockMapSize = blockMapFileData.length
-    packageFileInfo.blockMapData = blockMapDataString
-    return packageFileInfo
+
+    // compute block map using compressed file data
+    const sevenZFile = new SevenZFile(fd)
+    await sevenZFile.read()
+    const blockMap = await computeBlockMap(sevenZFile)
+    return await appendBlockMapData(blockMap, archiveFile, fd, sevenZFile.archive.headerSize, false)
   }
   catch (e) {
-    sevenZFile.close()
+    await close(fd)
     throw e
   }
 }
 
-export async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
+async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: number, headerSize: number | null, addLength: boolean) {
+  const blockMapDataString = safeDump(blockMap)
+  const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
+
+  await write(fd, blockMapFileData)
+  if (addLength) {
+    const sizeBuffer = Buffer.alloc(4)
+    sizeBuffer.writeUInt32BE(blockMapFileData.length, 0)
+    await write(fd, sizeBuffer)
+  }
+
+  await close(fd)
+
+  const packageFileInfo = await createPackageFileInfo(archiveFile, blockMapFileData.length)
+  if (headerSize != null) {
+    packageFileInfo.headerSize = headerSize
+  }
+  packageFileInfo.blockMapData = blockMapDataString
+
+  if (process.env.DEBUG_BLOCKMAP) {
+    const buffer = Buffer.from(blockMapDataString)
+    await writeFile(`${archiveFile}.blockMap.yml`, buffer)
+    console.log(`BlockMap size: ${buffer.length}, compressed: ${blockMapFileData.length}`)
+  }
+
+  return packageFileInfo
+}
+
+export async function createPackageFileInfo(file: string, blockMapSize: number): Promise<PackageFileInfo> {
   return {
-    file,
+    path: file,
     size: (await stat(file)).size,
+    blockMapSize,
     sha512: await hashFile(file),
   }
 }
@@ -91,11 +119,18 @@ class BlockMapBuilder {
   }
 }
 
+export interface SubFileDescriptor {
+  name: string
+
+  dataStart: number
+  dataEnd: number
+}
+
 export async function computeBlockMap(sevenZFile: SevenZFile): Promise<BlockMap> {
   const archive = sevenZFile.archive
   const builder = new BlockMapBuilder(archive)
 
-  const files: Array<SevenZArchiveEntry> = []
+  const files: Array<SubFileDescriptor> = []
   for (const file of archive.files) {
     if (!file.isDirectory) {
       builder.buildFile(file)
@@ -106,6 +141,10 @@ export async function computeBlockMap(sevenZFile: SevenZFile): Promise<BlockMap>
     }
   }
 
+  return await doComputeBlockMap(files, sevenZFile.fd)
+}
+
+async function doComputeBlockMap(files: Array<SubFileDescriptor>, fd: number): Promise<BlockMap> {
   // just to be sure that file data really doesn't have gap and grouped one by one
   for (let i = 0; i < (files.length - 1); i++) {
     if (files[i].dataEnd !== files[i + 1].dataStart) {
@@ -114,18 +153,18 @@ export async function computeBlockMap(sevenZFile: SevenZFile): Promise<BlockMap>
   }
 
   const stats: Array<string> = []
-  const blocks = await BluebirdPromise.map(files, async entry => {
+  const blocks = await BluebirdPromise.map(files, async file => {
     const chunker = new ContentDefinedChunker()
-    const blocks = await chunker.computeChunks(sevenZFile.fd, entry.dataStart, entry.dataEnd, entry.name)
+    const blocks = await chunker.computeChunks(fd, file.dataStart, file.dataEnd, file.name)
 
     if (process.env.DEBUG_BLOCKMAP) {
-      stats.push(getStat(blocks.sizes, entry.name))
+      stats.push(getStat(blocks.sizes, file.name))
     }
 
     return {
-      name: entry.name.replace(/\\/g, "/"),
-      offset: entry.dataStart,
-      size: entry.dataEnd - entry.dataStart,
+      name: file.name.replace(/\\/g, "/"),
+      offset: file.dataStart,
+      size: file.dataEnd - file.dataStart,
       ...blocks,
     }
   }, {concurrency: 2})

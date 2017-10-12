@@ -5,7 +5,15 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
-test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
+test.ifNotWindows.ifNotCiMac("AppImage", app({
+  targets: Platform.LINUX.createTarget(),
+  config: {
+    publish: {
+      provider: "generic",
+      url: "https://example.com/downloads"
+    },
+  }
+}))
 
 test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({targets: Platform.LINUX.createTarget("Appimage", Arch.ia32)}))
 

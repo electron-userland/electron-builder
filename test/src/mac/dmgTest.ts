@@ -15,6 +15,10 @@ test.ifMac("no build directory", app({
     productName: "NoBuildDirectory",
   },
   effectiveOptionComputed: async it => {
+    if (!("volumePath" in it)) {
+      return false
+    }
+
     const volumePath = it.volumePath
     await assertThat(path.join(volumePath, ".background", "background.tiff")).isFile()
     await assertThat(path.join(volumePath, "Applications")).isSymbolicLink()
@@ -78,6 +82,10 @@ test.ifMac("no Applications link", () => {
       },
     },
     effectiveOptionComputed: async it => {
+      if (!("volumePath" in it)) {
+        return false
+      }
+
       const volumePath = it.volumePath
       await BluebirdPromise.all([
         assertThat(path.join(volumePath, ".background", "background.tiff")).isFile(),

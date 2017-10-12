@@ -6,6 +6,7 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {},
     },
   ],
 }
@@ -24,6 +25,7 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": null,
     },
   ],
 }
@@ -54,7 +56,8 @@ Object {
     Object {
       "arch": "ia32",
       "file": "beta-TestApp.exe",
-      "safeArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
+      "safeArtifactName": "beta-TestApp.exe",
+      "updateInfo": null,
     },
   ],
 }

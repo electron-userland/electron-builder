@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log, debug } from "builder-util"
-import { UUID } from "builder-util-runtime"
+import { UUID, BlockMapDataHolder } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -12,6 +12,9 @@ import { LinuxPackager } from "../linuxPackager"
 import { AppImageOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
+import { createDifferentialPackage } from "app-package-builder"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { safeDump } from "js-yaml"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -84,6 +87,11 @@ export default class AppImageTarget extends Target {
       return
     }
 
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, arch)
+    if (publishConfig != null) {
+      await writeFile(path.join(packager.getResourcesDir(appInStageDir), "app-update.yml"), safeDump(publishConfig))
+    }
+
     const vendorToolDir = path.join(vendorDir, process.platform === "darwin" ? "darwin" : `linux-${process.arch}`)
     // default gzip compression - 51.9, xz - 50.4 difference is negligible, start time - well, it seems, a little bit longer (but on Parallels VM on external SSD disk)
     // so, to be decided later, is it worth to use xz by default
@@ -106,7 +114,24 @@ export default class AppImageTarget extends Target {
     if (!debug.enabled) {
       await remove(stageDir)
     }
-    packager.dispatchArtifactCreated(resultFile, this, arch, packager.computeSafeArtifactName(artifactName, "AppImage", arch, false))
+
+    const blockMapInfo = await createDifferentialPackage(resultFile)
+
+    const updateInfo: BlockMapDataHolder = {
+      blockMapSize: blockMapInfo.blockMapSize,
+      size: blockMapInfo.size,
+      sha512: blockMapInfo.sha512,
+    }
+
+    packager.info.dispatchArtifactCreated({
+      file: resultFile,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
+      target: this,
+      arch,
+      packager,
+      isWriteUpdateInfo: true,
+      updateInfo,
+    })
   }
 
   private async copyIcons(stageDir: string, resourceName: string): Promise<string> {
