@@ -108,7 +108,7 @@ builder.build({
   })
 ```
 
-Add `win: []` to build for Windows default target. Add `win: ["nsis-web]` to build specified target (web installer) for Windows. The same for `mac: []` and `linux: []`
+Add `win: []` to build for Windows default target. Add `win: ["nsis-web"]` to build specified target (web installer) for Windows. The same for `mac: []` and `linux: []`
 
 Add `ia32: true` to build `ia32` (or `x64: true`, or `armv7l: true`). Several can be specified and built at once.
 
