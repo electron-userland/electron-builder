@@ -2,16 +2,31 @@ import { CancellationToken, DownloadOptions, AllPublishOptions, VersionInfo, App
 import { spawn, SpawnOptions } from "child_process"
 import "source-map-support/register"
 import { DifferentialDownloader } from "./differentialPackage"
-import { FileInfo, UPDATE_DOWNLOADED } from "./main"
+import { FileInfo, UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { BaseUpdater } from "./BaseUpdater"
 import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
 import { safeLoad } from "js-yaml"
-import { chmod, move, unlink } from "fs-extra-p"
+import { chmod, move } from "fs-extra-p"
 import * as path from "path"
+import isDev from "electron-is-dev"
+import BluebirdPromise from "bluebird-lst"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
     super(options, app)
+  }
+
+  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
+    if (isDev) {
+      return BluebirdPromise.resolve(null)
+    }
+
+    if (process.env.APPIMAGE == null) {
+      this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
+      return BluebirdPromise.resolve(null)
+    }
+
+    return super.checkForUpdatesAndNotify()
   }
 
   /*** @private */
@@ -74,6 +89,18 @@ export class AppImageUpdater extends BaseUpdater {
       throw new Error("APPIMAGE env is not defined")
     }
 
+    const spawnOptions: SpawnOptions = {
+      detached: true,
+      stdio: "ignore",
+      env: {
+        APPIMAGE_SILENT_INSTALL: "true",
+      },
+    }
+
+    if (!isForceRunAfter) {
+      spawnOptions.env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
+    }
+
     let destination: string
     if (path.basename(installerPath) === path.basename(appImageFile)) {
       // no version in the file name, overwrite existing
@@ -81,30 +108,11 @@ export class AppImageUpdater extends BaseUpdater {
     }
     else {
       destination = path.join(path.dirname(appImageFile), path.basename(installerPath))
+      spawnOptions.env.APPIMAGE_DELETE_OLD_FILE = appImageFile
     }
     move(installerPath, destination, {overwrite: true})
       .then(() => chmod(destination, "0755"))
-      .then((): any => {
-        if (destination === appImageFile) {
-          return null
-        }
-        else {
-          return unlink(appImageFile)
-        }
-      })
       .then(() => {
-        const spawnOptions: SpawnOptions = {
-          detached: true,
-          stdio: "ignore",
-          env: {
-            APPIMAGE_SILENT_INSTALL: "true",
-          },
-        }
-
-        if (!isForceRunAfter) {
-          spawnOptions.env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-        }
-
         try {
           spawn(installerPath, args, spawnOptions)
             .unref()

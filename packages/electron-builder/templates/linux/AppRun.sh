@@ -50,6 +50,12 @@ trap atexit EXIT
 # http://stackoverflow.com/questions/3190818
 atexit()
 {
+
+if [ ! -z "$APPIMAGE_DELETE_OLD_FILE" ] ; then
+  echo "Delete old file $APPIMAGE_DELETE_OLD_FILE"
+  rm -f "$APPIMAGE_DELETE_OLD_FILE"
+fi
+
 if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ] ; then
   if [ $NUMBER_OF_ARGS -eq 0 ] ; then
     exec "${BIN}"

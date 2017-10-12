@@ -171,9 +171,9 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
-  checkForUpdatesAndNotify() {
+  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
     if (isDev) {
-      return
+      return BluebirdPromise.resolve(null)
     }
 
     this.signals.updateDownloaded(it => {
