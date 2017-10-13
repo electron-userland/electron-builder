@@ -230,6 +230,7 @@
       <w>nomacver</w>
       <w>noninteractive</w>
       <w>noupdate</w>
+      <w>npmignore</w>
       <w>npmrc</w>
       <w>nsis</w>
       <w>nsisdir</w>
