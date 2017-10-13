@@ -93,7 +93,26 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       (result as any).releaseName = latestRelease.getElementValue("title")
     }
     if (result.releaseNotes == null) {
-      (result as any).releaseNotes = latestRelease.getElementValue("content")
+      if (this.updater.fullChangelog) {
+        const currentVersion = require("electron").app.getVersion()
+        const allReleases = feed.getElements('entry')
+        let releaseNotes : Array<ReleaseNoteInfo> = [];
+
+        for (let release of allReleases) {
+          let versionRelease = release.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
+
+          if (semver.lt(currentVersion, versionRelease)) {
+            releaseNotes.push({
+              version: versionRelease,
+              note: release.getElementValue("content")
+            })
+          }
+        }
+
+        (result as any).releaseNotes = releaseNotes
+      } else {
+          (result as any).releaseNotes = latestRelease.getElementValue("content")
+      }
     }
     return result
   }
