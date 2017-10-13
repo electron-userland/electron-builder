@@ -5,6 +5,12 @@ export interface VersionInfo {
   readonly version: string
 }
 
+export interface ReleaseNoteInfo {
+  readonly version: string
+
+  readonly note: string | null
+}
+
 export interface PackageFileInfo {
   file: string
   size: number
@@ -33,7 +39,7 @@ export interface UpdateInfo extends VersionInfo {
   /**
    * The release notes.
    */
-  readonly releaseNotes?: string | null
+  readonly releaseNotes?: string | Array<ReleaseNoteInfo> | null
 
   /**
    * The release date.
