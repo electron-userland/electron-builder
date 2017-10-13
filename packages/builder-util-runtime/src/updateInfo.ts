@@ -5,7 +5,7 @@ export interface VersionInfo {
   readonly version: string
 }
 
-export interface ReleaseNoteInfo { 
+export interface ReleaseNoteInfo {
   /**
    * The version.
    */
@@ -14,7 +14,7 @@ export interface ReleaseNoteInfo {
   /**
    * The note.
    */
-  readonly note: string | null 
+  readonly note: string | null
 }
 
 export interface BlockMapDataHolder {
