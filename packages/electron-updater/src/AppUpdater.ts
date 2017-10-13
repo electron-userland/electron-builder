@@ -33,6 +33,12 @@ export abstract class AppUpdater extends EventEmitter {
   allowPrerelease = false
 
   /**
+   * *GitHub provider only.* Get all release notes, not just the last
+   * @default false
+   */
+  fullChangelog = false
+
+  /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
    * @default false
    */
