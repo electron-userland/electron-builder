@@ -81,7 +81,7 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  addErrorAndTimeoutHandlers(request: any, reject: (error?: Error | null) => void) {
+  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void) {
     this.addTimeOutHandler(request, reject)
     request.on("error", reject)
     request.on("aborted", () => {

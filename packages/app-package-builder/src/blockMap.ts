@@ -44,7 +44,11 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
 }
 
 async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: number, headerSize: number | null, addLength: boolean) {
-  const blockMapDataString = safeDump(blockMap)
+  // lzma doesn't make a lof of sense (151 KB lzma vs 156 KB deflate) for small text file where most of the data are unique strings (encoded sha256 checksums)
+  const blockMapDataString = safeDump(blockMap, {
+    indent: 0,
+    flowLevel: 0,
+  })
   const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
 
   await write(fd, blockMapFileData)

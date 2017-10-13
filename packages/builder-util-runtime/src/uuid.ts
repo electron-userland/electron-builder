@@ -40,7 +40,6 @@ export class UUID {
   private ascii: string | null
   private binary: Buffer
   private version: number
-  private variant: string
 
   // from rfc4122#appendix-C
   static readonly DNS = new UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
@@ -55,7 +54,6 @@ export class UUID {
     }
 
     this.version = check.version!!
-    this.variant = check.variant!!
 
     if (check.format === "ascii") {
       this.ascii = uuid as string

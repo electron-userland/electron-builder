@@ -24,7 +24,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
       this.doDownload(configureRequestOptionsFromUrl(url, {
         headers: options.headers || undefined,
         agent,
-      }), destination, 0, options, (error: Error) => {
+      }), destination, 0, options, error => {
         if (error == null) {
           resolve(destination)
         }

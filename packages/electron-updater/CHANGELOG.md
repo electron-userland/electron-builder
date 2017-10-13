@@ -1,3 +1,9 @@
+# 2.12.0
+
+### Features
+
+* [Linux auto-update](https://github.com/electron-userland/electron-builder/releases/tag/v19.37.0)
+
 # 2.11.0
 
 ### Features

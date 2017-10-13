@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, use, log, debug } from "builder-util"
+import { Arch, asArray, log, debug } from "builder-util"
 import { walk, copyOrLinkFile } from "builder-util/out/fs"
 import { emptyDir, readdir, readFile, remove, writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -105,7 +105,9 @@ export default class AppXTarget extends Target {
     await writeFile(mappingFile, mapping)
     packager.debugLogger.add("appx.mapping", mapping)
 
-    use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
+    if (this.options.makeappxArgs != null) {
+      makeAppXArgs.push(...this.options.makeappxArgs)
+    }
     await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs)
     await packager.sign(artifactPath)
 

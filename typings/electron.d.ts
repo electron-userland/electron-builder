@@ -1,4 +1,4 @@
-// Type definitions for Electron 1.7.5
+// Type definitions for Electron 1.7.9
 // Project: http://electron.atom.io/
 // Definitions by: The Electron Team <https://github.com/electron/electron>
 // Definitions: https://github.com/electron/electron-typescript-definitions
@@ -32,96 +32,86 @@ declare namespace Electron {
     preventDefault: () => void;
     sender: WebContents;
     returnValue: any;
-    ctrlkey?: boolean;
+    ctrlKey?: boolean;
     metaKey?: boolean;
     shiftKey?: boolean;
+    altKey?: boolean;
   }
 
   interface CommonInterface {
-    clipboard: Electron.Clipboard;
-    crashReporter: Electron.CrashReporter;
-    nativeImage: typeof Electron.NativeImage;
-    screen: Electron.Screen;
-    shell: Electron.Shell;
+    clipboard: Clipboard;
+    crashReporter: CrashReporter;
+    nativeImage: typeof NativeImage;
+    screen: Screen;
+    shell: Shell;
   }
 
   interface MainInterface extends CommonInterface {
-    app: Electron.App;
-    autoUpdater: Electron.AutoUpdater;
-    BrowserView: typeof Electron.BrowserView;
-    BrowserWindow: typeof Electron.BrowserWindow;
-    ClientRequest: typeof Electron.ClientRequest;
-    contentTracing: Electron.ContentTracing;
-    Cookies: typeof Electron.Cookies;
-    Debugger: typeof Electron.Debugger;
-    dialog: Electron.Dialog;
-    DownloadItem: typeof Electron.DownloadItem;
-    globalShortcut: Electron.GlobalShortcut;
-    IncomingMessage: typeof Electron.IncomingMessage;
-    ipcMain: Electron.IpcMain;
-    Menu: typeof Electron.Menu;
-    MenuItem: typeof Electron.MenuItem;
-    net: Electron.Net;
-    Notification: typeof Electron.Notification;
-    powerMonitor: Electron.PowerMonitor;
-    powerSaveBlocker: Electron.PowerSaveBlocker;
-    protocol: Electron.Protocol;
-    session: typeof Electron.Session;
-    systemPreferences: Electron.SystemPreferences;
-    TouchBar: typeof Electron.TouchBar;
-    Tray: typeof Electron.Tray;
-    webContents: typeof Electron.WebContents;
-    WebRequest: typeof Electron.WebRequest;
+    app: App;
+    autoUpdater: AutoUpdater;
+    BrowserView: typeof BrowserView;
+    BrowserWindow: typeof BrowserWindow;
+    ClientRequest: typeof ClientRequest;
+    contentTracing: ContentTracing;
+    Cookies: typeof Cookies;
+    Debugger: typeof Debugger;
+    dialog: Dialog;
+    DownloadItem: typeof DownloadItem;
+    globalShortcut: GlobalShortcut;
+    IncomingMessage: typeof IncomingMessage;
+    ipcMain: IpcMain;
+    Menu: typeof Menu;
+    MenuItem: typeof MenuItem;
+    net: Net;
+    Notification: typeof Notification;
+    powerMonitor: PowerMonitor;
+    powerSaveBlocker: PowerSaveBlocker;
+    protocol: Protocol;
+    session: typeof Session;
+    systemPreferences: SystemPreferences;
+    TouchBar: typeof TouchBar;
+    Tray: typeof Tray;
+    webContents: typeof WebContents;
+    WebRequest: typeof WebRequest;
   }
 
   interface RendererInterface extends CommonInterface {
-    BrowserWindowProxy: typeof Electron.BrowserWindowProxy;
-    desktopCapturer: Electron.DesktopCapturer;
-    ipcRenderer: Electron.IpcRenderer;
-    remote: Electron.Remote;
-    webFrame: Electron.WebFrame;
-    webviewTag: Electron.WebviewTag;
+    BrowserWindowProxy: typeof BrowserWindowProxy;
+    desktopCapturer: DesktopCapturer;
+    ipcRenderer: IpcRenderer;
+    remote: Remote;
+    webFrame: WebFrame;
+    webviewTag: WebviewTag;
   }
 
-  interface AllElectron {
-    app: Electron.App;
-    autoUpdater: Electron.AutoUpdater;
-    BrowserView: typeof Electron.BrowserView;
-    BrowserWindow: typeof Electron.BrowserWindow;
-    BrowserWindowProxy: typeof Electron.BrowserWindowProxy;
-    ClientRequest: typeof Electron.ClientRequest;
-    clipboard: Electron.Clipboard;
-    contentTracing: Electron.ContentTracing;
-    Cookies: typeof Electron.Cookies;
-    crashReporter: Electron.CrashReporter;
-    Debugger: typeof Electron.Debugger;
-    desktopCapturer: Electron.DesktopCapturer;
-    dialog: Electron.Dialog;
-    DownloadItem: typeof Electron.DownloadItem;
-    globalShortcut: Electron.GlobalShortcut;
-    IncomingMessage: typeof Electron.IncomingMessage;
-    ipcMain: Electron.IpcMain;
-    ipcRenderer: Electron.IpcRenderer;
-    Menu: typeof Electron.Menu;
-    MenuItem: typeof Electron.MenuItem;
-    nativeImage: typeof Electron.NativeImage;
-    net: Electron.Net;
-    Notification: typeof Electron.Notification;
-    powerMonitor: Electron.PowerMonitor;
-    powerSaveBlocker: Electron.PowerSaveBlocker;
-    protocol: Electron.Protocol;
-    remote: Electron.Remote;
-    screen: Electron.Screen;
-    session: typeof Electron.Session;
-    shell: Electron.Shell;
-    systemPreferences: Electron.SystemPreferences;
-    TouchBar: typeof Electron.TouchBar;
-    Tray: typeof Electron.Tray;
-    webContents: typeof Electron.WebContents;
-    webFrame: Electron.WebFrame;
-    WebRequest: typeof Electron.WebRequest;
-    webviewTag: Electron.WebviewTag;
-  }
+  interface AllElectron extends MainInterface, RendererInterface {}
+
+  const app: App;
+  const autoUpdater: AutoUpdater;
+  const clipboard: Clipboard;
+  const contentTracing: ContentTracing;
+  const crashReporter: CrashReporter;
+  const desktopCapturer: DesktopCapturer;
+  const dialog: Dialog;
+  const globalShortcut: GlobalShortcut;
+  const ipcMain: IpcMain;
+  const ipcRenderer: IpcRenderer;
+  type nativeImage = NativeImage;
+  const nativeImage: typeof NativeImage;
+  const net: Net;
+  const powerMonitor: PowerMonitor;
+  const powerSaveBlocker: PowerSaveBlocker;
+  const protocol: Protocol;
+  const remote: Remote;
+  const screen: Screen;
+  type session = Session;
+  const session: typeof Session;
+  const shell: Shell;
+  const systemPreferences: SystemPreferences;
+  type webContents = WebContents;
+  const webContents: typeof WebContents;
+  const webFrame: WebFrame;
+  const webviewTag: WebviewTag;
 
   interface App extends EventEmitter {
 
@@ -798,6 +788,7 @@ declare namespace Electron {
     // Docs: http://electron.atom.io/docs/api/browser-view
 
     constructor(options?: BrowserViewConstructorOptions);
+    static fromId(id: number): BrowserView;
     setAutoResize(options: AutoResizeOptions): void;
     setBackgroundColor(color: string): void;
     /**
@@ -1059,6 +1050,12 @@ declare namespace Electron {
      * module is emitted.
      */
     static addDevToolsExtension(path: string): void;
+    /**
+     * Adds Chrome extension located at path, and returns extension's name. The method
+     * will also not return if the extension's manifest is missing or incomplete. Note:
+     * This API cannot be called before the ready event of the app module is emitted.
+     */
+    static addExtension(path: string): void;
     static fromId(id: number): BrowserWindow;
     static fromWebContents(webContents: WebContents): BrowserWindow;
     static getAllWindows(): BrowserWindow[];
@@ -1067,12 +1064,22 @@ declare namespace Electron {
      * This API cannot be called before the ready event of the app module is emitted.
      */
     static getDevToolsExtensions(): DevToolsExtensions;
+    /**
+     * Note: This API cannot be called before the ready event of the app module is
+     * emitted.
+     */
+    static getExtensions(): Extensions;
     static getFocusedWindow(): BrowserWindow;
     /**
      * Remove a DevTools extension by name. Note: This API cannot be called before the
      * ready event of the app module is emitted.
      */
     static removeDevToolsExtension(name: string): void;
+    /**
+     * Remove a Chrome extension by name. Note: This API cannot be called before the
+     * ready event of the app module is emitted.
+     */
+    static removeExtension(name: string): void;
     /**
      * Removes focus from the window.
      */
@@ -1327,7 +1334,7 @@ declare namespace Electron {
      * Sets the menu as the window's menu bar, setting it to null will remove the menu
      * bar.
      */
-    setMenu(menu: Menu): void;
+    setMenu(menu: Menu | null): void;
     /**
      * Sets whether the menu bar should be visible. If the menu bar is auto-hide, users
      * can still bring up the menu bar by pressing the single Alt key.
@@ -3822,7 +3829,7 @@ declare namespace Electron {
 
     // Docs: http://electron.atom.io/docs/api/touch-bar
 
-    constructor(items: TouchBarButton | TouchBarColorPicker | TouchBarGroup | TouchBarLabel | TouchBarPopover | TouchBarScrubber | TouchBarSegmentedControl | TouchBarSlider | TouchBarSpacer);
+    constructor(options: TouchBarConstructorOptions);
     escapeItem: any;
     static TouchBarButton: typeof TouchBarButton;
     static TouchBarColorPicker: typeof TouchBarColorPicker;
@@ -5389,90 +5396,90 @@ declare namespace Electron {
      * document as well as subframe document-level loads, but does not include
      * asynchronous resource loads.
      */
-    addEventListener(event: 'load-commit', listener: (event: LoadCommitEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'load-commit', listener: (event: LoadCommitEvent) => void): this;
+    // addEventListener(event: 'load-commit', listener: (event: LoadCommitEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'load-commit', listener: (event: LoadCommitEvent) => void): this;
     /**
      * Fired when the navigation is done, i.e. the spinner of the tab will stop
      * spinning, and the onload event is dispatched.
      */
-    addEventListener(event: 'did-finish-load', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-finish-load', listener: (event: Event) => void): this;
+    // addEventListener(event: 'did-finish-load', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-finish-load', listener: (event: Event) => void): this;
     /**
      * This event is like did-finish-load, but fired when the load failed or was
      * cancelled, e.g. window.stop() is invoked.
      */
-    addEventListener(event: 'did-fail-load', listener: (event: DidFailLoadEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-fail-load', listener: (event: DidFailLoadEvent) => void): this;
+    // addEventListener(event: 'did-fail-load', listener: (event: DidFailLoadEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-fail-load', listener: (event: DidFailLoadEvent) => void): this;
     /**
      * Fired when a frame has done navigation.
      */
-    addEventListener(event: 'did-frame-finish-load', listener: (event: DidFrameFinishLoadEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-frame-finish-load', listener: (event: DidFrameFinishLoadEvent) => void): this;
+    // addEventListener(event: 'did-frame-finish-load', listener: (event: DidFrameFinishLoadEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-frame-finish-load', listener: (event: DidFrameFinishLoadEvent) => void): this;
     /**
      * Corresponds to the points in time when the spinner of the tab starts spinning.
      */
-    addEventListener(event: 'did-start-loading', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-start-loading', listener: (event: Event) => void): this;
+    // addEventListener(event: 'did-start-loading', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-start-loading', listener: (event: Event) => void): this;
     /**
      * Corresponds to the points in time when the spinner of the tab stops spinning.
      */
-    addEventListener(event: 'did-stop-loading', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-stop-loading', listener: (event: Event) => void): this;
+    // addEventListener(event: 'did-stop-loading', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-stop-loading', listener: (event: Event) => void): this;
     /**
      * Fired when details regarding a requested resource is available. status indicates
      * socket connection to download the resource.
      */
-    addEventListener(event: 'did-get-response-details', listener: (event: DidGetResponseDetailsEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-get-response-details', listener: (event: DidGetResponseDetailsEvent) => void): this;
+    // addEventListener(event: 'did-get-response-details', listener: (event: DidGetResponseDetailsEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-get-response-details', listener: (event: DidGetResponseDetailsEvent) => void): this;
     /**
      * Fired when a redirect was received while requesting a resource.
      */
-    addEventListener(event: 'did-get-redirect-request', listener: (event: DidGetRedirectRequestEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-get-redirect-request', listener: (event: DidGetRedirectRequestEvent) => void): this;
+    // addEventListener(event: 'did-get-redirect-request', listener: (event: DidGetRedirectRequestEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-get-redirect-request', listener: (event: DidGetRedirectRequestEvent) => void): this;
     /**
      * Fired when document in the given frame is loaded.
      */
-    addEventListener(event: 'dom-ready', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'dom-ready', listener: (event: Event) => void): this;
+    // addEventListener(event: 'dom-ready', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'dom-ready', listener: (event: Event) => void): this;
     /**
      * Fired when page title is set during navigation. explicitSet is false when title
      * is synthesized from file url.
      */
-    addEventListener(event: 'page-title-updated', listener: (event: PageTitleUpdatedEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'page-title-updated', listener: (event: PageTitleUpdatedEvent) => void): this;
+    // addEventListener(event: 'page-title-updated', listener: (event: PageTitleUpdatedEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'page-title-updated', listener: (event: PageTitleUpdatedEvent) => void): this;
     /**
      * Fired when page receives favicon urls.
      */
-    addEventListener(event: 'page-favicon-updated', listener: (event: PageFaviconUpdatedEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'page-favicon-updated', listener: (event: PageFaviconUpdatedEvent) => void): this;
+    // addEventListener(event: 'page-favicon-updated', listener: (event: PageFaviconUpdatedEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'page-favicon-updated', listener: (event: PageFaviconUpdatedEvent) => void): this;
     /**
      * Fired when page enters fullscreen triggered by HTML API.
      */
-    addEventListener(event: 'enter-html-full-screen', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'enter-html-full-screen', listener: (event: Event) => void): this;
+    // addEventListener(event: 'enter-html-full-screen', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'enter-html-full-screen', listener: (event: Event) => void): this;
     /**
      * Fired when page leaves fullscreen triggered by HTML API.
      */
-    addEventListener(event: 'leave-html-full-screen', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'leave-html-full-screen', listener: (event: Event) => void): this;
+    // addEventListener(event: 'leave-html-full-screen', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'leave-html-full-screen', listener: (event: Event) => void): this;
     /**
      * Fired when the guest window logs a console message. The following example code
      * forwards all log messages to the embedder's console without regard for log level
      * or other properties.
      */
-    addEventListener(event: 'console-message', listener: (event: ConsoleMessageEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'console-message', listener: (event: ConsoleMessageEvent) => void): this;
+    // addEventListener(event: 'console-message', listener: (event: ConsoleMessageEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'console-message', listener: (event: ConsoleMessageEvent) => void): this;
     /**
      * Fired when a result is available for webview.findInPage request.
      */
-    addEventListener(event: 'found-in-page', listener: (event: FoundInPageEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'found-in-page', listener: (event: FoundInPageEvent) => void): this;
+    // addEventListener(event: 'found-in-page', listener: (event: FoundInPageEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'found-in-page', listener: (event: FoundInPageEvent) => void): this;
     /**
      * Fired when the guest page attempts to open a new browser window. The following
      * example code opens the new url in system's default browser.
      */
-    addEventListener(event: 'new-window', listener: (event: NewWindowEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'new-window', listener: (event: NewWindowEvent) => void): this;
+    // addEventListener(event: 'new-window', listener: (event: NewWindowEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'new-window', listener: (event: NewWindowEvent) => void): this;
     /**
      * Emitted when a user or the page wants to start navigation. It can happen when
      * the window.location object is changed or a user clicks a link in the page. This
@@ -5482,92 +5489,92 @@ declare namespace Electron {
      * Use did-navigate-in-page event for this purpose. Calling event.preventDefault()
      * does NOT have any effect.
      */
-    addEventListener(event: 'will-navigate', listener: (event: WillNavigateEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'will-navigate', listener: (event: WillNavigateEvent) => void): this;
+    // addEventListener(event: 'will-navigate', listener: (event: WillNavigateEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'will-navigate', listener: (event: WillNavigateEvent) => void): this;
     /**
      * Emitted when a navigation is done. This event is not emitted for in-page
      * navigations, such as clicking anchor links or updating the window.location.hash.
      * Use did-navigate-in-page event for this purpose.
      */
-    addEventListener(event: 'did-navigate', listener: (event: DidNavigateEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-navigate', listener: (event: DidNavigateEvent) => void): this;
+    // addEventListener(event: 'did-navigate', listener: (event: DidNavigateEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-navigate', listener: (event: DidNavigateEvent) => void): this;
     /**
      * Emitted when an in-page navigation happened. When in-page navigation happens,
      * the page URL changes but does not cause navigation outside of the page. Examples
      * of this occurring are when anchor links are clicked or when the DOM hashchange
      * event is triggered.
      */
-    addEventListener(event: 'did-navigate-in-page', listener: (event: DidNavigateInPageEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-navigate-in-page', listener: (event: DidNavigateInPageEvent) => void): this;
+    // addEventListener(event: 'did-navigate-in-page', listener: (event: DidNavigateInPageEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-navigate-in-page', listener: (event: DidNavigateInPageEvent) => void): this;
     /**
      * Fired when the guest page attempts to close itself. The following example code
      * navigates the webview to about:blank when the guest attempts to close itself.
      */
-    addEventListener(event: 'close', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'close', listener: (event: Event) => void): this;
+    // addEventListener(event: 'close', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'close', listener: (event: Event) => void): this;
     /**
      * Fired when the guest page has sent an asynchronous message to embedder page.
      * With sendToHost method and ipc-message event you can easily communicate between
      * guest page and embedder page:
      */
-    addEventListener(event: 'ipc-message', listener: (event: IpcMessageEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'ipc-message', listener: (event: IpcMessageEvent) => void): this;
+    // addEventListener(event: 'ipc-message', listener: (event: IpcMessageEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'ipc-message', listener: (event: IpcMessageEvent) => void): this;
     /**
      * Fired when the renderer process is crashed.
      */
-    addEventListener(event: 'crashed', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'crashed', listener: (event: Event) => void): this;
+    // addEventListener(event: 'crashed', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'crashed', listener: (event: Event) => void): this;
     /**
      * Fired when the gpu process is crashed.
      */
-    addEventListener(event: 'gpu-crashed', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'gpu-crashed', listener: (event: Event) => void): this;
+    // addEventListener(event: 'gpu-crashed', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'gpu-crashed', listener: (event: Event) => void): this;
     /**
      * Fired when a plugin process is crashed.
      */
-    addEventListener(event: 'plugin-crashed', listener: (event: PluginCrashedEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'plugin-crashed', listener: (event: PluginCrashedEvent) => void): this;
+    // addEventListener(event: 'plugin-crashed', listener: (event: PluginCrashedEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'plugin-crashed', listener: (event: PluginCrashedEvent) => void): this;
     /**
      * Fired when the WebContents is destroyed.
      */
-    addEventListener(event: 'destroyed', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'destroyed', listener: (event: Event) => void): this;
+    // addEventListener(event: 'destroyed', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'destroyed', listener: (event: Event) => void): this;
     /**
      * Emitted when media starts playing.
      */
-    addEventListener(event: 'media-started-playing', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'media-started-playing', listener: (event: Event) => void): this;
+    // addEventListener(event: 'media-started-playing', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'media-started-playing', listener: (event: Event) => void): this;
     /**
      * Emitted when media is paused or done playing.
      */
-    addEventListener(event: 'media-paused', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'media-paused', listener: (event: Event) => void): this;
+    // addEventListener(event: 'media-paused', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'media-paused', listener: (event: Event) => void): this;
     /**
      * Emitted when a page's theme color changes. This is usually due to encountering a
      * meta tag:
      */
-    addEventListener(event: 'did-change-theme-color', listener: (event: DidChangeThemeColorEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'did-change-theme-color', listener: (event: DidChangeThemeColorEvent) => void): this;
+    // addEventListener(event: 'did-change-theme-color', listener: (event: DidChangeThemeColorEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'did-change-theme-color', listener: (event: DidChangeThemeColorEvent) => void): this;
     /**
      * Emitted when mouse moves over a link or the keyboard moves the focus to a link.
      */
-    addEventListener(event: 'update-target-url', listener: (event: UpdateTargetUrlEvent) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'update-target-url', listener: (event: UpdateTargetUrlEvent) => void): this;
+    // addEventListener(event: 'update-target-url', listener: (event: UpdateTargetUrlEvent) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'update-target-url', listener: (event: UpdateTargetUrlEvent) => void): this;
     /**
      * Emitted when DevTools is opened.
      */
-    addEventListener(event: 'devtools-opened', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'devtools-opened', listener: (event: Event) => void): this;
+    // addEventListener(event: 'devtools-opened', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'devtools-opened', listener: (event: Event) => void): this;
     /**
      * Emitted when DevTools is closed.
      */
-    addEventListener(event: 'devtools-closed', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'devtools-closed', listener: (event: Event) => void): this;
+    // addEventListener(event: 'devtools-closed', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'devtools-closed', listener: (event: Event) => void): this;
     /**
      * Emitted when DevTools is focused / opened.
      */
-    addEventListener(event: 'devtools-focused', listener: (event: Event) => void, useCapture?: boolean): this;
-    removeEventListener(event: 'devtools-focused', listener: (event: Event) => void): this;
+    // addEventListener(event: 'devtools-focused', listener: (event: Event) => void, useCapture?: boolean): this;
+    // removeEventListener(event: 'devtools-focused', listener: (event: Event) => void): this;
     canGoBack(): boolean;
     canGoForward(): boolean;
     canGoToOffset(offset: number): boolean;
@@ -6555,6 +6562,9 @@ declare namespace Electron {
     uploadThroughput?: number;
   }
 
+  interface Extensions {
+  }
+
   interface FileIconOptions {
     size: ('small' | 'normal' | 'large');
   }
@@ -6963,6 +6973,10 @@ declare namespace Electron {
      */
     replyPlaceholder?: string;
     /**
+     * The name of the sound file to play when the notification is shown.
+     */
+    sound?: string;
+    /**
      * Actions to add to the notification. Please read the available actions and
      * limitations in the NotificationAction documentation
      */
@@ -7129,7 +7143,7 @@ declare namespace Electron {
      * Contains which features the dialog should use. The following values are
      * supported:
      */
-    properties?: Array<'openFile' | 'openDirectory' | 'multiSelections' | 'showHiddenFiles' | 'createDirectory' | 'promptToCreate' | 'noResolveAliases'>;
+    properties?: Array<'openFile' | 'openDirectory' | 'multiSelections' | 'showHiddenFiles' | 'createDirectory' | 'promptToCreate' | 'noResolveAliases' | 'treatPackageAsDirectory'>;
     /**
      * Message to display above input boxes.
      */
@@ -7589,6 +7603,11 @@ declare namespace Electron {
     change?: (color: string) => void;
   }
 
+  interface TouchBarConstructorOptions {
+    items: TouchBarButton | TouchBarColorPicker | TouchBarGroup | TouchBarLabel | TouchBarPopover | TouchBarScrubber | TouchBarSegmentedControl | TouchBarSlider | TouchBarSpacer;
+    escapeItem?: TouchBarButton | TouchBarColorPicker | TouchBarGroup | TouchBarLabel | TouchBarPopover | TouchBarScrubber | TouchBarSegmentedControl | TouchBarSlider | TouchBarSpacer;
+  }
+
   interface TouchBarGroupConstructorOptions {
     /**
      * Items to display as a group.
@@ -8040,12 +8059,11 @@ declare namespace Electron {
 }
 
 declare module 'electron' {
-  const electron: Electron.AllElectron;
-  export = electron;
+  export = Electron;
 }
 
 interface NodeRequireFunction {
-  (moduleName: 'electron'): Electron.AllElectron;
+  (moduleName: 'electron'): typeof Electron;
 }
 
 interface File {
