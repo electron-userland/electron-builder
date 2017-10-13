@@ -112,6 +112,10 @@ export class PublishManager implements PublishContext {
 
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
+        if (publishConfig.provider === "generic") {
+          continue
+        }
+
         if (this.cancellationToken.cancelled) {
           debug(`${eventFile} is not published: cancelled`)
           break
