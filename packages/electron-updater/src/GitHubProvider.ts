@@ -1,6 +1,7 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, ReleaseNoteInfo } from "builder-util-runtime"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
+import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
