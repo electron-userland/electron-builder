@@ -59,7 +59,7 @@ export abstract class BaseS3Publisher extends Publisher {
       })
     }
 
-    return cancellationToken.createPromise((resolve, reject, onCancel) => {
+    return await cancellationToken.createPromise((resolve, reject, onCancel) => {
       onCancel(() => uploader.abort())
       uploader.upload()
         .then(() => {

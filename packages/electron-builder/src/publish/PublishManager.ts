@@ -157,15 +157,20 @@ export class PublishManager implements PublishContext {
     this.nameToPublisher.clear()
   }
 
+  // noinspection InfiniteRecursionJS
   async awaitTasks(): Promise<void> {
     await this.taskManager.awaitTasks()
     if (!this.cancellationToken.cancelled) {
+      if (this.postponedArtifactCreatedEvents.length === 0) {
+        return
+      }
+
       const events = this.postponedArtifactCreatedEvents.slice()
       this.postponedArtifactCreatedEvents.length = 0
       for (const event of events) {
         this.packager.dispatchArtifactCreated(event)
       }
-      await this.taskManager.awaitTasks()
+      await this.awaitTasks()
     }
   }
 }

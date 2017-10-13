@@ -1,5 +1,5 @@
 import { exists, statOrNull } from "builder-util/out/fs"
-import { lstat, stat } from "fs-extra-p"
+import { lstat } from "fs-extra-p"
 import * as path from "path"
 
 // http://joel-costigliola.github.io/assertj/
@@ -39,9 +39,13 @@ class Assertions {
   }
 
   async isDirectory() {
-    const info = await stat(this.actual)
+    const file = this.actual
+    const info = await statOrNull(file)
+    if (info == null) {
+      throw new Error(`Path ${file} doesn't exist`)
+    }
     if (!info.isDirectory()) {
-      throw new Error(`Path ${this.actual} is not a directory`)
+      throw new Error(`Path ${file} is not a directory`)
     }
   }
 
