@@ -1,5 +1,55 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`AppImage 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": Object {},
+    },
+    Object {
+      "file": "latest-linux.yml",
+      "fileContent": Object {
+        "path": "TestApp-1.0.0-x86_64.AppImage",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage 2`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": Object {},
+    },
+    Object {
+      "file": "latest-linux.yml",
+      "fileContent": Object {
+        "path": "TestApp-1.0.1-x86_64.AppImage",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage 3`] = `
+Object {
+  "name": "TestApp-1.0.1-x86_64.AppImage",
+}
+`;
+
+exports[`AppImage 4`] = `
+Array [
+  "TestApp-1.0.1-x86_64.AppImage",
+]
+`;
+
 exports[`web installer 1`] = `
 Object {
   "win": Array [
@@ -8,7 +58,7 @@ Object {
       "fileContent": Object {
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
           },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
@@ -18,12 +68,14 @@ Object {
     Object {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
-      "packageFiles": Object {
-        "x64": Object {
-          "file": "TestApp-1.0.0-x64.nsis.7z",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+          },
         },
       },
-      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
     },
     Object {
       "arch": "x64",
@@ -41,7 +93,7 @@ Object {
       "fileContent": Object {
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
           },
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",
@@ -51,12 +103,14 @@ Object {
     Object {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
-      "packageFiles": Object {
-        "x64": Object {
-          "file": "TestApp-1.0.1-x64.nsis.7z",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+          },
         },
       },
-      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
     },
     Object {
       "arch": "x64",

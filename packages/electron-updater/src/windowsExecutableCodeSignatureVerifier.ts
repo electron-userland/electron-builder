@@ -55,7 +55,7 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
         }
       }
 
-      const result = JSON.stringify(data, (name, value) => name === "RawData" ? undefined : value, 2)
+      const result = `publisherNames: ${publisherNames.join(" | ")}, raw info: ` + JSON.stringify(data, (name, value) => name === "RawData" ? undefined : value, 2)
       logger.info(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
       resolve(result)
     })

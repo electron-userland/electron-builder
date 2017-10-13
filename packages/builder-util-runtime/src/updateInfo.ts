@@ -5,19 +5,22 @@ export interface VersionInfo {
   readonly version: string
 }
 
-export interface ReleaseNoteInfo {
-  readonly version: string
-
-  readonly note: string | null
+export interface ReleaseNoteInfo { 
+  readonly version: string 
+ 
+  readonly note: string | null 
 }
 
-export interface PackageFileInfo {
-  file: string
+export interface BlockMapDataHolder {
   size: number
-  sha512: string
+  blockMapSize: number
+  readonly sha512: string
+}
+
+export interface PackageFileInfo extends BlockMapDataHolder {
+  readonly path: string
 
   headerSize?: number
-  blockMapSize?: number
 
   // we cannot pack blockMap file as part of package file because of chicken and egg problem — we build blockMap for package file (and we don't to complicate)
   // used and not null only during build time
@@ -26,8 +29,7 @@ export interface PackageFileInfo {
 
 export interface UpdateInfo extends VersionInfo {
   readonly path: string
-
-  packages?: { [arch: string]: PackageFileInfo } | null
+  readonly sha512: string
 
   githubArtifactName?: string | null
 
@@ -47,15 +49,21 @@ export interface UpdateInfo extends VersionInfo {
   readonly releaseDate: string
 
   /**
-   * @deprecated
-   * @private
-   */
-  readonly sha2?: string
-
-  readonly sha512?: string
-
-  /**
    * The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
    */
   readonly stagingPercentage?: number
+}
+
+//tslint:disable-next-line:no-empty-interface
+export interface AppImageUpdateInfo extends UpdateInfo, BlockMapDataHolder {
+}
+
+export interface WindowsUpdateInfo extends UpdateInfo {
+  packages?: { [arch: string]: PackageFileInfo } | null
+
+  /**
+   * @deprecated
+   * @private
+   */
+  sha2?: string
 }

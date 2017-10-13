@@ -20,7 +20,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       this.doDownload(configureRequestOptionsFromUrl(url, {
         headers: options.headers || undefined,
-      }), destination, 0, options, (error: Error) => {
+      }), destination, 0, options, error => {
         if (error == null) {
           resolve(destination)
         }

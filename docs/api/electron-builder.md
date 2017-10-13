@@ -51,7 +51,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 **Properties**
 * **<code id="ArtifactCreated-packager">packager</code>** PlatformPackager&lt;any&gt;
 * <code id="ArtifactCreated-target">target</code> [Target](#Target)
-* <code id="ArtifactCreated-packageFiles">packageFiles</code> Object&lt;String, any&gt;
+* <code id="ArtifactCreated-updateInfo">updateInfo</code> any
 * <code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String
 * <code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/configuration/publish.md#publishconfiguration)
 * <code id="ArtifactCreated-isWriteUpdateInfo">isWriteUpdateInfo</code> Boolean

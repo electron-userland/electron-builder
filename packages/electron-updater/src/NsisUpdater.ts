@@ -1,23 +1,15 @@
-import { CancellationError, CancellationToken, DownloadOptions, GenericServerOptions, PublishConfiguration, VersionInfo } from "builder-util-runtime"
+import { CancellationToken, DownloadOptions, AllPublishOptions, VersionInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
-import { mkdtemp, remove } from "fs-extra-p"
-import { tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
-import { AppUpdater } from "./AppUpdater"
-import { DifferentialDownloader } from "./differentialPackage"
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
+import { SevenZipDifferentialDownloader } from "./differentialPackage"
+import { FileInfo, UPDATE_DOWNLOADED } from "./main"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
+import { BaseUpdater } from "./BaseUpdater"
 
-export class NsisUpdater extends AppUpdater {
-  private readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
-
-  private quitAndInstallCalled = false
-  private quitHandlerAdded = false
-
-  constructor(options?: PublishConfiguration | GenericServerOptions | null, app?: any) {
+export class NsisUpdater extends BaseUpdater {
+  constructor(options?: AllPublishOptions | null, app?: any) {
     super(options, app)
   }
 
@@ -37,42 +29,26 @@ export class NsisUpdater extends AppUpdater {
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 
-    if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
-    }
-
-    // use TEST_APP_TMP_DIR if defined and developer machine (must be not windows due to security reasons - we must not use env var in the production)
-    const tempDir = await mkdtemp(`${path.join((process.platform === "darwin" ? process.env.TEST_APP_TMP_DIR : null) || tmpdir(), "up")}-`)
-    installerPath = path.join(tempDir, fileInfo.name)
-
-    const removeTempDirIfAny = () => {
-      this.downloadedUpdateHelper.clear()
-      return remove(tempDir)
-        .catch(() => {
-          // ignored
-        })
-    }
-
-    let signatureVerificationStatus
-    try {
+    await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
+      installerPath = destinationFile
+      let signatureVerificationStatus
       await this.httpExecutor.download(fileInfo.url, installerPath, downloadOptions)
       signatureVerificationStatus = await this.verifySignature(installerPath)
 
       const packageInfo = fileInfo.packageInfo
       if (packageInfo != null) {
-        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.file) || ".7z"}`)
+        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.path) || ".7z"}`)
 
         let isDownloadFull = packageInfo.blockMapSize == null || packageInfo.headerSize == null
         if (!isDownloadFull) {
           try {
-            await new DifferentialDownloader(packageInfo, this.httpExecutor,
-              {
-                oldBlockMapFile: path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME),
-                oldPackageFile: path.join(process.resourcesPath!, "..", "package.7z"),
-                logger: this._logger,
-                packagePath,
-                requestHeaders: this.requestHeaders,
-              }).download()
+            await new SevenZipDifferentialDownloader(packageInfo, this.httpExecutor, {
+              newUrl: packageInfo.path,
+              oldPackageFile: path.join(process.resourcesPath!, "..", "package.7z"),
+              logger: this._logger,
+              newFile: packagePath,
+              requestHeaders: this.requestHeaders,
+            }).downloadNsisPackage(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
           }
           catch (e) {
             this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
@@ -82,7 +58,7 @@ export class NsisUpdater extends AppUpdater {
         }
 
         if (isDownloadFull) {
-          await this.httpExecutor.download(packageInfo.file, packagePath!!, {
+          await this.httpExecutor.download(packageInfo.path, packagePath!!, {
             skipDirCreation: true,
             headers: this.computeRequestHeaders(fileInfo),
             cancellationToken,
@@ -90,28 +66,18 @@ export class NsisUpdater extends AppUpdater {
           })
         }
       }
-    }
-    catch (e) {
-      await removeTempDirIfAny()
 
-      if (e instanceof CancellationError) {
-        this.emit("update-cancelled", this.versionInfo)
-        this._logger.info("Cancelled")
+      if (signatureVerificationStatus != null) {
+        await removeTempDirIfAny()
+        // noinspection ThrowInsideFinallyBlockJS
+        throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
       }
-      throw e
-    }
+    })
 
-    if (signatureVerificationStatus != null) {
-      await removeTempDirIfAny()
-      // noinspection ThrowInsideFinallyBlockJS
-      throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
-    }
-
-    this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${installerPath}`)
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath, packagePath, versionInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, versionInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.versionInfo)
-    return packagePath == null ? [installerPath] : [installerPath, packagePath]
+    return packagePath == null ? [installerPath!!] : [installerPath!!, packagePath]
   }
 
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
@@ -135,39 +101,7 @@ export class NsisUpdater extends AppUpdater {
     return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
   }
 
-  private addQuitHandler() {
-    if (this.quitHandlerAdded) {
-      return
-    }
-
-    this.quitHandlerAdded = true
-
-    this.app.on("quit", () => {
-      this._logger.info("Auto install update on quit")
-      this.install(true, false)
-    })
-  }
-
-  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
-    if (this.install(isSilent, isForceRunAfter)) {
-      this.app.quit()
-    }
-  }
-
-  private install(isSilent: boolean, isForceRunAfter: boolean): boolean {
-    if (this.quitAndInstallCalled) {
-      return false
-    }
-
-    const installerPath = this.downloadedUpdateHelper.file
-    if (!this.updateAvailable || installerPath == null) {
-      this.dispatchError(new Error("No update available, can't quit and install"))
-      return false
-    }
-
-    // prevent calling several times
-    this.quitAndInstallCalled = true
-
+  protected doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
     const args = ["--updated"]
     if (isSilent) {
       args.push("/S")

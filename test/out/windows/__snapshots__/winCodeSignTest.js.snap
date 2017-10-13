@@ -1,5 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`parseDn 1`] = `
+Map {
+  "CN" => "7digital Limited",
+  "O" => "7digital Limited",
+  "L" => "London",
+  "C" => "GB",
+}
+`;
+
 exports[`sign electronDist 1`] = `"ENOENT: no such file or directory, scandir '<path>/foo'"`;
 
 exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing"`;

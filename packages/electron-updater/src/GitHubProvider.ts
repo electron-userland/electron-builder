@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, ReleaseNoteInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, ReleaseNoteInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
@@ -151,12 +151,12 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       sha512: versionInfo.sha512,
     }
 
-    const packages = versionInfo.packages
+    const packages = (versionInfo as WindowsUpdateInfo).packages
     const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
     if (packageInfo != null) {
       result.packageInfo = {
         ...packageInfo,
-        file: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, packageInfo.file), this.baseUrl).href,
+        path: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, packageInfo.path || (packageInfo as any).file), this.baseUrl).href,
       }
     }
     return result

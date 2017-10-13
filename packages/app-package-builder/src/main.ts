@@ -7,8 +7,7 @@ if (process.mainModule === module) {
   require(a + "map-support").install()
 
   async function main() {
-    // const file = new SevenZFile("/Users/develar/Documents/onshape-desktop-shell/dist/Onshape-0.5.13-x64.nsis.7z")
-    const file = "/Users/develar/Documents/onshape-desktop-shell/dist/Onshape-0.5.13-x64.nsis.7z"
+    const file = "/Volumes/test/electron-builder-test/dist/nsis-web/TestApp-1.0.1-x64.nsis.7z"
     await createDifferentialPackage(file)
     // const archive = await file.read()
     // for (const entry of archive.files) {

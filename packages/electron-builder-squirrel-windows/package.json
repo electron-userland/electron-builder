@@ -13,8 +13,8 @@
   "dependencies": {
     "builder-util": "^0.0.0-semantic-release",
     "bluebird-lst": "^1.0.4",
-    "fs-extra-p": "^4.4.3",
-    "archiver": "^2.0.3",
+    "fs-extra-p": "^4.4.4",
+    "archiver": "^2.1.0",
     "sanitize-filename": "^1.6.1"
   },
   "peerDependencies": {

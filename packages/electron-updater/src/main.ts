@@ -26,7 +26,7 @@ function _load_autoUpdater(): AppUpdater {
     _autoUpdater = new (require("./MacUpdater").MacUpdater)()
   }
   else {
-    _autoUpdater = require("electron").autoUpdater
+    _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
   }
   return _autoUpdater
 }
@@ -56,7 +56,13 @@ export function getDefaultChannelName() {
 }
 
 function getChannelFilePrefix() {
-  return getCurrentPlatform() === "darwin" ? "-mac" : ""
+  const currentPlatform = getCurrentPlatform()
+  if (currentPlatform === "linux") {
+    return "-linux"
+  }
+  else {
+    return currentPlatform === "darwin" ? "-mac" : ""
+  }
 }
 
 export function getCustomChannelName(channel: string) {

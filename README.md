@@ -7,7 +7,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * [Code Signing](https://www.electron.build/code-signing) on a CI server or development machine.
 * [Auto Update](https://www.electron.build/auto-update) ready application packaging.
 * Numerous target formats:
-  * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
+  * All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
   * [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
   * [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
@@ -88,15 +88,14 @@ See [Command Line Interface](https://www.electron.build/cli).
 ## Programmatic Usage
 See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.
 
+To build for current platform and current arch:
 ```js
 "use strict"
 
 const builder = require("electron-builder")
-const Platform = builder.Platform
 
 // Promise is returned
 builder.build({
-  targets: Platform.MAC.createTarget(),
   config: {
    "//": "build options, see https://goo.gl/ZhRfla"
   }
@@ -108,6 +107,10 @@ builder.build({
     // handle error
   })
 ```
+
+Add `win: []` to build for Windows default target. Add `win: ["nsis-web"]` to build specified target (web installer) for Windows. The same for `mac: []` and `linux: []`
+
+Add `ia32: true` to build `ia32` (or `x64: true`, or `armv7l: true`). Several can be specified and built at once.
 
 ## Pack Only in a Distributable Format
 

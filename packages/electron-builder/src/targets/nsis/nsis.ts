@@ -72,6 +72,15 @@ export class NsisTarget extends Target {
       archiveOptions.solid = false
       // our reader doesn't support compressed headers
       archiveOptions.isArchiveHeaderCompressed = false
+      /*
+       * dict size 64 MB: Full: 33,744.88 KB, To download: 17,630.3 KB (52%)
+       * dict size 16 MB: Full: 33,936.84 KB, To download: 16,175.9 KB (48%)
+       * dict size  8 MB: Full: 34,187.59 KB, To download:  8,229.9 KB (24%)
+       * dict size  4 MB: Full: 34,628.73 KB, To download: 3,782.97 KB (11%)
+
+       as we can see, if file changed in one place, all block is invalidated (and update size approximately equals to dict size)
+       */
+      archiveOptions.dictSize = 4
       // do not allow to change compression level to avoid different packages
       compression = "normal"
     }
@@ -82,7 +91,7 @@ export class NsisTarget extends Target {
       return await createDifferentialPackage(archiveFile)
     }
     else {
-      return await createPackageFileInfo(archiveFile)
+      return await createPackageFileInfo(archiveFile, 0)
     }
   }
 
@@ -166,7 +175,7 @@ export class NsisTarget extends Target {
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
         const fileInfo = await this.packageHelper.packArch(arch, this)
-        const file = fileInfo.file
+        const file = fileInfo.path
         const defineKey = arch === Arch.x64 ? "APP_64" : "APP_32"
         defines[defineKey] = file
         defines[`${defineKey}_NAME`] = path.basename(file)
@@ -219,9 +228,25 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await BluebirdPromise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? BluebirdPromise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
+    let updateInfo: any = null
+    if (packageFiles != null) {
+      const keys = Object.keys(packageFiles)
+      if (keys.length > 0) {
+        const packages: { [arch: string]: PackageFileInfo } = {}
+        for (const arch of keys) {
+          const packageFileInfo = packageFiles[arch]
+          packages[arch] = {
+            ...packageFileInfo,
+            path: path.basename(packageFileInfo.path)
+          }
+        }
+        updateInfo = {packages}
+      }
+    }
+
     packager.info.dispatchArtifactCreated({
       file: installerPath,
-      packageFiles,
+      updateInfo,
       target: this,
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,

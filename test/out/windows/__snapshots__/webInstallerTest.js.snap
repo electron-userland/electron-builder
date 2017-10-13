@@ -9,10 +9,10 @@ Object {
         "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
         "packages": Object {
           "ia32": Object {
-            "file": "TestApp-1.1.0-ia32.nsis.7z",
+            "path": "TestApp-1.1.0-ia32.nsis.7z",
           },
           "x64": Object {
-            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
           },
         },
         "path": "Test App ßW Web Setup 1.1.0.exe",
@@ -21,15 +21,17 @@ Object {
     },
     Object {
       "file": "Test App ßW Web Setup 1.1.0.exe",
-      "packageFiles": Object {
-        "ia32": Object {
-          "file": "TestApp-1.1.0-ia32.nsis.7z",
-        },
-        "x64": Object {
-          "file": "TestApp-1.1.0-x64.nsis.7z",
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "ia32": Object {
+            "path": "TestApp-1.1.0-ia32.nsis.7z",
+          },
+          "x64": Object {
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+          },
         },
       },
-      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
       "arch": "ia32",
@@ -51,7 +53,7 @@ Object {
       "fileContent": Object {
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
           },
         },
         "path": "Test App ßW Web Setup 1.1.0.exe",
@@ -61,12 +63,14 @@ Object {
     Object {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.1.0.exe",
-      "packageFiles": Object {
-        "x64": Object {
-          "file": "TestApp-1.1.0-x64.nsis.7z",
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+          },
         },
       },
-      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
       "arch": "x64",
@@ -85,7 +89,7 @@ Object {
         "githubArtifactName": "WorkFlowy.exe",
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.1.0-x64.nsis.7z",
+            "path": "TestApp-1.1.0-x64.nsis.7z",
           },
         },
         "path": "WorkFlowy.exe",
@@ -99,12 +103,14 @@ Object {
     Object {
       "arch": "x64",
       "file": "WorkFlowy.exe",
-      "packageFiles": Object {
-        "x64": Object {
-          "file": "TestApp-1.1.0-x64.nsis.7z",
+      "safeArtifactName": "WorkFlowy.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "path": "TestApp-1.1.0-x64.nsis.7z",
+          },
         },
       },
-      "safeArtifactName": "WorkFlowy.exe",
     },
   ],
 }

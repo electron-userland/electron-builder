@@ -23,5 +23,5 @@ export function computeToolEnv(libPath: Array<string>): any {
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("linux-tools", "mac-10.12.2", "i+D1SGCPSKNuR4wZd/lpiW5l1emfX1MgkNwESqOXKgh5SpN3TNV9oi0W6zD9fEDwCBJaMYsZJtSjulh16TzKEA==")
+  return getBinFromGithub("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }

@@ -5,22 +5,10 @@ To publish your updates you just need a simple file hosting, it does not require
 
 See the [Auto Update](https://electron.build/auto-update) for more information.
 
-Supported OS: 
+Supported OS:
  - macOS ([Squirrel.Mac](https://github.com/Squirrel/Squirrel.Mac)).
  - Windows (NSIS).
- 
-Linux support is [planned](https://github.com/electron-userland/electron-builder/issues/1138).
- 
-## Differences between electron-updater and built-in autoUpdater
-
-* It doesn't require a dedicated release server.
-* Code signature validation on Windows.
-* [electron-builder](https://github.com/electron-userland/electron-builder) produces and publishes all required metadata files and artifacts.
-* Download progress supported on all platforms, including macOS.
-* [Staged rollouts](https://electron.build/auto-update#staged-rollouts) supported on all platforms, including macOS.
-* Actually, built-in autoUpdater is used inside on macOS.
-* Different providers supported out of the box (GitHub, Bintray, Amazon S3, DigitalOcean Spaces, generic HTTP(s) server).
-* You need only 2 lines of code to make it work.
+ - Linux (AppImage).
 
 ## Credits
 

@@ -1,4 +1,6 @@
-export class SevenZArchiveEntry {
+import { SubFileDescriptor } from "./blockMap"
+
+export class SevenZArchiveEntry implements SubFileDescriptor {
   hasStream: boolean
   isDirectory: boolean
   isAntiItem: boolean

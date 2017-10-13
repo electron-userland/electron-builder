@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { GenericServerOptions, UpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, WindowsUpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { Arch, Platform } from "electron-builder"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
@@ -10,10 +10,11 @@ import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack } from "../helpers/packTester"
 import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-
-process.env.TEST_UPDATER_PLATFORM = "win32"
+import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
+  process.env.TEST_UPDATER_PLATFORM = "win32"
+
   let outDirs: Array<string> = []
 
   async function buildApp(version: string) {
@@ -30,9 +31,6 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
           bucket: "develar",
           path: "test",
         },
-        nsis: {
-          differentialPackage: true,
-        },
       },
     }, {
       signed: true,
@@ -42,7 +40,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
         const targetOutDir = path.join(outDir, "nsis-web")
         const updateInfoFile = path.join(targetOutDir, "latest.yml")
 
-        const updateInfo: UpdateInfo = safeLoad(await readFile(updateInfoFile, "utf-8"))
+        const updateInfo: WindowsUpdateInfo = safeLoad(await readFile(updateInfoFile, "utf-8"))
         const fd = await open(path.join(targetOutDir, `TestApp-${version}-x64.nsis.7z`), "r")
         try {
           const packageInfo = updateInfo.packages!!.x64
@@ -152,7 +150,129 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     ]
   }
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"))
+  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater)
+})
+
+test.ifAll.ifDevOrLinuxCi("AppImage", async () => {
+  process.env.TEST_UPDATER_PLATFORM = "linux"
+
+  let outDirs: Array<string> = []
+
+  async function buildApp(version: string) {
+    await assertPack("test-app-one", {
+      targets: Platform.LINUX.createTarget(["appimage"], Arch.x64),
+      config: {
+        extraMetadata: {
+          version,
+        },
+        compression: "normal",
+        publish: {
+          provider: "s3",
+          bucket: "develar",
+          path: "test",
+        },
+      },
+    }, {
+      packed: async context => {
+        outDirs.push(context.outDir)}
+    })
+  }
+
+  if (process.env.__SKIP_BUILD == null) {
+    await buildApp("1.0.0")
+
+    const tmpDir = new TmpDir()
+    try {
+      // move dist temporarily out of project dir
+      const oldDir = await tmpDir.getTempDir()
+      await rename(outDirs[0], oldDir)
+      outDirs[0] = oldDir
+
+      await buildApp("1.0.1")
+    }
+    catch (e) {
+      await tmpDir.cleanup()
+      throw e
+    }
+
+    // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
+    const oldDir = path.join(outDirs[1], "..", "oldDist")
+    await rename(outDirs[0], oldDir)
+    outDirs[0] = oldDir
+
+    // await rename(path.join(oldDir, "TestApp-1.0.0-x86_64.AppImage"), path.join(oldDir, "win-unpacked", "package.7z"))
+  }
+  else {
+    // to  avoid snapshot mismatch (since in this node app is not packed)
+    expect({
+      win: [
+        {
+          file: "latest.yml",
+          fileContent: {
+            version: "1.0.0",
+            path: "Test App ßW Web Setup 1.0.0.exe",
+            packages: {
+              x64: {
+                file: "TestApp-1.0.0-x64.nsis.7z"
+              }
+            },
+          }
+        },
+        {
+          file: "Test App ßW Web Setup 1.0.0.exe",
+          packageFiles: {
+            x64: {
+              file: "TestApp-1.0.0-x64.nsis.7z"
+            }
+          },
+          arch: "x64",
+          safeArtifactName: "TestApp-WebSetup-1.0.0.exe"
+        },
+        {
+          file: "TestApp-1.0.0-x64.nsis.7z",
+          arch: "x64"
+        }
+      ]
+    }).toMatchSnapshot()
+    expect({
+      win: [
+        {
+          file: "latest.yml",
+          fileContent: {
+            version: "1.0.1",
+            path: "Test App ßW Web Setup 1.0.1.exe",
+            packages: {
+              x64: {
+                file: "TestApp-1.0.1-x64.nsis.7z"
+              }
+            },
+          }
+        },
+        {
+          file: "Test App ßW Web Setup 1.0.1.exe",
+          packageFiles: {
+            x64: {
+              file: "TestApp-1.0.1-x64.nsis.7z"
+            }
+          },
+          arch: "x64",
+          safeArtifactName: "TestApp-WebSetup-1.0.1.exe"
+        },
+        {
+          file: "TestApp-1.0.1-x64.nsis.7z",
+          arch: "x64"
+        }
+      ]
+    }).toMatchSnapshot()
+
+    outDirs = [
+      path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"),
+      path.join(process.env.TEST_APP_TMP_DIR!!, "dist"),
+    ]
+  }
+
+  process.env.APPIMAGE = path.join(outDirs[0], "TestApp-1.0.0-x86_64.AppImage")
+  await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater)
 })
 
 // test.ifAll("s3", async () => {
@@ -195,15 +315,18 @@ async function checkResult(updater: NsisUpdater) {
 
   // because port is random
   expect(fileInfo.url).toBeDefined()
-  expect(fileInfo.packageInfo).toBeDefined()
   delete fileInfo.url
-  delete fileInfo.packageInfo
+
+  if (updater instanceof NsisUpdater) {
+    expect(fileInfo.packageInfo).toBeDefined()
+    delete fileInfo.packageInfo
+  }
 
   expect(fileInfo).toMatchSnapshot()
   expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
 }
 
-function testBlockMap(oldDir: string, newDir: string) {
+function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
   const serveStatic = require("serve-static")
   const finalHandler = require("finalhandler")
   const serve = serveStatic(newDir)
@@ -227,7 +350,7 @@ function testBlockMap(oldDir: string, newDir: string) {
     server.on("error", reject)
 
     server!!.listen(0, "127.0.0.1", 16, () => {
-      const updater = new NsisUpdater()
+      const updater = new updaterClass()
       tuneNsisUpdater(updater)
       updater.logger = console
       const doTest = async () => {

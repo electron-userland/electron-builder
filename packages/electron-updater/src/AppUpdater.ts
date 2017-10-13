@@ -8,7 +8,6 @@ import { outputFile, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
-import * as os from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
@@ -101,7 +100,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected readonly httpExecutor: ElectronHttpExecutor
 
-  constructor(options: PublishConfiguration | null | undefined, app?: any) {
+  constructor(options: AllPublishOptions | null | undefined, app?: any) {
     super()
 
     this.on("error", (error: Error) => {
@@ -178,14 +177,9 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
-  checkForUpdatesAndNotify() {
+  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
     if (isDev) {
-      return
-    }
-
-    const platform = os.platform()
-    if (platform === "linux") {
-      return
+      return BluebirdPromise.resolve(null)
     }
 
     this.signals.updateDownloaded(it => {
