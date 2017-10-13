@@ -6,8 +6,14 @@ export interface VersionInfo {
 }
 
 export interface ReleaseNoteInfo { 
-  readonly version: string 
- 
+  /**
+   * The version.
+   */
+  readonly version: string
+
+  /**
+   * The note.
+   */
   readonly note: string | null 
 }
 
