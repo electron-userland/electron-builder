@@ -1,6 +1,7 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, ReleaseNoteInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
+import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
@@ -92,7 +93,26 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       (result as any).releaseName = latestRelease.getElementValue("title")
     }
     if (result.releaseNotes == null) {
-      (result as any).releaseNotes = latestRelease.getElementValue("content")
+      if (this.updater.fullChangelog) {
+        const currentVersion = this.updater.currentVersion
+        const allReleases = feed.getElements("entry")
+        const releaseNotes: Array<ReleaseNoteInfo> = []
+
+        for (const release of allReleases) {
+          const versionRelease = release.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
+
+          if (semver.lt(currentVersion, versionRelease)) {
+            releaseNotes.push({
+              version: versionRelease,
+              note: release.getElementValue("content")
+            })
+          }
+        }
+
+        result.releaseNotes = releaseNotes
+      } else {
+          (result as any).releaseNotes = latestRelease.getElementValue("content")
+      }
     }
     return result
   }

@@ -32,10 +32,21 @@ export abstract class AppUpdater extends EventEmitter {
   allowPrerelease = false
 
   /**
+   * *GitHub provider only.* Get all release notes, not just the last
+   * @default false
+   */
+  fullChangelog = false
+
+  /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
    * @default false
    */
   allowDowngrade = false
+
+  /**
+   * Current version Electron application
+   */
+  currentVersion: string
 
   /**
    *  The request headers.
@@ -89,8 +100,6 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
-
-  private currentVersion: string
 
   protected readonly httpExecutor: ElectronHttpExecutor
 

@@ -5,6 +5,18 @@ export interface VersionInfo {
   readonly version: string
 }
 
+export interface ReleaseNoteInfo {
+  /**
+   * The version.
+   */
+  readonly version: string
+
+  /**
+   * The note.
+   */
+  readonly note: string | null
+}
+
 export interface BlockMapDataHolder {
   size: number
   blockMapSize: number
@@ -35,7 +47,7 @@ export interface UpdateInfo extends VersionInfo {
   /**
    * The release notes.
    */
-  readonly releaseNotes?: string | null
+  releaseNotes?: string | Array<ReleaseNoteInfo> | null
 
   /**
    * The release date.
