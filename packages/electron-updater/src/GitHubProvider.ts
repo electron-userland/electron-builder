@@ -109,7 +109,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
           }
         }
 
-        (result as any).releaseNotes = releaseNotes
+        result.releaseNotes = releaseNotes
       } else {
           (result as any).releaseNotes = latestRelease.getElementValue("content")
       }

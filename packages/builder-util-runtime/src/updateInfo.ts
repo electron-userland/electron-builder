@@ -47,7 +47,7 @@ export interface UpdateInfo extends VersionInfo {
   /**
    * The release notes.
    */
-  readonly releaseNotes?: string | Array<ReleaseNoteInfo> | null
+  releaseNotes?: string | Array<ReleaseNoteInfo> | null
 
   /**
    * The release date.
