@@ -152,6 +152,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Extends**: <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>  
 **Properties**
 * <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
+* <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - Get all release notes, not just the last.
 * <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
   
   If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
@@ -255,7 +256,7 @@ This is different from the normal quit event sequence.
 * <code id="UpdateInfo-packages">packages</code> Object&lt;String, any&gt;
 * <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
 * <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
-* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String - The release notes.
+* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String | Array<[ReleaseNoteInfo](#ReleaseNoteInfo)> - The release notes.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
 * <code id="UpdateInfo-sha512">sha512</code> String
 * <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
@@ -266,6 +267,13 @@ This is different from the normal quit event sequence.
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
 * **<code id="VersionInfo-version">version</code>** String - The version.
+
+<a name="ReleaseNoteInfo"></a>
+### `ReleaseNoteInfo`
+**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
+**Properties**
+* **<code id="ReleaseNoteInfo-version">version</code>** String - The version.
+* **<code id="ReleaseNoteInfo-note">note</code>** String | null - The note.
 
 <a name="UpdateCheckResult"></a>
 ### `UpdateCheckResult`
