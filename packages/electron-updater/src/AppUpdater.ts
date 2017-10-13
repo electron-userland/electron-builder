@@ -44,6 +44,11 @@ export abstract class AppUpdater extends EventEmitter {
   allowDowngrade = false
 
   /**
+   * Current version Electron application
+   */
+  currentVersion: string
+
+  /**
    *  The request headers.
    */
   requestHeaders: OutgoingHttpHeaders | null
@@ -95,8 +100,6 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
-
-  private currentVersion: string
 
   protected readonly httpExecutor: ElectronHttpExecutor
 

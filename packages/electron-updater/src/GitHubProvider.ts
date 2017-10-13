@@ -94,7 +94,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
     if (result.releaseNotes == null) {
       if (this.updater.fullChangelog) {
-        const currentVersion = require("electron").app.getVersion()
+        const currentVersion = this.updater.currentVersion
         const allReleases = feed.getElements("entry")
         const releaseNotes: Array<ReleaseNoteInfo> = []
 
