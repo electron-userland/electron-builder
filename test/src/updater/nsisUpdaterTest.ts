@@ -206,18 +206,24 @@ test("file url github", async () => {
     repo: "__test_nsis_release",
   }
   updater.updateConfigPath = await writeUpdateConfig(options)
+  updater.signals.updateDownloaded(info => {
+    expect(info).toMatchSnapshot()
+  })
   await validateDownload(updater)
 })
 
-test("file url github pre-release", async () => {
+test("file url github pre-release and fullChangelog", async () => {
   const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
   const options: GithubOptions = {
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
   }
+  updater.fullChangelog = true
   updater.updateConfigPath = await writeUpdateConfig(options)
-
+  updater.signals.updateDownloaded(info => {
+    expect(info).toMatchSnapshot()
+  })
   const updateCheckResult = await validateDownload(updater)
   expect(updateCheckResult.versionInfo).toMatchSnapshot()
 })

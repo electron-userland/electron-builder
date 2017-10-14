@@ -126,7 +126,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * [electron-updater](#module_electron-updater)
     * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
         * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-        * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>undefined</code> \| <code>Promise</code>
+        * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
@@ -138,13 +138,13 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.info(message)`](#module_electron-updater.Logger+info)
         * [`.warn(message)`](#module_electron-updater.Logger+warn)
     * [`.UpdateInfo`](#UpdateInfo) ⇐ <code>[VersionInfo](#VersionInfo)</code>
-    * [`.VersionInfo`](#VersionInfo)
     * [`.UpdateCheckResult`](#UpdateCheckResult)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
         * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
+    * [`.VersionInfo`](#VersionInfo)
 
 <a name="AppUpdater"></a>
 ### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
@@ -152,11 +152,12 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Extends**: <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>  
 **Properties**
 * <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
-* <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - Get all release notes, not just the last.
 * <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
   
   If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
+* <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
 * <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
+* <code id="AppUpdater-currentVersion">currentVersion</code> String - The current application version.
 * <code id="AppUpdater-requestHeaders">requestHeaders</code> [key: string]: string - The request headers.
 * <code id="AppUpdater-logger">logger</code> [Logger](#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
 * <code id="AppUpdater-signals">signals</code> = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal) - For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
@@ -165,7 +166,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Methods**
 * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-    * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>undefined</code> \| <code>Promise</code>
+    * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
@@ -176,7 +177,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 Asks the server whether there is an update.
 
 <a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a>
-#### `appUpdater.checkForUpdatesAndNotify()` ⇒ <code>undefined</code> \| <code>Promise</code>
+#### `appUpdater.checkForUpdatesAndNotify()` ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
 #### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
@@ -256,23 +257,10 @@ This is different from the normal quit event sequence.
 * **<code id="UpdateInfo-sha512">sha512</code>** String
 * <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
 * <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
-* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String | Array<[ReleaseNoteInfo](#ReleaseNoteInfo)> - The release notes.
+* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String | Array&lt;module:builder-util-runtime.ReleaseNoteInfo&gt; - The release notes. List if `updater.fullChangelog` is set to `true`, `string` otherwise.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
 * <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
 * **<code id="UpdateInfo-version">version</code>** String - The version.
-
-<a name="VersionInfo"></a>
-### `VersionInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Properties**
-* **<code id="VersionInfo-version">version</code>** String - The version.
-
-<a name="ReleaseNoteInfo"></a>
-### `ReleaseNoteInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Properties**
-* **<code id="ReleaseNoteInfo-version">version</code>** String - The version.
-* **<code id="ReleaseNoteInfo-note">note</code>** String | null - The note.
 
 <a name="UpdateCheckResult"></a>
 ### `UpdateCheckResult`
@@ -314,6 +302,12 @@ Emitted when an authenticating proxy is [asking for user credentials](https://gi
 #### `updaterSignal.updateDownloaded(handler)`
 
 - handler <code>callback</code>
+
+<a name="VersionInfo"></a>
+### `VersionInfo`
+**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
+**Properties**
+* **<code id="VersionInfo-version">version</code>** String - The version.
 
 
 <!-- end of generated block -->

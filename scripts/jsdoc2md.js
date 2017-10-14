@@ -348,7 +348,7 @@ function sortAutoUpdate(pages) {
       member.longname = member.id
       member.memberof = "module:electron-updater"
       // move to end
-      member.order += pages[pageIndex].data.length + 1 // order started from 1
+      member.order += pages[pageIndex].data.length + 22 // order started from 1
       return true
     }
 

@@ -2,12 +2,12 @@ import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { AppXOptions, WindowsConfiguration } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
-import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 
 /**
  * Configuration Options
@@ -230,7 +230,6 @@ export interface ReleaseInfo {
   /**
    * The release notes.
    */
-
   releaseNotes?: string | null
 
   /**

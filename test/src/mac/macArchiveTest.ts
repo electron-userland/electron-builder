@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { Platform } from "electron-builder"
 import { exec } from "builder-util"
+import { parseXml } from "builder-util-runtime"
+import { Platform } from "electron-builder"
 import { readFile, symlink } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { parseString } from "xml2js"
 import { assertThat } from "../helpers/fileAssert"
 import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
@@ -44,15 +44,18 @@ test.ifAll.ifMac("pkg scripts", app({
     const unpackedDir = path.join(context.outDir, "pkg-unpacked")
     await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
 
-    const m: any = BluebirdPromise.promisify(parseString)
-    const info = await m(await readFile(path.join(unpackedDir, "Distribution"), "utf8"), {
-      explicitRoot: false,
-      explicitArray: false,
-      mergeAttrs: true,
-    })
-    delete info["pkg-ref"][0]["bundle-version"].bundle.CFBundleVersion
-    delete info["pkg-ref"][1].installKBytes
-    delete info.product.version
+    const info = parseXml(await readFile(path.join(unpackedDir, "Distribution"), "utf8"))
+    for (const element of info.getElements("pkg-ref")) {
+      element.removeAttribute("installKBytes")
+      const bundleVersion = element.elementOrNull("bundle-version")
+      if (bundleVersion != null) {
+        bundleVersion.element("bundle").removeAttribute("CFBundleVersion")
+      }
+    }
+
+    // delete info.product.version
+    info.element("product").removeAttribute("version")
+
     expect(info).toMatchSnapshot()
 
     const scriptDir = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "Scripts")

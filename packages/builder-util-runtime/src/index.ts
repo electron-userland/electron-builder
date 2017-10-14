@@ -5,3 +5,4 @@ export { UpdateInfo, WindowsUpdateInfo, AppImageUpdateInfo, BlockMapDataHolder, 
 export { parseDn } from "./rfc2253Parser"
 export { UUID } from "./uuid"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
+export { parseXml, XElement } from "./xml"

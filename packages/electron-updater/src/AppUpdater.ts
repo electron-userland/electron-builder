@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, AllPublishOptions, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
+import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -32,7 +32,7 @@ export abstract class AppUpdater extends EventEmitter {
   allowPrerelease = false
 
   /**
-   * *GitHub provider only.* Get all release notes, not just the last
+   * *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
    * @default false
    */
   fullChangelog = false
@@ -44,9 +44,9 @@ export abstract class AppUpdater extends EventEmitter {
   allowDowngrade = false
 
   /**
-   * Current version Electron application
+   * The current application version.
    */
-  currentVersion: string
+  readonly currentVersion: string
 
   /**
    *  The request headers.
@@ -130,7 +130,7 @@ export abstract class AppUpdater extends EventEmitter {
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
-      throw new Error(`App version is not valid semver version: "${currentVersionString}`)
+      throw new Error(`App version is not a valid semver version: "${currentVersionString}`)
     }
     this.currentVersion = currentVersion
 

@@ -427,70 +427,185 @@ Array [
 `;
 
 exports[`pkg scripts 3`] = `
-Object {
-  "choice": Array [
-    Object {
-      "id": "default",
-      "title": "Test App ßW",
-      "versStr": "1.1.0",
-    },
-    Object {
-      "id": "org.electron-builder.testApp",
-      "pkg-ref": Object {
+XElement {
+  "attributes": Object {
+    "minSpecVersion": "2",
+  },
+  "elements": Array [
+    XElement {
+      "attributes": Object {
         "id": "org.electron-builder.testApp",
       },
-      "title": "Test App ßW",
-      "visible": "false",
-    },
-  ],
-  "choices-outline": Object {
-    "line": Object {
-      "choice": "default",
-      "line": Object {
-        "choice": "org.electron-builder.testApp",
-      },
-    },
-  },
-  "domains": Object {
-    "enable_anywhere": "true",
-    "enable_currentUserHome": "true",
-    "enable_localSystem": "true",
-  },
-  "minSpecVersion": "2",
-  "options": Object {
-    "customize": "never",
-    "hostArchitectures": "x86_64",
-    "require-scripts": "false",
-  },
-  "pkg-ref": Array [
-    Object {
-      "bundle-version": Object {
-        "bundle": Object {
-          "CFBundleShortVersionString": "1.1.0",
-          "id": "org.electron-builder.testApp",
-          "path": "Test App ßW.app",
+      "elements": Array [
+        XElement {
+          "attributes": Object {},
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "CFBundleShortVersionString": "1.1.0",
+                "id": "org.electron-builder.testApp",
+                "path": "Test App ßW.app",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "bundle",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "bundle-version",
+          "value": "
+        ",
         },
-      },
-      "id": "org.electron-builder.testApp",
+      ],
+      "isCData": false,
+      "name": "pkg-ref",
+      "value": "
+    ",
     },
-    Object {
-      "_": "#org.electron-builder.testApp.pkg",
-      "id": "org.electron-builder.testApp",
-      "onConclusion": "none",
-      "version": "1.1.0",
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "product",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": null,
+      "isCData": false,
+      "name": "title",
+      "value": "Test App ßW",
+    },
+    XElement {
+      "attributes": Object {
+        "customize": "never",
+        "hostArchitectures": "x86_64",
+        "require-scripts": "false",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "options",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": Array [
+        XElement {
+          "attributes": Object {},
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "min": "10.9.0",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "os-version",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "allowed-os-versions",
+          "value": "
+        ",
+        },
+      ],
+      "isCData": false,
+      "name": "volume-check",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": Array [
+        XElement {
+          "attributes": Object {
+            "choice": "default",
+          },
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "choice": "org.electron-builder.testApp",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "line",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "line",
+          "value": "
+        ",
+        },
+      ],
+      "isCData": false,
+      "name": "choices-outline",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "default",
+        "title": "Test App ßW",
+        "versStr": "1.1.0",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "choice",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+        "title": "Test App ßW",
+        "visible": "false",
+      },
+      "elements": Array [
+        XElement {
+          "attributes": Object {
+            "id": "org.electron-builder.testApp",
+          },
+          "elements": null,
+          "isCData": false,
+          "name": "pkg-ref",
+          "value": "",
+        },
+      ],
+      "isCData": false,
+      "name": "choice",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+        "onConclusion": "none",
+        "version": "1.1.0",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "pkg-ref",
+      "value": "#org.electron-builder.testApp.pkg",
+    },
+    XElement {
+      "attributes": Object {
+        "enable_anywhere": "true",
+        "enable_currentUserHome": "true",
+        "enable_localSystem": "true",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "domains",
+      "value": "",
     },
   ],
-  "product": Object {
-    "id": "org.electron-builder.testApp",
-  },
-  "title": "Test App ßW",
-  "volume-check": Object {
-    "allowed-os-versions": Object {
-      "os-version": Object {
-        "min": "10.9.0",
-      },
-    },
-  },
+  "isCData": false,
+  "name": "installer-gui-script",
+  "value": "
+",
 }
 `;
 

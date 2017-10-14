@@ -91,8 +91,10 @@ export interface UpdateCheckResult {
   readonly cancellationToken?: CancellationToken
 }
 
-export const DOWNLOAD_PROGRESS = "download-progress"
-export const UPDATE_DOWNLOADED = "update-downloaded"
+export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
+
+export const DOWNLOAD_PROGRESS: UpdaterEvents = "download-progress"
+export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
 
@@ -111,18 +113,18 @@ export class UpdaterSignal {
     addHandler(this.emitter, DOWNLOAD_PROGRESS, handler)
   }
 
-  updateDownloaded(handler: (info: VersionInfo) => void) {
+  updateDownloaded(handler: (info: UpdateInfo) => void) {
     addHandler(this.emitter, UPDATE_DOWNLOADED, handler)
   }
 
-  updateCancelled(handler: (info: VersionInfo) => void) {
+  updateCancelled(handler: (info: UpdateInfo) => void) {
     addHandler(this.emitter, "update-cancelled", handler)
   }
 }
 
 const isLogEvent = false
 
-function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
+function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...args: Array<any>) => void) {
   if (isLogEvent) {
     emitter.on(event, (...args: Array<any>) => {
       console.log("%s %s", event, args)

@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo, ReleaseNoteInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, parseXml, ReleaseNoteInfo, UpdateInfo, WindowsUpdateInfo, XElement } from "builder-util-runtime"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
@@ -32,21 +32,16 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const basePath = this.basePath
     const cancellationToken = new CancellationToken()
 
-    const xElement = require("xelement")
-    const feedXml = await this.httpRequest(newUrlFromBase(`${basePath}.atom`, this.baseUrl), {
+    const feedXml: string = (await this.httpRequest(newUrlFromBase(`${basePath}.atom`, this.baseUrl), {
       Accept: "application/xml, application/atom+xml, text/xml, */*",
-    }, cancellationToken)
+    }, cancellationToken))!
 
-    const feed = new xElement.Parse(feedXml)
-    const latestRelease = feed.element("entry")
-    if (latestRelease == null) {
-      throw new Error(`No published versions on GitHub`)
-    }
-
+    const feed = parseXml(feedXml)
+    const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     let version: string | null
     try {
       if (this.updater.allowPrerelease) {
-        version = latestRelease.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
+        version = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
       }
       else {
         version = await this.getLatestVersionString(basePath, cancellationToken)
@@ -60,7 +55,6 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw new Error(`No published versions on GitHub`)
     }
 
-    let result: UpdateInfo
     const channelFile = getChannelFilename(getDefaultChannelName())
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(version, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
@@ -77,6 +71,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw e
     }
 
+    let result: UpdateInfo
     try {
       result = safeLoad(rawData)
     }
@@ -90,29 +85,11 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
 
     if (result.releaseName == null) {
-      (result as any).releaseName = latestRelease.getElementValue("title")
+      result.releaseName = latestRelease.elementValueOrEmpty("title")
     }
+
     if (result.releaseNotes == null) {
-      if (this.updater.fullChangelog) {
-        const currentVersion = this.updater.currentVersion
-        const allReleases = feed.getElements("entry")
-        const releaseNotes: Array<ReleaseNoteInfo> = []
-
-        for (const release of allReleases) {
-          const versionRelease = release.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
-
-          if (semver.lt(currentVersion, versionRelease)) {
-            releaseNotes.push({
-              version: versionRelease,
-              note: release.getElementValue("content")
-            })
-          }
-        }
-
-        result.releaseNotes = releaseNotes
-      } else {
-          (result as any).releaseNotes = latestRelease.getElementValue("content")
-      }
+      result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, feed, latestRelease)
     }
     return result
   }
@@ -169,4 +146,29 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
 interface GithubReleaseInfo {
   readonly tag_name: string
+}
+
+function getNoteValue(parent: XElement): string {
+  const result = parent.elementValueOrEmpty("content")
+  // GitHub reports empty notes as <content>No content.</content>
+  return result === "No content." ? "" : result
+}
+
+export function computeReleaseNotes(currentVersion: string, isFullChangelog: boolean, feed: XElement, latestRelease: any) {
+  if (!isFullChangelog) {
+    return getNoteValue(latestRelease)
+  }
+
+  const releaseNotes: Array<ReleaseNoteInfo> = []
+  for (const release of feed.getElements("entry")) {
+    const versionRelease = release.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)![1]
+    if (semver.lt(currentVersion, versionRelease)) {
+      releaseNotes.push({
+        version: versionRelease,
+        note: getNoteValue(release)
+      })
+    }
+  }
+  return releaseNotes
+    .sort((a, b) => semver.rcompare(a.version, b.version))
 }
