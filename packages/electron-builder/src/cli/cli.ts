@@ -37,6 +37,7 @@ yargs
   .help()
   .epilog(`See ${underline("https://electron.build")} for more documentation.`)
   .strict()
+  .recommendCommands()
   .argv
 
 function wrap(task: (args: any) => Promise<any>) {

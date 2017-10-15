@@ -1,5 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`cli 1`] = `
+Object {
+  "config": Object {
+    "extraMetadata": Object {
+      "foo": "bar",
+    },
+  },
+  "draft": undefined,
+  "prepackaged": undefined,
+  "prerelease": undefined,
+  "projectDir": undefined,
+  "publish": undefined,
+}
+`;
+
+exports[`cli 2`] = `
+Object {
+  "config": Object {
+    "extraMetadata": Object {
+      "dev": Object {
+        "login-url": true,
+      },
+    },
+  },
+  "draft": undefined,
+  "prepackaged": undefined,
+  "prerelease": undefined,
+  "projectDir": undefined,
+  "publish": undefined,
+}
+`;
+
 exports[`extra metadata (no asar) 1`] = `
 Object {
   "linux": Array [],

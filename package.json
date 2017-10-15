@@ -131,5 +131,8 @@
       "<rootDir>/packages"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
+  },
+  "yargs": {
+    "camel-case-expansion": false
   }
 }

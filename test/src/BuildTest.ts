@@ -54,14 +54,6 @@ test("cli", async () => {
       extends: "./config.json"
     }
   })
-
-  function parseExtraMetadata(input: string) {
-    const result = parse(input)
-    delete result.targets
-    return result
-  }
-
-  expect(parseExtraMetadata("--em.foo=bar"))
 })
 
 test("build in the app package.json", appTwoThrows({targets: linuxDirTarget}, {
