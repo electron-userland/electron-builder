@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, BlockMapDataHolder, safeGetHeader, PackageFileInfo } from "builder-util-runtime"
+import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, PackageFileInfo, safeGetHeader } from "builder-util-runtime"
 import { BlockMap, BlockMapFile, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
 import { close, createReadStream, createWriteStream, open, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
@@ -17,14 +17,18 @@ export class DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 }
 
-function buildChecksumToOffsetMap(file: BlockMapFile, fileOffset: number) {
-  const result = new Map<string, number>()
+function buildChecksumMap(file: BlockMapFile, fileOffset: number) {
+  const checksumToOffset = new Map<string, number>()
+  const checksumToSize = new Map<string, number>()
   let offset = fileOffset
   for (let i = 0; i < file.checksums.length; i++) {
-    result.set(file.checksums[i], offset)
-    offset += file.sizes[i]
+    const checksum = file.checksums[i]
+    const size = file.sizes[i]
+    checksumToOffset.set(checksum, offset)
+    checksumToSize.set(checksum, size)
+    offset += size
   }
-  return result
+  return {checksumToOffset, checksumToSize}
 }
 
 export class DifferentialDownloader {
@@ -227,14 +231,20 @@ export class DifferentialDownloader {
 
       let changedBlockCount = 0
 
-      const checksumToOldOffset = buildChecksumToOffsetMap(oldFile, oldEntry.offset)
+      const {checksumToOffset: checksumToOldOffset, checksumToSize} = buildChecksumMap(oldFile, oldEntry.offset)
 
       let newOffset = 0
       blockMapLoop:
       for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
         const currentBlockSize = newFile.sizes[i]
 
-        const oldOffset = checksumToOldOffset.get(newFile.checksums[i])
+        const checksum = newFile.checksums[i]
+        let oldOffset: number | null | undefined = checksumToOldOffset.get(checksum)
+        if (oldOffset != null && checksumToSize.get(checksum) !== currentBlockSize) {
+          this.logger.warn(`Checksum ("${checksum}") matches, but size differs (old: ${checksumToSize.get(checksum)}, new: ${currentBlockSize})`)
+          oldOffset = null
+        }
+
         if (oldOffset == null) {
           changedBlockCount++
 
