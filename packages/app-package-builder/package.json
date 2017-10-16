@@ -8,7 +8,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "out", "blake2s.min.js"
   ],
   "dependencies": {
     "bluebird-lst": "^1.0.4",

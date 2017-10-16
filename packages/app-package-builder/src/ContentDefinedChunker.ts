@@ -1,9 +1,6 @@
 import { FileChunks } from "builder-util-runtime/out/blockMapApi"
-import { createHash, Hash } from "crypto"
 import { read } from "fs-extra-p"
 import { Rabin } from "rabin-bindings"
-
-const CHECKSUM_ALGORITHM = "md5"
 
 export class ContentDefinedChunker {
   async computeChunks(fd: number, start: number, end: number, name: string): Promise<FileChunks> {
@@ -35,7 +32,7 @@ export class ContentDefinedChunker {
         allSizes.push(size)
         let chunkEnd = chunkStart + size
 
-        const hash = createHash(CHECKSUM_ALGORITHM)
+        const hash = new Blake2s(CHECKSUM_OUTPUT_LENGTH)
         if (tailBufferData !== null) {
           hash.update(tailBufferData)
           // if there is the tail data (already processed by rabin data), first size includes it
@@ -78,11 +75,17 @@ export class ContentDefinedChunker {
   }
 }
 
+// base64 - should be divisible by 3 to avoid paddings
+const CHECKSUM_OUTPUT_LENGTH = 18
+const Blake2s = require("../blake2s.js")
+
 function computeChecksum(chunk: Buffer) {
+  const hash = new Blake2s(CHECKSUM_OUTPUT_LENGTH)
+  hash.update(chunk)
   // node-base91 doesn't make a lot of sense - 29KB vs 30KB Because for base64 string value in the yml never escaped, but node-base91 often escaped (single quotes) and it adds extra 2 symbols.
-  return digest(createHash(CHECKSUM_ALGORITHM).update(chunk))
+  return digest(hash)
 }
 
-function digest(hash: Hash) {
-  return hash.digest("base64").replace(/={1,2}$/, "")
+function digest(hash: any) {
+  return hash.digest().toString("base64")
 }

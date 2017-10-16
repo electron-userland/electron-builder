@@ -28,7 +28,7 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number) {
     checksumToSize.set(checksum, size)
     offset += size
   }
-  return {checksumToOffset, checksumToSize}
+  return {checksumToOffset, checksumToOldSize: checksumToSize}
 }
 
 export class DifferentialDownloader {
@@ -209,6 +209,8 @@ export class DifferentialDownloader {
 
     const oldEntryMap = buildEntryMap(oldBlockMap.files)
 
+    let lastOperation: Operation | null = null
+
     const operations: Array<Operation> = []
     for (const blockMapFile of newBlockMap.files) {
       const name = blockMapFile.name
@@ -224,71 +226,51 @@ export class DifferentialDownloader {
         continue
       }
 
-      let lastOperation: Operation | null = null
-
       const newFile = nameToNewBlocks.get(name)!!
-      const oldFile = nameToOldBlocks.get(name)!!
-
       let changedBlockCount = 0
 
-      const {checksumToOffset: checksumToOldOffset, checksumToSize} = buildChecksumMap(oldFile, oldEntry.offset)
+      const {checksumToOffset: checksumToOldOffset, checksumToOldSize} = buildChecksumMap(nameToOldBlocks.get(name)!!, oldEntry.offset)
 
-      let newOffset = 0
-      blockMapLoop:
+      let newOffset = blockMapFile.offset
       for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
-        const currentBlockSize = newFile.sizes[i]
-
+        const blockSize = newFile.sizes[i]
         const checksum = newFile.checksums[i]
         let oldOffset: number | null | undefined = checksumToOldOffset.get(checksum)
-        if (oldOffset != null && checksumToSize.get(checksum) !== currentBlockSize) {
-          this.logger.warn(`Checksum ("${checksum}") matches, but size differs (old: ${checksumToSize.get(checksum)}, new: ${currentBlockSize})`)
+        if (oldOffset != null && checksumToOldSize.get(checksum) !== blockSize) {
+          this.logger.warn(`Checksum ("${checksum}") matches, but size differs (old: ${checksumToOldSize.get(checksum)}, new: ${blockSize})`)
           oldOffset = null
         }
 
         if (oldOffset == null) {
           changedBlockCount++
 
-          const start = blockMapFile.offset + newOffset
-          const end = start + currentBlockSize
-          if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD) {
+          if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD || lastOperation.end !== newOffset) {
             lastOperation = {
               kind: OperationKind.DOWNLOAD,
-              start,
-              end,
+              start: newOffset,
+              end: newOffset + blockSize,
             }
             operations.push(lastOperation)
           }
           else {
-            lastOperation.end += currentBlockSize
+            lastOperation.end += blockSize
           }
         }
+        else if (lastOperation == null || lastOperation.kind !== OperationKind.COPY || lastOperation.end !== oldOffset) {
+          lastOperation = {
+            kind: OperationKind.COPY,
+            start: oldOffset,
+            end: oldOffset + blockSize,
+          }
+          operations.push(lastOperation)
+        }
         else {
-          if (lastOperation == null || lastOperation.kind !== OperationKind.COPY || lastOperation.end !== oldOffset) {
-            const end: number = oldOffset + currentBlockSize
-            if (i === 0 && operations.length > 0) {
-              const prevOperation = operations[operations.length - 1]
-              if (prevOperation.kind === OperationKind.COPY && prevOperation.end === oldOffset) {
-                lastOperation = prevOperation
-                prevOperation.end = end
-                continue blockMapLoop
-              }
-            }
-
-            lastOperation = {
-              kind: OperationKind.COPY,
-              start: oldOffset,
-              end,
-            }
-            operations.push(lastOperation)
-          }
-          else {
-            lastOperation.end += currentBlockSize
-          }
+          lastOperation.end += blockSize
         }
       }
 
       if (changedBlockCount > 0) {
-        this.logger.info(`File ${blockMapFile.name} has ${changedBlockCount} changed blocks`)
+        this.logger.info(`File${blockMapFile.name === "file" ? "" : (" " + blockMapFile.name)} has ${changedBlockCount} changed blocks`)
       }
     }
     return operations

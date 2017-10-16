@@ -71,7 +71,7 @@
     "yargs": "^9.0.1"
   },
   "devDependencies": {
-    "@develar/gitbook": "^3.2.6",
+    "@develar/gitbook": "3.2.6",
     "@types/chalk": "^0.4.31",
     "@types/debug": "^0.0.30",
     "@types/ejs": "^2.3.33",
