@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, Platform } from "electron-builder"
 import { walk } from "builder-util/out/fs"
-import { readAsarJson } from "electron-builder/out/asar"
+import { Arch, Platform } from "electron-builder"
+import { readAsarJson } from "electron-builder/out/asar/asar"
 import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
@@ -58,7 +58,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
 
   const appAsar = path.join(instDir, name, "resources", "app.asar")
   expect(await readAsarJson(appAsar, "package.json")).toMatchObject({
-    name: name,
+    name,
   })
 
   if (!perUser) {

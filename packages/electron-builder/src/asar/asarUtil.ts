@@ -3,12 +3,12 @@ import { AsyncTaskManager, debug, log } from "builder-util"
 import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull } from "builder-util/out/fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { AsarFilesystem, Node, readAsar } from "../asar"
 import { AsarOptions } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
-import { getDestinationPath } from "./appFileCopier"
+import { getDestinationPath } from "../util/appFileCopier"
+import { NODE_MODULES_PATTERN, ResolvedFileSet } from "../util/AppFileCopierHelper"
+import { AsarFilesystem, Node, readAsar } from "./asar"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require("chromium-pickle-js")

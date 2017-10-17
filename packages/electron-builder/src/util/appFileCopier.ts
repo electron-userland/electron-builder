@@ -3,9 +3,9 @@ import { AsyncTaskManager } from "builder-util"
 import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { ensureDir, readlink, symlink } from "fs-extra-p"
 import * as path from "path"
+import { copyFileOrData } from "../asar/asarUtil"
 import { Packager } from "../packager"
 import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
-import { copyFileOrData } from "./asarUtil"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   return file === fileSet.src ? fileSet.destination : file.replace(ensureEndSlash(fileSet.src), ensureEndSlash(fileSet.destination))
