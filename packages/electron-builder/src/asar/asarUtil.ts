@@ -74,54 +74,59 @@ export class AsarPackager {
     for (let i = 0, n = fileSet.files.length; i < n; i++) {
       const file = fileSet.files[i]
       const stat = metadata.get(file)
+      if (stat == null) {
+        continue
+      }
+
       const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
-      if (stat != null && stat.isFile()) {
-        let fileParent = path.dirname(pathInArchive)
-        if (fileParent === ".") {
-          fileParent = ""
-        }
 
-        if (currentDirPath !== fileParent) {
-          if (fileParent.startsWith("..")) {
-            throw new Error("Internal error")
-          }
-
-          currentDirPath = fileParent
-          currentDirNode = this.fs.getOrCreateNode(fileParent)
-          // do not check for root
-          if (fileParent !== "" && !currentDirNode.unpacked) {
-            if (unpackedDirs.has(fileParent)) {
-              currentDirNode.unpacked = true
-            }
-            else {
-              await correctDirNodeUnpackedFlag(fileParent, currentDirNode)
-            }
-          }
-        }
-
-        const dirNode = currentDirNode!
-        const newData = transformedFiles == null ? null : transformedFiles.get(i)
-        const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
-        this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData), isUnpacked, stat)
-        if (isUnpacked) {
-          if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
-            dirToCreateForUnpackedFiles.add(fileParent)
-            await ensureDir(path.join(unpackedDest, fileParent))
-          }
-
-          const unpackedFile = path.join(unpackedDest, pathInArchive)
-          taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
-          if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
-            await taskManager.awaitTasks()
-          }
-
-          unpackedFileIndexSet.add(i)
-        }
-      }
-      else if (stat != null && stat.isSymbolicLink()) {
+      if (stat.isSymbolicLink()) {
         this.fs.getOrCreateNode(pathInArchive).link = (stat as any).relativeLink
+        continue
       }
-    }
+
+      let fileParent = path.dirname(pathInArchive)
+      if (fileParent === ".") {
+        fileParent = ""
+      }
+
+      if (currentDirPath !== fileParent) {
+        if (fileParent.startsWith("..")) {
+          throw new Error(`Internal error: path must not start with "..": ${fileParent}`)
+        }
+
+        currentDirPath = fileParent
+        currentDirNode = this.fs.getOrCreateNode(fileParent)
+        // do not check for root
+        if (fileParent !== "" && !currentDirNode.unpacked) {
+          if (unpackedDirs.has(fileParent)) {
+            currentDirNode.unpacked = true
+          }
+          else {
+            await correctDirNodeUnpackedFlag(fileParent, currentDirNode)
+          }
+        }
+      }
+
+      const dirNode = currentDirNode!
+      const newData = transformedFiles == null ? null : transformedFiles.get(i)
+      const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
+      this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData), isUnpacked, stat)
+      if (isUnpacked) {
+        if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
+          dirToCreateForUnpackedFiles.add(fileParent)
+          await ensureDir(path.join(unpackedDest, fileParent))
+        }
+
+        const unpackedFile = path.join(unpackedDest, pathInArchive)
+        taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
+        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+          await taskManager.awaitTasks()
+        }
+
+        unpackedFileIndexSet.add(i)
+      }
+  }
 
     if (taskManager.tasks.length > 0) {
       await taskManager.awaitTasks()

@@ -5,10 +5,8 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder/out/asar/asar"
 import { move, outputJson, readJson } from "fs-extra-p"
 import * as path from "path"
-import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-
-const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
 test("cli", async () => {
   // because these methods are internal

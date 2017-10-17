@@ -1,0 +1,211 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`yarn several workspaces 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn several workspaces 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "0",
+      "size": 841,
+    },
+    "index.js": Object {
+      "offset": "841",
+      "size": 4371,
+    },
+    "node_modules": Object {
+      "files": Object {
+        "electron-log": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "offset": "5522",
+              "size": 1082,
+            },
+            "index.js": Object {
+              "offset": "6604",
+              "size": 140,
+            },
+            "lib": Object {
+              "files": Object {
+                "format.js": Object {
+                  "offset": "9889",
+                  "size": 1021,
+                },
+                "log.js": Object {
+                  "offset": "10910",
+                  "size": 877,
+                },
+                "transports": Object {
+                  "files": Object {
+                    "console.js": Object {
+                      "offset": "11787",
+                      "size": 343,
+                    },
+                    "file": Object {
+                      "files": Object {
+                        "find-log-path.js": Object {
+                          "offset": "14425",
+                          "size": 2078,
+                        },
+                        "get-app-name.js": Object {
+                          "offset": "16503",
+                          "size": 1780,
+                        },
+                        "index.js": Object {
+                          "offset": "18283",
+                          "size": 2068,
+                        },
+                      },
+                    },
+                    "log-s.js": Object {
+                      "offset": "12130",
+                      "size": 1751,
+                    },
+                    "renderer-console.js": Object {
+                      "offset": "13881",
+                      "size": 544,
+                    },
+                  },
+                },
+              },
+            },
+            "main.js": Object {
+              "offset": "6744",
+              "size": 1343,
+            },
+            "package.json": Object {
+              "offset": "8087",
+              "size": 824,
+            },
+            "renderer.js": Object {
+              "offset": "8911",
+              "size": 978,
+            },
+          },
+        },
+        "ms": Object {
+          "files": Object {
+            "index.js": Object {
+              "offset": "20351",
+              "size": 2764,
+            },
+            "license.md": Object {
+              "offset": "23115",
+              "size": 1077,
+            },
+            "package.json": Object {
+              "offset": "24192",
+              "size": 469,
+            },
+          },
+        },
+      },
+    },
+    "package.json": Object {
+      "offset": "5212",
+      "size": 310,
+    },
+  },
+}
+`;
+
+exports[`yarn workspace 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`yarn workspace 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "0",
+      "size": 841,
+    },
+    "index.js": Object {
+      "offset": "841",
+      "size": 4371,
+    },
+    "node_modules": Object {
+      "files": Object {
+        "electron-log": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "offset": "5503",
+              "size": 1082,
+            },
+            "index.js": Object {
+              "offset": "6585",
+              "size": 140,
+            },
+            "lib": Object {
+              "files": Object {
+                "format.js": Object {
+                  "offset": "10471",
+                  "size": 1021,
+                },
+                "log.js": Object {
+                  "offset": "11492",
+                  "size": 877,
+                },
+                "transports": Object {
+                  "files": Object {
+                    "console.js": Object {
+                      "offset": "12369",
+                      "size": 343,
+                    },
+                    "file": Object {
+                      "files": Object {
+                        "find-log-path.js": Object {
+                          "offset": "15007",
+                          "size": 2078,
+                        },
+                        "get-app-name.js": Object {
+                          "offset": "17085",
+                          "size": 1780,
+                        },
+                        "index.js": Object {
+                          "offset": "18865",
+                          "size": 2068,
+                        },
+                      },
+                    },
+                    "log-s.js": Object {
+                      "offset": "12712",
+                      "size": 1751,
+                    },
+                    "renderer-console.js": Object {
+                      "offset": "14463",
+                      "size": 544,
+                    },
+                  },
+                },
+              },
+            },
+            "main.js": Object {
+              "offset": "6725",
+              "size": 1343,
+            },
+            "package.json": Object {
+              "offset": "8068",
+              "size": 1425,
+            },
+            "renderer.js": Object {
+              "offset": "9493",
+              "size": 978,
+            },
+          },
+        },
+      },
+    },
+    "package.json": Object {
+      "offset": "5212",
+      "size": 291,
+    },
+  },
+}
+`;

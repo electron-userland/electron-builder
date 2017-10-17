@@ -12,6 +12,13 @@ import { createFilter, hasMagic } from "./util/filter"
 // https://github.com/electron-userland/electron-builder/issues/733
 const minimatchOptions = {dot: true}
 
+// noinspection SpellCheckingInspection
+export const excludedNames = ".git,.hg,.svn,CVS,RCS,SCCS," +
+  "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
+  ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
+  ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
+  "appveyor.yml,.travis.yml,circle.yml,.nyc_output"
+
 /** @internal */
 export class FileMatcher {
   readonly from: string
@@ -23,7 +30,7 @@ export class FileMatcher {
 
   readonly isSpecifiedAsEmptyArray: boolean
 
-  constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | null | undefined) {
+  constructor(from: string, to: string, readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | null | undefined) {
     this.from = macroExpander(from)
     this.to = macroExpander(to)
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
@@ -149,16 +156,11 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     patterns.push("!**/node_modules/**/*.{dll,exe}")
   }
 
-  patterns.push("!**/node_modules/*/{README.md,karma.conf.js,.coveralls.yml,readme.markdown,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}")
   patterns.push(`!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,pdb}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
   //noinspection SpellCheckingInspection
-  patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
-    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
-    ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
-    ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
-    "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
+  patterns.push(`!**/{${excludedNames}}`)
 
   if (isElectronCompile) {
     patterns.push("!.cache{,/**/*}")

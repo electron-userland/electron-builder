@@ -1,6 +1,0 @@
-{
-  presets: ["babel-preset-ts-node4-bluebird"],
-  plugins: [
-    "./scripts/babel-plugin-version-transform.js"
-  ]
-}

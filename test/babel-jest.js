@@ -4,32 +4,13 @@ let babel
 const crypto = require("crypto")
 const fs = require("fs")
 const jestPreset = require("babel-preset-jest")
-const path = require("path")
-
-let babelRc;
-
-function getBabelRcDigest() {
-  if (babelRc == null) {
-    let configFile
-    try {
-      configFile = fs.readFileSync(path.join(__dirname, ".babelrc"))
-    }
-    catch (e) {
-      configFile = fs.readFileSync(path.join(__dirname, "..", ".babelrc"))
-    }
-
-    babelRc = crypto
-      .createHash("md5")
-      .update(configFile)
-      .digest()
-  }
-  return babelRc
-}
 
 // compiled by ts-babel - do not transform
 function isFullyCompiled(fileData) {
   return fileData.startsWith(`"use strict";`) && fileData.includes("var _")
 }
+
+const BABEL_CONFIG_VERSION = Buffer.from([1])
 
 function createTransformer(options) {
   options = Object.assign({}, options, {
@@ -45,7 +26,7 @@ function createTransformer(options) {
         .update(fileData)
         .update(isFullyCompiled(fileData) ? "f": "p")
         .update(configString)
-        .update(getBabelRcDigest())
+        .update(BABEL_CONFIG_VERSION)
         .update(_ref2.instrument ? "instrument" : "")
         .digest("hex")
     },

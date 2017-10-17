@@ -39,7 +39,7 @@ export class ContentDefinedChunker {
           chunkEnd -= tailBufferData.length
           tailBufferData = null
         }
-        hash.update(dataBuffer.slice(chunkStart, chunkEnd))
+        hash.update(dataBuffer, chunkStart, size)
         checksums.push(digest(hash))
         chunkStart = chunkEnd
       }

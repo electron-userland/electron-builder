@@ -6,9 +6,7 @@ import { outputFile, readFile, move, stat, symlink } from "fs-extra-p"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, modifyPackageJson } from "./helpers/packTester"
-
-const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
+import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("expand not defined env", appThrows({
   targets: linuxDirTarget,

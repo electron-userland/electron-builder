@@ -1,7 +1,5 @@
-import { DIR_TARGET, Platform } from "electron-builder"
-import { app, appThrows } from "./helpers/packTester"
-
-const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
+import { Platform } from "electron-builder"
+import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifAll.ifDevOrLinuxCi("validation", appThrows({
   targets: linuxDirTarget,

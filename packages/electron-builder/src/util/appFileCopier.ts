@@ -5,10 +5,27 @@ import { ensureDir, readlink, symlink } from "fs-extra-p"
 import * as path from "path"
 import { copyFileOrData } from "../asar/asarUtil"
 import { Packager } from "../packager"
-import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
+import { ensureEndSlash, NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  return file === fileSet.src ? fileSet.destination : file.replace(ensureEndSlash(fileSet.src), ensureEndSlash(fileSet.destination))
+  if (file === fileSet.src) {
+    return fileSet.destination
+  }
+  else {
+    const src = ensureEndSlash(fileSet.src)
+    const dest = ensureEndSlash(fileSet.destination)
+    if (file.startsWith(src)) {
+      return dest + file.substring(src.length)
+    }
+    else {
+      // hoisted node_modules
+      const index = file.lastIndexOf(NODE_MODULES_PATTERN)
+      if (index < 0) {
+        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
+      }
+      return dest + file.substring(index + 1 /* leading slash */)
+    }
+  }
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager) {

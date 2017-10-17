@@ -18,7 +18,7 @@
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=6.11.4"
   },
   "keywords": [
     "electron",
@@ -53,8 +53,8 @@
   "dependencies": {
     "7zip-bin": "^2.2.7",
     "async-exit-hook": "^2.0.1",
-    "bluebird-lst": "^1.0.4",
-    "chalk": "^2.1.0",
+    "bluebird-lst": "^1.0.5",
+    "chalk": "2.1.0",
     "chromium-pickle-js": "^0.2.0",
     "cuint": "^0.2.2",
     "app-package-builder": "0.0.0-semantic-release",

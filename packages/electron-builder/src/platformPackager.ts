@@ -228,6 +228,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     } : config.extraMetadata)
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
       return computeFileSets(matchers, transformer, this.info, isElectronCompile)
+        .then(it => it.filter(it => it.files.length > 0))
     }
 
     if (this.info.isPrepackedAppAsar) {

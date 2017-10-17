@@ -6,7 +6,7 @@ import { getLinuxToolsPath } from "builder-util/out/bundledTool"
 import { copyDir, FileCopier, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target, Configuration } from "electron-builder"
+import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
@@ -26,6 +26,8 @@ if (process.env.TRAVIS !== "true") {
 }
 
 const OUT_DIR_NAME = "dist"
+
+export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
 interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
@@ -98,7 +100,8 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   await copyDir(projectDir, dir, {
     filter: it => {
       const basename = path.basename(it)
-      return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
+      // if custom project dir specified, copy node_modules (i.e. do not ignore it)
+      return basename !== OUT_DIR_NAME && (packagerOptions.projectDir != null || basename !== "node_modules") && !basename.startsWith(".")
     },
     isUseHardLink: it => path.basename(it) !== "package.json",
   })
@@ -115,7 +118,14 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       }
     }
 
-    const {packager, outDir} = await packAndCheck({projectDir, ...packagerOptions}, checkOptions)
+    if (packagerOptions.projectDir != null) {
+      packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
+    }
+
+    const {packager, outDir} = await packAndCheck({
+      projectDir,
+      ...packagerOptions
+    }, checkOptions)
 
     if (checkOptions.packed != null) {
       function base(platform: Platform, arch?: Arch): string {

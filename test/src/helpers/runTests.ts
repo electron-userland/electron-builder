@@ -50,6 +50,7 @@ async function runTests() {
       args.push("nsisUpdaterTest")
       args.push("macArchiveTest")
       args.push("macCodeSignTest")
+      args.push("HoistedNodeModuleTest")
     }
     else if (circleNodeIndex === 1) {
       args.push("oneClickInstallerTest")

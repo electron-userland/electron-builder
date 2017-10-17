@@ -3,7 +3,7 @@ import { move, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
+import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
 function createBuildResourcesTest(platform: Platform) {
@@ -25,8 +25,6 @@ function createBuildResourcesTest(platform: Platform) {
     projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   })
 }
-
-const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
 test.ifAll.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
 test.ifAll.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))

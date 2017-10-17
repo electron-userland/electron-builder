@@ -7,6 +7,8 @@ import { FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost } from "../fileTransformer"
 import { Packager } from "../packager"
 import { AppFileWalker } from "./AppFileWalker"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
+import { Dependency } from "./packageDependencies"
 
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
@@ -23,17 +25,34 @@ export interface ResolvedFileSet {
 
 export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
+  let hoistedNodeModuleFileSets: Array<ResolvedFileSet> | null = null
+  let isHoistedNodeModuleChecked = false
   for (const matcher of matchers) {
     const fileWalker = new AppFileWalker(matcher, packager)
 
-    const fromStat = await statOrNull(fileWalker.matcher.from)
+    const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      debug(`Directory ${fileWalker.matcher.from} doesn't exists, skip file copying`)
+      debug(`Directory ${matcher.from} doesn't exists, skip file copying`)
       continue
     }
 
-    const files = await walk(fileWalker.matcher.from, fileWalker.filter, fileWalker)
+    const files = await walk(matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
+
+    // https://github.com/electron-userland/electron-builder/issues/2205 Support for hoisted node_modules (lerna + yarn workspaces)
+    // if no node_modules in the app dir, it means that probably dependencies are hoisted
+    // check that main node_modules doesn't exist in addition to isNodeModulesHandled because isNodeModulesHandled will be false if node_modules dir is ignored by filter
+    // here isNodeModulesHandled is required only because of performance reasons (avoid stat call)
+    if (!isHoistedNodeModuleChecked && matcher.from === packager.appDir && !fileWalker.isNodeModulesHandled) {
+      isHoistedNodeModuleChecked = true
+      if ((await statOrNull(path.join(packager.appDir, "node_modules"))) == null) {
+        // in the prepacked mode no package.json
+        const packageJsonStat = await statOrNull(path.join(packager.appDir, "package.json"))
+        if (packageJsonStat != null && packageJsonStat.isFile()) {
+          hoistedNodeModuleFileSets = await copyHoistedNodeModules(packager, matcher)
+        }
+      }
+    }
 
     const transformedFiles = new Map<number, string | Buffer>()
     await BluebirdPromise.filter(files, (it, index) => {
@@ -60,15 +79,40 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
       return false
     }, CONCURRENCY)
 
-    fileSets.push({src: fileWalker.matcher.from, files, metadata: fileWalker.metadata, transformedFiles, destination: fileWalker.matcher.to})
+    fileSets.push({src: matcher.from, files, metadata, transformedFiles, destination: matcher.to})
   }
 
-  const mainFileSet = fileSets[0]
   if (isElectronCompile) {
     // cache files should be first (better IO)
-    fileSets.unshift(await compileUsingElectronCompile(mainFileSet, packager))
+    fileSets.unshift(await compileUsingElectronCompile(fileSets[0], packager))
+  }
+  if (hoistedNodeModuleFileSets != null) {
+    return fileSets.concat(hoistedNodeModuleFileSets)
   }
   return fileSets
+}
+
+async function copyHoistedNodeModules(packager: Packager, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
+  const productionDeps = await packager.productionDeps.value
+  const rootPathToCopier = new Map<string, Array<Dependency>>()
+  for (const dep of productionDeps) {
+    const root = dep.path.substring(0, dep.path.indexOf(NODE_MODULES_PATTERN))
+    let list = rootPathToCopier.get(root)
+    if (list == null) {
+      list = []
+      rootPathToCopier.set(root, list)
+    }
+    list.push(dep)
+  }
+
+  // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
+  return await BluebirdPromise.mapSeries(rootPathToCopier.keys(), async source => {
+    // use main matcher patterns, so, user can exclude some files in such hoisted node modules
+    const matcher = new FileMatcher(source, mainMatcher.to, mainMatcher.macroExpander, mainMatcher.patterns)
+    const copier = new NodeModuleCopyHelper(matcher, packager)
+    const files = await copier.collectNodeModules(rootPathToCopier.get(source)!!)
+    return {src: matcher.from, destination: matcher.to, files, metadata: copier.metadata}
+  })
 }
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`

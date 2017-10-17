@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "bluebird-lst": "^1.0.4",
+    "bluebird-lst": "^1.0.5",
     "fs-extra-p": "^4.4.4"
   },
   "typings": "./out/main.d.ts"

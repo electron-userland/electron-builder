@@ -11,7 +11,7 @@
     "out", "blake2s.min.js"
   ],
   "dependencies": {
-    "bluebird-lst": "^1.0.4",
+    "bluebird-lst": "^1.0.5",
     "fs-extra-p": "^4.4.4",
     "int64-buffer": "^0.1.9",
     "builder-util-runtime": "^0.0.0-semantic-release",
