@@ -21,7 +21,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     super(info)
 
     if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
-      this.codeSigningInfo = BluebirdPromise.resolve(Object.create(null))
+      this.codeSigningInfo = BluebirdPromise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
     }
     else {
       this.codeSigningInfo = createKeychain({
