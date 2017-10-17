@@ -29,10 +29,11 @@ export class AsarPackager {
       await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
     }
     await ensureDir(path.dirname(this.outFile))
+    const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
     for (const fileSet of fileSets) {
-      await this.createPackageFromFiles(fileSet, packager.info)
+      unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
     }
-    await this.writeAsarFile(fileSets)
+    await this.writeAsarFile(fileSets, unpackedFileIndexMap)
   }
 
   private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
@@ -48,24 +49,15 @@ export class AsarPackager {
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
 
-    const isDirNodeUnpacked = async (filePathInArchive: string, dirNode: Node) => {
-      if (dirNode.unpacked) {
-        return
-      }
-
-      if (unpackedDirs.has(filePathInArchive)) {
-        dirNode.unpacked = true
-      }
-      else {
-        for (const dir of unpackedDirs) {
-          if (filePathInArchive.length > (dir.length + 2) && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
-            dirNode.unpacked = true
-            unpackedDirs.add(filePathInArchive)
-            // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
-            // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-            await ensureDir(path.join(unpackedDest, filePathInArchive))
-            break
-          }
+    const correctDirNodeUnpackedFlag = async (filePathInArchive: string, dirNode: Node) => {
+      for (const dir of unpackedDirs) {
+        if (filePathInArchive.length > (dir.length + 2) && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
+          dirNode.unpacked = true
+          unpackedDirs.add(filePathInArchive)
+          // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
+          // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
+          await ensureDir(path.join(unpackedDest, filePathInArchive))
+          break
         }
       }
     }
@@ -76,6 +68,8 @@ export class AsarPackager {
 
     let currentDirNode: Node | null = null
     let currentDirPath: string | null = null
+
+    const unpackedFileIndexSet = new Set<number>()
 
     for (let i = 0, n = fileSet.files.length; i < n; i++) {
       const file = fileSet.files[i]
@@ -88,23 +82,28 @@ export class AsarPackager {
         }
 
         if (currentDirPath !== fileParent) {
+          if (fileParent.startsWith("..")) {
+            throw new Error("Internal error")
+          }
+
           currentDirPath = fileParent
           currentDirNode = this.fs.getOrCreateNode(fileParent)
           // do not check for root
-          if (fileParent !== "") {
-            await isDirNodeUnpacked(fileParent, currentDirNode)
+          if (fileParent !== "" && !currentDirNode.unpacked) {
+            if (unpackedDirs.has(fileParent)) {
+              currentDirNode.unpacked = true
+            }
+            else {
+              await correctDirNodeUnpackedFlag(fileParent, currentDirNode)
+            }
           }
         }
 
         const dirNode = currentDirNode!
-        const newData = transformedFiles == null ? null : transformedFiles[i] as string | Buffer
+        const newData = transformedFiles == null ? null : transformedFiles.get(i)
         const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
-        this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData as any), isUnpacked, stat)
+        this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData), isUnpacked, stat)
         if (isUnpacked) {
-          if (newData != null) {
-            transformedFiles[i] = null
-          }
-
           if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
             dirToCreateForUnpackedFiles.add(fileParent)
             await ensureDir(path.join(unpackedDest, fileParent))
@@ -115,31 +114,11 @@ export class AsarPackager {
           if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
             await taskManager.awaitTasks()
           }
-        }
-        else if (newData == null) {
-          transformedFiles[i] = true
+
+          unpackedFileIndexSet.add(i)
         }
       }
-      else if (stat == null || stat.isDirectory()) {
-        let unpacked = false
-        if (unpackedDirs.has(pathInArchive)) {
-          unpacked = true
-        }
-        else {
-          for (const dir of unpackedDirs) {
-            if (pathInArchive.length > (dir.length + 2) && pathInArchive[dir.length] === path.sep && pathInArchive.startsWith(dir)) {
-              unpacked = true
-              unpackedDirs.add(pathInArchive)
-              // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
-              // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-              await ensureDir(path.join(unpackedDest, pathInArchive))
-              break
-            }
-          }
-        }
-        this.fs.insertDirectory(pathInArchive, unpacked)
-      }
-      else if (stat.isSymbolicLink()) {
+      else if (stat != null && stat.isSymbolicLink()) {
         this.fs.getOrCreateNode(pathInArchive).link = (stat as any).relativeLink
       }
     }
@@ -147,9 +126,11 @@ export class AsarPackager {
     if (taskManager.tasks.length > 0) {
       await taskManager.awaitTasks()
     }
+
+    return unpackedFileIndexSet
   }
 
-  private writeAsarFile(fileSets: Array<ResolvedFileSet>): Promise<any> {
+  private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
     return new BluebirdPromise((resolve, reject) => {
       const headerPickle = pickle.createEmpty()
       headerPickle.writeString(JSON.stringify(this.fs.header))
@@ -169,8 +150,8 @@ export class AsarPackager {
       let files = fileSets[0].files
       let metadata = fileSets[0].metadata
       let transformedFiles = fileSets[0].transformedFiles
+      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!!
       const w = (index: number) => {
-        let data
         while (true) {
           if (index >= files.length) {
             if (++fileSetIndex >= fileSets.length) {
@@ -181,18 +162,21 @@ export class AsarPackager {
               files = fileSets[fileSetIndex].files
               metadata = fileSets[fileSetIndex].metadata
               transformedFiles = fileSets[fileSetIndex].transformedFiles
+              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!!
               index = 0
             }
           }
 
-          if ((data = transformedFiles[index++]) != null) {
+          if (!unpackedFileIndexSet.has(index)) {
             break
           }
+          index++
         }
 
-        const file = files[index - 1]
-        if (data !== true) {
-          writeStream.write(data, () => w(index))
+        const data = transformedFiles == null ? null : transformedFiles.get(index)
+        const file = files[index]
+        if (data !== null && data !== undefined) {
+          writeStream.write(data, () => w(index + 1))
           return
         }
 
@@ -201,14 +185,14 @@ export class AsarPackager {
         if (stat != null && stat.size < (4 * 1024 * 1024)) {
           readFile(file)
             .then(it => {
-              writeStream.write(it, () => w(index))
+              writeStream.write(it, () => w(index + 1))
             })
             .catch(reject)
         }
         else {
           const readStream = createReadStream(file)
           readStream.on("error", reject)
-          readStream.once("end", () => w(index))
+          readStream.once("end", () => w(index + 1))
           readStream.pipe(writeStream, {
             end: false
           })

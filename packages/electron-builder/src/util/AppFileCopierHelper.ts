@@ -18,7 +18,7 @@ export interface ResolvedFileSet {
 
   files: Array<string>
   metadata: Map<string, Stats>
-  transformedFiles: Array<string | Buffer | true | null>
+  transformedFiles?: Map<number, string | Buffer> | null
 }
 
 export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
@@ -35,9 +35,29 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
     const files = await walk(fileWalker.matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
 
-    const transformedFiles = await BluebirdPromise.map(files, it => {
+    const transformedFiles = new Map<number, string | Buffer>()
+    await BluebirdPromise.filter(files, (it, index) => {
       const fileStat = metadata.get(it)
-      return fileStat != null && fileStat.isFile() ? transformer(it) : null
+      if (fileStat == null || !fileStat.isFile()) {
+        return false
+      }
+
+      const transformedValue = transformer(it)
+      if (transformedValue == null) {
+        return false
+      }
+
+      if (typeof transformedValue === "object" && "then" in transformedValue) {
+        return (transformedValue as BluebirdPromise<any>)
+          .then(it => {
+            if (it != null) {
+              transformedFiles.set(index, it)
+            }
+            return false
+          })
+      }
+      transformedFiles.set(index, transformedValue as string | Buffer)
+      return false
     }, CONCURRENCY)
 
     fileSets.push({src: fileWalker.matcher.from, files, metadata: fileWalker.metadata, transformedFiles, destination: fileWalker.matcher.to})
@@ -45,7 +65,7 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
   const mainFileSet = fileSets[0]
   if (isElectronCompile) {
-    // cache should be first in the asar
+    // cache files should be first (better IO)
     fileSets.unshift(await compileUsingElectronCompile(mainFileSet, packager))
   }
   return fileSets
@@ -72,13 +92,13 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
       return null
     }
     return compilerHost.compile(file)
-      .then((it: any) => null)
+      .then(() => null)
   }, CONCURRENCY)
 
   await compilerHost.saveConfiguration()
 
   const metadata = new Map<string, Stats>()
-  const cacheFiles = await walk(cacheDir, (file, stat) => !file.startsWith("."), {
+  const cacheFiles = await walk(cacheDir, file => !file.startsWith("."), {
     consume: (file, fileStat) => {
       if (fileStat.isFile()) {
         metadata.set(file, fileStat)
@@ -89,16 +109,16 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
 
   // add shim
   const shimPath = `${mainFileSet.src}/${ELECTRON_COMPILE_SHIM_FILENAME}`
-  cacheFiles.push(shimPath)
-  metadata.set(shimPath, {isFile: () => true, isDirectory: () => false} as any)
-
-  const transformedFiles = new Array(cacheFiles.length)
-  transformedFiles[cacheFiles.length - 1] = `
+  mainFileSet.files.push(shimPath)
+  mainFileSet.metadata.set(shimPath, {isFile: () => true, isDirectory: () => false} as any)
+  if (mainFileSet.transformedFiles == null) {
+    mainFileSet.transformedFiles = new Map()
+  }
+  mainFileSet.transformedFiles.set(mainFileSet.files.length - 1, `
 'use strict';
 require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
-`
-  // cache files should be first (better IO)
-  return {src: electronCompileCache, files: cacheFiles, transformedFiles, metadata, destination: mainFileSet.destination}
+`)
+  return {src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination}
 }
 
 // sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end

@@ -95,15 +95,6 @@ export class AsarFilesystem {
     return node
   }
 
-  insertDirectory(p: string, unpacked: boolean = false) {
-    const node = this.getOrCreateNode(p)
-    node.files = {}
-    if (unpacked) {
-      node.unpacked = unpacked
-    }
-    return node.files
-  }
-
   getNode(p: string) {
     const node = this.searchNodeFromDirectory(path.dirname(p), false)!
     return node.files![path.basename(p)]

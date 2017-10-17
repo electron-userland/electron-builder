@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder/out/asar/asar"
-import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
+import { mkdirs, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, modifyPackageJson, PackedContext } from "./helpers/packTester"
@@ -29,14 +29,17 @@ test.ifDevOrLinuxCi("unpackDir one", app({
   packed: assertDirs,
 }))
 
-function assertDirs(context: PackedContext) {
-  return BluebirdPromise.all([
-    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "assets")).isDirectory(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "b2")).isDirectory(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
+async function assertDirs(context: PackedContext) {
+  const resourceDir = context.getResources(Platform.LINUX)
+  await BluebirdPromise.all([
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
   ])
+
+  expect((await readFile(path.join(resourceDir, "app.asar"))).toString("base64")).toMatchSnapshot()
 }
 test.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack("test-app", {

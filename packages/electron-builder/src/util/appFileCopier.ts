@@ -30,18 +30,13 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager)
 
     const destinationFile = getDestinationPath(sourceFile, fileSet)
     if (stat.isFile()) {
-      const newData = transformedFiles == null ? null : transformedFiles[i] as string | Buffer
-      if (newData != null) {
-        transformedFiles[i] = null
-      }
-
       const fileParent = path.dirname(destinationFile)
       if (!createdParentDirs.has(fileParent)) {
         createdParentDirs.add(fileParent)
         await ensureDir(fileParent)
       }
 
-      taskManager.addTask(copyFileOrData(fileCopier, newData, sourceFile, destinationFile, stat))
+      taskManager.addTask(copyFileOrData(fileCopier, transformedFiles == null ? null : transformedFiles.get(i), sourceFile, destinationFile, stat))
       if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
         await taskManager.awaitTasks()
       }
