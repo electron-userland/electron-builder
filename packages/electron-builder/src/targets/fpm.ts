@@ -159,7 +159,8 @@ export default class FpmTarget extends Target {
         depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk2", "libappindicator-gtk3", "libappindicator-sharp"]
       }
       else if (target === "rpm") {
-        depends = ["libnotify", "libappindicator"]
+        // noinspection SpellCheckingInspection
+        depends = ["libnotify", "libappindicator", "libXScrnSaver"]
       }
       else {
         depends = []
