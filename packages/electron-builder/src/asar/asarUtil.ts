@@ -1,37 +1,17 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, debug, log } from "builder-util"
-import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull } from "builder-util/out/fs"
+import { AsyncTaskManager, log } from "builder-util"
+import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarOptions } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { getDestinationPath } from "../util/appFileCopier"
-import { NODE_MODULES_PATTERN, ResolvedFileSet } from "../util/AppFileCopierHelper"
-import { AsarFilesystem, Node, readAsar } from "./asar"
+import { ResolvedFileSet } from "../util/AppFileCopierHelper"
+import { AsarFilesystem, Node } from "./asar"
+import { detectUnpackedDirs } from "./unpackDetector"
 
-const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require("chromium-pickle-js")
-
-function addValue(map: Map<string, Array<string>>, key: string, value: string) {
-  let list = map.get(key)
-  if (list == null) {
-    list = [value]
-    map.set(key, list)
-  }
-  else {
-    list.push(value)
-  }
-}
-
-export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
-  if (data == null) {
-    return fileCopier.copy(source, destination, stats)
-  }
-  else {
-    return writeFile(destination, data)
-  }
-}
 
 /** @internal */
 export class AsarPackager {
@@ -240,132 +220,12 @@ export class AsarPackager {
   }
 }
 
-/** @internal */
-export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
-  function error(text: string) {
-    return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
+export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
+  if (data == null) {
+    return fileCopier.copy(source, destination, stats)
   }
-
-  let fs
-  try {
-    fs = await readAsar(asarFile)
-  }
-  catch (e) {
-    throw error(`is corrupted: ${e}`)
-  }
-
-  let stat: Node | null
-  try {
-    stat = fs.getFile(relativeFile)
-  }
-  catch (e) {
-    const fileStat = await statOrNull(asarFile)
-    if (fileStat == null) {
-      throw error(`does not exist. Seems like a wrong configuration.`)
-    }
-
-    // asar throws error on access to undefined object (info.link)
-    stat = null
-  }
-
-  if (stat == null) {
-    throw error(`does not exist. Seems like a wrong configuration.`)
-  }
-  if (stat.size === 0) {
-    throw error(`is corrupted: size 0`)
-  }
-}
-
-async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string, rootForAppFilesWithoutAsar: string) {
-  const dirToCreate = new Map<string, Array<string>>()
-  const metadata = fileSet.metadata
-
-  function addParents(child: string, root: string) {
-    child = path.dirname(child)
-    if (autoUnpackDirs.has(child)) {
-      return
-    }
-
-    do {
-      autoUnpackDirs.add(child)
-      const p = path.dirname(child)
-      // create parent dir to be able to copy file later without directory existence check
-      addValue(dirToCreate, p, path.basename(child))
-
-      if (child === root || p === root || autoUnpackDirs.has(p)) {
-        break
-      }
-      child = p
-    }
-    while (true)
-
-    autoUnpackDirs.add(root)
-  }
-
-  for (let i = 0, n = fileSet.files.length; i < n; i++) {
-    const file = fileSet.files[i]
-    const index = file.lastIndexOf(NODE_MODULES_PATTERN)
-    if (index < 0) {
-      continue
-    }
-
-    let nextSlashIndex = file.indexOf(path.sep, index + NODE_MODULES_PATTERN.length + 1)
-    if (nextSlashIndex < 0) {
-      continue
-    }
-
-    if (file[index + NODE_MODULES_PATTERN.length] === "@") {
-      nextSlashIndex = file.indexOf(path.sep, nextSlashIndex + 1)
-    }
-
-    if (!metadata.get(file)!.isFile()) {
-      continue
-    }
-
-    const packageDir = file.substring(0, nextSlashIndex)
-    const packageDirPathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(packageDir, fileSet))
-    const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
-    if (autoUnpackDirs.has(packageDirPathInArchive)) {
-      // if package dir is unpacked, any file also unpacked
-      addParents(pathInArchive, packageDirPathInArchive)
-      continue
-    }
-
-    let shouldUnpack = false
-    if (file.endsWith(".dll") || file.endsWith(".exe")) {
-      shouldUnpack = true
-    }
-    else if (!file.includes(".", nextSlashIndex) && path.extname(file) === "") {
-      shouldUnpack = await isBinaryFile(file)
-    }
-
-    if (!shouldUnpack) {
-      continue
-    }
-
-    if (debug.enabled) {
-      debug(`${pathInArchive} is not packed into asar archive - contains executable code`)
-    }
-
-    addParents(pathInArchive, packageDirPathInArchive)
-  }
-
-  if (dirToCreate.size > 0) {
-    await ensureDir(unpackedDest + path.sep + "node_modules")
-    // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(dirToCreate.keys(), async parentDir => {
-      const base = unpackedDest + path.sep + parentDir
-      await ensureDir(base)
-      await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
-        if (dirToCreate.has(parentDir + path.sep + it)) {
-          // already created
-          return null
-        }
-        else {
-          return ensureDir(base + path.sep + it)
-        }
-      })
-    }, CONCURRENCY)
+  else {
+    return writeFile(destination, data)
   }
 }
 
