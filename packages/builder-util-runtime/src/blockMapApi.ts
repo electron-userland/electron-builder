@@ -17,7 +17,6 @@ export interface BlockMap {
 export interface BlockMapFile extends FileChunks {
   name: string
   offset: number
-  size: number
 }
 
 export async function readBlockMapDataFromAppImage(file: string) {

@@ -214,14 +214,13 @@ export class DifferentialDownloader {
     const operations: Array<Operation> = []
     for (const blockMapFile of newBlockMap.files) {
       const name = blockMapFile.name
-      const oldEntry = blockMapFile.size === 0 ? null : oldEntryMap.get(name)
-      // block map doesn't contain empty files, but we check this case just to be sure
+      const oldEntry = oldEntryMap.get(name)
       if (oldEntry == null) {
         // new file
         operations.push({
           kind: OperationKind.DOWNLOAD,
           start: blockMapFile.offset,
-          end: blockMapFile.size - blockMapFile.offset,
+          end: blockMapFile.offset + blockMapFile.sizes.reduce((accumulator, currentValue) => accumulator + currentValue),
         })
         continue
       }

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { hashFile } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { BlockMap, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
+import { BlockMap, SIGNATURE_HEADER_SIZE, BlockMapFile } from "builder-util-runtime/out/blockMapApi"
 import { close, open, stat, write, writeFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Archive } from "./Archive"
@@ -47,7 +47,7 @@ async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: n
   // lzma doesn't make a lof of sense (151 KB lzma vs 156 KB deflate) for small text file where most of the data are unique strings (encoded checksums)
   // protobuf size — BlockMap size: 153104, compressed: 151256 So, it means that it doesn't make sense - better to use deflate instead of complicating (another runtime dependency (google-protobuf), proto files and so on)
   // size encoding in a form where next value is a relative to previous doesn't make sense (zero savings in tests), since in our case next size can be less than previous (so, int will be negative and `-` symbol will be added)
-  // sha2556 secure hash is not required, md5 collision-resistance is good for our purpose, secure hash algo not required, in any case sha512 checksum is checked for the whole file. And size of matched block is checked in addition to.
+  // sha2556 secure hash is not required, md5 collision-resistance is good for our purpose, secure hash algorithm not required, in any case sha512 checksum is checked for the whole file. And size of matched block is checked in addition to.
   const blockMapDataString = safeDump(blockMap, {
     indent: 0,
     flowLevel: 0,
@@ -160,7 +160,7 @@ async function doComputeBlockMap(files: Array<SubFileDescriptor>, fd: number): P
   }
 
   const stats: Array<string> = []
-  const blocks = await BluebirdPromise.map(files, async file => {
+  const blocks = await BluebirdPromise.map(files, async (file): Promise<BlockMapFile> => {
     const chunker = new ContentDefinedChunker()
     const blocks = await chunker.computeChunks(fd, file.dataStart, file.dataEnd, file.name)
 
@@ -171,7 +171,6 @@ async function doComputeBlockMap(files: Array<SubFileDescriptor>, fd: number): P
     return {
       name: file.name.replace(/\\/g, "/"),
       offset: file.dataStart,
-      size: file.dataEnd - file.dataStart,
       ...blocks,
     }
   }, {concurrency: 2})

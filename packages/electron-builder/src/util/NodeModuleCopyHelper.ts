@@ -70,8 +70,7 @@ export class NodeModuleCopyHelper {
         const childNames = await readdir(dirPath)
         childNames.sort()
 
-        const isTopLevel = !dirPath.includes(path.sep, dep.path.length + 1)
-
+        const isTopLevel = dirPath === dep.path
         const dirs: Array<string> = []
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
