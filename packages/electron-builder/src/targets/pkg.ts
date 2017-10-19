@@ -19,7 +19,8 @@ export class PkgTarget extends Target {
   readonly options: PkgOptions = {
     allowAnywhere: true,
     allowCurrentUserHome: true,
-    allowRootDirectory: true, ...this.packager.config.pkg}
+    allowRootDirectory: true, 
+    license: "build/licence.txt", ...this.packager.config.pkg,}
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("pkg")
@@ -70,6 +71,7 @@ export class PkgTarget extends Target {
     let distInfo = await readFile(distInfoFile, "utf-8")
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
+    distInfo = distInfo.substring(0, insertIndex) + `    <license file="${options.license}"/>\n` + distInfo.substring(insertIndex)
     debug(distInfo)
     await writeFile(distInfoFile, distInfo)
   }
