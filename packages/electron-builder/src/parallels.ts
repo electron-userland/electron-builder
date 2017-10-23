@@ -132,7 +132,10 @@ class ParallelsVmManager extends VmManager {
 }
 
 export function macPathToParallelsWindows(file: string) {
-  return "\\\\Mac\\Host\\\\" + file
+  if (file.startsWith("C:\\")) {
+    return file
+  }
+  return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
 }
 
 export interface ParallelsVm {

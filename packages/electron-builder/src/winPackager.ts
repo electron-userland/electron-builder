@@ -13,7 +13,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
-import AppXTarget from "./targets/appx"
+import AppXTarget from "./targets/AppxTarget"
 import { NsisTarget } from "./targets/nsis/nsis"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
@@ -177,7 +177,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
               }
 
             case "appx":
-              return require("./targets/appx").default
+              return require("./targets/AppxTarget").default
+
+            case "msi":
+              return require("./targets/MsiTarget").default
 
             default:
               return null

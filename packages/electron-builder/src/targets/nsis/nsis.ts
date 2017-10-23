@@ -23,7 +23,7 @@ import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
 const debug = _debug("electron-builder:nsis")
 
 // noinspection SpellCheckingInspection
-const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
+const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 // noinspection SpellCheckingInspection
 const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
@@ -134,7 +134,7 @@ export class NsisTarget extends Target {
       APP_GUID: guid,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
-      APP_FILENAME: (!oneClick || options.perMachine === true) && /^[-_+0-9a-zA-Z ]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.name,
+      APP_FILENAME: (!oneClick || options.perMachine === true) && /^[-_+0-9a-zA-Z ]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName,
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 

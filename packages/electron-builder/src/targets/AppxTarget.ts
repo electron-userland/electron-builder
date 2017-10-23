@@ -1,15 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, log, debug } from "builder-util"
+import { Arch, asArray, log } from "builder-util"
 import { walk, copyOrLinkFile } from "builder-util/out/fs"
-import { emptyDir, readdir, readFile, remove, writeFile } from "fs-extra-p"
+import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Target } from "../core"
-import { AppXOptions } from "../options/winOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { VmManager } from "../parallels"
+import { createHelperDir } from "./targetUtil"
+import { AppXOptions } from "../"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -39,14 +40,9 @@ export default class AppXTarget extends Target {
     const vendorPath = await getSignVendorPath()
     const vm = await packager.vm.value
 
-    const tempDir = path.join(this.outDir, `__appx-temp-${Arch[arch]}`)
-    await emptyDir(tempDir)
+    const stageDir = await createHelperDir(this, arch)
 
-    function getTempFile(name: string) {
-      return path.join(tempDir, name)
-    }
-
-    const mappingFile = getTempFile("mapping.txt")
+    const mappingFile = stageDir.getTempFile("mapping.txt")
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
     const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */,
@@ -70,16 +66,16 @@ export default class AppXTarget extends Target {
     const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath, userAssetDir)
     const userAssets = assetInfo.userAssets
 
-    const manifestFile = getTempFile("AppxManifest.xml")
+    const manifestFile = stageDir.getTempFile("AppxManifest.xml")
     await this.writeManifest(getTemplatePath("appx"), manifestFile, arch, await this.computePublisherName(), userAssets)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
 
     if (isScaledAssetsProvided(userAssets)) {
-      const outFile = vm.toVmFile(getTempFile("resources.pri"))
+      const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
       const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
 
-      const assetRoot = path.join(tempDir, "appx/assets")
+      const assetRoot = path.join(stageDir.tempDir, "appx/assets")
       await emptyDir(assetRoot)
       await BluebirdPromise.map(assetInfo.allAssets, it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it))))
 
@@ -92,8 +88,8 @@ export default class AppXTarget extends Target {
       ])
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
-      for (const resourceFile of (await readdir(tempDir)).filter(it => it.startsWith("resources.")).sort()) {
-        mappingList.push([`"${vm.toVmFile(path.join(tempDir, resourceFile))}" "${resourceFile}"`])
+      for (const resourceFile of (await readdir(stageDir.tempDir)).filter(it => it.startsWith("resources.")).sort()) {
+        mappingList.push([`"${vm.toVmFile(path.join(stageDir.tempDir, resourceFile))}" "${resourceFile}"`])
       }
       makeAppXArgs.push("/l")
     }
@@ -111,9 +107,7 @@ export default class AppXTarget extends Target {
     await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs)
     await packager.sign(artifactPath)
 
-    if (!debug.enabled) {
-      await remove(tempDir)
-    }
+    await stageDir.cleanup()
 
     packager.info.dispatchArtifactCreated({
       file: artifactPath,

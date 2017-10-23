@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- https://blogs.msdn.microsoft.com/gremlininthemachine/2006/12/05/msi-wix-and-unicode/ -->
+  <Product Id="*" Name="${productName}" UpgradeCode="${upgradeCode}" Version="${version}" Language="1033" Codepage="65001" Manufacturer="${manufacturer}">
+    <Package Compressed="yes"/>
+
+    ${uiRef}
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed."/>
+    <MediaTemplate EmbedCab="yes" CompressionLevel="${compressionLevel}"/>
+
+    <Feature Id="ProductFeature">
+      <ComponentGroupRef Id="ProductComponents"/>
+    </Feature>
+
+    <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}" />
+    <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="${programFilesId}">
+        <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
+      </Directory>
+    </Directory>
+
+${dirs}
+    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER">
+${files}
+    </ComponentGroup>
+  </Product>
+</Wix>

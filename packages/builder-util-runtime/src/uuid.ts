@@ -1,10 +1,5 @@
 import { createHash, randomBytes } from "crypto"
 
-// error codes
-const invalidNamespace =
-  "options.namespace must be a string or a Buffer " +
-  "containing a valid UUID, or a UUID object"
-
 const invalidName =
   "options.name must be either a string or a Buffer"
 
@@ -42,10 +37,8 @@ export class UUID {
   private version: number
 
   // from rfc4122#appendix-C
-  static readonly DNS = new UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
   static readonly URL = new UUID("6ba7b811-9dad-11d1-80b4-00c04fd430c8")
-  static readonly OID = new UUID("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
-  static readonly X500 = new UUID("6ba7b814-9dad-11d1-80b4-00c04fd430c8")
+  static readonly OID = UUID.parse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
 
   constructor(uuid: Buffer | string) {
     const check = UUID.check(uuid)
@@ -67,7 +60,7 @@ export class UUID {
     return uuidTimeBased(randomHost)
   }
 
-  static v5(name: string | Buffer, namespace: string | Buffer | UUID) {
+  static v5(name: string | Buffer, namespace: Buffer) {
     return uuidNamed(name, "sha1", 0x50, namespace)
   }
 
@@ -250,24 +243,11 @@ function uuidTimeBased(nodeId: Buffer, encoding: UuidEncoding = UuidEncoding.ASC
 }
 
 // v3 + v5
-function uuidNamed(name: string | Buffer, hashMethod: string, version: number, namespace: string | Buffer | UUID, encoding: UuidEncoding = UuidEncoding.ASCII) {
+function uuidNamed(name: string | Buffer, hashMethod: string, version: number, namespace: Buffer, encoding: UuidEncoding = UuidEncoding.ASCII) {
   const hash = createHash(hashMethod)
 
-  if (typeof namespace === "string") {
-    if (!UUID.check(namespace)) {
-      throw new Error(invalidNamespace)
-    }
-    namespace = UUID.parse(namespace)
-  }
-  else if (namespace instanceof UUID) {
-    namespace = namespace.toBuffer()
-  }
-  else if (!(Buffer.isBuffer(namespace)) || namespace.length !== 16) {
-    throw new Error(invalidNamespace)
-  }
-
   const nameIsNotAString = typeof name !== "string"
-  if (nameIsNotAString && !(Buffer.isBuffer(name))) {
+  if (nameIsNotAString && !Buffer.isBuffer(name)) {
     throw new Error(invalidName)
   }
 
@@ -302,75 +282,6 @@ function uuidNamed(name: string | Buffer, hashMethod: string, version: number, n
   }
   return result
 }
-
-// v4
-// function uuidRandom(arg1, arg2) {
-//
-//     const options = arg1 || {}
-//     const callback = typeof arg1 === "function" ? arg1 : arg2
-//
-//     const buffer = crypto.randomBytes(16)
-//
-//     buffer[6] = (buffer[6] & 0x0f) | 0x40
-//     buffer[8] = (buffer[8] & 0x3f) | 0x80
-//
-//     let result
-//     switch (options.encoding && options.encoding[0]) {
-//         case "b":
-//         case "B":
-//             result = buffer
-//             break
-//         case "o":
-//         case "U":
-//             result = new UUID(buffer)
-//             break
-//         default:
-//             result = byte2hex[buffer[0]] + byte2hex[buffer[1]] +
-//                      byte2hex[buffer[2]] + byte2hex[buffer[3]] + "-" +
-//                      byte2hex[buffer[4]] + byte2hex[buffer[5]] + "-" +
-//                      byte2hex[(buffer[6] & 0x0f) | 0x40] +
-//                      byte2hex[buffer[7]] + "-" +
-//                      byte2hex[(buffer[8] & 0x3f) | 0x80] +
-//                      byte2hex[buffer[9]] + "-" +
-//                      byte2hex[buffer[10]] + byte2hex[buffer[11]] +
-//                      byte2hex[buffer[12]] + byte2hex[buffer[13]] +
-//                      byte2hex[buffer[14]] + byte2hex[buffer[15]]
-//             break
-//     }
-//     if (callback) {
-//         setImmediate(function() {
-//             callback(null, result)
-//         })
-//     } else {
-//         return result
-//     }
-// }
-
-// v4 fast
-// function uuidRandomFast() {
-//
-//     const r1 = Math.random() * 0x100000000
-//     const r2 = Math.random() * 0x100000000
-//     const r3 = Math.random() * 0x100000000
-//     const r4 = Math.random() * 0x100000000
-//
-//     return byte2hex[ r1        & 0xff] +
-//            byte2hex[ r1 >>>  8 & 0xff] +
-//            byte2hex[ r1 >>> 16 & 0xff] +
-//            byte2hex[ r1 >>> 24 & 0xff] + "-" +
-//            byte2hex[ r2 & 0xff] +
-//            byte2hex[ r2 >>>  8 & 0xff] + "-" +
-//            byte2hex[(r2 >>> 16 & 0x0f) | 0x40] +
-//            byte2hex[ r2 >>> 24 & 0xff] + "-" +
-//            byte2hex[(r3 & 0x3f) | 0x80] +
-//            byte2hex[ r3 >>>  8 & 0xff] + "-" +
-//            byte2hex[ r3 >>> 16 & 0xff] +
-//            byte2hex[ r3 >>> 24 & 0xff] +
-//            byte2hex[ r4        & 0xff] +
-//            byte2hex[ r4 >>>  8 & 0xff] +
-//            byte2hex[ r4 >>> 16 & 0xff] +
-//            byte2hex[ r1 >>> 24 & 0xff]
-// }
 
 function stringify(buffer: Buffer) {
   return byte2hex[buffer[0]] + byte2hex[buffer[1]] +

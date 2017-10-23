@@ -4,7 +4,7 @@ import { bold } from "chalk"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { quoteString } from "../targets/appx"
+import { quoteString } from "../targets/AppxTarget"
 import { getSignVendorPath } from "../windowsCodeSign"
 
 /** @internal */

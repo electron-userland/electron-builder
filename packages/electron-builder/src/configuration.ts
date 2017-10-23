@@ -5,9 +5,11 @@ import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./op
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
-import { AppXOptions, WindowsConfiguration } from "./options/winOptions"
+import { WindowsConfiguration } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
+import { MsiOptions } from "./options/MsiOptions"
+import { AppXOptions } from "./options/AppXOptions"
 
 /**
  * Configuration Options
@@ -58,6 +60,8 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly nsisWeb?: NsisWebOptions | null
   readonly portable?: PortableOptions | null
   readonly appx?: AppXOptions | null
+  /** @private */
+  readonly msi?: MsiOptions | null
   readonly squirrelWindows?: SquirrelWindowsOptions | null
 
   /**

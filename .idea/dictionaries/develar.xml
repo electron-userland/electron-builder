@@ -19,6 +19,7 @@
       <w>appimagekit</w>
       <w>appimagetool</w>
       <w>appleid</w>
+      <w>applicationfolder</w>
       <w>appveyor</w>
       <w>appx</w>
       <w>appxmanifest</w>
@@ -156,6 +157,7 @@
       <w>inetc</w>
       <w>inno</w>
       <w>insertmacro</w>
+      <w>installfolder</w>
       <w>installmode</w>
       <w>instdir</w>
       <w>instfiles</w>
@@ -298,6 +300,7 @@
       <w>srcfolder</w>
       <w>subcommand</w>
       <w>subsequence</w>
+      <w>targetdir</w>
       <w>targetsize</w>
       <w>templating</w>
       <w>testapp</w>
@@ -339,6 +342,7 @@
       <w>winedlloverrides</w>
       <w>winemenubuilder</w>
       <w>winstaller</w>
+      <w>wixobj</w>
       <w>workflows</w>
       <w>writev</w>
       <w>xamarin</w>
