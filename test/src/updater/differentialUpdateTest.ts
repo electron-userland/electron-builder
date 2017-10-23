@@ -153,14 +153,15 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater)
 })
 
-test.ifAll.ifDevOrLinuxCi("AppImage", async () => {
+async function testLinux(arch: Arch) {
   process.env.TEST_UPDATER_PLATFORM = "linux"
+  process.env.TEST_UPDATER_ARCH = Arch[arch]
 
   let outDirs: Array<string> = []
 
   async function buildApp(version: string) {
     await assertPack("test-app-one", {
-      targets: Platform.LINUX.createTarget(["appimage"], Arch.x64),
+      targets: Platform.LINUX.createTarget(["appimage"], arch),
       config: {
         extraMetadata: {
           version,
@@ -273,7 +274,11 @@ test.ifAll.ifDevOrLinuxCi("AppImage", async () => {
 
   process.env.APPIMAGE = path.join(outDirs[0], "TestApp-1.0.0-x86_64.AppImage")
   await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater)
-})
+}
+
+test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
+
+test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
 // test.ifAll("s3", async () => {
 //   if (process.env.OLD_DIST == null) {

@@ -58,7 +58,9 @@ export function getDefaultChannelName() {
 function getChannelFilePrefix() {
   const currentPlatform = getCurrentPlatform()
   if (currentPlatform === "linux") {
-    return "-linux"
+    const arch = process.env.TEST_UPDATER_ARCH || process.arch
+    const archSuffix = arch === "x64" ? "" : `-${arch}`
+    return "-linux" + archSuffix
   }
   else {
     return currentPlatform === "darwin" ? "-mac" : ""

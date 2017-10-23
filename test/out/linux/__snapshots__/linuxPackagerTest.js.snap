@@ -65,6 +65,13 @@ Object {
       "file": "TestApp-1.1.0-i386.AppImage",
       "updateInfo": Object {},
     },
+    Object {
+      "file": "latest-linux-ia32.yml",
+      "fileContent": Object {
+        "path": "TestApp-1.1.0-i386.AppImage",
+        "version": "1.1.0",
+      },
+    },
   ],
 }
 `;

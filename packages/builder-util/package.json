@@ -16,7 +16,7 @@
     "is-ci": "^1.0.10",
     "stat-mode": "^0.2.2",
     "bluebird-lst": "^1.0.5",
-    "chalk": "2.1.0",
+   "chalk": "2.1.0",
     "debug": "^3.1.0",
     "node-emoji": "^1.8.1",
     "builder-util-runtime": "^0.0.0-semantic-release",

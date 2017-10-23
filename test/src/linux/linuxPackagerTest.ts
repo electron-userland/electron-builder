@@ -12,10 +12,18 @@ test.ifNotWindows.ifNotCiMac("AppImage", app({
       provider: "generic",
       url: "https://example.com/downloads"
     },
-  }
+  },
 }))
 
-test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({targets: Platform.LINUX.createTarget("Appimage", Arch.ia32)}))
+test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({
+  targets: Platform.LINUX.createTarget("Appimage", Arch.ia32),
+  config: {
+    publish: {
+      provider: "generic",
+      url: "https://example.com/downloads"
+    },
+  },
+}))
 
 test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
   targets: Platform.LINUX.createTarget(),

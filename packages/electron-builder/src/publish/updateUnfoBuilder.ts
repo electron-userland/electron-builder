@@ -1,4 +1,4 @@
-import { hashFile } from "builder-util"
+import { hashFile, Arch } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -34,7 +34,7 @@ function isGenerateUpdatesFilesForAllChannels(packager: PlatformPackager<any>) {
  if this is a "beta" version, we need to generate both the "alpha" and "beta" .yml file
  if this is a "stable" version, we need to generate all the "alpha", "beta" and "stable" .yml file
  */
-function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration) {
+function computeChannelNames(packager: PlatformPackager<any>, publishConfig: PublishConfiguration): Array<string> {
   const currentChannel: string = (publishConfig as GenericServerOptions).channel || "latest"
   // for GitHub should be pre-release way be used
   if (currentChannel === "alpha" || publishConfig.provider === "github" || !isGenerateUpdatesFilesForAllChannels(packager)) {
@@ -51,6 +51,12 @@ function computeChannelNames(packager: PlatformPackager<any>, publishConfig: Pub
     default:
       return [currentChannel]
   }
+}
+
+function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null): string {
+  const osSuffix = packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
+  const archSuffix = (arch != null && arch !== Arch.x64 && packager.platform === Platform.LINUX) ? `-${Arch[arch]}` : ""
+  return `${channel}${osSuffix}${archSuffix}.yml`
 }
 
 /** @internal */
@@ -109,7 +115,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, `${channel}${packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`}.yml`)
+      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
