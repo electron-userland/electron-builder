@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, use } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
+import { getLicenseFiles } from "builder-util/out/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { findIdentity, Identity } from "../codeSign"
@@ -71,9 +72,14 @@ export class PkgTarget extends Target {
     let distInfo = await readFile(distInfoFile, "utf-8")
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
-    if (options.license) {
-      const licensePath = path.join(this.packager.info.projectDir, options.license)
-      distInfo = distInfo.substring(0, insertIndex) + `    <license file="${licensePath}"/>\n` + distInfo.substring(insertIndex)
+
+    if (options.license !== null) {
+      const licenseFiles = await getLicenseFiles(this.packager)
+      const license = await this.packager.getResource(options.license, ...licenseFiles.map(f => f.file))
+      if (license != null) {
+        const licensePath = path.join(this.packager.info.projectDir, license)
+        distInfo = distInfo.substring(0, insertIndex) + `    <license file="${licensePath}"/>\n` + distInfo.substring(insertIndex)
+      }
     }
 
     debug(distInfo)
