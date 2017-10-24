@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { yellow } from "chalk"
+import chalk from "chalk"
 import { get as getEmoji } from "node-emoji"
 import WritableStream = NodeJS.WritableStream
 
@@ -14,7 +14,7 @@ class Logger {
   }
 
   warn(message: string): void {
-    this.log(yellow(`Warning: ${message}`))
+    this.log(chalk.yellow(`Warning: ${message}`))
   }
 
   log(message: string): void {
@@ -39,7 +39,7 @@ class TtyLogger extends Logger {
   }
 
   warn(message: string): void {
-    this.log(`${getEmoji("warning")}  ${yellow(message)}`)
+    this.log(`${getEmoji("warning")}  ${chalk.yellow(message)}`)
   }
 }
 

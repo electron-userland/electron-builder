@@ -51,6 +51,7 @@ async function runTests() {
       args.push("macArchiveTest")
       args.push("macCodeSignTest")
       args.push("HoistedNodeModuleTest")
+      args.push("extraMetadataTest")
     }
     else if (circleNodeIndex === 1) {
       args.push("oneClickInstallerTest")
@@ -72,7 +73,7 @@ async function runTests() {
       args.push("filesTest")
       args.push("globTest")
       args.push("webInstallerTest")
-      args.push("extraMetadataTest")
+      args.push("msiTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

@@ -1,6 +1,6 @@
 import { exec, log, spawn, TmpDir } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { bold } from "chalk"
+import chalk from "chalk"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -15,7 +15,7 @@ export async function createSelfSignedCert(publisher: string) {
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 
-  log(bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
+  log(chalk.bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
 
   try {
     await ensureDir(path.dirname(tempPrefix))

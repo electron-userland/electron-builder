@@ -1,4 +1,5 @@
 import { TargetSpecificOptions } from "../../core"
+import { CommonWindowsInstallerOptions } from "../../options/CommonWindowsInstallerOptions"
 
 export interface CommonNsisOptions {
   /**
@@ -25,7 +26,7 @@ export interface CommonNsisOptions {
   readonly useZip?: boolean
 }
 
-export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
+export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerOptions, TargetSpecificOptions {
   /**
    * One-click installation.
    * @default true
@@ -51,12 +52,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default false
    */
   readonly allowToChangeInstallationDirectory?: boolean
-
-  /**
-   * *one-click installer only.* Run application after finish.
-   * @default true
-   */
-  readonly runAfterFinish?: boolean
 
   /**
    * The path to installer icon, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
@@ -128,21 +123,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * Defaults to `true` for web installer (`nsis-web`)
    */
   differentialPackage?: boolean
-
-  /**
-   * Whether to create desktop shortcut.
-   * @default true
-   */
-  readonly createDesktopShortcut?: boolean
-  /**
-   * Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
-   * @default false
-   */
-  readonly menuCategory?: boolean | string
-  /**
-   * The name that will be used for all shortcuts. Defaults to the application name.
-   */
-  readonly shortcutName?: string | null
 
   /**
    * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).

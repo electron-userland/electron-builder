@@ -8,7 +8,7 @@ import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
-import { VmManager } from "../parallels"
+import { VmManager } from "../vm/vm"
 import { createHelperDir } from "./targetUtil"
 import { AppXOptions } from "../"
 

@@ -1,15 +1,17 @@
 import { TargetSpecificOptions } from "../core"
+import { CommonWindowsInstallerOptions } from "./CommonWindowsInstallerOptions"
 
-export interface MsiOptions extends TargetSpecificOptions {
+export interface MsiOptions extends CommonWindowsInstallerOptions, TargetSpecificOptions {
   /**
    * One-click installation.
    * @default true
    */
   readonly oneClick?: boolean
 
-  /***
+  /**
    * Install per all users (per-machine).
    * @default true
+   * @private Well, one-click per-user is not easy to write for us, feature hidden for now
    */
   readonly perMachine?: boolean
 

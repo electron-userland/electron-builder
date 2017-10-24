@@ -2,7 +2,7 @@
 
 import { exec, log, warn } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
-import { cyan, dim, green, reset, underline } from "chalk"
+import chalk from "chalk"
 import { readJson } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
@@ -35,7 +35,7 @@ yargs
     yargs => yargs,
     wrap(argv => start()))
   .help()
-  .epilog(`See ${underline("https://electron.build")} for more documentation.`)
+  .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()
   .recommendCommands()
   .argv
@@ -63,7 +63,7 @@ function checkIsOutdated() {
       const notifier = updateNotifier({pkg: it})
       if (notifier.update != null) {
         notifier.notify({
-          message: `Update available ${dim(notifier.update.current)}${reset(" → ")}${green(notifier.update.latest)} \nRun ${cyan("yarn upgrade electron-builder")} to update`
+          message: `Update available ${chalk.dim(notifier.update.current)}${chalk.reset(" → ")}${chalk.green(notifier.update.latest)} \nRun ${chalk.cyan("yarn upgrade electron-builder")} to update`
         })
       }
     })

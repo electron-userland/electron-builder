@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { addValue, Arch, archFromString, isEmptyOrSpaces, warn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally } from "builder-util/out/promise"
-import { underline } from "chalk"
+import chalk from "chalk"
 import { PublishOptions } from "electron-publish"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Configuration } from "./configuration"
@@ -304,19 +304,19 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
-      description: `Build for macOS, accepts target list (see ${underline("https://goo.gl/5uHuzj")}).`,
+      description: `Build for macOS, accepts target list (see ${chalk.underline("https://goo.gl/5uHuzj")}).`,
       type: "array",
     })
     .option("linux", {
       group: buildGroup,
       alias: "l",
-      description: `Build for Linux, accepts target list (see ${underline("https://goo.gl/4vwQad")})`,
+      description: `Build for Linux, accepts target list (see ${chalk.underline("https://goo.gl/4vwQad")})`,
       type: "array",
     })
     .option("win", {
       group: buildGroup,
       alias: ["w", "windows"],
-      description: `Build for Windows, accepts target list (see ${underline("https://goo.gl/jYsTEJ")})`,
+      description: `Build for Windows, accepts target list (see ${chalk.underline("https://goo.gl/jYsTEJ")})`,
       type: "array",
     })
     .option("x64", {
@@ -342,7 +342,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("publish", {
       group: publishGroup,
       alias: "p",
-      description: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/tSFycD")}`,
+      description: `Publish artifacts (to GitHub Releases), see ${chalk.underline("https://goo.gl/tSFycD")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("draft", {
@@ -385,7 +385,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("config", {
       alias: ["c"],
       group: buildGroup,
-      description: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + underline("https://goo.gl/YFRJOM"),
+      description: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + chalk.underline("https://goo.gl/YFRJOM"),
     })
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")

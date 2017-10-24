@@ -1,7 +1,7 @@
-import { red } from "chalk"
+import chalk from "chalk"
 
 export function printErrorAndExit(error: Error) {
-  console.error(red((error.stack || error).toString()))
+  console.error(chalk.red((error.stack || error).toString()))
   process.exit(-1)
 }
 

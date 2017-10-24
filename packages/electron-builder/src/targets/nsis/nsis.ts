@@ -1,6 +1,6 @@
 import { createDifferentialPackage, createPackageFileInfo } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, log, spawnAndWrite, use, warn } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull } from "builder-util/out/fs"
@@ -8,7 +8,6 @@ import _debug from "debug"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 import { Target } from "../../core"
 import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
@@ -19,6 +18,7 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
+import { getEffectiveOptions } from "../../options/CommonWindowsInstallerOptions"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -368,24 +368,13 @@ export class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
-    if (options.menuCategory != null && options.menuCategory !== false) {
-      let menu: string
-      if (options.menuCategory === true) {
-        const companyName = packager.appInfo.companyName
-        if (companyName == null) {
-          throw new Error(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
-        }
-        menu = sanitizeFileName(companyName)
-      }
-      else {
-        menu = (options.menuCategory as string).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")
-      }
-      if (!isEmptyOrSpaces(menu)) {
-        defines.MENU_FILENAME = menu
-      }
+    const commonOptions = getEffectiveOptions(options, packager)
+
+    if (commonOptions.menuCategory != null) {
+      defines.MENU_FILENAME = commonOptions.menuCategory
     }
 
-    defines.SHORTCUT_NAME = isEmptyOrSpaces(options.shortcutName) ? defines.PRODUCT_FILENAME : packager.expandMacro(options.shortcutName!!)
+    defines.SHORTCUT_NAME = commonOptions.shortcutName
 
     if (options.deleteAppDataOnUninstall) {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
@@ -401,8 +390,11 @@ export class NsisTarget extends Target {
     })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
-    if (options.createDesktopShortcut === false) {
+    if (!commonOptions.createDesktopShortcut) {
       defines.DO_NOT_CREATE_DESKTOP_SHORTCUT = null
+    }
+    if (!commonOptions.createStartMenuShortcut) {
+      defines.DO_NOT_CREATE_START_MENU_SHORTCUT = null
     }
 
     if (options.displayLanguageSelector === true) {

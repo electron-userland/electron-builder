@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { bold } from "chalk"
+import chalk from "chalk"
 import depCheck, { DepCheckResult } from "depcheck"
 import { readdir, readJson } from "fs-extra-p"
 import * as path from "path"
@@ -29,13 +29,13 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   // console.log(result)
 
   if (result.dependencies.length > 0) {
-    console.error(`${bold(packageName)} Unused dependencies: ${JSON.stringify(result.dependencies, null, 2)}`)
+    console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(result.dependencies, null, 2)}`)
     return false
   }
 
   const unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
   if (unusedDevDependencies.length > 0) {
-    console.error(`${bold(packageName)} Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
+    console.error(`${chalk.bold(packageName)} Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
     return false
   }
 
@@ -52,7 +52,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   if (Object.keys(result.missing).length > 0) {
-    console.error(`${bold(packageName)} Missing dependencies: ${JSON.stringify(result.missing, null, 2)}`)
+    console.error(`${chalk.bold(packageName)} Missing dependencies: ${JSON.stringify(result.missing, null, 2)}`)
     return false
   }
 
@@ -69,7 +69,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
     for (const file of usages) {
       if (file.startsWith(path.join(projectDir, "src") + path.sep)) {
-        console.error(`${bold(packageName)} Dev dependency ${name} is used in the sources`)
+        console.error(`${chalk.bold(packageName)} Dev dependency ${name} is used in the sources`)
         return false
       }
     }

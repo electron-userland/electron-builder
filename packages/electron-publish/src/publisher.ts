@@ -1,6 +1,6 @@
 import { Arch, log } from "builder-util"
 import { CancellationToken, ProgressCallbackTransform } from "builder-util-runtime"
-import { green } from "chalk"
+import chalk from "chalk"
 import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
 import { basename } from "path"
@@ -47,7 +47,7 @@ export abstract class Publisher {
       return null
     }
     else {
-      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, {total: size, ...progressBarOptions})
+      return this.context.progress.createBar(`[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {total: size, ...progressBarOptions})
     }
   }
 

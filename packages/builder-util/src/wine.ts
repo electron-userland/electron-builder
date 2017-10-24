@@ -16,9 +16,9 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     let version: string | null = null
     let checksum: string | null = null
     if (semver.gte(osVersion, "10.13.0")) {
-      version = "2.0.2-mac-10.13"
+      version = "2.0.3-mac-10.13"
       // noinspection SpellCheckingInspection
-      checksum = "v6r9RSQBAbfvpVQNrEj48X8Cw1181rEGMRatGxSKY5p+7khzzy/0tOdfHGO8cU+GqYvH43FAKMK8p6vUfCqSSA=="
+      checksum = "dlEVCf0YKP5IEiOKPNE48Q8NKXbXVdhuaI9hG2oyDEay2c+93PE5qls7XUbIYq4Xi1gRK8fkWeCtzN2oLpVQtg=="
     }
     else if (semver.gte(osVersion, "10.12.0")) {
       version = "2.0.1-mac-10.12"
@@ -52,7 +52,16 @@ export function execWine(file: string, args: Array<string>, options: ExecOptions
   }
   else {
     return wineExecutable.value
-      .then(wine => exec(wine.path, [file].concat(args), wine.env == null ? options : {env: wine.env, ...options}))
+      .then(wine => {
+        const effectiveOptions = wine.env == null ? options : {...options}
+        if (wine.env != null) {
+          effectiveOptions.env = options.env == null ? wine.env : {
+            ...options.env,
+            ...wine.env,
+          }
+        }
+        return exec(wine.path, [file].concat(args), effectiveOptions)
+      })
   }
 }
 

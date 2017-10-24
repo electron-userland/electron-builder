@@ -8,7 +8,7 @@ import * as path from "path"
 import { WindowsConfiguration } from "./options/winOptions"
 import { resolveFunction } from "./platformPackager"
 import { isUseSystemSigncode } from "./util/flags"
-import { VmManager } from "./parallels"
+import { VmManager } from "./vm/vm"
 import { WinPackager } from "./winPackager"
 
 export function getSignVendorPath() {

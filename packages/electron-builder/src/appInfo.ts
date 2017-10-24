@@ -26,11 +26,8 @@ export class AppInfo {
       if (!isEmptyOrSpaces(this.buildNumber)) {
         buildVersion += `.${this.buildNumber}`
       }
-      this.buildVersion = buildVersion
     }
-    else {
-      this.buildVersion = buildVersion
-    }
+    this.buildVersion = buildVersion
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.productFilename = sanitizeFileName(this.productName)

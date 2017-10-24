@@ -1,8 +1,9 @@
 import { exec, spawn, ExecOptions, DebugLogger, ExtraSpawnOptions } from "builder-util"
 import { SpawnOptions, execFileSync } from "child_process"
-import * as path from "path"
+import { VmManager } from "./vm"
 
-async function parseVmList(debugLogger: DebugLogger) {
+/** @internal */
+export async function parseVmList(debugLogger: DebugLogger) {
   // do not log output if debug - it is huge, logged using debugLogger
   let rawList = await exec("prlctl", ["list", "-i", "-s", "name"], undefined, false)
   debugLogger.add("parallels.list", rawList)
@@ -29,35 +30,8 @@ async function parseVmList(debugLogger: DebugLogger) {
   return result
 }
 
-export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
-  const vmList = (await parseVmList(debugLogger)).filter(it => it.os === "win-10")
-  if (vmList.length === 0) {
-    throw new Error("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
-  }
-
-  // prefer running or suspended vm
-  return new ParallelsVmManager(vmList.find(it => it.state === "running") || vmList.find(it => it.state === "suspended") || vmList[0])
-}
-
-export class VmManager {
-  get pathSep(): string {
-    return path.sep
-  }
-
-  exec(file: string, args: Array<string>, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
-    return exec(file, args, options, isLogOutIfDebug)
-  }
-
-  spawn(command: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
-    return spawn(command, args)
-  }
-
-  toVmFile(file: string): string {
-    return file
-  }
-}
-
-class ParallelsVmManager extends VmManager {
+/** @internal */
+export class ParallelsVmManager extends VmManager {
   private startPromise: Promise<any>
 
   private isExitHookAdded = false
@@ -86,9 +60,9 @@ class ParallelsVmManager extends VmManager {
       .catch(error => this.handleExecuteError(error))
   }
 
-  async spawn(command: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
+  async spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
     await this.ensureThatVmStarted()
-    return await spawn("prlctl", ["exec", this.vm.id, command].concat(args), options, extraOptions)
+    return await spawn("prlctl", ["exec", this.vm.id, file].concat(args), options, extraOptions)
       .catch(error => this.handleExecuteError(error))
   }
 
@@ -135,7 +109,8 @@ export function macPathToParallelsWindows(file: string) {
   if (file.startsWith("C:\\")) {
     return file
   }
-  return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
+  // return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
+  return "Z:" + file.replace(/\//g, "\\")
 }
 
 export interface ParallelsVm {

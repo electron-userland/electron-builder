@@ -22,7 +22,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
-import { VmManager, getWindowsVm } from "./parallels"
+import { VmManager, getWindowsVm } from "./vm/vm"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {

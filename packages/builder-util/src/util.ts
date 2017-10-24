@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { safeStringifyJson } from "builder-util-runtime"
-import { red, yellow } from "chalk"
+import chalk from "chalk"
 import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
@@ -99,18 +99,18 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
         resolve(stdout.toString())
       }
       else {
-        let message = red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+        let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
         if (stdout.length !== 0) {
           if (file.endsWith("wine")) {
             stdout = removeWineSpam(stdout.toString())
           }
-          message += `\n${yellow(stdout.toString())}`
+          message += `\n${chalk.yellow(stdout.toString())}`
         }
         if (stderr.length !== 0) {
           if (file.endsWith("wine")) {
             stderr = removeWineSpam(stderr.toString())
           }
-          message += `\n${red(stderr.toString())}`
+          message += `\n${chalk.red(stderr.toString())}`
         }
 
         reject(new Error(message))

@@ -190,28 +190,30 @@
 !macroend
 
 !macro addStartMenuLink keepShortcuts
-  # The keepShortcuts mechanism is NOT enabled.
-  # Menu shortcut will be recreated.
-  ${if} $keepShortcuts  == "false"
-    !insertmacro cleanupOldMenuDirectory
-    !insertmacro createMenuDirectory
+  !ifndef DO_NOT_CREATE_START_MENU_SHORTCUT
+    # The keepShortcuts mechanism is NOT enabled.
+    # Menu shortcut will be recreated.
+    ${if} $keepShortcuts  == "false"
+      !insertmacro cleanupOldMenuDirectory
+      !insertmacro createMenuDirectory
 
-    CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-    # clear error (if shortcut already exists)
-    ClearErrors
-    WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
-  # The keepShortcuts mechanism IS enabled.
-  # The menu shortcut could either not exist (it shouldn't be recreated) or exist in an obsolete location.
-  ${elseif} $oldStartMenuLink != $newStartMenuLink
-  ${andIf} ${FileExists} "$oldStartMenuLink"
-    !insertmacro createMenuDirectory
+      CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+      # clear error (if shortcut already exists)
+      ClearErrors
+      WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+    # The keepShortcuts mechanism IS enabled.
+    # The menu shortcut could either not exist (it shouldn't be recreated) or exist in an obsolete location.
+    ${elseif} $oldStartMenuLink != $newStartMenuLink
+    ${andIf} ${FileExists} "$oldStartMenuLink"
+      !insertmacro createMenuDirectory
 
-    Rename $oldStartMenuLink $newStartMenuLink
-    WinShell::UninstShortcut "$oldStartMenuLink"
-    WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+      Rename $oldStartMenuLink $newStartMenuLink
+      WinShell::UninstShortcut "$oldStartMenuLink"
+      WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
 
-    !insertmacro cleanupOldMenuDirectory
-  ${endIf}
+      !insertmacro cleanupOldMenuDirectory
+    ${endIf}
+  !endif
 !macroend
 
 !macro addDesktopLink keepShortcuts

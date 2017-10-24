@@ -35,14 +35,16 @@ Section "un.install"
       Delete "$oldDesktopLink"
     !endif
 
-    WinShell::UninstShortcut "$oldStartMenuLink"
+    !ifndef DO_NOT_CREATE_START_MENU_SHORTCUT
+      WinShell::UninstShortcut "$oldStartMenuLink"
 
-    ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory
-    ${if} $R1 == ""
-      Delete "$oldStartMenuLink"
-    ${else}
-      RMDir /r "$SMPROGRAMS\$R1"
-    ${endIf}
+      ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory
+      ${if} $R1 == ""
+        Delete "$oldStartMenuLink"
+      ${else}
+        RMDir /r "$SMPROGRAMS\$R1"
+      ${endIf}
+    !endif
   ${endIf}
 
   # refresh the desktop

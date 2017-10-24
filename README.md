@@ -145,3 +145,4 @@ We do this open source work in our free time. If you'd like us to invest more ti
 ## Sponsors
 
 <a href="https://workflowy.com"><img src="https://workflowy.com/media/i/wf-icon-android.png" alt="WorkFlowy" title="WorkFlowy" width="75" height="75"/></a>
+<a href="https://tidepool.org"><img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" /></a>

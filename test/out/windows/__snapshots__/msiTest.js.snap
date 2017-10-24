@@ -1,11 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`assisted 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI Assisted-1.1.0.msi",
+      "safeArtifactName": "TestApp-1.1.0.msi",
+    },
+  ],
+}
+`;
+
 exports[`msi 1`] = `
 Object {
   "win": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.msi",
+      "file": "Test MSI-1.1.0.msi",
       "safeArtifactName": "TestApp-1.1.0.msi",
     },
   ],

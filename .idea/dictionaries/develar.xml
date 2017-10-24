@@ -20,12 +20,14 @@
       <w>appimagetool</w>
       <w>appleid</w>
       <w>applicationfolder</w>
+      <w>applicationrootdirectory</w>
       <w>appveyor</w>
       <w>appx</w>
       <w>appxmanifest</w>
       <w>archiver</w>
       <w>archs</w>
       <w>armv</w>
+      <w>arpproducticon</w>
       <w>asar</w>
       <w>aspx</w>
       <w>atexit</w>
@@ -83,6 +85,7 @@
       <w>docdash</w>
       <w>docstrap</w>
       <w>donorbox</w>
+      <w>dontnet</w>
       <w>dpkg</w>
       <w>dsym</w>
       <w>dyld</w>
@@ -259,6 +262,7 @@
       <w>prebuild</w>
       <w>precompilation</w>
       <w>preinstall</w>
+      <w>preinstalled</w>
       <w>prelease</w>
       <w>prerelease</w>
       <w>priconfig</w>
