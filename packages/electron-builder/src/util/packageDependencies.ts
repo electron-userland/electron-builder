@@ -74,7 +74,7 @@ function computeSortedPaths(parent: Dependency, result: Array<Dependency>, isExt
 
 class Collector {
   readonly pathToMetadata = new Map<string, Dependency>()
-  private unresolved = new Set<string>()
+  private unresolved = new Map<string, boolean>()
 
   async collect(dir: string) {
     const rootDependency: Dependency = await readJson(path.join(dir, "package.json"))
@@ -83,7 +83,7 @@ class Collector {
 
     if (this.unresolved.size > 0) {
       if (debug.enabled) {
-        debug(`Unresolved dependencies after first round: ${Array.from(this.unresolved).join(", ")}`)
+        debug(`Unresolved dependencies after first round: ${Array.from(this.unresolved.keys()).join(", ")}`)
       }
       await this.resolveUnresolvedHoisted(rootDependency, dir)
     }
@@ -101,12 +101,16 @@ class Collector {
     do {
       parentDir = path.dirname(parentDir)
       if (parentDir === "" || parentDir.endsWith("/") || parentDir.endsWith("\\")) {
-        const message = `Unresolved node modules: ${Array.from(this.unresolved).join(", ")}`
-        if (isEnvTrue(process.env.ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES)) {
-          warn(message)
-        }
-        else {
-          throw new Error(message)
+        // https://github.com/electron-userland/electron-builder/issues/2220
+        const list = Array.from(this.unresolved.keys()).filter(it => !this.unresolved.get(it))
+        if (list.length !== 0) {
+          const message = `Unresolved node modules: ${list.join(", ")}`
+          if (isEnvTrue(process.env.ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES)) {
+            warn(message)
+          }
+          else {
+            throw new Error(message)
+          }
         }
         break
       }
@@ -117,7 +121,7 @@ class Collector {
         continue
       }
 
-      const unresolved = Array.from(this.unresolved)
+      const unresolved = Array.from(this.unresolved.keys())
       this.unresolved.clear()
 
       const resolved = await BluebirdPromise.map(unresolved, it => {
@@ -218,9 +222,9 @@ class Collector {
     return metadata
   }
 
-  private unmark(deps: Iterable<string>, obj: Dependency, unsetOptional: boolean) {
+  private unmark(deps: Iterable<string>, obj: Dependency, unsetOptional: boolean, isOptional: boolean) {
     for (const name of deps) {
-      const dep = this.findDep(obj, name)
+      const dep = this.findDep(obj, name, isOptional)
       if (dep != null) {
         if (unsetOptional) {
           dep.optional = false
@@ -240,20 +244,20 @@ class Collector {
     obj.extraneous = false
 
     if (obj.directDependencyNames != null) {
-      this.unmark(obj.directDependencyNames, obj, true)
+      this.unmark(obj.directDependencyNames, obj, true, false)
     }
 
     if (obj.peerDependencies != null) {
-      this.unmark(Object.keys(obj.peerDependencies), obj, true)
+      this.unmark(Object.keys(obj.peerDependencies), obj, true, false)
     }
 
     if (obj.optionalDependencies != null) {
-      this.unmark(Object.keys(obj.optionalDependencies), obj, false)
+      this.unmark(Object.keys(obj.optionalDependencies), obj, false, true)
     }
   }
 
   // find the one that will actually be loaded by require() so we can make sure it's valid
-  private findDep(obj: Dependency, name: string) {
+  private findDep(obj: Dependency, name: string, isOptional: boolean) {
     if (isIgnoredDep(name)) {
       return null
     }
@@ -271,7 +275,7 @@ class Collector {
     }
 
     if (found == null) {
-      this.unresolved.add(name)
+      this.unresolved.set(name, isOptional)
     }
     return found
   }

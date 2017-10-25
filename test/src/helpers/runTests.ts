@@ -50,7 +50,6 @@ async function runTests() {
       args.push("nsisUpdaterTest")
       args.push("macArchiveTest")
       args.push("macCodeSignTest")
-      args.push("HoistedNodeModuleTest")
       args.push("extraMetadataTest")
     }
     else if (circleNodeIndex === 1) {
@@ -65,6 +64,7 @@ async function runTests() {
       args.push("portableTest")
       args.push("linuxPackagerTest")
       args.push("ignoreTest")
+      args.push("HoistedNodeModuleTest")
     }
     else {
       args.push("BuildTest")

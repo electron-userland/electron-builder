@@ -20,5 +20,8 @@
   },
   "dependencies": {
     "electron-log": "2.2.9"
+  },
+  "optionalDependencies": {
+    "unresolved": "^2.0.0"
   }
 }
