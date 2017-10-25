@@ -24,7 +24,14 @@
 
     ${if} $R1 != ""
     ${andIf} $R0 != ""
-      CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+      ClearErrors
+      Rename "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+      ${if} ${errors}
+        # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
+        ClearErrors
+        CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+        Delete "$R0"
+      ${endif}
 
       ${if} $installMode == "CurrentUser"
       ${orIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
@@ -108,6 +115,7 @@
           # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
           ClearErrors
           CopyFiles /SILENT "$packageFile" "$INSTDIR\package.7z"
+          Delete "$packageFile"
         ${endif}
 
         !ifdef APP_64
