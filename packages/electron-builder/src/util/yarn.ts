@@ -34,29 +34,28 @@ function getElectronGypCacheDir() {
 
 /** @internal */
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
+  const common = {
+    ...process.env,
+    npm_config_arch: arch,
+    npm_config_target_arch: arch,
+    npm_config_platform: platform,
+    npm_config_build_from_source: buildFromSource,
+    // required for node-pre-gyp
+    npm_config_target_platform: platform,
+    npm_config_update_binary: true,
+    npm_config_fallback_to_build: true,
+  }
+
   if (!frameworkInfo.useCustomDist) {
-    return {
-      ...process.env,
-      npm_config_arch: arch,
-      npm_config_target_arch: arch,
-      npm_config_platform: platform,
-      npm_config_build_from_source: buildFromSource
-    }
+    return common
   }
 
   // https://github.com/nodejs/node-gyp/issues/21
   return {
-    ...process.env,
+    ...common,
     npm_config_disturl: "https://atom.io/download/electron",
     npm_config_target: frameworkInfo.version,
     npm_config_runtime: "electron",
-    npm_config_arch: arch,
-    npm_config_target_arch: arch,
-    npm_config_platform: platform,
-    // required for node-pre-gyp
-    npm_config_target_platform: platform,
-    npm_config_fallback_to_build: true,
-    npm_config_build_from_source: buildFromSource,
     npm_config_devdir: getElectronGypCacheDir(),
   }
 }
@@ -146,7 +145,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
 
   const env = getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true)
   if (isYarn) {
-    execArgs.push("run", "install", "--")
+    execArgs.push("run", "install")
     if (additionalArgs != null) {
       execArgs.push(...additionalArgs)
     }
