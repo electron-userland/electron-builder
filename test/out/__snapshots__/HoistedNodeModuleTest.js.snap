@@ -135,51 +135,51 @@ Object {
         "electron-log": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "5503",
+              "offset": "5563",
               "size": 1082,
             },
             "index.js": Object {
-              "offset": "6585",
+              "offset": "6645",
               "size": 140,
             },
             "lib": Object {
               "files": Object {
                 "format.js": Object {
-                  "offset": "10471",
+                  "offset": "10531",
                   "size": 1021,
                 },
                 "log.js": Object {
-                  "offset": "11492",
+                  "offset": "11552",
                   "size": 877,
                 },
                 "transports": Object {
                   "files": Object {
                     "console.js": Object {
-                      "offset": "12369",
+                      "offset": "12429",
                       "size": 343,
                     },
                     "file": Object {
                       "files": Object {
                         "find-log-path.js": Object {
-                          "offset": "15007",
+                          "offset": "15067",
                           "size": 2078,
                         },
                         "get-app-name.js": Object {
-                          "offset": "17085",
+                          "offset": "17145",
                           "size": 1780,
                         },
                         "index.js": Object {
-                          "offset": "18865",
+                          "offset": "18925",
                           "size": 2068,
                         },
                       },
                     },
                     "log-s.js": Object {
-                      "offset": "12712",
+                      "offset": "12772",
                       "size": 1751,
                     },
                     "renderer-console.js": Object {
-                      "offset": "14463",
+                      "offset": "14523",
                       "size": 544,
                     },
                   },
@@ -187,15 +187,15 @@ Object {
               },
             },
             "main.js": Object {
-              "offset": "6725",
+              "offset": "6785",
               "size": 1343,
             },
             "package.json": Object {
-              "offset": "8068",
+              "offset": "8128",
               "size": 1425,
             },
             "renderer.js": Object {
-              "offset": "9493",
+              "offset": "9553",
               "size": 978,
             },
           },
@@ -204,7 +204,7 @@ Object {
     },
     "package.json": Object {
       "offset": "5212",
-      "size": 291,
+      "size": 351,
     },
   },
 }
