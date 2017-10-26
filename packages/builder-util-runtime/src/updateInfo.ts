@@ -1,10 +1,3 @@
-export interface VersionInfo {
-  /**
-   * The version.
-   */
-  readonly version: string
-}
-
 export interface ReleaseNoteInfo {
   /**
    * The version.
@@ -33,8 +26,19 @@ export interface PackageFileInfo extends BlockMapDataHolder {
   blockMapData?: string
 }
 
-export interface UpdateInfo extends VersionInfo {
+export interface UpdateInfo {
+  /**
+   * The version.
+   */
+  readonly version: string
+
+  /**
+   * @deprecated
+   */
   readonly path: string
+
+  readonly url: string | Array<string>
+
   readonly sha512: string
 
   githubArtifactName?: string | null

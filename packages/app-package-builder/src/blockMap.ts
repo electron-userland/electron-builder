@@ -52,13 +52,15 @@ async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: n
     indent: 0,
     flowLevel: 0,
   })
-  const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
+  const blockMapFileData: Buffer = await deflateRaw(blockMapDataString, {level: 9})
 
-  await write(fd, blockMapFileData)
+  // Compatibility with nodejs 6, because:
+  // v7.2.0 The offset and length parameters are optional now.
+  await write(fd, blockMapFileData, 0, blockMapFileData.length)
   if (addLength) {
     const sizeBuffer = Buffer.alloc(4)
     sizeBuffer.writeUInt32BE(blockMapFileData.length, 0)
-    await write(fd, sizeBuffer)
+    await write(fd, sizeBuffer, 0, sizeBuffer.length)
   }
 
   await close(fd)

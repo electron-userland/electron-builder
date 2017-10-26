@@ -24,6 +24,7 @@ Object {
         "releaseNotes": "New release with new bugs and
 
 without features",
+        "url": "Test Custom Installation Dir Setup 1.1.0.exe",
         "version": "1.1.0",
       },
     },
@@ -52,6 +53,7 @@ Object {
   "releaseNotes": "New release with new bugs and
 
 without features",
+  "url": "Test Custom Installation Dir Setup 1.1.0.exe",
   "version": "1.1.0",
 }
 `;

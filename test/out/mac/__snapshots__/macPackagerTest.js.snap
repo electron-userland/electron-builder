@@ -17,6 +17,7 @@ Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "path": "Test App ßW-1.1.0-mac.zip",
+        "url": "Test App ßW-1.1.0-mac.zip",
         "version": "1.1.0",
       },
     },
@@ -105,6 +106,7 @@ Object {
       "fileContent": Object {
         "githubArtifactName": "TestApp-1.1.0-mac.zip",
         "path": "TestApp-1.1.0-mac.zip",
+        "url": "TestApp-1.1.0-mac.zip",
         "version": "1.1.0",
       },
     },

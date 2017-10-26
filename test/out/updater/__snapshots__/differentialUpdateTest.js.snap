@@ -12,6 +12,7 @@ Object {
       "file": "latest-linux.yml",
       "fileContent": Object {
         "path": "TestApp-1.0.0-x86_64.AppImage",
+        "url": "TestApp-1.0.0-x86_64.AppImage",
         "version": "1.0.0",
       },
     },
@@ -62,6 +63,7 @@ Object {
       "file": "latest-linux-ia32.yml",
       "fileContent": Object {
         "path": "TestApp-1.0.0-i386.AppImage",
+        "url": "TestApp-1.0.0-i386.AppImage",
         "version": "1.0.0",
       },
     },
@@ -112,6 +114,7 @@ Object {
           },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
+        "url": "Test App ßW Web Setup 1.0.0.exe",
         "version": "1.0.0",
       },
     },

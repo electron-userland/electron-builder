@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
+import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -98,7 +98,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected readonly app: Electron.App
 
-  protected versionInfo: VersionInfo | null
+  protected versionInfo: UpdateInfo | null
   private fileInfo: FileInfo | null
 
   protected readonly httpExecutor: ElectronHttpExecutor
@@ -245,42 +245,44 @@ export abstract class AppUpdater extends EventEmitter {
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
-    const versionInfo = await client.getLatestVersion()
+    const updateInfo = await client.getLatestVersion()
 
-    const latestVersion = parseVersion(versionInfo.version)
+    const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
       throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
-    const isStagingMatch = await this.isStagingMatch(versionInfo)
+    const isStagingMatch = await this.isStagingMatch(updateInfo)
     if (!isStagingMatch || (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
       this.updateAvailable = false
-      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
-      this.emit("update-not-available", versionInfo)
+      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
+      this.emit("update-not-available", updateInfo)
       return {
-        versionInfo,
+        versionInfo: updateInfo,
+        updateInfo,
       }
     }
 
-    const fileInfo = await client.getUpdateFile(versionInfo)
+    const fileInfo = await client.getUpdateFile(updateInfo)
 
     this.updateAvailable = true
-    this.versionInfo = versionInfo
+    this.versionInfo = updateInfo
     this.fileInfo = fileInfo
 
-    this.onUpdateAvailable(versionInfo, fileInfo)
+    this.onUpdateAvailable(updateInfo, fileInfo)
 
     const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
-      versionInfo,
+      versionInfo: updateInfo,
+      updateInfo,
       fileInfo,
       cancellationToken,
       downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
     }
   }
 
-  protected onUpdateAvailable(versionInfo: VersionInfo, fileInfo: FileInfo) {
+  protected onUpdateAvailable(versionInfo: UpdateInfo, fileInfo: FileInfo) {
     this._logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
     this.emit("update-available", versionInfo)
   }
@@ -290,9 +292,9 @@ export abstract class AppUpdater extends EventEmitter {
    * @returns {Promise<string>} Path to downloaded file.
    */
   async downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
-    const versionInfo = this.versionInfo
+    const updateInfo = this.versionInfo
     const fileInfo = this.fileInfo
-    if (versionInfo == null || fileInfo == null) {
+    if (updateInfo == null || fileInfo == null) {
       const error = new Error("Please check update first")
       this.dispatchError(error)
       throw error
@@ -301,7 +303,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(`Downloading update from ${fileInfo.url}`)
 
     try {
-      return await this.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)
+      return await this.doDownloadUpdate(updateInfo, fileInfo, cancellationToken)
     }
     catch (e) {
       this.dispatchError(e)
@@ -313,7 +315,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>>
+  protected async abstract doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.

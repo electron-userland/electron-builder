@@ -1,9 +1,10 @@
-import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, VersionInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo, asArray } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { FileInfo, isUseOldMacProvider } from "./main"
+import { safeLoad } from "js-yaml"
 
-export abstract class Provider<T extends VersionInfo> {
+export abstract class Provider<T extends UpdateInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null
 
   constructor(protected readonly executor: HttpExecutor<any>) {
@@ -57,4 +58,24 @@ export abstract class Provider<T extends VersionInfo> {
     result.path = url.pathname + url.search
     return result
   }
+}
+
+export function parseUpdateInfo(rawData: string, channelFile: string, channelFileUrl: URL): UpdateInfo {
+  let result: UpdateInfo
+  try {
+    result = safeLoad(rawData)
+  }
+  catch (e) {
+    throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`)
+  }
+  Provider.validateUpdateInfo(result)
+  return result
+}
+
+export function getUpdateFileUrl(info: UpdateInfo) {
+  const result = info.path
+  if (result != null) {
+    return result
+  }
+  return asArray(info.url)[0]
 }

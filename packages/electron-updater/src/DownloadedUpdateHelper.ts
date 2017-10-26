@@ -1,4 +1,4 @@
-import { VersionInfo } from "builder-util-runtime"
+import { UpdateInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
 import { FileInfo } from "./main"
 
@@ -7,7 +7,7 @@ export class DownloadedUpdateHelper {
   private setupPath: string | null
   private _packagePath: string | null
 
-  private versionInfo: VersionInfo | null
+  private versionInfo: UpdateInfo | null
   private fileInfo: FileInfo | null
 
   get file() {
@@ -18,7 +18,7 @@ export class DownloadedUpdateHelper {
     return this._packagePath
   }
 
-  getDownloadedFile(versionInfo: VersionInfo, fileInfo: FileInfo): string | null {
+  getDownloadedFile(versionInfo: UpdateInfo, fileInfo: FileInfo): string | null {
     if (this.setupPath == null) {
       return null
     }
@@ -26,7 +26,7 @@ export class DownloadedUpdateHelper {
     return isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo, fileInfo) ? this.setupPath : null
   }
 
-  setDownloadedFile(file: string, packagePath: string | null, versionInfo: VersionInfo, fileInfo: FileInfo) {
+  setDownloadedFile(file: string, packagePath: string | null, versionInfo: UpdateInfo, fileInfo: FileInfo) {
     this.setupPath = file
     this._packagePath = packagePath
 

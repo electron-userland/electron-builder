@@ -50,6 +50,7 @@ Object {
       "file": "beta.yml",
       "fileContent": Object {
         "path": "beta-TestApp.exe",
+        "url": "beta-TestApp.exe",
         "version": "1.0.0-beta.1",
       },
     },
@@ -74,6 +75,7 @@ Object {
 exports[`override targets in the config - only arch 3`] = `
 Object {
   "path": "beta-TestApp.exe",
+  "url": "beta-TestApp.exe",
   "version": "1.0.0-beta.1",
 }
 `;

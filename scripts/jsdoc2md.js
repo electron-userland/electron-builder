@@ -321,7 +321,7 @@ function sortAutoUpdate(pages) {
   const pageIndex = 1
 
   const filtered = []
-  const included = new Set(["AppUpdater", "UpdaterSignal", "UpdateInfo", "VersionInfo", "UpdateCheckResult", "FileInfo", "Logger"])
+  const included = new Set(["AppUpdater", "UpdaterSignal", "UpdateInfo", "UpdateCheckResult", "FileInfo", "Logger"])
   pages[pageIndex].data = pages[pageIndex].data.filter(member => {
     if (member.kind === "module" || included.has(member.name)) {
       return true
@@ -343,7 +343,7 @@ function sortAutoUpdate(pages) {
       return true
     }
 
-    if (member.name === "UpdateInfo" || member.name === "VersionInfo") {
+    if (member.name === "UpdateInfo") {
       member.id = "module:electron-updater." + member.name
       member.longname = member.id
       member.memberof = "module:electron-updater"

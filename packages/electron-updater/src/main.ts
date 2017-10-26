@@ -1,4 +1,4 @@
-import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateInfo, VersionInfo } from "builder-util-runtime"
+import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
@@ -7,7 +7,7 @@ import { LoginCallback } from "./electronHttpExecutor"
 
 export { NET_SESSION_NAME } from "./electronHttpExecutor"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
-export { UpdateInfo, VersionInfo }
+export { UpdateInfo }
 export { CancellationToken } from "builder-util-runtime"
 export { Provider } from "./Provider"
 
@@ -85,7 +85,12 @@ export function getChannelFilename(channel: string) {
 }
 
 export interface UpdateCheckResult {
-  readonly versionInfo: VersionInfo
+  /**
+   * @deprecated
+   */
+  readonly versionInfo: UpdateInfo
+
+  readonly updateInfo: UpdateInfo
   readonly fileInfo?: FileInfo
 
   readonly downloadPromise?: Promise<Array<string>> | null

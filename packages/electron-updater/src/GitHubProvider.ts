@@ -1,10 +1,10 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, parseXml, ReleaseNoteInfo, UpdateInfo, WindowsUpdateInfo, XElement } from "builder-util-runtime"
-import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
+import { getUpdateFileUrl, parseUpdateInfo } from "./Provider"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -63,23 +63,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       rawData = (await this.executor.request(requestOptions, cancellationToken))!!
     }
     catch (e) {
-      if (!this.updater.allowPrerelease) {
-        if (e instanceof HttpError && e.response.statusCode === 404) {
-          throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`)
-        }
+      if (!this.updater.allowPrerelease && e instanceof HttpError && e.response.statusCode === 404) {
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`)
       }
       throw e
     }
 
-    let result: UpdateInfo
-    try {
-      result = safeLoad(rawData)
-    }
-    catch (e) {
-      throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`)
-    }
-
-    Provider.validateUpdateInfo(result)
+    const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
     if (isUseOldMacProvider()) {
       (result as any).releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
     }
@@ -115,25 +105,26 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return this.computeGithubBasePath(`/${this.options.owner}/${this.options.repo}/releases`)
   }
 
-  async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
+  async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
     if (isUseOldMacProvider()) {
-      return versionInfo as any
+      return updateInfo as any
     }
 
     // space is not supported on GitHub
-    const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    const updateFileUrl = getUpdateFileUrl(updateInfo)
+    const name = updateInfo.githubArtifactName || path.posix.basename(updateFileUrl).replace(/ /g, "-")
     const result: FileInfo = {
       name,
-      url: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, name), this.baseUrl).href,
-      sha512: versionInfo.sha512,
+      url: newUrlFromBase(this.getBaseDownloadPath(updateInfo.version, name), this.baseUrl).href,
+      sha512: updateInfo.sha512,
     }
 
-    const packages = (versionInfo as WindowsUpdateInfo).packages
+    const packages = (updateInfo as WindowsUpdateInfo).packages
     const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
     if (packageInfo != null) {
       result.packageInfo = {
         ...packageInfo,
-        path: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, packageInfo.path || (packageInfo as any).file), this.baseUrl).href,
+        path: newUrlFromBase(this.getBaseDownloadPath(updateInfo.version, packageInfo.path || (packageInfo as any).file), this.baseUrl).href,
       }
     }
     return result

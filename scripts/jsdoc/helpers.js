@@ -78,7 +78,7 @@ function renderProperties(object, root, level) {
   const parents = object.augments
   if (parents != null) {
     for (const parentId of parents) {
-      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions") && !parentId.endsWith("PublishConfiguration") && !parentId.endsWith("VersionInfo")) {
+      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions") && !parentId.endsWith("PublishConfiguration")) {
         if (firstDocumentedParent == null && !parentId.endsWith("PlatformSpecificBuildOptions")) {
           firstDocumentedParent = resolveById(parentId)
         }

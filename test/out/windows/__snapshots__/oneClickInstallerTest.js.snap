@@ -84,6 +84,14 @@ exports[`one-click 1`] = `
 Object {
   "win": Array [
     Object {
+      "file": "1.1.0_latest.yml",
+      "fileContent": Object {
+        "path": "Test App ßW Setup 1.1.0.exe",
+        "url": "Test App ßW Setup 1.1.0.exe",
+        "version": "1.1.0",
+      },
+    },
+    Object {
       "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
@@ -108,6 +116,7 @@ Object {
       "file": "latest.yml",
       "fileContent": Object {
         "path": "TestApp Setup 1.1.0.exe",
+        "url": "TestApp Setup 1.1.0.exe",
         "version": "1.1.0",
       },
     },
@@ -131,6 +140,7 @@ Object {
 exports[`perMachine, no run after finish 3`] = `
 Object {
   "path": "TestApp Setup 1.1.0.exe",
+  "url": "TestApp Setup 1.1.0.exe",
   "version": "1.1.0",
 }
 `;

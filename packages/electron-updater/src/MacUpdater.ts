@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, AllPublishOptions, RequestHeaders, safeGetHeader, VersionInfo } from "builder-util-runtime"
+import { CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, AllPublishOptions, RequestHeaders, safeGetHeader, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
@@ -21,7 +21,7 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected doDownloadUpdate(updateInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
     const server = createServer()
     server.on("close", () => {
       this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${fileInfo.url})`)

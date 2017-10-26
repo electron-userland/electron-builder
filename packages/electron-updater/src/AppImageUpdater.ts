@@ -1,4 +1,4 @@
-import { CancellationToken, DownloadOptions, AllPublishOptions, VersionInfo, AppImageUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo, AppImageUpdateInfo } from "builder-util-runtime"
 import { spawn, SpawnOptions } from "child_process"
 import "source-map-support/register"
 import { DifferentialDownloader } from "./differentialPackage"
@@ -30,7 +30,7 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.computeRequestHeaders(fileInfo),

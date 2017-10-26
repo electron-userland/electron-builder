@@ -1,4 +1,4 @@
-import { CancellationToken, DownloadOptions, AllPublishOptions, VersionInfo } from "builder-util-runtime"
+import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
 import * as path from "path"
@@ -14,7 +14,7 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.computeRequestHeaders(fileInfo),

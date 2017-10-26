@@ -1,8 +1,7 @@
 import { GenericServerOptions, HttpError, HttpExecutor, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import { RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { FileInfo, getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
+import { getUpdateFileUrl, parseUpdateInfo } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
@@ -17,16 +16,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     const channelFile = getChannelFilename(this.channel)
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl)
     try {
-      const options: RequestOptions = {
-        hostname: channelUrl.hostname,
-        path: `${channelUrl.pathname}${channelUrl.search}`,
-        protocol: channelUrl.protocol,
-        headers: this.requestHeaders || undefined,
-      }
-      if (channelUrl.port != null) {
-        options.port = channelUrl.port
-      }
-      result = safeLoad((await this.executor.request(options))!!)
+      result = parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelUrl)))!!, channelFile, channelUrl)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -42,19 +32,19 @@ export class GenericProvider extends Provider<UpdateInfo> {
     return result
   }
 
-  async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
+  async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
     if (isUseOldMacProvider()) {
-      return versionInfo as any
+      return updateInfo as any
     }
 
-    const filePath = versionInfo.path
+    const updateFileUrl = getUpdateFileUrl(updateInfo)
     const result: FileInfo = {
-      name: path.posix.basename(filePath),
-      url: newUrlFromBase(filePath, this.baseUrl).href,
-      sha512: versionInfo.sha512,
+      name: path.posix.basename(updateFileUrl),
+      url: newUrlFromBase(updateFileUrl, this.baseUrl).href,
+      sha512: updateInfo.sha512,
     }
 
-    const packages = (versionInfo as WindowsUpdateInfo).packages
+    const packages = (updateInfo as WindowsUpdateInfo).packages
     const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
     if (packageInfo != null) {
       result.packageInfo = {

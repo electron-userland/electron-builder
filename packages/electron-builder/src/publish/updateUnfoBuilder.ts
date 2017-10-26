@@ -75,10 +75,6 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const events: Array<ArtifactCreated> = []
   for (let publishConfig of publishConfigs) {
-    if (publishConfig.provider === "bintray") {
-      continue
-    }
-
     if (publishConfig.provider === "github" && "releaseType" in publishConfig) {
       publishConfig = {...publishConfig}
       delete (publishConfig as GithubOptions).releaseType
@@ -115,7 +111,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
         await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, (publishConfig.provider === "bintray" ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
@@ -141,10 +137,12 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
 
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo) {
   const customUpdateInfo = event.updateInfo
+  const url = path.basename(event.file!)
   return {
     version,
     releaseDate: new Date().toISOString(),
-    path: path.basename(event.file!),
+    path: url,
+    url,
     ...customUpdateInfo,
     sha512: (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!),
     ...releaseInfo as UpdateInfo,

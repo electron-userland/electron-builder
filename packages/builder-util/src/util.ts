@@ -19,6 +19,7 @@ export { DebugLogger } from "./DebugLogger"
 
 export { hashFile } from "./hash"
 export { copyFile } from "./fs"
+export { asArray } from "builder-util-runtime"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -249,17 +250,6 @@ export function isTokenCharValid(token: string) {
   return /^[\w\/=+-]+$/.test(token)
 }
 
-export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
-  if (v == null) {
-    return []
-  }
-  else if (Array.isArray(v)) {
-    return v
-  }
-  else {
-    return [v]
-  }
-}
 export function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
   if (!isEmptyOrSpaces(env)) {
