@@ -34,7 +34,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerOp
   readonly oneClick?: boolean
 
   /***
-   * If `oneClick` is `true` (default): Install per all users (per-machine).
+   * If `oneClick` is `true` (default): Whether to install per all users (per-machine).
    *
    * If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
    * @default false

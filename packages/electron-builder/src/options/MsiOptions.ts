@@ -9,13 +9,6 @@ export interface MsiOptions extends CommonWindowsInstallerOptions, TargetSpecifi
   readonly oneClick?: boolean
 
   /**
-   * Install per all users (per-machine).
-   * @default true
-   * @private Well, one-click per-user is not easy to write for us, feature hidden for now
-   */
-  readonly perMachine?: boolean
-
-  /**
    * The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.
    */
   readonly upgradeCode?: string | null

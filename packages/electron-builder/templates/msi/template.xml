@@ -30,7 +30,7 @@
 
     <Property Id="ALLUSERS" Secure="yes" Value="2"/>
     {{ if (isPerMachine) { }}
-    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+    <Property Id="MSIINSTALLPERUSER" Secure="yes"/>
     {{ } else { }}
     <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
     {{ } -}}

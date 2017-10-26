@@ -6,6 +6,12 @@ export interface CommonWindowsInstallerOptions {
   readonly oneClick?: boolean
 
   /**
+   * Whether to install per all users (per-machine).
+   * @default false
+   */
+  readonly perMachine?: boolean
+
+  /**
    * *one-click installer only.*  Whether to run the installed application after finish.
    * @default true
    */
@@ -36,10 +42,11 @@ export interface CommonWindowsInstallerOptions {
 }
 
 export interface FinalCommonWindowsInstallerOptions {
+  isAssisted: boolean
+  isPerMachine: boolean
+
   shortcutName: string
   menuCategory: string | null
-
-  isAssisted: boolean
 
   isCreateDesktopShortcut: boolean
   isCreateStartMenuShortcut: boolean
@@ -63,6 +70,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerOptions, pack
   }
 
   return {
+    isPerMachine: options.perMachine === true,
     isAssisted: options.oneClick === false,
 
     shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.productFilename : packager.expandMacro(options.shortcutName!!),

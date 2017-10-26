@@ -34,9 +34,7 @@ const projectTemplate = new Lazy<(data: any) => string>(async () => {
 export default class MsiTarget extends Target {
   private readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
 
-  readonly options: MsiOptions = deepAssign({
-    perMachine: true,
-  }, this.packager.platformSpecificBuildOptions, this.packager.config.msi)
+  readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("msi")
@@ -151,7 +149,6 @@ export default class MsiTarget extends Target {
     const iconPath = await this.packager.getIconPath()
     return (await projectTemplate.value)({
       ...commonOptions,
-      isPerMachine: options.perMachine !== false,
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
       compressionLevel: compression === "store" ? "none" : "high",
