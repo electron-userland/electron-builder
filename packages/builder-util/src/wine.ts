@@ -4,7 +4,9 @@ import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
 import { getMacOsVersion } from "./macosVersion"
-import { debug, exec, ExecOptions, isEnvTrue } from "./util"
+import { debug, debug7zArgs, exec, ExecOptions, isEnvTrue } from "./util"
+import { path7za } from "7zip-bin"
+import * as os from "os"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
@@ -41,7 +43,12 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     }
   }
 
-  await checkWineVersion(exec("wine", ["--version"]))
+  if (process.env.COMPRESSED_WINE_HOME) {
+    await exec(path7za, debug7zArgs("x").concat(process.env.COMPRESSED_WINE_HOME!!, "-aoa", `-o${path.join(os.homedir(), ".wine")}`))
+  }
+  else {
+    await checkWineVersion(exec("wine", ["--version"]))
+  }
   return {path: "wine"}
 })
 

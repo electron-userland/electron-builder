@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- https://blogs.msdn.microsoft.com/gremlininthemachine/2006/12/05/msi-wix-and-unicode/ -->
+  <Product Id="*" Name="${productName}" UpgradeCode="${upgradeCode}" Version="${version}" Language="1033" Codepage="65001" Manufacturer="${manufacturer}">
+    <Package Compressed="yes" InstallerVersion="500"/>
+
+    <Condition Message="Windows 7 and above is required"><![CDATA[Installed OR VersionNT >= 601]]></Condition>
+
+    <!--
+    AllowSameVersionUpgrades:
+      When set to no (the default), installing a product with the same version and upgrade code (but different product code) is allowed and treated by MSI as two products.
+      When set to yes, WiX sets the msidbUpgradeAttributesVersionMaxInclusive attribute, which tells MSI to treat a product with the same version as a major upgrade.
+
+      So, AllowSameVersionUpgrades="yes" allows to build and test MSI with the same version, and previously installed app will be removed.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage='A newer version of "[ProductName]" is already installed.'/>
+    <MediaTemplate CompressionLevel="${compressionLevel}" EmbedCab="yes"/>
+
+    <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}"/>
+    <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
+
+    {{ if (iconPath) { }}
+    <Icon Id="icon.ico" SourceFile="${iconPath}"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico"/>
+    {{ } -}}
+
+    {{ if (isAssisted || isRunAfterFinish) { }}
+    <CustomAction Id="runAfterFinish" FileKey="mainExecutable" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait"/>
+    {{ } -}}
+
+    <Property Id="ALLUSERS" Secure="yes" Value="2"/>
+    {{ if (isPerMachine) { }}
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+    {{ } else { }}
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+    {{ } -}}
+
+    {{ if (isAssisted) { }}
+    <!-- Check "Run after finish" checkbox by default -->
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run ${productName}"/>
+
+    <UIRef Id="WixUI_Assisted"/>
+    {{ } else if (isRunAfterFinish) { }}
+    <!-- https://stackoverflow.com/questions/1871531/launch-after-install-with-no-ui -->
+    <InstallExecuteSequence>
+      <Custom Action="runAfterFinish" After="InstallFinalize"/>
+    </InstallExecuteSequence>
+    {{ } -}}
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="${programFilesId}">
+        <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
+      </Directory>
+
+      <!-- Desktop link -->
+      {{ if (isCreateDesktopShortcut) { }}
+      <Directory Id="DesktopFolder" Name="Desktop"/>
+      {{ } -}}
+
+      <!-- Start menu link -->
+      {{ if (isCreateStartMenuShortcut) { }}
+      <Directory Id="ProgramMenuFolder"/>
+      {{ } }}
+    </Directory>
+
+    <!-- Files -->
+    <Feature Id="ProductFeature" Absent="disallow">
+      <ComponentGroupRef Id="ProductComponents"/>
+    </Feature>
+
+    {{-dirs}}
+
+    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER">
+      {{-files}}
+    </ComponentGroup>
+  </Product>
+</Wix>

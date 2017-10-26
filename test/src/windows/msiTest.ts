@@ -4,6 +4,7 @@ import { Platform } from "electron-builder"
 test.ifAll("msi", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {
+    appId: "build.electron.test.msi.oneClick.perMachine",
     extraMetadata: {
       // version: "1.0.0",
     },
@@ -13,9 +14,26 @@ test.ifAll("msi", app({
   // signed: true,
 }))
 
+test.ifAll("per-user", app({
+  targets: Platform.WINDOWS.createTarget("msi"),
+  config: {
+    appId: "build.electron.test.msi.oneClick.perUser",
+    extraMetadata: {
+      // version: "1.0.0",
+    },
+    productName: "Test MSI Per User",
+    msi: {
+      perMachine: false,
+    }
+  }
+}, {
+  // signed: true,
+}))
+
 test.ifAll("assisted", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {
+    appId: "build.electron.test.msi.assisted",
     extraMetadata: {
       // version: "1.0.0",
     },

@@ -28,7 +28,7 @@ export interface CommonNsisOptions {
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerOptions, TargetSpecificOptions {
   /**
-   * One-click installation.
+   * Whether to create one-click installer or assisted.
    * @default true
    */
   readonly oneClick?: boolean

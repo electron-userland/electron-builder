@@ -3,6 +3,8 @@ import { isEmptyOrSpaces } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 
 export interface CommonWindowsInstallerOptions {
+  readonly oneClick?: boolean
+
   /**
    * *one-click installer only.*  Whether to run the installed application after finish.
    * @default true
@@ -33,7 +35,17 @@ export interface CommonWindowsInstallerOptions {
   readonly shortcutName?: string | null
 }
 
-export function getEffectiveOptions(options: CommonWindowsInstallerOptions, packager: WinPackager) {
+export interface FinalCommonWindowsInstallerOptions {
+  shortcutName: string
+  menuCategory: string | null
+
+  isAssisted: boolean
+
+  isCreateDesktopShortcut: boolean
+  isCreateStartMenuShortcut: boolean
+}
+
+export function getEffectiveOptions(options: CommonWindowsInstallerOptions, packager: WinPackager): FinalCommonWindowsInstallerOptions {
   const appInfo = packager.appInfo
 
   let menuCategory: string | null = null
@@ -51,9 +63,11 @@ export function getEffectiveOptions(options: CommonWindowsInstallerOptions, pack
   }
 
   return {
+    isAssisted: options.oneClick === false,
+
     shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.productFilename : packager.expandMacro(options.shortcutName!!),
-    createDesktopShortcut: options.createDesktopShortcut !== false,
-    createStartMenuShortcut: options.createStartMenuShortcut !== false,
+    isCreateDesktopShortcut: options.createDesktopShortcut !== false,
+    isCreateStartMenuShortcut: options.createStartMenuShortcut !== false,
     menuCategory,
   }
 }

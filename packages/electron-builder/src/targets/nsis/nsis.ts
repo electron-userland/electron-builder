@@ -390,10 +390,10 @@ export class NsisTarget extends Target {
     })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
-    if (!commonOptions.createDesktopShortcut) {
+    if (!commonOptions.isCreateDesktopShortcut) {
       defines.DO_NOT_CREATE_DESKTOP_SHORTCUT = null
     }
-    if (!commonOptions.createStartMenuShortcut) {
+    if (!commonOptions.isCreateStartMenuShortcut) {
       defines.DO_NOT_CREATE_START_MENU_SHORTCUT = null
     }
 

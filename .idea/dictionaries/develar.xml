@@ -103,6 +103,8 @@
       <w>epipe</w>
       <w>evolvehq</w>
       <w>exdev</w>
+      <w>exitdialogoptionalcheckbox</w>
+      <w>exitdialogoptionalcheckboxtext</w>
       <w>extname</w>
       <w>faroese</w>
       <w>fcopy</w>
@@ -226,6 +228,7 @@
       <w>mkdtemp</w>
       <w>mksnapshot</w>
       <w>mpass</w>
+      <w>msiinstallperuser</w>
       <w>multilib</w>
       <w>multiuser</w>
       <w>muon</w>
@@ -347,6 +350,7 @@
       <w>winemenubuilder</w>
       <w>winstaller</w>
       <w>wixobj</w>
+      <w>wixui</w>
       <w>workflows</w>
       <w>writev</w>
       <w>xamarin</w>

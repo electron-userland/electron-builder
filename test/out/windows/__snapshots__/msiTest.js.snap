@@ -23,3 +23,15 @@ Object {
   ],
 }
 `;
+
+exports[`per-user 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI Per User-1.1.0.msi",
+      "safeArtifactName": "TestApp-1.1.0.msi",
+    },
+  ],
+}
+`;
