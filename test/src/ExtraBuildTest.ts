@@ -11,6 +11,7 @@ function createBuildResourcesTest(platform: Platform) {
     // only dir - avoid DMG
     targets: platform.createTarget(platform === Platform.MAC ? DIR_TARGET : null),
     config: {
+      publish: null,
       directories: {
         buildResources: "custom",
         output: "customDist",

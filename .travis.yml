@@ -1,4 +1,4 @@
-osx_image: xcode9.0
+osx_image: xcode9.1
 language: node_js
 
 matrix:
@@ -24,7 +24,10 @@ cache:
     - /tmp/jest-electron-builder-tests
 
 install:
-  - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.2.0/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.2.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
+  - |
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.3.4/git-lfs-darwin-amd64-2.3.4.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
+    fi
   - curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* $HOME/.yarn
   - export PATH="$HOME/.yarn/bin:$PATH"
   - yarn

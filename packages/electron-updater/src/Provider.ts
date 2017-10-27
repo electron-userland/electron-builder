@@ -1,8 +1,9 @@
 import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo, asArray } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
-import { FileInfo, isUseOldMacProvider } from "./main"
+import { FileInfo, isUseOldMacProvider, newUrlFromBase } from "./main"
 import { safeLoad } from "js-yaml"
+import * as path from "path"
 
 export abstract class Provider<T extends UpdateInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null
@@ -78,4 +79,12 @@ export function getUpdateFileUrl(info: UpdateInfo) {
     return result
   }
   return asArray(info.url)[0]
+}
+
+export function createFileInfo(updateInfo: UpdateInfo, baseUrl: URL, updateFileUrl: string = getUpdateFileUrl(updateInfo)): FileInfo {
+  return {
+    name: path.posix.basename(updateFileUrl),
+    url: newUrlFromBase(updateFileUrl, baseUrl).href,
+    sha512: updateInfo.sha512,
+  }
 }

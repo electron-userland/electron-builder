@@ -1,7 +1,6 @@
 import { GenericServerOptions, HttpError, HttpExecutor, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
-import * as path from "path"
 import { FileInfo, getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
-import { getUpdateFileUrl, parseUpdateInfo } from "./Provider"
+import { createFileInfo, parseUpdateInfo } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
@@ -37,13 +36,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       return updateInfo as any
     }
 
-    const updateFileUrl = getUpdateFileUrl(updateInfo)
-    const result: FileInfo = {
-      name: path.posix.basename(updateFileUrl),
-      url: newUrlFromBase(updateFileUrl, this.baseUrl).href,
-      sha512: updateInfo.sha512,
-    }
-
+    const result = createFileInfo(updateInfo, this.baseUrl)
     const packages = (updateInfo as WindowsUpdateInfo).packages
     const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
     if (packageInfo != null) {

@@ -1,7 +1,7 @@
 import { app } from "../helpers/packTester"
 import { Platform } from "electron-builder"
 
-test.ifAll("msi", app({
+test.ifAll.ifDevOrWinCi("msi", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {
     appId: "build.electron.test.msi.oneClick.perMachine",
@@ -14,7 +14,7 @@ test.ifAll("msi", app({
   // signed: true,
 }))
 
-test.ifAll("per-user", app({
+test.ifAll.ifDevOrWinCi("per-user", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {
     appId: "build.electron.test.msi.oneClick.perUser",
@@ -30,7 +30,7 @@ test.ifAll("per-user", app({
   // signed: true,
 }))
 
-test.ifAll("assisted", app({
+test.skip.ifAll("assisted", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {
     appId: "build.electron.test.msi.assisted",

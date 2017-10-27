@@ -152,6 +152,10 @@ async function runTests() {
 
   const testResult = await require("jest-cli").runCLI(jestArgs, [rootDir])
   const exitCode = testResult.results == null || testResult.results.success ? 0 : testResult.globalConfig.testFailureExitCode
+  if (isCi) {
+    process.exit(exitCode)
+  }
+
   await remove(TEST_TMP_DIR)
   process.exitCode = exitCode
   if (testResult.globalConfig.forceExit) {

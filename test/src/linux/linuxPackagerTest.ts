@@ -5,7 +5,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
-test.ifNotWindows.ifNotCiMac("AppImage", app({
+test.ifNotWindows("AppImage", app({
   targets: Platform.LINUX.createTarget(),
   config: {
     publish: {
@@ -67,7 +67,10 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
 
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
 test.ifNotWindows("icons from ICNS", app({
-  targets: Platform.LINUX.createTarget()
+  targets: Platform.LINUX.createTarget(),
+  config: {
+    publish: null,
+  },
 }, {
   projectDirCreated: it => remove(path.join(it, "build", "icons")),
   packed: async context => {

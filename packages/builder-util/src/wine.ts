@@ -14,6 +14,7 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     debug("Using system wine is forced")
   }
   else if (process.platform === "darwin") {
+    // assume that on travis latest version is used
     const osVersion = await getMacOsVersion()
     let version: string | null = null
     let checksum: string | null = null
@@ -22,7 +23,7 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
       // noinspection SpellCheckingInspection
       checksum = "dlEVCf0YKP5IEiOKPNE48Q8NKXbXVdhuaI9hG2oyDEay2c+93PE5qls7XUbIYq4Xi1gRK8fkWeCtzN2oLpVQtg=="
     }
-    else if (semver.gte(osVersion, "10.12.0")) {
+    else if (semver.gte(osVersion, "10.12.0") || process.env.TRAVIS_OS_NAME === "osx") {
       version = "2.0.1-mac-10.12"
       // noinspection SpellCheckingInspection
       checksum = "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg=="
@@ -37,8 +38,8 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
           WINEDEBUG: "-all,err+all",
           WINEDLLOVERRIDES: "winemenubuilder.exe=d",
           WINEPREFIX: path.join(wineDir, "wine-home"),
-          DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")])
-        }
+          DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")]),
+        },
       }
     }
   }

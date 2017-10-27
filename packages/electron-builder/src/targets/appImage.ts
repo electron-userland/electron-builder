@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log, debug } from "builder-util"
-import { UUID, BlockMapDataHolder } from "builder-util-runtime"
+import { UUID, BlockMapDataHolder,  } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -75,7 +75,7 @@ export default class AppImageTarget extends Target {
     }
 
     //noinspection SpellCheckingInspection
-    const vendorDir = await getBinFromGithub("appimage", "9.0.1", "mcme+7/krXSYb5C+6BpSt9qgajFYpn9dI1rjxzSW3YB5R/KrGYYrpZbVflEMG6pM7k9CL52poiOpGLBDG/jW3Q==")
+    const vendorDir = await getBinFromGithub("appimage", "9.0.2", "9Y6o5svZhJMeiVCuzy8PmKk0aERoX7LdqssBkiV/oglwGFvKdR2UK0jCJv5+cU5ZRwheq04npiRJ71qMBGVLIA==")
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
       await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"), {
@@ -106,7 +106,7 @@ export default class AppImageTarget extends Target {
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {
         ...process.env,
-        PATH: `${vendorToolDir}:${process.env.PATH}`,
+        PATH: `${vendorToolDir}:"/Users/develar/Library/Caches/electron-builder/linux-tools/linux-tools-mac-10.12.3/bin:${process.env.PATH}`,
         // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
         ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
       }
