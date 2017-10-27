@@ -137,6 +137,12 @@ export interface PkgOptions extends TargetSpecificOptions {
    * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
    */
   readonly identity?: string | null
+
+  /**
+   * The path to EULA license file. Defaults to `license.txt`. In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
+   * @default build/license.txt
+   */
+  readonly license?: string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
