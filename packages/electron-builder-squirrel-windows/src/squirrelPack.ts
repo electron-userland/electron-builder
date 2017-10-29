@@ -2,8 +2,10 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
 import { WinPackager } from "electron-builder/out/winPackager"
-import { createWriteStream, ensureDir, remove, stat, unlink } from "fs-extra-p"
+import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { path7za } from "7zip-bin"
+import { compute7zCompressArgs } from "electron-builder/out/targets/archive"
 
 const archiver = require("archiver")
 
@@ -51,61 +53,87 @@ export interface OutFileNames {
   packageFile: string
 }
 
-export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, outFileNames: OutFileNames, packager: WinPackager, appOutDir: string, outDir: string, arch: Arch) {
-  const appUpdate = await packager.getTempFile("Update.exe")
-  await BluebirdPromise.all([
-    copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
-      .then(() => packager.sign(appUpdate)),
-    BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
-      .then(() => ensureDir(outputDirectory))
-  ])
-
-  if (options.remoteReleases) {
-    await syncReleases(outputDirectory, options)
+export class SquirrelBuilder {
+  constructor(private readonly options: SquirrelOptions, private readonly outputDirectory: string, private readonly packager: WinPackager) {
   }
 
-  const embeddedArchiveFile = await packager.getTempFile("setup.zip")
-  const embeddedArchive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 6 : options.packageCompressionLevel}})
-  const embeddedArchiveOut = createWriteStream(embeddedArchiveFile)
-  const embeddedArchivePromise = new BluebirdPromise((resolve, reject) => {
-    embeddedArchive.on("error", reject)
-    embeddedArchiveOut.on("close", resolve)
-  })
-  embeddedArchive.pipe(embeddedArchiveOut)
+  async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch, dirToArchive: string) {
+    const outputDirectory = this.outputDirectory
+    const options = this.options
+    const appUpdate = path.join(dirToArchive, "Update.exe")
+    const packager = this.packager
+    await BluebirdPromise.all([
+      copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
+        .then(() => packager.sign(appUpdate)),
+      BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
+        .then(() => ensureDir(outputDirectory))
+    ])
 
-  embeddedArchive.file(appUpdate, {name: "Update.exe"})
-  embeddedArchive.file(options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), {name: "background.gif"})
+    if (options.remoteReleases) {
+      await syncReleases(outputDirectory, options)
+    }
 
-  const version = convertVersion(options.version)
-  const nupkgPath = path.join(outputDirectory, outFileNames.packageFile)
-  const setupPath = path.join(outputDirectory, outFileNames.setupFile)
+    const version = convertVersion(options.version)
+    const nupkgPath = path.join(outputDirectory, outFileNames.packageFile)
+    const setupPath = path.join(outputDirectory, outFileNames.setupFile)
 
-  await BluebirdPromise.all<any>([
-    pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
-    copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
-  ])
+    await BluebirdPromise.all<any>([
+      pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
+      copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
+      copyFile(options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), path.join(dirToArchive, "background.gif")),
+    ])
 
-  embeddedArchive.file(nupkgPath, {name: outFileNames.packageFile})
+    // releasify can be called only after pack nupkg and nupkg must be in the final output directory (where other old version nupkg can be located)
+    await this.releasify(nupkgPath, outFileNames.packageFile)
+      .then(it => writeFile(path.join(dirToArchive, "RELEASES"), it))
 
-  const releaseEntry = await releasify(options, nupkgPath, outputDirectory, outFileNames.packageFile)
+    const embeddedArchiveFile = await this.createEmbeddedArchiveFile(nupkgPath, dirToArchive)
 
-  embeddedArchive.append(releaseEntry, {name: "RELEASES"})
-  embeddedArchive.finalize()
-  await embeddedArchivePromise
+    await execWine(path.join(options.vendorPath, "WriteZipToSetup.exe"), [setupPath, embeddedArchiveFile])
 
-  await execWine(path.join(options.vendorPath, "WriteZipToSetup.exe"), [setupPath, embeddedArchiveFile])
+    await packager.signAndEditResources(setupPath, arch, outDir)
+    if (options.msi && process.platform === "win32") {
+      const outFile = outFileNames.setupFile.replace(".exe", ".msi")
+      await msi(options, nupkgPath, setupPath, outputDirectory, outFile)
+      // rcedit can only edit .exe resources
+      await packager.sign(path.join(outputDirectory, outFile))
+    }
+  }
 
-  await packager.signAndEditResources(setupPath, arch, outDir)
-  if (options.msi && process.platform === "win32") {
-    const outFile = outFileNames.setupFile.replace(".exe", ".msi")
-    await msi(options, nupkgPath, setupPath, outputDirectory, outFile)
-    // rcedit can only edit .exe resources
-    await packager.sign(path.join(outputDirectory, outFile))
+  private async releasify(nupkgPath: string, packageName: string) {
+    const args = [
+      "--releasify", nupkgPath,
+      "--releaseDir", this.outputDirectory
+    ]
+    const out = (await exec(process.platform === "win32" ? path.join(this.options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(this.options.vendorPath, "Update-Mono.exe")))).trim()
+    if (debug.enabled) {
+      debug(`Squirrel output: ${out}`)
+    }
+
+    const lines = out.split("\n")
+    for (let i = lines.length - 1; i > -1; i--) {
+      const line = lines[i]
+      if (line.includes(packageName)) {
+        return line.trim()
+      }
+    }
+
+    throw new Error(`Invalid output, cannot find last release entry, output: ${out}`)
+  }
+
+  private async createEmbeddedArchiveFile(nupkgPath: string, dirToArchive: string) {
+    const embeddedArchiveFile = await this.packager.getTempFile("setup.zip")
+    await exec(path7za, compute7zCompressArgs("zip", this.packager.compression, {isRegularFile: true}).concat(embeddedArchiveFile, "."), {
+      cwd: dirToArchive,
+    })
+    await exec(path7za, compute7zCompressArgs("zip", "store" /* nupkg is already compressed */, {isRegularFile: true}).concat(embeddedArchiveFile, nupkgPath))
+    return embeddedArchiveFile
   }
 }
 
 async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packager: WinPackager) {
-  const archive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel}})
+  // SW now doesn't support 0-level nupkg compressed files. It means that we are forced to use level 1 if store level requested.
+  const archive = archiver("zip", {zlib: {level: Math.max(1, (options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel))}})
   const archiveOut = createWriteStream(outFile)
   const archivePromise = new BluebirdPromise((resolve, reject) => {
     archive.on("error", reject)
@@ -173,27 +201,6 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   archive.file(updateFile, {name: "Update.exe", prefix: "lib/net45"})
   await encodedZip(archive, directory, "lib/net45", options.vendorPath, packager)
   await archivePromise
-}
-
-async function releasify(options: SquirrelOptions, nupkgPath: string, outputDirectory: string, packageName: string) {
-  const args = [
-    "--releasify", nupkgPath,
-    "--releaseDir", outputDirectory
-  ]
-  const out = (await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")))).trim()
-  if (debug.enabled) {
-    debug(`Squirrel output: ${out}`)
-  }
-
-  const lines = out.split("\n")
-  for (let i = lines.length - 1; i > -1; i--) {
-    const line = lines[i]
-    if (line.includes(packageName)) {
-      return line.trim()
-    }
-  }
-
-  throw new Error(`Invalid output, cannot find last release entry, output: ${out}`)
 }
 
 async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {

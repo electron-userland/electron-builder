@@ -4,11 +4,8 @@ import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "electron-bu
 import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
-
-const SW_VERSION = "1.6.0.0"
-//noinspection SpellCheckingInspection
-const SW_SHA2 = "ipd/ZQXyCe2+CYmNiUa9+nzVuO2PsRfF6DT8Y2mbIzkc8SVH8tJ6uS4rdhwAI1rPsYkmsPe1AcJGqv8ZDZcFww=="
+import { SquirrelBuilder, convertVersion, SquirrelOptions } from "./squirrelPack"
+import { emptyDir, remove } from "fs-extra-p"
 
 export default class SquirrelWindowsTarget extends Target {
   readonly options: SquirrelWindowsOptions = {...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows}
@@ -25,20 +22,27 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const packager = this.packager
-    const appInfo = packager.appInfo
-    const version = appInfo.version
-    const archSuffix = getArchSuffix(arch)
-
+    const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
 
     // tslint:disable-next-line:no-invalid-template-strings
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
     const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
 
-    const installerOutDir = path.join(this.outDir, `win${getArchSuffix(arch)}`)
+    const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const distOptions = await this.computeEffectiveDistOptions()
-    await buildInstaller(distOptions as SquirrelOptions, installerOutDir, {setupFile, packageFile}, packager, appOutDir, this.outDir, arch)
-    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFile), this, arch, `${sanitizedName}-Setup-${version}${archSuffix}.exe`)
+    const tempDir = path.join(installerOutDir, ".temp")
+    await emptyDir(tempDir)
+    try {
+      const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
+      await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch, tempDir)
+    }
+    finally {
+      await remove(tempDir)
+        .catch(e => warn(`Cannot delete temporary directory: ${e.message}`))
+    }
+
+    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFile), this, arch, `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`)
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
@@ -84,7 +88,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2),
+      vendorPath: await getBinFromGithub("Squirrel.Windows", "1.7.8", "p4Z7//ol4qih1xIl2l9lOeFf1RmX4y1eAJkol+3q7iZ0iEMotBhs3HXFLxU435xLRhKghYOjSYu7WiUktsP5Bg=="),
       ...this.options as any,
     }
 

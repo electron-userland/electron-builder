@@ -3,7 +3,6 @@ import { ExecOptions, ExtraSpawnOptions, execWine } from "builder-util"
 import { VmManager } from "./vm"
 import * as path from "path"
 
-/** @internal */
 export class WineVmManager extends VmManager {
   constructor() {
     super()

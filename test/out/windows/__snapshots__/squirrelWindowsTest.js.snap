@@ -16,11 +16,6 @@ Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
     },
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.1.0-win.zip",
-      "safeArtifactName": "TestApp-1.1.0-win.zip",
-    },
   ],
 }
 `;
@@ -113,6 +108,11 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-full.nupkg",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test TestApp foo.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
     },
   ],
 }

@@ -37,7 +37,7 @@ export async function tar(compression: CompressionLevel | any | any, format: str
     return
   }
 
-  const args = compute7zCompressArgs(compression, format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), {isRegularFile: true})
+  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), compression, {isRegularFile: true, method: "DEFAULT"})
   args.push(outFile, tarFile)
   await exec(path7za, args, {
     cwd: path.dirname(dirToArchive),
@@ -65,12 +65,13 @@ export interface ArchiveOptions {
   dictSize?: number
   excluded?: Array<string>
 
-  method?: "Copy" | "LZMA" | "Deflate"
+  // DEFAULT allows to disable custom logic and do not pass method switch at all
+  method?: "Copy" | "LZMA" | "Deflate" | "DEFAULT"
 
   isRegularFile?: boolean
 }
 
-export function compute7zCompressArgs(compression: CompressionLevel | any | any, format: string, options: ArchiveOptions = {}) {
+export function compute7zCompressArgs(format: string, compression: CompressionLevel | null | undefined, options: ArchiveOptions = {}) {
   let storeOnly = compression === "store"
   const args = debug7zArgs("a")
 
@@ -117,9 +118,11 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
   }
 
   if (options.method != null) {
-    args.push(`-mm=${options.method}`)
+    if (options.method !== "DEFAULT") {
+      args.push(`-mm=${options.method}`)
+    }
   }
-  else if (!options.isRegularFile && (format === "zip" || storeOnly)) {
+  else if (format === "zip" || storeOnly) {
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
@@ -135,7 +138,7 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
 // 7z is very fast, so, use ultra compression
 /** @internal */
 export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
-  const args = compute7zCompressArgs(compression, format, options)
+  const args = compute7zCompressArgs(format, compression, options)
   // remove file before - 7z doesn't overwrite file, but update
   await unlinkIfExists(outFile)
 

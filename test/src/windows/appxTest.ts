@@ -20,7 +20,7 @@ it.ifDevOrWinCi("AppX", app({
   signedWin: true,
 }))
 
-it.ifDevOrWinCi("certificateSubjectName", app({
+it.ifNotCi("certificateSubjectName", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
   config: {
     win: {
