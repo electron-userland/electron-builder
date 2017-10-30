@@ -210,7 +210,6 @@ This is different from the normal quit event sequence.
 ### `FileInfo`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="FileInfo-name">name</code>** String
 * **<code id="FileInfo-url">url</code>** String
 * <code id="FileInfo-packageInfo">packageInfo</code> module:builder-util-runtime.PackageFileInfo
 * <code id="FileInfo-sha2">sha2</code> String

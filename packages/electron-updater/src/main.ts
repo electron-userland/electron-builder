@@ -39,7 +39,6 @@ Object.defineProperty(exports, "autoUpdater", {
 })
 
 export interface FileInfo {
-  readonly name: string
   readonly url: string
 
   packageInfo?: PackageFileInfo

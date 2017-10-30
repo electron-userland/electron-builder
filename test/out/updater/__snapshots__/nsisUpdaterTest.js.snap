@@ -10,7 +10,6 @@ Array [
 
 exports[`90 staging percentage 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }
@@ -26,7 +25,6 @@ Array [
 
 exports[`DigitalOcean Spaces 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://electron-builder-test.nyc3.digitaloceanspaces.com/light-updater-test/TestApp%20Setup%201.1.0.exe",
 }
@@ -46,7 +44,6 @@ exports[`check updates - no versions at all 1`] = `"No latest version, please en
 
 exports[`checkForUpdates several times 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }
@@ -54,7 +51,6 @@ Object {
 
 exports[`checkForUpdates several times 2`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }
@@ -72,7 +68,6 @@ Array [
 
 exports[`downgrade (allowed) 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
   "sha512": undefined,
   "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
@@ -85,7 +80,6 @@ exports[`downgrade (disallowed, beta) 1`] = `undefined`;
 
 exports[`file url 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
   "sha512": undefined,
   "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
@@ -94,7 +88,6 @@ Object {
 
 exports[`file url generic - manual download 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }
@@ -109,7 +102,6 @@ Array [
 
 exports[`file url generic 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }
@@ -125,7 +117,6 @@ Array [
 
 exports[`file url github 1`] = `
 Object {
-  "name": "TestApp-Setup-1.1.0.exe",
   "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
   "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe",
 }
@@ -151,7 +142,6 @@ Array [
 
 exports[`file url github pre-release and fullChangelog 1`] = `
 Object {
-  "name": "TestApp-Setup-1.5.2-beta.3.exe",
   "sha512": undefined,
   "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.5.2-beta.3/TestApp-Setup-1.5.2-beta.3.exe",
 }
@@ -205,7 +195,6 @@ Object {
 
 exports[`sha512 mismatch error event 1`] = `
 Object {
-  "name": "TestApp Setup 1.1.0.exe",
   "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
 }

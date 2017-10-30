@@ -5,6 +5,7 @@ import { mkdtemp, remove } from "fs-extra-p"
 import * as path from "path"
 import { tmpdir } from "os"
 import { DOWNLOAD_PROGRESS, FileInfo } from "./main"
+import { URL } from "url"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
@@ -39,7 +40,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     try {
-      const destinationFile = path.join(tempDir, fileInfo.name)
+      const destinationFile = path.join(tempDir, path.posix.basename(new URL(fileInfo.url).pathname))
       await task(tempDir, destinationFile, removeTempDirIfAny)
 
       this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${destinationFile}`)

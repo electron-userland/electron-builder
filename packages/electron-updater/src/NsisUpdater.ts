@@ -37,7 +37,7 @@ export class NsisUpdater extends BaseUpdater {
 
       const packageInfo = fileInfo.packageInfo
       if (packageInfo != null) {
-        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.path) || ".7z"}`)
+        packagePath = path.join(tempDir, `package-${versionInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
 
         let isDownloadFull = packageInfo.blockMapSize == null || packageInfo.headerSize == null
         if (!isDownloadFull) {

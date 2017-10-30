@@ -3,7 +3,6 @@ import { BintrayClient } from "builder-util-runtime/out/bintray"
 import { FileInfo, getChannelFilename, getDefaultChannelName, Provider } from "./main"
 import { URL } from "url"
 import { getUpdateFileUrl, parseUpdateInfo } from "./Provider"
-import * as path from "path"
 
 export class BintrayProvider extends Provider<UpdateInfo> {
   private client: BintrayClient
@@ -63,7 +62,6 @@ export class BintrayProvider extends Provider<UpdateInfo> {
       }
 
       return {
-        name: path.posix.basename(fileUrl),
         url: fileUrl,
         sha2: sha256 ,
         sha512: updateInfo.sha512,

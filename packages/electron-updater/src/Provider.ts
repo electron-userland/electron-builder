@@ -3,7 +3,6 @@ import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
 import { FileInfo, isUseOldMacProvider, newUrlFromBase } from "./main"
 import { safeLoad } from "js-yaml"
-import * as path from "path"
 
 export abstract class Provider<T extends UpdateInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null
@@ -83,7 +82,6 @@ export function getUpdateFileUrl(info: UpdateInfo) {
 
 export function createFileInfo(updateInfo: UpdateInfo, baseUrl: URL, updateFileUrl: string = getUpdateFileUrl(updateInfo)): FileInfo {
   return {
-    name: path.posix.basename(updateFileUrl),
     url: newUrlFromBase(updateFileUrl, baseUrl).href,
     sha512: updateInfo.sha512,
   }
