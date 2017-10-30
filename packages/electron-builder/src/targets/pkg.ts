@@ -8,6 +8,7 @@ import { Target } from "../core"
 import MacPackager from "../macPackager"
 import { PkgOptions } from "../options/macOptions"
 import { filterCFBundleIdentifier } from "../packager/mac"
+import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
 
 const certType = "Developer ID Installer"
 
@@ -19,7 +20,9 @@ export class PkgTarget extends Target {
   readonly options: PkgOptions = {
     allowAnywhere: true,
     allowCurrentUserHome: true,
-    allowRootDirectory: true, ...this.packager.config.pkg}
+    allowRootDirectory: true,
+    ...this.packager.config.pkg,
+  }
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("pkg")
@@ -70,6 +73,12 @@ export class PkgTarget extends Target {
     let distInfo = await readFile(distInfoFile, "utf-8")
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
+
+    const license = await getNotLocalizedLicenseFiles(options.license, this.packager)
+    if (license != null) {
+      distInfo = distInfo.substring(0, insertIndex) + `    <license file="${license}"/>\n` + distInfo.substring(insertIndex)
+    }
+
     debug(distInfo)
     await writeFile(distInfoFile, distInfo)
   }

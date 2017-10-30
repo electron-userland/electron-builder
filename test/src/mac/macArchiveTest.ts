@@ -6,7 +6,7 @@ import { readFile, symlink } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { assertThat } from "../helpers/fileAssert"
-import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
+import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
 test.ifMac("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
@@ -27,6 +27,11 @@ test.ifAll.ifMac("empty installLocation", app({
   }
 }, {
   signed: false,
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
+    ])
+  },
 }))
 
 test.ifAll.ifMac("pkg scripts", app({

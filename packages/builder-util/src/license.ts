@@ -23,6 +23,20 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PackageBuil
     })
 }
 
+export async function getNotLocalizedLicenseFiles(custom: string | null | undefined, packager: PackageBuilder): Promise<string | null> {
+  const possibleFiles: Array<string> = []
+  for (const name of ["license", "eula"]) {
+    for (const ext of ["rtf", "txt", "html"]) {
+      possibleFiles.push(`${name}.${ext}`)
+      possibleFiles.push(`${name.toUpperCase()}.${ext}`)
+      possibleFiles.push(`${name}.${ext.toUpperCase()}`)
+      possibleFiles.push(`${name.toUpperCase()}.${ext.toUpperCase()}`)
+    }
+  }
+
+  return await packager.getResource(custom, ...possibleFiles)
+}
+
 export async function getLicenseFiles(packager: PackageBuilder): Promise<Array<LicenseFile>> {
   return getLicenseAssets((await packager.resourceList)
     .filter(it => {
