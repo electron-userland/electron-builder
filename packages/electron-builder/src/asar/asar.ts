@@ -10,7 +10,8 @@ export class Node {
   unpacked?: boolean
 
   size: number
-  offset: number
+  // electron expects string
+  offset: string
 
   executable?: boolean
 
@@ -76,7 +77,8 @@ export class AsarFilesystem {
       node.unpacked = true
     }
     else {
-      node.offset = this.offset
+      // electron expects string
+      node.offset = this.offset.toString()
       if (process.platform !== "win32" && (stat.mode & 0o100)) {
         node.executable = true
       }
@@ -156,7 +158,7 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
 
   const fd = await open(filesystem.src, "r")
   try {
-    const offset = 8 + filesystem.headerSize + parseInt(info.offset as any, 10)
+    const offset = 8 + filesystem.headerSize + parseInt(info.offset, 10)
     await read(fd, buffer, 0, info.size, offset)
   }
   finally {
