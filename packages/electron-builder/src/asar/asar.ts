@@ -2,8 +2,6 @@ import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra-p"
 import * as path from "path"
 
-const UINT64 = require("cuint").UINT64
-
 /** @internal */
 export class Node {
   // we don't use Map because later it will be stringified
@@ -21,7 +19,7 @@ export class Node {
 
 /** @internal */
 export class AsarFilesystem {
-  private offset = UINT64(0)
+  private offset = 0
 
   constructor(readonly src: string, readonly header = new Node(), readonly headerSize: number = -1) {
     if (this.header.files == null) {
@@ -78,11 +76,11 @@ export class AsarFilesystem {
       node.unpacked = true
     }
     else {
-      node.offset = this.offset.toString()
+      node.offset = this.offset
       if (process.platform !== "win32" && (stat.mode & 0o100)) {
         node.executable = true
       }
-      this.offset.add(UINT64(node.size))
+      this.offset += node.size
     }
 
     let children = dirNode.files

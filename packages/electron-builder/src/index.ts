@@ -10,6 +10,7 @@ export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, PkgOpt
 export { WindowsConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
 export { MsiOptions } from "./options/MsiOptions"
+export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions } from "./targets/nsis/nsisOptions"
 export { LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions } from "./options/linuxOptions"
 export { SnapOptions } from "./options/SnapOptions"

@@ -87,9 +87,12 @@ async function render2(files, jsdoc2MdOptions) {
       if (context.typeItem.name === "LinuxTargetSpecificOptions" && context.object.name === "DebOptions") {
         return null
       }
+      if (context.typeItem.name === "TargetSpecificOptions" && context.object.name === "NsisOptions") {
+        return null
+      }
 
       // looks strange when on LinuxConfiguration page "Inherited from `CommonLinuxOptions`:" - no configuration inheritance in this case
-      if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && context.typeItem.name === "CommonNsisOptions")) {
+      if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && (context.typeItem.name === "CommonNsisOptions" || context.typeItem.name === "CommonWindowsInstallerConfiguration"))) {
         return ""
       }
     }
@@ -195,7 +198,6 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/pkg.md", "PkgOptions"),
 
     new Page("configuration/win.md", "WindowsConfiguration"),
-    new Page("configuration/nsis.md", "NsisOptions"),
     new Page("configuration/appx.md", "AppXOptions"),
     new Page("configuration/squirrel-windows.md", "SquirrelWindowsOptions"),
 
@@ -219,6 +221,8 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
     new Page("generated/PlatformSpecificBuildOptions.md", "PlatformSpecificBuildOptions"),
     new Page("generated/Metadata.md", "Metadata"),
+    new Page("generated/NsisOptions.md", "NsisOptions"),
+    new Page("generated/TargetSpecificOptions.md", "TargetSpecificOptions"),
 
     new Page("configuration/target.md", "TargetConfiguration"),
   ]

@@ -2,7 +2,7 @@ import { WinPackager } from "../winPackager"
 import { isEmptyOrSpaces } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 
-export interface CommonWindowsInstallerOptions {
+export interface CommonWindowsInstallerConfiguration {
   readonly oneClick?: boolean
 
   /**
@@ -52,7 +52,7 @@ export interface FinalCommonWindowsInstallerOptions {
   isCreateStartMenuShortcut: boolean
 }
 
-export function getEffectiveOptions(options: CommonWindowsInstallerOptions, packager: WinPackager): FinalCommonWindowsInstallerOptions {
+export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration, packager: WinPackager): FinalCommonWindowsInstallerOptions {
   const appInfo = packager.appInfo
 
   let menuCategory: string | null = null

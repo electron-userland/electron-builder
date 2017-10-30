@@ -18,7 +18,7 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
-import { getEffectiveOptions } from "../../options/CommonWindowsInstallerOptions"
+import { getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 
 const debug = _debug("electron-builder:nsis")
 

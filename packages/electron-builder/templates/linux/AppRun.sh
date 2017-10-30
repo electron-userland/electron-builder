@@ -86,7 +86,7 @@ yesno()
   if [ -x /usr/bin/zenity ] ; then
     LD_LIBRARY_PATH="" zenity --question --title="$TITLE" --text="$TEXT" 2>/dev/null || exit 0
   elif [ -x /usr/bin/kdialog ] ; then
-    LD_LIBRARY_PATH="" kdialog --caption "Disk auswerfen?" --title "$TITLE" -yesno "$TEXT" || exit 0
+    LD_LIBRARY_PATH="" kdialog --title "$TITLE" --yesno "$TEXT" || exit 0
   elif [ -x /usr/bin/Xdialog ] ; then
     LD_LIBRARY_PATH="" Xdialog --title "$TITLE" --clear --yesno "$TEXT" 10 80 || exit 0
   else

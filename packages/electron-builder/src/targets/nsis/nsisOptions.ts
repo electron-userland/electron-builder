@@ -1,5 +1,5 @@
 import { TargetSpecificOptions } from "../../core"
-import { CommonWindowsInstallerOptions } from "../../options/CommonWindowsInstallerOptions"
+import { CommonWindowsInstallerConfiguration } from "../../options/CommonWindowsInstallerConfiguration"
 
 export interface CommonNsisOptions {
   /**
@@ -26,7 +26,7 @@ export interface CommonNsisOptions {
   readonly useZip?: boolean
 }
 
-export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerOptions, TargetSpecificOptions {
+export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
   /**
    * Whether to create one-click installer or assisted.
    * @default true

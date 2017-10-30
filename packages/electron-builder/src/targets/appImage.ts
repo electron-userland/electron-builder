@@ -106,7 +106,6 @@ export default class AppImageTarget extends Target {
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {
         ...process.env,
-        PATH: `${vendorToolDir}:"/Users/develar/Library/Caches/electron-builder/linux-tools/linux-tools-mac-10.12.3/bin:${process.env.PATH}`,
         // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
         ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
       }

@@ -1,7 +1,7 @@
 import { TargetSpecificOptions } from "../core"
-import { CommonWindowsInstallerOptions } from "./CommonWindowsInstallerOptions"
+import { CommonWindowsInstallerConfiguration } from "./CommonWindowsInstallerConfiguration"
 
-export interface MsiOptions extends CommonWindowsInstallerOptions, TargetSpecificOptions {
+export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetSpecificOptions {
   /**
    * One-click installation.
    * @default true

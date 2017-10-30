@@ -56,7 +56,6 @@
     "bluebird-lst": "^1.0.5",
     "chalk": "^2.3.0",
     "chromium-pickle-js": "^0.2.0",
-    "cuint": "^0.2.2",
     "app-package-builder": "0.0.0-semantic-release",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",

@@ -137,14 +137,13 @@ Emitted on progress.
         * [`.error(message)`](#module_electron-updater.Logger+error)
         * [`.info(message)`](#module_electron-updater.Logger+info)
         * [`.warn(message)`](#module_electron-updater.Logger+warn)
-    * [`.UpdateInfo`](#UpdateInfo) ⇐ <code>[VersionInfo](#VersionInfo)</code>
+    * [`.UpdateInfo`](#UpdateInfo)
     * [`.UpdateCheckResult`](#UpdateCheckResult)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
         * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
-    * [`.VersionInfo`](#VersionInfo)
 
 <a name="AppUpdater"></a>
 ### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
@@ -249,24 +248,25 @@ This is different from the normal quit event sequence.
 - message <code>any</code>
 
 <a name="UpdateInfo"></a>
-### `UpdateInfo` ⇐ <code>[VersionInfo](#VersionInfo)</code>
+### `UpdateInfo`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>[VersionInfo](#VersionInfo)</code>  
 **Properties**
-* **<code id="UpdateInfo-path">path</code>** String
+* **<code id="UpdateInfo-version">version</code>** String - The version.
+* **<code id="UpdateInfo-path">path</code>** String - Deprecated: {tag.description}
+* **<code id="UpdateInfo-url">url</code>** String | Array&lt;String&gt;
 * **<code id="UpdateInfo-sha512">sha512</code>** String
 * <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
 * <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
 * <code id="UpdateInfo-releaseNotes">releaseNotes</code> String | Array&lt;module:builder-util-runtime.ReleaseNoteInfo&gt; - The release notes. List if `updater.fullChangelog` is set to `true`, `string` otherwise.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
 * <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
-* **<code id="UpdateInfo-version">version</code>** String - The version.
 
 <a name="UpdateCheckResult"></a>
 ### `UpdateCheckResult`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.VersionInfo
+* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
+* **<code id="UpdateCheckResult-updateInfo">updateInfo</code>** module:builder-util-runtime.UpdateInfo
 * <code id="UpdateCheckResult-fileInfo">fileInfo</code> [FileInfo](#FileInfo)
 * <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt;
 * <code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken
@@ -302,12 +302,6 @@ Emitted when an authenticating proxy is [asking for user credentials](https://gi
 #### `updaterSignal.updateDownloaded(handler)`
 
 - handler <code>callback</code>
-
-<a name="VersionInfo"></a>
-### `VersionInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Properties**
-* **<code id="VersionInfo-version">version</code>** String - The version.
 
 
 <!-- end of generated block -->

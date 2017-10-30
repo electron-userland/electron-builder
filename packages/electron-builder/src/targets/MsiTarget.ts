@@ -15,7 +15,7 @@ import { WineVmManager } from "../vm/wine"
 import * as ejs from "ejs"
 import { Lazy } from "lazy-val"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerOptions"
+import { FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
