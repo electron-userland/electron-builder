@@ -16,7 +16,7 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 }
 ```
 
-## How do Publish
+## How to Publish
 
 Excerpt from [CLI Usage](https://github.com/electron-userland/electron-builder#cli-usage) of `electron-builder` command:
 ```
