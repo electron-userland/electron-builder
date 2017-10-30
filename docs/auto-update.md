@@ -114,7 +114,7 @@ Emitted when there is no available update.
   * `total`
   * `transferred`
 
-Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [does not provide](https://github.com/electron-userland/electron-builder/issues/1167) this data.
+Emitted on progress.
 
 #### Event: `update-downloaded`
 
