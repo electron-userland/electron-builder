@@ -41,8 +41,6 @@ export interface UpdateInfo {
 
   readonly sha512: string
 
-  githubArtifactName?: string | null
-
   /**
    * The release name.
    */

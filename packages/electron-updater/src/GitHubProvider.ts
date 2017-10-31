@@ -1,10 +1,9 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, parseXml, ReleaseNoteInfo, UpdateInfo, WindowsUpdateInfo, XElement } from "builder-util-runtime"
-import * as path from "path"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
-import { createFileInfo, getUpdateFileUrl, parseUpdateInfo } from "./Provider"
+import { getUpdateFile, parseUpdateInfo } from "./Provider"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -106,22 +105,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
-    if (isUseOldMacProvider()) {
-      return updateInfo as any
-    }
-
-    // space is not supported on GitHub
-    const fileName = updateInfo.githubArtifactName || path.posix.basename(getUpdateFileUrl(updateInfo)).replace(/ /g, "-")
-    const result = createFileInfo(updateInfo, this.baseUrl, this.getBaseDownloadPath(updateInfo.version, fileName))
-    const packages = (updateInfo as WindowsUpdateInfo).packages
-    const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
-    if (packageInfo != null) {
-      result.packageInfo = {
-        ...packageInfo,
-        path: newUrlFromBase(this.getBaseDownloadPath(updateInfo.version, packageInfo.path || (packageInfo as any).file), this.baseUrl).href,
-      }
-    }
-    return result
+    return getUpdateFile(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p))
   }
 
   private getBaseDownloadPath(version: string, fileName: string) {

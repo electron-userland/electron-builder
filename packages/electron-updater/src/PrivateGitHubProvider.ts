@@ -92,7 +92,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   async getUpdateFile(versionInfo: PrivateGitHubUpdateInfo): Promise<FileInfo> {
-    const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    const name = path.posix.basename(versionInfo.path)
     // noinspection JSDeprecatedSymbols
     return {
       name,

@@ -43,7 +43,6 @@ export interface FileInfo {
 
   packageInfo?: PackageFileInfo
 
-  readonly sha2?: string
   readonly sha512?: string
 
   readonly headers?: OutgoingHttpHeaders

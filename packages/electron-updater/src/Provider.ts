@@ -72,7 +72,7 @@ export function parseUpdateInfo(rawData: string, channelFile: string, channelFil
   return result
 }
 
-export function getUpdateFileUrl(info: UpdateInfo) {
+function getUpdateFileUrl(info: UpdateInfo) {
   const result = info.path
   if (result != null) {
     return result
@@ -80,9 +80,26 @@ export function getUpdateFileUrl(info: UpdateInfo) {
   return asArray(info.url)[0]
 }
 
-export function createFileInfo(updateInfo: UpdateInfo, baseUrl: URL, updateFileUrl: string = getUpdateFileUrl(updateInfo)): FileInfo {
+function createFileInfo(updateInfo: UpdateInfo, baseUrl: URL, updateFileUrl: string): FileInfo {
   return {
     url: newUrlFromBase(updateFileUrl, baseUrl).href,
     sha512: updateInfo.sha512,
   }
+}
+
+export function getUpdateFile(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): FileInfo {
+  if (isUseOldMacProvider()) {
+    return updateInfo as any
+  }
+
+  const result = createFileInfo(updateInfo, baseUrl, pathTransformer(getUpdateFileUrl(updateInfo)))
+  const packages = (updateInfo as WindowsUpdateInfo).packages
+  const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
+  if (packageInfo != null) {
+    result.packageInfo = {
+      ...packageInfo,
+      path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
+    }
+  }
+  return result
 }

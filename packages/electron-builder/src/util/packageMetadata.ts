@@ -2,6 +2,7 @@ import { isEmptyOrSpaces, log, warn } from "builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
 import { Metadata } from "../options/metadata"
+import * as semver from "semver"
 
 const normalizeData = require("normalize-package-data")
 
@@ -82,6 +83,11 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
 function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
   if (dependencies == null) {
     return
+  }
+
+  const updaterVersion = dependencies["electron-updater"]
+  if (updaterVersion != null && !semver.gte(updaterVersion, "2.16.0")) {
+    errors.push(`At least electron-updater 2.16.0 is required by current electron-builder version.`)
   }
 
   const deps = ["electron", "electron-prebuilt", "electron-rebuild"]

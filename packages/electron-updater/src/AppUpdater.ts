@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
+import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID, asArray } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -282,9 +282,9 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  protected onUpdateAvailable(versionInfo: UpdateInfo, fileInfo: FileInfo) {
-    this._logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
-    this.emit("update-available", versionInfo)
+  protected onUpdateAvailable(updateInfo: UpdateInfo, fileInfo: FileInfo) {
+    this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.url).join(", ")})`)
+    this.emit("update-available", updateInfo)
   }
 
   /**

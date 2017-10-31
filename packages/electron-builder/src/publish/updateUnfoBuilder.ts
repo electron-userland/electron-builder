@@ -100,7 +100,8 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     if (event.safeArtifactName != null && publishConfig.provider === "github") {
       info = {
         ...info,
-        githubArtifactName: event.safeArtifactName,
+        url: event.safeArtifactName,
+        path: event.safeArtifactName,
       }
     }
 
