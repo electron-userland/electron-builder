@@ -1,8 +1,8 @@
 import { BintrayOptions, CancellationToken, HttpExecutor, UpdateInfo } from "builder-util-runtime"
 import { BintrayClient } from "builder-util-runtime/out/bintray"
-import { FileInfo, getChannelFilename, getDefaultChannelName, newBaseUrl, Provider } from "./main"
+import { getChannelFilename, getDefaultChannelName, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "./main"
 import { URL } from "url"
-import { getUpdateFile, parseUpdateInfo } from "./Provider"
+import { resolveFiles, parseUpdateInfo } from "./Provider"
 
 export class BintrayProvider extends Provider<UpdateInfo> {
   private client: BintrayClient
@@ -25,10 +25,10 @@ export class BintrayProvider extends Provider<UpdateInfo> {
       const data = await this.client.getVersion("_latest")
       const channelFilename = getChannelFilename(getDefaultChannelName())
       const files = await this.client.getVersionFiles(data.name)
-      const channelFile = files.find(it => it.name.endsWith(`_${channelFilename}`))
+      const channelFile = files.find(it => it.name.endsWith(`_${channelFilename}`) || it.name.endsWith(`-${channelFilename}`))
       if (channelFile == null) {
         // noinspection ExceptionCaughtLocallyJS
-        throw new Error(`Cannot find channel file "${channelFilename}", existing files: ${files.join(", ")}`)
+        throw new Error(`Cannot find channel file "${channelFilename}", existing files:\n${files.map(it => JSON.stringify(it, null, 2)).join(",\n")}`)
       }
 
       const channelFileUrl = new URL(`https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${channelFile.name}`)
@@ -42,7 +42,7 @@ export class BintrayProvider extends Provider<UpdateInfo> {
     }
   }
 
-  async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
-    return getUpdateFile(updateInfo, this.baseUrl)
+  resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
+    return resolveFiles(updateInfo, this.baseUrl)
   }
 }

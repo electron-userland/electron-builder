@@ -2,8 +2,9 @@ import BluebirdPromise from "bluebird-lst"
 import { CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, AllPublishOptions, RequestHeaders, safeGetHeader, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
-import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
+import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
 import AutoUpdater = Electron.AutoUpdater
+import { findFile } from "./Provider"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -16,15 +17,18 @@ export class MacUpdater extends AppUpdater {
       this.emit("error", it)
     })
     this.nativeUpdater.on("update-downloaded", () => {
-      this._logger.info(`New version ${this.versionInfo!.version} has been downloaded`)
-      this.emit(UPDATE_DOWNLOADED, this.versionInfo)
+      this._logger.info(`New version ${this.updateInfo!.version} has been downloaded`)
+      this.emit(UPDATE_DOWNLOADED, this.updateInfo)
     })
   }
 
-  protected doDownloadUpdate(updateInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+    const files = (await this.provider).resolveFiles(updateInfo)
+    const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
+
     const server = createServer()
     server.on("close", () => {
-      this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${fileInfo.url})`)
+      this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${zipFileInfo.url.href})`)
     })
 
     function getServerUrl() {
@@ -32,7 +36,9 @@ export class MacUpdater extends AppUpdater {
       return `http://${address.address}:${address.port}`
     }
 
-    return new BluebirdPromise<Array<string>>((resolve, reject) => {
+    const requestHeaders = await this.computeRequestHeaders()
+
+    return await new BluebirdPromise<Array<string>>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         this._logger.info(`${requestUrl} requested`)
@@ -54,7 +60,7 @@ export class MacUpdater extends AppUpdater {
               }
             }
           })
-          this.proxyUpdateFile(response, fileInfo, cancellationToken, error => {
+          this.doProxyUpdateFile(response, zipFileInfo.url.href, requestHeaders, zipFileInfo.info.sha512, cancellationToken, error => {
             errorOccurred = true
             try {
               response.writeHead(500)
@@ -62,7 +68,7 @@ export class MacUpdater extends AppUpdater {
             }
             finally {
               this.nativeUpdater.removeListener("error", reject)
-              reject(new Error(`Cannot download "${fileInfo.url}": ${error}`))
+              reject(new Error(`Cannot download "${zipFileInfo.url}": ${error}`))
             }
           })
         }
@@ -79,10 +85,6 @@ export class MacUpdater extends AppUpdater {
         this.nativeUpdater.checkForUpdates()
       })
     })
-  }
-
-  private proxyUpdateFile(nativeResponse: ServerResponse, fileInfo: FileInfo, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    this.doProxyUpdateFile(nativeResponse, fileInfo.url, this.computeRequestHeaders(fileInfo), fileInfo.sha512 || null, cancellationToken, errorHandler)
   }
 
   private doProxyUpdateFile(nativeResponse: ServerResponse, url: string, headers: OutgoingHttpHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {

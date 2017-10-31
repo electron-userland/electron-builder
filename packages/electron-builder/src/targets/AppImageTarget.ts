@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, exec, log, debug } from "builder-util"
-import { UUID, BlockMapDataHolder,  } from "builder-util-runtime"
+import { Arch, exec, log, debug, serializeToYaml } from "builder-util"
+import { UUID, BlockMapDataHolder } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -14,7 +14,6 @@ import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createDifferentialPackage } from "app-package-builder"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { safeDump } from "js-yaml"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -89,7 +88,7 @@ export default class AppImageTarget extends Target {
 
     const publishConfig = await getAppUpdatePublishConfiguration(packager, arch)
     if (publishConfig != null) {
-      await writeFile(path.join(packager.getResourcesDir(appInStageDir), "app-update.yml"), safeDump(publishConfig))
+      await writeFile(path.join(packager.getResourcesDir(appInStageDir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     const vendorToolDir = path.join(vendorDir, process.platform === "darwin" ? "darwin" : `linux-${process.arch}`)
@@ -116,10 +115,9 @@ export default class AppImageTarget extends Target {
     }
 
     const blockMapInfo = await createDifferentialPackage(resultFile)
-
     const updateInfo: BlockMapDataHolder = {
-      blockMapSize: blockMapInfo.blockMapSize,
       size: blockMapInfo.size,
+      blockMapSize: blockMapInfo.blockMapSize,
       sha512: blockMapInfo.sha512,
     }
 

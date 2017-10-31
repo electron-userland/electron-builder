@@ -11,19 +11,43 @@ export interface ReleaseNoteInfo {
 }
 
 export interface BlockMapDataHolder {
-  size: number
-  blockMapSize: number
+  /**
+   * The file size. Used when block map data is embedded into the file (appimage, windows web installer package).
+   */
+  size?: number
+
+  /**
+   * The block map file size. Used when block map data is embedded into the file (appimage, windows web installer package).
+   * This information can be obtained from the file itself, but it requires additional HTTP request,
+   * so, to reduce request count, block map size is specified in the update metadata too.
+   */
+  blockMapSize?: number
+
+  /**
+   * The file checksum.
+   */
   readonly sha512: string
 }
 
 export interface PackageFileInfo extends BlockMapDataHolder {
+  readonly size: number
+
   readonly path: string
 
+  /**
+   * The header size. This number of bytes are downloaded as is and not included into the block map.
+   */
   headerSize?: number
 
-  // we cannot pack blockMap file as part of package file because of chicken and egg problem — we build blockMap for package file (and we don't to complicate)
-  // used and not null only during build time
-  blockMapData?: string
+  /**
+   * Used and not null only during build time.
+   * We cannot pack blockMap file as part of package file because of chicken and egg problem — we build blockMap for package file (and we don't to complicate).
+   */
+  blockMapData?: Buffer
+}
+
+export interface UpdateFileInfo extends BlockMapDataHolder {
+  url: string
 }
 
 export interface UpdateInfo {
@@ -32,13 +56,12 @@ export interface UpdateInfo {
    */
   readonly version: string
 
-  /**
-   * @deprecated
-   */
+  readonly files: Array<UpdateFileInfo>
+
+  /** @deprecated */
   readonly path: string
 
-  readonly url: string | Array<string>
-
+  /** @deprecated */
   readonly sha512: string
 
   /**
@@ -54,16 +77,12 @@ export interface UpdateInfo {
   /**
    * The release date.
    */
-  readonly releaseDate: string
+  releaseDate: string
 
   /**
    * The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
    */
   readonly stagingPercentage?: number
-}
-
-//tslint:disable-next-line:no-empty-interface
-export interface AppImageUpdateInfo extends UpdateInfo, BlockMapDataHolder {
 }
 
 export interface WindowsUpdateInfo extends UpdateInfo {

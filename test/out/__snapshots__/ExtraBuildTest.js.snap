@@ -6,7 +6,11 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -49,8 +53,16 @@ Object {
     Object {
       "file": "beta.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "beta-TestApp.exe",
+          },
+        ],
         "path": "beta-TestApp.exe",
-        "url": "beta-TestApp.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.0.0-beta.1",
       },
     },
@@ -69,14 +81,6 @@ Object {
   "channel": "beta",
   "provider": "generic",
   "url": "https://develar.s3.amazonaws.com/test",
-}
-`;
-
-exports[`override targets in the config - only arch 3`] = `
-Object {
-  "path": "beta-TestApp.exe",
-  "url": "beta-TestApp.exe",
-  "version": "1.0.0-beta.1",
 }
 `;
 

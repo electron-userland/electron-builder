@@ -6,7 +6,7 @@ import * as path from "path"
 import { URL } from "url"
 import { NET_SESSION_NAME } from "./electronHttpExecutor"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { FileInfo, getChannelFilename, getDefaultChannelName, newUrlFromBase, Provider } from "./main"
+import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -51,7 +51,6 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       throw e
     }
 
-    Provider.validateUpdateInfo(result);
     (result as PrivateGitHubUpdateInfo).assets = releaseInfo.assets
     return result
   }
@@ -68,6 +67,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
       callback({cancel: false, requestHeaders: details.requestHeaders})
     })
+  }
+
+  get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
+    return this.configureHeaders("application/octet-stream")
   }
 
   private configureHeaders(accept: string) {
@@ -91,16 +94,14 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     return this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
   }
 
-  async getUpdateFile(versionInfo: PrivateGitHubUpdateInfo): Promise<FileInfo> {
-    const name = path.posix.basename(versionInfo.path)
-    // noinspection JSDeprecatedSymbols
-    return {
-      name,
-      url: versionInfo.assets.find(it => it.name === name)!.url,
-      sha512: versionInfo.sha512,
-      headers: this.configureHeaders("application/octet-stream"),
-      session: this.netSession
-    } as any
+  resolveFiles(updateInfo: PrivateGitHubUpdateInfo): Array<ResolvedUpdateFileInfo> {
+    return updateInfo.files.map(it => {
+      const name = path.posix.basename(it.url).replace(/ /g, "-")
+      return {
+        url: new URL(updateInfo.assets.find(it => it.name === name)!.url),
+        info: it,
+      }
+    })
   }
 }
 

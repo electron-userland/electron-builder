@@ -3,10 +3,8 @@ import * as path from "path"
 import { app, checkDirContents } from "./helpers/packTester"
 import { assertThat } from "./helpers/fileAssert"
 
-const target = Platform.MAC.createTarget("zip")
-
 test.ifDevOrLinuxCi("generic, github and spaces", app({
-  targets: target,
+  targets: Platform.LINUX.createTarget(),
   config: {
     generateUpdatesFilesForAllChannels: true,
     publish: [
@@ -35,7 +33,7 @@ test.ifAll.ifNotWindows("os macro", app({
       bucket: "my bucket",
       // tslint:disable-next-line:no-invalid-template-strings
       path: "${channel}/${os}"
-    }
+    },
   },
 }, {
   publish: "always",

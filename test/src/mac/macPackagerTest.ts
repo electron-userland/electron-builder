@@ -12,6 +12,9 @@ test.ifMac("two-package", () => assertPack("test-app", {
     extraMetadata: {
       repository: "foo/bar"
     },
+    mac: {
+      electronUpdaterCompatibility: ">=2.16",
+    },
     //tslint:disable-next-line:no-invalid-template-strings
     artifactName: "${name}-${version}-${os}.${ext}",
   },
@@ -28,6 +31,7 @@ test.ifMac("one-package", app({
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
     mac: {
+      electronUpdaterCompatibility: ">=1.0.0",
       extendInfo: {
         LSUIElement: true,
       },

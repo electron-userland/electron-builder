@@ -79,6 +79,17 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
    */
   readonly requirements?: string | null
+
+  /**
+   * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`.
+   *
+   * @default >=1.0.0
+   *
+   * 1.0.0 latest-mac.json
+   * 2.15.0 path
+   * 2.16.0 files
+   */
+  readonly electronUpdaterCompatibility?: string | null
 }
 
 /**

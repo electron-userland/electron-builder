@@ -1,6 +1,5 @@
 import { Arch, build, DIR_TARGET, Platform } from "electron-builder"
-import { move, readFile } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { move } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
@@ -110,14 +109,6 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     await assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist()
     await assertThat(path.join(context.projectDir, "dist", "latest.yml")).doesNotExist()
     await expectUpdateMetadata(context, Arch.ia32)
-
-    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "beta.yml"), "utf-8"))
-    expect(updateInfo.sha2).not.toEqual("")
-    expect(updateInfo.releaseDate).not.toEqual("")
-    delete updateInfo.sha2
-    delete updateInfo.sha512
-    delete updateInfo.releaseDate
-    expect(updateInfo).toMatchSnapshot()
   },
 }))
 

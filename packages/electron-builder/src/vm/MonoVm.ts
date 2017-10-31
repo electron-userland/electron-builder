@@ -1,5 +1,5 @@
-import { SpawnOptions } from "child_process"
-import { exec, ExecOptions, ExtraSpawnOptions, spawn } from "builder-util"
+import { SpawnOptions, ExecFileOptions } from "child_process"
+import { exec, ExtraSpawnOptions, spawn } from "builder-util"
 import { VmManager } from "./vm"
 
 export class MonoVmManager extends VmManager {
@@ -7,7 +7,7 @@ export class MonoVmManager extends VmManager {
     super()
   }
 
-  exec(file: string, args: Array<string>, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
+  exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
     return exec("mono", [file].concat(args), {
       ...options,
     }, isLogOutIfDebug)

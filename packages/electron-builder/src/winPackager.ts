@@ -14,7 +14,7 @@ import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOpti
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/AppxTarget"
-import { NsisTarget } from "./targets/nsis/nsis"
+import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
 import { createCommonTarget } from "./targets/targetFactory"

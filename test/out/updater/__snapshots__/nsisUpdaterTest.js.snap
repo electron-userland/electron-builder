@@ -1,6 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`1 staging percentage 1`] = `undefined`;
+exports[`1 staging percentage 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "stagingPercentage": 1,
+  "version": "1.1.0",
+}
+`;
 
 exports[`1 staging percentage 2`] = `
 Array [
@@ -10,8 +21,14 @@ Array [
 
 exports[`90 staging percentage 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "stagingPercentage": 90,
+  "version": "1.1.0",
 }
 `;
 
@@ -25,8 +42,13 @@ Array [
 
 exports[`DigitalOcean Spaces 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://electron-builder-test.nyc3.digitaloceanspaces.com/light-updater-test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 
@@ -44,15 +66,25 @@ exports[`check updates - no versions at all 1`] = `"No latest version, please en
 
 exports[`checkForUpdates several times 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 
 exports[`checkForUpdates several times 2`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 
@@ -63,33 +95,69 @@ Array [
   "update-downloaded",
   "checking-for-update",
   "update-available",
+  "update-downloaded",
 ]
 `;
 
 exports[`downgrade (allowed) 1`] = `
 Object {
-  "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
-  "sha512": undefined,
-  "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.1.exe",
+    },
+  ],
+  "version": "1.1.1",
 }
 `;
 
-exports[`downgrade (disallowed) 1`] = `undefined`;
-
-exports[`downgrade (disallowed, beta) 1`] = `undefined`;
-
-exports[`file url 1`] = `
+exports[`downgrade (disallowed, beta) 1`] = `
 Object {
-  "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
-  "sha512": undefined,
-  "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": "",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`downgrade (disallowed, bintray) 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.1.exe",
+    },
+  ],
+  "version": "1.1.1",
+}
+`;
+
+exports[`file url (bintray) 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.1.exe",
+    },
+  ],
+  "version": "1.1.1",
 }
 `;
 
 exports[`file url generic - manual download 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 
@@ -102,8 +170,13 @@ Array [
 
 exports[`file url generic 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 
@@ -117,17 +190,28 @@ Array [
 
 exports[`file url github 1`] = `
 Object {
-  "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
-  "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": "",
+  "version": "1.1.0",
 }
 `;
 
 exports[`file url github 2`] = `
 Object {
-  "path": "TestApp Setup 1.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
   "releaseName": "v1.5.2-beta.3",
   "releaseNotes": "",
-  "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
   "version": "1.1.0",
 }
 `;
@@ -142,14 +226,12 @@ Array [
 
 exports[`file url github pre-release and fullChangelog 1`] = `
 Object {
-  "sha512": undefined,
-  "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.5.2-beta.3/TestApp-Setup-1.5.2-beta.3.exe",
-}
-`;
-
-exports[`file url github pre-release and fullChangelog 2`] = `
-Object {
-  "path": "TestApp Setup 1.5.2-beta.3.exe",
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
   "releaseName": "v1.5.2-beta.3",
   "releaseNotes": Array [
     Object {
@@ -161,7 +243,29 @@ Object {
       "version": "1.5.0",
     },
   ],
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`file url github pre-release and fullChangelog 2`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": Array [
+    Object {
+      "note": "",
+      "version": "1.5.2-beta.3",
+    },
+    Object {
+      "note": "<p>Test pre-release. qefr</p>",
+      "version": "1.5.0",
+    },
+  ],
   "version": "1.5.2-beta.3",
 }
 `;
@@ -176,7 +280,12 @@ Array [
 
 exports[`file url github pre-release and fullChangelog 4`] = `
 Object {
-  "path": "TestApp Setup 1.5.2-beta.3.exe",
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
   "releaseName": "v1.5.2-beta.3",
   "releaseNotes": Array [
     Object {
@@ -188,15 +297,19 @@ Object {
       "version": "1.5.0",
     },
   ],
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
   "version": "1.5.2-beta.3",
 }
 `;
 
 exports[`sha512 mismatch error event 1`] = `
 Object {
-  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==",
-  "url": "https://develar.s3.amazonaws.com/test/TestApp%20Setup%201.1.0.exe",
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
 }
 `;
 

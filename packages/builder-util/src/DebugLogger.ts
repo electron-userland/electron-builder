@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { outputFile } from "fs-extra-p"
-import { safeDump } from "js-yaml"
+import { serializeToYaml } from "./util"
 
 export class DebugLogger {
   readonly data: any = {}
@@ -43,7 +43,7 @@ export class DebugLogger {
   save(file: string) {
     // toml and json doesn't correctly output multiline string as multiline
     if (this.enabled && Object.keys(this.data).length > 0) {
-      return outputFile(file, safeDump(this.data))
+      return outputFile(file, serializeToYaml(this.data))
     }
     else {
       return BluebirdPromise.resolve()

@@ -2,8 +2,8 @@ import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, p
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
-import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
-import { getUpdateFile, parseUpdateInfo } from "./Provider"
+import { getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
+import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -104,8 +104,9 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return this.computeGithubBasePath(`/${this.options.owner}/${this.options.repo}/releases`)
   }
 
-  async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
-    return getUpdateFile(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p))
+  resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
+    // still replace space to - due to backward compatibility
+    return resolveFiles(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p.replace(/ /g, "-")))
   }
 
   private getBaseDownloadPath(version: string, fileName: string) {

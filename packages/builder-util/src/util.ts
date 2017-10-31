@@ -1,12 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
-import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
+import { ChildProcess, execFile, spawn as _spawn, SpawnOptions, ExecFileOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
+import { safeDump } from "js-yaml"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -24,18 +25,8 @@ export { asArray } from "builder-util-runtime"
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
 
-export interface BaseExecOptions {
-  cwd?: string
-  env?: any
-  stdio?: any
-}
-
-export interface ExecOptions extends BaseExecOptions {
-  customFds?: any
-  encoding?: string
-  timeout?: number
-  maxBuffer?: number
-  killSignal?: string
+export function serializeToYaml(object: object) {
+  return safeDump(object, {lineWidth: 8000})
 }
 
 export function removePassword(input: string) {
@@ -65,7 +56,7 @@ function getProcessEnv(env: { [key: string]: string | undefined } | undefined | 
   return finalEnv
 }
 
-export function exec(file: string, args?: Array<string> | null, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
+export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
     if (options != null && options.env != null) {

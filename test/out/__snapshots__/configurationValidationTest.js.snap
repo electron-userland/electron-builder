@@ -6,7 +6,11 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "arch": "ia32",
@@ -24,14 +28,14 @@ exports[`validation 1`] = `
    Configuration Options
 
  - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
+   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
    Options related to how build macOS targets.
    
    Details:
     * configuration.mac has an unknown property 'foo'. These properties are valid:
-      object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? }
+      object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? }
     * configuration.mac should be null:
       {
         \\"type\\": \\"null\\"

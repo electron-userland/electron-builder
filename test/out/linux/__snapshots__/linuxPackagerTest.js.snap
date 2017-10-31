@@ -20,7 +20,11 @@ Object {
       "arch": "x64",
       "file": "boo-Test App ßW",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -32,7 +36,11 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -44,13 +52,26 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-x86_64.AppImage",
+          },
+        ],
         "path": "TestApp-1.1.0-x86_64.AppImage",
-        "url": "TestApp-1.1.0-x86_64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -64,13 +85,26 @@ Object {
     Object {
       "arch": "ia32",
       "file": "TestApp-1.1.0-i386.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux-ia32.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-i386.AppImage",
+          },
+        ],
         "path": "TestApp-1.1.0-i386.AppImage",
-        "url": "TestApp-1.1.0-i386.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -84,7 +118,11 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }

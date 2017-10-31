@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder"
-import { readFile, writeFile } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -111,13 +110,6 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   },
   packed: async context => {
     await expectUpdateMetadata(context)
-    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    expect(updateInfo.sha512).not.toEqual("")
-    expect(updateInfo.releaseDate).not.toEqual("")
-    delete updateInfo.sha2
-    delete updateInfo.sha512
-    delete updateInfo.releaseDate
-    expect(updateInfo).toMatchSnapshot()
     await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), true)
     await doTest(context.outDir, false)
   },

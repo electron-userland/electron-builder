@@ -6,13 +6,26 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.0.0-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.0-x86_64.AppImage",
+          },
+        ],
         "path": "TestApp-1.0.0-x86_64.AppImage",
-        "url": "TestApp-1.0.0-x86_64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -26,12 +39,26 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.0.1-x86_64.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.1-x86_64.AppImage",
+          },
+        ],
         "path": "TestApp-1.0.1-x86_64.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -39,11 +66,7 @@ Object {
 }
 `;
 
-exports[`AppImage 3`] = `
-Object {
-  "name": "TestApp-1.0.1-x86_64.AppImage",
-}
-`;
+exports[`AppImage 3`] = `Object {}`;
 
 exports[`AppImage 4`] = `
 Array [
@@ -57,13 +80,26 @@ Object {
     Object {
       "arch": "ia32",
       "file": "TestApp-1.0.0-i386.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux-ia32.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.0-i386.AppImage",
+          },
+        ],
         "path": "TestApp-1.0.0-i386.AppImage",
-        "url": "TestApp-1.0.0-i386.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -108,13 +144,25 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.0.exe",
+          },
+        ],
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
-        "url": "Test App ßW Web Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.0.0",
       },
     },
@@ -125,7 +173,11 @@ Object {
       "updateInfo": Object {
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
       },
@@ -144,12 +196,25 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.1.exe",
+          },
+        ],
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -160,7 +225,11 @@ Object {
       "updateInfo": Object {
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
       },
@@ -173,15 +242,11 @@ Object {
 }
 `;
 
-exports[`web installer 3`] = `
-Object {
-  "name": "Test App ßW Web Setup 1.0.1.exe",
-}
-`;
+exports[`web installer 3`] = `Object {}`;
 
 exports[`web installer 4`] = `
 Array [
-  "Test App ßW Web Setup 1.0.1.exe",
-  "Test App ßW Web Setup 1.0.1.exe-package.7z",
+  "Test%20App%20%C3%9FW%20Web%20Setup%201.0.1.exe",
+  "package-1.0.1.7z",
 ]
 `;

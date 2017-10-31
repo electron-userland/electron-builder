@@ -1,6 +1,5 @@
-import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, ProgressInfo, UpdateInfo, UpdateFileInfo, PackageFileInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
@@ -38,14 +37,11 @@ Object.defineProperty(exports, "autoUpdater", {
   }
 })
 
-export interface FileInfo {
-  readonly url: string
+export interface ResolvedUpdateFileInfo {
+  readonly url: URL
+  readonly info: UpdateFileInfo
 
   packageInfo?: PackageFileInfo
-
-  readonly sha512?: string
-
-  readonly headers?: OutgoingHttpHeaders
 }
 
 // due to historical reasons for windows we use channel name without platform specifier
@@ -83,17 +79,14 @@ export function getChannelFilename(channel: string) {
 }
 
 export interface UpdateCheckResult {
-  /**
-   * @deprecated
-   */
-  readonly versionInfo: UpdateInfo
-
   readonly updateInfo: UpdateInfo
-  readonly fileInfo?: FileInfo
 
   readonly downloadPromise?: Promise<Array<string>> | null
 
   readonly cancellationToken?: CancellationToken
+
+  /** @deprecated */
+  readonly versionInfo: UpdateInfo
 }
 
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"

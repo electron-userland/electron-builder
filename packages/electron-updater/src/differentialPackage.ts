@@ -38,7 +38,7 @@ export class DifferentialDownloader {
 
   private readonly logger: Logger
 
-  constructor(private readonly packageInfo: BlockMapDataHolder, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
+  constructor(private readonly blockAwareFileInfo: BlockMapDataHolder, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
     this.logger = options.logger
     this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
   }
@@ -59,7 +59,7 @@ export class DifferentialDownloader {
   }
 
   async downloadNsisPackage(oldBlockMapFile: string) {
-    const packageInfo = this.packageInfo as PackageFileInfo
+    const packageInfo = this.blockAwareFileInfo as PackageFileInfo
     const offset = packageInfo.size - packageInfo.headerSize!! - packageInfo.blockMapSize!!
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
     const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(packageInfo.headerSize!!))
@@ -68,9 +68,10 @@ export class DifferentialDownloader {
   }
 
   async downloadAppImage(oldBlockMap: BlockMap) {
-    const packageInfo = this.packageInfo
-    const offset = packageInfo.size - (packageInfo.blockMapSize + 4)
-    this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
+    const packageInfo = this.blockAwareFileInfo
+    const fileSize = packageInfo.size!!
+    const offset = fileSize - (packageInfo.blockMapSize!! + 4)
+    this.fileMetadataBuffer = await this.readRemoteBytes(offset, fileSize - 1)
     const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
     await this.download(oldBlockMap, newBlockMap)
   }
@@ -98,7 +99,7 @@ export class DifferentialDownloader {
       }
     }
 
-    const newPackageSize = this.packageInfo.size
+    const newPackageSize = this.blockAwareFileInfo.size
     if ((downloadSize + copySize + this.fileMetadataBuffer.length + this.signatureSize) !== newPackageSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
@@ -115,7 +116,7 @@ export class DifferentialDownloader {
     const oldFileFd = await open(this.options.oldPackageFile, "r")
     await new BluebirdPromise((resolve, reject) => {
       const streams: Array<any> = []
-      const digestTransform = new DigestTransform(this.packageInfo.sha512)
+      const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
       // to simply debug, do manual validation to allow file to be fully written
       digestTransform.isValidateOnEnd = false
       streams.push(digestTransform)

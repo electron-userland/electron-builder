@@ -1,6 +1,5 @@
 import { Arch, archFromString, Platform } from "electron-builder"
-import { readFile, writeFile } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
@@ -130,13 +129,6 @@ test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
   },
   packed: async context => {
     await expectUpdateMetadata(context, archFromString(process.arch))
-    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    expect(updateInfo.sha512).not.toEqual("")
-    expect(updateInfo.releaseDate).not.toEqual("")
-    delete updateInfo.sha2
-    delete updateInfo.sha512
-    delete updateInfo.releaseDate
-    expect(updateInfo).toMatchSnapshot()
     await checkHelpers(context.getResources(Platform.WINDOWS), true)
     await doTest(context.outDir, false)
   }

@@ -4,7 +4,8 @@ import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
 import { getMacOsVersion } from "./macosVersion"
-import { debug, debug7zArgs, exec, ExecOptions, isEnvTrue } from "./util"
+import { debug, debug7zArgs, exec, isEnvTrue } from "./util"
+import { ExecFileOptions } from "child_process"
 import { path7za } from "7zip-bin"
 import * as os from "os"
 
@@ -54,7 +55,7 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
 })
 
 /** @private */
-export function execWine(file: string, args: Array<string>, options: ExecOptions = EXEC_TIMEOUT): Promise<string> {
+export function execWine(file: string, args: Array<string>, options: ExecFileOptions = EXEC_TIMEOUT): Promise<string> {
   if (process.platform === "win32") {
     return exec(file, args, options)
   }

@@ -1,5 +1,5 @@
-import { SpawnOptions } from "child_process"
-import { ExecOptions, ExtraSpawnOptions, execWine } from "builder-util"
+import { SpawnOptions, ExecFileOptions } from "child_process"
+import { ExtraSpawnOptions, execWine } from "builder-util"
 import { VmManager } from "./vm"
 import * as path from "path"
 
@@ -8,7 +8,7 @@ export class WineVmManager extends VmManager {
     super()
   }
 
-  exec(file: string, args: Array<string>, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
+  exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
     return execWine(file, args, options)
   }
 

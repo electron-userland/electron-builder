@@ -15,7 +15,7 @@ import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
-import { FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
+import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -88,6 +88,10 @@ export abstract class AppUpdater extends EventEmitter {
 
   private clientPromise: Promise<Provider<any>> | null
 
+  protected get provider(): Promise<Provider<any>> {
+    return this.clientPromise!!
+  }
+
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
   // public, allow to read old config for anyone
@@ -98,8 +102,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected readonly app: Electron.App
 
-  protected versionInfo: UpdateInfo | null
-  private fileInfo: FileInfo | null
+  protected updateInfo: UpdateInfo | null
 
   protected readonly httpExecutor: ElectronHttpExecutor
 
@@ -263,27 +266,23 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
 
-    const fileInfo = await client.getUpdateFile(updateInfo)
-
     this.updateAvailable = true
-    this.versionInfo = updateInfo
-    this.fileInfo = fileInfo
+    this.updateInfo = updateInfo
 
-    this.onUpdateAvailable(updateInfo, fileInfo)
+    this.onUpdateAvailable(updateInfo)
 
     const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
       versionInfo: updateInfo,
       updateInfo,
-      fileInfo,
       cancellationToken,
       downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
     }
   }
 
-  protected onUpdateAvailable(updateInfo: UpdateInfo, fileInfo: FileInfo) {
-    this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.url).join(", ")})`)
+  protected onUpdateAvailable(updateInfo: UpdateInfo) {
+    this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.files).map(it => it.url).join(", ")})`)
     this.emit("update-available", updateInfo)
   }
 
@@ -292,18 +291,17 @@ export abstract class AppUpdater extends EventEmitter {
    * @returns {Promise<string>} Path to downloaded file.
    */
   async downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
-    const updateInfo = this.versionInfo
-    const fileInfo = this.fileInfo
-    if (updateInfo == null || fileInfo == null) {
+    const updateInfo = this.updateInfo
+    if (updateInfo == null) {
       const error = new Error("Please check update first")
       this.dispatchError(error)
       throw error
     }
 
-    this._logger.info(`Downloading update from ${fileInfo.url}`)
+    this._logger.info(`Downloading update from ${asArray(updateInfo.files).map(it => it.url).join(", ")}`)
 
     try {
-      return await this.doDownloadUpdate(updateInfo, fileInfo, cancellationToken)
+      return await this.doDownloadUpdate(updateInfo, cancellationToken)
     }
     catch (e) {
       this.dispatchError(e)
@@ -315,7 +313,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>>
+  protected async abstract doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -337,10 +335,14 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /*** @private */
-  protected computeRequestHeaders(fileInfo: FileInfo): OutgoingHttpHeaders {
-    if (fileInfo.headers != null) {
+  protected async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
+    const fileExtraDownloadHeaders = (await this.provider).fileExtraDownloadHeaders
+    if (fileExtraDownloadHeaders != null) {
       const requestHeaders = this.requestHeaders
-      return requestHeaders == null ? fileInfo.headers : {...fileInfo.headers, ...requestHeaders}
+      return requestHeaders == null ? fileExtraDownloadHeaders : {
+        ...fileExtraDownloadHeaders,
+        ...requestHeaders,
+      }
     }
     return this.computeFinalHeaders({Accept: "*/*"})
   }

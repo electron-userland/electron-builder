@@ -1,7 +1,6 @@
-import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString } from "builder-util"
+import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString, serializeToYaml } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { emptyDir, outputFile } from "fs-extra-p"
-import { safeDump } from "js-yaml"
 import { homedir } from "os"
 import * as path from "path"
 import { Target } from "../core"
@@ -122,7 +121,7 @@ export default class SnapTarget extends Target {
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
-    await outputFile(snapcraft, safeDump(snap, {lineWidth: 160}))
+    await outputFile(snapcraft, serializeToYaml(snap))
 
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapFileName)

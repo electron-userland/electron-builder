@@ -1,10 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use } from "builder-util"
+import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use, serializeToYaml } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
-import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
@@ -141,7 +140,7 @@ export class Packager {
     const devMetadata = this.devMetadata
     const config = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
     if (debug.enabled) {
-      debug(`Effective config:\n${safeDump(JSON.parse(safeStringifyJson(config)))}`)
+      debug(`Effective config:\n${serializeToYaml(JSON.parse(safeStringifyJson(config)))}`)
     }
     await validateConfig(config, this.debugLogger)
     this._configuration = config

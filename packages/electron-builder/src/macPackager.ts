@@ -13,6 +13,8 @@ import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { ArchiveTarget } from "./targets/ArchiveTarget"
+import * as semver from "semver"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -58,11 +60,16 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg":
-          mapper("dmg", outDir => new DmgTarget(this, outDir))
+          mapper(name, outDir => new DmgTarget(this, outDir))
+          break
+
+        case "zip":
+          const electronUpdaterCompatibility = this.platformSpecificBuildOptions.electronUpdaterCompatibility
+          mapper(name, outDir => new ArchiveTarget(name, outDir, this, targets.some(it => it === "dmg") && (electronUpdaterCompatibility == null || semver.satisfies("2.16.0", electronUpdaterCompatibility))))
           break
 
         case "pkg":
-          mapper("pkg", outDir => new PkgTarget(this, outDir))
+          mapper(name, outDir => new PkgTarget(this, outDir))
           break
 
         default:

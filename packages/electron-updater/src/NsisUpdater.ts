@@ -4,9 +4,10 @@ import { spawn } from "child_process"
 import * as path from "path"
 import "source-map-support/register"
 import { SevenZipDifferentialDownloader } from "./differentialPackage"
-import { FileInfo, UPDATE_DOWNLOADED } from "./main"
+import { UPDATE_DOWNLOADED } from "./main"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { BaseUpdater } from "./BaseUpdater"
+import { findFile } from "./Provider"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -14,17 +15,20 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "exe")
+
+    const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
-      headers: this.computeRequestHeaders(fileInfo),
+      headers: requestHeaders,
       cancellationToken,
-      sha512: fileInfo == null ? null : fileInfo.sha512,
+      sha512: fileInfo.info.sha512,
     }
 
     let packagePath: string | null = this.downloadedUpdateHelper.packagePath
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(versionInfo, fileInfo)
+    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
     if (installerPath != null) {
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
@@ -32,12 +36,12 @@ export class NsisUpdater extends BaseUpdater {
     await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
       installerPath = destinationFile
       let signatureVerificationStatus
-      await this.httpExecutor.download(fileInfo.url, installerPath, downloadOptions)
+      await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
       signatureVerificationStatus = await this.verifySignature(installerPath)
 
       const packageInfo = fileInfo.packageInfo
       if (packageInfo != null) {
-        packagePath = path.join(tempDir, `package-${versionInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
+        packagePath = path.join(tempDir, `package-${updateInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
 
         let isDownloadFull = packageInfo.blockMapSize == null || packageInfo.headerSize == null
         if (!isDownloadFull) {
@@ -60,7 +64,7 @@ export class NsisUpdater extends BaseUpdater {
         if (isDownloadFull) {
           await this.httpExecutor.download(packageInfo.path, packagePath!!, {
             skipDirCreation: true,
-            headers: this.computeRequestHeaders(fileInfo),
+            headers: requestHeaders,
             cancellationToken,
             sha512: packageInfo.sha512,
           })
@@ -70,13 +74,13 @@ export class NsisUpdater extends BaseUpdater {
       if (signatureVerificationStatus != null) {
         await removeTempDirIfAny()
         // noinspection ThrowInsideFinallyBlockJS
-        throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
+        throw new Error(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
       }
     })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, versionInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, updateInfo, fileInfo)
     this.addQuitHandler()
-    this.emit(UPDATE_DOWNLOADED, this.versionInfo)
+    this.emit(UPDATE_DOWNLOADED, this.updateInfo)
     return packagePath == null ? [installerPath!!] : [installerPath!!, packagePath]
   }
 

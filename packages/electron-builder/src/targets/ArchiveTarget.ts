@@ -7,7 +7,7 @@ import { archive, tar } from "./archive"
 export class ArchiveTarget extends Target {
   readonly options = (this.packager.config as any)[this.name]
 
-  constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>) {
+  constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>, private readonly isWriteUpdateInfo = false) {
     super(name)
   }
 
@@ -19,14 +19,21 @@ export class ArchiveTarget extends Target {
 
     // do not specify arch if x64
     // tslint:disable:no-invalid-template-strings
-    const outFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
+    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
     if (format.startsWith("tar.")) {
-      await tar(packager.compression, format, outFile, appOutDir, isMac, packager.info.tempDirManager)
+      await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }
     else {
-      await archive(packager.compression, format, outFile, appOutDir, {withoutDir: !isMac})
+      await archive(packager.compression, format, artifactPath, appOutDir, {withoutDir: !isMac})
     }
 
-    packager.dispatchArtifactCreated(outFile, this, arch, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))
+    packager.info.dispatchArtifactCreated({
+      file: artifactPath,
+      safeArtifactName: isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null),
+      target: this,
+      arch,
+      packager,
+      isWriteUpdateInfo: this.isWriteUpdateInfo,
+    })
   }
 }

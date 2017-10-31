@@ -1,8 +1,8 @@
-import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo, AppImageUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
 import { spawn, SpawnOptions } from "child_process"
 import "source-map-support/register"
 import { DifferentialDownloader } from "./differentialPackage"
-import { FileInfo, UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
+import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { BaseUpdater } from "./BaseUpdater"
 import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
 import { safeLoad } from "js-yaml"
@@ -10,6 +10,7 @@ import { chmod, move } from "fs-extra-p"
 import * as path from "path"
 import isDev from "electron-is-dev"
 import BluebirdPromise from "bluebird-lst"
+import { findFile } from "./Provider"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -30,15 +31,18 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(versionInfo: UpdateInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "AppImage")
+
+    const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
-      headers: this.computeRequestHeaders(fileInfo),
+      headers: requestHeaders,
       cancellationToken,
-      sha512: fileInfo == null ? null : fileInfo.sha512,
+      sha512: fileInfo.info.sha512,
     }
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(versionInfo, fileInfo)
+    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
     if (installerPath != null) {
       return [installerPath]
     }
@@ -53,12 +57,12 @@ export class AppImageUpdater extends BaseUpdater {
 
       let isDownloadFull = false
       try {
-        await new DifferentialDownloader((versionInfo as any) as AppImageUpdateInfo, this.httpExecutor, {
-          newUrl: fileInfo.url,
+        await new DifferentialDownloader(fileInfo.info, this.httpExecutor, {
+          newUrl: fileInfo.url.href,
           oldPackageFile: oldFile,
           logger: this._logger,
           newFile: installerPath,
-          requestHeaders: this.requestHeaders,
+          requestHeaders,
         }).downloadAppImage(safeLoad(await readBlockMapDataFromAppImage(oldFile)))
       }
       catch (e) {
@@ -68,13 +72,13 @@ export class AppImageUpdater extends BaseUpdater {
       }
 
       if (isDownloadFull) {
-        await this.httpExecutor.download(fileInfo.url, installerPath, downloadOptions)
+        await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
       }
     })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, null, versionInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, null, updateInfo, fileInfo)
     this.addQuitHandler()
-    this.emit(UPDATE_DOWNLOADED, this.versionInfo)
+    this.emit(UPDATE_DOWNLOADED, this.updateInfo)
     return [installerPath!!]
   }
 

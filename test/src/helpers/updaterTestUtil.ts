@@ -1,10 +1,9 @@
-import { TmpDir } from "builder-util"
+import { TmpDir, serializeToYaml } from "builder-util"
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"
-import { safeDump } from "js-yaml"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
@@ -42,7 +41,7 @@ export function createTestApp(version: string, appPath = "") {
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
 export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options | SpacesOptions>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir(), "app-update.yml")
-  await outputFile(updateConfigPath, safeDump(data))
+  await outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath
 }
 
@@ -51,7 +50,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(updateCheckResult.updateInfo).toMatchSnapshot()
   if (expectDownloadPromise) {
     if (updater instanceof MacUpdater) {
       expect(await updateCheckResult.downloadPromise).toEqual([])

@@ -4852,9 +4852,9 @@ type-is@~1.6.10:
     media-typer "0.3.0"
     mime-types "~2.1.15"
 
-typescript@2.6.0-rc:
-  version "2.6.0-rc"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.6.0-rc.tgz#6a8022e2dd3e7033f2dcf187cff7925ea3c8ac25"
+typescript@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.6.1.tgz#ef39cdea27abac0b500242d6726ab90e0c846631"
 
 typescript@~2.5.3:
   version "2.5.3"

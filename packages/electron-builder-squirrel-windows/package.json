@@ -1,7 +1,7 @@
 {
   "name": "electron-builder-squirrel-windows",
   "version": "0.0.0-semantic-release",
-  "main": "out/squirrelWindows.js",
+  "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
@@ -23,5 +23,5 @@
   "peerDependencies": {
     "electron-builder": "~0.0.0-semantic-release"
   },
-  "typings": "./out/squirrelWindows.d.ts"
+  "types": "./out/SquirrelWindowsTarget.d.ts"
 }

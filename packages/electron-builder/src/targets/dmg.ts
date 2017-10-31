@@ -2,7 +2,7 @@ import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
 import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
-import { stat } from "fs-extra-p"
+import { stat, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
@@ -11,7 +11,8 @@ import { Target } from "../core"
 import MacPackager from "../macPackager"
 import { DmgOptions } from "../options/macOptions"
 import { isMacOsHighSierra } from "builder-util/out/macosVersion"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, BlockMapDataHolder } from "builder-util-runtime"
+import { createDifferentialPackage } from "app-package-builder"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -67,7 +68,35 @@ export class DmgTarget extends Target {
 
     await this.signDmg(artifactPath)
 
-    this.packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "dmg"))
+    const blockMapInfo = await createDifferentialPackage(artifactPath, false)
+    const updateInfo: BlockMapDataHolder = {
+      size: blockMapInfo.size,
+      sha512: blockMapInfo.sha512,
+    }
+
+    const blockMapFileSuffix = ".blockmap"
+    await writeFile(`${artifactPath}${blockMapFileSuffix}`, blockMapInfo.blockMapData)
+
+    const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
+    packager.info.dispatchArtifactCreated({
+      file: artifactPath,
+      safeArtifactName,
+      target: this,
+      arch,
+      packager,
+      isWriteUpdateInfo: true,
+      updateInfo,
+    })
+
+    packager.info.dispatchArtifactCreated({
+      file: `${artifactPath}${blockMapFileSuffix}`,
+      fileContent: blockMapInfo.blockMapData,
+      safeArtifactName: `${safeArtifactName}${blockMapFileSuffix}`,
+      target: this,
+      arch,
+      packager,
+      updateInfo,
+    })
   }
 
   private async signDmg(artifactPath: string) {

@@ -107,7 +107,7 @@
     "ts-babel": "^4.1.7",
     "ts-jsdoc": "^2.0.6",
     "tslint": "^5.8.0",
-    "typescript": "2.6.0-rc",
+    "typescript": "^2.6.1",
     "v8-compile-cache": "^1.1.0",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.5.1"

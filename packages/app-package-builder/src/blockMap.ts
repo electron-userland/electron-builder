@@ -10,6 +10,7 @@ import { SevenZArchiveEntry } from "./SevenZArchiveEntry"
 import { SevenZFile } from "./SevenZFile"
 
 const deflateRaw: any = BluebirdPromise.promisify(require("zlib").deflateRaw)
+const gzip: any = BluebirdPromise.promisify(require("zlib").gzip)
 
 /*
 Approach like AppX block map, but with one difference - block not compressed individually, instead, the whole file is compressed using LZMA compression.
@@ -18,7 +19,7 @@ and we don't set even dict size and default 64M is used), but full package size 
  */
 
 // reduce dict size to avoid large block invalidation on change
-export async function createDifferentialPackage(archiveFile: string): Promise<PackageFileInfo> {
+export async function createDifferentialPackage(archiveFile: string, isAppendToFile = true): Promise<PackageFileInfo> {
   const fd = await open(archiveFile, "a+")
   try {
     if (!archiveFile.endsWith(".7z")) {
@@ -27,15 +28,26 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
         dataStart: 0,
         dataEnd: (await stat(archiveFile)).size,
       }], fd)
-      // for AppImage allow to easily detect blockMap data size without update met
-      return await appendBlockMapData(blockMap, archiveFile, fd, null, true)
+      // for AppImage allow to easily detect blockMap data size without update metadata
+      const blockMapFileData = await serializeBlockMap(blockMap, archiveFile, !isAppendToFile)
+      if (isAppendToFile) {
+        await appendBlockMapData(fd, blockMapFileData, true)
+      }
+      else {
+        await close(fd)
+      }
+      return await createFileInfo(blockMapFileData, archiveFile)
     }
 
     // compute block map using compressed file data
     const sevenZFile = new SevenZFile(fd)
     await sevenZFile.read()
     const blockMap = await computeBlockMap(sevenZFile)
-    return await appendBlockMapData(blockMap, archiveFile, fd, sevenZFile.archive.headerSize, false)
+    const blockMapFileData = await serializeBlockMap(blockMap, archiveFile, false)
+    await appendBlockMapData(fd, blockMapFileData, false)
+    const result = await createFileInfo(blockMapFileData, archiveFile)
+    result.headerSize = sevenZFile.archive.headerSize
+    return result
   }
   catch (e) {
     await close(fd)
@@ -43,7 +55,7 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
   }
 }
 
-async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: number, headerSize: number | null, addLength: boolean) {
+async function serializeBlockMap(blockMap: BlockMap, archiveFile: string, isUseGzip: boolean) {
   // lzma doesn't make a lof of sense (151 KB lzma vs 156 KB deflate) for small text file where most of the data are unique strings (encoded checksums)
   // protobuf size — BlockMap size: 153104, compressed: 151256 So, it means that it doesn't make sense - better to use deflate instead of complicating (another runtime dependency (google-protobuf), proto files and so on)
   // size encoding in a form where next value is a relative to previous doesn't make sense (zero savings in tests), since in our case next size can be less than previous (so, int will be negative and `-` symbol will be added)
@@ -52,8 +64,17 @@ async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: n
     indent: 0,
     flowLevel: 0,
   })
-  const blockMapFileData: Buffer = await deflateRaw(blockMapDataString, {level: 9})
+  const blockMapFileData: Buffer = await (isUseGzip ? gzip : deflateRaw)(blockMapDataString, {level: 9, chunkSize: 1024 * 1024})
 
+  if (process.env.DEBUG_BLOCKMAP) {
+    const buffer = Buffer.from(blockMapDataString)
+    await writeFile(`${archiveFile}.blockMap.yml`, buffer)
+    console.log(`BlockMap size: ${buffer.length}, compressed: ${blockMapFileData.length}`)
+  }
+  return blockMapFileData
+}
+
+async function appendBlockMapData(fd: number, blockMapFileData: Buffer, addLength: boolean) {
   // Compatibility with nodejs 6, because:
   // v7.2.0 The offset and length parameters are optional now.
   await write(fd, blockMapFileData, 0, blockMapFileData.length)
@@ -64,19 +85,11 @@ async function appendBlockMapData(blockMap: BlockMap, archiveFile: string, fd: n
   }
 
   await close(fd)
+}
 
+async function createFileInfo(blockMapFileData: Buffer, archiveFile: string) {
   const packageFileInfo = await createPackageFileInfo(archiveFile, blockMapFileData.length)
-  if (headerSize != null) {
-    packageFileInfo.headerSize = headerSize
-  }
-  packageFileInfo.blockMapData = blockMapDataString
-
-  if (process.env.DEBUG_BLOCKMAP) {
-    const buffer = Buffer.from(blockMapDataString)
-    await writeFile(`${archiveFile}.blockMap.yml`, buffer)
-    console.log(`BlockMap size: ${buffer.length}, compressed: ${blockMapFileData.length}`)
-  }
-
+  packageFileInfo.blockMapData = blockMapFileData
   return packageFileInfo
 }
 

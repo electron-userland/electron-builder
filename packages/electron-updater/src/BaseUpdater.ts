@@ -4,8 +4,7 @@ import { AllPublishOptions, CancellationError, DownloadOptions } from "builder-u
 import { mkdtemp, remove } from "fs-extra-p"
 import * as path from "path"
 import { tmpdir } from "os"
-import { DOWNLOAD_PROGRESS, FileInfo } from "./main"
-import { URL } from "url"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
@@ -23,7 +22,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
-  protected async executeDownload(downloadOptions: DownloadOptions, fileInfo: FileInfo, task: (tempDir: string, destinationFile: string, removeTempDirIfAny: () => Promise<any>) => Promise<any>) {
+  protected async executeDownload(downloadOptions: DownloadOptions, fileInfo: ResolvedUpdateFileInfo, task: (tempDir: string, destinationFile: string, removeTempDirIfAny: () => Promise<any>) => Promise<any>) {
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
@@ -40,16 +39,16 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     try {
-      const destinationFile = path.join(tempDir, path.posix.basename(new URL(fileInfo.url).pathname))
+      const destinationFile = path.join(tempDir, path.posix.basename(fileInfo.url.pathname))
       await task(tempDir, destinationFile, removeTempDirIfAny)
 
-      this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${destinationFile}`)
+      this._logger.info(`New version ${this.updateInfo!.version} has been downloaded to ${destinationFile}`)
     }
     catch (e) {
       await removeTempDirIfAny()
 
       if (e instanceof CancellationError) {
-        this.emit("update-cancelled", this.versionInfo)
+        this.emit("update-cancelled", this.updateInfo)
         this._logger.info("Cancelled")
       }
       throw e

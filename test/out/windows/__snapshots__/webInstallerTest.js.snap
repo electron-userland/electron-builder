@@ -6,17 +6,32 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-WebSetup-1.1.0.exe",
+          },
+        ],
         "packages": Object {
           "ia32": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-ia32.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
-        "path": "Test App ßW Web Setup 1.1.0.exe",
-        "url": "Test App ßW Web Setup 1.1.0.exe",
+        "path": "TestApp-WebSetup-1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -26,10 +41,18 @@ Object {
       "updateInfo": Object {
         "packages": Object {
           "ia32": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-ia32.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
       },
@@ -52,13 +75,25 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.1.0.exe",
+          },
+        ],
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
         "path": "Test App ßW Web Setup 1.1.0.exe",
-        "url": "Test App ßW Web Setup 1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -69,7 +104,11 @@ Object {
       "updateInfo": Object {
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
       },
@@ -88,14 +127,25 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "WorkFlowy.exe",
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "WorkFlowy.exe",
+          },
+        ],
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
         "path": "WorkFlowy.exe",
-        "url": "WorkFlowy.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -110,7 +160,11 @@ Object {
       "updateInfo": Object {
         "packages": Object {
           "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
           },
         },
       },

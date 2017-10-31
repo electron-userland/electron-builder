@@ -1,6 +1,6 @@
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
-import { NsisTarget } from "./nsis"
+import { NsisTarget } from "./NsisTarget"
 import { NsisWebOptions } from "./nsisOptions"
 import { AppPackageHelper } from "./nsisUtil"
 

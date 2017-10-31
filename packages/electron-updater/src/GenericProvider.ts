@@ -1,6 +1,6 @@
 import { GenericServerOptions, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
-import { FileInfo, getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
-import { getUpdateFile, parseUpdateInfo } from "./Provider"
+import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
+import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
@@ -24,14 +24,13 @@ export class GenericProvider extends Provider<UpdateInfo> {
       throw e
     }
 
-    Provider.validateUpdateInfo(result)
     if (isUseOldMacProvider()) {
       (result as any).releaseJsonUrl = channelUrl.href
     }
     return result
   }
 
-  async getUpdateFile(updateInfo: UpdateInfo): Promise<FileInfo> {
-    return getUpdateFile(updateInfo, this.baseUrl)
+  resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
+    return resolveFiles(updateInfo, this.baseUrl)
   }
 }

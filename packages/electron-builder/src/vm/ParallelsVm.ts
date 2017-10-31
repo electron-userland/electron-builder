@@ -1,5 +1,5 @@
-import { exec, spawn, ExecOptions, DebugLogger, ExtraSpawnOptions } from "builder-util"
-import { SpawnOptions, execFileSync } from "child_process"
+import { exec, spawn, DebugLogger, ExtraSpawnOptions } from "builder-util"
+import { SpawnOptions, execFileSync, ExecFileOptions } from "child_process"
 import { VmManager } from "./vm"
 
 /** @internal */
@@ -53,7 +53,7 @@ export class ParallelsVmManager extends VmManager {
     throw error
   }
 
-  async exec(file: string, args: Array<string>, options?: ExecOptions): Promise<string> {
+  async exec(file: string, args: Array<string>, options?: ExecFileOptions): Promise<string> {
     await this.ensureThatVmStarted()
     // it is important to use "--current-user" to execute command under logged in user - to access certs.
     return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), options)
@@ -109,8 +109,7 @@ export function macPathToParallelsWindows(file: string) {
   if (file.startsWith("C:\\")) {
     return file
   }
-  // return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
-  return "Z:" + file.replace(/\//g, "\\")
+  return "\\\\Mac\\Host\\" + file.replace(/\//g, "\\")
 }
 
 export interface ParallelsVm {

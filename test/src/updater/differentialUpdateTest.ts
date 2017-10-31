@@ -313,7 +313,7 @@ async function checkResult(updater: NsisUpdater) {
   const downloadPromise = updateCheckResult.downloadPromise
   expect(downloadPromise).not.toBeNull()
   const files = await downloadPromise
-  const fileInfo: any = updateCheckResult.fileInfo
+  const fileInfo: any = updateCheckResult.updateInfo.files[0]
 
   delete fileInfo.sha2
   delete fileInfo.sha512

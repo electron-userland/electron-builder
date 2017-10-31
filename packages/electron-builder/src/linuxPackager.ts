@@ -6,7 +6,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
-import AppImageTarget from "./targets/appImage"
+import AppImageTarget from "./targets/AppImageTarget"
 import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
@@ -43,7 +43,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
-            return require("./targets/appImage").default
+            return require("./targets/AppImageTarget").default
           case "snap":
             return require("./targets/snap").default
           case "deb":

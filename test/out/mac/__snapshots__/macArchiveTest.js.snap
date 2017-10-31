@@ -15,7 +15,7 @@ Object {
 exports[`invalid target 1`] = `
 "Configuration is invalid.
  - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
+   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
    Options related to how build macOS targets.
@@ -56,18 +56,6 @@ How to fix:
 exports[`only zip 1`] = `
 Object {
   "mac": Array [
-    Object {
-      "file": "latest-mac.json",
-    },
-    Object {
-      "file": "latest-mac.yml",
-      "fileContent": Object {
-        "githubArtifactName": "TestApp-1.1.0-mac.zip",
-        "path": "Test App ßW-1.1.0-mac.zip",
-        "url": "Test App ßW-1.1.0-mac.zip",
-        "version": "1.1.0",
-      },
-    },
     Object {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",

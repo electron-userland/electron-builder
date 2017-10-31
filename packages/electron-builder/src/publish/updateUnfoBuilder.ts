@@ -1,7 +1,6 @@
-import { hashFile, Arch } from "builder-util"
+import { hashFile, Arch, serializeToYaml, safeStringifyJson } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
-import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { ReleaseInfo } from "../configuration"
@@ -9,6 +8,10 @@ import { Platform } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
+import * as semver from "semver"
+import { MacConfiguration } from "../"
+import BluebirdPromise from "bluebird-lst"
+import { Packager } from "../packager"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = {...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo)}
@@ -59,8 +62,16 @@ function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>,
   return `${channel}${osSuffix}${archSuffix}.yml`
 }
 
+export interface UpdateInfoFileTask {
+  readonly file: string
+  readonly info: UpdateInfo
+  readonly publishConfiguration: PublishConfiguration
+
+  readonly packager: PlatformPackager<any>
+}
+
 /** @internal */
-export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<ArtifactCreated>> {
+export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
   const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
@@ -73,20 +84,21 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   const isMac = packager.platform === Platform.MAC
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
-  const events: Array<ArtifactCreated> = []
-  for (let publishConfig of publishConfigs) {
-    if (publishConfig.provider === "github" && "releaseType" in publishConfig) {
-      publishConfig = {...publishConfig}
-      delete (publishConfig as GithubOptions).releaseType
+  const tasks: Array<UpdateInfoFileTask> = []
+  const electronUpdaterCompatibility = packager.platform === Platform.MAC ? (packager.platformSpecificBuildOptions as MacConfiguration).electronUpdaterCompatibility : null
+  for (let publishConfiguration of publishConfigs) {
+    if (publishConfiguration.provider === "github" && "releaseType" in publishConfiguration) {
+      publishConfiguration = {...publishConfiguration}
+      delete (publishConfiguration as GithubOptions).releaseType
     }
 
     let dir = outDir
-    if (publishConfigs.length > 1 && publishConfig !== publishConfigs[0]) {
-      dir = path.join(outDir, publishConfig.provider)
+    if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
+      dir = path.join(outDir, publishConfiguration.provider)
     }
 
     // spaces is a new publish provider, no need to keep backward compatibility
-    let isElectronUpdater1xCompatibility = publishConfig.provider !== "spaces"
+    let isElectronUpdater1xCompatibility = publishConfiguration.provider !== "spaces" && (electronUpdaterCompatibility == null || semver.satisfies("1.0.0", electronUpdaterCompatibility))
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
@@ -97,57 +109,92 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
       (info as WindowsUpdateInfo).sha2 = await sha2.value
     }
 
-    if (event.safeArtifactName != null && publishConfig.provider === "github") {
+    if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
+      const newFiles = info.files.slice()
+      newFiles[0].url = event.safeArtifactName
       info = {
         ...info,
-        url: event.safeArtifactName,
+        files: newFiles,
         path: event.safeArtifactName,
       }
     }
 
-    for (const channel of computeChannelNames(packager, publishConfig)) {
+    for (const channel of computeChannelNames(packager, publishConfiguration)) {
       if (isMac && isElectronUpdater1xCompatibility) {
         // write only for first channel (generateUpdatesFilesForAllChannels is a new functionality, no need to generate old mac update info file)
         isElectronUpdater1xCompatibility = false
-        await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
+        await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, (publishConfig.provider === "bintray" ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, (publishConfiguration.provider === "bintray" ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
 
       createdFiles.add(updateInfoFile)
 
-      const fileContent = Buffer.from(safeDump(info))
-      await outputFile(updateInfoFile, fileContent)
-
       // artifact should be uploaded only to designated publish provider
-      events.push({
+      tasks.push({
         file: updateInfoFile,
-        fileContent,
-        arch: null,
+        info,
+        publishConfiguration,
         packager,
-        target: null,
-        publishConfig,
       })
     }
   }
-  return events
+  return tasks
 }
 
-async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo) {
+async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo): Promise<UpdateInfo> {
   const customUpdateInfo = event.updateInfo
   const url = path.basename(event.file!)
-  return {
+  const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!)
+  const files = [{url, sha512}]
+  const result: UpdateInfo = {
     version,
-    releaseDate: new Date().toISOString(),
-    path: url,
-    url,
-    ...customUpdateInfo,
-    sha512: (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!),
+    files,
+    path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
+    sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     ...releaseInfo as UpdateInfo,
   }
+
+  if (customUpdateInfo != null) {
+    // file info or nsis web installer packages info
+    Object.assign("sha512" in customUpdateInfo ? files[0] : result, customUpdateInfo)
+  }
+  return result
+}
+
+export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfoFileTask>, packager: Packager) {
+  // zip must be first and zip info must be used for old path/sha512 properties in the update info
+  updateInfoFileTasks.sort((a, b) => (a.info.files[0].url.endsWith(".zip") ? 0 : 100) - (b.info.files[0].url.endsWith(".zip") ? 0 : 100))
+
+  const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
+  for (const task of updateInfoFileTasks) {
+    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration)}`
+    const existingTask = updateChannelFileToInfo.get(key)
+    if (existingTask == null) {
+      updateChannelFileToInfo.set(key, task)
+      continue
+    }
+
+    existingTask.info.files.push(...task.info.files)
+  }
+
+  const releaseDate = new Date().toISOString()
+  await BluebirdPromise.map(updateChannelFileToInfo.values(), async task => {
+    task.info.releaseDate = releaseDate
+    const fileContent = Buffer.from(serializeToYaml(task.info))
+    await outputFile(task.file, fileContent)
+    packager.dispatchArtifactCreated({
+      file: task.file,
+      fileContent,
+      arch: null,
+      packager: task.packager,
+      target: null,
+      publishConfig: task.publishConfiguration,
+    })
+  }, {concurrency: 4})
 }
 
 // backward compatibility - write json file

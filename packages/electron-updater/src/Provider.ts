@@ -1,7 +1,7 @@
-import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo, asArray } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
-import { FileInfo, isUseOldMacProvider, newUrlFromBase } from "./main"
+import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { safeLoad } from "js-yaml"
 
 export abstract class Provider<T extends UpdateInfo> {
@@ -10,30 +10,17 @@ export abstract class Provider<T extends UpdateInfo> {
   constructor(protected readonly executor: HttpExecutor<any>) {
   }
 
+  get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
+    return null
+  }
+
   setRequestHeaders(value: OutgoingHttpHeaders | null): void {
     this.requestHeaders = value
   }
 
   abstract getLatestVersion(): Promise<T>
 
-  abstract getUpdateFile(versionInfo: T): Promise<FileInfo>
-
-  static validateUpdateInfo(info: UpdateInfo) {
-    if (isUseOldMacProvider()) {
-      if ((info as any).url == null) {
-        throw new Error("Update info doesn't contain url")
-      }
-      return
-    }
-
-    // noinspection JSDeprecatedSymbols
-    if ((info as WindowsUpdateInfo).sha2 == null && info.sha512 == null) {
-      throw new Error(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(info)}`)
-    }
-    if (info.path == null) {
-      throw new Error(`Update info doesn't contain file path: ${safeStringifyJson(info)}`)
-    }
-  }
+  abstract resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo>
 
   protected httpRequest(url: URL, headers: OutgoingHttpHeaders | null, cancellationToken: CancellationToken) {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
@@ -60,6 +47,18 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>) {
+  if (files.length === 0) {
+    throw new Error("No files provided")
+  }
+
+  let result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
+  if (result == null && not != null) {
+    result = files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
+  }
+  return result || files[0]
+}
+
 export function parseUpdateInfo(rawData: string, channelFile: string, channelFileUrl: URL): UpdateInfo {
   let result: UpdateInfo
   try {
@@ -68,35 +67,39 @@ export function parseUpdateInfo(rawData: string, channelFile: string, channelFil
   catch (e) {
     throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`)
   }
-  Provider.validateUpdateInfo(result)
   return result
 }
 
-function getUpdateFileUrl(info: UpdateInfo) {
-  const result = info.path
-  if (result != null) {
-    return result
-  }
-  return asArray(info.url)[0]
-}
-
-function createFileInfo(updateInfo: UpdateInfo, baseUrl: URL, updateFileUrl: string): FileInfo {
-  return {
-    url: newUrlFromBase(updateFileUrl, baseUrl).href,
-    sha512: updateInfo.sha512,
-  }
-}
-
-export function getUpdateFile(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): FileInfo {
-  if (isUseOldMacProvider()) {
-    return updateInfo as any
+export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): Array<ResolvedUpdateFileInfo> {
+  let files = updateInfo.files
+  if (files == null || files.length === 0) {
+    if (updateInfo.path != null && updateInfo.sha512 != null) {
+      files = [
+        {
+          url: updateInfo.path,
+          sha512: updateInfo.sha512,
+        },
+      ]
+    }
+    else {
+      throw new Error(`No files provided: ${safeStringifyJson(updateInfo)}`)
+    }
   }
 
-  const result = createFileInfo(updateInfo, baseUrl, pathTransformer(getUpdateFileUrl(updateInfo)))
+  const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
+    if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {
+      throw new Error(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`)
+    }
+    return {
+      url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),
+      info: fileInfo,
+    }
+  })
+
   const packages = (updateInfo as WindowsUpdateInfo).packages
   const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
   if (packageInfo != null) {
-    result.packageInfo = {
+    (result[0] as any).packageInfo = {
       ...packageInfo,
       path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
     }

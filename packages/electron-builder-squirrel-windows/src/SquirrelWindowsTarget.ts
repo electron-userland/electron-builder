@@ -8,7 +8,8 @@ import { SquirrelBuilder, convertVersion, SquirrelOptions } from "./squirrelPack
 import { emptyDir, remove } from "fs-extra-p"
 
 export default class SquirrelWindowsTarget extends Target {
-  readonly options: SquirrelWindowsOptions = {...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows}
+  //tslint:disable-next-line:no-object-literal-type-assertion
+  readonly options: SquirrelWindowsOptions = {...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows} as SquirrelWindowsOptions
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("squirrel")

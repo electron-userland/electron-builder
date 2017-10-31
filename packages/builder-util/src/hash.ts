@@ -9,7 +9,7 @@ export function hashFile(file: string, algorithm: string = "sha512", encoding: "
       .on("error", reject)
       .setEncoding(encoding)
 
-    createReadStream(file, options)
+    createReadStream(file, {...options, highWaterMark: 1024 * 1024 /* better to use more memory but hash faster */})
       .on("error", reject)
       .on("end", () => {
         hash.end()

@@ -184,11 +184,12 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   for (const platform of packagerOptions.targets!!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await BluebirdPromise.map((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), async it => {
       const result: any = {...it}
-      if (result.file != null) {
-        if (result.file.endsWith(".yml")) {
-          result.fileContent = removeUnstableProperties(safeLoad(await readFile(result.file, "utf-8")))
+      const file = result.file
+      if (file != null) {
+        if (file.endsWith(".yml")) {
+          result.fileContent = removeUnstableProperties(safeLoad(await readFile(file, "utf-8")))
         }
-        result.file = path.basename(result.file)
+        result.file = path.basename(file)
       }
       const updateInfo = result.updateInfo
       if (updateInfo != null) {
@@ -204,6 +205,10 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       }
       else {
         result.arch = Arch[result.arch]
+      }
+
+      if (Buffer.isBuffer(result.fileContent)) {
+        delete result.fileContent
       }
 
       delete result.isWriteUpdateInfo
@@ -426,8 +431,9 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
       mac: {
         target,
       },
+      publish: null,
       ...config
-    }
+    },
   }, {
     signed: true,
     packed: async context => {
@@ -456,7 +462,8 @@ export async function checkDirContents(dir: string) {
 export function removeUnstableProperties(data: any) {
   return JSON.parse(JSON.stringify(data, (name, value) => {
     if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
-      return undefined
+      // to ensure that some property exists
+      return `@${name}`
     }
     return value
   }))

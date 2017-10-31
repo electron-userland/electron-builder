@@ -86,8 +86,16 @@ Object {
     Object {
       "file": "1.1.0_latest.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Setup 1.1.0.exe",
+          },
+        ],
         "path": "Test App ßW Setup 1.1.0.exe",
-        "url": "Test App ßW Setup 1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -115,8 +123,16 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp Setup 1.1.0.exe",
+          },
+        ],
         "path": "TestApp Setup 1.1.0.exe",
-        "url": "TestApp Setup 1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha2": "@sha2",
+        "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
@@ -134,14 +150,6 @@ exports[`perMachine, no run after finish 2`] = `
 Object {
   "provider": "generic",
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
-}
-`;
-
-exports[`perMachine, no run after finish 3`] = `
-Object {
-  "path": "TestApp Setup 1.1.0.exe",
-  "url": "TestApp Setup 1.1.0.exe",
-  "version": "1.1.0",
 }
 `;
 

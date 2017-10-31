@@ -7,6 +7,7 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { createTestApp, trackEvents, tuneNsisUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { removeUnstableProperties } from "../helpers/packTester"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
@@ -51,14 +52,14 @@ async function testUpdateFromBintray(app: any) {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   await checkDownloadPromise(updateCheckResult)
 
   expect(actualEvents).toEqual(expectedEvents)
 }
-test("file url", () => testUpdateFromBintray(null))
+test("file url (bintray)", () => testUpdateFromBintray(null))
 
-test("downgrade (disallowed)", async () => {
+test("downgrade (disallowed, bintray)", async () => {
   const updater = new NsisUpdater(null, createTestApp("2.0.0"))
   updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
     provider: "bintray",
@@ -76,7 +77,7 @@ test("downgrade (disallowed)", async () => {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   expect(updateCheckResult.downloadPromise).toBeUndefined()
 
   expect(actualEvents).toEqual(expectedEvents)
@@ -100,7 +101,7 @@ test("downgrade (disallowed, beta)", async () => {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   expect(updateCheckResult.downloadPromise).toBeUndefined()
 
   expect(actualEvents).toEqual(expectedEvents)
@@ -140,7 +141,7 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   await assertThat(updateCheckResult.downloadPromise).throws()
 
   expect(actualEvents).toMatchSnapshot()
@@ -158,7 +159,7 @@ test("file url generic - manual download", async () => {
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   expect(updateCheckResult.downloadPromise).toBeNull()
   expect(actualEvents).toMatchSnapshot()
 
@@ -183,7 +184,7 @@ test("checkForUpdates several times", async () => {
 
   async function checkForUpdates() {
     const updateCheckResult = await updater.checkForUpdates()
-    expect(updateCheckResult.fileInfo).toMatchSnapshot()
+    expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
     await checkDownloadPromise(updateCheckResult)
   }
 
@@ -299,7 +300,7 @@ test.ifAll.ifWindows("invalid signature", async () => {
 
 test("90 staging percentage", async () => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
-  await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
+  await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<S3Options>({
