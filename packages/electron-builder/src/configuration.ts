@@ -165,11 +165,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
    */
-  readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
+  readonly afterPack?: ((context: AfterPackContext) => Promise<any>) | string | null
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    */
-  readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
+  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
 }
 
 export interface AfterPackContext {
