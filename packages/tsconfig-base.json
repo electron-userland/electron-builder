@@ -2,6 +2,7 @@
   "extends": "../node_modules/ts-babel/tsconfig-base.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "stripInternal": true
+    "stripInternal": true,
+    "skipLibCheck": true
   }
 }

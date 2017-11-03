@@ -13,6 +13,7 @@ test.ifMac("no build directory", app({
   config: {
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "NoBuildDirectory",
+    publish: null,
   },
   effectiveOptionComputed: async it => {
     if (!("volumePath" in it)) {
@@ -102,6 +103,7 @@ test.ifMac("no Applications link", () => {
 test.ifMac("unset dmg icon", app({
   targets: Platform.MAC.createTarget("dmg"),
   config: {
+    publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "Test ß No Volume Icon",
     dmg: {
@@ -123,6 +125,7 @@ test.ifMac("unset dmg icon", app({
 test.ifMac("no background", app({
   targets: Platform.MAC.createTarget("dmg"),
   config: {
+    publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "NoBackground",
     dmg: {
@@ -141,6 +144,7 @@ test.ifMac("no background", app({
 test.ifAll.ifMac("bundleShortVersion", app({
   targets: Platform.MAC.createTarget("dmg"),
   config: {
+    publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "BundleShortVersion",
     mac: {
@@ -179,9 +183,14 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   })
 })
 
-test.ifAll.ifMac("multi language license", app({
+const packagerOptions = {
   targets: Platform.MAC.createTarget("dmg"),
-}, {
+  config: {
+    publish: null,
+  }
+}
+
+test.ifAll.ifMac("multi language license", app(packagerOptions, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
@@ -191,32 +200,26 @@ test.ifAll.ifMac("multi language license", app({
   },
 }))
 
-test.ifAll.ifMac("license ru", app({
-  targets: Platform.MAC.createTarget("dmg"),
-}, {
+test.ifAll.ifMac("license ru", app(packagerOptions, {
   projectDirCreated: projectDir => {
     return writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет".repeat(12))
   },
 }))
 
-test.ifAll.ifMac("license en", app({
-  targets: Platform.MAC.createTarget("dmg"),
-}, {
+test.ifAll.ifMac("license en", app(packagerOptions, {
   projectDirCreated: projectDir => {
     return copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt"))
   },
 }))
 
-test.ifAll.ifMac("license rtf", app({
-  targets: Platform.MAC.createTarget("dmg"),
-}, {
+test.ifAll.ifMac("license rtf", app(packagerOptions, {
   projectDirCreated: projectDir => {
     return copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf"))
   },
 }))
 
 test.ifAll.ifMac("license buttons config", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  ...packagerOptions,
   effectiveOptionComputed: async it => {
     if ("licenseData" in it) {
       expect(it.licenseData).toMatchSnapshot()
