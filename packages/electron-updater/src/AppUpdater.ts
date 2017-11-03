@@ -191,7 +191,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.signals.updateDownloaded(it => {
       new Notification({
         title: "A new update is ready to install",
-        body: `Version ${it.version} is downloaded and will be automatically installed on Quit`
+        body: `${this.app.getName()} version ${it.version} is downloaded and will be automatically installed on exit`
       }).show()
     })
     return this.checkForUpdates()
