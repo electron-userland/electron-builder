@@ -5,7 +5,6 @@ import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { SquirrelBuilder, convertVersion, SquirrelOptions } from "./squirrelPack"
-import { emptyDir, remove } from "fs-extra-p"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -32,16 +31,8 @@ export default class SquirrelWindowsTarget extends Target {
 
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const distOptions = await this.computeEffectiveDistOptions()
-    const tempDir = path.join(installerOutDir, ".temp")
-    await emptyDir(tempDir)
-    try {
-      const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
-      await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch, tempDir)
-    }
-    finally {
-      await remove(tempDir)
-        .catch(e => warn(`Cannot delete temporary directory: ${e.message}`))
-    }
+    const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
+    await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch)
 
     packager.dispatchArtifactCreated(path.join(installerOutDir, setupFile), this, arch, `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`)
 

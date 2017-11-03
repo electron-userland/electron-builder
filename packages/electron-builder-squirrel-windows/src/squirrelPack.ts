@@ -57,11 +57,12 @@ export class SquirrelBuilder {
   constructor(private readonly options: SquirrelOptions, private readonly outputDirectory: string, private readonly packager: WinPackager) {
   }
 
-  async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch, dirToArchive: string) {
+  async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch) {
+    const packager = this.packager
+    const dirToArchive = await packager.getTempDir()
     const outputDirectory = this.outputDirectory
     const options = this.options
     const appUpdate = path.join(dirToArchive, "Update.exe")
-    const packager = this.packager
     await BluebirdPromise.all([
       copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
         .then(() => packager.sign(appUpdate)),
