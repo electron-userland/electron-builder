@@ -66,7 +66,21 @@ Object {
 }
 `;
 
-exports[`AppImage 3`] = `Object {}`;
+exports[`AppImage 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "TestApp-1.0.1-x86_64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
 
 exports[`AppImage 4`] = `
 Array [
@@ -113,12 +127,26 @@ Object {
     Object {
       "arch": "ia32",
       "file": "TestApp-1.0.1-i386.AppImage",
-      "updateInfo": Object {},
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
     Object {
       "file": "latest-linux-ia32.yml",
       "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.0.1-i386.AppImage",
+          },
+        ],
         "path": "TestApp-1.0.1-i386.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
         "version": "1.0.1",
       },
     },
@@ -128,7 +156,17 @@ Object {
 
 exports[`AppImage ia32 3`] = `
 Object {
-  "name": "TestApp-1.0.1-i386.AppImage",
+  "files": Array [
+    Object {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "TestApp-1.0.1-i386.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
 }
 `;
 
@@ -242,7 +280,29 @@ Object {
 }
 `;
 
-exports[`web installer 3`] = `Object {}`;
+exports[`web installer 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": Object {
+    "x64": Object {
+      "blockMapSize": "@blockMapSize",
+      "headerSize": "@headerSize",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha2": "@sha2",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
 
 exports[`web installer 4`] = `
 Array [

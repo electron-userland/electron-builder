@@ -8,9 +8,10 @@ import { createServer } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { assertPack } from "../helpers/packTester"
+import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
+import { toLinuxArchString } from "builder-util"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   process.env.TEST_UPDATER_PLATFORM = "win32"
@@ -272,41 +273,13 @@ async function testLinux(arch: Arch) {
     ]
   }
 
-  process.env.APPIMAGE = path.join(outDirs[0], "TestApp-1.0.0-x86_64.AppImage")
+  process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${toLinuxArchString(arch)}.AppImage`)
   await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater)
 }
 
 test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
-
-// test.ifAll("s3", async () => {
-//   if (process.env.OLD_DIST == null) {
-//     return
-//   }
-//
-//   const mockApp = createTestApp("0.5.13")
-//   jest.mock("electron", () => {
-//     return {
-//       app: mockApp,
-//     }
-//   }, {virtual: true})
-//
-//   const updater = new NsisUpdater()
-//   updater.updateConfigPath = await writeUpdateConfig({
-//     provider: "s3",
-//     bucket: "develar",
-//     path: "onshape-test",
-//   })
-//   tuneNsisUpdater(updater)
-//   updater.logger = console
-//
-//   {
-//     (process as any).resourcesPath = path.join(process.env.OLD_DIST!!, "win-unpacked", "resources")
-//   }
-//
-//   await checkResult(updater)
-// })
 
 async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
@@ -315,19 +288,10 @@ async function checkResult(updater: NsisUpdater) {
   const files = await downloadPromise
   const fileInfo: any = updateCheckResult.updateInfo.files[0]
 
-  delete fileInfo.sha2
-  delete fileInfo.sha512
-
   // because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
-
-  if (updater instanceof NsisUpdater) {
-    expect(fileInfo.packageInfo).toBeDefined()
-    delete fileInfo.packageInfo
-  }
-
-  expect(fileInfo).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
   expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
 }
 
