@@ -1,4 +1,5 @@
-import { isMacOsSierra, warn, asArray, debug } from "builder-util"
+import BluebirdPromise from "bluebird-lst"
+import { asArray, debug, isMacOsSierra, warn } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
 import { rename } from "fs-extra-p"
@@ -131,8 +132,7 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   let vm: VmManager
   if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!!) /* certificateSubjectName and other such options */) {
     vm = await packager.vm.value
-    const vendorPath = await getSignVendorPath()
-    tool = path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+    tool = getWinSignTool(await getSignVendorPath())
     args = computeSignToolArgs(configuration, true, vm)
   }
   else {
@@ -145,7 +145,21 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
     }
   }
 
-  await vm.exec(tool, args, {timeout, env})
+  try {
+    await vm.exec(tool, args, {timeout, env})
+  }
+  catch (e) {
+    if (e.message.includes("The file is being used by another process")) {
+      await new BluebirdPromise((resolve, reject) => {
+        setTimeout(() => {
+          vm.exec(tool, args, {timeout, env})
+            .then(resolve)
+            .catch(reject)
+        }, 2000)
+      })
+    }
+    throw e
+  }
 }
 
 interface CertInfo {
@@ -246,6 +260,16 @@ export function isOldWin6() {
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
+function getWinSignTool(vendorPath: string): string {
+  // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
+  if (isOldWin6()) {
+    return path.join(vendorPath, "windows-6", "signtool.exe")
+  }
+  else {
+    return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+  }
+}
+
 async function getToolPath(): Promise<ToolInfo> {
   if (isUseSystemSigncode()) {
     return {path: "osslsigncode"}
@@ -259,12 +283,7 @@ async function getToolPath(): Promise<ToolInfo> {
   const vendorPath = await getSignVendorPath()
   if (process.platform === "win32") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
-    if (isOldWin6()) {
-      return {path: path.join(vendorPath, "windows-6", "signtool.exe")}
-    }
-    else {
-      return {path: path.join(vendorPath, "windows-10", process.arch, "signtool.exe")}
-    }
+    return {path: getWinSignTool(vendorPath)}
   }
   else if (process.platform === "darwin") {
     let suffix: string | null = null
