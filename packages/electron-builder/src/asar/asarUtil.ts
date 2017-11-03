@@ -192,7 +192,7 @@ export class AsarPackager {
             .then(it => {
               writeStream.write(it, () => w(index + 1))
             })
-            .catch(reject)
+            .catch(e => reject(`Cannot read file ${file}: ${e.stack || e}`))
         }
         else {
           const readStream = createReadStream(file, {highWaterMark: 1024 * 1024 /* better to use more memory but copy faster */} as any)

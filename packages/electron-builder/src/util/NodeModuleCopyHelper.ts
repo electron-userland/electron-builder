@@ -18,7 +18,7 @@ export class NodeModuleCopyHelper {
     this.filter = matcher.createFilter()
   }
 
-  protected handleFile(file: string, fileStat: Stats) {
+  protected handleFile(file: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {
       return null
     }
@@ -30,7 +30,7 @@ export class NodeModuleCopyHelper {
       })
   }
 
-  protected handleSymlink(fileStat: Stats, file: string, linkTarget: string) {
+  protected handleSymlink(fileStat: Stats, file: string, linkTarget: string): Promise<Stats> | null {
     const link = path.relative(this.matcher.from, linkTarget)
     if (link.startsWith("..")) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
@@ -104,9 +104,11 @@ export class NodeModuleCopyHelper {
                 return null
               }
 
-              metadata.set(filePath, stat)
+              if (!stat.isDirectory()) {
+                metadata.set(filePath, stat)
+              }
               const consumerResult = this.handleFile(filePath, stat)
-              if (consumerResult == null || !("then" in consumerResult)) {
+              if (consumerResult == null) {
                 if (stat.isDirectory()) {
                   dirs.push(name)
                   return null
@@ -116,10 +118,10 @@ export class NodeModuleCopyHelper {
                 }
               }
               else {
-                return (consumerResult as Promise<any>)
+                return consumerResult
                   .then(it => {
                     // asarUtil can return modified stat (symlink handling)
-                    if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
+                    if ((it == null ? stat : it).isDirectory()) {
                       dirs.push(name)
                       return null
                     }
