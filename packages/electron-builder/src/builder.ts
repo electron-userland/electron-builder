@@ -16,10 +16,6 @@ export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
 export interface CliOptions extends PackagerOptions, PublishOptions {
-  mac?: Array<string>
-  linux?: Array<string>
-  win?: Array<string>
-
   arch?: string
 
   x64?: boolean
@@ -31,8 +27,6 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   platform?: string
 
   project?: string
-
-  extraMetadata?: any
 }
 
 /** @internal */
@@ -157,8 +151,8 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.project
 
   let config = result.config
-  const extraMetadata = result.extraMetadata
-  delete result.extraMetadata
+  const deprecatedExtraMetadata = r.extraMetadata
+  delete r.extraMetadata
 
   // config is array when combining dot-notation values with a config file value (#2016)
   if (Array.isArray(config)) {
@@ -177,12 +171,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     result.config = newConfig
   }
 
-  if (extraMetadata != null) {
+  if (deprecatedExtraMetadata != null) {
     if (typeof config === "string") {
       // transform to object and specify path to config as extends
       config = {
         extends: config,
-        extraMetadata,
+        extraMetadata: deprecatedExtraMetadata,
       };
       (result as any).config = config
     }
@@ -190,7 +184,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       config = {};
       (result as any).config = config
     }
-    (config as any).extraMetadata = extraMetadata
+    (config as any).extraMetadata = deprecatedExtraMetadata
   }
 
   if (config != null && typeof config !== "string") {

@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use, serializeToYaml } from "builder-util"
+import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use, serializeToYaml, addValue, archFromString } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
@@ -88,6 +88,57 @@ export class Packager {
     }
     if ("extraMetadata" in options) {
       throw new Error("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
+    }
+
+    const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
+    if (options.targets == null) {
+      options.targets = targets
+    }
+
+    function processTargets(platform: Platform, types: Array<string>) {
+      function commonArch(currentIfNotSpecified: boolean): Array<Arch> {
+        if (platform === Platform.MAC) {
+          return currentIfNotSpecified ? [Arch.x64] : []
+        }
+
+        const result = Array<Arch>()
+        return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
+      }
+
+      let archToType = targets.get(platform)
+      if (archToType == null) {
+        archToType = new Map<Arch, Array<string>>()
+        targets.set(platform, archToType)
+      }
+
+      if (types.length === 0) {
+        for (const arch of commonArch(false)) {
+          archToType.set(arch, [])
+        }
+        return
+      }
+
+      for (const type of types) {
+        const suffixPos = type.lastIndexOf(":")
+        if (suffixPos > 0) {
+          addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
+        }
+        else {
+          for (const arch of commonArch(true)) {
+            addValue(archToType, arch, type)
+          }
+        }
+      }
+    }
+
+    if (options.mac != null) {
+      processTargets(Platform.MAC, options.mac)
+    }
+    if (options.linux != null) {
+      processTargets(Platform.LINUX, options.linux)
+    }
+    if (options.win != null) {
+      processTargets(Platform.WINDOWS, options.win)
     }
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)

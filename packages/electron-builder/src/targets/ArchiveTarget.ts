@@ -1,11 +1,11 @@
 import { Arch, log } from "builder-util"
 import * as path from "path"
-import { Platform, Target } from "../core"
+import { Platform, Target, TargetSpecificOptions } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 
 export class ArchiveTarget extends Target {
-  readonly options = (this.packager.config as any)[this.name]
+  readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
 
   constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>, private readonly isWriteUpdateInfo = false) {
     super(name)
@@ -17,9 +17,16 @@ export class ArchiveTarget extends Target {
     const format = this.name
     log(`Building ${isMac ? "macOS " : ""}${format}`)
 
-    // do not specify arch if x64
-    // tslint:disable:no-invalid-template-strings
-    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
+    let defaultPattern: string
+    if (packager.platform === Platform.LINUX) {
+      // tslint:disable-next-line:no-invalid-template-strings
+      defaultPattern = "${name}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + ".${ext}"
+    }
+    else {
+      // tslint:disable-next-line:no-invalid-template-strings
+      defaultPattern = "${productName}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + "-${os}.${ext}"
+    }
+    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false))
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }

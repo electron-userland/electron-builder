@@ -9,6 +9,10 @@ import { UploadTask } from "electron-publish"
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, Array<string>>>
 
+  mac?: Array<string>
+  linux?: Array<string>
+  win?: Array<string>
+
   projectDir?: string | null
 
   cscLink?: string | null

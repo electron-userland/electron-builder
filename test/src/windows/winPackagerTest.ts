@@ -14,7 +14,16 @@ test.ifWinCi("beta version", app({
 }))
 
 test.ifNotCiMac("win zip", app({
-  targets: Platform.WINDOWS.createTarget(["zip", ]),
+  targets: Platform.WINDOWS.createTarget(["zip"]),
+}))
+
+test.ifNotCiMac.ifAll("zip artifactName", app({
+  linux: ["appimage"],
+  win: ["zip"],
+  config: {
+    //tslint:disable-next-line:no-invalid-template-strings
+    artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
+  },
 }))
 
 test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
@@ -34,7 +43,7 @@ test.ifMac("custom icon", () => {
   let platformPackager: CheckingWinPackager | null = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
-    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingWinPackager(packager),
+    platformPackagerFactory: packager => platformPackager = new CheckingWinPackager(packager),
     config: {
       win: {
         icon: "customIcon",

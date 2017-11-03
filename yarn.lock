@@ -439,9 +439,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.141.0:
-  version "2.142.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.142.0.tgz#efdf69d2be3132aa51d4e7abb2c28fe42771e3ec"
+aws-sdk@^2.143.0:
+  version "2.143.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.143.0.tgz#751068bd4cf13d3265f6da1b0254903be4bac8ee"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -4783,12 +4783,12 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^4.1.7:
-  version "4.1.7"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.1.7.tgz#b95fe9bbafa43ea18c494777a3011270ebd9f8a3"
+ts-babel@^4.1.8:
+  version "4.1.8"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.1.8.tgz#9900be30a153d36a7fe6c465d5d3f9611a3bb655"
   dependencies:
     babel-core "^6.26.0"
-    bluebird-lst "^1.0.4"
+    bluebird-lst "^1.0.5"
     fs-extra-p "^4.4.4"
     source-map-support "^0.5.0"
     v8-compile-cache "^1.1.0"

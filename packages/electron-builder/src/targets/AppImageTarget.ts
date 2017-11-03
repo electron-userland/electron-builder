@@ -41,8 +41,9 @@ export default class AppImageTarget extends Target {
 
     // https://github.com/electron-userland/electron-builder/issues/775
     // https://github.com/electron-userland/electron-builder/issues/1726
-    const artifactName = this.options.artifactName == null ? packager.computeSafeArtifactName(null, "AppImage", arch, false)!! : packager.expandArtifactNamePattern(this.options, "AppImage", arch)
-    const resultFile = path.join(this.outDir, artifactName)
+    // tslint:disable-next-line:no-invalid-template-strings
+    const artifactName = packager.expandArtifactNamePattern(this.options, "AppImage", arch, "${name}-${version}-${arch}.${ext}", false)
+    const artifactPath = path.join(this.outDir, artifactName)
 
     // pax doesn't like dir with leading dot (e.g. `.__appimage`)
     const stageDir = path.join(this.outDir, `__appimage-${Arch[arch]}`)
@@ -55,7 +56,7 @@ export default class AppImageTarget extends Target {
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await BluebirdPromise.all([
-      unlinkIfExists(resultFile),
+      unlinkIfExists(artifactPath),
       writeFile(path.join(stageDir, "/AppRun"), (await appRunTemplate.value)({
         systemIntegration: this.options.systemIntegration || "ask",
         desktopFileName: finalDesktopFilename,
@@ -101,7 +102,7 @@ export default class AppImageTarget extends Target {
     if (packager.compression === "maximum") {
       args.push("--comp", "xz")
     }
-    args.push(stageDir, resultFile)
+    args.push(stageDir, artifactPath)
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {
         ...process.env,
@@ -114,7 +115,7 @@ export default class AppImageTarget extends Target {
       await remove(stageDir)
     }
 
-    const blockMapInfo = await createDifferentialPackage(resultFile)
+    const blockMapInfo = await createDifferentialPackage(artifactPath)
     const updateInfo: BlockMapDataHolder = {
       size: blockMapInfo.size,
       blockMapSize: blockMapInfo.blockMapSize,
@@ -122,7 +123,7 @@ export default class AppImageTarget extends Target {
     }
 
     packager.info.dispatchArtifactCreated({
-      file: resultFile,
+      file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
       target: this,
       arch,

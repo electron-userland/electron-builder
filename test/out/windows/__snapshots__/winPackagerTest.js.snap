@@ -15,3 +15,27 @@ Object {
   ],
 }
 `;
+
+exports[`zip artifactName 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-linux-x86_64.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win-x64.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
