@@ -131,7 +131,6 @@ Emitted on progress.
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
-    * [`.FileInfo`](#FileInfo)
     * [`.Logger`](#Logger)
         * [`.debug(message)`](#module_electron-updater.Logger+debug)
         * [`.error(message)`](#module_electron-updater.Logger+error)
@@ -206,16 +205,6 @@ This is different from the normal quit event sequence.
 - isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode.
 - isForceRunAfter <code>Boolean</code> - *windows-only* Run the app after finish even on silent install.
 
-<a name="FileInfo"></a>
-### `FileInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Properties**
-* **<code id="FileInfo-url">url</code>** String
-* <code id="FileInfo-packageInfo">packageInfo</code> module:builder-util-runtime.PackageFileInfo
-* <code id="FileInfo-sha2">sha2</code> String
-* <code id="FileInfo-sha512">sha512</code> String
-* <code id="FileInfo-headers">headers</code> [key: string]: string
-
 <a name="Logger"></a>
 ### `Logger`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
@@ -251,10 +240,9 @@ This is different from the normal quit event sequence.
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
 * **<code id="UpdateInfo-version">version</code>** String - The version.
+* **<code id="UpdateInfo-files">files</code>** Array&lt;module:builder-util-runtime.UpdateFileInfo&gt;
 * **<code id="UpdateInfo-path">path</code>** String - Deprecated: {tag.description}
-* **<code id="UpdateInfo-url">url</code>** String | Array&lt;String&gt;
-* **<code id="UpdateInfo-sha512">sha512</code>** String
-* <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
+* **<code id="UpdateInfo-sha512">sha512</code>** String - Deprecated: {tag.description}
 * <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
 * <code id="UpdateInfo-releaseNotes">releaseNotes</code> String | Array&lt;module:builder-util-runtime.ReleaseNoteInfo&gt; - The release notes. List if `updater.fullChangelog` is set to `true`, `string` otherwise.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
@@ -264,11 +252,10 @@ This is different from the normal quit event sequence.
 ### `UpdateCheckResult`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
 * **<code id="UpdateCheckResult-updateInfo">updateInfo</code>** module:builder-util-runtime.UpdateInfo
-* <code id="UpdateCheckResult-fileInfo">fileInfo</code> [FileInfo](#FileInfo)
 * <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt;
 * <code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken
+* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
 
 <a name="UpdaterSignal"></a>
 ### UpdaterSignal

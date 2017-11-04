@@ -8,6 +8,7 @@
   
   Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
 * <code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" - The type of storage to use for the object.
+* <code id="S3Options-endpoint">endpoint</code> String - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
 * <code id="S3Options-channel">channel</code> = `latest` String - The update channel.
 * <code id="S3Options-path">path</code> = `/` String - The directory path.
 <!-- end of generated block -->
