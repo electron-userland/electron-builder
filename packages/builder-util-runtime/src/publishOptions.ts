@@ -153,6 +153,12 @@ export interface S3Options extends BaseS3Options {
    * @default STANDARD
    */
   readonly storageClass?: "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | null
+
+  /**
+   * The endpoint URI to send requests to. The default endpoint is built from the configured region.
+   * The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
+   */
+  readonly endpoint?: string | null
 }
 
 /**
@@ -189,23 +195,28 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
 
 function s3Url(options: S3Options) {
   let url: string
-  if (!options.bucket.includes(".")) {
-    if (options.region === "cn-north-1") {
-      url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
-    }
-    else {
-      url = `https://${options.bucket}.s3.amazonaws.com`
-    }
+  if (options.endpoint != null) {
+    url = `${options.endpoint}/${options.bucket}`
   }
   else {
-    if (options.region == null) {
-      throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
+    if (!options.bucket.includes(".")) {
+      if (options.region === "cn-north-1") {
+        url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
+      }
+      else {
+        url = `https://${options.bucket}.s3.amazonaws.com`
+      }
     }
+    else {
+      if (options.region == null) {
+        throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
+      }
 
-    // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
-    url = options.region === "us-east-1"
-      ? `https://s3.amazonaws.com/${options.bucket}`
-      : `https://s3-${options.region}.amazonaws.com/${options.bucket}`
+      // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
+      url = options.region === "us-east-1"
+        ? `https://s3.amazonaws.com/${options.bucket}`
+        : `https://s3-${options.region}.amazonaws.com/${options.bucket}`
+    }
   }
 
   if (options.path != null) {

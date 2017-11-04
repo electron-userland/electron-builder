@@ -86,8 +86,8 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
   }
 
   const updaterVersion = dependencies["electron-updater"]
-  if (updaterVersion != null && !semver.satisfies("2.16.0", updaterVersion)) {
-    errors.push(`At least electron-updater 2.16.0 is required by current electron-builder version.`)
+  if (updaterVersion != null && !semver.satisfies("2.16.1", updaterVersion)) {
+    errors.push(`At least electron-updater 2.16.1 is required by current electron-builder version.`)
   }
 
   const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
