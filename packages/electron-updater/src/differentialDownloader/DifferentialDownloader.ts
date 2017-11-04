@@ -1,9 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, PackageFileInfo, safeGetHeader } from "builder-util-runtime"
-import { BlockMap, BlockMapFile, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
-import { close, createReadStream, createWriteStream, open, readJson } from "fs-extra-p"
+import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { BlockMap } from "builder-util-runtime/out/blockMapApi"
+import { close, createReadStream, createWriteStream, open } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { Logger } from "./main"
+import { Logger } from "../main"
+import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
 
@@ -16,33 +17,19 @@ export class DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 }
 
-function buildChecksumMap(file: BlockMapFile, fileOffset: number) {
-  const checksumToOffset = new Map<string, number>()
-  const checksumToSize = new Map<string, number>()
-  let offset = fileOffset
-  for (let i = 0; i < file.checksums.length; i++) {
-    const checksum = file.checksums[i]
-    const size = file.sizes[i]
-    checksumToOffset.set(checksum, offset)
-    checksumToSize.set(checksum, size)
-    offset += size
-  }
-  return {checksumToOffset, checksumToOldSize: checksumToSize}
-}
-
-export class DifferentialDownloader {
+export abstract class DifferentialDownloader {
   private readonly baseRequestOptions: RequestOptions
 
-  private fileMetadataBuffer: Buffer
+  protected fileMetadataBuffer: Buffer
 
   private readonly logger: Logger
 
-  constructor(private readonly blockAwareFileInfo: BlockMapDataHolder, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
+  constructor(protected readonly blockAwareFileInfo: BlockMapDataHolder, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
     this.logger = options.logger
     this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
   }
 
-  protected get signatureSize() {
+  protected get signatureSize(): number {
     return 0
   }
 
@@ -57,33 +44,16 @@ export class DifferentialDownloader {
     }
   }
 
-  async downloadNsisPackage(oldBlockMapFile: string) {
-    const packageInfo = this.blockAwareFileInfo as PackageFileInfo
-    const offset = packageInfo.size - packageInfo.headerSize!! - packageInfo.blockMapSize!!
-    this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
-    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(packageInfo.headerSize!!))
-    const oldBlockMap = await readJson(oldBlockMapFile)
-    await this.download(oldBlockMap, newBlockMap)
-  }
-
-  async downloadAppImage(oldBlockMap: BlockMap) {
-    const packageInfo = this.blockAwareFileInfo
-    const fileSize = packageInfo.size!!
-    const offset = fileSize - (packageInfo.blockMapSize!! + 4)
-    this.fileMetadataBuffer = await this.readRemoteBytes(offset, fileSize - 1)
-    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
-    await this.download(oldBlockMap, newBlockMap)
-  }
-
-  private async download(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+  protected async doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
     if (oldBlockMap.version !== newBlockMap.version) {
       throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
     }
 
-    const operations = this.computeOperations(oldBlockMap, newBlockMap)
-    if (this.logger.debug != null) {
-      this.logger.debug(JSON.stringify(operations, null, 2))
+    const logger = this.logger
+    const operations = computeOperations(oldBlockMap, newBlockMap, logger)
+    if (logger.debug != null) {
+      logger.debug(JSON.stringify(operations, null, 2))
     }
 
     let downloadSize = 0
@@ -103,7 +73,7 @@ export class DifferentialDownloader {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
-    this.logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newPackageSize / 100))}%)`)
+    logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newPackageSize / 100))}%)`)
 
     await this.downloadFile(operations)
   }
@@ -203,79 +173,7 @@ export class DifferentialDownloader {
       .finally(() => close(oldFileFd))
   }
 
-  private computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
-    const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
-    const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
-
-    const oldEntryMap = buildEntryMap(oldBlockMap.files)
-
-    let lastOperation: Operation | null = null
-
-    const operations: Array<Operation> = []
-    for (const blockMapFile of newBlockMap.files) {
-      const name = blockMapFile.name
-      const oldEntry = oldEntryMap.get(name)
-      if (oldEntry == null) {
-        // new file
-        operations.push({
-          kind: OperationKind.DOWNLOAD,
-          start: blockMapFile.offset,
-          end: blockMapFile.offset + blockMapFile.sizes.reduce((accumulator, currentValue) => accumulator + currentValue),
-        })
-        continue
-      }
-
-      const newFile = nameToNewBlocks.get(name)!!
-      let changedBlockCount = 0
-
-      const {checksumToOffset: checksumToOldOffset, checksumToOldSize} = buildChecksumMap(nameToOldBlocks.get(name)!!, oldEntry.offset)
-
-      let newOffset = blockMapFile.offset
-      for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
-        const blockSize = newFile.sizes[i]
-        const checksum = newFile.checksums[i]
-        let oldOffset: number | null | undefined = checksumToOldOffset.get(checksum)
-        if (oldOffset != null && checksumToOldSize.get(checksum) !== blockSize) {
-          this.logger.warn(`Checksum ("${checksum}") matches, but size differs (old: ${checksumToOldSize.get(checksum)}, new: ${blockSize})`)
-          oldOffset = null
-        }
-
-        if (oldOffset == null) {
-          changedBlockCount++
-
-          if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD || lastOperation.end !== newOffset) {
-            lastOperation = {
-              kind: OperationKind.DOWNLOAD,
-              start: newOffset,
-              end: newOffset + blockSize,
-            }
-            operations.push(lastOperation)
-          }
-          else {
-            lastOperation.end += blockSize
-          }
-        }
-        else if (lastOperation == null || lastOperation.kind !== OperationKind.COPY || lastOperation.end !== oldOffset) {
-          lastOperation = {
-            kind: OperationKind.COPY,
-            start: oldOffset,
-            end: oldOffset + blockSize,
-          }
-          operations.push(lastOperation)
-        }
-        else {
-          lastOperation.end += blockSize
-        }
-      }
-
-      if (changedBlockCount > 0) {
-        this.logger.info(`File${blockMapFile.name === "file" ? "" : (" " + blockMapFile.name)} has ${changedBlockCount} changed blocks`)
-      }
-    }
-    return operations
-  }
-
-  private async readRemoteBytes(start: number, endInclusive: number) {
+  protected async readRemoteBytes(start: number, endInclusive: number) {
     const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
     const requestOptions = this.createRequestOptions()
     requestOptions.headers!!.Range = `bytes=${start}-${endInclusive}`
@@ -313,44 +211,7 @@ export class DifferentialDownloader {
   }
 }
 
-export class SevenZipDifferentialDownloader extends DifferentialDownloader {
-  constructor(packageInfo: BlockMapDataHolder, httpExecutor: HttpExecutor<any>, options: DifferentialDownloaderOptions) {
-    super(packageInfo, httpExecutor, options)
-  }
-
-  protected get signatureSize() {
-    return SIGNATURE_HEADER_SIZE
-  }
-}
-
-enum OperationKind {
-  COPY, DOWNLOAD
-}
-
-interface Operation {
-  kind: OperationKind
-
-  start: number
-  end: number
-}
-
-function buildEntryMap(list: Array<BlockMapFile>) {
-  const result = new Map<string, BlockMapFile>()
-  for (const item of list) {
-    result.set(item.name, item)
-  }
-  return result
-}
-
-function buildBlockFileMap(list: Array<BlockMapFile>) {
-  const result = new Map<string, BlockMapFile>()
-  for (const item of list) {
-    result.set(item.name, item)
-  }
-  return result
-}
-
-async function readBlockMap(data: Buffer): Promise<BlockMap> {
+export async function readBlockMap(data: Buffer): Promise<BlockMap> {
   return JSON.parse((await inflateRaw(data)).toString())
 }
 

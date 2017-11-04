@@ -1,7 +1,7 @@
 import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
 import { spawn, SpawnOptions } from "child_process"
 import "source-map-support/register"
-import { DifferentialDownloader } from "./DifferentialDownloader"
+import { AppImageDifferentialDownloader } from "./differentialDownloader/AppImageDifferentialDownloader"
 import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { BaseUpdater } from "./BaseUpdater"
 import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
@@ -57,13 +57,13 @@ export class AppImageUpdater extends BaseUpdater {
 
       let isDownloadFull = false
       try {
-        await new DifferentialDownloader(fileInfo.info, this.httpExecutor, {
+        await new AppImageDifferentialDownloader(fileInfo.info, this.httpExecutor, {
           newUrl: fileInfo.url.href,
           oldPackageFile: oldFile,
           logger: this._logger,
           newFile: installerPath,
           requestHeaders,
-        }).downloadAppImage(safeLoad(await readBlockMapDataFromAppImage(oldFile)))
+        }).download(safeLoad(await readBlockMapDataFromAppImage(oldFile)))
       }
       catch (e) {
         this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

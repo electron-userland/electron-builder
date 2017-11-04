@@ -3,7 +3,7 @@ import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
 import * as path from "path"
 import "source-map-support/register"
-import { SevenZipDifferentialDownloader } from "./DifferentialDownloader"
+import { SevenZipDifferentialDownloader } from "./differentialDownloader/SevenZipDifferentialDownloader"
 import { UPDATE_DOWNLOADED } from "./main"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { BaseUpdater } from "./BaseUpdater"
@@ -51,7 +51,7 @@ export class NsisUpdater extends BaseUpdater {
               logger: this._logger,
               newFile: packagePath,
               requestHeaders: this.requestHeaders,
-            }).downloadNsisPackage(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
+            }).download(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
           }
           catch (e) {
             this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
