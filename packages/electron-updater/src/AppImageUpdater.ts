@@ -1,7 +1,7 @@
 import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
 import { spawn, SpawnOptions } from "child_process"
 import "source-map-support/register"
-import { DifferentialDownloader } from "./differentialPackage"
+import { DifferentialDownloader } from "./DifferentialDownloader"
 import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { BaseUpdater } from "./BaseUpdater"
 import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
