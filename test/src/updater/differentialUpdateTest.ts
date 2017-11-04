@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { GenericServerOptions, WindowsUpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
-import { Arch, Platform } from "electron-builder"
+import { Arch, Platform, Configuration } from "electron-builder"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { close, open, read, readFile, rename, writeFile } from "fs-extra-p"
 import { createServer } from "http"
@@ -11,7 +11,8 @@ import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
-import { toLinuxArchString } from "builder-util"
+import { MacUpdater } from "electron-updater/out/MacUpdater"
+import { EventEmitter } from "events"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   process.env.TEST_UPDATER_PLATFORM = "win32"
@@ -158,128 +159,78 @@ async function testLinux(arch: Arch) {
   process.env.TEST_UPDATER_PLATFORM = "linux"
   process.env.TEST_UPDATER_ARCH = Arch[arch]
 
-  let outDirs: Array<string> = []
+  const outDirs: Array<string> = []
+  await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch))
 
-  async function buildApp(version: string) {
-    await assertPack("test-app-one", {
-      targets: Platform.LINUX.createTarget(["appimage"], arch),
-      config: {
-        extraMetadata: {
-          version,
-        },
-        compression: "normal",
-        publish: {
-          provider: "s3",
-          bucket: "develar",
-          path: "test",
-        },
-      },
-    }, {
-      packed: async context => {
-        outDirs.push(context.outDir)}
-    })
-  }
-
-  if (process.env.__SKIP_BUILD == null) {
-    await buildApp("1.0.0")
-
-    const tmpDir = new TmpDir()
-    try {
-      // move dist temporarily out of project dir
-      const oldDir = await tmpDir.getTempDir()
-      await rename(outDirs[0], oldDir)
-      outDirs[0] = oldDir
-
-      await buildApp("1.0.1")
-    }
-    catch (e) {
-      await tmpDir.cleanup()
-      throw e
-    }
-
-    // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
-    const oldDir = path.join(outDirs[1], "..", "oldDist")
-    await rename(outDirs[0], oldDir)
-    outDirs[0] = oldDir
-
-    // await rename(path.join(oldDir, "TestApp-1.0.0-x86_64.AppImage"), path.join(oldDir, "win-unpacked", "package.7z"))
-  }
-  else {
-    // to  avoid snapshot mismatch (since in this node app is not packed)
-    expect({
-      win: [
-        {
-          file: "latest.yml",
-          fileContent: {
-            version: "1.0.0",
-            path: "Test App ßW Web Setup 1.0.0.exe",
-            packages: {
-              x64: {
-                file: "TestApp-1.0.0-x64.nsis.7z"
-              }
-            },
-          }
-        },
-        {
-          file: "Test App ßW Web Setup 1.0.0.exe",
-          packageFiles: {
-            x64: {
-              file: "TestApp-1.0.0-x64.nsis.7z"
-            }
-          },
-          arch: "x64",
-          safeArtifactName: "TestApp-WebSetup-1.0.0.exe"
-        },
-        {
-          file: "TestApp-1.0.0-x64.nsis.7z",
-          arch: "x64"
-        }
-      ]
-    }).toMatchSnapshot()
-    expect({
-      win: [
-        {
-          file: "latest.yml",
-          fileContent: {
-            version: "1.0.1",
-            path: "Test App ßW Web Setup 1.0.1.exe",
-            packages: {
-              x64: {
-                file: "TestApp-1.0.1-x64.nsis.7z"
-              }
-            },
-          }
-        },
-        {
-          file: "Test App ßW Web Setup 1.0.1.exe",
-          packageFiles: {
-            x64: {
-              file: "TestApp-1.0.1-x64.nsis.7z"
-            }
-          },
-          arch: "x64",
-          safeArtifactName: "TestApp-WebSetup-1.0.1.exe"
-        },
-        {
-          file: "TestApp-1.0.1-x64.nsis.7z",
-          arch: "x64"
-        }
-      ]
-    }).toMatchSnapshot()
-
-    outDirs = [
-      path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"),
-      path.join(process.env.TEST_APP_TMP_DIR!!, "dist"),
-    ]
-  }
-
-  process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${toLinuxArchString(arch)}.AppImage`)
+  process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
   await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater)
 }
 
 test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+
+async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, extraConfig?: Configuration | null) {
+  await assertPack("test-app-one", {
+    targets,
+    config: {
+      extraMetadata: {
+        version,
+      },
+      ...extraConfig,
+      compression: "normal",
+      publish: {
+        provider: "s3",
+        bucket: "develar",
+        path: "test",
+      },
+    },
+  }, {
+    packed: async context => {
+      outDirs.push(context.outDir)}
+  })
+}
+
+async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, extraConfig?: Configuration | null) {
+  await buildApp("1.0.0", outDirs, targets, extraConfig)
+
+  const tmpDir = new TmpDir()
+  try {
+    // move dist temporarily out of project dir
+    const oldDir = await tmpDir.getTempDir()
+    await rename(outDirs[0], oldDir)
+    outDirs[0] = oldDir
+
+    await buildApp("1.0.1", outDirs, targets, extraConfig)
+  }
+  catch (e) {
+    await tmpDir.cleanup()
+    throw e
+  }
+
+  // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
+  const oldDir = path.join(outDirs[1], "..", "oldDist")
+  await rename(outDirs[0], oldDir)
+  outDirs[0] = oldDir
+}
+
+test.ifAll.ifMac.ifNotCi("dmg", async () => {
+  process.env.TEST_UPDATER_PLATFORM = "darwin"
+
+  const outDirs: Array<string> = []
+  if (process.env.__SKIP_BUILD == null) {
+    await doBuild(outDirs, Platform.MAC.createTarget(), {
+      mac: {
+        electronUpdaterCompatibility: ">=2.17.0",
+      },
+    })
+  }
+  else {
+    // todo
+  }
+
+  await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater)
+})
 
 async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
@@ -295,6 +246,28 @@ async function checkResult(updater: NsisUpdater) {
   expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
 }
 
+class TestNativeUpdater extends EventEmitter {
+  // private updateUrl: string | null = null
+
+  // noinspection JSMethodCanBeStatic
+  checkForUpdates() {
+    console.log("TestNativeUpdater.checkForUpdates")
+    // this.download()
+    //   .catch(error => {
+    //     this.emit("error", error)
+    //   })
+  }
+
+  // private async download() {
+  // }
+
+  // noinspection JSMethodCanBeStatic
+  setFeedURL(updateUrl: string) {
+    // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
+    // this.updateUrl = updateUrl
+  }
+}
+
 function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
   const serveStatic = require("serve-static")
   const finalHandler = require("finalhandler")
@@ -308,10 +281,12 @@ function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
     serve(request, response, finalHandler(request, response))
   })
 
+  const mockNativeUpdater = new TestNativeUpdater()
   const mockApp = createTestApp("0.0.1")
   jest.mock("electron", () => {
     return {
       app: mockApp,
+      autoUpdater: mockNativeUpdater,
     }
   }, {virtual: true})
 

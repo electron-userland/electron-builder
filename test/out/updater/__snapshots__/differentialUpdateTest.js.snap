@@ -176,6 +176,88 @@ Array [
 ]
 `;
 
+exports[`dmg 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.dmg",
+      "safeArtifactName": "TestApp-1.0.0.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.dmg.blockmap",
+      "safeArtifactName": "TestApp-1.0.0.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.dmg",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.dmg",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg 2`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.dmg",
+      "safeArtifactName": "TestApp-1.0.1.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.dmg.blockmap",
+      "safeArtifactName": "TestApp-1.0.1.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.dmg",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.dmg",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
 exports[`web installer 1`] = `
 Object {
   "win": Array [

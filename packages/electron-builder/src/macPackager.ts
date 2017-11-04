@@ -38,7 +38,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   get defaultTarget(): Array<string> {
-    return ["zip", "dmg"]
+    const electronUpdaterCompatibility = this.platformSpecificBuildOptions.electronUpdaterCompatibility
+    return (electronUpdaterCompatibility == null || semver.satisfies("2.16.0", electronUpdaterCompatibility)) ? ["zip", "dmg"] : ["dmg"]
   }
 
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {

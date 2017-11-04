@@ -32,7 +32,7 @@ export class AppImageUpdater extends BaseUpdater {
 
   /*** @private */
   protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
-    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "AppImage")
+    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "AppImage")!!
 
     const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {

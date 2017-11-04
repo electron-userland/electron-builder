@@ -1,14 +1,24 @@
+## 2.16.0
+
+### Features
+
+* [Update metadata format allows several files](https://github.com/electron-userland/electron-builder/releases/tag/v19.44.0).
+
+### Bug Fixes
+
+*  Include application name in update notification ([#2262](https://github.com/electron-userland/electron-builder/issues/2262)) ([1809c94](https://github.com/electron-userland/electron-builder/commit/1809c94))
+
 ## 2.13.0
 
 ### Features
 
-* **electron-updater:** full changelog for all versions from current to latest ([67fe9ff](https://github.com/electron-userland/electron-builder/commit/67fe9ff))
+* full changelog for all versions from current to latest ([67fe9ff](https://github.com/electron-userland/electron-builder/commit/67fe9ff))
 
 ## 2.12.1
 
 ### Performance Improvements
 
-* **electron-updater:** a little bit more compact blockmap data ([c92bc38](https://github.com/electron-userland/electron-builder/commit/c92bc38))
+* a little bit more compact blockmap data ([c92bc38](https://github.com/electron-userland/electron-builder/commit/c92bc38))
 
 ## 2.12.0
 

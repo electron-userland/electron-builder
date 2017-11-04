@@ -16,8 +16,7 @@ export class NsisUpdater extends BaseUpdater {
 
   /*** @private */
   protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
-    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "exe")
-
+    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "exe")!!
     const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,

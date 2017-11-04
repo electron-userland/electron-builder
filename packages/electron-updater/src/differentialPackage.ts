@@ -1,9 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, PackageFileInfo, safeGetHeader } from "builder-util-runtime"
 import { BlockMap, BlockMapFile, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
-import { close, createReadStream, createWriteStream, open, readFile } from "fs-extra-p"
+import { close, createReadStream, createWriteStream, open, readJson } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
 import { Logger } from "./main"
 
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
@@ -63,7 +62,7 @@ export class DifferentialDownloader {
     const offset = packageInfo.size - packageInfo.headerSize!! - packageInfo.blockMapSize!!
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
     const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(packageInfo.headerSize!!))
-    const oldBlockMap = safeLoad(await readFile(oldBlockMapFile, "utf-8"))
+    const oldBlockMap = await readJson(oldBlockMapFile)
     await this.download(oldBlockMap, newBlockMap)
   }
 
@@ -352,7 +351,7 @@ function buildBlockFileMap(list: Array<BlockMapFile>) {
 }
 
 async function readBlockMap(data: Buffer): Promise<BlockMap> {
-  return safeLoad((await inflateRaw(data)).toString())
+  return JSON.parse((await inflateRaw(data)).toString())
 }
 
 function formatBytes(value: number, symbol = " KB") {

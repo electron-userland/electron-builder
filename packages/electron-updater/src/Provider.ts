@@ -47,16 +47,21 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
-export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>) {
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
   if (files.length === 0) {
     throw new Error("No files provided")
   }
 
-  let result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
-  if (result == null && not != null) {
-    result = files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
+  const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
+  if (result != null) {
+    return result
   }
-  return result || files[0]
+  else if (not == null) {
+    return files[0]
+  }
+  else {
+    return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
+  }
 }
 
 export function parseUpdateInfo(rawData: string, channelFile: string, channelFileUrl: URL): UpdateInfo {
