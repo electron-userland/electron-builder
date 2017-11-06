@@ -95,7 +95,10 @@ export default class AppImageTarget extends Target {
     const vendorToolDir = path.join(vendorDir, process.platform === "darwin" ? "darwin" : `linux-${process.arch}`)
     // default gzip compression - 51.9, xz - 50.4 difference is negligible, start time - well, it seems, a little bit longer (but on Parallels VM on external SSD disk)
     // so, to be decided later, is it worth to use xz by default
-    const args = ["--runtime-file", path.join(vendorDir, `runtime-${(arch === Arch.ia32 ? "i686" : (arch === Arch.x64 ? "x86_64" : "armv7l"))}`)]
+    const args = [
+      "--runtime-file", path.join(vendorDir, `runtime-${(arch === Arch.ia32 ? "i686" : (arch === Arch.x64 ? "x86_64" : "armv7l"))}`),
+      "--no-appstream",
+    ]
     if (debug.enabled) {
       args.push("--verbose")
     }
