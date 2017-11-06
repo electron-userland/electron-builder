@@ -82,6 +82,7 @@ export class AsarPackager {
 
       if (stat.isSymbolicLink()) {
         this.fs.getOrCreateNode(pathInArchive).link = (stat as any).relativeLink
+        unpackedFileIndexSet.add(i)
         continue
       }
 
@@ -126,7 +127,7 @@ export class AsarPackager {
 
         unpackedFileIndexSet.add(i)
       }
-  }
+    }
 
     if (taskManager.tasks.length > 0) {
       await taskManager.awaitTasks()

@@ -52,11 +52,13 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.updateInfo).toMatchSnapshot()
   if (expectDownloadPromise) {
+    expect(updateCheckResult.downloadPromise).toBeDefined()
+    const downloadResult = await updateCheckResult.downloadPromise
     if (updater instanceof MacUpdater) {
-      expect(await updateCheckResult.downloadPromise).toEqual([])
+      expect(downloadResult).toEqual([])
     }
     else {
-      await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
+      await assertThat(path.join((downloadResult)!![0])).isFile()
     }
   }
   else {
