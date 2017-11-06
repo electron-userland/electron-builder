@@ -1,9 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, createReadStream, createWriteStream, open } from "fs-extra-p"
-import { OutgoingHttpHeaders, RequestOptions } from "http"
+import { close, createWriteStream, open } from "fs-extra-p"
+import { OutgoingHttpHeaders, RequestOptions, IncomingMessage } from "http"
+import { Writable } from "stream"
 import { Logger } from "../main"
+import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
@@ -44,7 +46,7 @@ export abstract class DifferentialDownloader {
     }
   }
 
-  protected async doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+  protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
     if (oldBlockMap.version !== newBlockMap.version) {
       throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
@@ -75,10 +77,10 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newPackageSize / 100))}%)`)
 
-    await this.downloadFile(operations)
+    return this.downloadFile(operations)
   }
 
-  private async downloadFile(operations: Array<Operation>) {
+  private async downloadFile(tasks: Array<Operation>): Promise<any> {
     // todo we can avoid download remote and construct manually
     const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
 
@@ -120,47 +122,19 @@ export abstract class DifferentialDownloader {
 
       const firstStream = streams[0]
 
-      const w = (index: number) => {
-        if (index >= operations.length) {
+      const w = (taskOffset: number) => {
+        if (taskOffset >= tasks.length) {
           firstStream.end(this.fileMetadataBuffer)
           return
         }
 
-        const operation = operations[index++]
-
-        if (operation.kind === OperationKind.COPY) {
-          const readStream = createReadStream(this.options.oldPackageFile, {
-            fd: oldFileFd,
-            autoClose: false,
-            start: operation.start,
-            // end is inclusive
-            end: operation.end - 1,
-          })
-          readStream.on("error", reject)
-          readStream.once("end", () => w(index))
-          readStream.pipe(firstStream, {
-            end: false
-          })
-        }
-        else {
-          // https://github.com/electron-userland/electron-builder/issues/1523#issuecomment-327084661
-          // todo to reduce http requests we need to consolidate non sequential download operations (Multipart ranges)
-          const requestOptions = this.createRequestOptions("get")
-          requestOptions.headers!!.Range = `bytes=${operation.start}-${operation.end - 1}`
-          const request = this.httpExecutor.doRequest(requestOptions, response => {
-            // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-            if (response.statusCode >= 400) {
-              reject(new HttpError(response))
-            }
-
-            response.pipe(firstStream, {
-              end: false
-            })
-            response.once("end", () => w(index))
-          })
-          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-          request.end()
-        }
+        const nextOffset = taskOffset + 2000
+        this.executeTasks({
+          tasks,
+          start: taskOffset,
+          end: Math.min(tasks.length, nextOffset),
+          oldFileFd,
+        }, firstStream, () => w(nextOffset), reject)
       }
 
       if (signature == null) {
@@ -171,6 +145,78 @@ export abstract class DifferentialDownloader {
       }
     })
       .finally(() => close(oldFileFd))
+  }
+
+  private executeTasks(options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void) {
+    let ranges = "bytes="
+    let partCount = 0
+    const partIndexToTaskIndex = new Map<number, number>()
+    const partIndexToLength: Array<number> = []
+    for (let i = options.start; i < options.end; i++) {
+      const task = options.tasks[i]
+      if (task.kind === OperationKind.DOWNLOAD) {
+        ranges += `${task.start}-${task.end - 1}, `
+        partIndexToTaskIndex.set(partCount, i)
+        partCount++
+        partIndexToLength.push(task.end - task.start)
+      }
+    }
+
+    if (partCount <= 1) {
+      // the only remote range - copy
+      const w = (index: number) => {
+        if (index >= options.end) {
+          resolve()
+          return
+        }
+
+        const task = options.tasks[index++]
+
+        if (task.kind === OperationKind.COPY) {
+          copyData(task, out, options.oldFileFd, reject, () => w(index))
+        }
+        else {
+          const requestOptions = this.createRequestOptions("get")
+          requestOptions.headers!!.Range = `bytes=${task.start}-${task.end - 1}`
+          const request = this.httpExecutor.doRequest(requestOptions, response => {
+            if (!checkIsRangesSupported(response, reject)) {
+              return
+            }
+
+            response.pipe(out, {
+              end: false
+            })
+            response.once("end", () => w(index))
+          })
+          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+          request.end()
+        }
+      }
+
+      w(options.start)
+      return
+    }
+
+    const requestOptions = this.createRequestOptions("get")
+    requestOptions.headers!!.Range = ranges.substring(0, ranges.length - 2)
+    const request = this.httpExecutor.doRequest(requestOptions, response => {
+      if (!checkIsRangesSupported(response, reject)) {
+        return
+      }
+
+      const contentType = safeGetHeader(response, "content-type")
+      const m = /^multipart\/.+?(?:; boundary=(?:(?:"(.+)")|(?:([^\s]+))))$/i.exec(contentType)
+      if (m == null) {
+        reject(new Error(`Content-Type "multipart/byteranges" is expected, but got "${contentType}"`))
+        return
+      }
+
+      const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve)
+      dicer.on("error", reject)
+      response.pipe(dicer)
+    })
+    this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+    request.end()
   }
 
   protected async readRemoteBytes(start: number, endInclusive: number) {
@@ -188,16 +234,8 @@ export abstract class DifferentialDownloader {
   private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void) {
     return new BluebirdPromise((resolve, reject) => {
       const request = this.httpExecutor.doRequest(requestOptions, response => {
-        // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-        if (response.statusCode >= 400) {
-          reject(new HttpError(response))
-        }
-
-        if (response.statusCode !== 206) {
-          const acceptRanges = safeGetHeader(response, "accept-ranges")
-          if (acceptRanges == null || acceptRanges === "none") {
-            reject(new Error("Server doesn't support Accept-Ranges"))
-          }
+        if (!checkIsRangesSupported(response, reject)) {
+          return
         }
 
         response.on("data", dataHandler)
@@ -217,4 +255,21 @@ export async function readBlockMap(data: Buffer): Promise<BlockMap> {
 
 function formatBytes(value: number, symbol = " KB") {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
+}
+
+function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
+  // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+  if (response.statusCode!! >= 400) {
+    reject(new HttpError(response))
+    return false
+  }
+
+  if (response.statusCode !== 206) {
+    const acceptRanges = safeGetHeader(response, "accept-ranges")
+    if (acceptRanges == null || acceptRanges === "none") {
+      reject(new Error("Server doesn't support Accept-Ranges"))
+      return false
+    }
+  }
+  return true
 }

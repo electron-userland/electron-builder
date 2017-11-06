@@ -45,6 +45,7 @@
       <w>boilerplates</w>
       <w>bootstrapper</w>
       <w>buildpack</w>
+      <w>byteranges</w>
       <w>checksums</w>
       <w>chipset</w>
       <w>chown</w>
@@ -77,6 +78,7 @@
       <w>devel</w>
       <w>develar</w>
       <w>devmode</w>
+      <w>dicer</w>
       <w>difflet</w>
       <w>digester</w>
       <w>digitaloceanspaces</w>
@@ -93,6 +95,7 @@
       <w>dylibbundler</w>
       <w>eacces</w>
       <w>ebusy</w>
+      <w>econnrefused</w>
       <w>editorconfig</w>
       <w>electronuserland</w>
       <w>emoji</w>

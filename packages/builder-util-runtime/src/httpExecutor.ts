@@ -1,6 +1,5 @@
 import { createHash, Hash } from "crypto"
 import _debug from "debug"
-import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
@@ -15,15 +14,6 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: string
 }
 
-export interface Response extends EventEmitter {
-  statusCode?: number
-  statusMessage?: string
-
-  headers: any
-
-  setEncoding(encoding: string): void
-}
-
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
   readonly skipDirCreation?: boolean
@@ -36,7 +26,7 @@ export interface DownloadOptions {
 }
 
 export class HttpError extends Error {
-  constructor(readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: Array<string>; } | undefined}, public description: any | null = null) {
+  constructor(readonly response: IncomingMessage, public description: any | null = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
 
     this.name = "HttpError"
@@ -89,7 +79,7 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  protected handleResponse(response: IncomingMessage, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
     }
@@ -215,7 +205,7 @@ export class DigestTransform extends Transform {
     this.digester = createHash(algorithm)
   }
 
-  _transform(chunk: any, encoding: string, callback: any) {
+  _transform(chunk: Buffer, encoding: string, callback: any) {
     this.digester.update(chunk)
     callback(null, chunk)
   }

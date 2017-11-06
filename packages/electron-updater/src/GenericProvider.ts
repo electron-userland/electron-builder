@@ -14,14 +14,30 @@ export class GenericProvider extends Provider<UpdateInfo> {
     let result: UpdateInfo
     const channelFile = getChannelFilename(this.channel)
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl)
-    try {
-      result = parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelUrl)))!!, channelFile, channelUrl)
-    }
-    catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`)
+    for (let attemptNumber = 0; ; attemptNumber++) {
+      try {
+        result = parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelUrl)))!!, channelFile, channelUrl)
+        break
       }
-      throw e
+      catch (e) {
+        if (e instanceof HttpError && e.response.statusCode === 404) {
+          throw new Error(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`)
+        }
+        else if (e.code === "ECONNREFUSED") {
+          if (attemptNumber < 3) {
+            await new Promise((resolve, reject) => {
+              try {
+                setTimeout(resolve, 1000 * attemptNumber)
+              }
+              catch (e) {
+                reject(e)
+              }
+            })
+            continue
+          }
+        }
+        throw e
+      }
     }
 
     if (isUseOldMacProvider()) {

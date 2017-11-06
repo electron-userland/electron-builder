@@ -4,10 +4,11 @@ import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { Arch, Platform, Configuration } from "electron-builder"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { close, open, read, readFile, rename, writeFile } from "fs-extra-p"
-import { createServer } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { TmpDir } from "temp-file"
+import { doSpawn } from "builder-util"
+import { getBinFromGithub } from "builder-util/out/binDownload"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
@@ -90,60 +91,98 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
         {
           file: "latest.yml",
           fileContent: {
-            version: "1.0.0",
-            path: "Test App ßW Web Setup 1.0.0.exe",
+            files: [
+              {
+                sha512: "@sha512",
+                url: "Test App ßW Web Setup 1.0.0.exe",
+              },
+            ],
             packages: {
               x64: {
-                file: "TestApp-1.0.0-x64.nsis.7z"
-              }
+                blockMapSize: "@blockMapSize",
+                headerSize: "@headerSize",
+                path: "TestApp-1.0.0-x64.nsis.7z",
+                sha512: "@sha512",
+                size: "@size",
+              },
             },
-          }
-        },
-        {
-          file: "Test App ßW Web Setup 1.0.0.exe",
-          packageFiles: {
-            x64: {
-              file: "TestApp-1.0.0-x64.nsis.7z"
-            }
+            path: "Test App ßW Web Setup 1.0.0.exe",
+            releaseDate: "@releaseDate",
+            sha2: "@sha2",
+            sha512: "@sha512",
+            version: "1.0.0",
           },
-          arch: "x64",
-          safeArtifactName: "TestApp-WebSetup-1.0.0.exe"
         },
         {
+          arch: "x64",
+          file: "Test App ßW Web Setup 1.0.0.exe",
+          safeArtifactName: "TestApp-WebSetup-1.0.0.exe",
+          updateInfo: {
+            packages: {
+              x64: {
+                blockMapSize: "@blockMapSize",
+                headerSize: "@headerSize",
+                path: "TestApp-1.0.0-x64.nsis.7z",
+                sha512: "@sha512",
+                size: "@size",
+              },
+            },
+          },
+        },
+        {
+          arch: "x64",
           file: "TestApp-1.0.0-x64.nsis.7z",
-          arch: "x64"
-        }
-      ]
+        },
+      ],
     }).toMatchSnapshot()
     expect({
       win: [
         {
           file: "latest.yml",
           fileContent: {
-            version: "1.0.1",
-            path: "Test App ßW Web Setup 1.0.1.exe",
+            files: [
+              {
+                sha512: "@sha512",
+                url: "Test App ßW Web Setup 1.0.1.exe",
+              },
+            ],
             packages: {
               x64: {
-                file: "TestApp-1.0.1-x64.nsis.7z"
-              }
+                blockMapSize: "@blockMapSize",
+                headerSize: "@headerSize",
+                path: "TestApp-1.0.1-x64.nsis.7z",
+                sha512: "@sha512",
+                size: "@size",
+              },
             },
-          }
-        },
-        {
-          file: "Test App ßW Web Setup 1.0.1.exe",
-          packageFiles: {
-            x64: {
-              file: "TestApp-1.0.1-x64.nsis.7z"
-            }
+            path: "Test App ßW Web Setup 1.0.1.exe",
+            releaseDate: "@releaseDate",
+            sha2: "@sha2",
+            sha512: "@sha512",
+            version: "1.0.1",
           },
-          arch: "x64",
-          safeArtifactName: "TestApp-WebSetup-1.0.1.exe"
         },
         {
+          arch: "x64",
+          file: "Test App ßW Web Setup 1.0.1.exe",
+          safeArtifactName: "TestApp-WebSetup-1.0.1.exe",
+          updateInfo: {
+            packages: {
+              x64: {
+                blockMapSize: "@blockMapSize",
+                headerSize: "@headerSize",
+                path: "TestApp-1.0.1-x64.nsis.7z",
+                sha512: "@sha512",
+                size: "@size",
+              },
+            },
+          },
+        },
+        {
+          arch: "x64",
           file: "TestApp-1.0.1-x64.nsis.7z",
-          arch: "x64"
-        }
-      ]
+        },
+      ],
     }).toMatchSnapshot()
 
     outDirs = [
@@ -268,18 +307,14 @@ class TestNativeUpdater extends EventEmitter {
   }
 }
 
-function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
-  const serveStatic = require("serve-static")
-  const finalHandler = require("finalhandler")
-  const serve = serveStatic(newDir)
+async function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
+  const port = 8000 + updaterClass.name.charCodeAt(0)
 
+  // noinspection SpellCheckingInspection
+  const httpServerProcess = doSpawn(path.join(await getBinFromGithub("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`])
   {
     (process as any).resourcesPath = path.join(oldDir, "win-unpacked", "resources")
   }
-
-  const server = createServer((request, response) => {
-    serve(request, response, finalHandler(request, response))
-  })
 
   const mockNativeUpdater = new TestNativeUpdater()
   const mockApp = createTestApp("0.0.1")
@@ -290,29 +325,26 @@ function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
     }
   }, {virtual: true})
 
-  return new BluebirdPromise((resolve, reject) => {
-    server.on("error", reject)
+  return await new BluebirdPromise((resolve, reject) => {
+    httpServerProcess.on("error", reject)
 
-    server!!.listen(0, "127.0.0.1", 16, () => {
-      const updater = new updaterClass()
-      tuneNsisUpdater(updater)
-      updater.logger = console
-      const doTest = async () => {
-        const address = server!!.address()
-        updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
-          provider: "generic",
-          url: `http://${address.address}:${address.port}`,
-        })
+    const updater = new updaterClass()
+    tuneNsisUpdater(updater)
+    updater.logger = console
+    const doTest = async () => {
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+        provider: "generic",
+        url: `http://127.0.0.1:${port}`,
+      })
 
-        await checkResult(updater)
-      }
+      await checkResult(updater)
+    }
 
-      doTest()
-        .then(() => resolve())
-        .catch(reject)
-    })
+    doTest()
+      .then(() => resolve())
+      .catch(reject)
   })
     .finally(() => {
-      server.close()
+      httpServerProcess.kill()
     })
 }
