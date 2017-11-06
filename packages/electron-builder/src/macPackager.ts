@@ -166,7 +166,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
-      ignore: (file: string) => file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length),
+      ignore: (file: string) => {
+        return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
+          // https://github.com/electron-userland/electron-builder/issues/2010
+          file.includes("/node_modules/puppeteer/.local-chromium")
+      },
       identity: identity!,
       type,
       platform: isMas ? "mas" : "darwin",
