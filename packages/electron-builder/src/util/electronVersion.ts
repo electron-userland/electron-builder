@@ -6,6 +6,7 @@ import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
 import { Configuration } from "../configuration"
 import { getConfig } from "./config"
+import { versionFromDependencyRange } from "./packageMetadata"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
@@ -59,8 +60,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     throw new Error(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
 
-  const firstChar = electronPrebuiltDep[0]
-  return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
+  return versionFromDependencyRange(electronPrebuiltDep)
 }
 
 function findFromElectronPrebuilt(packageData: any): any {
