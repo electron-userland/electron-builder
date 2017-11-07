@@ -89,7 +89,32 @@ export class PublishManager implements PublishContext {
       }
     })
 
-    packager.artifactCreated(event => this.taskManager.addTask(this.artifactCreated(event)))
+    packager.artifactCreated(event => {
+      const publishConfiguration = event.publishConfig
+      if (publishConfiguration == null) {
+        this.taskManager.addTask(this.artifactCreated(event))
+      }
+      else if (this.isPublish) {
+        if (debug.enabled) {
+          debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
+        }
+        this.scheduleUpload(publishConfiguration, event)
+      }
+    })
+  }
+
+  private scheduleUpload(publishConfig: PublishConfiguration, event: ArtifactCreated): void {
+    if (publishConfig.provider === "generic") {
+      return
+    }
+
+    const publisher = this.getOrCreatePublisher(publishConfig, event.packager)
+    if (publisher == null) {
+      debug(`${event.file} is not published: publisher is null, ${safeStringifyJson(publishConfig)}`)
+      return
+    }
+
+    this.taskManager.addTask(publisher.upload(event))
   }
 
   private async artifactCreated(event: ArtifactCreated) {
@@ -111,22 +136,12 @@ export class PublishManager implements PublishContext {
 
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
-        if (publishConfig.provider === "generic") {
-          continue
-        }
-
         if (this.cancellationToken.cancelled) {
-          debug(`${eventFile} is not published: cancelled`)
+          debug(`${event.file} is not published: cancelled`)
           break
         }
 
-        const publisher = this.getOrCreatePublisher(publishConfig, packager)
-        if (publisher == null) {
-          debug(`${eventFile} is not published: publisher is null, ${safeStringifyJson(publishConfig)}`)
-          continue
-        }
-
-        this.taskManager.addTask(publisher.upload(event))
+        this.scheduleUpload(publishConfig, event)
       }
     }
 

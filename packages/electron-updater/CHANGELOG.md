@@ -1,3 +1,9 @@
+## 2.16.2
+
+### Features
+
+* [Use the only HTTP request to download all changed blocks](https://github.com/electron-userland/electron-builder/releases/tag/v19.45.1).
+
 ## 2.16.0
 
 ### Features

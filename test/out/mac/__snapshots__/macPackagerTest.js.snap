@@ -27,9 +27,6 @@ Object {
       "file": "latest-mac.json",
     },
     Object {
-      "file": "latest-mac.json",
-    },
-    Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "files": Array [

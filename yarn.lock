@@ -439,9 +439,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.145.0:
-  version "2.145.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.145.0.tgz#085bb4553231defd93b96b0d95023717c9c3c093"
+aws-sdk@^2.146.0:
+  version "2.146.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.146.0.tgz#e2d75585a030dae116ae32cbf42c496688d04efb"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -1110,7 +1110,7 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
 
-config-master@^3.0.0:
+config-master@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/config-master/-/config-master-3.1.0.tgz#667663590505a283bf26a484d68489d74c5485da"
   dependencies:
@@ -1408,7 +1408,7 @@ direction@0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/direction/-/direction-0.1.5.tgz#ce5d797f97e26f8be7beff53f7dc40e1c1a9ec4c"
 
-dmd@^3.0.0:
+dmd@^3.0.6:
   version "3.0.6"
   resolved "https://registry.yarnpkg.com/dmd/-/dmd-3.0.6.tgz#94c0e0fb88d1cb6b82837595053de7919c753c25"
   dependencies:
@@ -2875,20 +2875,20 @@ jsdoc-parse@^3.0.0:
     sort-array "^1.1.1"
     test-value "^2.1.0"
 
-jsdoc-to-markdown@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/jsdoc-to-markdown/-/jsdoc-to-markdown-3.0.0.tgz#cc8a94f1f412ac1da4bac1657475b0975ee8161a"
+jsdoc-to-markdown@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/jsdoc-to-markdown/-/jsdoc-to-markdown-3.0.1.tgz#115962a20ec345d7dbe8327056bf7e965687a92f"
   dependencies:
-    array-back "^1.0.4"
+    array-back "^2.0.0"
     command-line-tool "^0.7.0"
-    config-master "^3.0.0"
-    dmd "^3.0.0"
+    config-master "^3.1.0"
+    dmd "^3.0.6"
     jsdoc-api "^3.0.0"
     jsdoc-parse "^3.0.0"
-    jsdoc2md-stats "^2.0.0"
-    walk-back "^2.0.1"
+    jsdoc2md-stats "^2.0.1"
+    walk-back "^3.0.0"
 
-jsdoc2md-stats@^2.0.0:
+jsdoc2md-stats@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/jsdoc2md-stats/-/jsdoc2md-stats-2.0.1.tgz#bd8343734cfe69ea8050a17931251293f0d9047b"
   dependencies:

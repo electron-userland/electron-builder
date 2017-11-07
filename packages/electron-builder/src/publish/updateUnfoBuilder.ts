@@ -120,7 +120,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
     }
 
     for (const channel of computeChannelNames(packager, publishConfiguration)) {
-      if (isMac && isElectronUpdater1xCompatibility) {
+      if (isMac && isElectronUpdater1xCompatibility && event.file.endsWith(".zip")) {
         // write only for first channel (generateUpdatesFilesForAllChannels is a new functionality, no need to generate old mac update info file)
         isElectronUpdater1xCompatibility = false
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
