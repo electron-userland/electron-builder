@@ -34,6 +34,8 @@ export class GitHubPublisher extends HttpPublisher {
 
   private readonly releaseType: "draft" | "prerelease" | "release"
 
+  private releaseStatus: string
+
   /** @private */
   get releasePromise(): Promise<Release | null> {
     if (this._releasePromise == null) {
@@ -100,7 +102,8 @@ export class GitHubPublisher extends HttpPublisher {
       // https://electron-builder.slack.com/archives/general/p1485961449000202
       // https://github.com/electron-userland/electron-builder/issues/2072
       if (this.releaseType === "draft") {
-        warn(`Release with tag ${this.tag} already exists`)
+        this.releaseStatus = `Release with tag ${this.tag} already exists with type "${release.prerelease ? "pre-release" : "release"}", but current release type is "${this.releaseType}"`
+        warn(this.releaseStatus)
         return null
       }
 
@@ -110,7 +113,8 @@ export class GitHubPublisher extends HttpPublisher {
       const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
       if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
-        warn(`Release with tag ${this.tag} published at ${new Date(publishedAt).toString()}, more than 2 hours ago`)
+        this.releaseStatus = `Release with tag ${this.tag} published at ${new Date(publishedAt).toString()}, more than 2 hours ago`
+        warn(this.releaseStatus)
         return null
       }
       return release
@@ -121,13 +125,15 @@ export class GitHubPublisher extends HttpPublisher {
       log(`Release with tag ${this.tag} doesn't exist, creating one`)
       return this.createRelease()
     }
+
+    this.releaseStatus = `Release with tag ${this.tag} doesn't exist and not created because "publish" is not "always" and build is not on tag`
     return null
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this.releasePromise
     if (release == null) {
-      warn(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
+      warn(`Artifact ${fileName} is not published: ${this.releaseStatus}`)
       return
     }
 
