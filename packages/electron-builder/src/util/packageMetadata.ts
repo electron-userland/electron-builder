@@ -80,13 +80,18 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
 }
 
+export function versionFromDependencyRange(version: string) {
+  const firstChar = version[0]
+  return firstChar === "^" || firstChar === "~" ? version.substring(1) : version
+}
+
 function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
   if (dependencies == null) {
     return
   }
 
   const updaterVersion = dependencies["electron-updater"]
-  if (updaterVersion != null && !semver.satisfies("2.16.1", updaterVersion)) {
+  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), ">=2.16.1")) {
     errors.push(`At least electron-updater 2.16.1 is required by current electron-builder version.`)
   }
 
