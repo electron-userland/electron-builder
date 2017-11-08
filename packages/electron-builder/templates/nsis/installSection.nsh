@@ -75,14 +75,23 @@ ${endIf}
   !insertmacro customInstall
 !endif
 
+Var /GLOBAL isOneClickRun
+StrCpy $isOneClickRun "false"
 !ifdef ONE_CLICK
   !ifdef RUN_AFTER_FINISH
     ${IfNot} ${Silent}
-    ${OrIf} ${isForceRun}
-      # otherwise app window will be in background
-      HideWindow
-      !insertmacro StartApp
+	  StrCpy $isOneClickRun "true"
     ${EndIf}
   !endif
+!endif
+
+${If} ${isForceRun}
+${OrIf} $isOneClickRun == "true"
+  # otherwise app window will be in background
+  HideWindow
+  !insertmacro StartApp
+${EndIf}
+
+!ifdef ONE_CLICK
   !insertmacro quitSuccess
 !endif
