@@ -1,17 +1,4 @@
 !ifndef BUILD_UNINSTALLER
-  !ifdef RUN_AFTER_FINISH
-    !macro StartApp
-      Var /GLOBAL startAppArgs
-      ${if} ${isUpdated}
-        StrCpy $startAppArgs "--updated"
-      ${else}
-        StrCpy $startAppArgs ""
-      ${endif}
-
-      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
-    !macroend
-  !endif
-
   !ifmacrodef licensePage
     !insertmacro licensePageHelper
     !insertmacro licensePage

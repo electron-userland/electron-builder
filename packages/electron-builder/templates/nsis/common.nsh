@@ -72,3 +72,14 @@ Name "${PRODUCT_NAME}"
 
   !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
 !macroend
+
+!macro StartApp
+  Var /GLOBAL startAppArgs
+  ${if} ${isUpdated}
+    StrCpy $startAppArgs "--updated"
+  ${else}
+    StrCpy $startAppArgs ""
+  ${endif}
+
+  ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
+!macroend
