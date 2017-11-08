@@ -7,6 +7,7 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
+import { RemoteBuilder } from "./RemoteBuilder"
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -17,6 +18,11 @@ export default class SnapTarget extends Target {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     log(`Building Snap for arch ${Arch[arch]}`)
+
+    if (process.platform === "win32" || process.env._REMOTE_BUILD) {
+      const remoteBuilder = new RemoteBuilder()
+      return await remoteBuilder.build("linux", ["snap"], appOutDir, this.packager.info, this.outDir)
+    }
 
     const packager = this.packager
     const appInfo = packager.appInfo

@@ -14,6 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createDifferentialPackage } from "app-package-builder"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { RemoteBuilder } from "./RemoteBuilder"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -36,6 +37,11 @@ export default class AppImageTarget extends Target {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     log(`Building AppImage for arch ${Arch[arch]}`)
+
+    if (process.platform === "win32" || process.env._REMOTE_BUILD) {
+      const remoteBuilder = new RemoteBuilder()
+      return await remoteBuilder.build("linux", ["appimage"], appOutDir, this.packager.info, this.outDir)
+    }
 
     const packager = this.packager
 

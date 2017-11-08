@@ -268,20 +268,25 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   })
 
   const publishManager = new PublishManager(packager, options, cancellationToken)
-  process.on("SIGINT", () => {
+  const sigIntHandler = () => {
     warn("Cancelled by SIGINT")
     cancellationToken.cancel()
     publishManager.cancelTasks()
-  })
+  }
+  process.once("SIGINT", sigIntHandler)
 
   return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
+    let promise: Promise<any>
     if (errorOccurred) {
       publishManager.cancelTasks()
-      return BluebirdPromise.resolve(null)
+      promise = BluebirdPromise.resolve(null)
     }
     else {
-      return publishManager.awaitTasks()
+      promise = publishManager.awaitTasks()
     }
+
+    return promise
+      .then(() => process.removeListener("SIGINT", sigIntHandler))
   })
 }
 
