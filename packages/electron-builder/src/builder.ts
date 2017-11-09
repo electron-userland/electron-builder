@@ -241,7 +241,7 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
   return targets
 }
 
-export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
+export function build(rawOptions?: CliOptions): Promise<Array<string>> {
   const options = normalizeOptions(rawOptions || {})
 
   if (options.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
@@ -257,7 +257,10 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
   }
 
-  const cancellationToken = new CancellationToken()
+  return _build(options)
+}
+
+export async function _build(options: CliOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
   const packager = new Packager(options, cancellationToken)
   // because artifact event maybe dispatched several times for different publish providers
   const artifactPaths = new Set<string>()
@@ -267,7 +270,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     }
   })
 
-  const publishManager = new PublishManager(packager, options, cancellationToken)
+  const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
     warn("Cancelled by SIGINT")
     cancellationToken.cancel()

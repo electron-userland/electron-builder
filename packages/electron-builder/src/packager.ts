@@ -32,9 +32,16 @@ declare const PACKAGE_VERSION: string
 
 export class Packager {
   readonly projectDir: string
-  appDir: string
 
-  metadata: Metadata
+  private _appDir: string
+  get appDir(): string {
+    return this._appDir
+  }
+
+  private _metadata: Metadata
+  get metadata(): Metadata {
+    return this._metadata
+  }
 
   private _isPrepackedAppAsar: boolean
 
@@ -42,7 +49,10 @@ export class Packager {
     return this._isPrepackedAppAsar
   }
 
-  devMetadata: Metadata
+  private _devMetadata: Metadata | null
+  get devMetadata(): Metadata | null {
+    return this._devMetadata
+  }
 
   private _configuration: Configuration
 
@@ -50,7 +60,7 @@ export class Packager {
     return this._configuration
   }
 
-  isTwoPackageJsonProjectLayoutUsed = true
+  isTwoPackageJsonProjectLayoutUsed = false
 
   readonly eventEmitter = new EventEmitter()
 
@@ -146,6 +156,7 @@ export class Packager {
     }
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+    this._appDir = this.projectDir
     this.options = {
       ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
@@ -190,47 +201,57 @@ export class Packager {
     const projectDir = this.projectDir
 
     const devPackageFile = path.join(projectDir, "package.json")
-    this.devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
+    this._devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
 
     const devMetadata = this.devMetadata
-    const config = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
+    const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
     if (debug.enabled) {
-      debug(`Effective config:\n${serializeToYaml(JSON.parse(safeStringifyJson(config)))}`)
+      debug(`Effective config:\n${serializeToYaml(JSON.parse(safeStringifyJson(configuration)))}`)
     }
-    await validateConfig(config, this.debugLogger)
-    this._configuration = config
 
-    this.appDir = await computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app))
-
-    this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== projectDir
+    this._appDir = await computeDefaultAppDirectory(projectDir, use(configuration.directories, it => it!.app))
+    this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
 
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
 
-    const extraMetadata = config.extraMetadata
     // tslint:disable:prefer-conditional-expression
-    if (devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
-      this.metadata = devMetadata
+    if (this.devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
+      this._metadata = this.devMetadata
     }
     else {
-      this.metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
+      this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
-    deepAssign(this.metadata, extraMetadata)
+    deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
     }
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
-    checkMetadata(this.metadata, devMetadata, appPackageFile, devPackageFile)
+    return await this._build(configuration, this._metadata, this._devMetadata)
+  }
 
-    if (config.electronVersion == null) {
+  // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
+  async _build(configuration: Configuration, metadata: Metadata, devMetadata: Metadata | null, repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    await validateConfig(configuration, this.debugLogger)
+    this._configuration = configuration
+    this._metadata = metadata
+    this._devMetadata = devMetadata
+
+    if (repositoryInfo != null) {
+      this._repositoryInfo.value = BluebirdPromise.resolve(repositoryInfo)
+    }
+
+    const projectDir = this.projectDir
+    if (configuration.electronVersion == null) {
       // for prepacked app asar no dev deps in the app.asar
       if (this.isPrepackedAppAsar) {
-        config.electronVersion = await getElectronVersionFromInstalled(projectDir)
-        if (config.electronVersion == null) {
+        configuration.electronVersion = await getElectronVersionFromInstalled(projectDir)
+        if (configuration.electronVersion == null) {
           throw new Error(`Cannot compute electron version for prepacked asar`)
         }
       }
-      config.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
+      configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
     }
     this.appInfo = new AppInfo(this)
 
@@ -292,25 +313,7 @@ export class Packager {
         }
 
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
-        const ourDirs = new Set<string>()
-        for (const target of targetList) {
-          if (target instanceof NoOpTarget) {
-            continue
-          }
-
-          const outDir = (target as Target).outDir
-          if (createdOutDirs.has(outDir)) {
-            ourDirs.add(outDir)
-          }
-        }
-
-        if (ourDirs.size > 0) {
-          await BluebirdPromise.map(Array.from(ourDirs).sort(), it => {
-            createdOutDirs.add(it)
-            return ensureDir(it)
-          })
-        }
-
+        await createOutDirIfNeed(targetList, createdOutDirs)
         await packager.pack(outDir, arch, targetList, taskManager)
       }
 
@@ -407,6 +410,28 @@ export class Packager {
     }
     return BluebirdPromise.each(handlers, it => it(context))
   }
+}
+
+function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<string>): Promise<any> {
+  const ourDirs = new Set<string>()
+  for (const target of targetList) {
+    if (target instanceof NoOpTarget) {
+      continue
+    }
+
+    const outDir = (target as Target).outDir
+    if (!createdOutDirs.has(outDir)) {
+      ourDirs.add(outDir)
+    }
+  }
+
+  if (ourDirs.size > 0) {
+    return BluebirdPromise.map(Array.from(ourDirs).sort(), it => {
+      createdOutDirs.add(it)
+      return ensureDir(it)
+    })
+  }
+  return BluebirdPromise.resolve()
 }
 
 export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | null | undefined): Array<Platform> {

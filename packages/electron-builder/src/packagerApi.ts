@@ -34,7 +34,7 @@ export interface ArtifactCreated extends UploadTask {
   readonly packager: PlatformPackager<any>
   readonly target: Target | null
 
-  readonly updateInfo?: any
+  updateInfo?: any
 
   readonly safeArtifactName?: string | null
 

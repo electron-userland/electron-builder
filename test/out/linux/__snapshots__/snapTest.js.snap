@@ -216,69 +216,6 @@ Object {
 }
 `;
 
-exports[`platform 1`] = `
-Object {
-  "apps": Object {
-    "sep": Object {
-      "command": "desktop-launch $SNAP/Sep",
-      "plugs": Array [
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-        "platform",
-      ],
-    },
-  },
-  "confinement": "strict",
-  "description": "Test Application (test quite “ #378)",
-  "grade": "stable",
-  "icon": "snap/gui/icon.png",
-  "name": "sep",
-  "parts": Object {
-    "app": Object {
-      "after": Array [
-        "extra",
-        "desktop-ubuntu-app-platform",
-      ],
-      "plugin": "dump",
-      "stage-packages": Array [
-        "libnss3",
-      ],
-    },
-    "extra": Object {
-      "plugin": "dump",
-    },
-  },
-  "plugs": Object {
-    "platform": Object {
-      "content": "ubuntu-app-platform1",
-      "default-provider": "ubuntu-app-platform",
-      "interface": "content",
-      "target": "ubuntu-app-platform",
-    },
-  },
-  "summary": "Sep P",
-  "version": "1.1.0",
-}
-`;
-
-exports[`platform 2`] = `
-"[Desktop Entry]
-Name=Sep P
-Comment=Test Application (test quite “ #378)
-Exec=Sep
-Terminal=false
-Type=Application
-Icon=\${SNAP}/meta/gui/icon.png
-Categories=Development;
-"
-`;
-
 exports[`snap 1`] = `
 Object {
   "linux": Array [

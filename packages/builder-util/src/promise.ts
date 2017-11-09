@@ -2,7 +2,7 @@ import chalk from "chalk"
 
 export function printErrorAndExit(error: Error) {
   console.error(chalk.red((error.stack || error).toString()))
-  process.exit(-1)
+  process.exit(1)
 }
 
 // you don't need to handle error in your task - it is passed only indicate status of promise

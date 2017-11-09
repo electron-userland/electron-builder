@@ -189,6 +189,7 @@
       <w>libgconf</w>
       <w>libgcrypt</w>
       <w>libgnome</w>
+      <w>libicudata</w>
       <w>liblzma</w>
       <w>libnotify</w>
       <w>libnss</w>
@@ -198,6 +199,7 @@
       <w>libxss</w>
       <w>libxtst</w>
       <w>licensepage</w>
+      <w>lintian</w>
       <w>localappdata</w>
       <w>lockfile</w>
       <w>lzfse</w>

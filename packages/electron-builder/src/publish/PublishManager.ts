@@ -15,7 +15,7 @@ import { Platform, Target, PlatformSpecificBuildOptions, ArtifactCreated } from 
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
-import { UpdateInfoFileTask, writeUpdateInfoFiles, createUpdateInfoTasks } from "./updateUnfoBuilder"
+import { UpdateInfoFileTask, writeUpdateInfoFiles, createUpdateInfoTasks } from "./updateInfoBuilder"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -33,7 +33,7 @@ export class PublishManager implements PublishContext {
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
-  constructor(private readonly packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
+  constructor(private readonly packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken = packager.cancellationToken) {
     this.taskManager = new AsyncTaskManager(cancellationToken)
 
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"

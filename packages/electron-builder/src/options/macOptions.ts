@@ -81,9 +81,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly requirements?: string | null
 
   /**
-   * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`.
-   *
-   * @default >=1.0.0
+   * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
    *
    * 1.0.0 latest-mac.json
    * 2.15.0 path

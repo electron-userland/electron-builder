@@ -5,7 +5,7 @@ import * as path from "path"
 import { SourceRepositoryInfo } from "../core"
 import { Metadata, RepositoryInfo } from "../options/metadata"
 
-export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<SourceRepositoryInfo | null> {
+export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata | null): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 

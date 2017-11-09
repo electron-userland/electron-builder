@@ -157,7 +157,7 @@ export function getFixtureDir() {
 async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-  const publishManager = new PublishManager(packager, {publish: checkOptions.publish || "never"}, cancellationToken)
+  const publishManager = new PublishManager(packager, {publish: checkOptions.publish || "never"})
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
@@ -194,6 +194,9 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       const updateInfo = result.updateInfo
       if (updateInfo != null) {
         result.updateInfo = removeUnstableProperties(updateInfo)
+      }
+      else if (updateInfo === null) {
+        delete result.updateInfo
       }
 
       // reduce snapshot - avoid noise

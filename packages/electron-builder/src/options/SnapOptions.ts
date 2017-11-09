@@ -52,10 +52,4 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
    */
   readonly after?: Array<string> | null
-
-  /**
-   * Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/).
-   * Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
-   */
-  readonly ubuntuAppPlatformContent?: string | null
 }

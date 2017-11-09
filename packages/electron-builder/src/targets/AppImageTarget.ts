@@ -40,7 +40,7 @@ export default class AppImageTarget extends Target {
 
     if (process.platform === "win32" || process.env._REMOTE_BUILD) {
       const remoteBuilder = new RemoteBuilder()
-      return await remoteBuilder.build("linux", ["appimage"], appOutDir, this.packager.info, this.outDir)
+      return await remoteBuilder.build(["appimage"], appOutDir, this.packager, this.outDir)
     }
 
     const packager = this.packager

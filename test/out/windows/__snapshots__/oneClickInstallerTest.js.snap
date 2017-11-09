@@ -7,7 +7,6 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -20,7 +19,6 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -35,7 +33,6 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -48,7 +45,6 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -61,7 +57,6 @@ Object {
       "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -74,7 +69,6 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -103,7 +97,6 @@ Object {
       "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -140,7 +133,6 @@ Object {
       "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }
@@ -160,7 +152,6 @@ Object {
       "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
-      "updateInfo": null,
     },
   ],
 }

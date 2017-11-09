@@ -20,4 +20,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 * <code id="MacConfiguration-extendInfo">extendInfo</code> any - The extra entries for `Info.plist`.
 * <code id="MacConfiguration-binaries">binaries</code> Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
 * <code id="MacConfiguration-requirements">requirements</code> String - Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
+* <code id="MacConfiguration-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
+  
+  1.0.0 latest-mac.json 2.15.0 path 2.16.0 files
 <!-- end of generated block -->
