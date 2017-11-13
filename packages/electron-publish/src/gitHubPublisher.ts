@@ -173,7 +173,7 @@ export class GitHubPublisher extends HttpPublisher {
             continue
           }
         }
-        else if (attemptNumber++ < 3 && e.code === "EPIPE") {
+        else if (attemptNumber++ < 3 && (e.code === "EPIPE" || e.code === "ECONNRESET")) {
           continue
         }
 
