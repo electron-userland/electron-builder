@@ -1,4 +1,4 @@
-import { getRepositoryInfo } from "electron-builder/out/util/repositoryInfo"
+import { getRepositoryInfo } from "electron-builder-lib/out/util/repositoryInfo"
 
 function checkInfo(info: any) {
   delete info.pathmatch

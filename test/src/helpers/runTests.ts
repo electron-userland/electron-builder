@@ -12,7 +12,7 @@ const rootDir = path.join(__dirname, "../../..")
 const util = require(`${rootDir}/packages/builder-util/out/util`)
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
-const baseDir = process.env.ELECTRON_BUILDER_TEST_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
+const baseDir = process.env.ELECTRON_BUILDER_TMP_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
 const TEST_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
 
 runTests()

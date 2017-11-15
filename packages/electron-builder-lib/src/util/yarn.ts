@@ -7,7 +7,6 @@ import * as path from "path"
 import { Configuration } from "../configuration"
 import { Dependency } from "./packageDependencies"
 
-/** @internal */
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
   const effectiveOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
@@ -22,7 +21,6 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
   }
 }
 
-/** @internal */
 export interface DesktopFrameworkInfo {
   version: string
   useCustomDist: boolean
@@ -32,7 +30,6 @@ function getElectronGypCacheDir() {
   return path.join(homedir(), ".electron-gyp")
 }
 
-/** @internal */
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
   const common = {
     ...process.env,

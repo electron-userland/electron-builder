@@ -1,25 +1,17 @@
-export { Packager, BuildResult } from "./packager"
-export { PackagerOptions, ArtifactCreated } from "./packagerApi"
-export { TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET, CompressionLevel } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { build, CliOptions, createTargets } from "./builder"
-export { Configuration, AfterPackContext, MetadataDirectories, Protocol, ReleaseInfo, ElectronDownloadOptions } from "./configuration"
-export { PlatformSpecificBuildOptions, AsarOptions, FileSet } from "./options/PlatformSpecificBuildOptions"
-export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, PkgOptions, DmgContent, DmgWindow } from "./options/macOptions"
-export { WindowsConfiguration } from "./options/winOptions"
-export { AppXOptions } from "./options/AppXOptions"
-export { MsiOptions } from "./options/MsiOptions"
-export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
-export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions } from "./targets/nsis/nsisOptions"
-export { LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions } from "./options/linuxOptions"
-export { SnapOptions } from "./options/SnapOptions"
+export {
+  TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET, CompressionLevel,
+  MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, PkgOptions, DmgContent, DmgWindow,
+  PlatformSpecificBuildOptions, AsarOptions, FileSet,
+  LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions,
+  Configuration, AfterPackContext, MetadataDirectories, Protocol, ReleaseInfo, ElectronDownloadOptions,
+  SnapOptions, CommonWindowsInstallerConfiguration, FileAssociation, MsiOptions, AppXOptions, WindowsConfiguration,
+  Packager, BuildResult, PackagerOptions, ArtifactCreated,
+  NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions, SquirrelWindowsOptions,
+  WindowsSignOptions, CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo,
+  Metadata, AuthorMetadata, RepositoryInfo, AppInfo,
+  UploadTask, PublishManager, PublishOptions
+} from "electron-builder-lib"
 export { buildForge, ForgeOptions } from "./forge/forge-maker"
-export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
-export { AppInfo } from "./appInfo"
-export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
-export { WindowsSignOptions, CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo } from "./windowsCodeSign"
 export { CancellationToken } from "builder-util-runtime"
-export { UploadTask } from "electron-publish"
-export { PublishManager } from "./publish/PublishManager"
-export { PublishOptions } from "electron-publish"

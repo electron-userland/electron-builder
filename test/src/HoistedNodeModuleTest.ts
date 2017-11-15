@@ -1,4 +1,4 @@
-import { readAsar } from "electron-builder/out/asar/asar"
+import { readAsar } from "electron-builder-lib/out/asar/asar"
 import { assertPack, linuxDirTarget } from "./helpers/packTester"
 import { Platform } from "electron-builder"
 import * as path from "path"

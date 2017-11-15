@@ -8,10 +8,10 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
 import yargs from "yargs"
-import { computeDefaultAppDirectory, getConfig } from "../util/config"
-import { getElectronVersion } from "../util/electronVersion"
-import { createLazyProductionDeps } from "../util/packageDependencies"
-import { installOrRebuild } from "../util/yarn"
+import { computeDefaultAppDirectory, getConfig } from "electron-builder-lib/out/util/config"
+import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
+import { createLazyProductionDeps } from "electron-builder-lib/out/util/packageDependencies"
+import { installOrRebuild } from "electron-builder-lib/out/util/yarn"
 
 declare const PACKAGE_VERSION: string
 

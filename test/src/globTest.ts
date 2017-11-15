@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { readAsar } from "electron-builder/out/asar/asar"
+import { readAsar } from "electron-builder-lib/out/asar/asar"
 import { mkdirs, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"

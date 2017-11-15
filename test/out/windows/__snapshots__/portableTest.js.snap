@@ -19,6 +19,7 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
     Object {
       "arch": "x64",
       "file": "Test App ßW 1.1.0.exe",

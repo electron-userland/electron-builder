@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
-import { WinPackager } from "electron-builder/out/winPackager"
+import { WinPackager } from "electron-builder-lib/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { path7za } from "7zip-bin"
-import { compute7zCompressArgs } from "electron-builder/out/targets/archive"
+import { compute7zCompressArgs } from "electron-builder-lib/out/targets/archive"
 
 const archiver = require("archiver")
 

@@ -1,10 +1,10 @@
 import { AsyncTaskManager } from "builder-util"
 import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
-import { Identity } from "electron-builder/out/codeSign"
-import MacPackager from "electron-builder/out/macPackager"
-import { DmgTarget } from "electron-builder/out/targets/dmg"
-import { WinPackager } from "electron-builder/out/winPackager"
+import { Identity } from "electron-builder-lib/out/codeSign"
+import MacPackager from "electron-builder-lib/out/macPackager"
+import { DmgTarget } from "electron-builder-lib/out/targets/dmg"
+import { WinPackager } from "electron-builder-lib/out/winPackager"
 import { SignOptions as MacSignOptions } from "electron-osx-sign"
 
 export class CheckingWinPackager extends WinPackager {

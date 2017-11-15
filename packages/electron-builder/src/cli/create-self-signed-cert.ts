@@ -4,8 +4,8 @@ import chalk from "chalk"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { quoteString } from "../targets/AppxTarget"
-import { getSignVendorPath } from "../windowsCodeSign"
+import { quoteString } from "electron-builder-lib/out/targets/AppxTarget"
+import { getSignVendorPath } from "electron-builder-lib/out/windowsCodeSign"
 
 /** @internal */
 export async function createSelfSignedCert(publisher: string) {

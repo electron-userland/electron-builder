@@ -111,9 +111,11 @@ export default class SnapTarget extends Target {
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapFileName)
 
+    // usr/share/fonts is required, cannot run otherwise
     const unnecessaryFiles = [
       "usr/share/doc",
       "usr/share/man",
+      "usr/share/icons",
       "usr/share/bash-completion",
       "usr/share/lintian",
       "usr/share/dh-python",
@@ -157,7 +159,9 @@ export default class SnapTarget extends Target {
         stdio: ["ignore", "inherit", "inherit"],
       }
       await spawn("snapcraft", ["prime", "--target-arch", toLinuxArchString(arch)], spawnOptions)
-      await exec("rm", ["-rf"].concat(unnecessaryFiles.map(it => path.join(stageDir, "prime", it))))
+      await exec("sh", ["-c", `rm -rf ${unnecessaryFiles.join(" ")}`], {
+        cwd: stageDir + path.sep + "prime",
+      })
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], spawnOptions)
     }
     packager.dispatchArtifactCreated(resultFile, this, arch)

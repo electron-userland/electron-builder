@@ -5,11 +5,8 @@ import { executeFinally } from "builder-util/out/promise"
 import chalk from "chalk"
 import { PublishOptions } from "electron-publish"
 import { deepAssign } from "read-config-file/out/deepAssign"
-import { Configuration } from "./configuration"
-import { DIR_TARGET, Platform } from "./core"
-import { normalizePlatforms, Packager } from "./packager"
-import { PackagerOptions } from "./packagerApi"
-import { PublishManager } from "./publish/PublishManager"
+import { PublishManager, PackagerOptions, DIR_TARGET, Platform, Configuration } from "electron-builder-lib"
+import { normalizePlatforms, Packager } from "electron-builder-lib/out/packager"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {

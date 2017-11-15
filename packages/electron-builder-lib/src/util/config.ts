@@ -32,7 +32,6 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
   }
 }
 
-/** @internal */
 export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Configuration | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
   const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata, log}
   const config = await _getConfig<Configuration>(configRequest, configPath)
@@ -118,7 +117,6 @@ How to fix:
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-/** @internal */
 export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
   if (userAppDir != null) {
     const absolutePath = path.resolve(projectDir, userAppDir)
