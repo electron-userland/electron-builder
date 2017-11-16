@@ -10,7 +10,7 @@ On a macOS development machine valid and appropriate identity from your keychain
 | `CSC_IDENTITY_AUTO_DISCOVERY`| `true` or `false`. Defaults to `true` — on a macOS development machine valid and appropriate identity from your keychain will be automatically used.
 | `CSC_KEYCHAIN`| The keychain name. Used if `CSC_LINK` is not specified. Defaults to system default keychain.
 
-If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`. 
+If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
 
 ## Windows
 
