@@ -57,6 +57,6 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
 
 # How to disable Code Signing during the build process on macOS
 
-To disable Code Signing when building for OS X leave all the above vars unset except for CSC_IDENTITY_AUTO_DISCOVERY which needs to be set to 'false'
+To disable Code Signing when building for macOS leave all the above vars unset except for CSC_IDENTITY_AUTO_DISCOVERY which needs to be set to 'false'
 
 This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false` 
