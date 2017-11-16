@@ -2,19 +2,25 @@ import { emptyDir, remove } from "fs-extra-p"
 import * as path from "path"
 import { Target } from "../core"
 import { Arch, debug } from "builder-util"
+import BluebirdPromise from "bluebird-lst"
 
 export class StageDir {
   constructor(readonly tempDir: string) {
   }
 
-  getTempFile(name: string) {
-    return path.join(this.tempDir, name)
+  ensureEmpty() {
+    return emptyDir(this.tempDir)
   }
 
-  async cleanup() {
-    if (!debug.enabled) {
-      await remove(this.tempDir)
+  getTempFile(name: string) {
+    return this.tempDir + path.sep + name
+  }
+
+  cleanup() {
+    if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
+      return remove(this.tempDir)
     }
+    return BluebirdPromise.resolve()
   }
 }
 

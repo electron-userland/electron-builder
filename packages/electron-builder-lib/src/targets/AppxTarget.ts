@@ -75,7 +75,7 @@ export default class AppXTarget extends Target {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
       const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
 
-      const assetRoot = path.join(stageDir.tempDir, "appx/assets")
+      const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
       await BluebirdPromise.map(assetInfo.allAssets, it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it))))
 
@@ -89,7 +89,7 @@ export default class AppXTarget extends Target {
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
       for (const resourceFile of (await readdir(stageDir.tempDir)).filter(it => it.startsWith("resources.")).sort()) {
-        mappingList.push([`"${vm.toVmFile(path.join(stageDir.tempDir, resourceFile))}" "${resourceFile}"`])
+        mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
       }
       makeAppXArgs.push("/l")
     }

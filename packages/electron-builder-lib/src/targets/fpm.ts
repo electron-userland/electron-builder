@@ -2,7 +2,7 @@ import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { computeEnv, getLinuxToolsPath } from "builder-util/out/bundledTool"
+import { computeEnv } from "builder-util/out/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -13,6 +13,7 @@ import { LinuxPackager } from "../linuxPackager"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
+import { getLinuxToolsPath } from "./tools"
 
 const fpmPath = new Lazy(() => {
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {

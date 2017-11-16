@@ -5,8 +5,8 @@ import * as path from "path"
 import { CompressionLevel } from "../core"
 import { TmpDir } from "temp-file"
 import BluebirdPromise from "bluebird-lst"
-import { getLinuxToolsPath } from "builder-util/out/bundledTool"
 import { move } from "fs-extra-p"
+import { getLinuxToolsPath } from "./tools"
 
 /** @internal */
 export async function tar(compression: CompressionLevel | any | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {

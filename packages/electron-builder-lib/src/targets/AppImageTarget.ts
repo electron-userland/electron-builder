@@ -1,10 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log, debug, serializeToYaml } from "builder-util"
 import { UUID, BlockMapDataHolder } from "builder-util-runtime"
-import { getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
-import { emptyDir, ensureDir, readFile, remove, symlink, writeFile } from "fs-extra-p"
+import { ensureDir, readFile, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
@@ -15,6 +14,8 @@ import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createDifferentialPackage } from "app-package-builder"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { RemoteBuilder } from "./RemoteBuilder"
+import { StageDir } from "./targetUtil"
+import { getAppImage } from "./tools"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -52,18 +53,18 @@ export default class AppImageTarget extends Target {
     const artifactPath = path.join(this.outDir, artifactName)
 
     // pax doesn't like dir with leading dot (e.g. `.__appimage`)
-    const stageDir = path.join(this.outDir, `__appimage-${Arch[arch]}`)
-    const appInStageDir = path.join(stageDir, "app")
-    await emptyDir(stageDir)
+    const stageDir = new StageDir(path.join(this.outDir, `__appimage-${Arch[arch]}`))
+    const appInStageDir = stageDir.getTempFile("app")
+    await stageDir.ensureEmpty()
     await copyDirUsingHardLinks(appOutDir, appInStageDir)
 
     const resourceName = `appimagekit-${this.packager.executableName}`
-    const installIcons = await this.copyIcons(stageDir, resourceName)
+    const installIcons = await this.copyIcons(stageDir.tempDir, resourceName)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await BluebirdPromise.all([
       unlinkIfExists(artifactPath),
-      writeFile(path.join(stageDir, "/AppRun"), (await appRunTemplate.value)({
+      writeFile(stageDir.getTempFile("/AppRun"), (await appRunTemplate.value)({
         systemIntegration: this.options.systemIntegration || "ask",
         desktopFileName: finalDesktopFilename,
         executableName: this.packager.executableName,
@@ -72,7 +73,7 @@ export default class AppImageTarget extends Target {
       }), {
         mode: "0755",
       }),
-      writeFile(path.join(stageDir, finalDesktopFilename), await this.desktopEntry.value),
+      writeFile(stageDir.getTempFile(finalDesktopFilename), await this.desktopEntry.value),
     ])
 
     // must be after this.helper.icons call
@@ -81,10 +82,10 @@ export default class AppImageTarget extends Target {
     }
 
     //noinspection SpellCheckingInspection
-    const vendorDir = await getBinFromGithub("appimage", "9.0.2", "9Y6o5svZhJMeiVCuzy8PmKk0aERoX7LdqssBkiV/oglwGFvKdR2UK0jCJv5+cU5ZRwheq04npiRJ71qMBGVLIA==")
+    const vendorDir = await getAppImage()
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
-      await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), path.join(stageDir, "usr/lib"), {
+      await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), stageDir.getTempFile("usr/lib"), {
         isUseHardLink: USE_HARD_LINKS,
       })
     }
@@ -111,7 +112,7 @@ export default class AppImageTarget extends Target {
     if (packager.compression === "maximum") {
       args.push("--comp", "xz")
     }
-    args.push(stageDir, artifactPath)
+    args.push(stageDir.tempDir, artifactPath)
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {
         ...process.env,
@@ -120,9 +121,8 @@ export default class AppImageTarget extends Target {
         ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
       }
     })
-    if (!debug.enabled) {
-      await remove(stageDir)
-    }
+
+    await stageDir.cleanup()
 
     const blockMapInfo = await createDifferentialPackage(artifactPath)
     const updateInfo: BlockMapDataHolder = {
