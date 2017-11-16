@@ -54,3 +54,9 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
    Please note – you can select as many certificates, as need. No restrictions on electron-builder side.
    All selected certificates will be imported into temporary keychain on CI server.
 4. Open context menu and `Export`.
+
+# How to Disable Code Signing During the Build Process on macOS
+
+To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`. 
+
+Another way — set `mac.identity` to `null`. You can pass adiitional configuration using CLI as well: `-c.mac.identity=null`.
