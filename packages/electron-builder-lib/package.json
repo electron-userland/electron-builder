@@ -48,7 +48,6 @@
     "app-package-builder": "0.0.0-semantic-release",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
-    "electron-download-tf": "4.3.4",
     "electron-osx-sign": "0.4.7",
     "electron-publish": "0.0.0-semantic-release",
     "fs-extra-p": "^4.4.4",

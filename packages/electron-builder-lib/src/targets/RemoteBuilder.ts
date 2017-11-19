@@ -79,7 +79,8 @@ async function findBuildAgent(): Promise<string> {
 
   const agentInfo = JSON.parse((await httpExecutor.request({
     hostname: "www.electron.build",
-    path: "/find-build-agent",
+    // add random query param to prevent caching
+    path: `/find-build-agent?c=${Date.now().toString(32)}`,
   }))!!)
   return agentInfo.endpoint
 }

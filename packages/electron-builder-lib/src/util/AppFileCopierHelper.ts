@@ -154,7 +154,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
   // add shim
   const shimPath = `${mainFileSet.src}/${ELECTRON_COMPILE_SHIM_FILENAME}`
   mainFileSet.files.push(shimPath)
-  mainFileSet.metadata.set(shimPath, {isFile: () => true, isDirectory: () => false} as any)
+  mainFileSet.metadata.set(shimPath, {isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false} as any)
   if (mainFileSet.transformedFiles == null) {
     mainFileSet.transformedFiles = new Map()
   }

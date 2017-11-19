@@ -28,8 +28,9 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   // console.log(result)
 
-  if (result.dependencies.length > 0) {
-    console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(result.dependencies, null, 2)}`)
+  const unusedDependencies = result.dependencies.filter(it => it !== "electron-download-tf")
+  if (unusedDependencies.length > 0) {
+    console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
     return false
   }
 
@@ -46,7 +47,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   for (const name of Object.keys(result.missing)) {
-    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack") {
+    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" || name === "electron-download-tf") {
       delete (result.missing as any)[name]
     }
   }
