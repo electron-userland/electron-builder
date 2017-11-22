@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { debug, exec, isEmptyOrSpaces, warn } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { outputFile, readdir } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxConfiguration, LinuxTargetSpecificOptions } from "../options/linuxOptions"
@@ -15,12 +16,15 @@ export interface IconInfo {
 }
 
 export class LinuxTargetHelper {
-  readonly icons: Promise<Array<IconInfo>>
+  private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
 
   maxIconPath: string | null = null
 
   constructor(private packager: LinuxPackager) {
-    this.icons = this.computeDesktopIcons()
+  }
+
+  get icons(): Promise<Array<IconInfo>> {
+    return this.iconPromise.value
   }
 
   // must be name without spaces and other special characters, but not product name used

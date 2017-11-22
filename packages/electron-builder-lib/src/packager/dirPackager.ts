@@ -7,8 +7,6 @@ import * as path from "path"
 import { Configuration, ElectronDownloadOptions } from "../configuration"
 import { PlatformPackager } from "../platformPackager"
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
-
 interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
   version: string
   platform: string
@@ -50,7 +48,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
 
   if (dist == null) {
     const zipPath = (await BluebirdPromise.all<any>([
-      downloadElectron(options),
+      packager.info.electronDownloader(options),
       emptyDir(out)
     ]))[0]
 

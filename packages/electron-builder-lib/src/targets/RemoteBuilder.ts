@@ -1,21 +1,23 @@
 import { path7za } from "7zip-bin"
 import { ensureDir, outputFile, outputJson } from "fs-extra-p"
-import { constants, connect, ClientHttp2Stream, OutgoingHttpHeaders, ClientHttp2Session, IncomingHttpHeaders, SecureClientSessionOptions } from "http2"
+import { constants, connect, ClientHttp2Stream, OutgoingHttpHeaders, ClientHttp2Session, SecureClientSessionOptions } from "http2"
 import BluebirdPromise from "bluebird-lst"
 import { spawn } from "child_process"
 import { debug, Arch, isEnvTrue } from "builder-util"
 import * as path from "path"
 import { createWriteStream } from "fs"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { safeStringifyJson } from "builder-util-runtime"
+import { UploadTask } from "electron-publish"
 import { Target, TargetSpecificOptions } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
+import { JsonStreamParser } from "../util/JsonStreamParser"
 import { time } from "../util/timer"
 
 const {
   HTTP2_HEADER_PATH,
   HTTP2_METHOD_POST,
+  HTTP2_METHOD_GET,
   HTTP2_HEADER_METHOD,
   HTTP2_HEADER_CONTENT_TYPE,
   HTTP2_HEADER_STATUS,
@@ -96,7 +98,7 @@ function getZstdCompressionLevel(endpoint: string): string {
 class RemoteBuildManager {
   private readonly client: ClientHttp2Session
 
-  private files: Array<string> | null = null
+  private files: Array<ArtifactInfo> | null = null
   private finishedStreamCount = 0
 
   constructor(private readonly buildServiceEndpoint: string, private readonly unpackedDirectory: string, private readonly outDir: string, private readonly packager: PlatformPackager<any>) {
@@ -152,7 +154,7 @@ class RemoteBuildManager {
 
   private async saveConfigurationAndMetadata() {
     const packager = this.packager.info
-    const tempDir = await packager.tempDirManager.createTempDir()
+    const tempDir = await packager.tempDirManager.createTempDir({prefix: "remote-build-metadata"})
     // we cannot use getTempFile because file name must be constant
     const info: any = {
       metadata: packager.metadata,
@@ -168,11 +170,14 @@ class RemoteBuildManager {
   }
 
   private doBuild(customHeaders: OutgoingHttpHeaders, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void): void {
-    const client = this.client
+    this.upload(customHeaders, resolve, reject)
+  }
+
+  private upload(customHeaders: OutgoingHttpHeaders, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
     const zstdCompressionLevel = getZstdCompressionLevel(this.buildServiceEndpoint)
 
-    const stream = client.request({
-      [HTTP2_HEADER_PATH]: "/v1/build",
+    const stream = this.client.request({
+      [HTTP2_HEADER_PATH]: "/v1/upload",
       [HTTP2_HEADER_METHOD]: HTTP2_METHOD_POST,
       [HTTP2_HEADER_CONTENT_TYPE]: "application/octet-stream",
       ...customHeaders,
@@ -180,8 +185,9 @@ class RemoteBuildManager {
       "x-zstd-compression-level": zstdCompressionLevel,
     })
     stream.on("error", reject)
-    this.handleStreamEvent(resolve, reject)
+    // this.handleStreamEvent(resolve, reject)
     this.uploadUnpackedAppArchive(stream, zstdCompressionLevel, reject)
+
     stream.on("response", headers => {
       const status: number = headers[HTTP2_HEADER_STATUS] as any
       if (status !== HTTP_STATUS_OK && status !== HTTP_STATUS_BAD_REQUEST) {
@@ -205,51 +211,81 @@ class RemoteBuildManager {
           return
         }
 
-        this.files = result.files
-        if (this.files == null) {
-          if (result.error == null) {
-            reject(new Error("Incorrect result, list of files is expected"))
-          }
-          else {
-            resolve(result)
-          }
+        const id = result.id
+        if (id == null) {
+          reject(new Error("Server didn't return id"))
           return
         }
 
-        // pushed streams can be already handled
-        if (this.finishedStreamCount >= this.files.length) {
-          resolve(null)
-        }
+        // cannot connect immediately because channel status is not yet created
+        setTimeout(() => this.listenEvents(id, resolve, reject), 3 * 1000 /* min build time */)
       })
     })
   }
 
-  private handleStreamEvent(resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
-    this.client.on("stream", (stream, headers) => {
-      stream.on("error", reject)
-
-      const file = headers[HTTP2_HEADER_PATH] as string
-      if (debug.enabled) {
-        debug(`Remote builder stream: ${file} (headers: ${safeStringifyJson(headers)})`)
+  private listenEvents(id: string, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
+    const stream = this.client.request({
+      [HTTP2_HEADER_PATH]: `/v1/status/${id}`,
+      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
+    })
+    stream.on("error", reject)
+    stream.on("response", headers => {
+      if (!checkStatus(headers[HTTP2_HEADER_STATUS] as any, reject)) {
+        return
       }
 
-      const localFile = path.join(this.outDir, file)
-      const artifactCreatedEvent = this.fileStreamHeadersToArtifactCreatedEvent(headers, localFile)
-      const fileWritten = () => {
-        this.finishedStreamCount++
+      stream.setEncoding("utf8")
+      const eventSource = new JsonStreamParser(data => {
         if (debug.enabled) {
-          debug(`Remote artifact saved to: ${localFile}`)
+          debug(`Remote builder event: ${JSON.stringify(data)}`)
         }
 
-        // PublishManager uses outDir and options, real (the same as for local build) values must be used
-        this.packager.info.dispatchArtifactCreated(artifactCreatedEvent)
-
-        if (this.files != null && this.finishedStreamCount >= this.files.length) {
-          resolve(null)
+        if (!("files" in data)) {
+          console.error(`Unknown builder event: ${JSON.stringify(data)}`)
+          return
         }
+
+        this.files = data.files
+        for (const artifact of this.files!!) {
+          this.downloadFile(id, artifact, resolve, reject)
+        }
+      })
+      stream.on("data", (chunk: string) => eventSource.parseIncoming(chunk))
+      stream.on("end", () => {
+        console.log("event stream end")
+      })
+    })
+  }
+
+  private downloadFile(id: string, artifact: ArtifactInfo, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
+    const stream = this.client.request({
+      [HTTP2_HEADER_PATH]: `/v1/download/${id}/${artifact.file}`,
+      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
+    })
+    stream.on("error", reject)
+
+    const localFile = path.join(this.outDir, artifact.file)
+    const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile)
+    const fileWritten = () => {
+      this.finishedStreamCount++
+      if (debug.enabled) {
+        debug(`Remote artifact saved to: ${localFile}`)
       }
 
-      if (file.endsWith(".yml") || file.endsWith(".json")) {
+      // PublishManager uses outDir and options, real (the same as for local build) values must be used
+      this.packager.info.dispatchArtifactCreated(artifactCreatedEvent)
+
+      if (this.files != null && this.finishedStreamCount >= this.files.length) {
+        resolve(null)
+      }
+    }
+
+    stream.on("response", headers => {
+      if (!checkStatus(headers[HTTP2_HEADER_STATUS] as any, reject)) {
+        return
+      }
+
+      if (artifact.file.endsWith(".yml") || artifact.file.endsWith(".json")) {
         const buffers: Array<Buffer> = []
         stream.on("end", () => {
           const fileContent = buffers.length === 1 ? buffers[0] : Buffer.concat(buffers)
@@ -278,20 +314,14 @@ class RemoteBuildManager {
     })
   }
 
-  private fileStreamHeadersToArtifactCreatedEvent(headers: IncomingHttpHeaders, localFile: string): ArtifactCreated {
-    const target = headers["x-target"] as string | undefined
-    // noinspection SpellCheckingInspection
-    const rawUpdateinfo = headers["x-updateinfo"] as string | undefined
-
+  private artifactInfoToArtifactCreatedEvent(artifact: ArtifactInfo, localFile: string): ArtifactCreated {
+    const target = artifact.target
     // noinspection SpellCheckingInspection
     return {
+      ...artifact,
       file: localFile,
-      safeArtifactName: headers["x-safeartifactname"] as string | undefined,
       target: target == null ? null : new FakeTarget(target, this.outDir, (this.packager.config as any)[target]),
-      arch: parseInt(headers["x-arch"] as any, 10),
       packager: this.packager,
-      isWriteUpdateInfo: headers["x-iswriteupdateinfo"] === "1",
-      updateInfo: rawUpdateinfo == null ? null : JSON.parse(rawUpdateinfo),
     }
   }
 
@@ -321,6 +351,21 @@ class RemoteBuildManager {
   }
 }
 
+function checkStatus(status: number, reject: (error: Error) => void) {
+  if (status === HTTP_STATUS_OK) {
+    return true
+  }
+
+  if (status === constants.HTTP_STATUS_SERVICE_UNAVAILABLE) {
+    reject(new Error(`Error: request rate limit exceeded, please retry after 15 seconds`))
+    return false
+  }
+  else {
+    reject(new Error(`Error: ${status}`))
+    return false
+  }
+}
+
 class FakeTarget extends Target {
   constructor(name: string, readonly outDir: string, readonly options: TargetSpecificOptions | null | undefined) {
     super(name)
@@ -329,4 +374,11 @@ class FakeTarget extends Target {
   async build(appOutDir: string, arch: Arch) {
     // no build
   }
+}
+
+export interface ArtifactInfo extends UploadTask {
+  target: string | null
+
+  readonly isWriteUpdateInfo?: boolean
+  readonly updateInfo?: any
 }

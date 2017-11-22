@@ -59,7 +59,7 @@ export class SquirrelBuilder {
 
   async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch) {
     const packager = this.packager
-    const dirToArchive = await packager.getTempDir()
+    const dirToArchive = await packager.info.tempDirManager.createTempDir({prefix: "squirrel-windows"})
     const outputDirectory = this.outputDirectory
     const options = this.options
     const appUpdate = path.join(dirToArchive, "Update.exe")

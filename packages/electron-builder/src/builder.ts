@@ -259,6 +259,15 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
 
 export async function _build(options: CliOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
   const packager = new Packager(options, cancellationToken)
+
+  let electronDownloader: any = null
+  packager.electronDownloader = options => {
+    if (electronDownloader ==  null) {
+      electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
+    }
+    return electronDownloader(options)
+  }
+
   // because artifact event maybe dispatched several times for different publish providers
   const artifactPaths = new Set<string>()
   packager.artifactCreated(event => {

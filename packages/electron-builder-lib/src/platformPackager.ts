@@ -523,10 +523,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.tempDirManager.getTempFile({suffix})
   }
 
-  getTempDir(suffix?: string): Promise<string> {
-    return this.info.tempDirManager.getTempDir(suffix == null ? undefined : {suffix})
-  }
-
   get fileAssociations(): Array<FileAssociation> {
     return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }

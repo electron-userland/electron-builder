@@ -91,6 +91,15 @@ export class Packager {
     return result
   }
 
+  private _electronDownloader: any = null
+
+  electronDownloader: (options: any) => Promise<any> = options => {
+    if (this._electronDownloader == null) {
+      this._electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
+    }
+    return this._electronDownloader(options)
+  }
+
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
     if ("project" in options) {

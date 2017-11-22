@@ -40,7 +40,7 @@ export function createTestApp(version: string, appPath = "") {
 
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
 export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options | SpacesOptions>(data: T): Promise<string> {
-  const updateConfigPath = path.join(await tmpDir.getTempDir(), "app-update.yml")
+  const updateConfigPath = path.join(await tmpDir.getTempDir({prefix: "test-update-config"}), "app-update.yml")
   await outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath
 }

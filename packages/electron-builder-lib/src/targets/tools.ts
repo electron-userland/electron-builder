@@ -6,5 +6,6 @@ export function getLinuxToolsPath() {
 }
 
 export function getAppImage() {
-  return getBinFromGithub("appimage", "9.0.2", "9Y6o5svZhJMeiVCuzy8PmKk0aERoX7LdqssBkiV/oglwGFvKdR2UK0jCJv5+cU5ZRwheq04npiRJ71qMBGVLIA==")
+  //noinspection SpellCheckingInspection
+  return getBinFromGithub("appimage", "9.0.3", "jaOGGGXLKjJV4SXajFOoIb7vCq4GbN0ggy5eosd8F0GAh0ythYfZSq9Lj/+uymmw2h3kKf9W8Y2KBnWxIjU0aw==")
 }
