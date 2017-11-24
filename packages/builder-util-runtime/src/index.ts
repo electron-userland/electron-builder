@@ -1,5 +1,5 @@
 export { CancellationToken, CancellationError } from "./CancellationToken"
-export { HttpError, HttpExecutor, DownloadOptions, DigestTransform, RequestHeaders, safeGetHeader, configureRequestOptions, configureRequestOptionsFromUrl, safeStringifyJson, parseJson } from "./httpExecutor"
+export { HttpError, createHttpError, HttpExecutor, DownloadOptions, DigestTransform, RequestHeaders, safeGetHeader, configureRequestOptions, configureRequestOptionsFromUrl, safeStringifyJson, parseJson } from "./httpExecutor"
 export { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, SpacesOptions, BaseS3Options, getS3LikeProviderBaseUrl, Publish, githubUrl, PublishProvider, AllPublishOptions } from "./publishOptions"
 export { UpdateInfo, UpdateFileInfo, WindowsUpdateInfo, BlockMapDataHolder, PackageFileInfo, ReleaseNoteInfo } from "./updateInfo"
 export { parseDn } from "./rfc2253Parser"

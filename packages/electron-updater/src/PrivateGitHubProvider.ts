@@ -45,7 +45,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       result = safeLoad((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!!)
     }
     catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
+      if (e instanceof HttpError && e.statusCode === 404) {
         throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`)
       }
       throw e

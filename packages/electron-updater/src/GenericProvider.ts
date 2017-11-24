@@ -20,7 +20,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
         break
       }
       catch (e) {
-        if (e instanceof HttpError && e.response.statusCode === 404) {
+        if (e instanceof HttpError && e.statusCode === 404) {
           throw new Error(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`)
         }
         else if (e.code === "ECONNREFUSED") {

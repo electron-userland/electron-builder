@@ -97,13 +97,13 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^21.1.7":
-  version "21.1.7"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-21.1.7.tgz#af148f4fd2cb54e3fceba7b9f2162122ca2bfb28"
+"@types/jest@^21.1.8":
+  version "21.1.8"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-21.1.8.tgz#d497213725684f1e5a37900b17a47c9c018f1a97"
 
-"@types/js-yaml@^3.10.0":
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.10.0.tgz#9f69ce9554188dcf6f5a961d9632b45d89973a80"
+"@types/js-yaml@^3.10.1":
+  version "3.10.1"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.10.1.tgz#a4ddaf67fec34151e620cdbdd22e40b64217f577"
 
 "@types/lodash.isequal@^4.5.2":
   version "4.5.2"
@@ -430,9 +430,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.155.0:
-  version "2.155.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.155.0.tgz#2ae5381f97e8f42e650e1d25999e9090a936d0c6"
+aws-sdk@^2.156.0:
+  version "2.156.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.156.0.tgz#409c06f7051d58320cb389a024ca7b61ce31f136"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -1133,6 +1133,10 @@ content-type@~1.0.1:
 convert-source-map@^1.4.0, convert-source-map@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-1.5.0.tgz#9acd70851c6d5dfdd93d9282e5edf94a03ff46b5"
+
+convert-source-map@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/convert-source-map/-/convert-source-map-1.5.1.tgz#b8278097b9bc229365de5c62cf5fcaed8b5599e5"
 
 core-js@^2.4.0, core-js@^2.5.0:
   version "2.5.1"
@@ -4577,9 +4581,9 @@ tar@^2.2.1:
     fstream "^1.0.2"
     inherits "2"
 
-temp-file@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-2.1.1.tgz#7c2db304595007461b16a06e3625639cbf69a91d"
+temp-file@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-3.0.0.tgz#1e9eca9c411a41564f5746bc2774c39080021db0"
   dependencies:
     async-exit-hook "^2.0.1"
     bluebird-lst "^1.0.5"

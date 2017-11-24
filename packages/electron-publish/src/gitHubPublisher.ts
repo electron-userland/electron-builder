@@ -154,7 +154,7 @@ export class GitHubPublisher extends HttpPublisher {
       }
       catch (e) {
         if (e instanceof HttpError) {
-          if (e.response.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+          if (e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
             debug(`Artifact ${fileName} already exists on GitHub, overwrite one`)
 
@@ -169,7 +169,7 @@ export class GitHubPublisher extends HttpPublisher {
             debug(`Artifact ${fileName} not found on GitHub, trying to upload again`)
             continue
           }
-          else if (attemptNumber++ < 3 && e.response.statusCode === 502) {
+          else if (attemptNumber++ < 3 && e.statusCode === 502) {
             continue
           }
         }
@@ -210,11 +210,11 @@ export class GitHubPublisher extends HttpPublisher {
       }
       catch (e) {
         if (e instanceof HttpError) {
-          if (e.response.statusCode === 404) {
+          if (e.statusCode === 404) {
             warn(`Cannot delete release ${release.id} — doesn't exist`)
             return
           }
-          else if (e.response.statusCode === 405 || e.response.statusCode === 502) {
+          else if (e.statusCode === 405 || e.statusCode === 502) {
             continue
           }
         }

@@ -35,7 +35,7 @@ export class BintrayProvider extends Provider<UpdateInfo> {
       return parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelFileUrl)))!!, channelFilename, channelFileUrl)
     }
     catch (e) {
-      if ("response" in e && e.response.statusCode === 404) {
+      if ("statusCode" in e && e.statusCode === 404) {
         throw new Error(`No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. ${e.stack || e.message}`)
       }
       throw e

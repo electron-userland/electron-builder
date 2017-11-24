@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, createWriteStream, open } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions, IncomingMessage } from "http"
@@ -260,7 +260,7 @@ function formatBytes(value: number, symbol = " KB") {
 function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
   // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
   if (response.statusCode!! >= 400) {
-    reject(new HttpError(response))
+    reject(createHttpError(response))
     return false
   }
 

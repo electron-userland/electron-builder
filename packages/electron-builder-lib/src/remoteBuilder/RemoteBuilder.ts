@@ -8,11 +8,13 @@ import * as path from "path"
 import { createWriteStream } from "fs"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { UploadTask } from "electron-publish"
+import { HttpError } from "builder-util-runtime"
 import { Target, TargetSpecificOptions } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { JsonStreamParser } from "../util/JsonStreamParser"
 import { time } from "../util/timer"
+import { ELECTRON_BUILD_SERVICE_CA_CERT, ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT } from "./remote-builder-certs"
 
 const {
   HTTP2_HEADER_PATH,
@@ -24,34 +26,6 @@ const {
   HTTP_STATUS_OK,
   HTTP_STATUS_BAD_REQUEST
 } = constants
-
-// noinspection SpellCheckingInspection
-const ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT = Buffer.from(`-----BEGIN CERTIFICATE-----
-MIIBiDCCAS+gAwIBAgIRAPHSzTRLcN2nElhQdaRP47IwCgYIKoZIzj0EAwIwJDEi
-MCAGA1UEAxMZZWxlY3Ryb24uYnVpbGQubG9jYWwgcm9vdDAeFw0xNzExMTMxNzI4
-NDFaFw0yNzExMTExNzI4NDFaMCQxIjAgBgNVBAMTGWVsZWN0cm9uLmJ1aWxkLmxv
-Y2FsIHJvb3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQVyduuCT2acuk2QH06
-yal/b6O7eTTpOHk3Ucjc+ZZta2vC2+c1IKcSAwimKbTbK+nRxWWJl9ZYx9RTwbRf
-QjD6o0IwQDAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E
-FgQUlm08vBe4CUNAOTQN5Z1RNTfJjjYwCgYIKoZIzj0EAwIDRwAwRAIgMXlT6YM8
-4pQtnhUjijVMz+NlcYafS1CEbNBMaWhP87YCIGXUmu7ON9hRLanXzBNBlrtTQG+i
-l/NT6REwZA64/lNy
------END CERTIFICATE-----
-`)
-
-// noinspection SpellCheckingInspection
-const ELECTRON_BUILD_SERVICE_CA_CERT = Buffer.from(`-----BEGIN CERTIFICATE-----
-MIIBfTCCASOgAwIBAgIRAIdieK1+3C4abgOvQ7pVVqAwCgYIKoZIzj0EAwIwHjEc
-MBoGA1UEAxMTZWxlY3Ryb24uYnVpbGQgcm9vdDAeFw0xNzExMTMxNzI4NDFaFw0x
-ODExMTMxNzI4NDFaMB4xHDAaBgNVBAMTE2VsZWN0cm9uLmJ1aWxkIHJvb3QwWTAT
-BgcqhkjOPQIBBggqhkjOPQMBBwNCAAR+4b6twzizN/z27yvwrCV5kinGUrfo+W7n
-L/l28ErscNe1BDSyh/IYrnMWb1rDMSLGhvkgI9Cfex1whNPHR101o0IwQDAOBgNV
-HQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQU6Dq8kK7tQlrt
-zkIYrYiTZGpHEp0wCgYIKoZIzj0EAwIDSAAwRQIgKSfjAQbYlY/S1wMLUi84r8QN
-hhMnUwsOmlDan0xPalICIQDLIAXAIyArVtH38a4aizvhH8YeXrxzpJh3U8RolBZF
-SA==
------END CERTIFICATE-----
-`)
 
 interface RemoteBuilderResponse {
   error?: string
@@ -191,7 +165,7 @@ class RemoteBuildManager {
     stream.on("response", headers => {
       const status: number = headers[HTTP2_HEADER_STATUS] as any
       if (status !== HTTP_STATUS_OK && status !== HTTP_STATUS_BAD_REQUEST) {
-        reject(new Error(`Error: ${status}`))
+        reject(new HttpError(status))
         return
       }
 
@@ -207,7 +181,7 @@ class RemoteBuildManager {
         }
 
         if (status === HTTP_STATUS_BAD_REQUEST) {
-          reject(new Error(JSON.stringify(result, null, 2)))
+          reject(new HttpError(status, JSON.stringify(result, null, 2)))
           return
         }
 
@@ -238,6 +212,11 @@ class RemoteBuildManager {
       const eventSource = new JsonStreamParser(data => {
         if (debug.enabled) {
           debug(`Remote builder event: ${JSON.stringify(data)}`)
+        }
+
+        const error = data.error
+        if (error != null) {
+          return
         }
 
         if (!("files" in data)) {
@@ -355,13 +334,8 @@ function checkStatus(status: number, reject: (error: Error) => void) {
   if (status === HTTP_STATUS_OK) {
     return true
   }
-
-  if (status === constants.HTTP_STATUS_SERVICE_UNAVAILABLE) {
-    reject(new Error(`Error: request rate limit exceeded, please retry after 15 seconds`))
-    return false
-  }
   else {
-    reject(new Error(`Error: ${status}`))
+    reject(new HttpError(status))
     return false
   }
 }

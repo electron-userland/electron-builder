@@ -6,7 +6,7 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { RemoteBuilder } from "./RemoteBuilder"
+import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}

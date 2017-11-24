@@ -25,9 +25,29 @@ export interface DownloadOptions {
   onProgress?(progress: ProgressInfo): void
 }
 
+export function createHttpError(response: IncomingMessage, description: any | null = null) {
+  return new HttpError(response.statusCode || -1, `${response.statusCode} ${response.statusMessage}` + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + safeStringifyJson(response.headers), description)
+}
+
+const HTTP_STATUS_CODES = new Map<number, string>([
+  [429, "Too many requests"],
+  [400, "Bad request"],
+  [403, "Forbidden"],
+  [404, "Not found"],
+  [405, "Method not allowed"],
+  [406, "Not acceptable"],
+  [408, "Request timeout"],
+  [413, "Request entity too large"],
+  [500, "Internal server error"],
+  [502, "Bad gateway"],
+  [503, "Service unavailable"],
+  [504, "Gateway timeout"],
+  [505, "HTTP version not supported"],
+])
+
 export class HttpError extends Error {
-  constructor(readonly response: IncomingMessage, public description: any | null = null) {
-    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
+  constructor(readonly statusCode: number, message: string = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
+    super(message)
 
     this.name = "HttpError"
   }
@@ -87,7 +107,7 @@ export abstract class HttpExecutor<REQUEST> {
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
-      reject(new HttpError(response, `method: ${options.method} url: ${options.protocol || "https:"}//${options.hostname}${options.path}
+      reject(createHttpError(response, `method: ${options.method} url: ${options.protocol || "https:"}//${options.hostname}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
 `))
@@ -123,7 +143,7 @@ Please double check that your authentication token is correct. Due to security r
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
           const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
-          reject(new HttpError(response, isJson ? JSON.parse(data) : data))
+          reject(createHttpError(response, isJson ? JSON.parse(data) : data))
         }
         else {
           resolve(data.length === 0 ? null : data)

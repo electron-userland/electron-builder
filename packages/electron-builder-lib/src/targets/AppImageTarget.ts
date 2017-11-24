@@ -13,7 +13,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createDifferentialPackage } from "app-package-builder"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { RemoteBuilder } from "./RemoteBuilder"
+import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
 import { StageDir } from "./targetUtil"
 import { getAppImage } from "./tools"
 

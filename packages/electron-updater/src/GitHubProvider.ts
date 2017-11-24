@@ -62,7 +62,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       rawData = (await this.executor.request(requestOptions, cancellationToken))!!
     }
     catch (e) {
-      if (!this.updater.allowPrerelease && e instanceof HttpError && e.response.statusCode === 404) {
+      if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
         throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`)
       }
       throw e

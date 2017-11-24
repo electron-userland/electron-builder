@@ -39,7 +39,7 @@ export class BintrayPublisher extends HttpPublisher {
       return await this.client.getVersion(this.version)
     }
     catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
+      if (e instanceof HttpError && e.statusCode === 404) {
         if (this.options.publish !== "onTagOrDraft") {
           log(`Version ${this.version} doesn't exist, creating one`)
           return this.client.createVersion(this.version)
@@ -87,7 +87,7 @@ export class BintrayPublisher extends HttpPublisher {
         return await httpExecutor.doApiRequest(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
-        if (attemptNumber < 3 && ((e instanceof HttpError && e.response.statusCode === 502) || e.code === "EPIPE")) {
+        if (attemptNumber < 3 && ((e instanceof HttpError && e.statusCode === 502) || e.code === "EPIPE")) {
           continue
         }
 
