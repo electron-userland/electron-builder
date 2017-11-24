@@ -59,12 +59,10 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
   checkNotEmpty("version", metadata.version)
 
-  if (devMetadata != null) {
-    checkDependencies(devMetadata.dependencies, errors)
+  if (metadata != null) {
+    checkDependencies(metadata.dependencies, errors)
   }
   if (metadata !== devMetadata) {
-    checkDependencies(metadata.dependencies, errors)
-
     if (metadata.build != null) {
       errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
     }
