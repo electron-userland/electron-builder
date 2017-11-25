@@ -14,7 +14,7 @@ import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createDifferentialPackage } from "app-package-builder"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
-import { StageDir } from "./targetUtil"
+import { createStageDir } from "./targetUtil"
 import { getAppImage } from "./tools"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
@@ -53,13 +53,12 @@ export default class AppImageTarget extends Target {
     const artifactPath = path.join(this.outDir, artifactName)
 
     // pax doesn't like dir with leading dot (e.g. `.__appimage`)
-    const stageDir = new StageDir(path.join(this.outDir, `__appimage-${Arch[arch]}`))
+    const stageDir = await createStageDir(this, packager, arch)
     const appInStageDir = stageDir.getTempFile("app")
-    await stageDir.ensureEmpty()
     await copyDirUsingHardLinks(appOutDir, appInStageDir)
 
     const resourceName = `appimagekit-${this.packager.executableName}`
-    const installIcons = await this.copyIcons(stageDir.tempDir, resourceName)
+    const installIcons = await this.copyIcons(stageDir.dir, resourceName)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await BluebirdPromise.all([
@@ -112,7 +111,7 @@ export default class AppImageTarget extends Target {
     if (packager.compression === "maximum") {
       args.push("--comp", "xz")
     }
-    args.push(stageDir.tempDir, artifactPath)
+    args.push(stageDir.dir, artifactPath)
     await exec(path.join(vendorToolDir, "appimagetool"), args, {
       env: {
         ...process.env,

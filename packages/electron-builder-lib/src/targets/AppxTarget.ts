@@ -9,7 +9,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { VmManager } from "../vm/vm"
-import { createHelperDir } from "./targetUtil"
+import { createStageDir } from "./targetUtil"
 import { AppXOptions } from "../"
 
 const APPX_ASSETS_DIR_NAME = "appx"
@@ -40,7 +40,7 @@ export default class AppXTarget extends Target {
     const vendorPath = await getSignVendorPath()
     const vm = await packager.vm.value
 
-    const stageDir = await createHelperDir(this, arch)
+    const stageDir = await createStageDir(this, packager, arch)
 
     const mappingFile = stageDir.getTempFile("mapping.txt")
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
@@ -88,7 +88,7 @@ export default class AppXTarget extends Target {
       ])
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
-      for (const resourceFile of (await readdir(stageDir.tempDir)).filter(it => it.startsWith("resources.")).sort()) {
+      for (const resourceFile of (await readdir(stageDir.dir)).filter(it => it.startsWith("resources.")).sort()) {
         mappingList.push([`"${vm.toVmFile(stageDir.getTempFile(resourceFile))}" "${resourceFile}"`])
       }
       makeAppXArgs.push("/l")

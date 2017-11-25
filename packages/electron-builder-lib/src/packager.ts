@@ -100,6 +100,10 @@ export class Packager {
     return this._electronDownloader(options)
   }
 
+  stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
+    return path.join(target.outDir, `__${target.name}-${Arch[arch]}`)
+  }
+
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
     if ("project" in options) {

@@ -1,12 +1,13 @@
 import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString, serializeToYaml } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
-import { emptyDir, outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
+import { createStageDir } from "./targetUtil"
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -27,10 +28,9 @@ export default class SnapTarget extends Target {
     const appInfo = packager.appInfo
     const options = this.options
 
-    const stageDir = `${appOutDir}-snap`
+    const stageDir = await createStageDir(this, packager, arch)
     // snapcraft.yaml inside a snap directory
-    const snapDir = path.join(stageDir, "snap")
-    await emptyDir(stageDir)
+    const snapDir = path.join(stageDir.dir, "snap")
 
     const snap: any = {}
     snap.name = packager.executableName.toLowerCase()
@@ -132,7 +132,7 @@ export default class SnapTarget extends Target {
       }
 
       // https://bugs.launchpad.net/snapcraft/+bug/1692752
-      commands.push(`cp -R /out/${path.basename(stageDir)} /s/`)
+      commands.push(`cp -R /out/${path.basename(stageDir.dir)} /s/`)
       commands.push("cd /s")
       commands.push("apt-get -qq update")
       commands.push(`snapcraft prime --target-arch ${toLinuxArchString(arch)}`)
@@ -155,7 +155,7 @@ export default class SnapTarget extends Target {
         await spawn("apt-get", ["-qq", "install", "--no-install-recommends"].concat(options.buildPackages))
       }
       const spawnOptions = {
-        cwd: stageDir,
+        cwd: stageDir.dir,
         stdio: ["ignore", "inherit", "inherit"],
       }
       await spawn("snapcraft", ["prime", "--target-arch", toLinuxArchString(arch)], spawnOptions)
@@ -164,6 +164,8 @@ export default class SnapTarget extends Target {
       })
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], spawnOptions)
     }
+
+    await stageDir.cleanup()
     packager.dispatchArtifactCreated(resultFile, this, arch)
   }
 }

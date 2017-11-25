@@ -5,7 +5,7 @@ import { readFile, writeFile } from "fs-extra-p"
 import { getTemplatePath } from "../util/pathManager"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
-import { createHelperDir } from "./targetUtil"
+import { createStageDir } from "./targetUtil"
 import { MsiOptions } from "../"
 import { UUID } from "builder-util-runtime"
 import BluebirdPromise from "bluebird-lst"
@@ -42,7 +42,7 @@ export default class MsiTarget extends Target {
 
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
-    const stageDir = await createHelperDir(this, arch)
+    const stageDir = await createStageDir(this, packager, arch)
     const vm = this.vm
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
@@ -75,12 +75,12 @@ export default class MsiTarget extends Target {
       candleArgs.push(ASSISTED_UI_FILE_NAME)
     }
     await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
-      cwd: stageDir.tempDir,
+      cwd: stageDir.dir,
     })
 
     const artifactName = packager.expandArtifactNamePattern(this.options, "msi", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.tempDir)
+    await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
 
     await stageDir.cleanup()
 

@@ -3,29 +3,31 @@ import * as path from "path"
 import { Target } from "../core"
 import { Arch, debug } from "builder-util"
 import BluebirdPromise from "bluebird-lst"
+import { PlatformPackager } from "../platformPackager"
 
 export class StageDir {
-  constructor(readonly tempDir: string) {
+  constructor(readonly dir: string) {
   }
 
   ensureEmpty() {
-    return emptyDir(this.tempDir)
+    return emptyDir(this.dir)
   }
 
   getTempFile(name: string) {
-    return this.tempDir + path.sep + name
+    return this.dir + path.sep + name
   }
 
   cleanup() {
     if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
-      return remove(this.tempDir)
+      return remove(this.dir)
     }
     return BluebirdPromise.resolve()
   }
 }
 
-export async function createHelperDir(target: Target, arch: Arch): Promise<StageDir> {
-  const tempDir = path.join(target.outDir, `__${target.name}-temp-${Arch[arch]}`)
-  await emptyDir(tempDir)
-  return new StageDir(tempDir)
+export async function createStageDir(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<StageDir> {
+  const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
+  const stageDir = new StageDir(tempDir)
+  await stageDir.ensureEmpty()
+  return stageDir
 }
