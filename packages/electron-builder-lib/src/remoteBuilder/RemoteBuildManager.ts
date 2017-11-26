@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { ensureDir, outputFile, outputJson } from "fs-extra-p"
+import { ensureDir, outputFile } from "fs-extra-p"
 import { constants, connect, ClientHttp2Stream, OutgoingHttpHeaders, ClientHttp2Session, SecureClientSessionOptions } from "http2"
 import BluebirdPromise from "bluebird-lst"
 import { spawn } from "child_process"
@@ -13,8 +13,10 @@ import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { JsonStreamParser } from "../util/JsonStreamParser"
 import { time } from "../util/timer"
+import { ProjectInfoManager } from "./ProjectInfoManager"
 import { ELECTRON_BUILD_SERVICE_CA_CERT, ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT } from "./remote-builder-certs"
 import { RemoteBuilderResponse } from "./RemoteBuilder"
+import { URL } from "url"
 
 const {
   HTTP2_HEADER_PATH,
@@ -33,7 +35,11 @@ export class RemoteBuildManager {
   private files: Array<ArtifactInfo> | null = null
   private finishedStreamCount = 0
 
-  constructor(private readonly buildServiceEndpoint: string, private readonly unpackedDirectory: string, private readonly outDir: string, private readonly packager: PlatformPackager<any>) {
+  constructor(private readonly buildServiceEndpoint: string,
+              private readonly projectInfoManager: ProjectInfoManager,
+              private readonly unpackedDirectory: string,
+              private readonly outDir: string,
+              private readonly packager: PlatformPackager<any>) {
     debug(`Connect to remote build service: ${buildServiceEndpoint}`)
     const options: SecureClientSessionOptions = {}
     const caCert = process.env.ELECTRON_BUILD_SERVICE_CA_CERT
@@ -82,23 +88,6 @@ export class RemoteBuildManager {
       .finally(() => {
         this.client.destroy()
       })
-  }
-
-  private async saveConfigurationAndMetadata() {
-    const packager = this.packager.info
-    const tempDir = await packager.tempDirManager.createTempDir({prefix: "remote-build-metadata"})
-    // we cannot use getTempFile because file name must be constant
-    const info: any = {
-      metadata: packager.metadata,
-      configuration: packager.config,
-      repositoryInfo: packager.repositoryInfo,
-    }
-    if (packager.metadata !== packager.devMetadata && packager.devMetadata != null) {
-      info.devMetadata = packager.devMetadata
-    }
-    const file = path.join(tempDir, "info.json")
-    await outputJson(file, info)
-    return file
   }
 
   private doBuild(customHeaders: OutgoingHttpHeaders, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void): void {
@@ -150,58 +139,62 @@ export class RemoteBuildManager {
         }
 
         // cannot connect immediately because channel status is not yet created
-        setTimeout(() => this.listenEvents(id, resolve, reject), 3 * 1000 /* min build time */)
+        setTimeout(() => {
+          this.listenEvents(id)
+            .then(resolve)
+            .catch(reject)
+        }, 3 * 1000 /* min build time */)
       })
     })
   }
 
-  private listenEvents(id: string, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
-    const stream = this.client.request({
-      [HTTP2_HEADER_PATH]: `/v1/status/${id}`,
-      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
-    })
-    stream.on("error", reject)
-    stream.on("response", headers => {
-      if (!checkStatus(headers[HTTP2_HEADER_STATUS] as any, reject)) {
-        return
-      }
-
-      stream.setEncoding("utf8")
-      const eventSource = new JsonStreamParser(data => {
-        if (debug.enabled) {
-          debug(`Remote builder event: ${JSON.stringify(data)}`)
-        }
-
-        const error = data.error
-        if (error != null) {
-          stream.destroy()
-          resolve(data)
-          return
-        }
-
-        if (!("files" in data)) {
-          console.error(`Unknown builder event: ${JSON.stringify(data)}`)
-          return
-        }
-
-        // close, no more events are expected
-        stream.destroy()
-
-        this.files = data.files
-        for (const artifact of this.files!!) {
-          this.downloadFile(id, artifact, resolve, reject)
-        }
+  private listenEvents(id: string): Promise<RemoteBuilderResponse | null> {
+    return new BluebirdPromise((resolve, reject) => {
+      const stream = this.client.request({
+        [HTTP2_HEADER_PATH]: `/v1/status/${id}`,
+        [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
       })
-      stream.on("data", (chunk: string) => eventSource.parseIncoming(chunk))
-      stream.on("end", () => {
-        console.log("event stream end")
+      stream.on("error", reject)
+      stream.on("response", headers => {
+        if (!checkStatus(headers[HTTP2_HEADER_STATUS] as any, reject)) {
+          return
+        }
+
+        stream.setEncoding("utf8")
+        const eventSource = new JsonStreamParser(data => {
+          if (debug.enabled) {
+            debug(`Remote builder event: ${JSON.stringify(data, null, 2)}`)
+          }
+
+          const error = data.error
+          if (error != null) {
+            stream.destroy()
+            resolve(data)
+            return
+          }
+
+          if (!("files" in data)) {
+            console.error(`Unknown builder event: ${JSON.stringify(data)}`)
+            return
+          }
+
+          // close, no more events are expected
+          stream.destroy()
+
+          this.files = data.files
+          for (const artifact of this.files!!) {
+            this.downloadFile(id, artifact, resolve, reject)
+          }
+        })
+        stream.on("data", (chunk: string) => eventSource.parseIncoming(chunk))
       })
     })
   }
 
   private downloadFile(id: string, artifact: ArtifactInfo, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
     const stream = this.client.request({
-      [HTTP2_HEADER_PATH]: `/v1/download/${id}/${artifact.file}`,
+      // use URL to encode path properly (critical for filenames with unicode symbols, e.g. "boo-Test App ßW")
+      [HTTP2_HEADER_PATH]: `/v1/download${new URL(`f:/${id}/${artifact.file}`).pathname}`,
       [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
     })
     stream.on("error", reject)
@@ -215,7 +208,7 @@ export class RemoteBuildManager {
       }
 
       // PublishManager uses outDir and options, real (the same as for local build) values must be used
-      this.packager.info.dispatchArtifactCreated(artifactCreatedEvent)
+      this.projectInfoManager.packager.dispatchArtifactCreated(artifactCreatedEvent)
 
       if (this.files != null && this.finishedStreamCount >= this.files.length) {
         resolve(null)
@@ -269,7 +262,7 @@ export class RemoteBuildManager {
 
   // compress and upload in the same time, directly to remote without intermediate local file
   private uploadUnpackedAppArchive(stream: ClientHttp2Stream, zstdCompressionLevel: string, reject: (error: Error) => void) {
-    this.saveConfigurationAndMetadata()
+    this.projectInfoManager.infoFile.value
       .then(infoFile => {
         const compressAndUploadTimer = time("compress and upload")
         // noinspection SpellCheckingInspection

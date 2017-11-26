@@ -23,6 +23,10 @@ export class StageDir {
     }
     return BluebirdPromise.resolve()
   }
+
+  toString() {
+    return this.dir
+  }
 }
 
 export async function createStageDir(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<StageDir> {

@@ -1,4 +1,4 @@
-import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString, serializeToYaml } from "builder-util"
+import { Arch, exec, log, replaceDefault, spawn, toLinuxArchString, serializeToYaml } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
@@ -7,7 +7,21 @@ import { LinuxPackager } from "../linuxPackager"
 import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
-import { createStageDir } from "./targetUtil"
+import { createStageDir, StageDir } from "./targetUtil"
+
+// usr/share/fonts is required, cannot run otherwise
+const unnecessaryFiles = [
+  "usr/share/doc",
+  "usr/share/man",
+  "usr/share/icons",
+  "usr/share/bash-completion",
+  "usr/share/lintian",
+  "usr/share/dh-python",
+  "usr/share/python3",
+
+  "usr/lib/python*",
+  "usr/bin/python*",
+]
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -21,7 +35,7 @@ export default class SnapTarget extends Target {
 
     if (process.platform === "win32" || process.env._REMOTE_BUILD) {
       const remoteBuilder = new RemoteBuilder()
-      return await remoteBuilder.build(["snap"], appOutDir, this.packager, this.outDir)
+      return await remoteBuilder.buildTarget(this, arch, appOutDir, this.packager)
     }
 
     const packager = this.packager
@@ -65,24 +79,7 @@ export default class SnapTarget extends Target {
       }
     }
 
-    let isUseDocker = process.platform !== "linux"
-    if (process.platform === "darwin" && process.env.USE_SYSTEM_SNAPCAFT) {
-      try {
-        // http://click.pocoo.org/5/python3/
-        const env: any = {...process.env}
-        delete env.VERSIONER_PYTHON_VERSION
-        delete env.VERSIONER_PYTHON_PREFER_32_BIT
-        await exec("snapcraft", ["--version"], {
-          // execution because Python 3 was configured to use ASCII as encoding for the environment
-          env,
-        })
-        isUseDocker = false
-      }
-      catch (e) {
-        debug(`snapcraft not installed: ${e}`)
-      }
-    }
-
+    const isUseDocker = process.platform !== "linux"
     // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
     const defaultStagePackages = ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]
     const defaultAfter = ["desktop-glib-only"]
@@ -91,7 +88,7 @@ export default class SnapTarget extends Target {
       app: {
         plugin: "dump",
         "stage-packages": replaceDefault(options.stagePackages, defaultStagePackages),
-        source: isUseDocker ? `/out/${path.basename(appOutDir)}` : appOutDir,
+        source: isUseDocker ? "/appOutDir" : appOutDir,
         after
       }
     }
@@ -111,43 +108,8 @@ export default class SnapTarget extends Target {
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapFileName)
 
-    // usr/share/fonts is required, cannot run otherwise
-    const unnecessaryFiles = [
-      "usr/share/doc",
-      "usr/share/man",
-      "usr/share/icons",
-      "usr/share/bash-completion",
-      "usr/share/lintian",
-      "usr/share/dh-python",
-      "usr/share/python3",
-
-      "usr/lib/python*",
-      "usr/bin/python*",
-    ]
-
     if (isUseDocker) {
-      const commands: Array<string> = []
-      if (options.buildPackages != null && options.buildPackages.length > 0) {
-        commands.push(`apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`)
-      }
-
-      // https://bugs.launchpad.net/snapcraft/+bug/1692752
-      commands.push(`cp -R /out/${path.basename(stageDir.dir)} /s/`)
-      commands.push("cd /s")
-      commands.push("apt-get -qq update")
-      commands.push(`snapcraft prime --target-arch ${toLinuxArchString(arch)}`)
-      commands.push(`rm -rf ${unnecessaryFiles.map(it => `prime/${it}`).join(" ")}`)
-      commands.push(`snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`)
-
-      await spawn("docker", ["run", "--rm",
-        "-v", `${packager.info.projectDir}:/project`,
-        // dist dir can be outside of project dir
-        "-v", `${this.outDir}:/out`,
-        "electronuserland/builder:latest",
-        "/bin/bash", "-c", commands.join(" && ")], {
-        cwd: packager.info.projectDir,
-        stdio: ["ignore", "inherit", "inherit"],
-      })
+      await this.buildUsingDocker(options, arch, snapFileName, stageDir, appOutDir)
     }
     else {
       if (options.buildPackages != null && options.buildPackages.length > 0) {
@@ -159,13 +121,42 @@ export default class SnapTarget extends Target {
         stdio: ["ignore", "inherit", "inherit"],
       }
       await spawn("snapcraft", ["prime", "--target-arch", toLinuxArchString(arch)], spawnOptions)
-      await exec("sh", ["-c", `rm -rf ${unnecessaryFiles.join(" ")}`], {
-        cwd: stageDir + path.sep + "prime",
+      await exec("/bin/bash", ["-c", `rm -rf ${unnecessaryFiles.join(" ")}`], {
+        cwd: stageDir.dir + path.sep + "prime",
       })
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], spawnOptions)
     }
 
     await stageDir.cleanup()
     packager.dispatchArtifactCreated(resultFile, this, arch)
+  }
+
+  private async buildUsingDocker(options: SnapOptions, arch: Arch, snapFileName: string, stageDir: StageDir, appOutDir: string) {
+    const commands: Array<string> = []
+    if (options.buildPackages != null && options.buildPackages.length > 0) {
+      commands.push(`apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`)
+    }
+
+    // copy stage to linux fs to avoid performance issues (https://docs.docker.com/docker-for-mac/osxfs-caching/)
+    commands.push(`cp -R /stage /s/`)
+    commands.push("cd /s")
+    commands.push("apt-get -qq update")
+    commands.push(`snapcraft prime --target-arch ${toLinuxArchString(arch)}`)
+    commands.push(`rm -rf ${unnecessaryFiles.map(it => `prime/${it}`).join(" ")}`)
+    commands.push(`snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`)
+
+    const packager = this.packager
+    await spawn("docker", ["run", "--rm",
+      "-v", `${packager.info.projectDir}:/project:delegated`,
+      // dist dir can be outside of project dir
+      "-v", `${this.outDir}:/out`,
+      "-v", `${stageDir.dir}:/stage:ro`,
+      "-v", `${appOutDir}:/appOutDir:ro`,
+      "electronuserland/builder:latest",
+      "/bin/bash", "-c", commands.join(" && "),
+    ], {
+      cwd: packager.info.projectDir,
+      stdio: ["ignore", "inherit", "inherit"],
+    })
   }
 }
