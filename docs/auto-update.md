@@ -32,7 +32,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 **NOTICE**:
 
 1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
-2. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
+2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ### Examples
 
