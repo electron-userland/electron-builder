@@ -1,13 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
-import { ChildProcess, execFile, spawn as _spawn, SpawnOptions, ExecFileOptions } from "child_process"
+import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
+import { safeDump } from "js-yaml"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
-import { safeDump } from "js-yaml"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -50,7 +50,7 @@ function getProcessEnv(env: { [key: string]: string | undefined } | undefined | 
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
   // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-  const locale = process.platform === "linux" ? "C.UTF-8" : "en_US.UTF-8"
+  const locale = process.platform === "linux" ? (process.env.LANG || "C.UTF-8") : "en_US.UTF-8"
   finalEnv.LANG = locale
   finalEnv.LC_CTYPE = locale
   finalEnv.LC_ALL = locale
