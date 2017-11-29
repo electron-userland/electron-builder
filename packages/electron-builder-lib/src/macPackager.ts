@@ -4,17 +4,17 @@ import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
+import * as semver from "semver"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
+import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { ArchiveTarget } from "./targets/ArchiveTarget"
-import * as semver from "semver"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -214,7 +214,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (customSignOptions.entitlements == null) {
       const p = `entitlements.${entitlementsSuffix}.plist`
       if (resourceList.includes(p)) {
-        signOptions.entitlements = path.join(this.buildResourcesDir, p)
+        signOptions.entitlements = path.join(this.info.buildResourcesDir, p)
       }
     }
     else {
@@ -224,7 +224,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (customSignOptions.entitlementsInherit == null) {
       const p = `entitlements.${entitlementsSuffix}.inherit.plist`
       if (resourceList.includes(p)) {
-        signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
+        signOptions["entitlements-inherit"] = path.join(this.info.buildResourcesDir, p)
       }
     }
     else {

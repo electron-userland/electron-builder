@@ -1,11 +1,13 @@
+import { Arch } from "builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { AfterPackContext } from "./configuration"
-import { DIR_TARGET, Platform, Target } from "./core"
+import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
+import { RemoteBuilder } from "./remoteBuilder/RemoteBuilder"
 import AppImageTarget from "./targets/AppImageTarget"
 import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
@@ -35,6 +37,8 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
       return helper
     }
 
+    let remoteBuilder: RemoteBuilder | null = null
+
     for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
@@ -59,7 +63,21 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         }
       })()
 
-      mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new targetClass(name, this, getHelper(), outDir))
+      mapper(name, outDir => {
+        if (targetClass === null) {
+          return createCommonTarget(name, outDir, this)
+        }
+
+        const target = new targetClass(name, this, getHelper(), outDir)
+        if (process.platform === "win32" || process.env._REMOTE_BUILD) {
+          if (remoteBuilder == null) {
+            remoteBuilder = new RemoteBuilder(this)
+          }
+          // return remoteBuilder.buildTarget(this, arch, appOutDir, this.packager)
+          return new RemoteTarget(target, remoteBuilder)
+        }
+        return target
+      })
     }
   }
 
@@ -69,5 +87,28 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
   protected postInitApp(packContext: AfterPackContext): Promise<any> {
     return rename(path.join(packContext.appOutDir, this.electronDistExecutableName), path.join(packContext.appOutDir, this.executableName))
+  }
+}
+
+class RemoteTarget extends Target {
+  get options(): TargetSpecificOptions | null | undefined {
+    return this.target.options
+  }
+
+  get outDir(): string {
+    return this.target.outDir
+  }
+
+  constructor(private readonly target: Target, private readonly remoteBuilder: RemoteBuilder) {
+    super(target.name, true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */)
+  }
+
+  finishBuild(): Promise<any> {
+    return this.remoteBuilder.build()
+  }
+
+  async build(appOutDir: string, arch: Arch) {
+    console.log(`Schedule remote ${this.target.name} build for arch ${Arch[arch]}`)
+    this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)
   }
 }

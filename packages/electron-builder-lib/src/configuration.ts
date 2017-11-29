@@ -1,15 +1,15 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
+import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
+import { MsiOptions } from "./options/MsiOptions"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { WindowsConfiguration } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
-import { MsiOptions } from "./options/MsiOptions"
-import { AppXOptions } from "./options/AppXOptions"
 
 /**
  * Configuration Options
@@ -170,6 +170,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    */
   readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
+
+  /**
+   * Whether to build using Electron Build Service if target not supported on current OS.
+   * @default true
+   */
+  readonly remoteBuild?: boolean
 }
 
 export interface AfterPackContext {

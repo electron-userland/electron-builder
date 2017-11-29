@@ -4,7 +4,7 @@ import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "electron-bu
 import { WinPackager } from "electron-builder-lib/out/winPackager"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { SquirrelBuilder, convertVersion, SquirrelOptions } from "./squirrelPack"
+import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -55,7 +55,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (iconUrl == null) {
       const info = await packager.info.repositoryInfo
       if (info != null) {
-        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
+        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.info.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
 
       if (iconUrl == null) {

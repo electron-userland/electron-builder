@@ -1,6 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, warn } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -24,12 +24,21 @@ import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
-  readonly packagerOptions: PackagerOptions
+  get packagerOptions(): PackagerOptions {
+    return this.info.options
+  }
 
-  readonly projectDir: string
-  readonly buildResourcesDir: string
+  get buildResourcesDir(): string {
+    return this.info.buildResourcesDir
+  }
 
-  readonly config: Configuration
+  get projectDir(): string {
+    return this.info.projectDir
+  }
+
+  get config(): Configuration {
+    return this.info.config
+  }
 
   readonly platformSpecificBuildOptions: DC
 
@@ -37,20 +46,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this._resourceList.value
   }
 
-  private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.buildResourcesDir), []))
+  private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
 
   abstract get platform(): Platform
 
   readonly appInfo: AppInfo
 
   constructor(readonly info: Packager) {
-    this.config = info.config
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
-    this.packagerOptions = info.options
-    this.projectDir = info.projectDir
-
-    this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
   }
 
   get compression(): CompressionLevel {
@@ -93,10 +97,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const cscKeyPassword = this.packagerOptions.cscKeyPassword
     // allow to specify as empty string
     return cscKeyPassword == null ? process.env.CSC_KEY_PASSWORD : cscKeyPassword
-  }
-
-  get relativeBuildResourcesDirname() {
-    return use(this.config.directories, it => it!.buildResources) || "build"
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
@@ -511,7 +511,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourceList = await this.resourceList
     const name = `icon.${ext}`
     if (resourceList.includes(name)) {
-      return path.join(this.buildResourcesDir, name)
+      return path.join(this.info.buildResourcesDir, name)
     }
     else {
       warn("Application icon is not set, default Electron icon will be used")
@@ -528,25 +528,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   async getResource(custom: string | null | undefined, ...names: Array<string>): Promise<string | null> {
+    const resourcesDir = this.info.buildResourcesDir
     if (custom === undefined) {
       const resourceList = await this.resourceList
       for (const name of names) {
         if (resourceList.includes(name)) {
-          return path.join(this.buildResourcesDir, name)
+          return path.join(resourcesDir, name)
         }
       }
     }
     else if (custom != null && !isEmptyOrSpaces(custom)) {
       const resourceList = await this.resourceList
       if (resourceList.includes(custom)) {
-        return path.join(this.buildResourcesDir, custom)
+        return path.join(resourcesDir, custom)
       }
 
-      let p = path.resolve(this.buildResourcesDir, custom)
+      let p = path.resolve(resourcesDir, custom)
       if (await statOrNull(p) == null) {
         p = path.resolve(this.projectDir, custom)
         if (await statOrNull(p) == null) {
-          throw new Error(`Cannot find specified resource "${custom}", nor relative to "${this.buildResourcesDir}", neither relative to project dir ("${this.projectDir}")`)
+          throw new Error(`Cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`)
         }
       }
       return p

@@ -98,10 +98,11 @@ export class FileMatcher {
 }
 
 /** @internal */
-export function getMainFileMatchers(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: PlatformPackager<any>, outDir: string, isElectronCompile: boolean): Array<FileMatcher> {
-  const buildResourceDir = path.resolve(packager.info.projectDir, packager.buildResourcesDir)
+export function getMainFileMatchers(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, platformPackager: PlatformPackager<any>, outDir: string, isElectronCompile: boolean): Array<FileMatcher> {
+  const packager = platformPackager.info
+  const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
 
-  let matchers = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, destination, macroExpander, platformSpecificBuildOptions)
+  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", appDir, destination, macroExpander, platformSpecificBuildOptions)
   if (matchers == null) {
     matchers = [new FileMatcher(appDir, destination, macroExpander)]
   }
@@ -135,7 +136,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
   }
 
-  const relativeOutDir = matcher.normalizePattern(path.relative(packager.info.projectDir, outDir))
+  const relativeOutDir = matcher.normalizePattern(path.relative(packager.projectDir, outDir))
   if (!relativeOutDir.startsWith(".")) {
     customFirstPatterns.push(`!${relativeOutDir}{,/**/*}`)
   }
@@ -151,7 +152,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
   // not moved to copyNodeModules because depends on platform packager (for now, not easy)
-  if (packager.platform !== Platform.WINDOWS) {
+  if (platformPackager.platform !== Platform.WINDOWS) {
     // https://github.com/electron-userland/electron-builder/issues/1738
     patterns.push("!**/node_modules/**/*.{dll,exe}")
   }
@@ -170,7 +171,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   // exclude ony for app root, use .yarnclean to clean node_modules
   patterns.push("!.editorconfig")
 
-  const debugLogger = packager.info.debugLogger
+  const debugLogger = packager.debugLogger
   if (debugLogger.enabled) {
     //tslint:disable-next-line:no-invalid-template-strings
     debugLogger.add(`${macroExpander("${arch}")}.firstOrDefaultFilePatterns`, patterns)

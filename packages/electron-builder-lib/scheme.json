@@ -4671,6 +4671,11 @@
             "$ref": "#/definitions/ReleaseInfo",
             "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
         },
+        "remoteBuild": {
+            "default": true,
+            "description": "Whether to build using Electron Build Service if target not supported on current OS.",
+            "type": "boolean"
+        },
         "rpm": {
             "anyOf": [
                 {

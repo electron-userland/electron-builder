@@ -7,7 +7,6 @@ export class ProjectInfoManager {
   readonly infoFile = new Lazy(() => this.saveConfigurationAndMetadata())
 
   constructor(readonly packager: Packager) {
-
   }
 
   private async saveConfigurationAndMetadata() {
@@ -18,6 +17,7 @@ export class ProjectInfoManager {
       metadata: packager.metadata,
       configuration: packager.config,
       repositoryInfo: packager.repositoryInfo,
+      buildResourceDirName: path.basename(packager.buildResourcesDir)
     }
     if (packager.metadata !== packager.devMetadata && packager.devMetadata != null) {
       info.devMetadata = packager.devMetadata

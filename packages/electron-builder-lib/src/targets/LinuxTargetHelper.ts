@@ -32,7 +32,7 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const customIconSetDir = packager.platformSpecificBuildOptions.icon
     if (customIconSetDir != null) {
-      let iconDir = path.resolve(packager.buildResourcesDir, customIconSetDir)
+      let iconDir = path.resolve(packager.info.buildResourcesDir, customIconSetDir)
       const stat = await statOrNull(iconDir)
       if (stat == null || !stat.isDirectory()) {
         iconDir = path.resolve(packager.projectDir, customIconSetDir)
@@ -56,7 +56,7 @@ export class LinuxTargetHelper {
 
     const resourceList = await packager.resourceList
     if (resourceList.includes("icons")) {
-      return await this.iconsFromDir(path.join(packager.buildResourcesDir, "icons"))
+      return await this.iconsFromDir(path.join(packager.info.buildResourcesDir, "icons"))
     }
     else {
       return await this.createFromIcns(await packager.info.tempDirManager.createTempDir({suffix: ".iconset"}))
@@ -100,7 +100,7 @@ export class LinuxTargetHelper {
   }
 
   private async getIcns(): Promise<string | null> {
-    const build = this.packager.config
+    const build = this.packager.info.config
     let iconPath = (build.mac || {}).icon || build.icon
     if (iconPath != null && !iconPath.endsWith(".icns")) {
       iconPath += ".icns"

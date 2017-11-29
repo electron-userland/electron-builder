@@ -1,24 +1,26 @@
 import { debug } from "builder-util"
 
 export interface Timer {
-  end(): void
+  end(): string
 }
 
-class DevTimer implements Timer {
+export class DevTimer implements Timer {
   private start = process.hrtime()
 
   constructor(private readonly label: string) {
   }
 
-  end(): void {
+  end(): string {
     const end = process.hrtime(this.start)
-    console.info(`${this.label}: %ds %dms`, end[0], Math.round(end[1] / 1000000))
+    const result = `${end[0]}s ${Math.round(end[1] / 1000000)}ms`
+    console.info(`${this.label}: ${result}`)
+    return result
   }
 }
 
 class ProductionTimer implements Timer {
-  end(): void {
-    // ignore
+  end(): string {
+    return ""
   }
 }
 

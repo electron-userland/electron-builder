@@ -1,22 +1,22 @@
 import { path7za } from "7zip-bin"
-import { ensureDir, outputFile } from "fs-extra-p"
-import { constants, connect, ClientHttp2Stream, OutgoingHttpHeaders, ClientHttp2Session, SecureClientSessionOptions } from "http2"
 import BluebirdPromise from "bluebird-lst"
-import { spawn } from "child_process"
-import { debug, Arch, isEnvTrue } from "builder-util"
-import * as path from "path"
-import { createWriteStream } from "fs"
-import { UploadTask } from "electron-publish"
+import { Arch, debug, isEnvTrue } from "builder-util"
 import { HttpError } from "builder-util-runtime"
+import { spawn } from "child_process"
+import { UploadTask } from "electron-publish"
+import { createWriteStream } from "fs"
+import { ensureDir, outputFile } from "fs-extra-p"
+import { ClientHttp2Session, ClientHttp2Stream, connect, constants, OutgoingHttpHeaders, SecureClientSessionOptions } from "http2"
+import * as path from "path"
+import { URL } from "url"
 import { Target, TargetSpecificOptions } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { JsonStreamParser } from "../util/JsonStreamParser"
-import { time } from "../util/timer"
+import { DevTimer } from "../util/timer"
 import { ProjectInfoManager } from "./ProjectInfoManager"
 import { ELECTRON_BUILD_SERVICE_CA_CERT, ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT } from "./remote-builder-certs"
 import { RemoteBuilderResponse } from "./RemoteBuilder"
-import { URL } from "url"
 
 const {
   HTTP2_HEADER_PATH,
@@ -28,6 +28,22 @@ const {
   HTTP_STATUS_OK,
   HTTP_STATUS_BAD_REQUEST
 } = constants
+
+export function getConnectOptions(): SecureClientSessionOptions {
+  const options: SecureClientSessionOptions = {}
+  const caCert = process.env.ELECTRON_BUILD_SERVICE_CA_CERT
+  if (caCert !== "false") {
+    const isUseLocalCert = isEnvTrue(process.env.USE_ELECTRON_BUILD_SERVICE_LOCAL_CA)
+    if (isUseLocalCert) {
+      debug("Local certificate authority is used")
+    }
+    options.ca = caCert || (isUseLocalCert ? ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT : ELECTRON_BUILD_SERVICE_CA_CERT)
+    // we cannot issue cert per IP because build agent can be started on demand (and for security reasons certificate authority is offline).
+    // Since own certificate authority is used, it is ok to skip server name verification.
+    options.checkServerIdentity = () => undefined
+  }
+  return options
+}
 
 export class RemoteBuildManager {
   private readonly client: ClientHttp2Session
@@ -41,19 +57,7 @@ export class RemoteBuildManager {
               private readonly outDir: string,
               private readonly packager: PlatformPackager<any>) {
     debug(`Connect to remote build service: ${buildServiceEndpoint}`)
-    const options: SecureClientSessionOptions = {}
-    const caCert = process.env.ELECTRON_BUILD_SERVICE_CA_CERT
-    if (caCert !== "false") {
-      const isUseLocalCert = isEnvTrue(process.env.USE_ELECTRON_BUILD_SERVICE_LOCAL_CA)
-      if (isUseLocalCert) {
-        debug("Local certificate authority is used")
-      }
-      options.ca = caCert || (isUseLocalCert ? ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT : ELECTRON_BUILD_SERVICE_CA_CERT)
-      // we cannot issue cert per IP because build agent can be started on demand (and for security reasons certificate authority is offline).
-      // Since own certificate authority is used, it is ok to skip server name verification.
-      options.checkServerIdentity = () => undefined
-    }
-    this.client = connect(buildServiceEndpoint, options)
+    this.client = connect(buildServiceEndpoint, getConnectOptions())
   }
 
   build(customHeaders: OutgoingHttpHeaders): Promise<RemoteBuilderResponse | null> {
@@ -77,14 +81,6 @@ export class RemoteBuildManager {
         resolve(result)
       }, reject)
     })
-      .catch(error => {
-        if (error.code === "ECONNREFUSED") {
-          throw new Error(`Cannot connect to electron build service ${this.buildServiceEndpoint}: ${error.message}`)
-        }
-        else {
-          throw error
-        }
-      })
       .finally(() => {
         this.client.destroy()
       })
@@ -138,12 +134,9 @@ export class RemoteBuildManager {
           return
         }
 
-        // cannot connect immediately because channel status is not yet created
-        setTimeout(() => {
-          this.listenEvents(id)
-            .then(resolve)
-            .catch(reject)
-        }, 3 * 1000 /* min build time */)
+        this.listenEvents(id)
+          .then(resolve)
+          .catch(reject)
       })
     })
   }
@@ -173,6 +166,21 @@ export class RemoteBuildManager {
             return
           }
 
+          if (data.state != null) {
+            let message = data.state
+            switch (data.state) {
+              case "added":
+                message = "Job added to build queue."
+                break
+
+              case "started":
+                message = "Job started."
+                break
+            }
+            console.log(message)
+            return
+          }
+
           if (!("files" in data)) {
             console.error(`Unknown builder event: ${JSON.stringify(data)}`)
             return
@@ -183,6 +191,7 @@ export class RemoteBuildManager {
 
           this.files = data.files
           for (const artifact of this.files!!) {
+            console.log(`Downloading ${artifact.file}`)
             this.downloadFile(id, artifact, resolve, reject)
           }
         })
@@ -262,11 +271,24 @@ export class RemoteBuildManager {
 
   // compress and upload in the same time, directly to remote without intermediate local file
   private uploadUnpackedAppArchive(stream: ClientHttp2Stream, zstdCompressionLevel: string, reject: (error: Error) => void) {
+    const packager = this.projectInfoManager.packager
+    const buildResourcesDir = packager.buildResourcesDir
+    if (buildResourcesDir === packager.projectDir) {
+      reject(new Error(`Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`))
+      return
+    }
+
     this.projectInfoManager.infoFile.value
       .then(infoFile => {
-        const compressAndUploadTimer = time("compress and upload")
+        console.log(`Compressing and uploading to remote build agent`)
+        const compressAndUploadTimer = new DevTimer("compress and upload")
         // noinspection SpellCheckingInspection
-        const tarProcess = spawn(path7za, ["a", "dummy", "-ttar", "-so", this.unpackedDirectory, infoFile], {
+        const tarProcess = spawn(path7za, [
+          "a", "dummy", "-ttar", "-so",
+          this.unpackedDirectory,
+          infoFile,
+          buildResourcesDir,
+        ], {
           stdio: ["pipe", "pipe", process.stderr],
         })
         tarProcess.stdout.on("error", reject)
@@ -279,7 +301,7 @@ export class RemoteBuildManager {
         zstdProcess.stdout.pipe(stream)
 
         zstdProcess.stdout.on("end", () => {
-          compressAndUploadTimer.end()
+          console.log(`Uploaded in ${compressAndUploadTimer.end()}`)
         })
       })
       .catch(reject)
@@ -294,7 +316,7 @@ function getZstdCompressionLevel(endpoint: string): string {
   return endpoint.startsWith("https://127.0.0.1:") || endpoint.startsWith("https://localhost:") || endpoint.startsWith("[::1]:") ? "3" : "19"
 }
 
-function checkStatus(status: number, reject: (error: Error) => void) {
+export function checkStatus(status: number, reject: (error: Error) => void) {
   if (status === HTTP_STATUS_OK) {
     return true
   }

@@ -9,6 +9,7 @@ import { readFile, unlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core"
+import { getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
@@ -18,7 +19,6 @@ import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
-import { getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -139,7 +139,7 @@ export class NsisTarget extends Target {
       VERSION: version,
 
       PROJECT_DIR: packager.projectDir,
-      BUILD_RESOURCES_DIR: packager.buildResourcesDir,
+      BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
     }
 
     if (companyName != null) {
@@ -477,7 +477,7 @@ export class NsisTarget extends Target {
     })
 
     taskManager.add(async () => {
-      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+      const userPluginDir = path.join(packager.info.buildResourcesDir, pluginArch)
       const stat = await statOrNull(userPluginDir)
       if (stat != null && stat.isDirectory()) {
         scriptGenerator.addPluginDir(pluginArch, userPluginDir)
@@ -494,7 +494,7 @@ export class NsisTarget extends Target {
       taskManager.add(async () => {
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
-          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
+          scriptGenerator.addIncludeDir(packager.info.buildResourcesDir)
           scriptGenerator.include(customInclude)
         }
       })

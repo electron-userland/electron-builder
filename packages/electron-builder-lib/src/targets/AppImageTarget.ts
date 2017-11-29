@@ -1,7 +1,8 @@
+import { createDifferentialPackage } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, exec, log, debug, serializeToYaml } from "builder-util"
-import { UUID, BlockMapDataHolder } from "builder-util-runtime"
-import { unlinkIfExists, copyOrLinkFile, copyDir, USE_HARD_LINKS } from "builder-util/out/fs"
+import { Arch, debug, exec, log, serializeToYaml } from "builder-util"
+import { BlockMapDataHolder, UUID } from "builder-util-runtime"
+import { copyDir, copyOrLinkFile, unlinkIfExists, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
 import { ensureDir, readFile, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -9,11 +10,9 @@ import * as path from "path"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { AppImageOptions } from "../options/linuxOptions"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createDifferentialPackage } from "app-package-builder"
-import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
 import { createStageDir } from "./targetUtil"
 import { getAppImage } from "./tools"
 
@@ -38,11 +37,6 @@ export default class AppImageTarget extends Target {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     log(`Building AppImage for arch ${Arch[arch]}`)
-
-    if (process.platform === "win32" || process.env._REMOTE_BUILD) {
-      const remoteBuilder = new RemoteBuilder()
-      return await remoteBuilder.buildTarget(this, arch, appOutDir, this.packager)
-    }
 
     const packager = this.packager
 

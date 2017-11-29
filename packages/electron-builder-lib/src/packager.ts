@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use, serializeToYaml, addValue, archFromString } from "builder-util"
+import { addValue, Arch, archFromString, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, serializeToYaml, TmpDir, use } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
@@ -102,6 +102,21 @@ export class Packager {
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${Arch[arch]}`)
+  }
+
+  private _buildResourcesDir: string | null
+
+  get buildResourcesDir(): string {
+    let result = this._buildResourcesDir
+    if (result == null) {
+      result = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
+      this._buildResourcesDir = result
+    }
+    return result
+  }
+
+  get relativeBuildResourcesDirname(): string {
+    return use(this.config.directories, it => it!.buildResources) || "build"
   }
 
   //noinspection JSUnusedGlobalSymbols

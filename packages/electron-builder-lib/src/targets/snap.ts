@@ -1,4 +1,4 @@
-import { Arch, exec, log, replaceDefault, spawn, toLinuxArchString, serializeToYaml } from "builder-util"
+import { Arch, exec, log, replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
@@ -6,7 +6,6 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { RemoteBuilder } from "../remoteBuilder/RemoteBuilder"
 import { createStageDir, StageDir } from "./targetUtil"
 
 // usr/share/fonts is required, cannot run otherwise
@@ -32,11 +31,6 @@ export default class SnapTarget extends Target {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     log(`Building Snap for arch ${Arch[arch]}`)
-
-    if (process.platform === "win32" || process.env._REMOTE_BUILD) {
-      const remoteBuilder = new RemoteBuilder()
-      return await remoteBuilder.buildTarget(this, arch, appOutDir, this.packager)
-    }
 
     const packager = this.packager
     const appInfo = packager.appInfo

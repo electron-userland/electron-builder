@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, use } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
+import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { findIdentity, Identity } from "../codeSign"
@@ -8,7 +9,6 @@ import { Target } from "../core"
 import MacPackager from "../macPackager"
 import { PkgOptions } from "../options/macOptions"
 import { filterCFBundleIdentifier } from "../packager/mac"
-import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
 
 const certType = "Developer ID Installer"
 
@@ -90,10 +90,10 @@ export class PkgTarget extends Target {
     ]
     use(this.options.installLocation || "/Applications", it => args.push("--install-location", it!))
     if (options.scripts != null) {
-      args.push("--scripts", path.resolve(this.packager.buildResourcesDir, options.scripts))
+      args.push("--scripts", path.resolve(this.packager.info.buildResourcesDir, options.scripts))
     }
     else if (options.scripts !== null) {
-      const dir = path.join(this.packager.buildResourcesDir, "pkg-scripts")
+      const dir = path.join(this.packager.info.buildResourcesDir, "pkg-scripts")
       const stat = await statOrNull(dir)
       if (stat != null && stat.isDirectory()) {
         args.push("--scripts", dir)
