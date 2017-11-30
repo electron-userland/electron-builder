@@ -16,7 +16,7 @@ export class ProjectInfoManager {
     const info: any = {
       metadata: packager.metadata,
       configuration: packager.config,
-      repositoryInfo: packager.repositoryInfo,
+      repositoryInfo: await packager.repositoryInfo,
       buildResourceDirName: path.basename(packager.buildResourcesDir)
     }
     if (packager.metadata !== packager.devMetadata && packager.devMetadata != null) {
