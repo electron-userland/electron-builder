@@ -1,6 +1,6 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEnvTrue } from "builder-util"
+import { Arch, debug, isEnvTrue, log, warn } from "builder-util"
 import { HttpError } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { UploadTask } from "electron-publish"
@@ -134,9 +134,12 @@ export class RemoteBuildManager {
           return
         }
 
-        this.listenEvents(id)
-          .then(resolve)
-          .catch(reject)
+        // cannot connect immediately because channel status is not yet created
+        setTimeout(() => {
+          this.listenEvents(id)
+            .then(resolve)
+            .catch(reject)
+        }, 2 * 1000)
       })
     })
   }
@@ -177,12 +180,12 @@ export class RemoteBuildManager {
                 message = "Job started."
                 break
             }
-            console.log(message)
+            log(message)
             return
           }
 
           if (!("files" in data)) {
-            console.error(`Unknown builder event: ${JSON.stringify(data)}`)
+            warn(`Unknown builder event: ${JSON.stringify(data)}`)
             return
           }
 
@@ -191,7 +194,7 @@ export class RemoteBuildManager {
 
           this.files = data.files
           for (const artifact of this.files!!) {
-            console.log(`Downloading ${artifact.file}`)
+            log(`Downloading ${artifact.file}`)
             this.downloadFile(id, artifact, resolve, reject)
           }
         })
@@ -201,6 +204,7 @@ export class RemoteBuildManager {
   }
 
   private downloadFile(id: string, artifact: ArtifactInfo, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
+    const downloadTimer = new DevTimer("compress and upload")
     const stream = this.client.request({
       // use URL to encode path properly (critical for filenames with unicode symbols, e.g. "boo-Test App ßW")
       [HTTP2_HEADER_PATH]: `/v1/download${new URL(`f:/${id}/${artifact.file}`).pathname}`,
@@ -212,6 +216,7 @@ export class RemoteBuildManager {
     const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile)
     const fileWritten = () => {
       this.finishedStreamCount++
+      log(`${artifact.file} is downloaded in ${downloadTimer.endAndGet()}`)
       if (debug.enabled) {
         debug(`Remote artifact saved to: ${localFile}`)
       }
@@ -280,7 +285,7 @@ export class RemoteBuildManager {
 
     this.projectInfoManager.infoFile.value
       .then(infoFile => {
-        console.log(`Compressing and uploading to remote build agent`)
+        log(`Compressing and uploading to remote build agent`)
         const compressAndUploadTimer = new DevTimer("compress and upload")
         // noinspection SpellCheckingInspection
         const tarProcess = spawn(path7za, [
@@ -301,7 +306,7 @@ export class RemoteBuildManager {
         zstdProcess.stdout.pipe(stream)
 
         zstdProcess.stdout.on("end", () => {
-          console.log(`Uploaded in ${compressAndUploadTimer.end()}`)
+          log(`Uploaded in ${compressAndUploadTimer.endAndGet()}`)
         })
       })
       .catch(reject)

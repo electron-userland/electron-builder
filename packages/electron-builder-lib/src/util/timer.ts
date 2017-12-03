@@ -1,7 +1,7 @@
 import { debug } from "builder-util"
 
 export interface Timer {
-  end(): string
+  end(): void
 }
 
 export class DevTimer implements Timer {
@@ -10,17 +10,19 @@ export class DevTimer implements Timer {
   constructor(private readonly label: string) {
   }
 
-  end(): string {
+  endAndGet(): string {
     const end = process.hrtime(this.start)
-    const result = `${end[0]}s ${Math.round(end[1] / 1000000)}ms`
-    console.info(`${this.label}: ${result}`)
-    return result
+    return `${end[0]}s ${Math.round(end[1] / 1000000)}ms`
+  }
+
+  end(): void {
+    console.info(`${this.label}: ${this.endAndGet()}`)
   }
 }
 
 class ProductionTimer implements Timer {
-  end(): string {
-    return ""
+  end(): void {
+    // ignore
   }
 }
 
