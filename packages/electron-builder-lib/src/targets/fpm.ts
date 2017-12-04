@@ -1,4 +1,4 @@
-import { path7x, path7za } from "7zip-bin"
+import { path7za, pathCompressStdIn } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "builder-util"
 import { computeEnv } from "builder-util/out/bundledTool"
@@ -178,7 +178,7 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      FPM_COMPRESS_PROGRAM: path7x,
+      FPM_COMPRESS_PROGRAM: pathCompressStdIn,
       SZA_PATH: path7za,
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
       SZA_ARCHIVE_TYPE: "xz",

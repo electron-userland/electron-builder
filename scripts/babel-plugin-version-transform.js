@@ -1,5 +1,5 @@
 const path = require("path")
-const version = require(path.join(__dirname, "../packages/electron-builder/package.json")).version
+const version = require(path.join(__dirname, "../packages/electron-builder-lib/package.json")).version
 
 Object.defineProperty(exports, "__esModule", {
   value: true

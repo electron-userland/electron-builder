@@ -10,7 +10,7 @@
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=isCi",
     "test-all": "yarn pretest && node ./test/out/helpers/runTests.js",
-    "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/Library/Caches/electron:/root/.cache/electron  -v ~/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine /bin/bash -c \"yarn && TEST_FILES=msiTest node ./test/out/helpers/runTests.js\"",
+    "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/Library/Caches/electron:/root/.cache/electron  -v ~/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine /bin/bash -c \"yarn && TEST_FILES=debTest node ./test/out/helpers/runTests.js\"",
     "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh",
     "update-deps": "npm-check-updates -a -x gitbook-plugin-github,chalk && node ./scripts/update-deps.js",
@@ -28,7 +28,7 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "7zip-bin": "^2.2.7",
+    "7zip-bin": "^2.3.3",
     "archiver": "^2.1.0",
     "async-exit-hook": "^2.0.1",
     "aws-sdk": "^2.162.0",
