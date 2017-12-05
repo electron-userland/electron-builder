@@ -25,7 +25,7 @@ dist/
 /test/test-report.xml
 
 /packages/electron-builder/README.md
-/packages/electron-builder/scheme.json
+/packages/electron-builder-lib/scheme.json
 
 /scripts/jsdoc/out/
 
