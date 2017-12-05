@@ -3,8 +3,8 @@
 
 
 "7zip-bin-linux@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/7zip-bin-linux/-/7zip-bin-linux-1.1.0.tgz#2ca309fd6a2102e18bd81e3a5d91b39db9adab71"
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/7zip-bin-linux/-/7zip-bin-linux-1.2.0.tgz#c0ddfb640b255e14bd6730c26af45b2669c0193c"
 
 "7zip-bin-mac@^1.0.1":
   version "1.0.1"
@@ -87,6 +87,10 @@
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@types/electron-is-dev/-/electron-is-dev-0.3.0.tgz#28dc6aa4c9493869a8c5da29ebd586648f5ffb70"
 
+"@types/events@*":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@types/events/-/events-1.1.0.tgz#93b1be91f63c184450385272c47b6496fd028e02"
+
 "@types/iconv-lite@^0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@types/iconv-lite/-/iconv-lite-0.0.1.tgz#aa3b8bda2be512b1ae0a057b942e869c370a5569"
@@ -112,16 +116,18 @@
     "@types/lodash" "*"
 
 "@types/lodash@*":
-  version "4.14.86"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.86.tgz#6788d3d75032c46322ff1c144c948cf8117c405b"
+  version "4.14.87"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.87.tgz#55f92183b048c2c64402afe472f8333f4e319a6b"
 
 "@types/node-emoji@^1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@types/node-emoji/-/node-emoji-1.4.0.tgz#34068c35b74ee5c9d73eb9b84c60b2c06a169412"
 
 "@types/node@*":
-  version "8.0.53"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.53.tgz#396b35af826fa66aad472c8cb7b8d5e277f4e6d8"
+  version "8.0.54"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.54.tgz#3fd9357db4af388b79e03845340259440edffde6"
+  dependencies:
+    "@types/events" "*"
 
 "@types/sanitize-filename@^1.1.28":
   version "1.1.28"
@@ -430,9 +436,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.162.0:
-  version "2.162.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.162.0.tgz#1b16215fc9b599ba7cd2cfe7ce050c7f934381a6"
+aws-sdk@^2.163.0:
+  version "2.163.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.163.0.tgz#bf0c43878634800c5426aa0931b5683900493d92"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"

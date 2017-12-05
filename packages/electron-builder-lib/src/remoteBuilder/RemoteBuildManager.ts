@@ -1,18 +1,19 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEnvTrue, log, warn } from "builder-util"
+import { Arch, debug, isEnvTrue, log, spawn as _spawn, warn } from "builder-util"
 import { HttpError } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { UploadTask } from "electron-publish"
-import { createWriteStream } from "fs"
-import { ensureDir, outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
 import { ClientHttp2Session, ClientHttp2Stream, connect, constants, OutgoingHttpHeaders, SecureClientSessionOptions } from "http2"
 import * as path from "path"
 import { URL } from "url"
 import { Target, TargetSpecificOptions } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
+import { getAria, getZstd } from "../targets/tools"
 import { JsonStreamParser } from "../util/JsonStreamParser"
+import { getTemplatePath } from "../util/pathManager"
 import { DevTimer } from "../util/timer"
 import { ProjectInfoManager } from "./ProjectInfoManager"
 import { ELECTRON_BUILD_SERVICE_CA_CERT, ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT } from "./remote-builder-certs"
@@ -29,11 +30,12 @@ const {
   HTTP_STATUS_BAD_REQUEST
 } = constants
 
+const isUseLocalCert = isEnvTrue(process.env.USE_ELECTRON_BUILD_SERVICE_LOCAL_CA)
+
 export function getConnectOptions(): SecureClientSessionOptions {
   const options: SecureClientSessionOptions = {}
   const caCert = process.env.ELECTRON_BUILD_SERVICE_CA_CERT
   if (caCert !== "false") {
-    const isUseLocalCert = isEnvTrue(process.env.USE_ELECTRON_BUILD_SERVICE_LOCAL_CA)
     if (isUseLocalCert) {
       debug("Local certificate authority is used")
     }
@@ -76,70 +78,91 @@ export class RemoteBuildManager {
         reject(new Error("Timeout"))
       })
 
-      this.doBuild(customHeaders, result => {
-        handled = true
-        resolve(result)
-      }, reject)
+      this.doBuild(customHeaders)
+        .then(result => {
+          handled = true
+          resolve(result)
+        })
+        .catch(reject)
     })
       .finally(() => {
         this.client.destroy()
       })
   }
 
-  private doBuild(customHeaders: OutgoingHttpHeaders, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void): void {
-    this.upload(customHeaders, resolve, reject)
+  private async doBuild(customHeaders: OutgoingHttpHeaders): Promise<RemoteBuilderResponse | null> {
+    const id = await this.upload(customHeaders)
+    const result = await this.listenEvents(id)
+    await new BluebirdPromise((resolve, reject) => {
+      const stream = this.client.request({
+        [HTTP2_HEADER_PATH]: `/v1/complete/${id}`,
+        [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
+      })
+      stream.on("error", reject)
+      stream.on("response", headers => {
+        try {
+          const status = headers[HTTP2_HEADER_STATUS] as any
+          if (!checkStatus(status, reject)) {
+            warn(`Not critical server error: ${status}`)
+          }
+        }
+        finally {
+          resolve()
+        }
+      })
+    })
+
+    return result
   }
 
-  private upload(customHeaders: OutgoingHttpHeaders, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
-    const zstdCompressionLevel = getZstdCompressionLevel(this.buildServiceEndpoint)
+  private upload(customHeaders: OutgoingHttpHeaders): Promise<string> {
+    return new BluebirdPromise((resolve, reject) => {
+      const zstdCompressionLevel = getZstdCompressionLevel(this.buildServiceEndpoint)
 
-    const stream = this.client.request({
-      [HTTP2_HEADER_PATH]: "/v1/upload",
-      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_POST,
-      [HTTP2_HEADER_CONTENT_TYPE]: "application/octet-stream",
-      ...customHeaders,
-      // only for stats purpose, not required for build
-      "x-zstd-compression-level": zstdCompressionLevel,
-    })
-    stream.on("error", reject)
-    // this.handleStreamEvent(resolve, reject)
-    this.uploadUnpackedAppArchive(stream, zstdCompressionLevel, reject)
-
-    stream.on("response", headers => {
-      const status: number = headers[HTTP2_HEADER_STATUS] as any
-      if (status !== HTTP_STATUS_OK && status !== HTTP_STATUS_BAD_REQUEST) {
-        reject(new HttpError(status))
-        return
-      }
-
-      let data = ""
-      stream.setEncoding("utf8")
-      stream.on("data", (chunk: string) => {
-        data += chunk
+      const stream = this.client.request({
+        [HTTP2_HEADER_PATH]: "/v1/upload",
+        [HTTP2_HEADER_METHOD]: HTTP2_METHOD_POST,
+        [HTTP2_HEADER_CONTENT_TYPE]: "application/octet-stream",
+        ...customHeaders,
+        // only for stats purpose, not required for build
+        "x-zstd-compression-level": zstdCompressionLevel,
       })
-      stream.on("end", () => {
-        const result = data.length === 0 ? {} : JSON.parse(data)
-        if (debug.enabled) {
-          debug(`Remote builder result: ${JSON.stringify(result, null, 2)}`)
-        }
+      stream.on("error", reject)
+      // this.handleStreamEvent(resolve, reject)
+      this.uploadUnpackedAppArchive(stream, zstdCompressionLevel, reject)
 
-        if (status === HTTP_STATUS_BAD_REQUEST) {
-          reject(new HttpError(status, JSON.stringify(result, null, 2)))
+      stream.on("response", headers => {
+        const status: number = headers[HTTP2_HEADER_STATUS] as any
+        if (status !== HTTP_STATUS_OK && status !== HTTP_STATUS_BAD_REQUEST) {
+          reject(new HttpError(status))
           return
         }
 
-        const id = result.id
-        if (id == null) {
-          reject(new Error("Server didn't return id"))
-          return
-        }
+        let data = ""
+        stream.setEncoding("utf8")
+        stream.on("data", (chunk: string) => {
+          data += chunk
+        })
+        stream.on("end", () => {
+          const result = data.length === 0 ? {} : JSON.parse(data)
+          if (debug.enabled) {
+            debug(`Remote builder result: ${JSON.stringify(result, null, 2)}`)
+          }
 
-        // cannot connect immediately because channel status is not yet created
-        setTimeout(() => {
-          this.listenEvents(id)
-            .then(resolve)
-            .catch(reject)
-        }, 2 * 1000)
+          if (status === HTTP_STATUS_BAD_REQUEST) {
+            reject(new HttpError(status, JSON.stringify(result, null, 2)))
+            return
+          }
+
+          const id = result.id
+          if (id == null) {
+            reject(new Error("Server didn't return id"))
+            return
+          }
+
+          // cannot connect immediately because channel status is not yet created
+          resolve(id)
+        })
       })
     })
   }
@@ -205,15 +228,11 @@ export class RemoteBuildManager {
 
   private downloadFile(id: string, artifact: ArtifactInfo, resolve: (result: RemoteBuilderResponse | null) => void, reject: (error: Error) => void) {
     const downloadTimer = new DevTimer("compress and upload")
-    const stream = this.client.request({
-      // use URL to encode path properly (critical for filenames with unicode symbols, e.g. "boo-Test App ßW")
-      [HTTP2_HEADER_PATH]: `/v1/download${new URL(`f:/${id}/${artifact.file}`).pathname}`,
-      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
-    })
-    stream.on("error", reject)
-
     const localFile = path.join(this.outDir, artifact.file)
     const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile)
+    // use URL to encode path properly (critical for filenames with unicode symbols, e.g. "boo-Test App ßW")
+    const fileUrlPath = `/v1/download${new URL(`f:/${id}/${artifact.file}`).pathname}`
+
     const fileWritten = () => {
       this.finishedStreamCount++
       log(`${artifact.file} is downloaded in ${downloadTimer.endAndGet()}`)
@@ -229,37 +248,55 @@ export class RemoteBuildManager {
       }
     }
 
+    const isShort = artifact.file.endsWith(".yml") || artifact.file.endsWith(".json")
+    if (!isShort) {
+      // --ca-certificate This option is only available when aria2 was compiled against GnuTLS or OpenSSL. WinTLS and AppleTLS will always use the system certificate store. Instead of `--ca-certificate install the certificate in that store.
+      // so, we have to use --check-certificate false
+      getAria()
+        .then(aria2c => {
+          return _spawn(aria2c, [
+            "--max-connection-per-server=4",
+            "--min-split-size=5M",
+            "--retry-wait=3",
+            `--ca-certificate=${getTemplatePath(isUseLocalCert ? "local-ca.crt" : "ca.crt")}`,
+            "--check-certificate=false",
+            "--min-tls-version=TLSv1.2",
+            "--console-log-level=warn",
+            "--download-result=full",
+            `--dir=${this.outDir}`,
+            `${this.buildServiceEndpoint}${fileUrlPath}`,
+          ], {
+            cwd: this.outDir,
+            stdio: ["ignore", "inherit", "inherit"],
+          })
+        })
+        .then(fileWritten)
+        .catch(reject)
+      return
+    }
+
+    const stream = this.client.request({
+      [HTTP2_HEADER_PATH]: fileUrlPath,
+      [HTTP2_HEADER_METHOD]: HTTP2_METHOD_GET,
+    })
+    stream.on("error", reject)
+
     stream.on("response", headers => {
       if (!checkStatus(headers[HTTP2_HEADER_STATUS] as any, reject)) {
         return
       }
 
-      if (artifact.file.endsWith(".yml") || artifact.file.endsWith(".json")) {
-        const buffers: Array<Buffer> = []
-        stream.on("end", () => {
-          const fileContent = buffers.length === 1 ? buffers[0] : Buffer.concat(buffers)
-          artifactCreatedEvent.fileContent = fileContent
-          outputFile(localFile, fileContent)
-            .then(fileWritten)
-            .catch(reject)
-        })
-        stream.on("data", (chunk: Buffer) => {
-          buffers.push(chunk)
-        })
-      }
-      else {
-        ensureDir(path.dirname(localFile))
-          .then(() => {
-            const fileStream = createWriteStream(localFile, {
-              // 1MB buffer, download as faster as possible, reduce chance that download will be paused for a while due to slow file write
-              highWaterMark: 1024 * 1024,
-            } as any)
-            fileStream.on("error", reject)
-            fileStream.on("close", fileWritten)
-            stream.pipe(fileStream)
-          })
+      const buffers: Array<Buffer> = []
+      stream.on("end", () => {
+        const fileContent = buffers.length === 1 ? buffers[0] : Buffer.concat(buffers)
+        artifactCreatedEvent.fileContent = fileContent
+        outputFile(localFile, fileContent)
+          .then(fileWritten)
           .catch(reject)
-      }
+      })
+      stream.on("data", (chunk: Buffer) => {
+        buffers.push(chunk)
+      })
     })
   }
 
@@ -283,8 +320,9 @@ export class RemoteBuildManager {
       return
     }
 
-    this.projectInfoManager.infoFile.value
-      .then(infoFile => {
+    BluebirdPromise.all([this.projectInfoManager.infoFile.value, getZstd()])
+      .then(results => {
+        const infoFile = results[0]
         log(`Compressing and uploading to remote build agent`)
         const compressAndUploadTimer = new DevTimer("compress and upload")
         // noinspection SpellCheckingInspection
@@ -298,7 +336,7 @@ export class RemoteBuildManager {
         })
         tarProcess.stdout.on("error", reject)
 
-        const zstdProcess = spawn("zstd", [`-${zstdCompressionLevel}`, "--long"], {
+        const zstdProcess = spawn(results[1], [`-${zstdCompressionLevel}`, "--long"], {
           stdio: ["pipe", "pipe", process.stderr],
         })
         zstdProcess.on("error", reject)

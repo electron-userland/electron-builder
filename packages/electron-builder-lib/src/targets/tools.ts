@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { Platform } from "../core"
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
@@ -35,4 +36,46 @@ export const fpmPath = new Lazy(() => {
 export function prefetchBuildTools() {
   // yes, we starting to use native Promise
   return Promise.all([getAppImage(), fpmPath.value])
+}
+
+export function getZstd() {
+  const platform = Platform.current()
+  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+
+  let checksum = ""
+  if (platform === Platform.MAC) {
+    // noinspection SpellCheckingInspection
+    checksum = "Ts8UetZVWz1G1qhzmsw4FlbK9L3sgI3OVYAMffIK0qPy4gxnTSSV7dhvE54SpmhWnfTlELmprbAAJm5zzcqT8w=="
+  }
+  else if (platform === Platform.WINDOWS) {
+    // noinspection SpellCheckingInspection
+    checksum = process.arch === "ia32" ?
+      "zjMFp++cp6ekMDaKu/SsFlog6cyr5kdgk5x2IvSpB6IsSp0c7bTL2Y58lLpV4qPAL1eagjjoMHi+doOWFSHpzg==" :
+      "oTOQout3zX0x/4gcXGcoevs79TqnlY7CQNXXx/cwp2ebj1dgavf8C9R3JvNFKQf/mQ7WcY7+W9vVI2oP7mxbFA=="
+  }
+
+  //noinspection SpellCheckingInspection
+  return getBinFromGithub(`zstd-${platform.buildConfigurationKey}${archQualifier}`, "1.3.2", checksum)
+    .then(it => path.join(it, `zstd${platform === Platform.WINDOWS ? ".exe" : ""}`))
+}
+
+export function getAria() {
+  const platform = Platform.current()
+  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+
+  let checksum = ""
+  if (platform === Platform.MAC) {
+    // noinspection SpellCheckingInspection
+    checksum = "UjstpQUAtoP/sZ9SNuWwIN1WyDfvr1V3bzLGzTZCt1IqQsf9YwBSo0jrXMMRZOqv1sy5EOvp5nyC4VvJZCRVuQ=="
+  }
+  else if (platform === Platform.WINDOWS) {
+    // noinspection SpellCheckingInspection
+    checksum = process.arch === "ia32" ?
+      "aulZig14OCHqj5qUWDvIAacibzW9k+gfDGDeECzWDrF7FPYzI+Vn7Q7QnW/FXNyNnbe8PeYawTlGzD3vJxLQWg==" :
+      "zksKH0Uazwtc/vfGSVy+tzsNou+thSamAGTKt8P1DLoNkdSz9ueaIFoJ7jt8jlDds8Z6Rrxls6IFkZRBDxiyfg=="
+  }
+
+  //noinspection SpellCheckingInspection
+  return getBinFromGithub(`aria2-${platform.buildConfigurationKey}${archQualifier}`, "1.33.1", checksum)
+    .then(it => path.join(it, `aria2c${platform === Platform.WINDOWS ? ".exe" : ""}`))
 }
