@@ -4,7 +4,7 @@ import { createWriteStream } from "fs-extra-p"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
-import { parse as parseUrl } from "url"
+import { parse as parseUrl, URL } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
@@ -126,7 +126,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(configureRequestOptionsFromUrl(redirectUrl, {...options}), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -167,7 +167,7 @@ Please double check that your authentication token is correct. Due to security r
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          this.doDownload(configureRequestOptionsFromUrl(redirectUrl, {...requestOptions}), destination, redirectCount++, options, callback, onCancel)
+          this.doDownload(prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -362,4 +362,15 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
     }
     return value
   }, 2)
+}
+
+function prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
+  const newOptions = configureRequestOptionsFromUrl(redirectUrl, {...options})
+  if (newOptions.headers != null && newOptions.headers.Authorization != null && (newOptions.headers!!.Authorization as string).startsWith("token")) {
+    const parsedNewUrl = new URL(redirectUrl)
+    if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
+      delete newOptions.headers.Authorization
+    }
+  }
+  return newOptions
 }

@@ -1,8 +1,8 @@
 import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
+import { safeLoad } from "js-yaml"
 import { URL } from "url"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
-import { safeLoad } from "js-yaml"
 
 export abstract class Provider<T extends UpdateInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null
@@ -75,22 +75,27 @@ export function parseUpdateInfo(rawData: string, channelFile: string, channelFil
   return result
 }
 
-export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): Array<ResolvedUpdateFileInfo> {
-  let files = updateInfo.files
-  if (files == null || files.length === 0) {
-    if (updateInfo.path != null && updateInfo.sha512 != null) {
-      files = [
-        {
-          url: updateInfo.path,
-          sha512: updateInfo.sha512,
-        },
-      ]
-    }
-    else {
-      throw new Error(`No files provided: ${safeStringifyJson(updateInfo)}`)
-    }
+export function getFileList(updateInfo: UpdateInfo) {
+  const files = updateInfo.files
+  if (files != null && files.length > 0) {
+    return files
   }
 
+  if (updateInfo.path != null) {
+    return [
+      {
+        url: updateInfo.path,
+        sha512: updateInfo.sha512,
+      },
+    ]
+  }
+  else {
+    throw new Error(`No files provided: ${safeStringifyJson(updateInfo)}`)
+  }
+}
+
+export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): Array<ResolvedUpdateFileInfo> {
+  const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {
       throw new Error(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`)

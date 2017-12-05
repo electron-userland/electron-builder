@@ -301,6 +301,90 @@ Object {
 }
 `;
 
+exports[`file url github private 1`] = `
+Object {
+  "assets": Array [
+    Object {
+      "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/latest.yml",
+      "content_type": "application/octet-stream",
+      "created_at": "2017-12-05T08:01:23Z",
+      "id": 5530341,
+      "label": null,
+      "name": "latest.yml",
+      "size": 156,
+      "state": "uploaded",
+      "updated_at": "2017-12-05T08:01:24Z",
+      "uploader": Object {
+        "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
+        "events_url": "https://api.github.com/users/develar/events{/privacy}",
+        "followers_url": "https://api.github.com/users/develar/followers",
+        "following_url": "https://api.github.com/users/develar/following{/other_user}",
+        "gists_url": "https://api.github.com/users/develar/gists{/gist_id}",
+        "gravatar_id": "",
+        "html_url": "https://github.com/develar",
+        "id": 350686,
+        "login": "develar",
+        "organizations_url": "https://api.github.com/users/develar/orgs",
+        "received_events_url": "https://api.github.com/users/develar/received_events",
+        "repos_url": "https://api.github.com/users/develar/repos",
+        "site_admin": false,
+        "starred_url": "https://api.github.com/users/develar/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/develar/subscriptions",
+        "type": "User",
+        "url": "https://api.github.com/users/develar",
+      },
+      "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530341",
+    },
+    Object {
+      "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/TestApp-Setup-1.0.0.exe",
+      "content_type": "application/octet-stream",
+      "created_at": "2017-12-05T08:01:53Z",
+      "id": 5530346,
+      "label": null,
+      "name": "TestApp-Setup-1.0.0.exe",
+      "size": 9248,
+      "state": "uploaded",
+      "updated_at": "2017-12-05T08:01:55Z",
+      "uploader": Object {
+        "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
+        "events_url": "https://api.github.com/users/develar/events{/privacy}",
+        "followers_url": "https://api.github.com/users/develar/followers",
+        "following_url": "https://api.github.com/users/develar/following{/other_user}",
+        "gists_url": "https://api.github.com/users/develar/gists{/gist_id}",
+        "gravatar_id": "",
+        "html_url": "https://github.com/develar",
+        "id": 350686,
+        "login": "develar",
+        "organizations_url": "https://api.github.com/users/develar/orgs",
+        "received_events_url": "https://api.github.com/users/develar/received_events",
+        "repos_url": "https://api.github.com/users/develar/repos",
+        "site_admin": false,
+        "starred_url": "https://api.github.com/users/develar/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/develar/subscriptions",
+        "type": "User",
+        "url": "https://api.github.com/users/develar",
+      },
+      "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530346",
+    },
+  ],
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.0.0.exe",
+    },
+  ],
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url github private 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`sha512 mismatch error event 1`] = `
 Object {
   "files": Array [

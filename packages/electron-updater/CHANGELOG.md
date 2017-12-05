@@ -1,3 +1,11 @@
+## 2.17.0
+
+PrivateGitHubProvider requires at least Electron 1.6.11. Better to use latest stable.
+
+### Features
+
+* PrivateGitHubProvider [fixes](https://github.com/electron-userland/electron-builder/issues/2342).
+
 ## 2.16.2
 
 ### Features

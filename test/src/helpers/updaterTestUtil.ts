@@ -1,4 +1,4 @@
-import { TmpDir, serializeToYaml } from "builder-util"
+import { serializeToYaml, TmpDir } from "builder-util"
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { AppUpdater, NoOpLogger } from "electron-updater"
@@ -50,6 +50,13 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
+  const assets = (updateCheckResult.updateInfo as any).assets
+  if (assets != null) {
+    for (const asset of assets) {
+      delete asset.download_count
+    }
+  }
+
   expect(updateCheckResult.updateInfo).toMatchSnapshot()
   if (expectDownloadPromise) {
     expect(updateCheckResult.downloadPromise).toBeDefined()

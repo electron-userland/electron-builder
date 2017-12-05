@@ -1,29 +1,24 @@
 import { CancellationToken, GithubOptions, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
-import { session } from "electron"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { URL } from "url"
-import { NET_SESSION_NAME } from "./electronHttpExecutor"
 import { BaseGitHubProvider } from "./GitHubProvider"
 import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
+import { getFileList } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  private readonly netSession = (session as any).fromPartition(NET_SESSION_NAME)
-
   constructor(options: GithubOptions, private readonly token: string, executor: HttpExecutor<any>) {
     super(options, "api.github.com", executor)
-
-    this.registerHeaderRemovalListener()
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
     const result = super.createRequestOptions(url, headers);
-    (result as any).session = this.netSession
+    (result as any).redirect = "manual"
     return result
   }
 
@@ -55,20 +50,6 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     return result
   }
 
-  private registerHeaderRemovalListener(): void {
-    const filter = {
-      urls: ["*://*.amazonaws.com/*"]
-    }
-
-    this.netSession.webRequest.onBeforeSendHeaders(filter, (details: any, callback: any) => {
-      if (details.requestHeaders.Authorization != null) {
-        delete details.requestHeaders.Authorization
-      }
-
-      callback({cancel: false, requestHeaders: details.requestHeaders})
-    })
-  }
-
   get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
     return this.configureHeaders("application/octet-stream")
   }
@@ -95,10 +76,15 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   resolveFiles(updateInfo: PrivateGitHubUpdateInfo): Array<ResolvedUpdateFileInfo> {
-    return updateInfo.files.map(it => {
+    return getFileList(updateInfo).map(it => {
       const name = path.posix.basename(it.url).replace(/ /g, "-")
+      const asset = updateInfo.assets.find(it => it != null && it.name === name)
+      if (asset == null) {
+        throw new Error(`Cannot find asset "${name}" in: ${JSON.stringify(updateInfo.assets, null, 2)}`)
+      }
+
       return {
-        url: new URL(updateInfo.assets.find(it => it.name === name)!.url),
+        url: new URL(asset.url),
         info: it,
       }
     })

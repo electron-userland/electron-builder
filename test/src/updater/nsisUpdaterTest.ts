@@ -6,8 +6,8 @@ import { outputFile } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { createTestApp, trackEvents, tuneNsisUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { removeUnstableProperties } from "../helpers/packTester"
+import { createTestApp, trackEvents, tuneNsisUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
@@ -230,11 +230,13 @@ test("file url github pre-release and fullChangelog", async () => {
 })
 
 test.skip("file url github private", async () => {
-  const updater = new NsisUpdater()
+  const updater = new NsisUpdater(null, createTestApp("0.0.1"))
+  tuneNsisUpdater(updater)
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release_private",
+    private: true,
   })
   await validateDownload(updater)
 })
