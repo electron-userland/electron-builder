@@ -1,4 +1,4 @@
-import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { URL } from "url"
@@ -75,7 +75,7 @@ export function parseUpdateInfo(rawData: string, channelFile: string, channelFil
   return result
 }
 
-export function getFileList(updateInfo: UpdateInfo) {
+export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   const files = updateInfo.files
   if (files != null && files.length > 0) {
     return files

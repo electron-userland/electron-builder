@@ -1,4 +1,6 @@
+import { DebugLogger } from "builder-util/out/DebugLogger"
 import { Platform } from "electron-builder"
+import { validateConfig } from "electron-builder-lib/out/util/config"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifAll.ifDevOrLinuxCi("validation", appThrows({
@@ -50,3 +52,14 @@ test.ifAll.ifDevOrLinuxCi("extraFiles", app({
     ],
   },
 }))
+
+test.ifAll.ifDevOrLinuxCi("files", () => {
+  return validateConfig({
+    appId: "com.example.myapp",
+    files: [{from: "dist/app", to: "app", filter: "*.js"}],
+    win: {
+      target: "NSIS",
+      icon: "build/icon.ico"
+    }
+  }, new DebugLogger())
+})

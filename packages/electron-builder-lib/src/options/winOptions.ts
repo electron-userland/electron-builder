@@ -87,6 +87,12 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * @default asInvoker
    */
   readonly requestedExecutionLevel?: RequestedExecutionLevel | null
+
+  /**
+   * Whether to sign and add metadata to executable. Advanced option.
+   * @default true
+   */
+  readonly signAndEditExecutable?: boolean
 }
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"

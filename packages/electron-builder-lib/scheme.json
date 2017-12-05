@@ -4061,6 +4061,11 @@
                     ],
                     "description": "The custom function (or path to file or module id) to sign Windows executable."
                 },
+                "signAndEditResources": {
+                    "default": true,
+                    "description": "Whether to sign and add metadata to executable. Advanced option.",
+                    "type": "boolean"
+                },
                 "signingHashAlgorithms": {
                     "anyOf": [
                         {

@@ -82,7 +82,6 @@ export async function getConfig(projectDir: string, configPath: string | null, c
 
 const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
 
-/** @internal */
 export async function validateConfig(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata
   if (extraMetadata != null) {

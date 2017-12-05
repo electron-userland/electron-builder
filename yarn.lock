@@ -14,9 +14,9 @@
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/7zip-bin-win/-/7zip-bin-win-2.1.1.tgz#8acfc28bb34e53a9476b46ae85a97418e6035c20"
 
-"7zip-bin@^2.3.3":
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.3.3.tgz#20fef9e4b7500ebfa13df2742782cdfd1151e628"
+"7zip-bin@^2.3.4":
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.3.4.tgz#0861a3c99793dd794f4dd6175ec4ddfa6af8bc9d"
   optionalDependencies:
     "7zip-bin-linux" "^1.1.0"
     "7zip-bin-mac" "^1.0.1"

@@ -21,8 +21,8 @@ import { createCommonTarget } from "./targets/targetFactory"
 import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
+import { getWindowsVm, VmManager } from "./vm/vm"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
-import { VmManager, getWindowsVm } from "./vm/vm"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -348,9 +348,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await rename(path.join(packContext.appOutDir, `${this.electronDistExecutableName}.exe`), executable)
   }
 
-  protected signApp(packContext: AfterPackContext): Promise<any> {
+  protected async signApp(packContext: AfterPackContext): Promise<any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
+    if (this.platformSpecificBuildOptions.signAndEditExecutable !== false) {
+      await this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
+    }
   }
 }
 
