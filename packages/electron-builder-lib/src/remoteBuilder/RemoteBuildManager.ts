@@ -356,7 +356,10 @@ function getZstdCompressionLevel(endpoint: string): string {
   if (result != null) {
     return result
   }
-  return endpoint.startsWith("https://127.0.0.1:") || endpoint.startsWith("https://localhost:") || endpoint.startsWith("[::1]:") ? "3" : "19"
+  // 18 - 40s
+  // 17 - 30s
+  // 16 - 20s
+  return endpoint.startsWith("https://127.0.0.1:") || endpoint.startsWith("https://localhost:") || endpoint.startsWith("[::1]:") ? "3" : "16"
 }
 
 export function checkStatus(status: number, reject: (error: Error) => void) {
