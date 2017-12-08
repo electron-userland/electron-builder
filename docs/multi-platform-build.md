@@ -5,7 +5,9 @@ Don't expect that you can build app for all platforms on one platform.
   [prebuild](https://www.npmjs.com/package/prebuild) is a solution, but most node modules [don't provide](https://github.com/atom/node-keytar/issues/27) prebuilt binaries.
 * macOS Code Signing works only on macOS. [Cannot be fixed](http://stackoverflow.com/a/12156576).
 
-Don't think that mentioned issues are major, you should use build servers — e.g. [AppVeyor](http://www.appveyor.com/) to build Windows app and [Travis](https://travis-ci.org) to build MacOS/Linux apps.
+Free public [electron-build-service](https://github.com/electron-userland/electron-build-service) is used to build Electron app for Linux on Windows. On macOS/Linux you can build Electron app for Windows locally, except Appx for Windows Store (in the future (feel free to file issue) electron-build-service will support Appx target).
+
+You can use build servers — e.g. [Travis](https://travis-ci.org) to build macOS/Linux apps and [AppVeyor](http://www.appveyor.com/) to build Windows app.
 
 By default build for current platform and current arch. Use CLI flags `--mac`, `--win`, `--linux` to specify platforms. And `--ia32`, `--x64` to specify arch.
 

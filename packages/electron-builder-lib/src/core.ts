@@ -79,6 +79,10 @@ export abstract class Target {
   constructor(readonly name: string, readonly isAsyncSupported: boolean = true) {
   }
 
+  async checkOptions(): Promise<any> {
+    // ignore
+  }
+
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   finishBuild(): Promise<any> {

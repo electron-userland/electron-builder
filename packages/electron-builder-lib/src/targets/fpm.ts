@@ -13,6 +13,12 @@ import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 import { fpmPath, getLinuxToolsPath } from "./tools"
 
+interface FpmOptions {
+  maintainer: string | undefined
+  vendor: string
+  url: string
+}
+
 export default class FpmTarget extends Target {
   readonly options: LinuxTargetSpecificOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
 
@@ -46,7 +52,44 @@ export default class FpmTarget extends Target {
     ])
   }
 
+  checkOptions(): Promise<any> {
+    return this.computeFpmMetaInfoOptions()
+  }
+
+  private async computeFpmMetaInfoOptions(): Promise<FpmOptions> {
+    const packager = this.packager
+    const projectUrl = await packager.appInfo.computePackageUrl()
+    const errors: Array<string> = []
+    if (projectUrl == null) {
+      errors.push("Please specify project homepage, see https://electron.build/configuration/configuration#Metadata-homepage")
+    }
+
+    const options = this.options
+    let author = options.maintainer
+    if (author == null) {
+      const a = packager.info.metadata.author
+      if (a == null || a.email == null) {
+        errors.push(errorMessages.authorEmailIsMissed)
+      }
+      else {
+        author = `${a.name} <${a.email}>`
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(errors.join("\n\n"))
+    }
+
+    return {
+      maintainer: author!!,
+      url: projectUrl!!,
+      vendor: options.vendor || author!!,
+    }
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
+    const fpmMetaInfoOptions = await this.computeFpmMetaInfoOptions()
+
     const target = this.name
 
     log(`Building ${target}`)
@@ -72,22 +115,7 @@ export default class FpmTarget extends Target {
     const scripts = await this.scriptFiles
     const packager = this.packager
     const appInfo = packager.appInfo
-
-    const projectUrl = await appInfo.computePackageUrl()
-    if (projectUrl == null) {
-      throw new Error("Please specify project homepage, see https://electron.build/configuration/configuration#Metadata-homepage")
-    }
-
     const options = this.options
-    let author = options.maintainer
-    if (author == null) {
-      const a = packager.info.metadata.author!
-      if (a.email == null) {
-        throw new Error(errorMessages.authorEmailIsMissed)
-      }
-      author = `${a.name} <${a.email}>`
-    }
-
     const synopsis = options.synopsis
     const args = [
       "-s", "dir",
@@ -98,12 +126,16 @@ export default class FpmTarget extends Target {
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
       "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
-      "--maintainer", author,
-      "--vendor", options.vendor || author,
       "--version", appInfo.version,
       "--package", destination,
-      "--url", projectUrl,
     ]
+
+    for (const key of Object.keys(fpmMetaInfoOptions)) {
+      const value = (fpmMetaInfoOptions as any)[key]
+      if (value != null) {
+        args.push(`--${key}`, value)
+      }
+    }
 
     if (debug.enabled) {
       args.push(

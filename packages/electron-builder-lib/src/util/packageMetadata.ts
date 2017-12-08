@@ -1,8 +1,8 @@
 import { isEmptyOrSpaces, log, warn } from "builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
-import { Metadata } from "../options/metadata"
 import * as semver from "semver"
+import { Metadata } from "../options/metadata"
 
 const normalizeData = require("normalize-package-data")
 
@@ -54,7 +54,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   if (isEmptyOrSpaces(metadata.description)) {
     warn(`description is missed in the package.json (${appPackageFile})`)
   }
-  if (!metadata.author) {
+  if (metadata.author == null) {
     warn(`author is missed in the package.json (${appPackageFile})`)
   }
   checkNotEmpty("version", metadata.version)

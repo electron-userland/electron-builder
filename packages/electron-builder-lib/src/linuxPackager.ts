@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, log } from "builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -108,7 +108,8 @@ class RemoteTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
-    console.log(`Schedule remote ${this.target.name} build for arch ${Arch[arch]}`)
+    log(`Schedule remote ${this.target.name} build for arch ${Arch[arch]}`)
+    await this.target.checkOptions()
     this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)
   }
 }

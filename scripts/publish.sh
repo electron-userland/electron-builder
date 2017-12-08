@@ -11,7 +11,7 @@ set -e
 
 cd _book
 
-mkdir sponsor-logos
+mkdir sponsor-logos || true
 cp ../scripts/sponsor-logos/*.svg sponsor-logos/
 
 # do not use force push - netlify doesn't trigger deploy for forced push
