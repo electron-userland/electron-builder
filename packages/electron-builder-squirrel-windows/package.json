@@ -13,7 +13,7 @@
   "dependencies": {
     "builder-util": "^0.0.0-semantic-release",
     "bluebird-lst": "^1.0.5",
-    "fs-extra-p": "^4.4.4",
+    "fs-extra-p": "^4.4.5",
     "archiver": "^2.1.0",
     "sanitize-filename": "^1.6.1"
   },

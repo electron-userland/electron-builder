@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID, asArray } from "builder-util-runtime"
+import { AllPublishOptions, asArray, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -322,8 +322,8 @@ export abstract class AppUpdater extends EventEmitter {
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
    *
-   * @param isSilent *windows-only* Runs the installer in silent mode.
-   * @param isForceRunAfter *windows-only* Run the app after finish even on silent install.
+   * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
+   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 

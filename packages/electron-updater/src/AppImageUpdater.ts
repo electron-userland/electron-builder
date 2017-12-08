@@ -1,15 +1,15 @@
-import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
-import { spawn, SpawnOptions } from "child_process"
+import BluebirdPromise from "bluebird-lst"
+import { AllPublishOptions, CancellationToken, DownloadOptions, UpdateInfo } from "builder-util-runtime"
+import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
+import { execFileSync, spawn } from "child_process"
+import isDev from "electron-is-dev"
+import { chmod, unlinkSync } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
+import * as path from "path"
 import "source-map-support/register"
+import { BaseUpdater } from "./BaseUpdater"
 import { AppImageDifferentialDownloader } from "./differentialDownloader/AppImageDifferentialDownloader"
 import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
-import { BaseUpdater } from "./BaseUpdater"
-import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
-import { safeLoad } from "js-yaml"
-import { chmod, move } from "fs-extra-p"
-import * as path from "path"
-import isDev from "electron-is-dev"
-import BluebirdPromise from "bluebird-lst"
 import { findFile } from "./Provider"
 
 export class AppImageUpdater extends BaseUpdater {
@@ -74,6 +74,8 @@ export class AppImageUpdater extends BaseUpdater {
       if (isDownloadFull) {
         await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
       }
+
+      await chmod(installerPath, 0o755)
     })
 
     this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, null, updateInfo, fileInfo)
@@ -82,28 +84,14 @@ export class AppImageUpdater extends BaseUpdater {
     return [installerPath!!]
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
-    const args = [""]
-    if (isForceRunAfter) {
-      args.push("--force-run")
-    }
-
+  protected doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean {
     const appImageFile = process.env.APPIMAGE!!
     if (appImageFile == null) {
       throw new Error("APPIMAGE env is not defined")
     }
 
-    const spawnOptions: SpawnOptions = {
-      detached: true,
-      stdio: "ignore",
-      env: {
-        APPIMAGE_SILENT_INSTALL: "true",
-      },
-    }
-
-    if (!isForceRunAfter) {
-      spawnOptions.env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-    }
+    // https://stackoverflow.com/a/1712051/1910191
+    unlinkSync(appImageFile)
 
     let destination: string
     if (path.basename(installerPath) === path.basename(appImageFile)) {
@@ -112,21 +100,27 @@ export class AppImageUpdater extends BaseUpdater {
     }
     else {
       destination = path.join(path.dirname(appImageFile), path.basename(installerPath))
-      spawnOptions.env.APPIMAGE_DELETE_OLD_FILE = appImageFile
     }
-    move(installerPath, destination, {overwrite: true})
-      .then(() => chmod(destination, "0755"))
-      .then(() => {
-        try {
-          spawn(installerPath, args, spawnOptions)
-            .unref()
-        }
-        catch (e) {
-          this.dispatchError(e)
-        }
-      })
-      .catch(e => this.dispatchError(e))
 
+    execFileSync("mv", ["-f", installerPath, destination])
+
+    const env: any = {
+      ...process.env,
+      APPIMAGE_SILENT_INSTALL: "true",
+    }
+
+    if (isRunAfter) {
+      spawn(destination, [], {
+        detached: true,
+        stdio: "ignore",
+        env,
+      })
+        .unref()
+    }
+    else {
+      env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
+      execFileSync(destination, [], {env})
+    }
     return true
   }
 }

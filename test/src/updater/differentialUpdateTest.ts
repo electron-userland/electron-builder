@@ -1,19 +1,19 @@
 import BluebirdPromise from "bluebird-lst"
-import { GenericServerOptions, WindowsUpdateInfo } from "builder-util-runtime"
+import { doSpawn } from "builder-util"
+import { GenericServerOptions, S3Options, WindowsUpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
-import { Arch, Platform, Configuration } from "electron-builder"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { Arch, Configuration, Platform } from "electron-builder"
+import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
+import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
+import { EventEmitter } from "events"
 import { close, open, read, readFile, rename, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { doSpawn } from "builder-util"
-import { getBinFromGithub } from "builder-util/out/binDownload"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
-import { MacUpdater } from "electron-updater/out/MacUpdater"
-import { EventEmitter } from "events"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   process.env.TEST_UPDATER_PLATFORM = "win32"
@@ -332,10 +332,17 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
     tuneNsisUpdater(updater)
     updater.logger = console
     const doTest = async () => {
-      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+      updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions | S3Options>({
         provider: "generic",
         url: `http://127.0.0.1:${port}`,
       })
+
+      // updater.updateConfigPath = await writeUpdateConfig<S3Options | GenericServerOptions>({
+      //   provider: "s3",
+      //   endpoint: "http://192.168.178.34:9000",
+      //   bucket: "develar",
+      //   path: "onshape-test",
+      // })
 
       await checkResult(updater)
     }

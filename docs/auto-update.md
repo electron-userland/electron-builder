@@ -202,8 +202,8 @@ It should only be called after `update-downloaded` has been emitted.
 This is different from the normal quit event sequence.
 
 
-- isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode.
-- isForceRunAfter <code>Boolean</code> - *windows-only* Run the app after finish even on silent install.
+- isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode. Defaults to `false`.
+- isForceRunAfter <code>Boolean</code> - Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
 
 <a name="Logger"></a>
 ### `Logger`

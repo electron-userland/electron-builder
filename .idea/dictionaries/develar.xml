@@ -202,6 +202,7 @@
       <w>lintian</w>
       <w>localappdata</w>
       <w>lockfile</w>
+      <w>lsof</w>
       <w>lzfse</w>
       <w>lzip</w>
       <w>lzma</w>
@@ -347,6 +348,7 @@
       <w>userland</w>
       <w>userprofile</w>
       <w>valuename</w>
+      <w>vendorprefix</w>
       <w>versioner</w>
       <w>veyor</w>
       <w>volid</w>

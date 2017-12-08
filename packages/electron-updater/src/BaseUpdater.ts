@@ -1,9 +1,9 @@
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { AppUpdater } from "./AppUpdater"
 import { AllPublishOptions, CancellationError, DownloadOptions } from "builder-util-runtime"
 import { mkdtemp, remove } from "fs-extra-p"
-import * as path from "path"
 import { tmpdir } from "os"
+import * as path from "path"
+import { AppUpdater } from "./AppUpdater"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
@@ -17,8 +17,11 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
-    if (this.install(isSilent, isForceRunAfter)) {
-      this.app.quit()
+    this._logger.info(`Install on explicit quitAndInstall`)
+    if (this.install(isSilent, isSilent ? isForceRunAfter : true)) {
+      setImmediate(() => {
+        this.app.quit()
+      })
     }
   }
 
@@ -55,10 +58,11 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
-  protected abstract doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean
+  protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
 
-  protected install(isSilent: boolean, isForceRunAfter: boolean): boolean {
+  protected install(isSilent: boolean, isRunAfter: boolean): boolean {
     if (this.quitAndInstallCalled) {
+      this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
 
@@ -71,7 +75,14 @@ export abstract class BaseUpdater extends AppUpdater {
     // prevent calling several times
     this.quitAndInstallCalled = true
 
-    return this.doInstall(installerPath, isSilent, isForceRunAfter)
+    try {
+      this._logger.info(`Install: isSilent: ${isSilent}, isRunAfter: ${isRunAfter}`)
+      return this.doInstall(installerPath, isSilent, isRunAfter)
+    }
+    catch (e) {
+      this.dispatchError(e)
+      return false
+    }
   }
 
   protected addQuitHandler() {
@@ -81,9 +92,11 @@ export abstract class BaseUpdater extends AppUpdater {
 
     this.quitHandlerAdded = true
 
-    this.app.on("quit", () => {
-      this._logger.info("Auto install update on quit")
-      this.install(true, false)
+    this.app.once("quit", () => {
+      if (!this.quitAndInstallCalled) {
+        this._logger.info("Auto install update on quit")
+        this.install(true, false)
+      }
     })
   }
 }

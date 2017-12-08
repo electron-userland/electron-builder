@@ -1,18 +1,18 @@
 #!/bin/bash
-
 set -e
 
-# Be verbose if $DEBUG=1 is set
+# be verbose if $DEBUG=1 is set
 if [ ! -z "$DEBUG" ] ; then
   env
   set -x
 fi
 
 THIS="$0"
-args=("$@") # http://stackoverflow.com/questions/3190818/
+# http://stackoverflow.com/questions/3190818/
+args=("$@")
 NUMBER_OF_ARGS="$#"
 
-# Please do not change $VENDORPREFIX as it will allow for desktop files
+# please do not change $VENDORPREFIX as it will allow for desktop files
 # belonging to AppImages to be recognized by future AppImageKit components
 # such as desktop integration daemons
 VENDORPREFIX=appimagekit
@@ -28,8 +28,7 @@ find-up () {
 if [ -z $APPDIR ] ; then
   # Find the AppDir. It is the directory that contains AppRun.
   # This assumes that this script resides inside the AppDir or a subdirectory.
-  # If this script is run inside an AppImage, then the AppImage runtime
-  # likely has already set $APPDIR
+  # If this script is run inside an AppImage, then the AppImage runtime likely has already set $APPDIR
   APPDIR=$(find-up "AppRun")
 fi
 
@@ -44,23 +43,13 @@ BIN="$APPDIR/app/<%= executableName %>"
 
 trap atexit EXIT
 
-# Note that the following handles 0, 1 or more arguments (file paths)
-# which can include blanks but uses a bashism; can the same be achieved
-# in POSIX-shell? (FIXME)
-# http://stackoverflow.com/questions/3190818
 atexit()
 {
-
-if [ ! -z "$APPIMAGE_DELETE_OLD_FILE" ] ; then
-  echo "Delete old file $APPIMAGE_DELETE_OLD_FILE"
-  rm -f "$APPIMAGE_DELETE_OLD_FILE"
-fi
-
 if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ] ; then
   if [ $NUMBER_OF_ARGS -eq 0 ] ; then
-    exec "${BIN}"
+    exec "$BIN"
   else
-    exec "${BIN}" "${args[@]}"
+    exec "$BIN" "${args[@]}"
   fi
 fi
 }

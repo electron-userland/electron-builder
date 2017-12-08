@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { BlockMapDataHolder, configureRequestOptionsFromUrl, DigestTransform, createHttpError, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { BlockMapDataHolder, configureRequestOptionsFromUrl, createHttpError, DigestTransform, HttpExecutor, safeGetHeader } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, createWriteStream, open } from "fs-extra-p"
-import { OutgoingHttpHeaders, RequestOptions, IncomingMessage } from "http"
+import { close, closeSync, createWriteStream, open } from "fs-extra-p"
+import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Writable } from "stream"
 import { Logger } from "../main"
 import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
@@ -85,6 +85,8 @@ export abstract class DifferentialDownloader {
     const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
 
     const oldFileFd = await open(this.options.oldPackageFile, "r")
+    const newFileFd = await open(this.options.newFile, "w")
+    const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
     await new BluebirdPromise((resolve, reject) => {
       const streams: Array<any> = []
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
@@ -92,7 +94,6 @@ export abstract class DifferentialDownloader {
       digestTransform.isValidateOnEnd = false
       streams.push(digestTransform)
 
-      const fileOut = createWriteStream(this.options.newFile)
       fileOut.on("finish", () => {
         (fileOut.close as any)(() => {
           try {
@@ -144,7 +145,14 @@ export abstract class DifferentialDownloader {
         firstStream.write(signature, () => w(0))
       }
     })
-      .finally(() => close(oldFileFd))
+      .then(() => {
+        return close(oldFileFd)
+      })
+      .catch(error => {
+        closeSync(oldFileFd)
+        closeSync(newFileFd)
+        throw error
+      })
   }
 
   private executeTasks(options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void) {

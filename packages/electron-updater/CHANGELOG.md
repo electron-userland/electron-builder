@@ -1,6 +1,14 @@
+## 2.17.2
+
+### Bug Fixes
+
+* Fix AppImage auto-update [#2240](https://github.com/electron-userland/electron-builder/issues/2240).
+
 ## 2.17.0
 
-PrivateGitHubProvider requires at least Electron 1.6.11. Better to use latest stable.
+### Bug Fixes
+
+* PrivateGitHubProvider requires at least Electron 1.6.11. Better to use latest stable.
 
 ### Features
 
