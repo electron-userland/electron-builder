@@ -1,13 +1,18 @@
-import { GenericServerOptions, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, HttpError, UpdateInfo } from "builder-util-runtime"
+import { AppUpdater } from "./AppUpdater"
 import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
-  private readonly channel = this.configuration.channel ? getCustomChannelName(this.configuration.channel) : getDefaultChannelName()
 
-  constructor(private readonly configuration: GenericServerOptions, executor: HttpExecutor<any>) {
-    super(executor)
+  constructor(private readonly configuration: GenericServerOptions, private readonly updater: AppUpdater) {
+    super(updater.httpExecutor)
+  }
+
+  private get channel(): string {
+    const result = this.updater.channel || this.configuration.channel
+    return result == null ? getDefaultChannelName() : getCustomChannelName(result)
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {

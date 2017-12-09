@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, asArray, BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
+import { AllPublishOptions, asArray, CancellationToken, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -11,12 +11,10 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
-import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
-import { GitHubProvider } from "./GitHubProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
-import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
+import { createClient } from "./providerFactory"
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -47,6 +45,34 @@ export abstract class AppUpdater extends EventEmitter {
    * The current application version.
    */
   readonly currentVersion: string
+
+  private _channel: string | null = null
+
+  /**
+   * Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
+   */
+  get channel(): string | null {
+    return this._channel
+  }
+
+  /**
+   * Set the update channel. Not applicable for GitHub. Overrides `channel` in the update configuration.
+   *
+   * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
+   */
+  set channel(value: string | null) {
+    if (this._channel != null) {
+      if (typeof value !== "string") {
+        throw new Error(`Channel must be a string, but got: ${value}`)
+      }
+      else if (value.length === 0) {
+        throw new Error(`Channel must be not an empty string`)
+      }
+    }
+
+    this._channel = value
+    this.allowDowngrade = true
+  }
 
   /**
    *  The request headers.
@@ -104,7 +130,8 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected updateInfo: UpdateInfo | null
 
-  protected readonly httpExecutor: ElectronHttpExecutor
+  /** @internal */
+  readonly httpExecutor: ElectronHttpExecutor
 
   constructor(options: AllPublishOptions | null | undefined, app?: any) {
     super()
@@ -155,14 +182,14 @@ export abstract class AppUpdater extends EventEmitter {
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions) {
     // https://github.com/electron-userland/electron-builder/issues/1105
-    let client: Provider<any>
+    let provider: Provider<any>
     if (typeof options === "string") {
-      client = new GenericProvider({provider: "generic", url: options}, this.httpExecutor)
+      provider = new GenericProvider({provider: "generic", url: options}, this)
     }
     else {
-      client = this.createClient(options)
+      provider = createClient(options, this)
     }
-    this.clientPromise = BluebirdPromise.resolve(client)
+    this.clientPromise = Promise.resolve(provider)
   }
 
   /**
@@ -242,7 +269,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     if (this.clientPromise == null) {
-      this.clientPromise = this.configOnDisk.value.then(it => this.createClient(it))
+      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this))
     }
 
     const client = await this.clientPromise
@@ -345,42 +372,6 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
     return this.computeFinalHeaders({Accept: "*/*"})
-  }
-
-  private createClient(data: string | PublishConfiguration) {
-    if (typeof data === "string") {
-      throw new Error("Please pass PublishConfiguration object")
-    }
-
-    const provider = (data as PublishConfiguration).provider
-    switch (provider) {
-      case "github":
-        const githubOptions = data as GithubOptions
-        const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
-        if (token == null) {
-          return new GitHubProvider(githubOptions, this, this.httpExecutor)
-        }
-        else {
-          return new PrivateGitHubProvider(githubOptions, token, this.httpExecutor)
-        }
-
-      case "s3":
-      case "spaces":
-        return new GenericProvider({
-          provider: "generic",
-          url: getS3LikeProviderBaseUrl(data),
-          channel: (data as BaseS3Options).channel || ""
-        }, this.httpExecutor)
-
-      case "generic":
-        return new GenericProvider(data as GenericServerOptions, this.httpExecutor)
-
-      case "bintray":
-        return new BintrayProvider(data as BintrayOptions, this.httpExecutor)
-
-      default:
-        throw new Error(`Unsupported provider: ${provider}`)
-    }
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
