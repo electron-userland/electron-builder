@@ -17,6 +17,8 @@ export class DifferentialDownloaderOptions {
   readonly newFile: string
 
   readonly requestHeaders: OutgoingHttpHeaders | null
+
+  readonly useMultipleRangeRequest?: boolean
 }
 
 export abstract class DifferentialDownloader {
@@ -81,7 +83,6 @@ export abstract class DifferentialDownloader {
   }
 
   private async downloadFile(tasks: Array<Operation>): Promise<any> {
-    // todo we can avoid download remote and construct manually
     const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
 
     const oldFileFd = await open(this.options.oldPackageFile, "r")
@@ -129,7 +130,7 @@ export abstract class DifferentialDownloader {
           return
         }
 
-        const nextOffset = taskOffset + 2000
+        const nextOffset = taskOffset + (this.options.useMultipleRangeRequest === false ? 1 : 1000)
         this.executeTasks({
           tasks,
           start: taskOffset,

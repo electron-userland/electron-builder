@@ -6,8 +6,8 @@ import { parseUpdateInfo, resolveFiles } from "./Provider"
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
 
-  constructor(private readonly configuration: GenericServerOptions, private readonly updater: AppUpdater) {
-    super(updater.httpExecutor)
+  constructor(private readonly configuration: GenericServerOptions, private readonly updater: AppUpdater, useMultipleRangeRequest = true) {
+    super(updater.httpExecutor, useMultipleRangeRequest)
   }
 
   private get channel(): string {

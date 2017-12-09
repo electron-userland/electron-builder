@@ -28,11 +28,11 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       return new GenericProvider({
         provider: "generic",
         url: getS3LikeProviderBaseUrl(data),
-        channel: (data as BaseS3Options).channel || ""
-      }, updater)
+        channel: (data as BaseS3Options).channel || null
+      }, updater, provider === "spaces" /* https://github.com/minio/minio/issues/5285#issuecomment-350428955 */)
 
     case "generic":
-      return new GenericProvider(data as GenericServerOptions, updater)
+      return new GenericProvider(data as GenericServerOptions, updater, true)
 
     case "bintray":
       return new BintrayProvider(data as BintrayOptions, httpExecutor)

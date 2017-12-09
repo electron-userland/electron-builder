@@ -31,6 +31,10 @@ export function createTestApp(version: string, appPath = "") {
       // ignored
     }
 
+    once() {
+      // ignored
+    }
+
     isReady() {
       return true
     }

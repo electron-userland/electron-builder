@@ -1,13 +1,13 @@
-import { CancellationToken, DownloadOptions, AllPublishOptions, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, DownloadOptions, UpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
 import * as path from "path"
 import "source-map-support/register"
+import { BaseUpdater } from "./BaseUpdater"
 import { SevenZipDifferentialDownloader } from "./differentialDownloader/SevenZipDifferentialDownloader"
 import { UPDATE_DOWNLOADED } from "./main"
-import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
-import { BaseUpdater } from "./BaseUpdater"
 import { findFile } from "./Provider"
+import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -16,7 +16,8 @@ export class NsisUpdater extends BaseUpdater {
 
   /*** @private */
   protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
-    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "exe")!!
+    const provider = await this.provider
+    const fileInfo = findFile(provider.resolveFiles(updateInfo), "exe")!!
     const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
@@ -51,6 +52,7 @@ export class NsisUpdater extends BaseUpdater {
               logger: this._logger,
               newFile: packagePath,
               requestHeaders: this.requestHeaders,
+              useMultipleRangeRequest: provider.useMultipleRangeRequest,
             }).download(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
           }
           catch (e) {

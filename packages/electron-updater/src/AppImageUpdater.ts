@@ -32,7 +32,8 @@ export class AppImageUpdater extends BaseUpdater {
 
   /*** @private */
   protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
-    const fileInfo = findFile((await this.provider).resolveFiles(updateInfo), "AppImage")!!
+    const provider = await this.provider
+    const fileInfo = findFile(provider.resolveFiles(updateInfo), "AppImage")!!
 
     const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
@@ -62,6 +63,7 @@ export class AppImageUpdater extends BaseUpdater {
           oldPackageFile: oldFile,
           logger: this._logger,
           newFile: installerPath,
+          useMultipleRangeRequest: provider.useMultipleRangeRequest,
           requestHeaders,
         }).download(safeLoad(await readBlockMapDataFromAppImage(oldFile)))
       }
