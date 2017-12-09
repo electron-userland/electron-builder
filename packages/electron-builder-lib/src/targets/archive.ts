@@ -1,11 +1,11 @@
 import { path7za } from "7zip-bin"
+import BluebirdPromise from "bluebird-lst"
 import { debug7z, debug7zArgs, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
-import * as path from "path"
-import { CompressionLevel } from "../core"
-import { TmpDir } from "temp-file"
-import BluebirdPromise from "bluebird-lst"
 import { move } from "fs-extra-p"
+import * as path from "path"
+import { TmpDir } from "temp-file"
+import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
 
 /** @internal */
@@ -37,7 +37,11 @@ export async function tar(compression: CompressionLevel | any | any, format: str
     return
   }
 
-  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), compression, {isRegularFile: true, method: "DEFAULT"})
+  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), {
+    isRegularFile: true,
+    method: "DEFAULT",
+    compression,
+  })
   args.push(outFile, tarFile)
   await exec(path7za, args, {
     cwd: path.dirname(dirToArchive),
@@ -45,6 +49,8 @@ export async function tar(compression: CompressionLevel | any | any, format: str
 }
 
 export interface ArchiveOptions {
+  compression?: CompressionLevel | null
+
   /**
    * @default false
    */
@@ -71,8 +77,8 @@ export interface ArchiveOptions {
   isRegularFile?: boolean
 }
 
-export function compute7zCompressArgs(format: string, compression: CompressionLevel | null | undefined, options: ArchiveOptions = {}) {
-  let storeOnly = compression === "store"
+export function compute7zCompressArgs(format: string, options: ArchiveOptions = {}) {
+  let storeOnly = options.compression === "store"
   const args = debug7zArgs("a")
 
   let isLevelSet = false
@@ -82,7 +88,7 @@ export function compute7zCompressArgs(format: string, compression: CompressionLe
     isLevelSet = true
   }
 
-  if (format === "zip" && compression === "maximum") {
+  if (format === "zip" && options.compression === "maximum") {
     // http://superuser.com/a/742034
     args.push("-mfb=258", "-mpass=15")
   }
@@ -137,8 +143,8 @@ export function compute7zCompressArgs(format: string, compression: CompressionLe
 
 // 7z is very fast, so, use ultra compression
 /** @internal */
-export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
-  const args = compute7zCompressArgs(format, compression, options)
+export async function archive(format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
+  const args = compute7zCompressArgs(format, options)
   // remove file before - 7z doesn't overwrite file, but update
   await unlinkIfExists(outFile)
 

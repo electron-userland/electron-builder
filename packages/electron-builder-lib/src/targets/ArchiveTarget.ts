@@ -31,7 +31,10 @@ export class ArchiveTarget extends Target {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }
     else {
-      await archive(packager.compression, format, artifactPath, appOutDir, {withoutDir: !isMac})
+      await archive(format, artifactPath, appOutDir, {
+        compression: packager.compression,
+        withoutDir: !isMac,
+      })
     }
 
     packager.info.dispatchArtifactCreated({

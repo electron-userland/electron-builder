@@ -14,6 +14,7 @@ import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
+import { configureDifferentialAwareArchiveOptions, createWebDifferentialUpdateInfo } from "./nsisDifferentialUpdateInfoBuilder"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -61,33 +62,19 @@ export class NsisTarget extends Target {
     const options = this.options
     const packager = this.packager
 
-    const isDifferentialPackage = options.differentialPackage
+    const isDifferentialPackage = options.differentialPackage !== false
     const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
-    const archiveOptions: ArchiveOptions = {withoutDir: true}
-    let compression = packager.compression
+    const archiveOptions: ArchiveOptions = {
+      withoutDir: true,
+      compression: packager.compression,
+    }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
-    if (isDifferentialPackage) {
-      archiveOptions.solid = false
-      // our reader doesn't support compressed headers
-      archiveOptions.isArchiveHeaderCompressed = false
-      /*
-       * dict size 64 MB: Full: 33,744.88 KB, To download: 17,630.3 KB (52%)
-       * dict size 16 MB: Full: 33,936.84 KB, To download: 16,175.9 KB (48%)
-       * dict size  8 MB: Full: 34,187.59 KB, To download:  8,229.9 KB (24%)
-       * dict size  4 MB: Full: 34,628.73 KB, To download: 3,782.97 KB (11%)
-
-       as we can see, if file changed in one place, all block is invalidated (and update size approximately equals to dict size)
-       */
-      archiveOptions.dictSize = 4
-      // do not allow to change compression level to avoid different packages
-      compression = "normal"
-    }
-    await archive(compression, format, archiveFile, appOutDir, archiveOptions)
+    await archive(format, archiveFile, appOutDir, isDifferentialPackage ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
 
-    if (options.differentialPackage) {
+    if (isDifferentialPackage && this.isWebInstaller) {
       return await createDifferentialPackage(archiveFile)
     }
     else {
@@ -95,7 +82,6 @@ export class NsisTarget extends Target {
     }
   }
 
-  // noinspection JSUnusedGlobalSymbols
   async finishBuild(): Promise<any> {
     log(`Building ${this.name} installer (${Array.from(this.archs.keys()).map(it => Arch[it]).join(" and ")})`)
     try {
@@ -120,15 +106,12 @@ export class NsisTarget extends Target {
 
     const packager = this.packager
     const appInfo = packager.appInfo
-    const version = appInfo.version
     const options = this.options
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, this.installerFilenamePattern)
-    const iconPath = (isPortable ? null : await packager.getResource(options.installerIcon, "installerIcon.ico")) || await packager.getIconPath()
     const oneClick = options.oneClick !== false
 
     const installerPath = path.join(this.outDir, installerFilename)
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
-    const companyName = appInfo.companyName
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
@@ -136,19 +119,10 @@ export class NsisTarget extends Target {
       PRODUCT_FILENAME: appInfo.productFilename,
       APP_FILENAME: (!oneClick || options.perMachine === true) && /^[-_+0-9a-zA-Z ]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName,
       APP_DESCRIPTION: appInfo.description,
-      VERSION: version,
+      VERSION: appInfo.version,
 
       PROJECT_DIR: packager.projectDir,
       BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
-    }
-
-    if (companyName != null) {
-      defines.COMPANY_NAME = companyName
-    }
-
-    // electron uses product file name as app data, define it as well to remove on uninstall
-    if (defines.APP_FILENAME !== appInfo.productFilename) {
-      defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
 
     const commands: any = {
@@ -158,6 +132,7 @@ export class NsisTarget extends Target {
       Unicode: this.isUnicodeEnabled,
     }
 
+    const iconPath = (isPortable ? null : await packager.getResource(options.installerIcon, "installerIcon.ico")) || await packager.getIconPath()
     if (iconPath != null) {
       if (isPortable) {
         commands.Icon = `"${iconPath}"`
@@ -208,8 +183,7 @@ export class NsisTarget extends Target {
       commands.SetCompress = "off"
     }
     else {
-      // investigate https://github.com/electron-userland/electron-builder/issues/2134#issuecomment-333286194
-      // difference - 33.540 vs 33.601, only 61 KB
+      // difference - 33.540 vs 33.601, only 61 KB (but zip is faster to decompress)
       commands.SetCompressor = "zlib"
       if (!this.isWebInstaller) {
         defines.COMPRESS = "auto"
@@ -228,25 +202,9 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await BluebirdPromise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? BluebirdPromise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    let updateInfo: any = null
-    if (packageFiles != null) {
-      const keys = Object.keys(packageFiles)
-      if (keys.length > 0) {
-        const packages: { [arch: string]: PackageFileInfo } = {}
-        for (const arch of keys) {
-          const packageFileInfo = packageFiles[arch]
-          packages[arch] = {
-            ...packageFileInfo,
-            path: path.basename(packageFileInfo.path)
-          }
-        }
-        updateInfo = {packages}
-      }
-    }
-
     packager.info.dispatchArtifactCreated({
       file: installerPath,
-      updateInfo,
+      updateInfo: createWebDifferentialUpdateInfo(packageFiles),
       target: this,
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
@@ -405,6 +363,17 @@ export class NsisTarget extends Target {
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: any) {
+    const appInfo = this.packager.appInfo
+    const companyName = appInfo.companyName
+    if (companyName != null) {
+      defines.COMPANY_NAME = companyName
+    }
+
+    // electron uses product file name as app data, define it as well to remove on uninstall
+    if (defines.APP_FILENAME !== appInfo.productFilename) {
+      defines.APP_PRODUCT_FILENAME = appInfo.productFilename
+    }
+
     const options = this.options
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {

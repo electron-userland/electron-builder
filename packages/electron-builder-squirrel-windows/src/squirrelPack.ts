@@ -1,11 +1,11 @@
+import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
+import { compute7zCompressArgs } from "electron-builder-lib/out/targets/archive"
 import { WinPackager } from "electron-builder-lib/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { path7za } from "7zip-bin"
-import { compute7zCompressArgs } from "electron-builder-lib/out/targets/archive"
 
 const archiver = require("archiver")
 
@@ -124,10 +124,16 @@ export class SquirrelBuilder {
 
   private async createEmbeddedArchiveFile(nupkgPath: string, dirToArchive: string) {
     const embeddedArchiveFile = await this.packager.getTempFile("setup.zip")
-    await exec(path7za, compute7zCompressArgs("zip", this.packager.compression, {isRegularFile: true}).concat(embeddedArchiveFile, "."), {
+    await exec(path7za, compute7zCompressArgs("zip", {
+      isRegularFile: true,
+      compression: this.packager.compression,
+    }).concat(embeddedArchiveFile, "."), {
       cwd: dirToArchive,
     })
-    await exec(path7za, compute7zCompressArgs("zip", "store" /* nupkg is already compressed */, {isRegularFile: true}).concat(embeddedArchiveFile, nupkgPath))
+    await exec(path7za, compute7zCompressArgs("zip", {
+      isRegularFile: true,
+      compression: "store" /* nupkg is already compressed */,
+    }).concat(embeddedArchiveFile, nupkgPath))
     return embeddedArchiveFile
   }
 }

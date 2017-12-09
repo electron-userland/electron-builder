@@ -1,17 +1,13 @@
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
 import { WinPackager } from "../../winPackager"
-import { NsisTarget } from "./NsisTarget"
 import { NsisWebOptions } from "./nsisOptions"
+import { NsisTarget } from "./NsisTarget"
 import { AppPackageHelper } from "./nsisUtil"
 
 /** @private */
 export class WebInstallerTarget extends NsisTarget {
   constructor(packager: WinPackager, outDir: string, targetName: string, packageHelper: AppPackageHelper) {
     super(packager, outDir, targetName, packageHelper)
-
-    if (this.options.differentialPackage == null) {
-      this.options.differentialPackage = true
-    }
   }
 
   get isWebInstaller(): boolean {
