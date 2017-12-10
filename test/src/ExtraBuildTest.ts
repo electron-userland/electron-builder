@@ -16,6 +16,9 @@ function createBuildResourcesTest(platform: Platform) {
         output: "customDist",
         // https://github.com/electron-userland/electron-builder/issues/601
         app: ".",
+      },
+      nsis: {
+        differentialPackage: false,
       }
     },
   }, {

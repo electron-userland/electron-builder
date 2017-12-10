@@ -12,7 +12,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "BundleShortVersion-2017.1-alpha5.dmg.blockmap",
       "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
@@ -2148,7 +2147,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -2173,7 +2171,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -2198,7 +2195,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -2223,7 +2219,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -2248,7 +2243,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -2287,7 +2281,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "NoApplicationsLink-1.1.0.dmg.blockmap",
       "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
@@ -2316,7 +2309,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "NoBackground-1.1.0.dmg.blockmap",
       "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
@@ -2355,7 +2347,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "NoBuildDirectory-1.1.0.dmg.blockmap",
       "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
@@ -2380,7 +2371,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test ß No Volume Icon-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {

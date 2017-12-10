@@ -6,9 +6,10 @@ import { copyDir, FileCopier, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishManager } from "electron-builder-lib"
 import { computeArchToTargetNamesMap } from "electron-builder-lib/out/targets/targetFactory"
+import { getLinuxToolsPath } from "electron-builder-lib/out/targets/tools"
+import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, readFile, readJson, writeJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -17,7 +18,6 @@ import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { TmpDir } from "temp-file"
-import { getLinuxToolsPath } from "electron-builder-lib/out/targets/tools"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -202,6 +202,9 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       // reduce snapshot - avoid noise
       if (result.safeArtifactName == null) {
         delete result.safeArtifactName
+      }
+      if (result.updateInfo == null) {
+        delete result.updateInfo
       }
       if (result.arch == null) {
         delete result.arch

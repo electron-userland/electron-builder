@@ -189,7 +189,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.0.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.0.0.dmg.blockmap",
       "updateInfo": Object {

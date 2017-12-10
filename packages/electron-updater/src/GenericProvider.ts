@@ -21,7 +21,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl)
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
-        result = parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelUrl)))!!, channelFile, channelUrl)
+        result = parseUpdateInfo(await this.httpRequest(channelUrl), channelFile, channelUrl)
         break
       }
       catch (e) {

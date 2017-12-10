@@ -30,19 +30,6 @@ test("one-click", app({
   }
 }))
 
-// test.ifAll("one-click - differential package", app({
-//   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
-//   config: {
-//     publish: null,
-//     nsis: {
-//       differentialPackage: true,
-//     },
-//   }
-// }, {
-//   // test that 7za is signed
-//   signedWin: true,
-// }))
-
 test.ifAll.ifNotCiMac("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
   config: {
@@ -50,7 +37,7 @@ test.ifAll.ifNotCiMac("multi language license", app({
     nsis: {
       uninstallDisplayName: "Hi!!!",
       createDesktopShortcut: false,
-    }
+    },
   },
 }, {
   projectDirCreated: projectDir => {
@@ -99,6 +86,9 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       provider: "generic",
       // tslint:disable:no-invalid-template-strings
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
+    },
+    win: {
+      electronUpdaterCompatibility: ">=2.16",
     },
   },
 }, {
@@ -197,6 +187,7 @@ test.ifAll.ifNotCiMac("string menuCategory", app({
 test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
+    publish: null,
     fileAssociations: [
       {
         ext: "foo",

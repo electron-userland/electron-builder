@@ -21,6 +21,7 @@ Object {
         "files": Array [
           Object {
             "sha512": "@sha512",
+            "size": "@size",
             "url": "test-custom-inst-dir-setup-1.1.0.exe",
           },
         ],
@@ -38,6 +39,18 @@ without features",
       "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -58,6 +71,18 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -87,6 +112,18 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }

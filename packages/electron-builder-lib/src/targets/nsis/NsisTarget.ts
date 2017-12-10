@@ -14,7 +14,7 @@ import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
-import { configureDifferentialAwareArchiveOptions, createWebDifferentialUpdateInfo } from "./nsisDifferentialUpdateInfoBuilder"
+import { configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -57,13 +57,17 @@ export class NsisTarget extends Target {
     this.archs.set(arch, appOutDir)
   }
 
+  get isBuildDifferentialAware() {
+    return !this.isPortable && this.options.differentialPackage !== false
+  }
+
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
-    const isDifferentialPackage = options.differentialPackage !== false
-    const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
+    const isBuildDifferentialAware = this.isBuildDifferentialAware
+    const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
@@ -71,10 +75,10 @@ export class NsisTarget extends Target {
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
-    await archive(format, archiveFile, appOutDir, isDifferentialPackage ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
+    await archive(format, archiveFile, appOutDir, isBuildDifferentialAware ? configureDifferentialAwareArchiveOptions(archiveOptions) : archiveOptions)
     timer.end()
 
-    if (isDifferentialPackage && this.isWebInstaller) {
+    if (isBuildDifferentialAware && this.isWebInstaller) {
       return await createDifferentialPackage(archiveFile)
     }
     else {
@@ -102,8 +106,6 @@ export class NsisTarget extends Target {
   }
 
   private async buildInstaller(): Promise<any> {
-    const isPortable = this.isPortable
-
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
@@ -132,6 +134,7 @@ export class NsisTarget extends Target {
       Unicode: this.isUnicodeEnabled,
     }
 
+    const isPortable = this.isPortable
     const iconPath = (isPortable ? null : await packager.getResource(options.installerIcon, "installerIcon.ico")) || await packager.getIconPath()
     if (iconPath != null) {
       if (isPortable) {
@@ -202,13 +205,23 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await BluebirdPromise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? BluebirdPromise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
+    const safeArtifactName = isSafeGithubName(installerFilename) ? installerFilename : this.generateGitHubInstallerName()
+
+    let updateInfo: any
+    if (this.isWebInstaller) {
+      updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)
+    }
+    else if (this.isBuildDifferentialAware) {
+      updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
+    }
+
     packager.info.dispatchArtifactCreated({
       file: installerPath,
-      updateInfo: createWebDifferentialUpdateInfo(packageFiles),
+      updateInfo,
       target: this,
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
-      safeArtifactName: isSafeGithubName(installerFilename) ? installerFilename : this.generateGitHubInstallerName(),
+      safeArtifactName,
       isWriteUpdateInfo: !this.isPortable,
     })
   }

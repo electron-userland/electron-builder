@@ -7,7 +7,9 @@ test.ifAll.ifNotCiMac("portable", app({
   targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
   config: {
     publish: null,
-    nsis: {}
+    nsis: {
+      differentialPackage: false,
+    },
   }
 }))
 

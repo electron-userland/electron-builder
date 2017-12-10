@@ -1,4 +1,4 @@
-import { createDifferentialPackage } from "app-package-builder"
+import { createDifferentialFile } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, log, serializeToYaml } from "builder-util"
 import { BlockMapDataHolder, UUID } from "builder-util-runtime"
@@ -117,7 +117,7 @@ export default class AppImageTarget extends Target {
 
     await stageDir.cleanup()
 
-    const blockMapInfo = await createDifferentialPackage(artifactPath)
+    const blockMapInfo = await createDifferentialFile(artifactPath, true)
     const updateInfo: BlockMapDataHolder = {
       size: blockMapInfo.size,
       blockMapSize: blockMapInfo.blockMapSize,

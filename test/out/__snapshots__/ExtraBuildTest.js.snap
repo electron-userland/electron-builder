@@ -55,6 +55,7 @@ Object {
         "files": Array [
           Object {
             "sha512": "@sha512",
+            "size": "@size",
             "url": "beta-TestApp.exe",
           },
         ],
@@ -69,6 +70,18 @@ Object {
       "arch": "ia32",
       "file": "beta-TestApp.exe",
       "safeArtifactName": "beta-TestApp.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "beta-TestApp.exe.blockmap",
+      "safeArtifactName": "beta-TestApp.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }

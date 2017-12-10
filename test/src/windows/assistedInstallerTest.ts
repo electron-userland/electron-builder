@@ -27,6 +27,7 @@ test.ifNotCiMac("assisted", app({
 test.ifAll.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", app({
   targets: nsisTarget,
   config: {
+    publish: null,
     extraMetadata: {
       // mt.exe doesn't like unicode names from wine
       name: "test",
@@ -40,7 +41,8 @@ test.ifAll.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin",
       allowElevation: false,
       perMachine: true,
       displayLanguageSelector: true,
-      installerLanguages: ["en_US", "ru_RU"]
+      installerLanguages: ["en_US", "ru_RU"],
+      differentialPackage: false,
     },
   }
 }))
@@ -50,8 +52,10 @@ test.ifNotCiMac("assisted, MUI_HEADER", () => {
   return assertPack("test-app-one", {
       targets: nsisTarget,
       config: {
+        publish: null,
         nsis: {
           oneClick: false,
+          differentialPackage: false,
         }
       },
       effectiveOptionComputed: async it => {
@@ -76,9 +80,11 @@ test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   return assertPack("test-app-one", {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
       config: {
+        publish: null,
         nsis: {
           oneClick: false,
-          installerHeader: "foo.bmp"
+          installerHeader: "foo.bmp",
+          differentialPackage: false,
         }
       },
       effectiveOptionComputed: async it => {

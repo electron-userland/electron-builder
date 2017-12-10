@@ -12,7 +12,8 @@ export interface ReleaseNoteInfo {
 
 export interface BlockMapDataHolder {
   /**
-   * The file size. Used when block map data is embedded into the file (appimage, windows web installer package).
+   * The file size. Used to verify downloaded size (save one HTTP request to get length).
+   * Also used when block map data is embedded into the file (appimage, windows web installer package).
    */
   size?: number
 

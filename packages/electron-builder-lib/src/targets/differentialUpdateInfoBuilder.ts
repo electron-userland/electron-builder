@@ -1,8 +1,12 @@
-import { PackageFileInfo } from "builder-util-runtime"
+import { createDifferentialFile } from "app-package-builder"
+import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
+import { writeFile } from "fs-extra-p"
 import * as path from "path"
-import { ArchiveOptions } from "../archive"
+import { Target } from "../core"
+import { PlatformPackager } from "../platformPackager"
+import { ArchiveOptions } from "./archive"
 
-export function createWebDifferentialUpdateInfo(packageFiles: { [arch: string]: PackageFileInfo }) {
+export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packageFiles: { [arch: string]: PackageFileInfo }) {
   if (packageFiles == null) {
     return null
   }
@@ -39,4 +43,26 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
   // do not allow to change compression level to avoid different packages
   archiveOptions.compression = "normal"
   return archiveOptions
+}
+
+export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null) {
+  const blockMapInfo = await createDifferentialFile(file)
+  const updateInfo: BlockMapDataHolder = {
+    size: blockMapInfo.size,
+    sha512: blockMapInfo.sha512,
+  }
+
+  const blockMapFileSuffix = ".blockmap"
+  await writeFile(`${file}${blockMapFileSuffix}`, blockMapInfo.blockMapData)
+
+  packager.info.dispatchArtifactCreated({
+    file: `${file}${blockMapFileSuffix}`,
+    fileContent: blockMapInfo.blockMapData,
+    safeArtifactName: `${safeArtifactName}${blockMapFileSuffix}`,
+    target,
+    arch: null,
+    packager,
+    updateInfo,
+  })
+  return updateInfo
 }

@@ -1,8 +1,8 @@
 import { BintrayOptions, CancellationToken, HttpExecutor, UpdateInfo } from "builder-util-runtime"
 import { BintrayClient } from "builder-util-runtime/out/bintray"
-import { getChannelFilename, getDefaultChannelName, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "./main"
 import { URL } from "url"
-import { resolveFiles, parseUpdateInfo } from "./Provider"
+import { getChannelFilename, getDefaultChannelName, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "./main"
+import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export class BintrayProvider extends Provider<UpdateInfo> {
   private client: BintrayClient
@@ -32,7 +32,7 @@ export class BintrayProvider extends Provider<UpdateInfo> {
       }
 
       const channelFileUrl = new URL(`https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${channelFile.name}`)
-      return parseUpdateInfo((await this.executor.request(this.createRequestOptions(channelFileUrl)))!!, channelFilename, channelFileUrl)
+      return parseUpdateInfo(await this.httpRequest(channelFileUrl), channelFilename, channelFileUrl)
     }
     catch (e) {
       if ("statusCode" in e && e.statusCode === 404) {

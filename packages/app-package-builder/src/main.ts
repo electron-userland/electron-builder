@@ -1,6 +1,6 @@
 import { createDifferentialPackage } from "./blockMap"
 
-export { createDifferentialPackage, createPackageFileInfo } from "./blockMap"
+export { createDifferentialPackage, createPackageFileInfo, createDifferentialFile } from "./blockMap"
 
 if (process.mainModule === module) {
   const a = "source-"

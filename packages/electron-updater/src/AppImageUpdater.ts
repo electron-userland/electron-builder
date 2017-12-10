@@ -4,7 +4,6 @@ import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapA
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
 import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
@@ -60,12 +59,13 @@ export class AppImageUpdater extends BaseUpdater {
       try {
         await new AppImageDifferentialDownloader(fileInfo.info, this.httpExecutor, {
           newUrl: fileInfo.url.href,
-          oldPackageFile: oldFile,
+          oldFile,
           logger: this._logger,
           newFile: installerPath,
           useMultipleRangeRequest: provider.useMultipleRangeRequest,
           requestHeaders,
-        }).download(safeLoad(await readBlockMapDataFromAppImage(oldFile)))
+        })
+          .download(JSON.parse(await readBlockMapDataFromAppImage(oldFile)))
       }
       catch (e) {
         this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

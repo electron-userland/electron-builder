@@ -1,12 +1,14 @@
-import { AllPublishOptions, CancellationToken, DownloadOptions, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, DownloadOptions, PackageFileInfo, UpdateInfo } from "builder-util-runtime"
 import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
+import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
+import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { SevenZipDifferentialDownloader } from "./differentialDownloader/SevenZipDifferentialDownloader"
-import { UPDATE_DOWNLOADED } from "./main"
-import { findFile } from "./Provider"
+import { newUrlFromBase, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED } from "./main"
+import { findFile, Provider } from "./Provider"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends BaseUpdater {
@@ -35,34 +37,21 @@ export class NsisUpdater extends BaseUpdater {
 
     await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
       installerPath = destinationFile
-      let signatureVerificationStatus
-      await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
-      signatureVerificationStatus = await this.verifySignature(installerPath)
+      if (await this.differentialDownloadInstaller(fileInfo, "OLD", installerPath, requestHeaders, provider)) {
+        await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
+      }
+
+      const signatureVerificationStatus = await this.verifySignature(installerPath)
+      if (signatureVerificationStatus != null) {
+        await removeTempDirIfAny()
+        // noinspection ThrowInsideFinallyBlockJS
+        throw new Error(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
+      }
 
       const packageInfo = fileInfo.packageInfo
       if (packageInfo != null) {
         packagePath = path.join(tempDir, `package-${updateInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
-
-        let isDownloadFull = packageInfo.blockMapSize == null || packageInfo.headerSize == null
-        if (!isDownloadFull) {
-          try {
-            await new SevenZipDifferentialDownloader(packageInfo, this.httpExecutor, {
-              newUrl: packageInfo.path,
-              oldPackageFile: path.join(process.resourcesPath!, "..", "package.7z"),
-              logger: this._logger,
-              newFile: packagePath,
-              requestHeaders: this.requestHeaders,
-              useMultipleRangeRequest: provider.useMultipleRangeRequest,
-            }).download(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
-          }
-          catch (e) {
-            this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
-            // during test (developer machine mac or linux) we must throw error
-            isDownloadFull = process.platform === "win32"
-          }
-        }
-
-        if (isDownloadFull) {
+        if (await this.differentialDownloadWebPackage(packageInfo, packagePath, provider)) {
           await this.httpExecutor.download(packageInfo.path, packagePath!!, {
             skipDirCreation: true,
             headers: requestHeaders,
@@ -70,12 +59,6 @@ export class NsisUpdater extends BaseUpdater {
             sha512: packageInfo.sha512,
           })
         }
-      }
-
-      if (signatureVerificationStatus != null) {
-        await removeTempDirIfAny()
-        // noinspection ThrowInsideFinallyBlockJS
-        throw new Error(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
       }
     })
 
@@ -150,5 +133,55 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     return true
+  }
+
+  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, oldFile: string, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
+    if (process.env.__NSIS_DIFFERENTIAL_UPDATE__ == null) {
+      return true
+    }
+
+    try {
+      const blockMapData = JSON.parse((await provider.httpRequest(newUrlFromBase(`${fileInfo.url.pathname}.blockMap.json`, fileInfo.url)))!!)
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+        newUrl: fileInfo.url.href,
+        oldFile,
+        logger: this._logger,
+        newFile: installerPath,
+        useMultipleRangeRequest: provider.useMultipleRangeRequest,
+        requestHeaders,
+      })
+        .download(blockMapData)
+    }
+    catch (e) {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      // during test (developer machine mac) we must throw error
+      return process.platform === "win32"
+    }
+
+    return false
+  }
+
+  private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
+    if (packageInfo.blockMapSize == null || packageInfo.headerSize == null) {
+      return true
+    }
+
+    try {
+      await new SevenZipDifferentialDownloader(packageInfo, this.httpExecutor, {
+        newUrl: packageInfo.path,
+        oldFile: path.join(process.resourcesPath!, "..", "package.7z"),
+        logger: this._logger,
+        newFile: packagePath,
+        requestHeaders: this.requestHeaders,
+        useMultipleRangeRequest: provider.useMultipleRangeRequest,
+      })
+        .download(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
+    }
+    catch (e) {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      // during test (developer machine mac or linux) we must throw error
+      return process.platform === "win32"
+    }
+    return false
   }
 }

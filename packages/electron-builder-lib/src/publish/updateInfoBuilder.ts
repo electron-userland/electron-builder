@@ -1,17 +1,16 @@
-import { hashFile, Arch, serializeToYaml, safeStringifyJson } from "builder-util"
-import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions, WindowsUpdateInfo } from "builder-util-runtime"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, hashFile, safeStringifyJson, serializeToYaml } from "builder-util"
+import { GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as semver from "semver"
 import { ReleaseInfo } from "../configuration"
 import { Platform } from "../core"
+import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
-import * as semver from "semver"
-import { MacConfiguration } from "../"
-import BluebirdPromise from "bluebird-lst"
-import { Packager } from "../packager"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
   const releaseInfo: ReleaseInfo = {...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo)}
@@ -85,15 +84,17 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = packager.platform === Platform.MAC ? (packager.platformSpecificBuildOptions as MacConfiguration).electronUpdaterCompatibility : null
+  const electronUpdaterCompatibility = (packager.platformSpecificBuildOptions as any).electronUpdaterCompatibility
   for (let publishConfiguration of publishConfigs) {
     if (publishConfiguration.provider === "github" && "releaseType" in publishConfiguration) {
       publishConfiguration = {...publishConfiguration}
       delete (publishConfiguration as GithubOptions).releaseType
     }
 
+    const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir
-    if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
+    // Bintray uses different variant of channel file info, better to generate it to a separate dir by always
+    if (isBintray || (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0])) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
@@ -126,7 +127,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, (publishConfiguration.provider === "bintray" ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, (isBintray ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }

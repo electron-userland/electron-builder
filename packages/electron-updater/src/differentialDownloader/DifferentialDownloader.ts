@@ -11,7 +11,7 @@ import { computeOperations, Operation, OperationKind } from "./downloadPlanBuild
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
 
 export class DifferentialDownloaderOptions {
-  readonly oldPackageFile: string
+  readonly oldFile: string
   readonly newUrl: string
   readonly logger: Logger
   readonly newFile: string
@@ -24,7 +24,7 @@ export class DifferentialDownloaderOptions {
 export abstract class DifferentialDownloader {
   private readonly baseRequestOptions: RequestOptions
 
-  protected fileMetadataBuffer: Buffer
+  protected fileMetadataBuffer: Buffer | null
 
   private readonly logger: Logger
 
@@ -73,7 +73,7 @@ export abstract class DifferentialDownloader {
     }
 
     const newPackageSize = this.blockAwareFileInfo.size
-    if ((downloadSize + copySize + this.fileMetadataBuffer.length + this.signatureSize) !== newPackageSize) {
+    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) + this.signatureSize) !== newPackageSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
@@ -85,7 +85,7 @@ export abstract class DifferentialDownloader {
   private async downloadFile(tasks: Array<Operation>): Promise<any> {
     const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
 
-    const oldFileFd = await open(this.options.oldPackageFile, "r")
+    const oldFileFd = await open(this.options.oldFile, "r")
     const newFileFd = await open(this.options.newFile, "w")
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
     await new BluebirdPromise((resolve, reject) => {
@@ -126,7 +126,10 @@ export abstract class DifferentialDownloader {
 
       const w = (taskOffset: number) => {
         if (taskOffset >= tasks.length) {
-          firstStream.end(this.fileMetadataBuffer)
+          if (this.fileMetadataBuffer != null) {
+            firstStream.write(this.fileMetadataBuffer)
+          }
+          firstStream.end()
           return
         }
 

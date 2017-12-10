@@ -15,7 +15,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg.blockmap",
       "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
@@ -128,7 +127,6 @@ Object {
       },
     },
     Object {
-      "arch": "x64",
       "file": "TestApp-1.1.0-mac.dmg.blockmap",
       "safeArtifactName": "null.blockmap",
       "updateInfo": Object {

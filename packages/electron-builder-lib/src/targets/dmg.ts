@@ -1,8 +1,10 @@
 import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
+import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
+import { isMacOsHighSierra } from "builder-util/out/macosVersion"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
 import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
-import { stat, writeFile } from "fs-extra-p"
+import { stat } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
@@ -10,9 +12,7 @@ import { findIdentity, isSignAllowed } from "../codeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
 import { DmgOptions } from "../options/macOptions"
-import { isMacOsHighSierra } from "builder-util/out/macosVersion"
-import { CancellationToken, BlockMapDataHolder } from "builder-util-runtime"
-import { createDifferentialPackage } from "app-package-builder"
+import { createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -68,16 +68,8 @@ export class DmgTarget extends Target {
 
     await this.signDmg(artifactPath)
 
-    const blockMapInfo = await createDifferentialPackage(artifactPath, false)
-    const updateInfo: BlockMapDataHolder = {
-      size: blockMapInfo.size,
-      sha512: blockMapInfo.sha512,
-    }
-
-    const blockMapFileSuffix = ".blockmap"
-    await writeFile(`${artifactPath}${blockMapFileSuffix}`, blockMapInfo.blockMapData)
-
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
+    const updateInfo = await createBlockmap(artifactPath, this, packager, safeArtifactName)
     packager.info.dispatchArtifactCreated({
       file: artifactPath,
       safeArtifactName,
@@ -85,16 +77,6 @@ export class DmgTarget extends Target {
       arch,
       packager,
       isWriteUpdateInfo: true,
-      updateInfo,
-    })
-
-    packager.info.dispatchArtifactCreated({
-      file: `${artifactPath}${blockMapFileSuffix}`,
-      fileContent: blockMapInfo.blockMapData,
-      safeArtifactName: `${safeArtifactName}${blockMapFileSuffix}`,
-      target: this,
-      arch,
-      packager,
       updateInfo,
     })
   }

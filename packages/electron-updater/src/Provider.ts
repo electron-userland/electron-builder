@@ -22,7 +22,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   abstract resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo>
 
-  protected httpRequest(url: URL, headers: OutgoingHttpHeaders | null, cancellationToken: CancellationToken) {
+  httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken) {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
@@ -64,7 +64,11 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   }
 }
 
-export function parseUpdateInfo(rawData: string, channelFile: string, channelFileUrl: URL): UpdateInfo {
+export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
+  if (rawData == null) {
+    throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`)
+  }
+
   let result: UpdateInfo
   try {
     result = safeLoad(rawData)
