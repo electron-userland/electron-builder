@@ -86,8 +86,21 @@ export abstract class HttpExecutor<REQUEST> {
         }
       })
       this.addErrorAndTimeoutHandlers(request, reject)
+      this.addRedirectHandlers(request, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
       requestProcessor(request, reject)
       onCancel(() => request.abort())
+    })
+  }
+
+  addRedirectHandlers(request: any, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+    request.on("redirect", (statusCode: number, method: string, redirectUrl: string, responseHeaders: any) => {
+      if (redirectCount > 10) {
+        reject(new Error("Too many redirects (> 10)"))
+        return
+      }
+      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
+        .then(resolve)
+        .catch(reject)
     })
   }
 
@@ -116,19 +129,6 @@ Please double check that your authentication token is correct. Due to security r
     else if (response.statusCode === 204) {
       // on DELETE request
       resolve()
-      return
-    }
-
-    const redirectUrl = safeGetHeader(response, "location")
-    if (redirectUrl != null) {
-      if (redirectCount > 10) {
-        reject(new Error("Too many redirects (> 10)"))
-        return
-      }
-
-      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
-        .then(resolve)
-        .catch(reject)
       return
     }
 
