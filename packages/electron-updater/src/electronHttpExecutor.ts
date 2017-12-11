@@ -37,6 +37,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   public doRequest(options: any, callback: (response: any) => void): any {
     const request = (net as any).request({session: (session as any).fromPartition(NET_SESSION_NAME), ...options}, callback)
     this.addProxyLoginHandler(request)
+    request.on("redirect", () => {
+      request.followRedirect();
+    })
     return request
   }
 
