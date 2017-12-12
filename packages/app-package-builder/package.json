@@ -13,7 +13,7 @@
   ],
   "dependencies": {
     "bluebird-lst": "^1.0.5",
-    "fs-extra-p": "^4.4.5",
+    "fs-extra-p": "^4.5.0",
     "int64-buffer": "^0.1.10",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",

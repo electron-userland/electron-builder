@@ -50,7 +50,7 @@
     "builder-util": "0.0.0-semantic-release",
     "electron-osx-sign": "0.4.7",
     "electron-publish": "0.0.0-semantic-release",
-    "fs-extra-p": "^4.4.5",
+    "fs-extra-p": "^4.5.0",
     "hosted-git-info": "^2.5.0",
     "is-ci": "^1.0.10",
     "isbinaryfile": "^3.0.2",
