@@ -14,7 +14,7 @@ import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
-import { configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
+import { BLOCK_MAP_FILE_SUFFIX, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -161,7 +161,7 @@ export class NsisTarget extends Target {
         defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
 
         if (fileInfo.blockMapData != null) {
-          const blockMapFile = await packager.getTempFile(".yml")
+          const blockMapFile = await packager.getTempFile(BLOCK_MAP_FILE_SUFFIX)
           await writeFile(blockMapFile, fileInfo.blockMapData)
           defines[`${defineKey}_BLOCK_MAP_FILE`] = blockMapFile
           delete fileInfo.blockMapData

@@ -19,7 +19,7 @@ function createBuildResourcesTest(platform: Platform) {
       },
       nsis: {
         differentialPackage: false,
-      }
+      },
     },
   }, {
     packed: async context => {

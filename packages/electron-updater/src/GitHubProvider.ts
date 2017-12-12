@@ -10,7 +10,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected readonly baseUrl: URL
 
   constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
-    super(executor)
+    super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
   }

@@ -49,9 +49,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
           const packageInfo = updateInfo.packages!!.x64
           const buffer = Buffer.allocUnsafe(packageInfo.blockMapSize!!)
           await read(fd, buffer, 0, buffer.length, packageInfo.size - buffer.length)
-          const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
-          const blockMapData = (await inflateRaw(buffer)).toString()
-          await writeFile(path.join(outDir, "win-unpacked", BLOCK_MAP_FILE_NAME), blockMapData)
+          await writeFile(path.join(outDir, "win-unpacked", BLOCK_MAP_FILE_NAME), buffer)
         }
         finally {
           await close(fd)

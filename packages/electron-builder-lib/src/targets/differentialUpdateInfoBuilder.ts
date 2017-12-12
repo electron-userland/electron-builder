@@ -6,6 +6,8 @@ import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveOptions } from "./archive"
 
+export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
+
 export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packageFiles: { [arch: string]: PackageFileInfo }) {
   if (packageFiles == null) {
     return null
@@ -52,13 +54,12 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
     sha512: blockMapInfo.sha512,
   }
 
-  const blockMapFileSuffix = ".blockmap"
-  await writeFile(`${file}${blockMapFileSuffix}`, blockMapInfo.blockMapData)
+  await writeFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`, blockMapInfo.blockMapData)
 
   packager.info.dispatchArtifactCreated({
-    file: `${file}${blockMapFileSuffix}`,
+    file: `${file}${BLOCK_MAP_FILE_SUFFIX}`,
     fileContent: blockMapInfo.blockMapData,
-    safeArtifactName: `${safeArtifactName}${blockMapFileSuffix}`,
+    safeArtifactName: `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,
     arch: null,
     packager,
