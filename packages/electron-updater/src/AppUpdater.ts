@@ -283,7 +283,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
-    if (!isStagingMatch || (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
+    if (!isStagingMatch || ((this.allowDowngrade && !hasPrereleaseComponents(latestVersion)) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
       this.updateAvailable = false
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
       this.emit("update-not-available", updateInfo)

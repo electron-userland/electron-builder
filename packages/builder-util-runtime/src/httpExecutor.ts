@@ -92,16 +92,8 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  addRedirectHandlers(request: any, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
-    request.on("redirect", (statusCode: number, method: string, redirectUrl: string, responseHeaders: any) => {
-      if (redirectCount > 10) {
-        reject(new Error("Too many redirects (> 10)"))
-        return
-      }
-      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
-        .then(resolve)
-        .catch(reject)
-    })
+  protected addRedirectHandlers(request: any, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+    // not required for NodeJS
   }
 
   addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void) {
@@ -139,7 +131,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(this.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -147,9 +139,7 @@ Please double check that your authentication token is correct. Due to security r
 
     let data = ""
     response.setEncoding("utf8")
-    response.on("data", (chunk: string) => {
-      data += chunk
-    })
+    response.on("data", (chunk: string) => data += chunk)
 
     response.on("end", () => {
       try {
@@ -180,7 +170,7 @@ Please double check that your authentication token is correct. Due to security r
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          this.doDownload(prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
+          this.doDownload(this.prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -202,6 +192,17 @@ Please double check that your authentication token is correct. Due to security r
         request.abort()
       })
     })
+  }
+
+  protected prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
+    const newOptions = configureRequestOptionsFromUrl(redirectUrl, {...options})
+    if (newOptions.headers != null && newOptions.headers.Authorization != null && (newOptions.headers!!.Authorization as string).startsWith("token")) {
+      const parsedNewUrl = new URL(redirectUrl)
+      if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
+        delete newOptions.headers.Authorization
+      }
+    }
+    return newOptions
   }
 }
 
@@ -375,15 +376,4 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
     }
     return value
   }, 2)
-}
-
-function prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
-  const newOptions = configureRequestOptionsFromUrl(redirectUrl, {...options})
-  if (newOptions.headers != null && newOptions.headers.Authorization != null && (newOptions.headers!!.Authorization as string).startsWith("token")) {
-    const parsedNewUrl = new URL(redirectUrl)
-    if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
-      delete newOptions.headers.Authorization
-    }
-  }
-  return newOptions
 }
