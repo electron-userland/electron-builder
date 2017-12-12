@@ -132,6 +132,19 @@ Please double check that your authentication token is correct. Due to security r
       return
     }
 
+    const redirectUrl = safeGetHeader(response, "location")
+    if (redirectUrl != null) {
+      if (redirectCount > 10) {
+        reject(new Error("Too many redirects (> 10)"))
+        return
+      }
+
+      this.doApiRequest(prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
+        .then(resolve)
+        .catch(reject)
+      return
+    }
+
     let data = ""
     response.setEncoding("utf8")
     response.on("data", (chunk: string) => {
