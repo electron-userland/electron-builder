@@ -1,9 +1,7 @@
 import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "builder-util-runtime"
-import { net, session } from "electron"
+import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
-
-export const NET_SESSION_NAME = "electron-updater"
 
 export type LoginCallback = (username: string, password: string) => void
 
@@ -35,7 +33,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   }
 
   public doRequest(options: any, callback: (response: any) => void): any {
-    const request = (net as any).request({session: (session as any).fromPartition(NET_SESSION_NAME), ...options}, callback)
+    const request = net.request(options)
+    request.on("response", callback)
     this.addProxyLoginHandler(request)
     return request
   }

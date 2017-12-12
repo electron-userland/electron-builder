@@ -1,10 +1,9 @@
-import { CancellationToken, ProgressInfo, UpdateInfo, UpdateFileInfo, PackageFileInfo } from "builder-util-runtime"
+import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
-export { NET_SESSION_NAME } from "./electronHttpExecutor"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo }
 export { CancellationToken } from "builder-util-runtime"
