@@ -16,6 +16,10 @@
   !define MUI_FINISHPAGE_RUN
   !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
+  !ifmacrodef customWelcomePage
+    !insertmacro customWelcomePage
+  !endif
+
   !ifmacrodef licensePage
     !insertmacro licensePageHelper
     !insertmacro licensePage
