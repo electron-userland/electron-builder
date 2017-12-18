@@ -86,7 +86,7 @@ For an app that will be shipped to production, you should sign your application.
 See [Command Line Interface](https://www.electron.build/cli).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided.
 
 To build for current platform and current arch:
 ```js
