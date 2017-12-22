@@ -64,7 +64,7 @@ async function render2(files, jsdoc2MdOptions) {
   const renderer = new Renderer(dataMap)
 
   const blockedPropertyName = new Set([
-    "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack",
+    "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack", "afterSign",
     "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector", "signingHashAlgorithms", "publisherName",
     "forceCodeSigning",
   ])
@@ -124,6 +124,9 @@ async function render2(files, jsdoc2MdOptions) {
       }
       if (context.object.name === "Configuration") {
         if (context.property.name === "afterPack") {
+          return "(context: AfterPackContext) => Promise | null"
+        }
+        if (context.property.name === "afterSign") {
           return "(context: AfterPackContext) => Promise | null"
         }
         if (context.property.name === "beforeBuild") {
