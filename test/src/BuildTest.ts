@@ -175,7 +175,7 @@ test.ifDevOrLinuxCi("win smart unpack", app({
 }, {
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      debug: "^2.2.0",
+      debug: "3.1.0",
       "edge-cs": "1.2.1",
       "@electron-builder/test-smart-unpack": "1.0.0",
       "@electron-builder/test-smart-unpack-empty": "1.0.0",
@@ -217,7 +217,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
 }, {
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      debug: "^2.2.0",
+      debug: "3.1.0",
       "edge-cs": "1.2.1",
       "lzma-native": "3.0.1",
       // test that prebuild-install is not copied

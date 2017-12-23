@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "fs-extra-p": "^4.5.0",
-    "mime": "^2.0.3",
+    "mime": "^2.1.0",
     "bluebird-lst": "^1.0.5",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",

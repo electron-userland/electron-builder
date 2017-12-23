@@ -1,8 +1,8 @@
-import { createDifferentialFile } from "app-package-builder"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
-import { writeFile } from "fs-extra-p"
+import { getBin } from "builder-util/out/binDownload"
+import { exec } from "builder-util/out/util"
 import * as path from "path"
-import { Target } from "../core"
+import { Platform, Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveOptions } from "./archive"
 
@@ -47,18 +47,39 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
   return archiveOptions
 }
 
-export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null) {
-  const blockMapInfo = await createDifferentialFile(file)
-  const updateInfo: BlockMapDataHolder = {
-    size: blockMapInfo.size,
-    sha512: blockMapInfo.sha512,
+function getTool() {
+  const version = "0.0.1"
+
+  const platform = Platform.current()
+  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+
+  let checksum = ""
+  if (platform === Platform.MAC) {
+    // noinspection SpellCheckingInspection
+    checksum = "rqaxCGtn78Skef83bqAHgWJbYND4ibAYmeQyPtDHG39LW7ZnXY/AL+//qS5A4g+Y843JntZn/nOZMocxlBTPhw=="
   }
+  else if (platform === Platform.LINUX) {
+    // noinspection SpellCheckingInspection
+    checksum = process.arch === "ia32" ?
+      "Rtar0melV7FKxx4jUJD5J48ZSQz2CvWCukhgNS8m4jntEmeKzSheHnbgm6Z9DujGewB1bC1PdbKzLFH6/yqFGg==" :
+      "GfpGnvxp44VmhvzMPIyVRImMYxHtjSgFCEL7TEKav+lO17hK2ZHMEWxaf0xf7IDHg8Z9YoJzlC/cGg6FbZ7cRQ=="
+  }
+  else if (platform === Platform.WINDOWS) {
+    // noinspection SpellCheckingInspection
+    checksum = process.arch === "ia32" ?
+      "MN7/uC9cLGzEPcojElcMKaovgtcz9/9ngkQOIXZNAID5KhDwOOd4nd9QI/MeMsa2OpTAdgsHcEcu64St4iPq5Q==" :
+      "OGtk3XoyvJZbzYQJGsIyUjfQkfIesVQjtnjUaILvuS3ga+OCApTSydQNVSCZEDrVLw6LYCfjmGZi3H3UYjgxrQ=="
+  }
+  // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
+  return getBin("block-map-builder", `block-map-builder-v${version}-${process.arch}`, `https://github.com/develar/block-map-builder/releases/download/v${version}/block-map-builder-v${version}-${platform.buildConfigurationKey}${archQualifier}.7z`, checksum)
+    .then(it => path.join(it, "block-map-builder"))
+}
 
-  await writeFile(`${file}${BLOCK_MAP_FILE_SUFFIX}`, blockMapInfo.blockMapData)
-
+export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null) {
+  const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
+  const updateInfo: BlockMapDataHolder = JSON.parse(await exec(await getTool(), ["-in", file, "-out", blockMapFile]))
   packager.info.dispatchArtifactCreated({
-    file: `${file}${BLOCK_MAP_FILE_SUFFIX}`,
-    fileContent: blockMapInfo.blockMapData,
+    file: blockMapFile,
     safeArtifactName: `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,
     arch: null,

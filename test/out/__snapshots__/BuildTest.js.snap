@@ -307,33 +307,27 @@ Object {
               "size": 1107,
             },
             "Makefile": Object {
-              "size": 1059,
-            },
-            "component.json": Object {
-              "size": 321,
+              "size": 1234,
             },
             "node.js": Object {
               "size": 40,
             },
             "package.json": Object {
-              "size": 1077,
+              "size": 946,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "size": 4734,
+                  "size": 5707,
                 },
                 "debug.js": Object {
-                  "size": 4394,
+                  "size": 4889,
                 },
                 "index.js": Object {
                   "size": 263,
                 },
-                "inspector-log.js": Object {
-                  "size": 373,
-                },
                 "node.js": Object {
-                  "size": 6015,
+                  "size": 4339,
                 },
               },
             },
@@ -362,7 +356,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 792,
+              "size": 740,
             },
             "src": Object {
               "files": Object {
@@ -432,7 +426,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 847,
+              "size": 801,
             },
           },
         },
@@ -571,7 +565,7 @@ Object {
                       "size": 1763,
                     },
                     "package.json": Object {
-                      "size": 590,
+                      "size": 486,
                     },
                   },
                 },
@@ -840,7 +834,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1644,
+                      "size": 1541,
                     },
                     "scripts": Object {
                       "files": Object {
@@ -878,7 +872,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 1047,
+                      "size": 943,
                     },
                   },
                 },
@@ -891,7 +885,7 @@ Object {
                       "size": 3937,
                     },
                     "package.json": Object {
-                      "size": 673,
+                      "size": 573,
                     },
                   },
                 },
@@ -910,7 +904,7 @@ Object {
                       "size": 163,
                     },
                     "package.json": Object {
-                      "size": 859,
+                      "size": 749,
                     },
                     "tracker-base.js": Object {
                       "size": 274,
@@ -958,7 +952,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 863,
+                      "size": 498,
                     },
                     "tst": Object {
                       "files": Object {
@@ -988,7 +982,7 @@ Object {
                       "size": 5330,
                     },
                     "package.json": Object {
-                      "size": 1225,
+                      "size": 602,
                     },
                   },
                 },
@@ -1041,7 +1035,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1044,
+                      "size": 937,
                     },
                     "parallel.js": Object {
                       "size": 1017,
@@ -1066,7 +1060,7 @@ Object {
                       "size": 4421,
                     },
                     "package.json": Object {
-                      "size": 732,
+                      "size": 629,
                     },
                   },
                 },
@@ -1085,7 +1079,7 @@ Object {
                       "size": 1914,
                     },
                     "package.json": Object {
-                      "size": 629,
+                      "size": 531,
                     },
                   },
                 },
@@ -1098,7 +1092,7 @@ Object {
                       "size": 1160,
                     },
                     "package.json": Object {
-                      "size": 1027,
+                      "size": 912,
                     },
                   },
                 },
@@ -1108,7 +1102,7 @@ Object {
                       "size": 23230,
                     },
                     "package.json": Object {
-                      "size": 305,
+                      "size": 274,
                     },
                   },
                 },
@@ -1124,7 +1118,7 @@ Object {
                       "size": 6555,
                     },
                     "package.json": Object {
-                      "size": 725,
+                      "size": 618,
                     },
                   },
                 },
@@ -1154,7 +1148,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 568,
+                      "size": 469,
                     },
                   },
                 },
@@ -1164,7 +1158,7 @@ Object {
                       "size": 4792,
                     },
                     "package.json": Object {
-                      "size": 1101,
+                      "size": 985,
                     },
                   },
                 },
@@ -1177,7 +1171,7 @@ Object {
                       "size": 1786,
                     },
                     "package.json": Object {
-                      "size": 635,
+                      "size": 532,
                     },
                     "test.js": Object {
                       "size": 1585,
@@ -1199,7 +1193,7 @@ Object {
                       "size": 5036,
                     },
                     "package.json": Object {
-                      "size": 600,
+                      "size": 507,
                     },
                   },
                 },
@@ -1212,7 +1206,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 703,
+                      "size": 589,
                     },
                   },
                 },
@@ -1232,7 +1226,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 771,
+                      "size": 655,
                     },
                   },
                 },
@@ -1248,7 +1242,7 @@ Object {
                       "size": 345,
                     },
                     "package.json": Object {
-                      "size": 994,
+                      "size": 882,
                     },
                   },
                 },
@@ -1264,7 +1258,7 @@ Object {
                       "size": 2339,
                     },
                     "package.json": Object {
-                      "size": 977,
+                      "size": 860,
                     },
                   },
                 },
@@ -1284,7 +1278,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 614,
+                      "size": 507,
                     },
                     "test.js": Object {
                       "size": 2101,
@@ -1307,7 +1301,7 @@ Object {
                     },
                     "package.json": Object {
                       "executable": true,
-                      "size": 592,
+                      "size": 488,
                     },
                   },
                 },
@@ -1347,14 +1341,14 @@ Object {
                               "size": 5454,
                             },
                             "package.json": Object {
-                              "size": 1225,
+                              "size": 602,
                             },
                           },
                         },
                       },
                     },
                     "package.json": Object {
-                      "size": 722,
+                      "size": 614,
                     },
                   },
                 },
@@ -1373,7 +1367,7 @@ Object {
                       "size": 40,
                     },
                     "package.json": Object {
-                      "size": 1388,
+                      "size": 1063,
                     },
                     "src": Object {
                       "files": Object {
@@ -1409,7 +1403,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1238,
+                      "size": 837,
                     },
                   },
                 },
@@ -1432,7 +1426,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 859,
+                      "size": 641,
                     },
                   },
                 },
@@ -1454,7 +1448,7 @@ Object {
                       "size": 2065,
                     },
                     "package.json": Object {
-                      "size": 540,
+                      "size": 426,
                     },
                   },
                 },
@@ -1480,7 +1474,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 807,
+                      "size": 701,
                     },
                     "test.js": Object {
                       "size": 682,
@@ -1502,7 +1496,7 @@ Object {
                       "size": 2275,
                     },
                     "package.json": Object {
-                      "size": 869,
+                      "size": 651,
                     },
                   },
                 },
@@ -1534,7 +1528,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 482,
+                      "size": 367,
                     },
                   },
                 },
@@ -1547,7 +1541,7 @@ Object {
                       "size": 4176,
                     },
                     "package.json": Object {
-                      "size": 774,
+                      "size": 666,
                     },
                   },
                 },
@@ -1570,7 +1564,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1430,
+                      "size": 1323,
                     },
                   },
                 },
@@ -1586,7 +1580,7 @@ Object {
                       "size": 8542,
                     },
                     "package.json": Object {
-                      "size": 695,
+                      "size": 589,
                     },
                   },
                 },
@@ -1645,7 +1639,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 764,
+                      "size": 665,
                     },
                   },
                 },
@@ -1658,7 +1652,7 @@ Object {
                       "size": 7500,
                     },
                     "package.json": Object {
-                      "size": 778,
+                      "size": 669,
                     },
                   },
                 },
@@ -1680,7 +1674,7 @@ Object {
                       "size": 6999,
                     },
                     "package.json": Object {
-                      "size": 1307,
+                      "size": 1208,
                     },
                     "plumbing.js": Object {
                       "size": 1269,
@@ -1743,14 +1737,14 @@ Object {
                               "size": 5454,
                             },
                             "package.json": Object {
-                              "size": 1225,
+                              "size": 602,
                             },
                           },
                         },
                       },
                     },
                     "package.json": Object {
-                      "size": 572,
+                      "size": 462,
                     },
                   },
                 },
@@ -1766,7 +1760,7 @@ Object {
                       "size": 19433,
                     },
                     "package.json": Object {
-                      "size": 906,
+                      "size": 802,
                     },
                     "sync.js": Object {
                       "size": 12002,
@@ -1788,7 +1782,7 @@ Object {
                       "size": 2655,
                     },
                     "package.json": Object {
-                      "size": 762,
+                      "size": 651,
                     },
                     "polyfills.js": Object {
                       "size": 8836,
@@ -1862,7 +1856,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1087,
+                      "size": 868,
                     },
                   },
                 },
@@ -1928,7 +1922,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1347,
+                      "size": 1234,
                     },
                     "src": Object {
                       "files": Object {
@@ -1954,7 +1948,7 @@ Object {
                       "size": 657,
                     },
                     "package.json": Object {
-                      "size": 633,
+                      "size": 528,
                     },
                   },
                 },
@@ -2019,7 +2013,7 @@ Object {
                     },
                     "package.json": Object {
                       "executable": true,
-                      "size": 818,
+                      "size": 693,
                     },
                   },
                 },
@@ -2049,7 +2043,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 548,
+                      "size": 449,
                     },
                   },
                 },
@@ -2087,7 +2081,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1027,
+                      "size": 649,
                     },
                   },
                 },
@@ -2100,7 +2094,7 @@ Object {
                       "size": 1365,
                     },
                     "package.json": Object {
-                      "size": 707,
+                      "size": 604,
                     },
                   },
                 },
@@ -2116,7 +2110,7 @@ Object {
                       "size": 672,
                     },
                     "package.json": Object {
-                      "size": 618,
+                      "size": 515,
                     },
                   },
                 },
@@ -2129,7 +2123,7 @@ Object {
                       "size": 4817,
                     },
                     "package.json": Object {
-                      "size": 643,
+                      "size": 545,
                     },
                   },
                 },
@@ -2142,7 +2136,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 851,
+                      "size": 727,
                     },
                   },
                 },
@@ -2155,7 +2149,7 @@ Object {
                       "size": 1016,
                     },
                     "package.json": Object {
-                      "size": 636,
+                      "size": 528,
                     },
                     "test.js": Object {
                       "size": 1095,
@@ -2174,7 +2168,7 @@ Object {
                       "size": 132,
                     },
                     "package.json": Object {
-                      "size": 978,
+                      "size": 870,
                     },
                     "test.js": Object {
                       "size": 320,
@@ -2190,7 +2184,7 @@ Object {
                       "size": 588,
                     },
                     "package.json": Object {
-                      "size": 653,
+                      "size": 551,
                     },
                     "test.js": Object {
                       "size": 6975,
@@ -2237,7 +2231,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 888,
+                      "size": 783,
                     },
                   },
                 },
@@ -2256,7 +2250,7 @@ Object {
                       "size": 41819,
                     },
                     "package.json": Object {
-                      "size": 608,
+                      "size": 503,
                     },
                   },
                 },
@@ -2375,7 +2369,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 905,
+                      "size": 798,
                     },
                   },
                 },
@@ -2388,7 +2382,7 @@ Object {
                       "size": 2861,
                     },
                     "package.json": Object {
-                      "size": 966,
+                      "size": 848,
                     },
                   },
                 },
@@ -2401,7 +2395,7 @@ Object {
                       "size": 675,
                     },
                     "package.json": Object {
-                      "size": 842,
+                      "size": 597,
                     },
                     "stringify.js": Object {
                       "size": 907,
@@ -2427,7 +2421,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 692,
+                      "size": 588,
                     },
                   },
                 },
@@ -2460,14 +2454,14 @@ Object {
                               "size": 5454,
                             },
                             "package.json": Object {
-                              "size": 1225,
+                              "size": 602,
                             },
                           },
                         },
                       },
                     },
                     "package.json": Object {
-                      "size": 609,
+                      "size": 503,
                     },
                   },
                 },
@@ -2486,7 +2480,7 @@ Object {
                       "size": 136,
                     },
                     "package.json": Object {
-                      "size": 1272,
+                      "size": 810,
                     },
                   },
                 },
@@ -2502,7 +2496,7 @@ Object {
                       "size": 3653,
                     },
                     "package.json": Object {
-                      "size": 1169,
+                      "size": 691,
                     },
                   },
                 },
@@ -2515,7 +2509,7 @@ Object {
                       "size": 25347,
                     },
                     "package.json": Object {
-                      "size": 711,
+                      "size": 607,
                     },
                   },
                 },
@@ -2528,7 +2522,7 @@ Object {
                       "size": 5589,
                     },
                     "package.json": Object {
-                      "size": 826,
+                      "size": 721,
                     },
                   },
                 },
@@ -2552,7 +2546,7 @@ Object {
                       "size": 2630,
                     },
                     "package.json": Object {
-                      "size": 718,
+                      "size": 610,
                     },
                   },
                 },
@@ -2565,7 +2559,7 @@ Object {
                       "size": 1077,
                     },
                     "package.json": Object {
-                      "size": 701,
+                      "size": 606,
                     },
                   },
                 },
@@ -2674,7 +2668,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1109,
+                      "size": 1002,
                     },
                     "template-name.diff": Object {
                       "size": 722,
@@ -2702,7 +2696,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 711,
+                      "size": 615,
                     },
                   },
                 },
@@ -2715,7 +2709,7 @@ Object {
                       "size": 8514,
                     },
                     "package.json": Object {
-                      "size": 755,
+                      "size": 657,
                     },
                   },
                 },
@@ -2728,7 +2722,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 674,
+                      "size": 560,
                     },
                   },
                 },
@@ -2741,7 +2735,7 @@ Object {
                       "size": 3585,
                     },
                     "package.json": Object {
-                      "size": 744,
+                      "size": 639,
                     },
                   },
                 },
@@ -2754,7 +2748,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 753,
+                      "size": 639,
                     },
                   },
                 },
@@ -2767,7 +2761,7 @@ Object {
                       "size": 935,
                     },
                     "package.json": Object {
-                      "size": 677,
+                      "size": 578,
                     },
                   },
                 },
@@ -2780,7 +2774,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 715,
+                      "size": 604,
                     },
                   },
                 },
@@ -2793,7 +2787,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 677,
+                      "size": 567,
                     },
                   },
                 },
@@ -2806,7 +2800,7 @@ Object {
                       "size": 1864,
                     },
                     "package.json": Object {
-                      "size": 720,
+                      "size": 623,
                     },
                     "x.tap": Object {
                       "size": 953,
@@ -2822,7 +2816,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 700,
+                      "size": 583,
                     },
                   },
                 },
@@ -2845,7 +2839,7 @@ Object {
                       "size": 1053,
                     },
                     "package.json": Object {
-                      "size": 705,
+                      "size": 596,
                     },
                     "src": Object {
                       "files": Object {
@@ -2865,7 +2859,7 @@ Object {
                       "size": 1064,
                     },
                     "package.json": Object {
-                      "size": 555,
+                      "size": 433,
                     },
                     "test.js": Object {
                       "size": 526,
@@ -2878,7 +2872,7 @@ Object {
                       "size": 1077,
                     },
                     "package.json": Object {
-                      "size": 1109,
+                      "size": 802,
                     },
                     "punycode.js": Object {
                       "size": 14670,
@@ -2923,7 +2917,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 987,
+                      "size": 751,
                     },
                   },
                 },
@@ -2963,14 +2957,14 @@ Object {
                               "size": 7189,
                             },
                             "package.json": Object {
-                              "size": 850,
+                              "size": 745,
                             },
                           },
                         },
                       },
                     },
                     "package.json": Object {
-                      "size": 766,
+                      "size": 664,
                     },
                   },
                 },
@@ -3039,7 +3033,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1165,
+                      "size": 1055,
                     },
                     "passthrough.js": Object {
                       "size": 51,
@@ -3105,7 +3099,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1965,
+                      "size": 1863,
                     },
                     "request.js": Object {
                       "size": 44706,
@@ -3122,7 +3116,7 @@ Object {
                       "size": 1196,
                     },
                     "package.json": Object {
-                      "size": 777,
+                      "size": 676,
                     },
                     "rimraf.js": Object {
                       "size": 8959,
@@ -3141,7 +3135,7 @@ Object {
                       "size": 1428,
                     },
                     "package.json": Object {
-                      "size": 660,
+                      "size": 554,
                     },
                     "test.js": Object {
                       "size": 2806,
@@ -3162,7 +3156,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 586,
+                      "size": 483,
                     },
                     "range.bnf": Object {
                       "size": 629,
@@ -3181,7 +3175,7 @@ Object {
                       "size": 252,
                     },
                     "package.json": Object {
-                      "size": 786,
+                      "size": 680,
                     },
                   },
                 },
@@ -3194,7 +3188,7 @@ Object {
                       "size": 3909,
                     },
                     "package.json": Object {
-                      "size": 757,
+                      "size": 652,
                     },
                     "signals.js": Object {
                       "size": 1295,
@@ -3225,7 +3219,7 @@ Object {
                     },
                     "package.json": Object {
                       "executable": true,
-                      "size": 760,
+                      "size": 635,
                     },
                   },
                 },
@@ -3358,14 +3352,14 @@ Object {
                               "size": 5454,
                             },
                             "package.json": Object {
-                              "size": 1225,
+                              "size": 602,
                             },
                           },
                         },
                       },
                     },
                     "package.json": Object {
-                      "size": 1802,
+                      "size": 1442,
                     },
                   },
                 },
@@ -3378,7 +3372,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 858,
+                      "size": 745,
                     },
                   },
                 },
@@ -3395,7 +3389,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 587,
+                      "size": 479,
                     },
                   },
                 },
@@ -3408,7 +3402,7 @@ Object {
                       "size": 814,
                     },
                     "package.json": Object {
-                      "size": 583,
+                      "size": 477,
                     },
                     "stringstream.js": Object {
                       "size": 2792,
@@ -3424,7 +3418,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 1064,
+                      "size": 960,
                     },
                   },
                 },
@@ -3437,7 +3431,7 @@ Object {
                       "size": 1119,
                     },
                     "package.json": Object {
-                      "size": 750,
+                      "size": 630,
                     },
                   },
                 },
@@ -3481,7 +3475,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 716,
+                      "size": 613,
                     },
                     "tar.js": Object {
                       "size": 4116,
@@ -3497,7 +3491,7 @@ Object {
                       "size": 7541,
                     },
                     "package.json": Object {
-                      "size": 782,
+                      "size": 671,
                     },
                   },
                 },
@@ -3529,7 +3523,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 1071,
+                      "size": 676,
                     },
                   },
                 },
@@ -3542,7 +3536,7 @@ Object {
                       "size": 6884,
                     },
                     "package.json": Object {
-                      "size": 786,
+                      "size": 679,
                     },
                   },
                 },
@@ -3570,7 +3564,7 @@ Object {
                       "size": 19089,
                     },
                     "package.json": Object {
-                      "size": 882,
+                      "size": 775,
                     },
                   },
                 },
@@ -3584,7 +3578,7 @@ Object {
                       "size": 644,
                     },
                     "package.json": Object {
-                      "size": 672,
+                      "size": 567,
                     },
                     "uid-number.js": Object {
                       "size": 1753,
@@ -3606,7 +3600,7 @@ Object {
                       "size": 123,
                     },
                     "package.json": Object {
-                      "size": 619,
+                      "size": 505,
                     },
                   },
                 },
@@ -3646,7 +3640,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 975,
+                      "size": 451,
                     },
                     "v1.js": Object {
                       "size": 3235,
@@ -3681,7 +3675,7 @@ Object {
                       },
                     },
                     "package.json": Object {
-                      "size": 509,
+                      "size": 398,
                     },
                   },
                 },
@@ -3694,7 +3688,7 @@ Object {
                       "size": 1428,
                     },
                     "package.json": Object {
-                      "size": 744,
+                      "size": 640,
                     },
                   },
                 },
@@ -3704,7 +3698,7 @@ Object {
                       "size": 765,
                     },
                     "package.json": Object {
-                      "size": 652,
+                      "size": 554,
                     },
                     "wrappy.js": Object {
                       "size": 905,
@@ -3714,7 +3708,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 1161,
+              "size": 1046,
             },
             "src": Object {
               "files": Object {
@@ -3755,14 +3749,14 @@ Object {
               "size": 1077,
             },
             "package.json": Object {
-              "size": 469,
+              "size": 606,
             },
           },
         },
       },
     },
     "package.json": Object {
-      "size": 436,
+      "size": 435,
     },
   },
 }
@@ -3821,7 +3815,7 @@ Object {
                   "unpacked": true,
                 },
                 "package.json": Object {
-                  "size": 74,
+                  "size": 96,
                   "unpacked": true,
                 },
               },
@@ -3830,7 +3824,7 @@ Object {
             "test-smart-unpack-empty": Object {
               "files": Object {
                 "package.json": Object {
-                  "size": 80,
+                  "size": 102,
                 },
               },
             },
@@ -3842,33 +3836,27 @@ Object {
               "size": 1107,
             },
             "Makefile": Object {
-              "size": 1059,
-            },
-            "component.json": Object {
-              "size": 321,
+              "size": 1234,
             },
             "node.js": Object {
               "size": 40,
             },
             "package.json": Object {
-              "size": 1077,
+              "size": 946,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "size": 4734,
+                  "size": 5707,
                 },
                 "debug.js": Object {
-                  "size": 4394,
+                  "size": 4889,
                 },
                 "index.js": Object {
                   "size": 263,
                 },
-                "inspector-log.js": Object {
-                  "size": 373,
-                },
                 "node.js": Object {
-                  "size": 6015,
+                  "size": 4339,
                 },
               },
             },
@@ -3907,7 +3895,7 @@ Object {
               "unpacked": true,
             },
             "package.json": Object {
-              "size": 792,
+              "size": 740,
               "unpacked": true,
             },
             "src": Object {
@@ -3974,14 +3962,14 @@ Object {
               "size": 1077,
             },
             "package.json": Object {
-              "size": 469,
+              "size": 606,
             },
           },
         },
       },
     },
     "package.json": Object {
-      "size": 437,
+      "size": 436,
     },
   },
 }
