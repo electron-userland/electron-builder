@@ -42,7 +42,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     try {
-      const destinationFile = path.join(tempDir, path.posix.basename(fileInfo.url.pathname))
+      const destinationFile = path.join(tempDir, path.posix.basename(fileInfo.info.url))
       await task(tempDir, destinationFile, removeTempDirIfAny)
 
       this._logger.info(`New version ${this.updateInfo!.version} has been downloaded to ${destinationFile}`)
