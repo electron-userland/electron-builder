@@ -140,6 +140,15 @@ export class MacUpdater extends AppUpdater {
       }
     })
 
+    downloadRequest.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+      if (headers.Authorization != null && (headers!!.Authorization as string).startsWith("token")) {
+        const parsedNewUrl = new URL(redirectUrl)
+        if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
+          delete headers.Authorization
+        }
+      }
+      this.doProxyUpdateFile(nativeResponse, redirectUrl, headers, sha512, cancellationToken, errorHandler)
+    })
     downloadRequest.on("error", errorHandler)
     downloadRequest.end()
   }
