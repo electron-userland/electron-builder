@@ -52,9 +52,19 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
         reject(new Error("Too many redirects (> 10)"))
         return
       }
-      this.doApiRequest(this.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(this.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount++)
         .then(resolve)
         .catch(reject)
+    })
+  }
+
+  protected addDownloadRedirectHandlers(request: any, requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
+    request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+      if (redirectCount > 10) {
+        throw Error("Too many redirects (> 10)")
+      }
+
+      this.doDownload(this.prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
     })
   }
 }

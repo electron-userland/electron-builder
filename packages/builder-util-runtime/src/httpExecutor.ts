@@ -181,8 +181,13 @@ Please double check that your authentication token is correct. Due to security r
       configurePipes(options, response, destination, callback, options.cancellationToken)
     })
     this.addErrorAndTimeoutHandlers(request, callback)
+    this.addDownloadRedirectHandlers(request, requestOptions, destination, redirectCount, options, callback, onCancel)
     onCancel(() => request.abort())
     request.end()
+  }
+
+  protected addDownloadRedirectHandlers(request: any, requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
+    // not required for NodeJS
   }
 
   protected addTimeOutHandler(request: any, callback: (error: Error) => void) {
