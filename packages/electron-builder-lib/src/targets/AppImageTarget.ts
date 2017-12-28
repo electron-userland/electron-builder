@@ -1,17 +1,17 @@
-import { createDifferentialFile } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, log, serializeToYaml } from "builder-util"
-import { BlockMapDataHolder, UUID } from "builder-util-runtime"
+import { UUID } from "builder-util-runtime"
 import { copyDir, copyOrLinkFile, unlinkIfExists, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
 import { ensureDir, readFile, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { AppImageOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
-import { AppImageOptions } from "../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getTemplatePath } from "../util/pathManager"
+import { appendBlockmap } from "./differentialUpdateInfoBuilder"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
 import { getAppImage } from "./tools"
@@ -117,13 +117,7 @@ export default class AppImageTarget extends Target {
 
     await stageDir.cleanup()
 
-    const blockMapInfo = await createDifferentialFile(artifactPath, true)
-    const updateInfo: BlockMapDataHolder = {
-      size: blockMapInfo.size,
-      blockMapSize: blockMapInfo.blockMapSize,
-      sha512: blockMapInfo.sha512,
-    }
-
+    const updateInfo = await appendBlockmap(artifactPath)
     packager.info.dispatchArtifactCreated({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),

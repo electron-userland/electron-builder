@@ -32,41 +32,41 @@ Object {
             "lib": Object {
               "files": Object {
                 "format.js": Object {
-                  "offset": "9889",
+                  "offset": "9810",
                   "size": 1021,
                 },
                 "log.js": Object {
-                  "offset": "10910",
+                  "offset": "10831",
                   "size": 877,
                 },
                 "transports": Object {
                   "files": Object {
                     "console.js": Object {
-                      "offset": "11787",
+                      "offset": "11708",
                       "size": 343,
                     },
                     "file": Object {
                       "files": Object {
                         "find-log-path.js": Object {
-                          "offset": "14425",
+                          "offset": "14346",
                           "size": 2078,
                         },
                         "get-app-name.js": Object {
-                          "offset": "16503",
+                          "offset": "16424",
                           "size": 1780,
                         },
                         "index.js": Object {
-                          "offset": "18283",
+                          "offset": "18204",
                           "size": 2068,
                         },
                       },
                     },
                     "log-s.js": Object {
-                      "offset": "12130",
+                      "offset": "12051",
                       "size": 1751,
                     },
                     "renderer-console.js": Object {
-                      "offset": "13881",
+                      "offset": "13802",
                       "size": 544,
                     },
                   },
@@ -79,10 +79,10 @@ Object {
             },
             "package.json": Object {
               "offset": "8087",
-              "size": 824,
+              "size": 745,
             },
             "renderer.js": Object {
-              "offset": "8911",
+              "offset": "8832",
               "size": 978,
             },
           },
@@ -90,15 +90,15 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "20351",
+              "offset": "20272",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "23115",
+              "offset": "23036",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "24192",
+              "offset": "24113",
               "size": 469,
             },
           },

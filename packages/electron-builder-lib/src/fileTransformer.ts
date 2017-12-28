@@ -1,6 +1,6 @@
 import { debug, warn } from "builder-util"
 import { FileTransformer } from "builder-util/out/fs"
-import { readJson } from "fs-extra-p"
+import { readFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Packager } from "./packager"
@@ -29,8 +29,8 @@ export function createTransformer(srcDir: string, extraMetadata: any): FileTrans
       return modifyMainPackageJson(file, extraMetadata)
     }
     else if (file.endsWith("/package.json") && file.includes("/node_modules/")) {
-      return readJson(file)
-        .then(it => cleanupPackageJson(it, false))
+      return readFile(file, "utf-8")
+        .then(it => cleanupPackageJson(JSON.parse(it), false))
         .catch(e => warn(e))
     }
     else {
@@ -52,7 +52,7 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "scripts", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "bugs"])
+const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "scripts", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "bugs", "tags"])
 
 function cleanupPackageJson(data: any, isMain: boolean): any {
   const deps = data.dependencies
@@ -80,7 +80,7 @@ function cleanupPackageJson(data: any, isMain: boolean): any {
 }
 
 async function modifyMainPackageJson(file: string, extraMetadata: any) {
-  const mainPackageData = await readJson(file)
+  const mainPackageData = JSON.parse(await readFile(file, "utf-8"))
   if (extraMetadata != null) {
     deepAssign(mainPackageData, extraMetadata)
   }

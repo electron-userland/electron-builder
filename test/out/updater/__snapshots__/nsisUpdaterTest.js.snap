@@ -407,7 +407,7 @@ Array [
 ]
 `;
 
-exports[`test error 1`] = `"Path must be a string. Received undefined"`;
+exports[`test error 1`] = `"ERR_INVALID_ARG_TYPE"`;
 
 exports[`test error 2`] = `
 Array [

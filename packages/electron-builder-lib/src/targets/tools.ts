@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Platform } from "../core"
@@ -33,30 +33,22 @@ export const fpmPath = new Lazy(() => {
     .then(it => path.join(it, "fpm"))
 })
 
+// noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools() {
   // yes, we starting to use native Promise
   return Promise.all([getAppImage(), fpmPath.value])
 }
 
 export function getZstd() {
-  const platform = Platform.current()
-  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
-
-  let checksum = ""
-  if (platform === Platform.MAC) {
-    // noinspection SpellCheckingInspection
-    checksum = "Ts8UetZVWz1G1qhzmsw4FlbK9L3sgI3OVYAMffIK0qPy4gxnTSSV7dhvE54SpmhWnfTlELmprbAAJm5zzcqT8w=="
-  }
-  else if (platform === Platform.WINDOWS) {
-    // noinspection SpellCheckingInspection
-    checksum = process.arch === "ia32" ?
-      "zjMFp++cp6ekMDaKu/SsFlog6cyr5kdgk5x2IvSpB6IsSp0c7bTL2Y58lLpV4qPAL1eagjjoMHi+doOWFSHpzg==" :
-      "oTOQout3zX0x/4gcXGcoevs79TqnlY7CQNXXx/cwp2ebj1dgavf8C9R3JvNFKQf/mQ7WcY7+W9vVI2oP7mxbFA=="
-  }
-
-  //noinspection SpellCheckingInspection
-  return getBinFromGithub(`zstd-${platform.buildConfigurationKey}${archQualifier}`, "1.3.2", checksum)
-    .then(it => path.join(it, `zstd${platform === Platform.WINDOWS ? ".exe" : ""}`))
+  // noinspection SpellCheckingInspection
+  return getTool({
+    name: "zstd",
+    version: "1.3.3",
+    mac: "RnFYU+gEieQFCu943WEmh++PT5TZjDSqSCZvZj7ArfVkc+JS+DdGi30/466gqx9VFKsk6XpYrCpZNryFSvDOuw==",
+    "linux-x64": "M1YpBtWX9C99hwRHF8bOLdN5bUFChMwWRc/NzGSwG48VVtegEV2RCFqbT1v0ZcSLC54muhOtK1VgMEmTKr0ouQ==",
+    "win-ia32": "uUG8l+JQZtgFOq5G9lg3ryABiFA2gv14inJTAmpprywmbVfCVe++ikzJcjg5ZdLKhYDcB3nIsKE5c7pWY7+1yA==",
+    "win-x64": "lBCx8nuRkEu8oQqgXosuO9e35BQOSyugFaK5ExBiTKh6qkv6amsYEUNELZGmEqH+FXscagxq+7+QUYkWJfmROQ==",
+  })
 }
 
 export function getAria() {
@@ -78,4 +70,34 @@ export function getAria() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub(`aria2-${platform.buildConfigurationKey}${archQualifier}`, "1.33.1", checksum)
     .then(it => path.join(it, `aria2c${platform === Platform.WINDOWS ? ".exe" : ""}`))
+}
+
+export interface ToolDescriptor {
+  name: string
+  version: string
+
+  repository?: string
+
+  mac: string
+  "linux-ia32"?: string
+  "linux-x64"?: string
+  "win-ia32": string
+  "win-x64": string
+}
+
+export function getTool(descriptor: ToolDescriptor): Promise<string> {
+  const platform = Platform.current()
+  const checksum = platform === Platform.MAC ? descriptor.mac : (descriptor as any)[`${platform.buildConfigurationKey}-${process.arch}`]
+  if (checksum == null) {
+    throw new Error(`Checksum not specified for ${platform}:${process.arch}`)
+  }
+
+  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+  // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
+  const version = descriptor.version
+  const name = descriptor.name
+  const repository = descriptor.repository || "electron-userland/electron-builder-binaries"
+  const tagPrefix = descriptor.repository == null ? `${name}-` : "v"
+  return getBin(name, `${name}-v${version}-${process.arch}`, `https://github.com/${repository}/releases/download/${tagPrefix}${version}/${name}-v${version}-${platform.buildConfigurationKey}${archQualifier}.7z`, checksum)
+    .then(it => path.join(it, `${name}${platform === Platform.WINDOWS ? ".exe" : ""}`))
 }

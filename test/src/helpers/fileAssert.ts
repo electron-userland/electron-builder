@@ -70,7 +70,7 @@ class Assertions {
       m = result
     }
     else {
-      m = actualError.message
+      m = (actualError as any).code || actualError.message
 
       if (m.includes("HttpError: ") && m.indexOf("\n") > 0) {
         m = m.substring(0, m.indexOf("\n"))

@@ -3,7 +3,7 @@ import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder-lib/out/asar/asar"
-import { move, outputJson, readJson } from "fs-extra-p"
+import { move, outputJson, readFileSync, readJson } from "fs-extra-p"
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -205,7 +205,15 @@ async function verifySmartUnpack(resourceDir: string) {
   })
   expect(removeUnstableProperties(fs.header)).toMatchSnapshot()
 
-  expect((await walk(resourceDir, file => !path.basename(file).startsWith("."))).map(it => it.substring(resourceDir.length + 1))).toMatchSnapshot()
+  const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".")))
+    .map(it => {
+      const name = it.substring(resourceDir.length + 1)
+      if (it.endsWith("package.json")) {
+        return {name, content: readFileSync(it, "utf-8")}
+      }
+      return name
+    })
+  expect(files).toMatchSnapshot()
 }
 
 // https://github.com/electron-userland/electron-builder/issues/1738

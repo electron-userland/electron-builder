@@ -356,7 +356,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 740,
+              "size": 626,
             },
             "src": Object {
               "files": Object {
@@ -3895,7 +3895,7 @@ Object {
               "unpacked": true,
             },
             "package.json": Object {
-              "size": 740,
+              "size": 626,
               "unpacked": true,
             },
             "src": Object {
@@ -3980,20 +3980,63 @@ Array [
   "app.asar",
   "electron.asar",
   "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
-  "app.asar.unpacked/node_modules/edge-cs/package.json",
+  Object {
+    "content": "{
+  \\"author\\": {
+    \\"name\\": \\"Tomasz Janczuk\\",
+    \\"email\\": \\"tomasz@janczuk.org\\",
+    \\"url\\": \\"http://tomasz.janczuk.org\\"
+  },
+  \\"dependencies\\": {},
+  \\"deprecated\\": false,
+  \\"description\\": \\"Edge-cs: run C# and node.js code in-process with edge.js\\",
+  \\"engines\\": {
+    \\"node\\": \\">= 0.8\\"
+  },
+  \\"homepage\\": \\"http://tjanczuk.github.com/edge\\",
+  \\"licenses\\": [
+    {
+      \\"type\\": \\"Apache\\",
+      \\"url\\": \\"http://www.apache.org/licenses/LICENSE-2.0\\"
+    }
+  ],
+  \\"main\\": \\"./lib/edge-cs.js\\",
+  \\"name\\": \\"edge-cs\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"git+ssh://git@github.com/tjanczuk/edge-cs.git\\"
+  },
+  \\"version\\": \\"1.2.1\\"
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/package.json",
+  },
   "app.asar.unpacked/node_modules/edge-cs/tools/install.js",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
-  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  Object {
+    "content": "{
+    \\"devDependencies\\": {
+        \\"gulp\\": \\"3.9.0\\"
+    }
+}",
+    "name": "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  },
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
   "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.dll",
   "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
   "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
-  "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",
+  Object {
+    "content": "{
+  \\"deprecated\\": false,
+  \\"name\\": \\"@electron-builder/test-smart-unpack\\",
+  \\"version\\": \\"1.0.0\\"
+}",
+    "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",
+  },
 ]
 `;
 

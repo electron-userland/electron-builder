@@ -33,49 +33,49 @@ async function runTests() {
     ])
   }
 
-  const testFiles: string | null | undefined = process.env.TEST_FILES
+  const testFiles = process.env.TEST_FILES
 
-  const args = []
+  const testPatterns: Array<string> = []
   if (!isEmptyOrSpaces(testFiles)) {
-    args.push(...testFiles!!.split(",").map(it => `${it.trim()}.js`))
+    testPatterns.push(...testFiles!!.split(","))
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
     if (circleNodeIndex === 0) {
-      args.push("debTest")
-      args.push("fpmTest")
-      args.push("winPackagerTest")
-      args.push("winCodeSignTest")
-      args.push("squirrelWindowsTest")
-      args.push("nsisUpdaterTest")
-      args.push("macArchiveTest")
-      args.push("macCodeSignTest")
-      args.push("extraMetadataTest")
+      testPatterns.push("debTest")
+      testPatterns.push("fpmTest")
+      testPatterns.push("winPackagerTest")
+      testPatterns.push("winCodeSignTest")
+      testPatterns.push("squirrelWindowsTest")
+      testPatterns.push("nsisUpdaterTest")
+      testPatterns.push("macArchiveTest")
+      testPatterns.push("macCodeSignTest")
+      testPatterns.push("extraMetadataTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("oneClickInstallerTest")
+      testPatterns.push("oneClickInstallerTest")
     }
     else if (circleNodeIndex === 2) {
-      args.push("snapTest")
-      args.push("configurationValidationTest")
-      args.push("mainEntryTest")
-      args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
-      args.push("macPackagerTest")
-      args.push("portableTest")
-      args.push("linuxPackagerTest")
-      args.push("ignoreTest")
-      args.push("HoistedNodeModuleTest")
+      testPatterns.push("snapTest")
+      testPatterns.push("configurationValidationTest")
+      testPatterns.push("mainEntryTest")
+      testPatterns.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
+      testPatterns.push("macPackagerTest")
+      testPatterns.push("portableTest")
+      testPatterns.push("linuxPackagerTest")
+      testPatterns.push("ignoreTest")
+      testPatterns.push("HoistedNodeModuleTest")
     }
     else {
-      args.push("BuildTest")
-      args.push("assistedInstallerTest")
-      args.push("linuxArchiveTest")
-      args.push("filesTest")
-      args.push("globTest")
-      args.push("webInstallerTest")
-      args.push("msiTest")
+      testPatterns.push("BuildTest")
+      testPatterns.push("assistedInstallerTest")
+      testPatterns.push("linuxArchiveTest")
+      testPatterns.push("filesTest")
+      testPatterns.push("globTest")
+      testPatterns.push("webInstallerTest")
+      testPatterns.push("msiTest")
     }
-    console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
+    console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }
 
   process.env.TEST_TMP_DIR = TEST_TMP_DIR
@@ -137,20 +137,25 @@ async function runTests() {
     }
   }
 
-  const jestArgs: any = {
+  const jestOptions: any = {
     verbose: true,
     updateSnapshot: process.env.UPDATE_SNAPSHOT === "true",
     config,
     runInBand,
-  }
-  if (args.length > 0) {
-    jestArgs.testPathPattern = args.join("|")
-  }
-  if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {
-    jestArgs.testResultsProcessor = "jest-junit"
+    projects: [rootDir],
   }
 
-  const testResult = await require("jest-cli").runCLI(jestArgs, [rootDir])
+  if (testPatterns.length > 0) {
+    jestOptions.testPathPattern = testPatterns
+      .map(it => it.endsWith(".js") || it.endsWith("*") ? it : `${it}\\.js$`)
+  }
+  if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {
+    jestOptions.testResultsProcessor = "jest-junit"
+  }
+
+  // console.log(JSON.stringify(jestOptions, null, 2))
+
+  const testResult = await require("jest-cli").runCLI(jestOptions, jestOptions.projects)
   const exitCode = testResult.results == null || testResult.results.success ? 0 : testResult.globalConfig.testFailureExitCode
   if (isCi) {
     process.exit(exitCode)
