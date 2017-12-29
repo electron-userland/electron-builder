@@ -1,4 +1,4 @@
-import { CancellationToken, configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "builder-util-runtime"
+import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "builder-util-runtime"
 import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import { RequestOptions } from "http"
@@ -46,15 +46,14 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     }
   }
 
-  protected addRedirectHandlers(request: any, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void) {
+  protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
       if (redirectCount > 10) {
         reject(new Error("Too many redirects (> 10)"))
         return
       }
-      this.doApiRequest(this.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
-        .then(resolve)
-        .catch(reject)
+
+      handler(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options))
     })
   }
 }

@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, AllPublishOptions, RequestHeaders, safeGetHeader, UpdateInfo, safeStringifyJson } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
-import AutoUpdater = Electron.AutoUpdater
 import { findFile } from "./Provider"
+import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -140,6 +140,15 @@ export class MacUpdater extends AppUpdater {
       }
     })
 
+    downloadRequest.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+      if (headers.Authorization != null && (headers!!.Authorization as string).startsWith("token")) {
+        const parsedNewUrl = new URL(redirectUrl)
+        if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
+          delete headers.Authorization
+        }
+      }
+      this.doProxyUpdateFile(nativeResponse, redirectUrl, headers, sha512, cancellationToken, errorHandler)
+    })
     downloadRequest.on("error", errorHandler)
     downloadRequest.end()
   }

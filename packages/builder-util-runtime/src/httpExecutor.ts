@@ -22,6 +22,7 @@ export interface DownloadOptions {
 
   readonly cancellationToken: CancellationToken
 
+  // noinspection JSUnusedLocalSymbols
   onProgress?(progress: ProgressInfo): void
 }
 
@@ -86,13 +87,18 @@ export abstract class HttpExecutor<REQUEST> {
         }
       })
       this.addErrorAndTimeoutHandlers(request, reject)
-      this.addRedirectHandlers(request, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
+      this.addRedirectHandlers(request, options, reject, redirectCount, options => {
+        this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)
+          .then(resolve)
+          .catch(reject)
+      })
       requestProcessor(request, reject)
       onCancel(() => request.abort())
     })
   }
 
-  protected addRedirectHandlers(request: any, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  // noinspection JSUnusedLocalSymbols
+  protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     // not required for NodeJS
   }
 
@@ -131,7 +137,7 @@ Please double check that your authentication token is correct. Due to security r
         return
       }
 
-      this.doApiRequest(this.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -158,6 +164,7 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
+  // noinspection JSUnusedLocalSymbols
   abstract doRequest(options: any, callback: (response: any) => void): any
 
   protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
@@ -170,7 +177,7 @@ Please double check that your authentication token is correct. Due to security r
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          this.doDownload(this.prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
+          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -181,6 +188,9 @@ Please double check that your authentication token is correct. Due to security r
       configurePipes(options, response, destination, callback, options.cancellationToken)
     })
     this.addErrorAndTimeoutHandlers(request, callback)
+    this.addRedirectHandlers(request, requestOptions, callback, redirectCount, requestOptions => {
+      this.doDownload(requestOptions, destination, redirectCount++, options, callback, onCancel)
+    })
     onCancel(() => request.abort())
     request.end()
   }
@@ -194,7 +204,7 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  protected prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
+  static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, {...options})
     if (newOptions.headers != null && newOptions.headers.Authorization != null && (newOptions.headers!!.Authorization as string).startsWith("token")) {
       const parsedNewUrl = new URL(redirectUrl)
@@ -227,6 +237,7 @@ export class DigestTransform extends Transform {
 
   private _actual: string
 
+  // noinspection JSUnusedGlobalSymbols
   get actual() {
     return this._actual
   }
@@ -239,11 +250,13 @@ export class DigestTransform extends Transform {
     this.digester = createHash(algorithm)
   }
 
+  // noinspection JSUnusedGlobalSymbols
   _transform(chunk: Buffer, encoding: string, callback: any) {
     this.digester.update(chunk)
     callback(null, chunk)
   }
 
+  // noinspection JSUnusedGlobalSymbols
   _flush(callback: any): void {
     this._actual = this.digester.digest(this.encoding)
 
