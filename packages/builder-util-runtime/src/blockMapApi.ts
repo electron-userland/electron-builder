@@ -2,7 +2,6 @@ import BluebirdPromise from "bluebird-lst"
 import { close, fstat, open, read } from "fs-extra-p"
 
 export const BLOCK_MAP_FILE_NAME = "_blockMap.blockmap"
-export const SIGNATURE_HEADER_SIZE = 12 /* signature + 2 bytes version + 4 bytes CRC */ + 20
 
 export interface FileChunks {
   checksums: Array<string>
@@ -19,7 +18,7 @@ export interface BlockMapFile extends FileChunks {
   offset: number
 }
 
-export async function readBlockMapDataFromAppImage(file: string) {
+export async function readEmbeddedBlockMapData(file: string) {
   const fd = await open(file, "r")
   try {
     const fileSize = (await fstat(fd)).size

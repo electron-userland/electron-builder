@@ -272,7 +272,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.0.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -293,7 +292,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.0.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -324,7 +322,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.0.1-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -345,7 +342,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.0.1-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -371,7 +367,6 @@ Object {
   "packages": Object {
     "x64": Object {
       "blockMapSize": "@blockMapSize",
-      "headerSize": "@headerSize",
       "path": "TestApp-1.0.1-x64.nsis.7z",
       "sha512": "@sha512",
       "size": "@size",
@@ -387,7 +382,7 @@ Object {
 
 exports[`web installer 4`] = `
 Array [
-  "Test%20App%20%C3%9FW%20Web%20Setup%201.0.1.exe",
+  "Test App ßW Web Setup 1.0.1.exe",
   "package-1.0.1.7z",
 ]
 `;

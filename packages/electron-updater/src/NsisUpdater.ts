@@ -1,12 +1,11 @@
 import { AllPublishOptions, CancellationToken, DownloadOptions, PackageFileInfo, UpdateInfo } from "builder-util-runtime"
-import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
 import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { SevenZipDifferentialDownloader } from "./differentialDownloader/SevenZipDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED } from "./main"
 import { findFile, Provider } from "./Provider"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
@@ -162,12 +161,12 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
-    if (packageInfo.blockMapSize == null || packageInfo.headerSize == null) {
+    if (packageInfo.blockMapSize == null) {
       return true
     }
 
     try {
-      await new SevenZipDifferentialDownloader(packageInfo, this.httpExecutor, {
+      await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, {
         newUrl: packageInfo.path,
         oldFile: path.join(process.resourcesPath!, "..", "package.7z"),
         logger: this._logger,
@@ -175,7 +174,7 @@ export class NsisUpdater extends BaseUpdater {
         requestHeaders: this.requestHeaders,
         useMultipleRangeRequest: provider.useMultipleRangeRequest,
       })
-        .download(path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME))
+        .download()
     }
     catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

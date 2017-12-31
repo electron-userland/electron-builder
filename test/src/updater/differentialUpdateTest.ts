@@ -1,15 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { doSpawn } from "builder-util"
-import { GenericServerOptions, S3Options, WindowsUpdateInfo } from "builder-util-runtime"
-import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
+import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { EventEmitter } from "events"
-import { close, open, read, readFile, rename, writeFile } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { rename } from "fs-extra-p"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
@@ -38,22 +36,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     }, {
       signed: true,
       packed: async context => {
-        const outDir = context.outDir
-        outDirs.push(outDir)
-        const targetOutDir = path.join(outDir, "nsis-web")
-        const updateInfoFile = path.join(targetOutDir, "latest.yml")
-
-        const updateInfo: WindowsUpdateInfo = safeLoad(await readFile(updateInfoFile, "utf-8"))
-        const fd = await open(path.join(targetOutDir, `TestApp-${version}-x64.nsis.7z`), "r")
-        try {
-          const packageInfo = updateInfo.packages!!.x64
-          const buffer = Buffer.allocUnsafe(packageInfo.blockMapSize!!)
-          await read(fd, buffer, 0, buffer.length, packageInfo.size - buffer.length)
-          await writeFile(path.join(outDir, "win-unpacked", BLOCK_MAP_FILE_NAME), buffer)
-        }
-        finally {
-          await close(fd)
-        }
+        outDirs.push(context.outDir)
       }
     })
   }

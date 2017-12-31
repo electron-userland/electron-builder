@@ -15,14 +15,12 @@ Object {
         "packages": Object {
           "ia32": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-ia32.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
           },
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -42,14 +40,12 @@ Object {
         "packages": Object {
           "ia32": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-ia32.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
           },
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -84,7 +80,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -105,7 +100,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -136,7 +130,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -161,7 +154,6 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
-            "headerSize": "@headerSize",
             "path": "TestApp-1.1.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",

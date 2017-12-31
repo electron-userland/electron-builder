@@ -30,9 +30,6 @@ export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packag
 }
 
 export function configureDifferentialAwareArchiveOptions(archiveOptions: ArchiveOptions): ArchiveOptions {
-  archiveOptions.solid = false
-  // our reader doesn't support compressed headers
-  archiveOptions.isArchiveHeaderCompressed = false
   /*
    * dict size 64 MB: Full: 33,744.88 KB, To download: 17,630.3 KB (52%)
    * dict size 16 MB: Full: 33,936.84 KB, To download: 16,175.9 KB (48%)
@@ -52,17 +49,17 @@ function getBlockMapTool() {
   return getTool({
     repository: "develar/block-map-builder",
     name: "block-map-builder",
-    version: "0.1.0",
-    mac: "hqlM948NJFglvJ9S0OC4COcc1rw2CwYjc1KJQKED/PfKHhPQsLbv5Z1Mi13mP5C/g/6bXqTnwjs2gLYTocfTVQ==",
-    "linux-ia32": "E7YpTsavXC9vZ0NZV6pykpvgYhHxyQBJsoLCHIWwwQA9mrSpnq828qCdE5c4/aMsoETlwxBWe6BFObSn4dzSPw==",
-    "linux-x64": "08Ps5UWzeUrfOBDwu3QGjH/QcHeFHnfURdrl8OpXNGLfYFMgobFGbIMw3YY+Jc+YFofpvruRoWDJ0yBGXWHr9w==",
-    "win-ia32": "63xaYaZl/8LAwGigfVBgeDWEhZeViOvv4tRetkeppD4qCohwCRgoMI1l9+k5LeyqOnjethFzkJASZfbGi6Ww+Q==",
-    "win-x64": "ABcfppB8I5O2A1L1ZwpRjCXqHFMuqoeeNCE+mhR9i9nKJANz2peS0Ob6sD7Y5M2R0TYDNLyQCC4YCexk6NWVHw==",
+    version: "0.2.0",
+    mac: "J+aspHER9Hba70oDJAg9ZUyr5KC8beTjIedMQRgrdsWd5Qlc+0COy+zXMw7Pcq+hqDvsEFoM2N4Yx6wQAaXDXA==",
+    "linux-ia32": "2zkhj4GVvLg8JDsGIDc4CUeZ+eHxwPchNuub+FTjO98YJyCIKDItJorfTStoZe4qlYqCE1tAX7Q/NXmBvpwj6A==",
+    "linux-x64": "2iErpiWfSMWMMFALd2sIcfU7cd4mFc96EzA/6j9/XCAx0Z6y6vSJinwjMlcemN2SUUsyVkUnHkinCLK7M34GXQ==",
+    "win-ia32": "QH/b+cmbsPtyaGzKriNGQtvKQ0KEUictieprGgcP7s4flHDXcsO+WtkecZpuJn5m3VLR0dGeSOw/oDxGxszBZA==",
+    "win-x64": "GMT7M9IibT8v5OY45N7Ar97rHpBcc9HexUGGePnzkv++4Dh7DjIlEeo/Q50MRRkp6pdgIrkG1OawEbJIt2DkLw==",
   })
 }
 
 export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {
-  return JSON.parse(await exec(await getBlockMapTool(), ["-in", file, "-append", "-compression", "deflate"]))
+  return JSON.parse(await exec(await getBlockMapTool(), ["-in", file, "-compression", "deflate"]))
 }
 
 export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null): Promise<BlockMapDataHolder> {

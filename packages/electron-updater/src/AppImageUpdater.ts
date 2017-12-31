@@ -1,13 +1,12 @@
 import BluebirdPromise from "bluebird-lst"
 import { AllPublishOptions, CancellationToken, DownloadOptions, UpdateInfo } from "builder-util-runtime"
-import { readBlockMapDataFromAppImage } from "builder-util-runtime/out/blockMapApi"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
 import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
-import { AppImageDifferentialDownloader } from "./differentialDownloader/AppImageDifferentialDownloader"
+import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { findFile } from "./Provider"
 
@@ -57,7 +56,7 @@ export class AppImageUpdater extends BaseUpdater {
 
       let isDownloadFull = false
       try {
-        await new AppImageDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+        await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
           newUrl: fileInfo.url.href,
           oldFile,
           logger: this._logger,
@@ -65,7 +64,7 @@ export class AppImageUpdater extends BaseUpdater {
           useMultipleRangeRequest: provider.useMultipleRangeRequest,
           requestHeaders,
         })
-          .download(JSON.parse(await readBlockMapDataFromAppImage(oldFile)))
+          .download()
       }
       catch (e) {
         this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

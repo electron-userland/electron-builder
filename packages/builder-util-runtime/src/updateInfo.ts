@@ -31,20 +31,7 @@ export interface BlockMapDataHolder {
 }
 
 export interface PackageFileInfo extends BlockMapDataHolder {
-  readonly size: number
-
   readonly path: string
-
-  /**
-   * The header size. This number of bytes are downloaded as is and not included into the block map.
-   */
-  headerSize?: number
-
-  /**
-   * Used and not null only during build time.
-   * We cannot pack blockMap file as part of package file because of chicken and egg problem — we build blockMap for package file (and we don't to complicate).
-   */
-  blockMapData?: Buffer
 }
 
 export interface UpdateFileInfo extends BlockMapDataHolder {

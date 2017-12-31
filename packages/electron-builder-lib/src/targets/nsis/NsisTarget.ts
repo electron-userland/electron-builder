@@ -1,11 +1,11 @@
-import { createDifferentialPackage, createPackageFileInfo } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, log, spawnAndWrite, use, warn } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull } from "builder-util/out/fs"
+import { hashFile } from "builder-util/out/hash"
 import _debug from "debug"
-import { readFile, unlink, writeFile } from "fs-extra-p"
+import { readFile, stat, unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core"
@@ -14,7 +14,7 @@ import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
-import { BLOCK_MAP_FILE_SUFFIX, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
+import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -79,10 +79,15 @@ export class NsisTarget extends Target {
     timer.end()
 
     if (isBuildDifferentialAware && this.isWebInstaller) {
-      return await createDifferentialPackage(archiveFile)
+      const data = await appendBlockmap(archiveFile)
+      return {
+        ...data,
+        size: data.size!!,
+        path: archiveFile,
+      }
     }
     else {
-      return await createPackageFileInfo(archiveFile, 0)
+      return await createPackageFileInfo(archiveFile)
     }
   }
 
@@ -159,13 +164,6 @@ export class NsisTarget extends Target {
         defines[`${defineKey}_NAME`] = path.basename(file)
         // nsis expect a hexadecimal string
         defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
-
-        if (fileInfo.blockMapData != null) {
-          const blockMapFile = await packager.getTempFile(BLOCK_MAP_FILE_SUFFIX)
-          await writeFile(blockMapFile, fileInfo.blockMapData)
-          defines[`${defineKey}_BLOCK_MAP_FILE`] = blockMapFile
-          delete fileInfo.blockMapData
-        }
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)
@@ -545,5 +543,13 @@ export class NsisTarget extends Target {
     }
 
     return scriptGenerator.build() + originalScript
+  }
+}
+
+async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
+  return {
+    path: file,
+    size: (await stat(file)).size,
+    sha512: await hashFile(file),
   }
 }
