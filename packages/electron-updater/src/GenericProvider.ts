@@ -1,4 +1,4 @@
-import { GenericServerOptions, HttpError, UpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
 import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
@@ -26,7 +26,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       }
       catch (e) {
         if (e instanceof HttpError && e.statusCode === 404) {
-          throw new Error(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`)
+          throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }
         else if (e.code === "ECONNREFUSED") {
           if (attemptNumber < 3) {

@@ -1,4 +1,4 @@
-import { CancellationToken, HttpExecutor, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { URL } from "url"
@@ -49,7 +49,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
   if (files.length === 0) {
-    throw new Error("No files provided")
+    throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 
   const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
@@ -66,7 +66,7 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
 
 export function parseUpdateInfo(rawData: string | null, channelFile: string, channelFileUrl: URL): UpdateInfo {
   if (rawData == null) {
-    throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`)
+    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): rawData: null`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
 
   let result: UpdateInfo
@@ -74,7 +74,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
     result = safeLoad(rawData)
   }
   catch (e) {
-    throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`)
+    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`, "ERR_UPDATER_INVALID_UPDATE_INFO")
   }
   return result
 }
@@ -94,7 +94,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
     ]
   }
   else {
-    throw new Error(`No files provided: ${safeStringifyJson(updateInfo)}`)
+    throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 }
 
@@ -102,7 +102,7 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {
-      throw new Error(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`)
+      throw newError(`Update info doesn't contain nor sha256 neither sha512 checksum: ${safeStringifyJson(fileInfo)}`, "ERR_UPDATER_NO_CHECKSUM")
     }
     return {
       url: newUrlFromBase(pathTransformer(fileInfo.url), baseUrl),

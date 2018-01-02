@@ -1,4 +1,4 @@
-import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration } from "builder-util-runtime"
+import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration } from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
 import { BintrayProvider } from "./BintrayProvider"
 import { GenericProvider } from "./GenericProvider"
@@ -7,7 +7,7 @@ import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export function createClient(data: PublishConfiguration | AllPublishOptions, updater: AppUpdater) {
   if (typeof data === "string") {
-    throw new Error("Please pass PublishConfiguration object")
+    throw newError("Please pass PublishConfiguration object", "ERR_UPDATER_INVALID_PROVIDER_CONFIGURATION")
   }
 
   const httpExecutor = updater.httpExecutor
@@ -38,6 +38,6 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       return new BintrayProvider(data as BintrayOptions, httpExecutor)
 
     default:
-      throw new Error(`Unsupported provider: ${provider}`)
+      throw newError(`Unsupported provider: ${provider}`, "ERR_UPDATER_UNSUPPORTED_PROVIDER")
   }
 }

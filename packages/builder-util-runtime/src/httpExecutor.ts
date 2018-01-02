@@ -6,6 +6,7 @@ import { Socket } from "net"
 import { Transform } from "stream"
 import { parse as parseUrl, URL } from "url"
 import { CancellationToken } from "./CancellationToken"
+import { newError } from "./index"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
 const debug = _debug("electron-builder")
@@ -275,11 +276,11 @@ export class DigestTransform extends Transform {
 
   validate() {
     if (this._actual == null) {
-      throw new Error("Not finished yet")
+      throw newError("Not finished yet", "ERR_STREAM_NOT_FINISHED")
     }
 
     if (this._actual !== this.expected) {
-      throw new Error(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${this._actual}`)
+      throw newError(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${this._actual}`, "ERR_CHECKSUM_MISMATCH")
     }
 
     return null

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "crypto"
+import { newError } from "./index"
 
 const invalidName =
   "options.name must be either a string or a Buffer"
@@ -123,7 +124,7 @@ export class UUID {
       }
     }
 
-    throw new Error("Unknown type of uuid")
+    throw newError("Unknown type of uuid", "ERR_UNKNOWN_UUID_TYPE")
   }
 
   // read stringified uuid into a Buffer
@@ -248,7 +249,7 @@ function uuidNamed(name: string | Buffer, hashMethod: string, version: number, n
 
   const nameIsNotAString = typeof name !== "string"
   if (nameIsNotAString && !Buffer.isBuffer(name)) {
-    throw new Error(invalidName)
+    throw newError(invalidName, "ERR_INVALID_UUID_NAME")
   }
 
   hash.update(namespace)

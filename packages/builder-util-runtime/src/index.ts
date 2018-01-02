@@ -18,3 +18,9 @@ export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
     return [v]
   }
 }
+
+export function newError(message: string, code: string) {
+  const error = new Error(message);
+  (error as any).code = code
+  return error
+}

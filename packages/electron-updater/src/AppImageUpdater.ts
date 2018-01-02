@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, CancellationToken, DownloadOptions, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, DownloadOptions, newError, UpdateInfo } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
@@ -51,7 +51,7 @@ export class AppImageUpdater extends BaseUpdater {
 
       const oldFile = process.env.APPIMAGE!!
       if (oldFile == null) {
-        throw new Error("APPIMAGE env is not defined")
+        throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
       }
 
       let isDownloadFull = false
@@ -88,7 +88,7 @@ export class AppImageUpdater extends BaseUpdater {
   protected doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean {
     const appImageFile = process.env.APPIMAGE!!
     if (appImageFile == null) {
-      throw new Error("APPIMAGE env is not defined")
+      throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
     }
 
     // https://stackoverflow.com/a/1712051/1910191

@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, HttpError, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
@@ -31,7 +31,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const asset = releaseInfo.assets.find(it => it.name === channelFile)
     if (asset == null) {
       // html_url must be always, but just to be sure
-      throw new Error(`Cannot find ${channelFile} in the release ${releaseInfo.html_url || releaseInfo.name}`)
+      throw newError(`Cannot find ${channelFile} in the release ${releaseInfo.html_url || releaseInfo.name}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
     }
 
     const url = new URL(asset.url)
@@ -41,7 +41,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
     catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`)
+        throw newError(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
       throw e
     }
@@ -67,7 +67,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       return (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`)
+      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
 
@@ -80,7 +80,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       const name = path.posix.basename(it.url).replace(/ /g, "-")
       const asset = updateInfo.assets.find(it => it != null && it.name === name)
       if (asset == null) {
-        throw new Error(`Cannot find asset "${name}" in: ${JSON.stringify(updateInfo.assets, null, 2)}`)
+        throw newError(`Cannot find asset "${name}" in: ${JSON.stringify(updateInfo.assets, null, 2)}`, "ERR_UPDATER_ASSET_NOT_FOUND")
       }
 
       return {

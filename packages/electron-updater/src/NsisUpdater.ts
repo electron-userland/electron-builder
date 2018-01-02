@@ -1,4 +1,4 @@
-import { AllPublishOptions, CancellationToken, DownloadOptions, PackageFileInfo, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, DownloadOptions, newError, PackageFileInfo, UpdateInfo } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
@@ -44,7 +44,7 @@ export class NsisUpdater extends BaseUpdater {
       if (signatureVerificationStatus != null) {
         await removeTempDirIfAny()
         // noinspection ThrowInsideFinallyBlockJS
-        throw new Error(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
+        throw newError(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
       }
 
       const packageInfo = fileInfo.packageInfo

@@ -419,7 +419,7 @@ export function platform(platform: Platform): PackagerOptions {
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   if (process.env.CSC_KEY_PASSWORD == null) {
-    log.warn({reason: "CSC_KEY_PASSWORD is not defined"}, "macOS code sign is not tested")
+    log.warn({reason: "CSC_KEY_PASSWORD is not defined"}, "macOS code signing is not tested")
   }
   else {
     packagerOptions.cscLink = CSC_LINK

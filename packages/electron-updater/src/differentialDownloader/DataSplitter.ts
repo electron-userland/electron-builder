@@ -1,7 +1,8 @@
+import BluebirdPromise from "bluebird-lst"
+import { newError } from "builder-util-runtime"
+import { createReadStream } from "fs-extra-p"
 import { Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
-import { createReadStream } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst"
 
 const DOUBLE_CRLF = Buffer.from("\r\n\r\n")
 
@@ -69,7 +70,7 @@ export class DataSplitter extends Writable {
     let start = 0
 
     if (this.ignoreByteCount !== 0 && this.remainingPartDataCount !== 0) {
-      throw new Error("Internal error")
+      throw newError("Internal error", "ERR_DATA_SPLITTER_BYTE_COUNT_MISMATCH")
     }
 
     if (this.ignoreByteCount > 0) {
@@ -113,7 +114,7 @@ export class DataSplitter extends Writable {
             taskIndex = this.options.end
           }
           else {
-            throw new Error("taskIndex is null")
+            throw newError("taskIndex is null", "ERR_DATA_SPLITTER_TASK_INDEX_IS_NULL")
           }
         }
 
@@ -122,7 +123,7 @@ export class DataSplitter extends Writable {
           await this.copyExistingData(prevTaskIndex, taskIndex)
         }
         else if (prevTaskIndex > taskIndex) {
-          throw new Error("prevTaskIndex must be < taskIndex")
+          throw newError("prevTaskIndex must be < taskIndex", "ERR_DATA_SPLITTER_TASK_INDEX_ASSERT_FAILED")
         }
 
         if (this.isFinished) {
@@ -201,7 +202,7 @@ export class DataSplitter extends Writable {
   private onPartEnd() {
     const expectedLength = this.partIndexToLength[this.partIndex - 1]
     if (this.actualPartLength !== expectedLength) {
-      throw new Error(`Expected length: ${expectedLength} differs from actual: ${this.actualPartLength}`)
+      throw newError(`Expected length: ${expectedLength} differs from actual: ${this.actualPartLength}`, "ERR_DATA_SPLITTER_LENGTH_MISMATCH")
     }
     this.actualPartLength = 0
   }

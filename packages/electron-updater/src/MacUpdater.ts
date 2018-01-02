@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
@@ -26,7 +26,7 @@ export class MacUpdater extends AppUpdater {
     const files = (await this.provider).resolveFiles(updateInfo)
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
-      throw new Error(`ZIP file not provided: ${safeStringifyJson(files)}`)
+      throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
     }
 
     const server = createServer()

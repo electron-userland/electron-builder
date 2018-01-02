@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, asArray, CancellationToken, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
+import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -63,10 +63,10 @@ export abstract class AppUpdater extends EventEmitter {
   set channel(value: string | null) {
     if (this._channel != null) {
       if (typeof value !== "string") {
-        throw new Error(`Channel must be a string, but got: ${value}`)
+        throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
       }
       else if (value.length === 0) {
-        throw new Error(`Channel must be not an empty string`)
+        throw newError(`Channel must be not an empty string`, "ERR_UPDATER_INVALID_CHANNEL")
       }
     }
 
@@ -160,7 +160,7 @@ export abstract class AppUpdater extends EventEmitter {
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
-      throw new Error(`App version is not a valid semver version: "${currentVersionString}`)
+      throw newError(`App version is not a valid semver version: "${currentVersionString}`, "ERR_UPDATER_INVALID_VERSION")
     }
     this.currentVersion = currentVersion
 
@@ -279,7 +279,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
+      throw newError(`Latest version (from update server) is not valid semver version: "${latestVersion}`, "ERR_UPDATER_INVALID_VERSION")
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)

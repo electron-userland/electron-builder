@@ -62,7 +62,7 @@ Array [
 
 exports[`cancel download with progress 1`] = `"Cancelled"`;
 
-exports[`check updates - no versions at all 1`] = `"No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. HttpError: 404 Not Found"`;
+exports[`check updates - no versions at all 1`] = `"ERR_UPDATER_LATEST_VERSION_NOT_FOUND"`;
 
 exports[`checkForUpdates several times 1`] = `
 Object {
@@ -397,7 +397,7 @@ Object {
 }
 `;
 
-exports[`sha512 mismatch error event 2`] = `"sha512 checksum mismatch, expected Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==, got Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw=="`;
+exports[`sha512 mismatch error event 2`] = `"ERR_CHECKSUM_MISMATCH"`;
 
 exports[`sha512 mismatch error event 3`] = `
 Array [

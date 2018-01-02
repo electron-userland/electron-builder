@@ -1,4 +1,5 @@
 import * as sax from "sax"
+import { newError } from "./index"
 
 export class XElement {
   value = ""
@@ -8,17 +9,17 @@ export class XElement {
 
   constructor(readonly name: string) {
     if (!name) {
-      throw new Error("Element name cannot be empty")
+      throw newError("Element name cannot be empty", "ERR_XML_ELEMENT_NAME_EMPTY")
     }
     if (!isValidName(name)) {
-      throw new Error(`Invalid element name: ${name}`)
+      throw newError(`Invalid element name: ${name}`, "ERR_XML_ELEMENT_INVALID_NAME")
     }
   }
 
   attribute(name: string): string {
     const result = this.attributes === null ? null : this.attributes[name]
     if (result == null) {
-      throw new Error(`No attribute "${name}"`)
+      throw newError(`No attribute "${name}"`, "ERR_XML_MISSED_ATTRIBUTE")
     }
     return result
   }
@@ -32,7 +33,7 @@ export class XElement {
   element(name: string, ignoreCase = false, errorIfMissed: string | null = null): XElement {
     const result = this.elementOrNull(name, ignoreCase)
     if (result === null) {
-      throw new Error(errorIfMissed || `No element "${name}"`)
+      throw newError(errorIfMissed || `No element "${name}"`, "ERR_XML_MISSED_ELEMENT")
     }
     return result
   }

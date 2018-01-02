@@ -1,4 +1,4 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
@@ -9,7 +9,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: URL
 
-  constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
+  protected constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
     super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
@@ -40,6 +40,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     let version: string | null
     try {
       if (this.updater.allowPrerelease) {
+        // noinspection TypeScriptValidateJSTypes
         version = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
       }
       else {
@@ -47,11 +48,11 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       }
     }
     catch (e) {
-      throw new Error(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`)
+      throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
     if (version == null) {
-      throw new Error(`No published versions on GitHub`)
+      throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
     const channelFile = getChannelFilename(getDefaultChannelName())
@@ -63,7 +64,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
     catch (e) {
       if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`)
+        throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
       throw e
     }
@@ -96,7 +97,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`)
+      throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
 
@@ -131,6 +132,7 @@ export function computeReleaseNotes(currentVersion: string, isFullChangelog: boo
 
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
+    // noinspection TypeScriptValidateJSTypes
     const versionRelease = release.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)![1]
     if (semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
