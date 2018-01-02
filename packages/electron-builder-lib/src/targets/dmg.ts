@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { isMacOsHighSierra } from "builder-util/out/macosVersion"
@@ -8,10 +8,10 @@ import { stat } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
+import { DmgOptions } from ".."
 import { findIdentity, isSignAllowed } from "../codeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
-import { DmgOptions } from "../options/macOptions"
 import { createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class DmgTarget extends Target {
@@ -23,7 +23,10 @@ export class DmgTarget extends Target {
 
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
-    log("Building DMG")
+    // tslint:disable-next-line:no-invalid-template-strings
+    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg", null, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + ".${ext}")
+    const artifactPath = path.join(this.outDir, artifactName)
+    this.logBuilding("DMG", artifactPath, arch)
 
     const specification = await this.computeDmgOptions()
     const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
@@ -39,17 +42,13 @@ export class DmgTarget extends Target {
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await exists(volumePath)) {
-      debug("Unmounting previous disk image")
+      log.debug({volumePath}, "unmounting previous disk image")
       await detach(volumePath)
     }
 
     if (!await attachAndExecute(tempDmg, true, () => customizeDmg(volumePath, specification, packager, backgroundFile, backgroundFilename))) {
       return
     }
-
-    // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg", null, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + ".${ext}")
-    const artifactPath = path.join(this.outDir, artifactName)
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     const args = ["convert", tempDmg, "-ov", "-format", specification.format!, "-o", artifactPath]
@@ -87,7 +86,7 @@ export class DmgTarget extends Target {
     }
 
     if (!(await isCanSignDmg())) {
-      warn("At least macOS 10.11.5 is required to sign DMG, please update OS.")
+      log.warn({solution: "please update OS"}, "at least macOS 10.11.5 is required to sign DMG")
     }
 
     const packager = this.packager
@@ -140,16 +139,16 @@ export class DmgTarget extends Target {
     const oldIconSize = (this.options as any)["icon-size"]
     const oldBackgroundColor = (this.options as any)["background-color"]
     if (oldPosition != null) {
-      warn("dmg.window.position is deprecated, please use dmg.window instead")
+      log.warn({solution: "use dmg.window"}, "dmg.window.position is deprecated")
     }
     if (oldSize != null) {
-      warn("dmg.window.size is deprecated, please use dmg.window instead")
+      log.warn({solution: "use dmg.window"}, "dmg.window.size is deprecated")
     }
     if (oldIconSize != null) {
-      warn("dmg.icon-size is deprecated, please use dmg.iconSize instead")
+      log.warn({solution: "use dmg.iconSize"}, "dmg.icon-size is deprecated")
     }
     if (oldBackgroundColor != null) {
-      warn("dmg.background-color is deprecated, please use dmg.backgroundColor instead")
+      log.warn({solution: "use dmg.backgroundColor"}, "dmg.background-color is deprecated")
     }
 
     const packager = this.packager
@@ -328,7 +327,7 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
   let result = ""
   for (const c of specification.contents!!) {
     if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
-      warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
+      log.warn({path: c.path, reason: "actual path to app will be used instead"}, `do not specify path for application`)
     }
 
     const entryPath = c.path || `${packager.appInfo.productFilename}.app`
@@ -342,7 +341,7 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
     else if (!isEmptyOrSpaces(c.path) && (c.type === "file" || c.type === "dir")) {
       const source = await packager.getResource(c.path)
       if (source == null) {
-        warn(`${entryPath} doesn't exist`)
+        log.warn({entryPath, reason: "doesn't exist"}, `skipped DMG item copying`)
         continue
       }
 

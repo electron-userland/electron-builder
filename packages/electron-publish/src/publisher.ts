@@ -1,5 +1,6 @@
 import { Arch, log } from "builder-util"
 import { CancellationToken, ProgressCallbackTransform } from "builder-util-runtime"
+import { PADDING } from "builder-util/out/log"
 import chalk from "chalk"
 import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
@@ -34,7 +35,7 @@ export interface UploadTask {
 }
 
 export abstract class Publisher {
-  constructor(protected readonly context: PublishContext) {
+  protected constructor(protected readonly context: PublishContext) {
   }
 
   abstract get providerName(): string
@@ -42,13 +43,11 @@ export abstract class Publisher {
   abstract upload(task: UploadTask): Promise<any>
 
   protected createProgressBar(fileName: string, size: number): ProgressBar | null {
-    if (this.context.progress == null) {
-      log(`Uploading ${fileName} to ${this.providerName}`)
+    log.info({file: fileName, provider: this.providerName}, "uploading")
+    if (this.context.progress == null || size < (512 * 1024)) {
       return null
     }
-    else {
-      return this.context.progress.createBar(`[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {total: size, ...progressBarOptions})
-    }
+    return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {total: size, ...progressBarOptions})
   }
 
   protected createReadStreamAndProgressBar(file: string, fileStat: Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {

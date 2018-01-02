@@ -3,8 +3,8 @@ import { access, chmod, copyFile as _nodeCopyFile, createReadStream, createWrite
 import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
+import { log } from "./log"
 import { orNullIfFileNotExist } from "./promise"
-import { debug } from "./util"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}
@@ -150,9 +150,9 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
     mode.others.read = true
 
     if (originalModeNumber !== stats.mode) {
-      if (debug.enabled) {
+      if (log.isDebugEnabled) {
         const oldMode = new Mode({mode: originalModeNumber})
-        debug(`${dest} permissions fixed from ${oldMode.toOctal()} (${oldMode.toString()}) to ${mode.toOctal()} (${mode.toString()})`)
+        log.debug({file: dest, oldMode, mode}, "permissions fixed from")
       }
 
       // https://helgeklein.com/blog/2009/05/hard-links-and-permissions-acls/
@@ -160,7 +160,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       // That means if you change the permissions/owner/attributes on one hard link, you will immediately see the changes on all other hard links.
       if (isUseHardLink) {
         isUseHardLink = false
-        debug(`${dest} will be copied, but not linked, because file permissions need to be fixed`)
+        log.debug({dest}, "copied, but not linked, because file permissions need to be fixed")
       }
     }
   }
@@ -170,8 +170,8 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       .catch(e => {
         if (e.code === "EXDEV") {
           const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
-          if (isLog && debug.enabled) {
-            debug(`Cannot copy using hard link: ${e.message}`)
+          if (isLog && log.isDebugEnabled) {
+            log.debug({error: e.message}, "cannot copy using hard link")
           }
           return doCopyFile(src, dest, stats)
         }
@@ -260,8 +260,8 @@ export interface CopyDirOptions {
 export function copyDir(src: string, destination: string, options: CopyDirOptions = {}): Promise<any> {
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
-  if (debug.enabled) {
-    debug(`Copying ${src} to ${destination}${fileCopier.isUseHardLink ? " using hard links" : ""}`)
+  if (log.isDebugEnabled) {
+    log.debug({src, destination}, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
   }
 
   const createdSourceDirs = new Set<string>()

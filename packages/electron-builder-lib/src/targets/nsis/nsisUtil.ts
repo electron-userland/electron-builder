@@ -1,13 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, warn } from "builder-util"
+import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
+import { Lazy } from "lazy-val"
+import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
-import { copyFile } from "builder-util/out/fs"
-import * as path from "path"
-import { Lazy } from "lazy-val"
-import { getBinFromGithub } from "builder-util/out/binDownload"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
@@ -66,7 +66,7 @@ export class CopyElevateHelper {
     let isPackElevateHelper = target.options.packElevateHelper
     if (isPackElevateHelper === false && target.options.perMachine === true) {
       isPackElevateHelper = true
-      warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
+      log.warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
     }
 
     if (isPackElevateHelper === false) {

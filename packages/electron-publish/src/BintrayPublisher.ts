@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
+import { Arch, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
 import { BintrayOptions, configureRequestOptions, HttpError } from "builder-util-runtime"
 import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -41,11 +41,11 @@ export class BintrayPublisher extends HttpPublisher {
     catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {
         if (this.options.publish !== "onTagOrDraft") {
-          log(`Version ${this.version} doesn't exist, creating one`)
+          log.info({version: this.version}, "version doesn't exist, creating one")
           return this.client.createVersion(this.version)
         }
         else {
-          log(`Version ${this.version} doesn't exist, artifacts will be not published`)
+          log.notice({reason: "version doesn't exist", version: this.version}, "skipped publishing")
         }
       }
 
@@ -56,7 +56,7 @@ export class BintrayPublisher extends HttpPublisher {
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
     const version = await this._versionPromise
     if (version == null) {
-      debug(`Version ${this.version} doesn't exist and is not created, artifact ${fileName} is not published`)
+      log.notice({file: fileName, reason: "version doesn't exist and is not created", version: this.version}, "skipped publishing")
       return
     }
 

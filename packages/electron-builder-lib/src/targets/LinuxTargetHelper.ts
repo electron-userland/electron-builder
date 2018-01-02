@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, exec, isEmptyOrSpaces, warn } from "builder-util"
+import { debug, exec, isEmptyOrSpaces, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { outputFile, readdir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { LinuxConfiguration, LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxConfiguration, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 
 export const installPrefix = "/opt"
@@ -152,7 +152,7 @@ export class LinuxTargetHelper {
         if (macCategory != null) {
           message += `\n Cannot map mac category "${macCategory}" to Linux. If possible mapping is known for you, please file issue to add it.`
         }
-        warn(message)
+        log.warn(message)
         category = "Utility"
       }
     }

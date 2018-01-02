@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, isEnvTrue, warn } from "builder-util"
+import { isEnvTrue, log } from "builder-util"
 import { CONCURRENCY, statOrNull } from "builder-util/out/fs"
 import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { lstat, readdir, readFile, realpath, Stats } from "fs-extra-p"
@@ -82,9 +82,7 @@ class Collector {
     this.unmarkExtraneous(rootDependency)
 
     if (this.unresolved.size > 0) {
-      if (debug.enabled) {
-        debug(`Unresolved dependencies after first round: ${Array.from(this.unresolved.keys()).join(", ")}`)
-      }
+      log.debug({unresolved: Array.from(this.unresolved.keys()).join(", ")}, "Unresolved dependencies after first round")
       await this.resolveUnresolvedHoisted(rootDependency, dir)
     }
     return rootDependency
@@ -106,7 +104,7 @@ class Collector {
         if (list.length !== 0) {
           const message = `Unresolved node modules: ${list.join(", ")}`
           if (isEnvTrue(process.env.ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES)) {
-            warn(message)
+            log.warn(message)
           }
           else {
             throw new Error(message)
@@ -190,7 +188,7 @@ class Collector {
     if (isSymbolicLink) {
       dir = await orNullIfFileNotExist(realpath(dir))
       if (dir == null) {
-        debug(`Broken symlink ${rawDir}`)
+        log.debug({path: rawDir}, "broken symlink")
         return null
       }
     }

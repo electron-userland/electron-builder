@@ -1,16 +1,12 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken, DownloadOptions } from "builder-util-runtime"
-import _debug from "debug"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { statOrNull } from "./fs"
-import { log, warn } from "./log"
 import { httpExecutor } from "./nodeHttpExecutor"
-import { debug7zArgs, getCacheDirectory, spawn } from "./util"
-
-const debug = _debug("electron-builder:binDownload")
+import { debug7zArgs, getCacheDirectory, log, spawn } from "./util"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 
@@ -44,19 +40,20 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
   const cachePath = path.join(getCacheDirectory(), name)
   const dirPath = path.join(cachePath, dirName)
 
+  const logFlags = {path: dirPath}
+
   const dirStat = await statOrNull(dirPath)
   //noinspection ES6MissingAwait
   if (dirStat != null && dirStat.isDirectory()) {
-    debug(`Found existing ${name} ${dirPath}`)
+    log.debug(logFlags, `found existing`)
     return dirPath
   }
 
-  log(`Downloading ${dirName}, please wait`)
+  log.info({...logFlags, url}, `downloading`)
 
   // 7z cannot be extracted from the input stream, temp file is required
   const tempUnpackDir = path.join(cachePath, getTempName())
   const archiveName = `${tempUnpackDir}.7z`
-  debug(`Download ${name} from ${url} to ${archiveName}`)
   // 7z doesn't create out dir, so, we don't create dir in parallel to download - dir creation will create parent dirs for archive file also
   await emptyDir(tempUnpackDir)
   const options: DownloadOptions = {
@@ -80,9 +77,12 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
         throw e
       }
 
-      warn(`Cannot download ${name}, attempt #${attemptNumber}: ${e}`)
+      log.warn({...logFlags, attempt: attemptNumber}, `cannot download: ${e}`)
       await new BluebirdPromise((resolve, reject) => {
-        setTimeout(() => httpExecutor.download(url, archiveName, options).then(resolve).catch(reject), 1000 * attemptNumber)
+        setTimeout(() =>
+          httpExecutor
+            .download(url, archiveName, options)
+            .then(resolve).catch(reject), 1000 * attemptNumber)
       })
     }
   }
@@ -93,12 +93,10 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
 
   await BluebirdPromise.all([
     rename(tempUnpackDir, dirPath)
-      .catch(e => {
-        console.warn(`Cannot move downloaded ${name} into final location (another process downloaded faster?): ${e}`)
-      }),
+      .catch(e => log.debug({...logFlags, tempUnpackDir, e}, `cannot move downloaded into final location (another process downloaded faster?)`)),
     unlink(archiveName),
   ])
 
-  debug(`${name}} downloaded to ${dirPath}`)
+  log.debug(logFlags, `downloaded`)
   return dirPath
 }

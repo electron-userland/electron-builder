@@ -1,6 +1,6 @@
 import { AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { asArray, getPlatformIconFileName, use, warn } from "builder-util"
+import { asArray, getPlatformIconFileName, log, use } from "builder-util"
 import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -60,7 +60,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
 
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
-    warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
+    log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
   const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appBundleIdentifier}.helper`)
 

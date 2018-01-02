@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, warn, isEnvTrue } from "builder-util"
+import { Arch, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
+import { Fields } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import mime from "mime"
@@ -34,7 +35,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private readonly releaseType: "draft" | "prerelease" | "release"
 
-  private releaseStatus: string
+  private releaseLogFields: Fields | null
 
   /** @private */
   get releasePromise(): Promise<Release | null> {
@@ -87,6 +88,11 @@ export class GitHubPublisher extends HttpPublisher {
   }
 
   private async getOrCreateRelease(): Promise<Release | null> {
+    const logFields = {
+      tag: this.tag,
+      version: this.version,
+    }
+
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await this.githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
@@ -102,8 +108,13 @@ export class GitHubPublisher extends HttpPublisher {
       // https://electron-builder.slack.com/archives/general/p1485961449000202
       // https://github.com/electron-userland/electron-builder/issues/2072
       if (this.releaseType === "draft") {
-        this.releaseStatus = `Release with tag ${this.tag} already exists with type "${release.prerelease ? "pre-release" : "release"}", but current release type is "${this.releaseType}"`
-        warn(this.releaseStatus)
+        this.releaseLogFields = {
+          reason: "existing type not compatible with publishing type",
+          ...logFields,
+          existingType: release.prerelease ? "pre-release" : "release",
+          publishingType: this.releaseType,
+        }
+        log.warn(this.releaseLogFields, "GitHub release not created")
         return null
       }
 
@@ -113,8 +124,12 @@ export class GitHubPublisher extends HttpPublisher {
       const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
       if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
-        this.releaseStatus = `Release with tag ${this.tag} published at ${new Date(publishedAt).toString()}, more than 2 hours ago`
-        warn(this.releaseStatus)
+        this.releaseLogFields = {
+          reason: "existing release published more than 2 hours ago",
+          ...logFields,
+          date: new Date(publishedAt).toString(),
+        }
+        log.warn(this.releaseLogFields, "GitHub release not created")
         return null
       }
       return release
@@ -122,18 +137,24 @@ export class GitHubPublisher extends HttpPublisher {
 
     // https://github.com/electron-userland/electron-builder/issues/1835
     if (this.options.publish === "always" || getCiTag() != null) {
-      log(`Release with tag ${this.tag} doesn't exist, creating one`)
+      log.info({
+        reason: "release doesn't exist",
+        ...logFields,
+      }, `creating GitHub release`)
       return this.createRelease()
     }
 
-    this.releaseStatus = `Release with tag ${this.tag} doesn't exist and not created because "publish" is not "always" and build is not on tag`
+    this.releaseLogFields = {
+      reason: "release doesn't exist and not created because \"publish\" is not \"always\" and build is not on tag",
+      ...logFields,
+    }
     return null
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this.releasePromise
     if (release == null) {
-      warn(`Artifact ${fileName} is not published: ${this.releaseStatus}`)
+      log.warn({file: fileName, ...this.releaseLogFields}, "skipped publishing")
       return
     }
 
@@ -156,7 +177,7 @@ export class GitHubPublisher extends HttpPublisher {
         if (e instanceof HttpError) {
           if (e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
-            debug(`Artifact ${fileName} already exists on GitHub, overwrite one`)
+            log.notice({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
 
             const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
             for (const asset of assets) {
@@ -166,7 +187,7 @@ export class GitHubPublisher extends HttpPublisher {
               }
             }
 
-            debug(`Artifact ${fileName} not found on GitHub, trying to upload again`)
+            log.debug({file: fileName, reason: "not found on GitHub"}, "trying to upload again")
             continue
           }
           else if (attemptNumber++ < 3 && e.statusCode === 502) {
@@ -211,7 +232,7 @@ export class GitHubPublisher extends HttpPublisher {
       catch (e) {
         if (e instanceof HttpError) {
           if (e.statusCode === 404) {
-            warn(`Cannot delete release ${release.id} — doesn't exist`)
+            log.warn({releaseId: release.id, reason: "doesn't exist"}, "cannot delete release")
             return
           }
           else if (e.statusCode === 405 || e.statusCode === 502) {
@@ -223,7 +244,7 @@ export class GitHubPublisher extends HttpPublisher {
       }
     }
 
-    warn(`Cannot delete release ${release.id}`)
+    log.warn({releaseId: release.id}, "cannot delete release")
   }
 
   private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {

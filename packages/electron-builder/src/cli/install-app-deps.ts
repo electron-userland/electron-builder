@@ -1,17 +1,17 @@
 #! /usr/bin/env node
 
 import BluebirdPromise from "bluebird-lst"
-import { log, use, warn } from "builder-util"
+import { log, use } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
+import { computeDefaultAppDirectory, getConfig } from "electron-builder-lib/out/util/config"
+import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
+import { createLazyProductionDeps } from "electron-builder-lib/out/util/packageDependencies"
+import { installOrRebuild } from "electron-builder-lib/out/util/yarn"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
 import yargs from "yargs"
-import { computeDefaultAppDirectory, getConfig } from "electron-builder-lib/out/util/config"
-import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
-import { createLazyProductionDeps } from "electron-builder-lib/out/util/packageDependencies"
-import { installOrRebuild } from "electron-builder-lib/out/util/yarn"
 
 declare const PACKAGE_VERSION: string
 
@@ -35,7 +35,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs 
 /** @internal */
 export async function installAppDeps(args: any) {
   try {
-    log("electron-builder " + PACKAGE_VERSION)
+    log.info({version: PACKAGE_VERSION}, "electron-builder")
   }
   catch (e) {
     // error in dev mode without babel
@@ -67,7 +67,7 @@ function main() {
 }
 
 if (process.mainModule === module) {
-  warn("Please use as subcommand: electron-builder install-app-deps")
+  log.warn("please use as subcommand: electron-builder install-app-deps")
   main()
     .catch(printErrorAndExit)
 }

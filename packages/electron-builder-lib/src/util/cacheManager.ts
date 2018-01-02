@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { Hash } from "crypto"
-import { Arch, debug, warn } from "builder-util"
+import { Arch, log } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { orNullIfFileNotExist } from "builder-util/out/promise"
+import { Hash } from "crypto"
 import { ensureDir, readFile, readJson, writeJson } from "fs-extra-p"
 import * as path from "path"
 
@@ -33,21 +33,21 @@ export class BuildCacheManager {
     this.cacheInfo = await orNullIfFileNotExist(readJson(this.cacheInfoFile))
     const oldDigest = this.cacheInfo == null ? null : this.cacheInfo.executableDigest
     if (oldDigest !== digest) {
-      debug(`No valid cached executable found, old digest: ${oldDigest}, new digest: ${digest}`)
+      log.debug({oldDigest, newDigest: digest}, "no valid cached executable found")
       return false
     }
 
-    debug(`Copy cached ${this.cacheFile} executable to ${this.executableFile}`)
+    log.debug({cacheFile: this.cacheFile, file: this.executableFile}, `copying cached executable`)
     try {
       await copyFile(this.cacheFile, this.executableFile, false)
       return true
     }
     catch (e) {
       if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-        debug(`Copy cached executable failed: ${e.code}`)
+        log.debug({error: e.code}, "copy cached executable failed")
       }
       else {
-        warn(`Cannot copy cached executable: ${e.stack || e}`)
+        log.warn({error: e.stack || e}, `cannot copy cached executable`)
       }
     }
     return false
@@ -70,7 +70,7 @@ export class BuildCacheManager {
       await BluebirdPromise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     }
     catch (e) {
-      warn(`Cannot save build cache: ${e.stack || e}`)
+      log.warn({error: e.stack || e}, `cannot save build cache`)
     }
   }
 }

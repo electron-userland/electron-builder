@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, exec, log, task, warn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, log } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
@@ -138,7 +138,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (this.forceCodeSigning) {
         throw new Error("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
-      log("identity explicitly is set to null, skipping macOS application code signing.")
+      log.info({reason: "identity explicitly is set to null"}, "skipped macOS application code signing")
       return
     }
 
@@ -152,7 +152,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
         identity = await findIdentity("Mac Developer", qualifier, keychainName)
         if (identity != null) {
-          warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
+          log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
       }
 
@@ -183,7 +183,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     await this.adjustSignOptions(signOptions, masOptions)
-    await task(`Signing app (identity: ${identity.hash} ${identity.name})`, this.doSign(signOptions))
+    log.info({
+      file: log.filePath(appPath),
+      identityName: identity.name,
+      identityHash: identity.hash,
+    }, "signing")
+    await this.doSign(signOptions)
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {

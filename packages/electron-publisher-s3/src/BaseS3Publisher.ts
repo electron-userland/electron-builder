@@ -1,5 +1,5 @@
 import S3, { ClientConfiguration, CreateMultipartUploadRequest, ObjectCannedACL } from "aws-sdk/clients/s3"
-import { debug } from "builder-util"
+import { log } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { ProgressCallback, PublishContext, Publisher, UploadTask } from "electron-publish"
 import { ensureDir, stat, symlink } from "fs-extra-p"
@@ -8,7 +8,7 @@ import * as path from "path"
 import { Uploader } from "./uploader"
 
 export abstract class BaseS3Publisher extends Publisher {
-  constructor(context: PublishContext, private options: BaseS3Options) {
+  protected constructor(context: PublishContext, private options: BaseS3Options) {
     super(context)
   }
 
@@ -64,7 +64,7 @@ export abstract class BaseS3Publisher extends Publisher {
       uploader.upload()
         .then(() => {
           try {
-            debug(`${this.providerName} Publisher: ${fileName} was uploaded to ${this.getBucketName()}`)
+            log.debug({provider: this.providerName, file: fileName, bucket: this.getBucketName()}, "uploaded")
           }
           finally {
             resolve()

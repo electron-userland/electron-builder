@@ -1,4 +1,4 @@
-import { asArray, DebugLogger, log, warn } from "builder-util"
+import { asArray, DebugLogger, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -33,10 +33,15 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
 }
 
 export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Configuration | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
-  const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata, log}
-  const config = await _getConfig<Configuration>(configRequest, configPath)
+  const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata}
+  const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
+  const config = configAndEffectiveFile == null ? {} : configAndEffectiveFile.result
   if (configFromOptions != null) {
     mergePublish(config, configFromOptions)
+  }
+
+  if (configAndEffectiveFile != null) {
+    log.info({file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile}, "loaded configuration")
   }
 
   let extendsSpec = config.extends
@@ -55,15 +60,18 @@ export async function getConfig(projectDir: string, configPath: string | null, c
   }
 
   if (extendsSpec == null) {
-    return config
+    return deepAssign(getDefaultConfig(), config)
   }
 
   let parentConfig: Configuration | null
   if (extendsSpec === "react-cra") {
     parentConfig = await reactCra(projectDir)
+    log.info({preset: extendsSpec}, "loaded parent configuration")
   }
   else {
-    parentConfig = await loadParentConfig<Configuration>(configRequest, extendsSpec)
+    const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, extendsSpec)
+    log.info({file: parentConfigAndEffectiveFile.configFile}, "loaded parent configuration")
+    parentConfig = parentConfigAndEffectiveFile.result
   }
 
   // electron-webpack and electrify client config - want to exclude some files
@@ -77,7 +85,16 @@ export async function getConfig(projectDir: string, configPath: string | null, c
     }
   }
 
-  return deepAssign(parentConfig, config)
+  return deepAssign(getDefaultConfig(), parentConfig, config)
+}
+
+function getDefaultConfig(): Configuration {
+  return {
+    directories: {
+      output: "dist",
+      buildResources: "build",
+    },
+  }
 }
 
 const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
@@ -127,7 +144,7 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
       throw new Error(`Application directory ${userAppDir} is not a directory`)
     }
     else if (projectDir === absolutePath) {
-      warn(`Specified application directory "${userAppDir}" equals to project dir — superfluous or wrong configuration`)
+      log.warn({appDirectory: userAppDir}, `Specified application directory equals to project dir — superfluous or wrong configuration`)
     }
     return absolutePath
   }

@@ -1,12 +1,12 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, isEmptyOrSpaces, warn } from "builder-util"
+import { addValue, Arch, archFromString, isEmptyOrSpaces, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally } from "builder-util/out/promise"
 import chalk from "chalk"
+import { Configuration, DIR_TARGET, PackagerOptions, Platform, PublishManager } from "electron-builder-lib"
+import { Packager } from "electron-builder-lib/out/packager"
 import { PublishOptions } from "electron-publish"
 import { deepAssign } from "read-config-file/out/deepAssign"
-import { PublishManager, PackagerOptions, DIR_TARGET, Platform, Configuration } from "electron-builder-lib"
-import { normalizePlatforms, Packager } from "electron-builder-lib/out/packager"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -33,7 +33,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   }
 
   if ((args as any).draft != null || (args as any).prerelease != null) {
-    warn("--draft and --prerelease is deprecated, please set releaseType (http://electron.build/configuration/publish#GithubOptions-releaseType) in the GitHub publish options instead")
+    log.warn({solution: "set releaseType (http://electron.build/configuration/publish#GithubOptions-releaseType) in the GitHub publish options"}, "--draft and --prerelease is deprecated")
   }
 
   let targets = new Map<Platform, Map<Arch, Array<string>>>()
@@ -254,6 +254,29 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
     options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
   }
 
+  // emoji doesn't improve output a lot, so, do not use it
+  // if ((process.stdout as any).isTTY) {
+  //   log.messageTransformer = (m, level) => {
+  //     let separator = "  "
+  //     let emoji: string | null = null
+  //     if (level === "warn") {
+  //       emoji = "warning"
+  //     }
+  //     else if (m === "packaging") {
+  //       emoji = "package"
+  //       separator = " "
+  //     }
+  //     else if (m === "building") {
+  //       emoji = "building_construction"
+  //     }
+  //     else if (m === "uploading") {
+  //       emoji = "rocket"
+  //       separator = " "
+  //     }
+  //     return emoji == null ? m : `${getEmoji(emoji)}${separator}${m}`
+  //   }
+  // }
+
   return _build(options)
 }
 
@@ -278,7 +301,7 @@ export async function _build(options: CliOptions, cancellationToken: Cancellatio
 
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
-    warn("Cancelled by SIGINT")
+    log.warn("cancelled by SIGINT")
     cancellationToken.cancel()
     publishManager.cancelTasks()
   }
@@ -401,4 +424,26 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .example("electron-builder --win --ia32", "build for Windows ia32")
     .example("electron-builder --em.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
+}
+
+function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | null | undefined): Array<Platform> {
+  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | null | undefined>) : [rawPlatforms]
+  if (platforms as any == null || platforms.length === 0) {
+    return [Platform.fromString(process.platform)]
+  }
+  else if (platforms[0] === "all") {
+    if (process.platform === Platform.MAC.nodeName) {
+      return [Platform.MAC, Platform.LINUX, Platform.WINDOWS]
+    }
+    else if (process.platform === Platform.LINUX.nodeName) {
+      // macOS code sign works only on macOS
+      return [Platform.LINUX, Platform.WINDOWS]
+    }
+    else {
+      return [Platform.WINDOWS]
+    }
+  }
+  else {
+    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
+  }
 }

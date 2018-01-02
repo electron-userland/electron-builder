@@ -1,4 +1,4 @@
-import { warn } from "builder-util"
+import { log } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -27,7 +27,7 @@ export async function getElectronVersionFromInstalled(projectDir: string) {
     }
     catch (e) {
       if (e.code !== "ENOENT") {
-        warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
+        log.warn({name, error: e}, `cannot read electron version package.json`)
       }
     }
   }
@@ -54,7 +54,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      warn(e)
+      log.warn(e)
     }
 
     throw new Error(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)

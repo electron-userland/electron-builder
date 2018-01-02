@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, debug, warn } from "builder-util"
+import { asArray, log } from "builder-util"
 import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
@@ -235,7 +235,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
   return BluebirdPromise.map(matchers, async (matcher: FileMatcher) => {
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      warn(`File source ${matcher.from} doesn't exist`)
+      log.warn({from: matcher.from}, `file source doesn't exist`)
       return
     }
 
@@ -253,9 +253,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
     if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
       matcher.prependPattern("**/*")
     }
-    if (debug.enabled) {
-      debug(`Copying files using pattern: ${matcher}`)
-    }
+    log.debug({matcher}, "copying files using pattern")
     return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter()})
   })
 }

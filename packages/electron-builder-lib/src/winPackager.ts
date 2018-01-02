@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, exec, execWine, log, use, warn } from "builder-util"
+import { Arch, asArray, exec, execWine, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
@@ -105,7 +105,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           }
         }
         catch (e) {
-          warn(`Cannot get publisher name using powershell: ${e.message}`)
+          log.warn({error: e.message}, "cannot get publisher name using powershell")
         }
       }
 
@@ -235,15 +235,24 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     if (logMessagePrefix == null) {
-      logMessagePrefix = `Signing ${path.basename(file)}`
+      logMessagePrefix = "signing"
     }
 
     if ("file" in cscInfo) {
-      log(`${logMessagePrefix} (certificate file: "${(cscInfo as FileCodeSigningInfo).file}")`)
+      log.info({
+        file: log.filePath(file),
+        certificateFile: (cscInfo as FileCodeSigningInfo).file,
+      }, logMessagePrefix)
     }
     else {
       const info = cscInfo as CertificateFromStoreInfo
-      log(`${logMessagePrefix} (subject: "${info.subject}", thumbprint: "${info.thumbprint}", store: ${info.store} (${info.isLocalMachineStore ? "local machine" : "current user"}))`)
+      log.info({
+        file: log.filePath(file),
+        subject: info.subject,
+        thumbprint: info.thumbprint,
+        store: info.store,
+        user: info.isLocalMachineStore ? "local machine" : "current user",
+      }, logMessagePrefix)
     }
 
     await this.doSign({
@@ -265,7 +274,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
-          warn(`Cannot sign, attempt ${i + 1}: ${message}`)
+          log.warn({error: message, attempt: i + 1}, `cannot sign`)
           continue
         }
         throw e

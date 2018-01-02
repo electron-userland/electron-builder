@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { PlatformPackager } from "../platformPackager"
@@ -15,7 +15,6 @@ export class ArchiveTarget extends Target {
     const packager = this.packager
     const isMac = packager.platform === Platform.MAC
     const format = this.name
-    log(`Building ${isMac ? "macOS " : ""}${format}`)
 
     let defaultPattern: string
     if (packager.platform === Platform.LINUX) {
@@ -27,6 +26,7 @@ export class ArchiveTarget extends Target {
       defaultPattern = "${productName}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + "-${os}.${ext}"
     }
     const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false))
+    this.logBuilding(`${isMac ? "macOS " : ""}${format}`, artifactPath, arch)
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }

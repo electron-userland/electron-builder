@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, log } from "builder-util"
+import { log } from "builder-util"
 import { CONCURRENCY, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
 import { ensureDir, Stats } from "fs-extra-p"
 import * as path from "path"
@@ -32,7 +32,7 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      debug(`Directory ${matcher.from} doesn't exists, skip file copying`)
+      log.debug({directory: matcher.from, reason: "doesn't exist"}, `skipped copying`)
       continue
     }
 
@@ -120,7 +120,7 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
-  log("Compiling using electron-compile")
+  log.info("compiling using electron-compile")
 
   const electronCompileCache = await packager.tempDirManager.getTempDir({prefix: "electron-compile-cache"})
   const cacheDir = path.join(electronCompileCache, ".cache")

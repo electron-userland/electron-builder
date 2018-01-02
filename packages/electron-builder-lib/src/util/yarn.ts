@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, log, spawn, warn } from "builder-util"
+import { asArray, log, spawn } from "builder-util"
 import { exists } from "builder-util/out/fs"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
@@ -62,7 +62,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  log(`Installing app dependencies for ${platform}:${arch} to ${appDir}`)
+  log.info({platform, arch, appDir}, `installing production dependencies`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
 
@@ -119,7 +119,7 @@ export interface RebuildOptions {
 export async function rebuild(appDir: string, options: RebuildOptions) {
   const nativeDeps = await BluebirdPromise.filter(await options.productionDeps!.value, it => exists(path.join(it.path, "binding.gyp")), {concurrency: 8})
   if (nativeDeps.length === 0) {
-    log(`No native production dependencies`)
+    log.info("no native production dependencies")
     return
   }
 
@@ -127,7 +127,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  log(`Rebuilding native production dependencies for ${platform}:${arch}`)
+  log.info({platform, arch}, "rebuilding native production dependencies")
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const isYarn = isYarnPath(execPath)
@@ -147,14 +147,14 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
       execArgs.push(...additionalArgs)
     }
     await BluebirdPromise.map(nativeDeps, dep => {
-      log(`Rebuilding native dependency ${dep.name}`)
+      log.info({name: dep.name}, `rebuilding native dependency`)
       return spawn(execPath!, execArgs, {
         cwd: dep.path,
         env,
       })
         .catch(error => {
           if (dep.optional) {
-            warn(`Cannot build optional native dep ${dep.name}`)
+            log.warn({dep: dep.name}, "cannot build optional native dep")
           }
           else {
             throw error

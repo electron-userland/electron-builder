@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug } from "builder-util"
+import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
@@ -87,8 +87,8 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
       continue
     }
 
-    if (debug.enabled) {
-      debug(`${pathInArchive} is not packed into asar archive - contains executable code`)
+    if (log.isDebugEnabled) {
+      log.debug({file: pathInArchive, reason: "contains executable code"}, "not packed into asar archive")
     }
 
     addParents(pathInArchive, packageDirPathInArchive)

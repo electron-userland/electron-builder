@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEnvTrue } from "builder-util"
+import { Arch, debug, isEnvTrue, log } from "builder-util"
 import { connect, constants } from "http2"
 import * as path from "path"
 import { promisify } from "util"
@@ -107,23 +107,17 @@ export class RemoteBuilder {
   }
 }
 
-function debugLog(message: string) {
-  if (debug.enabled) {
-    debug(`Remote build: ${message}`)
-  }
-}
-
 async function findBuildAgent(): Promise<string> {
   const result = process.env.ELECTRON_BUILD_SERVICE_ENDPOINT
   if (result != null) {
-    debugLog(`explicit endpoint: ${result}`)
+    log.debug({endpoint: result}, `endpoint is set explicitly`)
     return result.startsWith("http") ? result : `https://${result}`
   }
 
   const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "service.electron.build"
   // add random query param to prevent caching
   const routerUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`
-  debugLog(`router URL: ${routerUrl}`)
+  log.debug({routerUrl}, "")
   const client = connect(routerUrl, getConnectOptions())
   return await new BluebirdPromise<string>((resolve, reject) => {
     client.on("socketError", reject)
@@ -147,7 +141,9 @@ async function findBuildAgent(): Promise<string> {
       let data = ""
       stream.on("end", () => {
         try {
-          debugLog(data)
+          if (debug.enabled) {
+            debug(`Remote build: ${data}`)
+          }
           resolve(JSON.parse(data).endpoint)
         }
         catch (e) {

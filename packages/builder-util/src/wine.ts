@@ -1,18 +1,18 @@
+import { path7za } from "7zip-bin"
+import { ExecFileOptions } from "child_process"
 import { Lazy } from "lazy-val"
+import * as os from "os"
 import * as path from "path"
 import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
 import { getMacOsVersion } from "./macosVersion"
-import { debug, debug7zArgs, exec, isEnvTrue } from "./util"
-import { ExecFileOptions } from "child_process"
-import { path7za } from "7zip-bin"
-import * as os from "os"
+import { debug7zArgs, exec, isEnvTrue, log } from "./util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
   if (isUseSystemWine) {
-    debug("Using system wine is forced")
+    log.debug(null, "using system wine is forced")
   }
   else if (process.platform === "darwin") {
     // assume that on travis latest version is used

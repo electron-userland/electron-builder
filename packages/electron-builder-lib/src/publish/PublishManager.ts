@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -11,11 +11,11 @@ import isCi from "is-ci"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { Platform, Target, PlatformSpecificBuildOptions, ArtifactCreated } from "../index"
+import { ArtifactCreated, Platform, PlatformSpecificBuildOptions, Target } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
-import { UpdateInfoFileTask, writeUpdateInfoFiles, createUpdateInfoTasks } from "./updateInfoBuilder"
+import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -45,11 +45,11 @@ export class PublishManager implements PublishContext {
         else {
           const tag = getCiTag()
           if (tag != null) {
-            log(`Tag ${tag} is defined, so artifacts will be published`)
+            log.info({reason: "tag is defined", tag}, "artifacts will be published")
             publishOptions.publish = "onTag"
           }
           else if (isCi) {
-            log("CI detected, so artifacts will be published if draft release exists")
+            log.info({reason: "CI detected"}, "artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
           }
         }
@@ -58,13 +58,14 @@ export class PublishManager implements PublishContext {
       const publishPolicy = publishOptions.publish
       this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
       if (this.isPublish && forcePublishForPr) {
-        warn(publishForPrWarning)
+        log.warn(publishForPrWarning)
       }
     }
     else if (publishOptions.publish !== "never") {
-      log("Current build is a part of pull request, publishing will be skipped" +
-        "\nSet env PUBLISH_FOR_PULL_REQUEST to true to force code signing." +
-        `\n${publishForPrWarning}`)
+      log.info({
+        reason: "current build is a part of pull request",
+        solution: `set env PUBLISH_FOR_PULL_REQUEST to true to force code signing\n${publishForPrWarning}`,
+      }, "publishing will be skipped")
     }
 
     packager.addAfterPackHandler(async event => {
@@ -110,7 +111,11 @@ export class PublishManager implements PublishContext {
 
     const publisher = this.getOrCreatePublisher(publishConfig, event.packager)
     if (publisher == null) {
-      debug(`${event.file} is not published: publisher is null, ${safeStringifyJson(publishConfig)}`)
+      log.debug({
+        file: event.file,
+        reason: "publisher is null",
+        publishConfig: safeStringifyJson(publishConfig),
+      }, "not published")
       return
     }
 
@@ -129,7 +134,7 @@ export class PublishManager implements PublishContext {
     const eventFile = event.file
     if (publishConfigs == null) {
       if (this.isPublish) {
-        debug(`${eventFile} is not published: no publish configs`)
+        log.debug({file: eventFile, reason: "no publish configs"}, "not published")
       }
       return
     }
@@ -137,7 +142,7 @@ export class PublishManager implements PublishContext {
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
         if (this.cancellationToken.cancelled) {
-          debug(`${event.file} is not published: cancelled`)
+          log.debug({file: event.file, reason: "cancelled"}, "not published")
           break
         }
 
@@ -159,7 +164,7 @@ export class PublishManager implements PublishContext {
     if (publisher == null) {
       publisher = createPublisher(this, platformPackager.info.metadata.version!, publishConfig, this.publishOptions)
       this.nameToPublisher.set(providerCacheKey, publisher)
-      log(`Publishing to ${publisher}`)
+      log.info({publisher: publisher!!.toString()}, "publishing")
     }
     return publisher
   }
@@ -208,7 +213,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
   }
 
   if (publishConfigs.length === 0) {
-    debug("getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
+    log.debug(null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
@@ -328,7 +333,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
     }
 
     if (serviceName != null) {
-      debug(`Detect ${serviceName} as publish provider`)
+      log.debug(null, `Detect ${serviceName} as publish provider`)
       return [(await getResolvedPublishConfig(packager, {provider: serviceName}, arch))!]
     }
   }
@@ -421,13 +426,13 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
       throw new Error(message)
     }
     else {
-      warn(message)
+      log.warn(message)
       return null
     }
   }
 
   if (!owner || !project) {
-    debug(`Owner or project is not specified explicitly for ${provider}, call getInfo: owner: ${owner}, project: ${project}`)
+    log.debug({reason: "owner or project is not specified explicitly", provider, owner, project}, "calling getInfo")
     const info = await getInfo()
     if (info == null) {
       return null
@@ -443,7 +448,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
 
   if (isGithub) {
     if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
+      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return {owner, repo: project, ...options} as GithubOptions

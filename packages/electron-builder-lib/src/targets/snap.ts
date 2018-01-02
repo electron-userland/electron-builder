@@ -1,10 +1,10 @@
-import { Arch, exec, log, replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
+import { Arch, exec, replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
+import { SnapOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
-import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
 
@@ -30,8 +30,6 @@ export default class SnapTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
-    log(`Building Snap for arch ${Arch[arch]}`)
-
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
@@ -47,6 +45,10 @@ export default class SnapTarget extends Target {
     snap.description = this.helper.getDescription(options)
     snap.confinement = options.confinement || "strict"
     snap.grade = options.grade || "stable"
+
+    const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
+    const artifactPath = path.join(this.outDir, snapFileName)
+    this.logBuilding("snap", artifactPath, arch)
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
@@ -99,9 +101,6 @@ export default class SnapTarget extends Target {
     const snapcraftFile = path.join(snapDir, "snapcraft.yaml")
     await outputFile(snapcraftFile, serializeToYaml(snap))
 
-    const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
-    const resultFile = path.join(this.outDir, snapFileName)
-
     if (isUseDocker) {
       await this.buildUsingDocker(options, arch, snapFileName, stageDir, appOutDir)
     }
@@ -118,11 +117,11 @@ export default class SnapTarget extends Target {
       await exec("/bin/bash", ["-c", `rm -rf ${unnecessaryFiles.join(" ")}`], {
         cwd: stageDir.dir + path.sep + "prime",
       })
-      await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], spawnOptions)
+      await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", artifactPath], spawnOptions)
     }
 
     await stageDir.cleanup()
-    packager.dispatchArtifactCreated(resultFile, this, arch)
+    packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
 
   private async buildUsingDocker(options: SnapOptions, arch: Arch, snapFileName: string, stageDir: StageDir, appOutDir: string) {

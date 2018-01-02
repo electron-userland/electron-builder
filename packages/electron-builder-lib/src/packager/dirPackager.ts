@@ -1,6 +1,6 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { debug7zArgs, log, spawn, exec, isEnvTrue} from "builder-util"
+import { debug7zArgs, exec, isEnvTrue, log, spawn } from "builder-util"
 import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull } from "builder-util/out/fs"
 import { chmod, emptyDir } from "fs-extra-p"
 import * as path from "path"
@@ -71,7 +71,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
   else {
     const source = packager.getElectronSrcDir(dist)
     const destination = packager.getElectronDestinationDir(out)
-    log(`Copying Electron from "${source}" to "${destination}"`)
+    log.info({source, destination}, "copying Electron")
     await emptyDir(out)
     await copyDir(source, destination, {
       isUseHardLink: DO_NOT_USE_HARD_LINKS,

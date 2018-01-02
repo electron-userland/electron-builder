@@ -1,4 +1,4 @@
-import { log, warn } from "builder-util"
+import { log } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "electron-builder-lib"
 import { WinPackager } from "electron-builder-lib/out/winPackager"
@@ -15,12 +15,6 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
-    log(`Building Squirrel.Windows for arch ${Arch[arch]}`)
-
-    if (arch === Arch.ia32) {
-      warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
-    }
-
     const packager = this.packager
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
@@ -30,11 +24,19 @@ export default class SquirrelWindowsTarget extends Target {
     const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
 
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
+
+    const artifactPath = path.join(installerOutDir, setupFile)
+
+    this.logBuilding("Squirrel.Windows", artifactPath, arch)
+    if (arch === Arch.ia32) {
+      log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
+    }
+
     const distOptions = await this.computeEffectiveDistOptions()
     const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
     await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch)
 
-    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFile), this, arch, `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`)
+    packager.dispatchArtifactCreated(artifactPath, this, arch, `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`)
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
@@ -98,11 +100,11 @@ export default class SquirrelWindowsTarget extends Target {
     if (this.options.remoteReleases === true) {
       const info = await packager.info.repositoryInfo
       if (info == null) {
-        warn("remoteReleases set to true, but cannot get repository info")
+        log.warn("remoteReleases set to true, but cannot get repository info")
       }
       else {
         options.remoteReleases = `https://github.com/${info.user}/${info.project}`
-        log(`remoteReleases is set to ${options.remoteReleases}`)
+        log.info({remoteReleases: options.remoteReleases}, `remoteReleases is set`)
       }
     }
 
@@ -118,7 +120,7 @@ function checkConflictingOptions(options: any) {
   }
 
   if ("noMsi" in options) {
-    warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
+    log.warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
     options.msi = !options.noMsi
   }
 

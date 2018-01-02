@@ -1,4 +1,4 @@
-import { debug, warn } from "builder-util"
+import { debug, log } from "builder-util"
 import { FileTransformer } from "builder-util/out/fs"
 import { readFile } from "fs-extra-p"
 import * as path from "path"
@@ -31,7 +31,7 @@ export function createTransformer(srcDir: string, extraMetadata: any): FileTrans
     else if (file.endsWith("/package.json") && file.includes("/node_modules/")) {
       return readFile(file, "utf-8")
         .then(it => cleanupPackageJson(JSON.parse(it), false))
-        .catch(e => warn(e))
+        .catch(e => log.warn(e))
     }
     else {
       return null

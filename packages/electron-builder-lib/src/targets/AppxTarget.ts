@@ -1,16 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, log } from "builder-util"
-import { walk, copyOrLinkFile } from "builder-util/out/fs"
+import { copyOrLinkFile, walk } from "builder-util/out/fs"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
+import { AppXOptions } from "../"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
+import { VmManager } from "../vm/vm"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
-import { VmManager } from "../vm/vm"
 import { createStageDir } from "./targetUtil"
-import { AppXOptions } from "../"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -37,14 +37,16 @@ export default class AppXTarget extends Target {
   // https://docs.microsoft.com/en-us/windows/uwp/packaging/create-app-package-with-makeappx-tool#mapping-files
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
+    const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
+    const artifactPath = path.join(this.outDir, artifactName)
+    this.logBuilding("AppX", artifactPath, arch)
+
     const vendorPath = await getSignVendorPath()
     const vm = await packager.vm.value
 
     const stageDir = await createStageDir(this, packager, arch)
 
     const mappingFile = stageDir.getTempFile("mapping.txt")
-    const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
-    const artifactPath = path.join(this.outDir, artifactName)
     const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */,
       "/f", vm.toVmFile(mappingFile),
       "/p", vm.toVmFile(artifactPath),
@@ -149,7 +151,7 @@ export default class AppXTarget extends Target {
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
     if (await this.packager.cscInfo.value == null) {
-      log("AppX is not signed (Windows Store only build)")
+      log.info({reason: "Windows Store only build"}, "AppX is not signed")
       return this.options.publisher || "CN=ms"
     }
 
@@ -284,12 +286,4 @@ function isDefaultAssetIncluded(userAssets: Array<string>, defaultAsset: string)
 
 function isScaledAssetsProvided(userAssets: Array<string>) {
   return userAssets.some(it => it.includes(".scale-") || it.includes(".targetsize-"))
-}
-
-export function quoteString(s: string): string {
-  if (!s.includes(",") && !s.includes('"')) {
-    return s
-  }
-
-  return `"${s.replace(/"/g, '\\"')}"`
 }

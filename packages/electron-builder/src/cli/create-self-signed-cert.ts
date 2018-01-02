@@ -1,11 +1,10 @@
 import { exec, log, spawn, TmpDir } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import chalk from "chalk"
+import { getSignVendorPath } from "electron-builder-lib/out/windowsCodeSign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { quoteString } from "electron-builder-lib/out/targets/AppxTarget"
-import { getSignVendorPath } from "electron-builder-lib/out/windowsCodeSign"
 
 /** @internal */
 export async function createSelfSignedCert(publisher: string) {
@@ -15,7 +14,7 @@ export async function createSelfSignedCert(publisher: string) {
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 
-  log(chalk.bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
+  log.info(chalk.bold('When asked to enter a password ("Create Private Key Password"), please select "None".'))
 
   try {
     await ensureDir(path.dirname(tempPrefix))
@@ -26,13 +25,21 @@ export async function createSelfSignedCert(publisher: string) {
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
     await unlinkIfExists(pfx)
     await exec(path.join(vendorPath, "pvk2pfx.exe"), ["-pvk", pvk, "-spc", cer, "-pfx", pfx])
-    log(`${pfx} created. Please see https://electron.build/code-signing how to use it to sign.`)
+    log.info({file: pfx}, `created. Please see https://electron.build/code-signing how to use it to sign.`)
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
-    log(`${pfx} will be imported into ${certLocation} Operation will be succeed only if runned from root. Otherwise import file manually.`)
+    log.info({file: pfx, certLocation}, `importing. Operation will be succeed only if runned from root. Otherwise import file manually.`)
     await spawn("powershell.exe", ["Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", ""])
   }
   finally {
     await tmpDir.cleanup()
   }
+}
+
+function quoteString(s: string): string {
+  if (!s.includes(",") && !s.includes('"')) {
+    return s
+  }
+
+  return `"${s.replace(/"/g, '\\"')}"`
 }

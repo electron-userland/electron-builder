@@ -1,6 +1,6 @@
 import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { addValue, exec, log, spawn, warn } from "builder-util"
+import { addValue, exec, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, FileCopier, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
@@ -94,7 +94,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const dir = customTmpDir == null ? await tmpDir.createTempDir({prefix: "test-project"}) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
     await emptyDir(dir)
-    log(`Custom temp dir used: ${customTmpDir}`)
+    log.info({customTmpDir}, "custom temp dir used")
   }
 
   await copyDir(projectDir, dir, {
@@ -419,7 +419,7 @@ export function platform(platform: Platform): PackagerOptions {
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   if (process.env.CSC_KEY_PASSWORD == null) {
-    warn("macOS code sign is not tested — CSC_KEY_PASSWORD is not defined")
+    log.warn({reason: "CSC_KEY_PASSWORD is not defined"}, "macOS code sign is not tested")
   }
   else {
     packagerOptions.cscLink = CSC_LINK

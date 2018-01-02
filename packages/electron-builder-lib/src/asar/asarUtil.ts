@@ -3,7 +3,7 @@ import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { AsarOptions } from "../index"
+import { AsarOptions } from ".."
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { getDestinationPath } from "../util/appFileCopier"
@@ -253,6 +253,6 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
       missing += 1
     }
   }
-  log(`Ordering file has ${((total - missing) / total * 100)}% coverage.`)
+  log.info({coverage: ((total - missing) / total * 100)}, "ordering files in ASAR archive")
   return sortedFiles
 }

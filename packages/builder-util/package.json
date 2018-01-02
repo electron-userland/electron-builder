@@ -18,7 +18,6 @@
     "bluebird-lst": "^1.0.5",
     "chalk": "^2.3.0",
     "debug": "^3.1.0",
-    "node-emoji": "^1.8.1",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "source-map-support": "^0.5.0",
     "7zip-bin": "^2.3.4",

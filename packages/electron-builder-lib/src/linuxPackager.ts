@@ -108,7 +108,7 @@ class RemoteTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch) {
-    log(`Schedule remote ${this.target.name} build for arch ${Arch[arch]}`)
+    log.info({target: this.target.name, arch: Arch[arch]}, "scheduling remote build")
     await this.target.checkOptions()
     this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)
   }

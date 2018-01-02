@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, smarten, warn } from "builder-util"
+import { isEmptyOrSpaces, log, smarten } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
 import { Packager } from "./packager"
@@ -68,7 +68,7 @@ export class AppInfo {
     if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {
       const incorrectAppId = appId
       appId = generateDefaultAppId()
-      warn(`Do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
+      log.warn(`do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
     }
 
     return appId == null ? generateDefaultAppId() : appId

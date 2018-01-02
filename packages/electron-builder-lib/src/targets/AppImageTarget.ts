@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, log, serializeToYaml } from "builder-util"
+import { Arch, debug, exec, serializeToYaml } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { copyDir, copyOrLinkFile, unlinkIfExists, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -36,15 +36,13 @@ export default class AppImageTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
-    log(`Building AppImage for arch ${Arch[arch]}`)
-
     const packager = this.packager
-
     // https://github.com/electron-userland/electron-builder/issues/775
     // https://github.com/electron-userland/electron-builder/issues/1726
     // tslint:disable-next-line:no-invalid-template-strings
     const artifactName = packager.expandArtifactNamePattern(this.options, "AppImage", arch, "${name}-${version}-${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
+    this.logBuilding("AppImage", artifactPath, arch)
 
     // pax doesn't like dir with leading dot (e.g. `.__appimage`)
     const stageDir = await createStageDir(this, packager, arch)

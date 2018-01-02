@@ -1,6 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -52,7 +52,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  constructor(readonly info: Packager) {
+  protected constructor(readonly info: Packager) {
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
   }
@@ -85,7 +85,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
-      log("CSC_KEY_PASSWORD is not defined, empty password will be used")
+      log.info({reason: "CSC_KEY_PASSWORD is not defined"}, "empty password will be used for code signing")
       return ""
     }
     else {
@@ -151,7 +151,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const muonVersion = this.config.muonVersion
     const isElectron = muonVersion == null
     const config = this.config
-    log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${config.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
+    log.info({
+      platform: platformName,
+      arch: Arch[arch], [isElectron ? `electron` : `muon`]: isElectron ? config.electronVersion!! : muonVersion!!,
+      appOutDir: log.filePath(appOutDir),
+    }, `packaging`)
 
     if (this.info.isPrepackedAppAsar) {
       await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
@@ -276,7 +280,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
       //noinspection ES6MissingAwait
       if (appAsarStat == null || !appAsarStat.isFile()) {
-        warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
+        log.warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
           "Please enable asar and use asarUnpack to unpack files that must be externally available.")
       }
       return null
@@ -514,7 +518,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return path.join(this.info.buildResourcesDir, name)
     }
     else {
-      warn("Application icon is not set, default Electron icon will be used")
+      log.warn({reason: "application icon is not set"}, "default Electron icon is used")
       return null
     }
   }

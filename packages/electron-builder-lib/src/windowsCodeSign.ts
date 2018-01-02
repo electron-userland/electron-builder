@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, debug, isMacOsSierra, warn } from "builder-util"
+import { asArray, isMacOsSierra, log } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
 import { rename } from "fs-extra-p"
@@ -107,10 +107,10 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
 
     const parentPath = certInfo.PSParentPath
     const store = parentPath.substring(parentPath.lastIndexOf("\\") + 1)
-    debug(`Auto-detect certificate store ${store} (PSParentPath: ${parentPath})`)
+    log.debug({store, PSParentPath: parentPath}, "auto-detect certificate store")
     // https://github.com/electron-userland/electron-builder/issues/1717
     const isLocalMachineStore = (parentPath.includes("Certificate::LocalMachine"))
-    debug(`Auto-detect using of LocalMachine store`)
+    log.debug(null, "auto-detect using of LocalMachine store")
     return {
       thumbprint: certInfo.Thumbprint,
       subject: certInfo.Subject,
@@ -301,7 +301,7 @@ async function getToolPath(): Promise<ToolInfo> {
       }
     }
     catch (e) {
-      warn(`${e.stack || e}`)
+      log.warn(`${e.stack || e}`)
     }
     return {path: path.join(vendorPath, process.platform, `${suffix == null ? "" : `${suffix}/`}osslsigncode`)}
   }

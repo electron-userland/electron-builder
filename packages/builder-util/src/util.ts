@@ -8,10 +8,11 @@ import { safeDump } from "js-yaml"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
+import { debug, log } from "./log"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export { log, warn, task } from "./log"
+export { log, debug } from "./log"
 export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
@@ -22,7 +23,6 @@ export { hashFile } from "./hash"
 export { copyFile } from "./fs"
 export { asArray } from "builder-util-runtime"
 
-export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
 
 export function serializeToYaml(object: object) {
@@ -59,7 +59,7 @@ function getProcessEnv(env: { [key: string]: string | undefined } | undefined | 
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
   if (debug.enabled) {
-    debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
+    log.debug({file, args: args == null ? "" : removePassword(args.join(" "))}, "executing")
     if (options != null && options.env != null) {
       const diffEnv = {...options.env}
       for (const name of Object.keys(process.env)) {
@@ -70,7 +70,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
       debug(`env: ${safeStringifyJson(diffEnv)}`)
     }
     if (options != null && options.cwd != null) {
-      debug(`cwd: ${options.cwd}`)
+      log.debug(null, `cwd: ${options.cwd}`)
     }
   }
 
@@ -141,9 +141,9 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   // use general debug.enabled to log spawn, because it doesn't produce a lot of output (the only line), but important in any case
   if (debug.enabled) {
     const argsString = args.join(" ")
-    debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
+    log.debug({command, args: command === "docker" ? argsString : removePassword(argsString)}, "spawning")
     if (options != null && options.cwd != null) {
-      debug(`cwd: ${options.cwd}`)
+      debug({cwd: options.cwd}, "")
     }
   }
 
@@ -204,7 +204,7 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
 
   childProcess.once(event, (code: number) => {
     if (code === 0 && debug.enabled) {
-      debug(`${path.basename(command)} (${childProcess.pid}) exited with exit code 0`)
+      log.debug({command: path.basename(command), pid: childProcess.pid}, "exited with exit code 0")
     }
 
     if (code === 0) {

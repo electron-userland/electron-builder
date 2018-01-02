@@ -1,6 +1,6 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEnvTrue, log, spawn as _spawn, warn } from "builder-util"
+import { Arch, isEnvTrue, log, spawn as _spawn } from "builder-util"
 import { HttpError } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { UploadTask } from "electron-publish"
@@ -37,7 +37,7 @@ export function getConnectOptions(): SecureClientSessionOptions {
   const caCert = process.env.ELECTRON_BUILD_SERVICE_CA_CERT
   if (caCert !== "false") {
     if (isUseLocalCert) {
-      debug("Local certificate authority is used")
+      log.debug(null, "local certificate authority is used")
     }
     options.ca = caCert || (isUseLocalCert ? ELECTRON_BUILD_SERVICE_LOCAL_CA_CERT : ELECTRON_BUILD_SERVICE_CA_CERT)
     // we cannot issue cert per IP because build agent can be started on demand (and for security reasons certificate authority is offline).
@@ -58,7 +58,7 @@ export class RemoteBuildManager {
               private readonly unpackedDirectory: string,
               private readonly outDir: string,
               private readonly packager: PlatformPackager<any>) {
-    debug(`Connect to remote build service: ${buildServiceEndpoint}`)
+    log.debug({endpoint: buildServiceEndpoint}, "connect to remote build service")
     this.client = connect(buildServiceEndpoint, getConnectOptions())
   }
 
@@ -103,7 +103,7 @@ export class RemoteBuildManager {
         try {
           const status = headers[HTTP2_HEADER_STATUS] as any
           if (!checkStatus(status, reject)) {
-            warn(`Not critical server error: ${status}`)
+            log.warn(`Not critical server error: ${status}`)
           }
         }
         finally {
@@ -145,9 +145,7 @@ export class RemoteBuildManager {
         })
         stream.on("end", () => {
           const result = data.length === 0 ? {} : JSON.parse(data)
-          if (debug.enabled) {
-            debug(`Remote builder result: ${JSON.stringify(result, null, 2)}`)
-          }
+          log.debug({result: JSON.stringify(result, null, 2)}, `remote builder result`)
 
           if (status === HTTP_STATUS_BAD_REQUEST) {
             reject(new HttpError(status, JSON.stringify(result, null, 2)))
@@ -181,9 +179,7 @@ export class RemoteBuildManager {
 
         stream.setEncoding("utf8")
         const eventSource = new JsonStreamParser(data => {
-          if (debug.enabled) {
-            debug(`Remote builder event: ${JSON.stringify(data, null, 2)}`)
-          }
+          log.debug({event: JSON.stringify(data, null, 2)}, "remote builder event")
 
           const error = data.error
           if (error != null) {
@@ -196,19 +192,19 @@ export class RemoteBuildManager {
             let message = data.state
             switch (data.state) {
               case "added":
-                message = "Job added to build queue."
+                message = "job added to build queue"
                 break
 
               case "started":
-                message = "Job started."
+                message = "job started"
                 break
             }
-            log(message)
+            log.info(message)
             return
           }
 
           if (!("files" in data)) {
-            warn(`Unknown builder event: ${JSON.stringify(data)}`)
+            log.warn(`Unknown builder event: ${JSON.stringify(data)}`)
             return
           }
 
@@ -217,7 +213,7 @@ export class RemoteBuildManager {
 
           this.files = data.files
           for (const artifact of this.files!!) {
-            log(`Downloading ${artifact.file}`)
+            log.info({file: artifact.file}, `downloading remote build artifact`)
             this.downloadFile(id, artifact, resolve, reject)
           }
         })
@@ -235,10 +231,8 @@ export class RemoteBuildManager {
 
     const fileWritten = () => {
       this.finishedStreamCount++
-      log(`${artifact.file} is downloaded in ${downloadTimer.endAndGet()}`)
-      if (debug.enabled) {
-        debug(`Remote artifact saved to: ${localFile}`)
-      }
+      log.info({time: downloadTimer.endAndGet(), file: artifact.file}, `downloaded remote build artifact`)
+      log.debug({file: localFile}, `saved remote artifact`)
 
       // PublishManager uses outDir and options, real (the same as for local build) values must be used
       this.projectInfoManager.packager.dispatchArtifactCreated(artifactCreatedEvent)
@@ -323,7 +317,7 @@ export class RemoteBuildManager {
     BluebirdPromise.all([this.projectInfoManager.infoFile.value, getZstd()])
       .then(results => {
         const infoFile = results[0]
-        log(`Compressing and uploading to remote build agent`)
+        log.info(`compressing and uploading to remote build agent`)
         const compressAndUploadTimer = new DevTimer("compress and upload")
         // noinspection SpellCheckingInspection
         const tarProcess = spawn(path7za, [
@@ -344,7 +338,7 @@ export class RemoteBuildManager {
         zstdProcess.stdout.pipe(stream)
 
         zstdProcess.stdout.on("end", () => {
-          log(`Uploaded in ${compressAndUploadTimer.endAndGet()}`)
+          log.info({time: compressAndUploadTimer.endAndGet()}, `uploaded`)
         })
       })
       .catch(reject)

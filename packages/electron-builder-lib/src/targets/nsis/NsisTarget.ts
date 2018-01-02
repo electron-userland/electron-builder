@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, log, spawnAndWrite, use, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, log, spawnAndWrite, use } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull } from "builder-util/out/fs"
@@ -49,7 +49,7 @@ export class NsisTarget extends Target {
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
-      warn('"electron-squirrel-startup" dependency is not required for NSIS')
+      log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
   }
 
@@ -92,7 +92,6 @@ export class NsisTarget extends Target {
   }
 
   async finishBuild(): Promise<any> {
-    log(`Building ${this.name} installer (${Array.from(this.archs.keys()).map(it => Arch[it]).join(" and ")})`)
     try {
       await this.buildInstaller()
     }
@@ -116,8 +115,18 @@ export class NsisTarget extends Target {
     const options = this.options
     const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, this.installerFilenamePattern)
     const oneClick = options.oneClick !== false
-
     const installerPath = path.join(this.outDir, installerFilename)
+
+    const logFields: any = {
+      target: this.name,
+      file: log.filePath(installerPath),
+      archs: Array.from(this.archs.keys()).map(it => Arch[it]).join(", "),
+    }
+    if (!this.isPortable) {
+      logFields.oneClick = oneClick
+    }
+    log.info(logFields, "building")
+
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
     const defines: any = {
       APP_ID: appInfo.id,
@@ -244,7 +253,7 @@ export class NsisTarget extends Target {
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
-      log("Custom NSIS script is used - uninstaller is not signed by electron-builder")
+      log.info({reason: "custom NSIS script is used"}, "uninstaller is not signed by electron-builder")
       return script
     }
 

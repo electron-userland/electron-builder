@@ -1,14 +1,14 @@
 import { path7za, pathCompressStdIn } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "builder-util"
+import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
 import { computeEnv } from "builder-util/out/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
+import { DebOptions, LinuxTargetSpecificOptions } from ".."
 import { Target } from "../core"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
-import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 import { fpmPath, getLinuxToolsPath } from "./tools"
@@ -92,8 +92,6 @@ export default class FpmTarget extends Target {
 
     const target = this.name
 
-    log(`Building ${target}`)
-
     // tslint:disable:no-invalid-template-strings
     let nameFormat = "${name}-${version}-${arch}.${ext}"
     let isUseArchIfX64 = false
@@ -106,8 +104,11 @@ export default class FpmTarget extends Target {
       isUseArchIfX64 = true
     }
 
-    const destination = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
-    await unlinkIfExists(destination)
+    const artifactPath = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
+
+    this.logBuilding(target, artifactPath, arch)
+
+    await unlinkIfExists(artifactPath)
     if (this.packager.packagerOptions.prepackaged != null) {
       await ensureDir(this.outDir)
     }
@@ -127,7 +128,7 @@ export default class FpmTarget extends Target {
       "--after-remove", scripts[1],
       "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version", appInfo.version,
-      "--package", destination,
+      "--package", artifactPath,
     ]
 
     for (const key of Object.keys(fpmMetaInfoOptions)) {
@@ -179,6 +180,7 @@ export default class FpmTarget extends Target {
       }
     }
     else if (!Array.isArray(depends)) {
+      // noinspection SuspiciousTypeOfGuard
       if (typeof depends === "string") {
         depends = [depends as string]
       }
@@ -227,7 +229,7 @@ export default class FpmTarget extends Target {
     }
     await exec(await fpmPath.value, args, {env})
 
-    this.packager.dispatchArtifactCreated(destination, this, arch)
+    this.packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
 }
 
@@ -244,7 +246,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   const config = (await readFile(templatePath, "utf8"))
     .replace(/\${([a-zA-Z]+)}/g, replacer)
     .replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
-      warn("<%= varName %> is deprecated, please use ${varName} instead")
+      log.warn("<%= varName %> is deprecated, please use ${varName} instead")
       return replacer(match, p1.trim())
     })
 

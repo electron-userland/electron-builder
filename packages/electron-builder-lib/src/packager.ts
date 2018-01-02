@@ -1,9 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, serializeToYaml, TmpDir, use } from "builder-util"
+import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir, outputFile } from "fs-extra-p"
+import isCI from "is-ci"
+import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
@@ -74,7 +76,7 @@ export class Packager {
 
   readonly options: PackagerOptions
 
-  readonly debugLogger = new DebugLogger(debug.enabled)
+  readonly debugLogger = new DebugLogger(log.isDebugEnabled)
 
   get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
     return this._repositoryInfo.value
@@ -116,7 +118,7 @@ export class Packager {
   }
 
   get relativeBuildResourcesDirname(): string {
-    return use(this.config.directories, it => it!.buildResources) || "build"
+    return this.config.directories!!.buildResources!!
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -191,7 +193,7 @@ export class Packager {
     }
 
     try {
-      log("electron-builder " + PACKAGE_VERSION)
+      log.info({version: PACKAGE_VERSION}, "electron-builder")
     }
     catch (e) {
       // error in dev mode without babel
@@ -233,11 +235,11 @@ export class Packager {
 
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
-    if (debug.enabled) {
-      debug(`Effective config:\n${serializeToYaml(JSON.parse(safeStringifyJson(configuration)))}`)
+    if (log.isDebugEnabled) {
+      log.debug({config: serializeToYaml(JSON.parse(safeStringifyJson(configuration)))}, "effective config")
     }
 
-    this._appDir = await computeDefaultAppDirectory(projectDir, use(configuration.directories, it => it!.app))
+    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
 
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
@@ -252,7 +254,7 @@ export class Packager {
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
+      log.debug({devPackageFile, appPackageFile}, "two package.json structure is used")
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
@@ -283,7 +285,14 @@ export class Packager {
     }
     this.appInfo = new AppInfo(this)
 
-    const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
+    const outDir = path.resolve(this.projectDir, configuration.directories!!.output)
+
+    if (!isCI && (process.stdout as any).isTTY && process.env.TEST_APP_TMP_DIR == null) {
+      const effectiveConfigFile = path.join(outDir, "electron-builder.yaml")
+      log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
+      await outputFile(effectiveConfigFile, safeDump(configuration))
+    }
+
     return {
       outDir,
       platformToTargets: await executeFinally(this.doBuild(outDir), async () => {
@@ -291,7 +300,7 @@ export class Packager {
           await this.debugLogger.save(path.join(outDir, "electron-builder-debug.yml"))
         }
         await this.tempDirManager.cleanup()
-      })
+      }),
     }
   }
 
@@ -392,14 +401,14 @@ export class Packager {
     const frameworkInfo = {version: this.config.muonVersion || this.config.electronVersion!, useCustomDist: this.config.muonVersion == null}
     const config = this.config
     if (config.nodeGypRebuild === true) {
-      log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
+      log.info({arch: Arch[arch]}, "executing node-gyp rebuild")
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
         env: getGypEnv(frameworkInfo, platform.nodeName, Arch[arch], true),
       })
     }
 
     if (config.npmRebuild === false) {
-      log("Skip app dependencies rebuild because npmRebuild is set to false")
+      log.info({reason: "npmRebuild is set to false"}, "skipped app dependencies rebuild")
       return
     }
 
@@ -417,7 +426,7 @@ export class Packager {
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log("Skip app dependencies rebuild because platform is different and buildDependenciesFromSource is set to true")
+      log.info({reason: "platform is different and buildDependenciesFromSource is set to true"}, "skipped app dependencies rebuild")
     }
     else {
       await installOrRebuild(config, this.appDir, {
@@ -443,6 +452,7 @@ export class Packager {
 function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<string>): Promise<any> {
   const ourDirs = new Set<string>()
   for (const target of targetList) {
+    // noinspection SuspiciousInstanceOfGuard
     if (target instanceof NoOpTarget) {
       continue
     }
@@ -460,28 +470,6 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     })
   }
   return BluebirdPromise.resolve()
-}
-
-export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | null | undefined): Array<Platform> {
-  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | null | undefined>) : [rawPlatforms]
-  if (platforms as any == null || platforms.length === 0) {
-    return [Platform.fromString(process.platform)]
-  }
-  else if (platforms[0] === "all") {
-    if (process.platform === Platform.MAC.nodeName) {
-      return [Platform.MAC, Platform.LINUX, Platform.WINDOWS]
-    }
-    else if (process.platform === Platform.LINUX.nodeName) {
-      // macOS code sign works only on macOS
-      return [Platform.LINUX, Platform.WINDOWS]
-    }
-    else {
-      return [Platform.WINDOWS]
-    }
-  }
-  else {
-    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
-  }
 }
 
 export interface BuildResult {

@@ -1,21 +1,21 @@
-import { Target } from "../core"
-import { WinPackager } from "../winPackager"
-import { Arch, warn } from "builder-util"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, log } from "builder-util"
+import { UUID } from "builder-util-runtime"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { walk } from "builder-util/out/fs"
+import * as ejs from "ejs"
 import { readFile, writeFile } from "fs-extra-p"
-import { getTemplatePath } from "../util/pathManager"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
-import { createStageDir } from "./targetUtil"
 import { MsiOptions } from "../"
-import { UUID } from "builder-util-runtime"
-import BluebirdPromise from "bluebird-lst"
-import { walk } from "builder-util/out/fs"
+import { Target } from "../core"
+import { FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
-import * as ejs from "ejs"
-import { Lazy } from "lazy-val"
-import { getBinFromGithub } from "builder-util/out/binDownload"
-import { FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { WinPackager } from "../winPackager"
+import { createStageDir } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
@@ -42,6 +42,10 @@ export default class MsiTarget extends Target {
 
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
+    const artifactName = packager.expandArtifactNamePattern(this.options, "msi", arch)
+    const artifactPath = path.join(this.outDir, artifactName)
+    this.logBuilding("MSI", artifactPath, arch)
+
     const stageDir = await createStageDir(this, packager, arch)
     const vm = this.vm
 
@@ -50,7 +54,7 @@ export default class MsiTarget extends Target {
     if (commonOptions.isAssisted) {
       // F*** *** ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  *** WiX  ***  ***  ***  ***  ***  ***  ***  ***  ***
       // cannot understand how to set MSIINSTALLPERUSER on radio box change. In any case installed per user.
-      warn(`MSI DOESN'T SUPPORT assisted installer. Please use NSIS instead.`)
+      log.warn(`MSI DOESN'T SUPPORT assisted installer. Please use NSIS instead.`)
     }
 
     const projectFile = stageDir.getTempFile("project.wxs")
@@ -78,8 +82,6 @@ export default class MsiTarget extends Target {
       cwd: stageDir.dir,
     })
 
-    const artifactName = packager.expandArtifactNamePattern(this.options, "msi", arch)
-    const artifactPath = path.join(this.outDir, artifactName)
     await this.light(objectFiles, vm, artifactPath, appOutDir, vendorPath, stageDir.dir)
 
     await stageDir.cleanup()
@@ -141,7 +143,7 @@ export default class MsiTarget extends Target {
 
     const companyName = appInfo.companyName
     if (!companyName) {
-      warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
+      log.warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
     }
 
     const compression = this.packager.compression

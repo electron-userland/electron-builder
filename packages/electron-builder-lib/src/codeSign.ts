@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, getCacheDirectory, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, TmpDir, warn } from "builder-util"
+import { exec, getCacheDirectory, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { Fields, Logger } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { randomBytes } from "crypto"
 import { outputFile, rename } from "fs-extra-p"
@@ -21,7 +22,7 @@ export interface CodeSigningInfo {
 export function isSignAllowed(isPrintWarn = true): boolean {
   if (process.platform !== "darwin") {
     if (isPrintWarn) {
-      warn("macOS application code signing is supported only on macOS, skipping.")
+      log.warn({reason: "supported only on macOS"}, "skipped macOS application code signing")
     }
     return false
   }
@@ -32,13 +33,13 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   if (isPullRequest()) {
     if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
       if (isPrintWarn) {
-        warn(buildForPrWarning)
+        log.warn(buildForPrWarning)
       }
     }
     else {
       if (isPrintWarn) {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        warn("Current build is a part of pull request, code signing will be skipped." +
+        log.warn("Current build is a part of pull request, code signing will be skipped." +
           "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
           `\n${buildForPrWarning}`)
       }
@@ -49,20 +50,20 @@ export function isSignAllowed(isPrintWarn = true): boolean {
 }
 
 export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined, isForceCodeSigning: boolean) {
-  let message: string
+  const logFields: Fields = {}
   if (qualifier == null) {
-    message = `App is not signed`
+    logFields.reason = ""
     if (isAutoDiscoveryCodeSignIdentity()) {
-      const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
-      message += `: cannot find valid "${certificateType}" identity${postfix}`
+      logFields.reason += `cannot find valid "${certificateType}" identity${(isMas ? "" : ` or custom non-Apple code signing certificate`)}`
     }
-    message += ", see https://electron.build/code-signing"
+    logFields.reason += ", see https://electron.build/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {
-      message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
+      logFields.CSC_IDENTITY_AUTO_DISCOVERY = false
     }
   }
   else {
-    message = `Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`
+    logFields.reason = "Identity name is specified, but no valid identity with this name in the keychain"
+    logFields.identity = qualifier
   }
 
   const args = ["find-identity"]
@@ -71,19 +72,18 @@ export async function reportError(isMas: boolean, certificateType: CertType, qua
   }
 
   if (qualifier != null || isAutoDiscoveryCodeSignIdentity()) {
-    const allIdentities = (await exec("security", args))
+    logFields.allIdentities = (await exec("security", args))
       .trim()
       .split("\n")
       .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
       .join("\n")
-    message += "\n\nAll identities:\n" + allIdentities
   }
 
   if (isMas || isForceCodeSigning) {
-    throw new Error(message)
+    throw new Error(Logger.createMessage("skipped macOS application code signing", logFields, "error", it => it))
   }
   else {
-    warn(message)
+    log.warn(logFields, "skipped macOS application code signing")
   }
 }
 

@@ -1,20 +1,93 @@
-import BluebirdPromise from "bluebird-lst"
-import chalk from "chalk"
-import { get as getEmoji } from "node-emoji"
+import chalk, { Chalk } from "chalk"
+import _debug from "debug"
 import WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
+
+export const debug = _debug("electron-builder")
+
+export interface Fields {
+  [index: string]: any
+}
 
 export function setPrinter(value: ((message: string) => void) | null) {
   printer = value
 }
 
-class Logger {
+export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
+
+export const PADDING = 3
+
+export class Logger {
   constructor(protected readonly stream: WritableStream) {
   }
 
-  warn(message: string): void {
-    this.log(chalk.yellow(`Warning: ${message}`))
+  messageTransformer: ((message: string, level: LogLevel) => string) = it => it
+
+  filePath(file: string) {
+    const cwd = process.cwd()
+    return file.startsWith(cwd) ? file.substring(cwd.length + 1) : file
+  }
+
+  // noinspection JSMethodCanBeStatic
+  get isDebugEnabled() {
+    return debug.enabled
+  }
+
+  info(messageOrFields: Fields | null | string, message?: string) {
+    this.doLog(message, messageOrFields, "info")
+  }
+
+  notice(messageOrFields: Fields | null | string, message?: string): void {
+    this.doLog(message, messageOrFields, "notice")
+  }
+
+  warn(messageOrFields: Fields | null | string, message?: string): void {
+    this.doLog(message, messageOrFields, "warn")
+  }
+
+  debug(fields: Fields | null, message: string) {
+    if (debug.enabled) {
+      this._doLog(message, fields, "debug")
+    }
+  }
+
+  private doLog(message: string | undefined, messageOrFields: Fields | null | string, level: LogLevel) {
+    if (message === undefined) {
+      this._doLog(messageOrFields as string, null, level)
+    }
+    else {
+      this._doLog(message, messageOrFields as Fields | null, level)
+    }
+  }
+
+  private _doLog(message: string, fields: Fields | null, level: LogLevel) {
+    const levelIndicator = "•"
+    const color = LEVEL_TO_COLOR[level]
+    this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
+    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color))
+    this.stream.write("\n")
+  }
+
+  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string): string {
+    let text = message
+
+    const fieldPadding = " ".repeat(Math.max(0, 16 - message.length))
+    text += fieldPadding
+
+    if (fields != null) {
+      for (const name of Object.keys(fields)) {
+        let fieldValue = fields[name]
+        if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
+          fieldValue = ("\n" + fieldValue)
+            .replace(/\n/g, `\n${" ".repeat(PADDING)}${fieldPadding}`)
+        }
+
+        text += ` ${color(name)}=${Array.isArray(fieldValue) ? JSON.stringify(fieldValue) : fieldValue}`
+      }
+    }
+
+    return text
   }
 
   log(message: string): void {
@@ -25,34 +98,13 @@ class Logger {
       printer(message)
     }
   }
-
-  task(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
-    const promise = _promise as BluebirdPromise<any>
-    this.log(title)
-    return promise
-  }
 }
 
-class TtyLogger extends Logger {
-  constructor(stream: WritableStream) {
-    super(stream)
-  }
-
-  warn(message: string): void {
-    this.log(`${getEmoji("warning")}  ${chalk.yellow(message)}`)
-  }
+const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
+  info: chalk.blue,
+  notice: chalk.yellow,
+  warn: chalk.yellow,
+  debug: chalk.gray,
 }
 
-const logger = (process.stdout as any).isTTY ? new TtyLogger(process.stdout) : new Logger(process.stdout)
-
-export function warn(message: string) {
-  logger.warn(message)
-}
-
-export function log(message: string) {
-  logger.log(message)
-}
-
-export function task(title: string, promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
-  return logger.task(title, promise)
-}
+export const log = new Logger(process.stdout)

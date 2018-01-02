@@ -1,12 +1,9 @@
 import { exec, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseFiles } from "builder-util/out/license"
-import _debug from "debug"
 import { outputFile, readFile } from "fs-extra-p"
 import { serializeString } from "./dmgUtil"
 import { getLicenseButtons, getLicenseButtonsFile } from "./licenseButtons"
-
-export const debug = _debug("electron-builder")
 
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
 const DEFAULT_REGION_CODE = 0
@@ -29,8 +26,7 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   let counter = 5000
   const addedRegionCodes: Array<number> = []
   for (const item of licenseFiles) {
-
-    log("Adding " + item.langName + " license")
+    log.info({lang: item.langName}, "adding license")
 
     // value from DropDMG, data the same for any language
     // noinspection SpellCheckingInspection

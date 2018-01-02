@@ -1,13 +1,11 @@
+import { log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseAssets } from "builder-util/out/license"
-import _debug from "debug"
 import { readFile } from "fs-extra-p"
 import * as iconv from "iconv-lite"
 import { safeLoad } from "js-yaml"
 import { serializeString } from "./dmgUtil"
 import { getDefaultButtons } from "./licenseDefaultButtons"
-
-export const debug = _debug("electron-builder")
 
 export async function getLicenseButtonsFile(packager: PackageBuilder): Promise<Array<LicenseButtonsFile>> {
   return getLicenseAssets((await packager.resourceList)
@@ -48,13 +46,13 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
       data += serializeString("0006" + buttonsStr)
       data += `\n};`
 
-      if (debug.enabled) {
-        debug(`Overwriting the ${item.langName} license buttons:\n${data}`)
+      if (log.isDebugEnabled) {
+        log.debug({lang: item.langName, data}, `overwriting license buttons`)
       }
       return data
     }
     catch (e) {
-      debug(`!Error while overwriting buttons: ${e}`)
+      log.debug({error: e}, "cannot overwrite license buttons")
       return data
     }
   }
@@ -85,7 +83,7 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
       result += hex
     }
     catch (e) {
-      debug(`there was a problem while trying to convert a char (${str[i]}) to hex: ${e}`)
+      log.debug({error: e, char: str[i]}, "cannot convert")
       result += "3F" //?
     }
   }

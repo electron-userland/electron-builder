@@ -4,10 +4,10 @@ import { statOrNull } from "builder-util/out/fs"
 import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { PkgOptions } from ".."
 import { findIdentity, Identity } from "../codeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
-import { PkgOptions } from "../options/macOptions"
 import { filterCFBundleIdentifier } from "../packager/mac"
 
 const certType = "Developer ID Installer"
@@ -33,6 +33,11 @@ export class PkgTarget extends Target {
     const options = this.options
     const appInfo = packager.appInfo
 
+    const artifactName = packager.expandArtifactNamePattern(options, "pkg")
+    const artifactPath = path.join(this.outDir, artifactName)
+
+    this.logBuilding("pkg", artifactPath, arch)
+
     const keychainName = (await packager.codeSigningInfo).keychainName
 
     const appOutDir = this.outDir
@@ -50,8 +55,6 @@ export class PkgTarget extends Target {
       throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://electron.build/code-signing`)
     }
 
-    const artifactName = packager.expandArtifactNamePattern(options, "pkg")
-    const artifactPath = path.join(appOutDir, artifactName)
     const args = prepareProductBuildArgs(identity, keychainName)
     args.push("--distribution", distInfoFile)
     args.push(artifactPath)

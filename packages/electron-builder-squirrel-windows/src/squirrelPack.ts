@@ -21,7 +21,7 @@ export function convertVersion(version: string): string {
 }
 
 function syncReleases(outputDirectory: string, options: SquirrelOptions) {
-  log("Sync releases to build delta package")
+  log.info("syncing releases to build delta package")
   const args = prepareArgs(["-u", options.remoteReleases!, "-r", outputDirectory], path.join(options.vendorPath, "SyncReleases.exe"))
   if (options.remoteToken) {
     args.push("-t", options.remoteToken)
