@@ -60,6 +60,7 @@ Keep in mind — if you customize NSIS script, you should always state about it 
 
 * `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
 * `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to include files).
+* `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir`.
 * File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
 * All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
 
