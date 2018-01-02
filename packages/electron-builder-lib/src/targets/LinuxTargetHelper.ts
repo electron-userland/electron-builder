@@ -148,11 +148,13 @@ export class LinuxTargetHelper {
 
       if (category == null) {
         // https://github.com/develar/onshape-desktop-shell/issues/48
-        let message = "Application category is not set for Linux (linux.category).\nPlease see https://electron.build/configuration/configuration#LinuxBuildOptions-category"
         if (macCategory != null) {
-          message += `\n Cannot map mac category "${macCategory}" to Linux. If possible mapping is known for you, please file issue to add it.`
+          log.warn({macCategory}, "cannot map macOS category to Linux. If possible mapping is known for you, please file issue to add it.")
         }
-        log.warn(message)
+        log.warn({
+          reason: "linux.category is not set and cannot map from macOS",
+          docs: "https://electron.build/configuration/configuration#LinuxBuildOptions-category",
+        }, "application Linux category is set to default \"Utility\"")
         category = "Utility"
       }
     }
@@ -257,6 +259,7 @@ const macToLinuxCategory: any = {
   "public.app-category.video": "Video;AudioVideo",
   "public.app-category.utilities": "Utility",
   "public.app-category.social-networking": "Chat",
+  "public.app-category.finance": "Finance",
 }
 
 function resizeImage(imagePath: string, result: string, w: number, h: number) {
