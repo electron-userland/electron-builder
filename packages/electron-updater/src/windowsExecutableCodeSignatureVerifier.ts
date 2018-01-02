@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
+import * as os from "os"
 import { Logger } from "./main"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
@@ -8,10 +9,17 @@ import { Logger } from "./main"
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, tempUpdateFile: string, logger: Logger): Promise<string | null> {
   return new BluebirdPromise<string | null>((resolve, reject) => {
+    // https://github.com/electron-userland/electron-builder/issues/2421
     execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
-      timeout: 60 * 1000
+      timeout: 30 * 1000
     }, (error, stdout, stderr) => {
       if (error != null || stderr) {
+        if (isOldWin6()) {
+          logger.warn(`Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
+          resolve(null)
+          return
+        }
+
         try {
           execFileSync("powershell.exe", ["ConvertTo-Json test"], {timeout: 10 * 1000})
         }
@@ -60,4 +68,9 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
       resolve(result)
     })
   })
+}
+
+function isOldWin6() {
+  const winVersion = os.release()
+  return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
