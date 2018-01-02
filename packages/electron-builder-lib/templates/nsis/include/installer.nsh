@@ -168,10 +168,10 @@
   ${if} $oldMenuDirectory != ""
     !ifdef MENU_FILENAME
       ${if} $oldMenuDirectory != "${MENU_FILENAME}"
-        RMDir /r "$SMPROGRAMS\$oldMenuDirectory"
+        RMDir "$SMPROGRAMS\$oldMenuDirectory"
       ${endIf}
     !else
-      RMDir /r "$SMPROGRAMS\$oldMenuDirectory"
+      RMDir "$SMPROGRAMS\$oldMenuDirectory"
     !endif
   ${endIf}
 !macroend
