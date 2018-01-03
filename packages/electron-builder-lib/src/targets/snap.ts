@@ -77,7 +77,7 @@ export default class SnapTarget extends Target {
 
     const isUseDocker = process.platform !== "linux"
     // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-    const defaultStagePackages = ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]
+    const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]
     const defaultAfter = ["desktop-gtk2"]
     const after = replaceDefault(options.after, defaultAfter)
     snap.parts = {
