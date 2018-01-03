@@ -51,7 +51,7 @@
     "electron-publish": "0.0.0-semantic-release",
     "fs-extra-p": "^4.5.0",
     "hosted-git-info": "^2.5.0",
-    "is-ci": "^1.0.10",
+    "is-ci": "^1.1.0",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.10.0",
     "read-config-file": "2.0.1",

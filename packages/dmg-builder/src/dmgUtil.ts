@@ -2,9 +2,11 @@ import BluebirdPromise from "bluebird-lst"
 import { exec } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
+import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import { outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
+import { TmpDir } from "temp-file"
 
 const root = path.join(__dirname, "..")
 
@@ -36,7 +38,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
 
 export async function detach(name: string) {
   try {
-    await exec("hdiutil", ["detach", name])
+    await exec("hdiutil", ["detach", "-quiet", name])
   }
   catch (e) {
     await new BluebirdPromise((resolve, reject) => {
@@ -53,7 +55,7 @@ export function computeBackgroundColor(rawValue: string) {
   return require("parse-color")(rawValue).hex
 }
 
-export async function computeBackground(packager: PackageBuilder) {
+export async function computeBackground(packager: PackageBuilder): Promise<string> {
   const resourceList = await packager.resourceList
   if (resourceList.includes("background.tiff")) {
     return path.join(packager.buildResourcesDir, "background.tiff")
@@ -77,6 +79,21 @@ export async function applyProperties(entries: any, env: any, asyncTaskManager: 
     cwd: getDmgVendorPath(),
     env
   })
+}
+
+export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir): Promise<string> {
+  if (file.endsWith(".tiff") || file.endsWith(".TIFF")) {
+    return file
+  }
+
+  const retinaFile = file.replace(/\.([a-z]+)$/, "@2x.$1")
+  if (await exists(retinaFile)) {
+    const tiffFile = await tmpDir.getTempFile({suffix: ".tiff"})
+    await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
+    return tiffFile
+  }
+
+  return file
 }
 
 /** @internal */

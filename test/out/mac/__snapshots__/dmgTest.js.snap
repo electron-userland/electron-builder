@@ -2358,6 +2358,18 @@ Object {
 }
 `;
 
+exports[`retina background as 2 png 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
+`;
+
 exports[`unset dmg icon 1`] = `
 Object {
   "mac": Array [

@@ -47,6 +47,7 @@
       <w>bootstrapper</w>
       <w>buildpack</w>
       <w>byteranges</w>
+      <w>cathidpicheck</w>
       <w>checksums</w>
       <w>chipset</w>
       <w>chown</w>
@@ -320,6 +321,7 @@
       <w>templating</w>
       <w>testapp</w>
       <w>thenable</w>
+      <w>tiffutil</w>
       <w>timestamping</w>
       <w>toml</w>
       <w>tsconfig</w>

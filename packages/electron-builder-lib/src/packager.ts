@@ -5,7 +5,7 @@ import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile } from "fs-extra-p"
 import isCI from "is-ci"
-import { safeDump } from "js-yaml"
+import { dump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
@@ -287,10 +287,11 @@ export class Packager {
 
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output)
 
-    if (!isCI && (process.stdout as any).isTTY && process.env.TEST_APP_TMP_DIR == null) {
+    if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(outDir, "electron-builder.yaml")
       log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
-      await outputFile(effectiveConfigFile, safeDump(configuration))
+      // dump instead of safeDump to dump functions
+      await outputFile(effectiveConfigFile, dump(configuration))
     }
 
     return {

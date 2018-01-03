@@ -138,7 +138,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (this.forceCodeSigning) {
         throw new Error("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
-      log.info({reason: "identity explicitly is set to null"}, "skipped macOS application code signing")
+      log.info({reason: "identity explicitly is set to null"}, "skipped macOS code signing")
       return
     }
 

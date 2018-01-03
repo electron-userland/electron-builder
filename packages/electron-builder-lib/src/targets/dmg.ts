@@ -1,9 +1,8 @@
 import { Arch, AsyncTaskManager, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
-import { isMacOsHighSierra } from "builder-util/out/macosVersion"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
-import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
+import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach, transformBackgroundFileIfNeed } from "dmg-builder/out/dmgUtil"
 import { stat } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
@@ -34,9 +33,7 @@ export class DmgTarget extends Target {
     const tempDmg = await createStageDmg(await packager.getTempFile(".dmg"), appPath, volumeName)
 
     // https://github.com/electron-userland/electron-builder/issues/2115
-    const backgroundFilename = specification.background == null ? null : path.basename(specification.background)
-    const backgroundFile = backgroundFilename == null ? null : path.resolve(packager.info.projectDir, specification.background!)
-
+    const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
     const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
     await exec("hdiutil", ["resize", "-size", finalSize.toString(), tempDmg])
 
@@ -46,7 +43,7 @@ export class DmgTarget extends Target {
       await detach(volumePath)
     }
 
-    if (!await attachAndExecute(tempDmg, true, () => customizeDmg(volumePath, specification, packager, backgroundFile, backgroundFilename))) {
+    if (!await attachAndExecute(tempDmg, true, () => customizeDmg(volumePath, specification, packager, backgroundFile))) {
       return
     }
 
@@ -55,9 +52,9 @@ export class DmgTarget extends Target {
     if (specification.format === "UDZO") {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
-    await spawn("hdiutil", addVerboseIfNeed(args))
+    await spawn("hdiutil", addLogLevel(args))
     if (this.options.internetEnabled) {
-      await exec("hdiutil", addVerboseIfNeed(["internet-enable"]).concat(artifactPath))
+      await exec("hdiutil", addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 
     const licenseData = await addLicenseToDmg(packager, artifactPath)
@@ -179,14 +176,18 @@ export class DmgTarget extends Target {
       throw new Error("dmg.icon cannot be specified as empty string")
     }
 
+    const background = specification.background
     if (specification.backgroundColor != null) {
-      if (specification.background != null) {
+      if (background != null) {
         throw new Error("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
       }
       specification.backgroundColor = computeBackgroundColor(specification.backgroundColor)
     }
-    else if (!("background" in specification)) {
+    else if (background == null) {
       specification.background = await computeBackground(packager)
+    }
+    else {
+      specification.background = path.resolve(packager.info.projectDir, background)
     }
 
     if (specification.format == null) {
@@ -217,34 +218,24 @@ export class DmgTarget extends Target {
 
 async function createStageDmg(tempDmg: string, appPath: string, volumeName: string) {
   //noinspection SpellCheckingInspection
-  const imageArgs = addVerboseIfNeed(["create",
+  const imageArgs = addLogLevel(["create",
     "-srcfolder", appPath,
     "-volname", volumeName,
     "-anyowners", "-nospotlight",
     "-format", "UDRW",
   ])
-
-  if (await isMacOsHighSierra()) {
-    // imageArgs.push("-fs", "APFS")
-    imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
-  }
-  else {
-    imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
-  }
-
+  imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
   imageArgs.push(tempDmg)
   await spawn("hdiutil", imageArgs)
   return tempDmg
 }
 
-function addVerboseIfNeed(args: Array<string>): Array<string> {
-  if (process.env.DEBUG_DMG === "true") {
-    args.push("-verbose")
-  }
+function addLogLevel(args: Array<string>): Array<string> {
+  args.push(process.env.DEBUG_DMG === "true" ? "-verbose" : "-quiet")
   return args
 }
 
-async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | null) {
+async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | null | undefined) {
   const asyncTaskManager = new AsyncTaskManager(cancellationToken)
   asyncTaskManager.addTask(stat(dmgFile))
 
@@ -265,11 +256,11 @@ async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: s
   return result
 }
 
-async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null, backgroundFilename: string | null) {
+async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null | undefined) {
   const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
   if (backgroundFile != null) {
-    asyncTaskManager.addTask(copyFile(backgroundFile, path.join(volumePath, ".background", backgroundFilename!!)))
+    asyncTaskManager.addTask(copyFile(backgroundFile, path.join(volumePath, ".background", path.basename(backgroundFile))))
   }
 
   const window = specification.window!
@@ -316,7 +307,9 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
       env.windowHeight = window.height.toString()
     }
 
-    env.backgroundFilename = backgroundFilename as any
+    if (backgroundFile != null) {
+      env.backgroundFilename = path.basename(backgroundFile)
+    }
   }
 
   await applyProperties(await computeDmgEntries(specification, volumePath, packager, asyncTaskManager), env, asyncTaskManager, packager)

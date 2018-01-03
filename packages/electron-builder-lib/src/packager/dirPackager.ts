@@ -17,7 +17,8 @@ function createDownloadOpts(opts: Configuration, platform: string, arch: string,
   return {
     platform,
     arch,
-    version: electronVersion, ...opts.electronDownload
+    version: electronVersion,
+    ...opts.electronDownload,
   }
 }
 
@@ -31,7 +32,8 @@ export function unpackMuon(packager: PlatformPackager<any>, out: string, platfor
   return unpack(packager, out, platform, {
     mirror: "https://github.com/brave/muon/releases/download/v",
     customFilename: `brave-v${version}-${platform}-${arch}.zip`,
-    verifyChecksum: false, ...createDownloadOpts(packager.config, platform, arch, version)
+    verifyChecksum: false,
+    ...createDownloadOpts(packager.config, platform, arch, version),
   })
 }
 

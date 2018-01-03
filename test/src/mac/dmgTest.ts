@@ -1,9 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
+import { exec } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "electron-builder-lib"
-import { remove, writeFile } from "fs-extra-p"
+import { remove, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
@@ -58,6 +59,37 @@ test.ifAll.ifMac("custom background - new way", () => {
       copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "customIcon.icns")),
       copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns")),
     ]),
+  })
+})
+
+test.ifAll.ifMac("retina background as 2 png", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.MAC.createTarget(),
+    config: {
+      publish: null,
+    },
+    effectiveOptionComputed: async it => {
+      expect(it.specification.background).toMatch(/\.tiff$/)
+      return true
+    },
+  }, {
+    projectDirCreated: async projectDir => {
+      const resourceDir = path.join(projectDir, "build")
+      await copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(resourceDir, "background.tiff"))
+
+      async function extractPng(index: number, suffix: string) {
+        await exec("tiffutil", ["-extract", index.toString(), path.join(getDmgTemplatePath(), "background.tiff")], {
+          cwd: projectDir
+        })
+        await exec("sips", ["-s", "format", "png", "out.tiff", "--out", `background${suffix}.png`], {
+          cwd: projectDir
+        })
+      }
+
+      await extractPng(0, "")
+      await extractPng(1, "@2x")
+      await unlink(path.join(resourceDir, "background.tiff"))
+    },
   })
 })
 
@@ -155,11 +187,6 @@ test.ifAll.ifMac("bundleShortVersion", app({
   checkMacApp: async (appDir, info) => {
     expect(info).toMatchSnapshot()
   },
-  // packed: async context => {
-    // return attachAndExecute(path.join(context.outDir, "NoBackground-2017.1-alpha5.dmg"), false, () => {
-    //   return assertThat(path.join("/Volumes/NoBackground 2017.1-alpha5/.background")).doesNotExist()
-    // })
-  // }
 }))
 
 test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {

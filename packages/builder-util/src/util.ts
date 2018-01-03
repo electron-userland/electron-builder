@@ -58,36 +58,49 @@ function getProcessEnv(env: { [key: string]: string | undefined } | undefined | 
 }
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-  if (debug.enabled) {
-    log.debug({file, args: args == null ? "" : removePassword(args.join(" "))}, "executing")
-    if (options != null && options.env != null) {
-      const diffEnv = {...options.env}
-      for (const name of Object.keys(process.env)) {
-        if (process.env[name] === options.env[name]) {
-          delete diffEnv[name]
-        }
+  if (log.isDebugEnabled) {
+    const logFields: any = {
+      file,
+      args: args == null ? "" : removePassword(args.join(" ")),
+    }
+    if (options != null) {
+      if (options.cwd != null) {
+        logFields.cwd = options.cwd
       }
-      debug(`env: ${safeStringifyJson(diffEnv)}`)
+
+      if (options.env != null) {
+        const diffEnv = {...options.env}
+        for (const name of Object.keys(process.env)) {
+          if (process.env[name] === options.env[name]) {
+            delete diffEnv[name]
+          }
+        }
+        logFields.env = safeStringifyJson(diffEnv)
+      }
     }
-    if (options != null && options.cwd != null) {
-      log.debug(null, `cwd: ${options.cwd}`)
-    }
+
+    log.debug(logFields, "executing")
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
-    execFile(file, args as any, {
+    execFile(file, args, {
     ...options,
     maxBuffer: 10 * 1024 * 1024,
     env: getProcessEnv(options == null ? null : options.env),
   }, (error, stdout, stderr) => {
       if (error == null) {
-        if (isLogOutIfDebug && debug.enabled) {
-          if (stderr.length !== 0) {
-            debug(file.endsWith("wine") ? removeWineSpam(stderr.toString()) : stderr)
+        if (isLogOutIfDebug && log.isDebugEnabled) {
+          const logFields: any = {
+            file,
           }
-          if (stdout.length !== 0) {
-            debug(stdout)
+          if (stdout.length > 0) {
+            logFields.stdout = stdout
           }
+          if (stderr.length > 0) {
+            logFields.stderr = file.endsWith("wine") ? removeWineSpam(stderr.toString()) : stderr
+          }
+
+          log.debug(logFields, "executed")
         }
         resolve(stdout.toString())
       }
@@ -139,12 +152,16 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 
   // use general debug.enabled to log spawn, because it doesn't produce a lot of output (the only line), but important in any case
-  if (debug.enabled) {
+  if (log.isDebugEnabled) {
     const argsString = args.join(" ")
-    log.debug({command, args: command === "docker" ? argsString : removePassword(argsString)}, "spawning")
-    if (options != null && options.cwd != null) {
-      debug({cwd: options.cwd}, "")
+    const logFields: any = {
+      command,
+      args: command === "docker" ? argsString : removePassword(argsString),
     }
+    if (options != null && options.cwd != null) {
+      logFields.cwd = options.cwd
+    }
+    log.debug(logFields, "spawning")
   }
 
   try {
@@ -203,8 +220,12 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
   }
 
   childProcess.once(event, (code: number) => {
-    if (code === 0 && debug.enabled) {
-      log.debug({command: path.basename(command), pid: childProcess.pid}, "exited with exit code 0")
+    if (log.isDebugEnabled) {
+      log.debug({
+        command: path.basename(command),
+        code,
+        pid: childProcess.pid,
+      }, "exited")
     }
 
     if (code === 0) {

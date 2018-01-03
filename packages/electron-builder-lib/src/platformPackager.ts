@@ -280,8 +280,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
       //noinspection ES6MissingAwait
       if (appAsarStat == null || !appAsarStat.isFile()) {
-        log.warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
-          "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+        log.warn({
+          solution: "enable asar and use asarUnpack to unpack files that must be externally available",
+        }, "asar using is disabled — it is strongly not recommended")
       }
       return null
     }

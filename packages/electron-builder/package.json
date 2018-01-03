@@ -51,7 +51,7 @@
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
     "fs-extra-p": "^4.5.0",
-    "is-ci": "^1.0.10",
+    "is-ci": "^1.1.0",
     "read-config-file": "2.0.1",
     "sanitize-filename": "^1.6.1",
     "update-notifier": "^2.3.0",

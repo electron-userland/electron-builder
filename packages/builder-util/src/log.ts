@@ -16,7 +16,7 @@ export function setPrinter(value: ((message: string) => void) | null) {
 
 export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
 
-export const PADDING = 3
+export const PADDING = 2
 
 export class Logger {
   constructor(protected readonly stream: WritableStream) {
@@ -65,28 +65,43 @@ export class Logger {
     const levelIndicator = "•"
     const color = LEVEL_TO_COLOR[level]
     this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
-    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color))
+    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
     this.stream.write("\n")
   }
 
-  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string): string {
-    let text = message
-
-    const fieldPadding = " ".repeat(Math.max(0, 16 - message.length))
-    text += fieldPadding
-
-    if (fields != null) {
-      for (const name of Object.keys(fields)) {
-        let fieldValue = fields[name]
-        if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
-          fieldValue = ("\n" + fieldValue)
-            .replace(/\n/g, `\n${" ".repeat(PADDING)}${fieldPadding}`)
-        }
-
-        text += ` ${color(name)}=${Array.isArray(fieldValue) ? JSON.stringify(fieldValue) : fieldValue}`
-      }
+  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0): string {
+    if (fields == null) {
+      return message
     }
 
+    let text = message
+
+    const fieldPadding = " ".repeat(Math.max(1, 16 - message.length))
+    text += fieldPadding
+
+    const fieldNames = Object.keys(fields)
+    let counter = 0
+    for (const name of fieldNames) {
+      let fieldValue = fields[name]
+      let valuePadding: string | null = null
+      if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
+        valuePadding = " ".repeat(messagePadding + message.length + fieldPadding.length + 2)
+        fieldValue = "\n" + valuePadding + fieldValue.replace(/\n/g, `\n${valuePadding}`)
+      }
+      else if (Array.isArray(fieldValue)) {
+        fieldValue = JSON.stringify(fieldValue)
+      }
+
+      text += `${color(name)}=${fieldValue}`
+      if (++counter !== fieldNames.length) {
+        if (valuePadding == null) {
+          text += " "
+        }
+        else {
+          text += "\n" + valuePadding
+        }
+      }
+    }
     return text
   }
 
