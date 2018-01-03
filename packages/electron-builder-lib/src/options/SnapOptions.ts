@@ -47,7 +47,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
-   * Defaults to `["desktop-only""]`.
+   * Defaults to `["desktop-gtk2""]`.
    *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
    */
