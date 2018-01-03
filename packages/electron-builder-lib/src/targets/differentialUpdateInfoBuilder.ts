@@ -4,7 +4,7 @@ import * as path from "path"
 import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveOptions } from "./archive"
-import { getTool } from "./tools"
+import { getBlockMapTool } from "./tools"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
 
@@ -42,20 +42,6 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
   // do not allow to change compression level to avoid different packages
   archiveOptions.compression = "normal"
   return archiveOptions
-}
-
-function getBlockMapTool() {
-  // noinspection SpellCheckingInspection
-  return getTool({
-    repository: "develar/block-map-builder",
-    name: "block-map-builder",
-    version: "0.2.0",
-    mac: "J+aspHER9Hba70oDJAg9ZUyr5KC8beTjIedMQRgrdsWd5Qlc+0COy+zXMw7Pcq+hqDvsEFoM2N4Yx6wQAaXDXA==",
-    "linux-ia32": "2zkhj4GVvLg8JDsGIDc4CUeZ+eHxwPchNuub+FTjO98YJyCIKDItJorfTStoZe4qlYqCE1tAX7Q/NXmBvpwj6A==",
-    "linux-x64": "2iErpiWfSMWMMFALd2sIcfU7cd4mFc96EzA/6j9/XCAx0Z6y6vSJinwjMlcemN2SUUsyVkUnHkinCLK7M34GXQ==",
-    "win-ia32": "QH/b+cmbsPtyaGzKriNGQtvKQ0KEUictieprGgcP7s4flHDXcsO+WtkecZpuJn5m3VLR0dGeSOw/oDxGxszBZA==",
-    "win-x64": "GMT7M9IibT8v5OY45N7Ar97rHpBcc9HexUGGePnzkv++4Dh7DjIlEeo/Q50MRRkp6pdgIrkG1OawEbJIt2DkLw==",
-  })
 }
 
 export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {

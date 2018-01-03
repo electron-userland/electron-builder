@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEnvTrue, log } from "builder-util"
+import { Arch, isEnvTrue, log } from "builder-util"
 import { connect, constants } from "http2"
 import * as path from "path"
 import { promisify } from "util"
@@ -21,7 +21,7 @@ export class RemoteBuilder {
   private readonly toBuild = new Map<Arch, Array<TargetInfo>>()
   private buildStarted = false
 
-  constructor(private readonly packager: PlatformPackager<any>) {
+  constructor(readonly packager: PlatformPackager<any>) {
   }
 
   scheduleBuild(target: Target, arch: Arch, unpackedDirectory: string) {
@@ -57,8 +57,8 @@ export class RemoteBuilder {
 
   // noinspection JSMethodCanBeStatic
   private async _build(targets: Array<TargetInfo>, packager: PlatformPackager<any>): Promise<any> {
-    if (debug.enabled) {
-      debug(`Remote build targets: ${JSON.stringify(targets, null, 2)}`)
+    if (log.isDebugEnabled) {
+      log.debug({remoteTargets: JSON.stringify(targets, null, 2)}, "remote building")
     }
 
     const projectInfoManager = new ProjectInfoManager(packager.info)
@@ -141,8 +141,8 @@ async function findBuildAgent(): Promise<string> {
       let data = ""
       stream.on("end", () => {
         try {
-          if (debug.enabled) {
-            debug(`Remote build: ${data}`)
+          if (log.isDebugEnabled) {
+            log.debug({data}, "remote build response")
           }
           resolve(JSON.parse(data).endpoint)
         }

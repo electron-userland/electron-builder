@@ -1,4 +1,4 @@
-import { Arch, log } from "builder-util"
+import { Arch, AsyncTaskManager, log } from "builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -91,6 +91,8 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 }
 
 class RemoteTarget extends Target {
+  private buildTaskManager = new AsyncTaskManager(this.remoteBuilder.packager.info.cancellationToken)
+
   get options(): TargetSpecificOptions | null | undefined {
     return this.target.options
   }
@@ -103,11 +105,18 @@ class RemoteTarget extends Target {
     super(target.name, true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */)
   }
 
-  finishBuild(): Promise<any> {
-    return this.remoteBuilder.build()
+  async finishBuild() {
+    await this.buildTaskManager.awaitTasks()
+    await this.remoteBuilder.build()
   }
 
-  async build(appOutDir: string, arch: Arch) {
+  build(appOutDir: string, arch: Arch) {
+    const promise = this.doBuild(appOutDir, arch)
+    this.buildTaskManager.addTask(promise)
+    return promise
+  }
+
+  private async doBuild(appOutDir: string, arch: Arch) {
     log.info({target: this.target.name, arch: Arch[arch]}, "scheduling remote build")
     await this.target.checkOptions()
     this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)

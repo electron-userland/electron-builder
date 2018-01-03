@@ -1,3 +1,22 @@
+## 2.18.2
+
+### Bug Fixes
+
+* **electron-updater:** AutoUpdate takes 60 seconds to fail validating signature on Windows 7 due to PowerShell version [#2421](https://github.com/electron-userland/electron-builder/issues/2421) ([da96e73](https://github.com/electron-userland/electron-builder/commit/da96e73))
+
+## 2.18.1
+
+### Bug Fixes
+
+* **electron-updater:** add error codes ([2822049](https://github.com/electron-userland/electron-builder/commit/2822049)), closes [#2415](https://github.com/electron-userland/electron-builder/issues/2415)
+
+## 2.18.0
+
+### Bug Fixes
+
+* **electron-updater:** redirect event in electron.net ([e2ac601](https://github.com/electron-userland/electron-builder/commit/e2ac601)), closes [#2374](https://github.com/electron-userland/electron-builder/issues/2374)
+* use solid compression for web installer package ([6ea5668](https://github.com/electron-userland/electron-builder/commit/6ea5668))
+
 ## 2.17.2
 
 ### Bug Fixes

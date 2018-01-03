@@ -98,6 +98,7 @@
       <w>eacces</w>
       <w>ebusy</w>
       <w>econnrefused</w>
+      <w>econnreset</w>
       <w>editorconfig</w>
       <w>electronuserland</w>
       <w>emoji</w>

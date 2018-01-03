@@ -179,7 +179,9 @@ export class RemoteBuildManager {
 
         stream.setEncoding("utf8")
         const eventSource = new JsonStreamParser(data => {
-          log.debug({event: JSON.stringify(data, null, 2)}, "remote builder event")
+          if (log.isDebugEnabled) {
+            log.debug({event: JSON.stringify(data, null, 2)}, "remote builder event")
+          }
 
           const error = data.error
           if (error != null) {
@@ -199,7 +201,7 @@ export class RemoteBuildManager {
                 message = "job started"
                 break
             }
-            log.info(message)
+            log.info({status: message}, "remote building")
             return
           }
 
@@ -231,8 +233,8 @@ export class RemoteBuildManager {
 
     const fileWritten = () => {
       this.finishedStreamCount++
-      log.info({time: downloadTimer.endAndGet(), file: artifact.file}, `downloaded remote build artifact`)
-      log.debug({file: localFile}, `saved remote artifact`)
+      log.info({time: downloadTimer.endAndGet(), file: artifact.file}, "downloaded remote build artifact")
+      log.debug({file: localFile}, "saved remote build artifact")
 
       // PublishManager uses outDir and options, real (the same as for local build) values must be used
       this.projectInfoManager.packager.dispatchArtifactCreated(artifactCreatedEvent)
@@ -317,7 +319,7 @@ export class RemoteBuildManager {
     BluebirdPromise.all([this.projectInfoManager.infoFile.value, getZstd()])
       .then(results => {
         const infoFile = results[0]
-        log.info(`compressing and uploading to remote build agent`)
+        log.info("compressing and uploading to remote builder")
         const compressAndUploadTimer = new DevTimer("compress and upload")
         // noinspection SpellCheckingInspection
         const tarProcess = spawn(path7za, [
@@ -338,7 +340,7 @@ export class RemoteBuildManager {
         zstdProcess.stdout.pipe(stream)
 
         zstdProcess.stdout.on("end", () => {
-          log.info({time: compressAndUploadTimer.endAndGet()}, `uploaded`)
+          log.info({time: compressAndUploadTimer.endAndGet()}, "uploaded to remote builder")
         })
       })
       .catch(reject)

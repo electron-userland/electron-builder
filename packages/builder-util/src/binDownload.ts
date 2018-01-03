@@ -43,13 +43,12 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
   const logFlags = {path: dirPath}
 
   const dirStat = await statOrNull(dirPath)
-  //noinspection ES6MissingAwait
   if (dirStat != null && dirStat.isDirectory()) {
-    log.debug(logFlags, `found existing`)
+    log.debug(logFlags, "found existing")
     return dirPath
   }
 
-  log.info({...logFlags, url}, `downloading`)
+  log.info({...logFlags, url}, "downloading")
 
   // 7z cannot be extracted from the input stream, temp file is required
   const tempUnpackDir = path.join(cachePath, getTempName())
