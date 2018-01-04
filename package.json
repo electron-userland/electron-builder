@@ -62,7 +62,7 @@
     "semver": "^5.4.1",
     "source-map-support": "^0.5.0",
     "stat-mode": "^0.2.2",
-    "temp-file": "^3.0.0",
+    "temp-file": "^3.1.0",
     "tunnel-agent": "^0.6.0",
     "update-notifier": "^2.3.0",
     "yargs": "^10.0.3"

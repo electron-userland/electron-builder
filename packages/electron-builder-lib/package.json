@@ -63,7 +63,7 @@
     "debug": "^3.1.0",
     "asar-integrity": "0.0.0-semantic-release",
     "lazy-val": "^1.0.3",
-    "temp-file": "^3.0.0",
+    "temp-file": "^3.1.0",
     "ejs": "^2.5.7",
     "dmg-builder": "0.0.0-semantic-release"
   },

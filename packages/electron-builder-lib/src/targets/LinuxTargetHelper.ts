@@ -175,7 +175,17 @@ export class LinuxTargetHelper {
       return await this.iconsFromDir(path.join(getTemplatePath("linux"), "electron-icons"))
     }
 
-    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", iconPath]))
+    const rootTmpDir = await this.packager.info.tempDirManager.rootTempDir
+    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", iconPath], {
+      env: {
+        ...process.env,
+        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
+        TMPDIR: rootTmpDir,
+        // todo remove when app-builder will be updated to 0.2.0
+        ELECTRON_BUILDER_TMP_DIR: rootTmpDir,
+      },
+    }))
     this.maxIconPath = result.maxIconPath
     return result.icons
   }
