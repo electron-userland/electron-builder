@@ -194,7 +194,10 @@
       <w>libicudata</w>
       <w>liblzma</w>
       <w>libnotify</w>
+      <w>libnspr</w>
       <w>libnss</w>
+      <w>libpcre</w>
+      <w>libpulse</w>
       <w>libunity</w>
       <w>libvpx</w>
       <w>libxslt</w>
