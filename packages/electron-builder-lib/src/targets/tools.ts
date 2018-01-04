@@ -36,7 +36,7 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools() {
   // yes, we starting to use native Promise
-  return Promise.all([getAppImage(), fpmPath.value, getBlockMapTool()])
+  return Promise.all([getAppImage(), fpmPath.value, getBlockMapTool(), getAppBuilderTool()])
 }
 
 export function getZstd() {
@@ -113,5 +113,19 @@ export function getBlockMapTool() {
     "linux-x64": "2iErpiWfSMWMMFALd2sIcfU7cd4mFc96EzA/6j9/XCAx0Z6y6vSJinwjMlcemN2SUUsyVkUnHkinCLK7M34GXQ==",
     "win-ia32": "QH/b+cmbsPtyaGzKriNGQtvKQ0KEUictieprGgcP7s4flHDXcsO+WtkecZpuJn5m3VLR0dGeSOw/oDxGxszBZA==",
     "win-x64": "GMT7M9IibT8v5OY45N7Ar97rHpBcc9HexUGGePnzkv++4Dh7DjIlEeo/Q50MRRkp6pdgIrkG1OawEbJIt2DkLw==",
+  })
+}
+
+export function getAppBuilderTool() {
+  // noinspection SpellCheckingInspection
+  return getTool({
+    repository: "develar/app-builder",
+    name: "app-builder",
+    version: "0.1.0",
+    mac: "W/hQiFkK8LaoWy2i3X6yMadMcN14MBblcAYxeIsvROUmqH1duE0CLx4DpaIV4QEs+uaP+uOhF2XI4jYh1myHsQ==",
+    "linux-ia32": "TNmmj9ESgBN2HRejNM76L+etRRdShCdeKGySvN1Qq6Fwz/3VMsBae8juXBP+YO7/UfUU+8nK0bomb2lN/B+/Hw==",
+    "linux-x64": "QbRiEOUES6u3/eipKWxCV3wHVQkHKkw90z/tcrSPudIQalIJVTdwV+LQNpUnZ7iEICDgmKz+sbC6KCXOx10RtQ==",
+    "win-ia32": "X2JQO5JTMO2X+wj1ZSGzuAn/bXQjEx7QABvjcK9GI3Oqpw9+508LJb+BQiyRLS0dgJJqJaydJXtsPrp890BR/A==",
+    "win-x64": "dUXgoj7pSHhype2GIkRxlu3bs2Q99kDpr/Q6qMql+P0irRFodTcHZKWv21kbeeVSSKh2/yNDFDUjNl90FRCpWw==",
   })
 }

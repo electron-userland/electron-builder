@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`electronDist 1`] = `"ENOENT: no such file or directory, scandir '<path>/Electron.app'"`;
+exports[`electronDist 1`] = `"ENOENT"`;
 
 exports[`one-package 1`] = `
 Object {

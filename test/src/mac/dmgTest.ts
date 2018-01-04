@@ -46,7 +46,7 @@ test.ifAll.ifMac("custom background - new way", () => {
       },
     },
     effectiveOptionComputed: async it => {
-      expect(it.specification.background).toEqual(customBackground)
+      expect(it.specification.background).toMatch(new RegExp(`.+${customBackground}$`))
       expect(it.specification.icon).toEqual("foo.icns")
       const packager: PlatformPackager<any> = it.packager
       expect(await packager.getIconPath()).toEqual(path.join(packager.projectDir, "build", "customIcon.icns"))

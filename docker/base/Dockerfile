@@ -11,6 +11,7 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # python for node-gyp
   # rpm is required for FPM to build rpm package
   # libpng16-16 is required for libicns1_0.8.1-3.1 (on xenial)
+  # TODO remove graphicsmagick (3 months after electron-builder 19.53.0)
   # libgtk2.0-dev for snap desktop-gtk2 (see https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml#L248)
   apt-get install --no-install-recommends -y libsecret-1-0 git snapcraft qtbase5-dev bsdtar build-essential autoconf libssl-dev icnsutils libopenjp2-7 graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm python libcurl3 git git-lfs ssh libpng16-16 unzip libgtk2.0-dev && \
   # libicns

@@ -1,5 +1,4 @@
-import BluebirdPromise from "bluebird-lst"
-import { debug, exec, isEmptyOrSpaces, log } from "builder-util"
+import { exec, isEmptyOrSpaces, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { outputFile, readdir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -7,6 +6,7 @@ import * as path from "path"
 import { LinuxConfiguration, LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
 import { getTemplatePath } from "../util/pathManager"
+import { getAppBuilderTool } from "./tools"
 
 export const installPrefix = "/opt"
 
@@ -59,7 +59,7 @@ export class LinuxTargetHelper {
       return await this.iconsFromDir(path.join(packager.info.buildResourcesDir, "icons"))
     }
     else {
-      return await this.createFromIcns(await packager.info.tempDirManager.createTempDir({suffix: ".iconset"}))
+      return await this.createFromIcns()
     }
   }
 
@@ -121,7 +121,7 @@ export class LinuxTargetHelper {
 
   async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
     if (exec != null && exec.length === 0) {
-      throw new Error("Specified exec is emptyd")
+      throw new Error("Specified exec is empty")
     }
 
     const appInfo = this.packager.appInfo
@@ -169,85 +169,15 @@ export class LinuxTargetHelper {
     return data
   }
 
-  private async createFromIcns(tempDir: string): Promise<Array<IconInfo>> {
+  private async createFromIcns(): Promise<Array<IconInfo>> {
     const iconPath = await this.getIcns()
     if (iconPath == null) {
       return await this.iconsFromDir(path.join(getTemplatePath("linux"), "electron-icons"))
     }
 
-    if (process.platform === "darwin") {
-      await exec("iconutil", ["--convert", "iconset", "--output", tempDir, iconPath])
-      const iconFiles = await readdir(tempDir)
-      const imagePath = iconFiles.includes("icon_512x512.png") ? path.join(tempDir, "icon_512x512.png") : path.join(tempDir, "icon_256x256.png")
-      this.maxIconPath = imagePath
-
-      function resize(size: number): Promise<any> {
-        const filename = `icon_${size}x${size}.png`
-        return iconFiles.includes(filename) ? BluebirdPromise.resolve() : resizeImage(imagePath, path.join(tempDir, filename), size, size)
-      }
-
-      const promises: Array<Promise<any>> = [resize(24), resize(96)]
-      promises.push(resize(16))
-      promises.push(resize(48))
-      promises.push(resize(64))
-      promises.push(resize(128))
-      await BluebirdPromise.all(promises)
-
-      return this.createMappings(tempDir)
-    }
-    else {
-      const output = await exec("icns2png", ["-x", "-o", tempDir, iconPath])
-      debug(output)
-
-      //noinspection UnnecessaryLocalVariableJS
-      const has256 = output.includes("ic08")
-      const imagePath = path.join(tempDir, has256 ? "icon_256x256x32.png" : "icon_128x128x32.png")
-
-      this.maxIconPath = imagePath
-
-      function resize(size: number): Promise<any> {
-        return resizeImage(imagePath, path.join(tempDir, `icon_${size}x${size}x32.png`), size, size)
-      }
-
-      const promises: Array<Promise<any>> = [resize(24), resize(96)]
-      if (!output.includes("is32")) {
-        promises.push(resize(16))
-      }
-      if (!output.includes("ih32")) {
-        promises.push(resize(48))
-      }
-      if (!output.toString().includes("icp6")) {
-        promises.push(resize(64))
-      }
-      if (has256 && !output.includes("it32")) {
-        promises.push(resize(128))
-      }
-
-      await BluebirdPromise.all(promises)
-
-      return this.createMappings(tempDir)
-    }
-  }
-
-  private createMappings(tempDir: string) {
-    function createMapping(size: number): IconInfo {
-      return {
-        file: process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`,
-        size,
-      }
-    }
-
-    return [
-      createMapping(16),
-      createMapping(24),
-      createMapping(32),
-      createMapping(48),
-      createMapping(64),
-      createMapping(96),
-      createMapping(128),
-      createMapping(256),
-      createMapping(512),
-    ]
+    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", iconPath]))
+    this.maxIconPath = result.maxIconPath
+    return result.icons
   }
 }
 
@@ -260,14 +190,4 @@ const macToLinuxCategory: any = {
   "public.app-category.utilities": "Utility",
   "public.app-category.social-networking": "Chat",
   "public.app-category.finance": "Finance",
-}
-
-function resizeImage(imagePath: string, result: string, w: number, h: number) {
-  if (process.platform === "darwin") {
-    return exec("sips", ["--resampleHeightWidth", h.toString(10), w.toString(10), imagePath, "--out", result])
-  }
-  else {
-    const sizeArg = `${w}x${h}`
-    return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, result])
-  }
 }

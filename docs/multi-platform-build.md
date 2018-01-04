@@ -45,7 +45,7 @@ You can use [Docker](#docker) to avoid installing system dependencies.
 
 To build app in distributable format for Linux:
 ```
-sudo apt-get install --no-install-recommends -y icnsutils graphicsmagick
+sudo apt-get install --no-install-recommends -y icnsutils
 ```
 
 To build rpm: `sudo apt-get install --no-install-recommends -y rpm`.
