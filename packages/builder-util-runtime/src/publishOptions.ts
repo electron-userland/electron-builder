@@ -155,6 +155,11 @@ export interface S3Options extends BaseS3Options {
   readonly storageClass?: "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | null
 
   /**
+   * Server-side encryption algorithm to use for the object.
+   */
+  readonly encryption?: "AES256" | "aws:kms" | null
+
+  /**
    * The endpoint URI to send requests to. The default endpoint is built from the configured region.
    * The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
    */
