@@ -10,7 +10,7 @@ import { Logger } from "./main"
 export function verifySignature(publisherNames: Array<string>, tempUpdateFile: string, logger: Logger): Promise<string | null> {
   return new BluebirdPromise<string | null>((resolve, reject) => {
     // https://github.com/electron-userland/electron-builder/issues/2421
-    execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
+    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
       timeout: 30 * 1000
     }, (error, stdout, stderr) => {
       if (error != null || stderr) {
@@ -21,7 +21,7 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
         }
 
         try {
-          execFileSync("powershell.exe", ["ConvertTo-Json test"], {timeout: 10 * 1000})
+          execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], {timeout: 10 * 1000})
         }
         catch (testError) {
           logger.warn(`Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
