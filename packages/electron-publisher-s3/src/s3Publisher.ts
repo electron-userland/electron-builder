@@ -1,4 +1,4 @@
-import S3, { ClientConfiguration, StorageClass } from "aws-sdk/clients/s3"
+import S3, { ClientConfiguration, StorageClass, ServerSideEncryption } from "aws-sdk/clients/s3"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
@@ -46,6 +46,10 @@ export default class S3Publisher extends BaseS3Publisher {
 
     if (this.info.storageClass != null) {
       s3Options.StorageClass = this.info.storageClass as StorageClass
+    }
+
+    if (this.info.encryption != null) {
+      s3Options.ServerSideEncryption = this.info.encryption as ServerSideEncryption
     }
   }
 
