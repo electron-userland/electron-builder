@@ -94,7 +94,7 @@ export default class AppImageTarget extends Target {
     // default gzip compression - 51.9, xz - 50.4 difference is negligible, start time - well, it seems, a little bit longer (but on Parallels VM on external SSD disk)
     // so, to be decided later, is it worth to use xz by default
     const args = [
-      "--runtime-file", path.join(vendorDir, `runtime-${(arch === Arch.ia32 ? "i686" : (arch === Arch.x64 ? "x86_64" : "armv7l"))}`),
+      "--runtime-file", path.join(vendorDir, `runtime-${(archToRuntimeName(arch))}`),
       "--no-appstream",
     ]
     if (debug.enabled) {
@@ -171,4 +171,20 @@ function copyDirUsingHardLinks(source: string, destination: string) {
     .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
       cwd: source,
     }))
+}
+
+function archToRuntimeName(arch: Arch) {
+  switch (arch) {
+    case Arch.armv7l:
+      return "armv7"
+
+    case Arch.ia32:
+      return "i686"
+
+    case Arch.x64:
+      return "x86_64"
+
+    default:
+      throw new Error(`AppImage for arch ${Arch[arch]} not supported`)
+  }
 }

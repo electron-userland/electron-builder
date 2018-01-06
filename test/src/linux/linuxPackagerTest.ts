@@ -25,6 +25,13 @@ test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({
   },
 }))
 
+test.ifAll.ifNotWindows.ifNotCiMac("AppImage arm", app({
+  targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
+  config: {
+    publish: null,
+  },
+}))
+
 test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
   targets: Platform.LINUX.createTarget(),
   config: {

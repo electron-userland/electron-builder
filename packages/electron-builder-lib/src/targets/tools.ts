@@ -12,7 +12,7 @@ export function getLinuxToolsPath() {
 
 export function getAppImage() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("appimage", "9.0.3", "jaOGGGXLKjJV4SXajFOoIb7vCq4GbN0ggy5eosd8F0GAh0ythYfZSq9Lj/+uymmw2h3kKf9W8Y2KBnWxIjU0aw==")
+  return getBinFromGithub("appimage", "9.0.4", "pTFOnybYI2iGAyDUgXjzTkfuQ/E2ux8uLI1lXGB0RDoKhvFEq3y+q0sFzMOsbPTKZCcBRGhTujRlnsnTwgJmyw==")
 }
 
 export const fpmPath = new Lazy(() => {
