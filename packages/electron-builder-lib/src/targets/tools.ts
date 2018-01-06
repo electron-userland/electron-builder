@@ -118,12 +118,12 @@ export function getAppBuilderTool() {
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.2.0",
-    mac: "9ZSDQhXuM/tZx3c6epe1W74jmpP5beC32j4AhpazUY3w7dndaDTQhzH6YphBk7Hgk7dqdzoJIGdaqOOtMPcBVA==",
-    "linux-ia32": "zKbL5gEZTQark53feSSQxCKUZpsA05R7m9Xzfj3hnyAbsbxQvhn7ptKFhbMxnSgXHMLmUjHWkfJUbnZNE6t0eA==",
-    "linux-x64": "0Co/L3O6Z93IhJDmKruMeIi00PfSpFO1S6HgWNAomHQJhv5ZXTFMoYE+12HO7Zcft5sxDPA70RX41nC4iHyqAQ==",
-    "linux-armv7": "W3BrI/S67NN3RcOQJMGj/FlsJ564ssqhTGyf2Yn5xiI7KhYSdGO6bS473th68pPR3xSblMzOA57KXH2SB6BCmQ==",
-    "win-ia32": "RubntfEt7kAY0/hJO3HwZiKPmyf3kTPyRp9Z4Ogu5c07ga6TkuoRrryZz4QCZbh5WssmcN0bFdE3ECI4LGJTrw==",
-    "win-x64": "xy9Nsx0WBVm11ItjN/4qzkp+950IXrH5TwBTK7QqHGt7x1dhnIukQwPhrsw8AqHZdNSnK+KzrR4aXk8eRCO7ZA==",
+    version: "0.2.1",
+    mac: "jyDqvPMjyHDtGAX9LKHLSubgZFiSTm5dK1Q2xrGV+HjfiauW/2tXHIGEe1a5FWLeHeNGNFpv0OOnGPPokPkM4A==",
+    "linux-ia32": "m4j2s6xCeT70Ty8EQV72tvVVOLHfc02INPxUzmTGakpahu6slw0f2RijP14uxgv1cI8g8ORXYkZhcqkfY1abzw==",
+    "linux-x64": "1I7Ks3CG16e4fHSJwHLyMXCa1bRqeCCgVU9PfgMlGWlas2b3cn2a1hzQOGtUgEu42AlaPoJOSkLagx+IBWMdPw==",
+    "linux-armv7": "LjR5T8iVc9XNHfpM1KH1itxNay2AQr8Y2jENGLpD+BEynCTci4sPvD4E32ZBiD+CZShJfuNeHfmJiz2xegikDA==",
+    "win-ia32": "E1EukIWtbGDnutHm4nmjbS6q6SmVCx/ipitSu4t9Ee26Kfu54k3S0kxqa5TAB6kpmba4GNhlhEAxyz9UBBkJ/g==",
+    "win-x64": "umXWf/hGCBDRxJ/suaDIBH1yFgVXJ7RtfzNqgIslnI5VshTKTwlKumCn5x4gd8NWrcBfER4tDQlPFdEORQ25Nw==",
   })
 }

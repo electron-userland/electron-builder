@@ -119,7 +119,7 @@ const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
   info: chalk.blue,
   notice: chalk.yellow,
   warn: chalk.yellow,
-  debug: chalk.gray,
+  debug: chalk.white,
 }
 
 export const log = new Logger(process.stdout)

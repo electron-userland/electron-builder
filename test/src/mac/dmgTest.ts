@@ -31,7 +31,7 @@ test.ifMac("no build directory", app({
   projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
-test.ifAll.ifMac("custom background - new way", () => {
+test.ifMac("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
