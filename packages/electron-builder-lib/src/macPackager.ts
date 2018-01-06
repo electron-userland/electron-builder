@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, AsyncTaskManager, exec, log } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import * as semver from "semver"
@@ -15,9 +16,43 @@ import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { getAppBuilderTool } from "./targets/tools"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
+
+  private _iconPath = new Lazy(async () => {
+    const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
+    if (iconPath != null) {
+      return iconPath.endsWith(".icns") ? await this.getResource(iconPath) : await this.iconSetToIcns(iconPath)
+    }
+
+    const resourceList = await this.resourceList
+    if (resourceList.includes("icons")) {
+      return await this.iconSetToIcns(path.join(this.info.buildResourcesDir, "icons"))
+    }
+    else if (resourceList.includes("icon.png")) {
+      return await this.iconSetToIcns(path.join(this.info.buildResourcesDir, "icon.png"))
+    }
+    else {
+      return await this.getDefaultIcon("icns")
+    }
+  })
+
+  private async iconSetToIcns(source: string) {
+    const result = JSON.parse(await exec(await getAppBuilderTool(), ["png-to-icns", "--input", source, "--root", this.buildResourcesDir, "--root", this.projectDir], {
+        cwd: this.buildResourcesDir,
+        env: {
+          ...process.env,
+          // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+          // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
+          TMPDIR: await this.info.tempDirManager.rootTempDir,
+          DEBUG: log.isDebugEnabled ? "true" : "false",
+        },
+      }
+    ))
+    return result.file
+  }
 
   constructor(info: Packager) {
     super(info)
@@ -47,11 +82,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   async getIconPath(): Promise<string | null> {
-    let iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
-    if (iconPath != null && !iconPath.endsWith(".icns")) {
-      iconPath += ".icns"
-    }
-    return iconPath == null ? await this.getDefaultIcon("icns") : await this.getResource(iconPath)
+    return this._iconPath.value
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
@@ -177,7 +208,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       version: this.config.electronVersion,
       app: appPath,
       keychain: keychainName || undefined,
-      binaries:  (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
+      binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
       "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null
     }

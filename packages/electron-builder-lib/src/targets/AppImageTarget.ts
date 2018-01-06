@@ -75,14 +75,14 @@ export default class AppImageTarget extends Target {
     //noinspection SpellCheckingInspection
     const vendorDir = await getAppImage()
 
+    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
+      return
+    }
+
     if (arch === Arch.x64 || arch === Arch.ia32) {
       await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), stageDir.getTempFile("usr/lib"), {
         isUseHardLink: USE_HARD_LINKS,
       })
-    }
-
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
-      return
     }
 
     const publishConfig = await getAppUpdatePublishConfiguration(packager, arch)

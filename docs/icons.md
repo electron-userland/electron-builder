@@ -5,10 +5,11 @@ Recommended tools: [AppIcon Generator](http://www.tweaknow.com/appicongenerator.
 
 Files
 
-* *Optional* `icon.icns` (macOS app icon). Icon size should be at least 512x512.
+* *Optional* `icon.icns` (macOS app icon) or `icon.png`. Icon size should be at least 512x512.
 * *Optional* `background.png` (macOS DMG background).
+* *Optional* `background@2x.png` (macOS DMG Retina background).
 
-need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. All files are optional — but it is important to provide `icon.icns`, otherwise default Electron icon will be used.
+need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. All files are optional — but it is important to provide `icon.icns` (or `icon.png`), otherwise default Electron icon will be used.
 
 ## Windows (NSIS)
 

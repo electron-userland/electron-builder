@@ -1,4 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
+import { isEnvTrue } from "builder-util"
 import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -36,7 +37,7 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools() {
   // yes, we starting to use native Promise
-  return Promise.all([getAppImage(), fpmPath.value, getBlockMapTool(), getAppBuilderTool()])
+  return Promise.all([getAppImage(), fpmPath.value, getAppBuilderTool()])
 }
 
 export function getZstd() {
@@ -81,6 +82,8 @@ export interface ToolDescriptor {
   mac: string
   "linux-ia32"?: string
   "linux-x64"?: string
+  "linux-armv7"?: string
+
   "win-ia32": string
   "win-x64": string
 }
@@ -92,7 +95,11 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
     throw new Error(`Checksum not specified for ${platform}:${process.arch}`)
   }
 
-  const archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+  let archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
+  if (archQualifier === "arm") {
+    archQualifier = "armv7"
+  }
+
   // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
   const version = descriptor.version
   const name = descriptor.name
@@ -102,30 +109,21 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
     .then(it => path.join(it, `${name}${platform === Platform.WINDOWS ? ".exe" : ""}`))
 }
 
-export function getBlockMapTool() {
-  // noinspection SpellCheckingInspection
-  return getTool({
-    repository: "develar/block-map-builder",
-    name: "block-map-builder",
-    version: "0.2.0",
-    mac: "J+aspHER9Hba70oDJAg9ZUyr5KC8beTjIedMQRgrdsWd5Qlc+0COy+zXMw7Pcq+hqDvsEFoM2N4Yx6wQAaXDXA==",
-    "linux-ia32": "2zkhj4GVvLg8JDsGIDc4CUeZ+eHxwPchNuub+FTjO98YJyCIKDItJorfTStoZe4qlYqCE1tAX7Q/NXmBvpwj6A==",
-    "linux-x64": "2iErpiWfSMWMMFALd2sIcfU7cd4mFc96EzA/6j9/XCAx0Z6y6vSJinwjMlcemN2SUUsyVkUnHkinCLK7M34GXQ==",
-    "win-ia32": "QH/b+cmbsPtyaGzKriNGQtvKQ0KEUictieprGgcP7s4flHDXcsO+WtkecZpuJn5m3VLR0dGeSOw/oDxGxszBZA==",
-    "win-x64": "GMT7M9IibT8v5OY45N7Ar97rHpBcc9HexUGGePnzkv++4Dh7DjIlEeo/Q50MRRkp6pdgIrkG1OawEbJIt2DkLw==",
-  })
-}
-
 export function getAppBuilderTool() {
+  if (isEnvTrue(process.env.USE_SYSTEM_AB)) {
+    return Promise.resolve("app-builder")
+  }
+
   // noinspection SpellCheckingInspection
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.1.0",
-    mac: "W/hQiFkK8LaoWy2i3X6yMadMcN14MBblcAYxeIsvROUmqH1duE0CLx4DpaIV4QEs+uaP+uOhF2XI4jYh1myHsQ==",
-    "linux-ia32": "TNmmj9ESgBN2HRejNM76L+etRRdShCdeKGySvN1Qq6Fwz/3VMsBae8juXBP+YO7/UfUU+8nK0bomb2lN/B+/Hw==",
-    "linux-x64": "QbRiEOUES6u3/eipKWxCV3wHVQkHKkw90z/tcrSPudIQalIJVTdwV+LQNpUnZ7iEICDgmKz+sbC6KCXOx10RtQ==",
-    "win-ia32": "X2JQO5JTMO2X+wj1ZSGzuAn/bXQjEx7QABvjcK9GI3Oqpw9+508LJb+BQiyRLS0dgJJqJaydJXtsPrp890BR/A==",
-    "win-x64": "dUXgoj7pSHhype2GIkRxlu3bs2Q99kDpr/Q6qMql+P0irRFodTcHZKWv21kbeeVSSKh2/yNDFDUjNl90FRCpWw==",
+    version: "0.2.0",
+    mac: "9ZSDQhXuM/tZx3c6epe1W74jmpP5beC32j4AhpazUY3w7dndaDTQhzH6YphBk7Hgk7dqdzoJIGdaqOOtMPcBVA==",
+    "linux-ia32": "zKbL5gEZTQark53feSSQxCKUZpsA05R7m9Xzfj3hnyAbsbxQvhn7ptKFhbMxnSgXHMLmUjHWkfJUbnZNE6t0eA==",
+    "linux-x64": "0Co/L3O6Z93IhJDmKruMeIi00PfSpFO1S6HgWNAomHQJhv5ZXTFMoYE+12HO7Zcft5sxDPA70RX41nC4iHyqAQ==",
+    "linux-armv7": "W3BrI/S67NN3RcOQJMGj/FlsJ564ssqhTGyf2Yn5xiI7KhYSdGO6bS473th68pPR3xSblMzOA57KXH2SB6BCmQ==",
+    "win-ia32": "RubntfEt7kAY0/hJO3HwZiKPmyf3kTPyRp9Z4Ogu5c07ga6TkuoRrryZz4QCZbh5WssmcN0bFdE3ECI4LGJTrw==",
+    "win-x64": "xy9Nsx0WBVm11ItjN/4qzkp+950IXrH5TwBTK7QqHGt7x1dhnIukQwPhrsw8AqHZdNSnK+KzrR4aXk8eRCO7ZA==",
   })
 }

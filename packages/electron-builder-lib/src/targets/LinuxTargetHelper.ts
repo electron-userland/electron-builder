@@ -1,6 +1,7 @@
 import { exec, isEmptyOrSpaces, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
-import { outputFile, readdir } from "fs-extra-p"
+import { ExecFileOptions } from "child_process"
+import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { LinuxConfiguration, LinuxTargetSpecificOptions } from ".."
@@ -13,6 +14,11 @@ export const installPrefix = "/opt"
 export interface IconInfo {
   file: string
   size: number
+}
+
+export interface IconListResult {
+  maxIconPath: string
+  readonly icons: Array<IconInfo>
 }
 
 export class LinuxTargetHelper {
@@ -30,73 +36,49 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
-    const customIconSetDir = packager.platformSpecificBuildOptions.icon
-    if (customIconSetDir != null) {
-      let iconDir = path.resolve(packager.info.buildResourcesDir, customIconSetDir)
-      const stat = await statOrNull(iconDir)
-      if (stat == null || !stat.isDirectory()) {
-        iconDir = path.resolve(packager.projectDir, customIconSetDir)
-      }
-
-      try {
-        return await this.iconsFromDir(iconDir)
-      }
-      catch (e) {
-        if (e.code === "ENOENT") {
-          throw new Error(`Icon set directory ${iconDir} doesn't exist`)
-        }
-        else if (e.code === "ENOTDIR") {
-          throw new Error(`linux.icon must be set to an icon set directory, but ${iconDir} is not a directory. Please see https://electron.build/configuration/configuration#LinuxBuildOptions-icon`)
-        }
-        else {
-          throw e
-        }
-      }
+    const execOptions: ExecFileOptions = {
+      env: {
+        ...process.env,
+        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
+        TMPDIR: await this.packager.info.tempDirManager.rootTempDir,
+      },
     }
 
-    const resourceList = await packager.resourceList
-    if (resourceList.includes("icons")) {
-      return await this.iconsFromDir(path.join(packager.info.buildResourcesDir, "icons"))
+    async function collectIcons(sourceDir: string) {
+      return JSON.parse(await exec(await getAppBuilderTool(), ["collect-icons", "--source", sourceDir], execOptions))
+    }
+
+    let iconDir = packager.platformSpecificBuildOptions.icon
+    if (iconDir != null) {
+      const iconDirCandidate = path.resolve(packager.info.buildResourcesDir, iconDir)
+      if (await statOrNull(iconDirCandidate) == null) {
+        iconDir = path.resolve(packager.projectDir, iconDir)
+      }
+      else {
+        iconDir = iconDirCandidate
+      }
+    }
+    else if ((await packager.resourceList).includes("icons")) {
+      iconDir = path.join(packager.info.buildResourcesDir, "icons")
+    }
+
+    let result: IconListResult
+    if (iconDir == null) {
+      const icnsPath = await this.getIcns()
+      if (icnsPath == null) {
+        result = await collectIcons(path.join(getTemplatePath("linux"), "electron-icons"))
+      }
+      else {
+        result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", icnsPath], execOptions))
+      }
     }
     else {
-      return await this.createFromIcns()
-    }
-  }
-
-  private async iconsFromDir(iconDir: string) {
-    const mappings: Array<IconInfo> = []
-    let maxSize = 0
-    for (const file of (await readdir(iconDir))) {
-      if (file.endsWith(".png") || file.endsWith(".PNG")) {
-        // If parseInt encounters a character that is not a numeral in the specified radix,
-        // it returns the integer value parsed up to that point
-        try {
-          const sizeString = file.match(/\d+/)
-          const size = sizeString == null ? 0 : parseInt(sizeString[0], 10)
-          if (size > 0) {
-            const iconPath = `${iconDir}/${file}`
-            mappings.push({
-              file: iconPath,
-              size,
-            })
-
-            if (size > maxSize) {
-              maxSize = size
-              this.maxIconPath = iconPath
-            }
-          }
-        }
-        catch (e) {
-          console.error(e)
-        }
-      }
+      result = await collectIcons(iconDir)
     }
 
-    if (mappings.length === 0) {
-      throw new Error(`Icon set directory ${iconDir} doesn't contain icons`)
-    }
-
-    return mappings
+    this.maxIconPath = result.maxIconPath
+    return result.icons
   }
 
   private async getIcns(): Promise<string | null> {
@@ -167,27 +149,6 @@ export class LinuxTargetHelper {
     }
     data += "\n"
     return data
-  }
-
-  private async createFromIcns(): Promise<Array<IconInfo>> {
-    const iconPath = await this.getIcns()
-    if (iconPath == null) {
-      return await this.iconsFromDir(path.join(getTemplatePath("linux"), "electron-icons"))
-    }
-
-    const rootTmpDir = await this.packager.info.tempDirManager.rootTempDir
-    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", iconPath], {
-      env: {
-        ...process.env,
-        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
-        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-        TMPDIR: rootTmpDir,
-        // todo remove when app-builder will be updated to 0.2.0
-        ELECTRON_BUILDER_TMP_DIR: rootTmpDir,
-      },
-    }))
-    this.maxIconPath = result.maxIconPath
-    return result.icons
   }
 }
 
