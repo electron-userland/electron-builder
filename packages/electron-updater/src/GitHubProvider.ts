@@ -29,6 +29,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
   async getLatestVersion(): Promise<UpdateInfo> {
     const basePath = this.basePath
+    const apiBasePath = this.apiBasePath
+
     const cancellationToken = new CancellationToken()
 
     const feedXml: string = (await this.httpRequest(newUrlFromBase(`${basePath}.atom`, this.baseUrl), {
@@ -44,7 +46,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
         version = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
       }
       else {
-        version = await this.getLatestVersionString(basePath, cancellationToken)
+        version = await this.getLatestVersionString(apiBasePath, cancellationToken)
       }
     }
     catch (e) {
@@ -102,7 +104,11 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private get basePath() {
-    return this.computeGithubBasePath(`/${this.options.owner}/${this.options.repo}/releases`)
+    return `/${this.options.owner}/${this.options.repo}/releases`
+  }
+
+  private get apiBasePath() {
+    return this.computeGithubApiBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
