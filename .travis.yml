@@ -8,11 +8,11 @@ env:
 matrix:
   include:
     - os: osx
-      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux.*js$,windows.*js$
+      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows
       node_js: "9"
 
     - os: osx
-      env: TEST_FILES=CodeSignTest,macArchiveTest,macPackagerTest
+      env: TEST_FILES=CodeSignTest,macArchiveTest,macPackagerTest,macIconTest
       node_js: "9"
 
     - os: osx

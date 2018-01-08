@@ -3,7 +3,7 @@ import { Arch, asArray, exec, execWine, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { close, open, read, rename } from "fs-extra-p"
+import { rename } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -57,7 +57,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       })
   })
 
-  private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
+  private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
   readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? BluebirdPromise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
 
@@ -76,7 +76,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const certFile = vm.toVmFile(info.file)
     // https://github.com/electron-userland/electron-builder/issues/1735
     const args = info.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${info.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
-    return await vm.exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
+    return await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command"].concat(args), {timeout: 30 * 1000}).then(it => it.trim())
   })
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
@@ -198,21 +198,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   getIconPath() {
     return this._iconPath.value
-  }
-
-  private async getValidIconPath(): Promise<string | null> {
-    let iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
-    if (iconPath != null && !iconPath.endsWith(".ico")) {
-      iconPath += ".ico"
-    }
-
-    iconPath = iconPath == null ? await this.getDefaultIcon("ico") : path.resolve(this.projectDir, iconPath)
-    if (iconPath == null) {
-      return null
-    }
-
-    await checkIcon(iconPath)
-    return iconPath
   }
 
   async sign(file: string, logMessagePrefix?: string) {
@@ -363,55 +348,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       await this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
     }
   }
-}
-
-async function checkIcon(file: string): Promise<void> {
-  const fd = await open(file, "r")
-  const buffer = Buffer.allocUnsafe(512)
-  try {
-    await read(fd, buffer, 0, buffer.length, 0)
-  }
-  finally {
-    await close(fd)
-  }
-
-  if (!isIco(buffer)) {
-    throw new Error(`Windows icon is not valid ico file, please fix "${file}"`)
-  }
-
-  const sizes = parseIco(buffer)
-  for (const size of sizes) {
-    if (size!.w >= 256 && size!.h >= 256) {
-      return
-    }
-  }
-
-  throw new Error(`Windows icon size must be at least 256x256, please fix "${file}"`)
-}
-
-interface Size {
-  w: number
-  h: number
-}
-
-function parseIco(buffer: Buffer): Array<Size> {
-  if (!isIco(buffer)) {
-    throw new Error("buffer is not ico")
-  }
-
-  const n = buffer.readUInt16LE(4)
-  const result = new Array<Size>(n)
-  for (let i = 0; i < n; i++) {
-    result[i] = {
-      w: buffer.readUInt8(6 + i * 16) || 256,
-      h: buffer.readUInt8(7 + i * 16) || 256,
-    }
-  }
-  return result
-}
-
-function isIco(buffer: Buffer): boolean {
-  return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
 }
 
 const debugOpenssl = _debug("electron-builder:openssl")

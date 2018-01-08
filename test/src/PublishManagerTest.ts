@@ -1,7 +1,7 @@
 import { createTargets, Platform } from "electron-builder"
 import * as path from "path"
-import { app, checkDirContents } from "./helpers/packTester"
 import { assertThat } from "./helpers/fileAssert"
+import { app, checkDirContents } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("generic, github and spaces", app({
   targets: Platform.LINUX.createTarget(),
@@ -24,6 +24,9 @@ test.ifDevOrLinuxCi("generic, github and spaces", app({
     ]
   },
 }))
+
+// otherwise test "os macro" always failed for pull requests
+process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
 test.ifAll.ifNotWindows("os macro", app({
   targets: createTargets([Platform.LINUX, Platform.MAC], "zip"),

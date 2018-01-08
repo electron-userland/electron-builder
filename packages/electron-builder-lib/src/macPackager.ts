@@ -16,43 +16,11 @@ import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { getAppBuilderTool } from "./targets/tools"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
 
-  private _iconPath = new Lazy(async () => {
-    const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
-    if (iconPath != null) {
-      return iconPath.endsWith(".icns") ? await this.getResource(iconPath) : await this.iconSetToIcns(iconPath)
-    }
-
-    const resourceList = await this.resourceList
-    if (resourceList.includes("icons")) {
-      return await this.iconSetToIcns(path.join(this.info.buildResourcesDir, "icons"))
-    }
-    else if (resourceList.includes("icon.png")) {
-      return await this.iconSetToIcns(path.join(this.info.buildResourcesDir, "icon.png"))
-    }
-    else {
-      return await this.getDefaultIcon("icns")
-    }
-  })
-
-  private async iconSetToIcns(source: string) {
-    const result = JSON.parse(await exec(await getAppBuilderTool(), ["png-to-icns", "--input", source, "--root", this.buildResourcesDir, "--root", this.projectDir], {
-        cwd: this.buildResourcesDir,
-        env: {
-          ...process.env,
-          // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
-          // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-          TMPDIR: await this.info.tempDirManager.rootTempDir,
-          DEBUG: log.isDebugEnabled ? "true" : "false",
-        },
-      }
-    ))
-    return result.file
-  }
+  private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
   constructor(info: Packager) {
     super(info)

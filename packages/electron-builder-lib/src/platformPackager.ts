@@ -1,6 +1,7 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, isEmptyOrSpaces, log } from "builder-util"
+import { newError } from "builder-util-runtime"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -20,6 +21,7 @@ import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { createMacApp } from "./packager/mac"
 import { PackagerOptions } from "./packagerApi"
+import { getAppBuilderTool } from "./targets/tools"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
 
@@ -566,6 +568,45 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   get forceCodeSigning(): boolean {
     const forceCodeSigningPlatform = this.platformSpecificBuildOptions.forceCodeSigning
     return (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) || false
+  }
+
+  protected async getOrConvertIcon(format: "icns" | "ico") {
+    const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
+    if (iconPath != null) {
+      return await this.resolveIcon(iconPath, format)
+    }
+
+    const resourceList = await this.resourceList
+    const resourcesDir = this.info.buildResourcesDir
+    for (const fileName of [`icon.${format}`, "icon.png", "icons"]) {
+      if (resourceList.includes(fileName)) {
+        return await this.resolveIcon(path.join(resourcesDir, fileName), format)
+      }
+    }
+
+    log.warn({reason: "application icon is not set"}, "default Electron icon is used")
+    return null
+  }
+
+  // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
+  private async resolveIcon(source: string, outputFormat: "icns" | "ico") {
+    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icon", "--input", source, "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir], {
+        cwd: this.buildResourcesDir,
+        env: {
+          ...process.env,
+          // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+          // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
+          TMPDIR: await this.info.tempDirManager.rootTempDir,
+          DEBUG: log.isDebugEnabled ? "true" : "false",
+        },
+      }
+    ))
+
+    const errorMessage = result.error
+    if (errorMessage != null) {
+      throw newError(errorMessage, result.errorCode)
+    }
+    return result.file
   }
 }
 

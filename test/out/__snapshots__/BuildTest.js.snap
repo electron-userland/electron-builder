@@ -320,7 +320,7 @@ Object {
               "size": 40,
             },
             "package.json": Object {
-              "size": 946,
+              "size": 830,
             },
             "src": Object {
               "files": Object {
@@ -363,7 +363,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 626,
+              "size": 606,
             },
             "src": Object {
               "files": Object {
@@ -433,7 +433,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 801,
+              "size": 774,
             },
           },
         },
@@ -3715,7 +3715,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 1046,
+              "size": 1084,
             },
             "src": Object {
               "files": Object {
@@ -3756,7 +3756,7 @@ Object {
               "size": 1077,
             },
             "package.json": Object {
-              "size": 606,
+              "size": 469,
             },
           },
         },
@@ -3822,7 +3822,7 @@ Object {
                   "unpacked": true,
                 },
                 "package.json": Object {
-                  "size": 96,
+                  "size": 74,
                   "unpacked": true,
                 },
               },
@@ -3831,7 +3831,7 @@ Object {
             "test-smart-unpack-empty": Object {
               "files": Object {
                 "package.json": Object {
-                  "size": 102,
+                  "size": 80,
                 },
               },
             },
@@ -3849,7 +3849,7 @@ Object {
               "size": 40,
             },
             "package.json": Object {
-              "size": 946,
+              "size": 830,
             },
             "src": Object {
               "files": Object {
@@ -3902,7 +3902,7 @@ Object {
               "unpacked": true,
             },
             "package.json": Object {
-              "size": 626,
+              "size": 606,
               "unpacked": true,
             },
             "src": Object {
@@ -3969,7 +3969,7 @@ Object {
               "size": 1077,
             },
             "package.json": Object {
-              "size": 606,
+              "size": 469,
             },
           },
         },
@@ -3989,31 +3989,30 @@ Array [
   "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
   Object {
     "content": "{
+  \\"name\\": \\"edge-cs\\",
   \\"author\\": {
-    \\"name\\": \\"Tomasz Janczuk\\",
-    \\"email\\": \\"tomasz@janczuk.org\\",
-    \\"url\\": \\"http://tomasz.janczuk.org\\"
+    \\"name\\": \\"Tomasz Janczuk <tomasz@janczuk.org>\\",
+    \\"url\\": \\"http://tomasz.janczuk.org\\",
+    \\"twitter\\": \\"tjanczuk\\"
   },
-  \\"dependencies\\": {},
-  \\"deprecated\\": false,
+  \\"version\\": \\"1.2.1\\",
   \\"description\\": \\"Edge-cs: run C# and node.js code in-process with edge.js\\",
+  \\"main\\": \\"./lib/edge-cs.js\\",
   \\"engines\\": {
     \\"node\\": \\">= 0.8\\"
   },
-  \\"homepage\\": \\"http://tjanczuk.github.com/edge\\",
   \\"licenses\\": [
     {
       \\"type\\": \\"Apache\\",
       \\"url\\": \\"http://www.apache.org/licenses/LICENSE-2.0\\"
     }
   ],
-  \\"main\\": \\"./lib/edge-cs.js\\",
-  \\"name\\": \\"edge-cs\\",
+  \\"dependencies\\": {},
+  \\"homepage\\": \\"http://tjanczuk.github.com/edge\\",
   \\"repository\\": {
     \\"type\\": \\"git\\",
-    \\"url\\": \\"git+ssh://git@github.com/tjanczuk/edge-cs.git\\"
-  },
-  \\"version\\": \\"1.2.1\\"
+    \\"url\\": \\"git@github.com:tjanczuk/edge-cs.git\\"
+  }
 }",
     "name": "app.asar.unpacked/node_modules/edge-cs/package.json",
   },
@@ -4038,10 +4037,10 @@ Array [
   "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
   Object {
     "content": "{
-  \\"deprecated\\": false,
   \\"name\\": \\"@electron-builder/test-smart-unpack\\",
   \\"version\\": \\"1.0.0\\"
-}",
+}
+",
     "name": "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",
   },
 ]

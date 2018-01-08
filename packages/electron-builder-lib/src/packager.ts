@@ -291,7 +291,7 @@ export class Packager {
     }
     this.appInfo = new AppInfo(this)
 
-    const outDir = path.resolve(this.projectDir, configuration.directories!!.output)
+    const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
 
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(outDir, "electron-builder.yaml")
