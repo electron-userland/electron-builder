@@ -15,7 +15,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
   }
 
-  protected computeGithubApiBasePath(result: string) {
+  protected computeGithubBasePath(result: string) {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const host = this.options.host
     return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
@@ -108,7 +108,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private get apiBasePath() {
-    return this.computeGithubApiBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
+    return this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
