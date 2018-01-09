@@ -8,12 +8,13 @@ import { parseUpdateInfo, resolveFiles } from "./Provider"
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: URL
+  protected readonly baseApiUrl: URL
 
   protected constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
     super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
-    this.baseApiUrl = this.options.host || "api.github.com"
+    this.baseApiUrl = newBaseUrl(this.options.host || "api.github.com")
   }
 
   protected computeGithubBasePath(result: string) {
