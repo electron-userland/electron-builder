@@ -14,7 +14,8 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
     super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
-    this.baseApiUrl = newBaseUrl(githubUrl(options, defaultHost || "api.github.com"))
+    const apiHost = defaultHost === "github.com" ? "api.github.com" || defaultHost
+    this.baseApiUrl = newBaseUrl(githubUrl(options, apiHost))
   }
 
   protected computeGithubBasePath(result: string) {
