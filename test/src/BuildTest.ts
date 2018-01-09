@@ -149,6 +149,23 @@ test.ifLinuxOrDevMac("afterPack", () => {
   })
 })
 
+test.ifLinuxOrDevMac("afterSign", () => {
+  let called = 0
+  return assertPack("test-app-one", {
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
+    config: {
+      afterSign: () => {
+        called++
+        return BluebirdPromise.resolve()
+      }
+    }
+  }, {
+    packed: async () => {
+      expect(called).toEqual(2)
+    }
+  })
+})
+
 test.ifLinuxOrDevMac("beforeBuild", () => {
   let called = 0
   return assertPack("test-app-one", {

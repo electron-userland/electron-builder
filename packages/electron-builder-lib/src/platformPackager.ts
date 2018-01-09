@@ -213,6 +213,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.info.afterPack(packContext)
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
     await this.signApp(packContext)
+    await this.info.afterSign(packContext)
   }
 
   private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {

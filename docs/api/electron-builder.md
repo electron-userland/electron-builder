@@ -17,6 +17,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
     * [.Packager](#Packager)
         * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
         * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.afterSign(context)`](#module_electron-builder.Packager+afterSign) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
         * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
         * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
@@ -139,7 +140,9 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 **Methods**
 * [.Packager](#Packager)
     * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
+    * [`.addAfterSignHandler(handler)`](#module_electron-builder.Packager+addAfterSignHandler)
     * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.afterSign(context)`](#module_electron-builder.Packager+afterSign) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
     * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
     * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
@@ -151,8 +154,22 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 | --- | --- |
 | handler | <code>callback</code> | 
 
+<a name="module_electron-builder.Packager+addAfterSignHandler"></a>
+### `packager.addAfterSignHandler(handler)`
+
+| Param | Type |
+| --- | --- |
+| handler | <code>callback</code> | 
+
 <a name="module_electron-builder.Packager+afterPack"></a>
 ### `packager.afterPack(context)` ⇒ <code>Promise&lt;any&gt;</code>
+
+| Param | Type |
+| --- | --- |
+| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
+
+<a name="module_electron-builder.Packager+afterSign"></a>
+### `packager.afterSign(context)` ⇒ <code>Promise&lt;any&gt;</code>
 
 | Param | Type |
 | --- | --- |

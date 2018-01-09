@@ -7,6 +7,13 @@ Object {
 }
 `;
 
+exports[`afterSign 1`] = `
+Object {
+  "linux": Array [],
+  "mac": Array [],
+}
+`;
+
 exports[`beforeBuild 1`] = `
 Object {
   "linux": Array [],

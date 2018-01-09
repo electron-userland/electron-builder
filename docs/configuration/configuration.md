@@ -113,6 +113,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ---
 
 * <code id="Configuration-afterPack">afterPack</code> (context: AfterPackContext) => Promise | null - The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
+* <code id="Configuration-afterSign">afterSign</code> (context: AfterPackContext) => Promise | null - The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format).
 * <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
 <!-- end of generated block -->
 
