@@ -13,12 +13,13 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
     super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
+    this.baseApiUrl = this.options.host || "api.github.com"
   }
 
   protected computeGithubBasePath(result: string) {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const {host} = this.options
-    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : "api.github.com"
+    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
   }
 }
 
@@ -87,7 +88,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string | null> {
-    const url = newUrlFromBase(`${basePath}/latest`, this.baseUrl)
+    const url = newUrlFromBase(`${basePath}/latest`, this.baseApiUrl)
     try {
       // do not use API to avoid limit
       const rawData = await this.httpRequest(url, {Accept: "application/json"}, cancellationToken)
@@ -113,7 +114,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
     // still replace space to - due to backward compatibility
-    return resolveFiles(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p.replace(/ /g, "-")))
+    return resolveFiles(updateInfo, this.
+, p => this.getBaseDownloadPath(updateInfo.version, p.replace(/ /g, "-")))
   }
 
   private getBaseDownloadPath(version: string, fileName: string) {
