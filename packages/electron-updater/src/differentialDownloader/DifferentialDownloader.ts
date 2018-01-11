@@ -34,10 +34,6 @@ export abstract class DifferentialDownloader {
     this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
   }
 
-  protected get signatureSize(): number {
-    return 0
-  }
-
   createRequestOptions(method: "head" | "get" = "get", newUrl?: string | null): RequestOptions {
     return {
       ...(newUrl == null ? this.baseRequestOptions : configureRequestOptionsFromUrl(newUrl, {})),
@@ -74,7 +70,7 @@ export abstract class DifferentialDownloader {
     }
 
     const newPackageSize = this.blockAwareFileInfo.size
-    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) + this.signatureSize) !== newPackageSize) {
+    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length)) !== newPackageSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
@@ -84,8 +80,6 @@ export abstract class DifferentialDownloader {
   }
 
   private async downloadFile(tasks: Array<Operation>): Promise<any> {
-    const signature = this.signatureSize === 0 ? null : await this.readRemoteBytes(0, this.signatureSize - 1)
-
     const oldFileFd = await open(this.options.oldFile, "r")
     const newFileFd = await open(this.options.newFile, "w")
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
@@ -188,12 +182,7 @@ export abstract class DifferentialDownloader {
         }
       }
 
-      if (signature == null) {
-        w(0)
-      }
-      else {
-        firstStream.write(signature, () => w(0))
-      }
+      w(0)
     })
       .then(() => close(oldFileFd))
       .catch(error => {

@@ -10,7 +10,9 @@ module.exports = function (projectDir, callback) {
   run({
     config: path.join(process.cwd(), "node_modules/electron-builder-tslint-config/tslint.json"),
     format: "stylish",
-    project: projectDir
+    project: projectDir,
+    exclude: [],
+    files: [],
   }, {log: (m) => {
     if (m != "\n") {
       console.log(m)

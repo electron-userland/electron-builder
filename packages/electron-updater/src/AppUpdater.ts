@@ -100,6 +100,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private _appUpdateConfigPath: string | null
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * test only
    * @private
@@ -133,7 +134,7 @@ export abstract class AppUpdater extends EventEmitter {
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
-  constructor(options: AllPublishOptions | null | undefined, app?: any) {
+  protected constructor(options: AllPublishOptions | null | undefined, app?: any) {
     super()
 
     this.on("error", (error: Error) => {
@@ -180,7 +181,7 @@ export abstract class AppUpdater extends EventEmitter {
    * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
-  setFeedURL(options: PublishConfiguration | AllPublishOptions) {
+  setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {

@@ -25,6 +25,7 @@ Object {
     },
   },
   "draft": undefined,
+  "emDevLoginUrl": true,
   "prepackaged": undefined,
   "prerelease": undefined,
   "projectDir": undefined,

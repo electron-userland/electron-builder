@@ -1,7 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, isEmptyOrSpaces, log } from "builder-util"
-import { newError } from "builder-util-runtime"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -13,7 +12,7 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
-import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
+import { CompressionLevel, MisConfigurationError, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
@@ -590,21 +589,28 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   private async resolveIcon(source: string, outputFormat: "icns" | "ico") {
-    const result = JSON.parse(await exec(await getAppBuilderTool(), ["icon", "--input", source, "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir], {
-        cwd: this.buildResourcesDir,
-        env: {
-          ...process.env,
-          // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
-          // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-          TMPDIR: await this.info.tempDirManager.rootTempDir,
-          DEBUG: log.isDebugEnabled ? "true" : "false",
-        },
-      }
-    ))
+    const rawResult = await exec(await getAppBuilderTool(), ["icon", "--input", source, "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir], {
+      cwd: this.buildResourcesDir,
+      env: {
+        ...process.env,
+        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
+        TMPDIR: await this.info.tempDirManager.rootTempDir,
+        DEBUG: log.isDebugEnabled ? "true" : "false",
+      },
+    })
+
+    let result: any
+    try {
+      result = JSON.parse(rawResult)
+    }
+    catch (e) {
+      throw new Error(`Cannot parse result: ${e.message}: ${rawResult}`)
+    }
 
     const errorMessage = result.error
     if (errorMessage != null) {
-      throw newError(errorMessage, result.errorCode)
+      throw new MisConfigurationError(errorMessage, result.errorCode)
     }
     return result.file
   }

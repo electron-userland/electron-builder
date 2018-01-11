@@ -1,8 +1,8 @@
 #! /usr/bin/env node
 
 import { exec, log } from "builder-util"
-import { printErrorAndExit } from "builder-util/out/promise"
 import chalk from "chalk"
+import { MisConfigurationError } from "electron-builder-lib"
 import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
 import { getGypEnv } from "electron-builder-lib/out/util/yarn"
 import { readJson } from "fs-extra-p"
@@ -33,7 +33,7 @@ yargs
     wrap(argv => createSelfSignedCert(argv.publisher)))
   .command("start", "Run application in a development mode using electron-webpack",
     yargs => yargs,
-    wrap(argv => start()))
+    wrap(() => start()))
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
   .strict()
@@ -45,7 +45,10 @@ function wrap(task: (args: any) => Promise<any>) {
     checkIsOutdated()
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
-      .catch(printErrorAndExit)
+      .catch(error => {
+        console.error(chalk.red(error instanceof MisConfigurationError ? error.message : (error.stack || error).toString()))
+        process.exitCode = 1
+      })
   }
 }
 

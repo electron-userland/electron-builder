@@ -6,6 +6,7 @@ import { GitHubProvider } from "./GitHubProvider"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export function createClient(data: PublishConfiguration | AllPublishOptions, updater: AppUpdater) {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof data === "string") {
     throw newError("Please pass PublishConfiguration object", "ERR_UPDATER_INVALID_PROVIDER_CONFIGURATION")
   }
