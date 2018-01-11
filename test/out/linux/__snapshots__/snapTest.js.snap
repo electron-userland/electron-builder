@@ -6,6 +6,8 @@ Object {
     "sep": Object {
       "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
+        "desktop",
+        "desktop-legacy",
         "home",
         "x11",
         "unity7",
@@ -58,6 +60,8 @@ Object {
     "sep": Object {
       "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
+        "desktop",
+        "desktop-legacy",
         "home",
         "x11",
         "unity7",
@@ -113,6 +117,8 @@ Object {
       "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "custom",
+        "desktop",
+        "desktop-legacy",
         "home",
         "x11",
         "unity7",
@@ -167,6 +173,8 @@ Object {
       "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "foo1",
+        "desktop",
+        "desktop-legacy",
         "home",
         "x11",
         "unity7",

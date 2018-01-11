@@ -39,7 +39,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * The list of [plugs](https://snapcraft.io/docs/reference/interfaces).
-   * Defaults to `["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
+   * Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
    *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
    */
