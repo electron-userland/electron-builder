@@ -33,7 +33,8 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       }, updater, provider === "spaces" /* https://github.com/minio/minio/issues/5285#issuecomment-350428955 */)
 
     case "generic":
-      return new GenericProvider(data as GenericServerOptions, updater, true)
+      const options = data as GenericServerOptions
+      return new GenericProvider(options, updater, options.useMultipleRangeRequest !== false && !options.url.includes("s3.amazonaws.com"))
 
     case "bintray":
       return new BintrayProvider(data as BintrayOptions, httpExecutor)

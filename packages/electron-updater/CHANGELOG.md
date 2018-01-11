@@ -1,3 +1,9 @@
+## 2.19.0
+
+### Features
+
+* useMultipleRangeRequest option to disable using of multiple ranges request
+
 ## 2.18.2
 
 ### Bug Fixes

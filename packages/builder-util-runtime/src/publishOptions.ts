@@ -100,6 +100,11 @@ export interface GenericServerOptions extends PublishConfiguration {
    * @default latest
    */
   readonly channel?: string | null
+
+  /**
+   * Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
+   */
+  readonly useMultipleRangeRequest?: boolean
 }
 
 export interface BaseS3Options extends PublishConfiguration {
