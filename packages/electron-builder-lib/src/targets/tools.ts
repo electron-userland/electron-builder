@@ -118,7 +118,7 @@ export function getAppBuilderTool() {
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.3.1",
+    version: "0.4.0",
     mac: "c9Be84NmHjF3Yg+ZVWXiYn/BUTYtChqSVBPs++hqG0sqUCnWO/NLcNfvhSTh6OObmnTw2xKjde2CXZvDtZi+7w==",
     "linux-ia32": "eD+X4OWbjr7INncux2RLqpNF5jFzGSoI9R16XMCXP6j/NE+lWYuvHTTHMSEgKZ7QtJwZz8RMSVqJ3T0J3osUMA==",
     "linux-x64": "ObpN4OoTedDpOFKctwJSDyZgOp2VUuX0xew+3ooqb0JEiHTISLermk7pvEXSDGes9c7P6AqwajFQVvV43fWlyQ==",

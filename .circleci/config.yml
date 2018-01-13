@@ -36,12 +36,6 @@ jobs:
             TZ: Europe/Berlin
       steps:
         - checkout
-        - run:
-            name: "git-lfs"
-            command: |
-              mkdir -p /tmp/git-lfs
-              curl -L https://github.com/github/git-lfs/releases/download/v2.3.4/git-lfs-linux-amd64-2.3.4.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
-              /tmp/git-lfs/git-lfs pull
         - restore_cache:
             keys:
               - dependencies-{{ checksum "yarn.lock" }}
