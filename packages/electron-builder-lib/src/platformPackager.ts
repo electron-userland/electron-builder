@@ -577,7 +577,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourceList = await this.resourceList
     const resourcesDir = this.info.buildResourcesDir
-    for (const fileName of [`icon.${format}`, "icon.png", "icons"]) {
+    const sourceNames = [`icon.${format}`, "icon.png", "icons"]
+    if (format === "ico") {
+      sourceNames.push("icns")
+    }
+    for (const fileName of sourceNames) {
       if (resourceList.includes(fileName)) {
         return await this.resolveIcon(path.join(resourcesDir, fileName), format)
       }
@@ -595,7 +599,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         ...process.env,
         // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
         // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-        TMPDIR: await this.info.tempDirManager.rootTempDir,
+        TMPDIR: await this.info.tempDirManager.createTempDir({prefix: "icons"}),
         DEBUG: log.isDebugEnabled ? "true" : "false",
       },
     })

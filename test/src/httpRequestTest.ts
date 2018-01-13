@@ -8,7 +8,7 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
-const tmpDir = new TmpDir()
+const tmpDir = new TmpDir("http-request-test")
 
 afterEach(() => tmpDir.cleanup())
 

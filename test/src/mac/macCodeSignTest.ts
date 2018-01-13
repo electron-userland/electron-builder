@@ -8,7 +8,7 @@ if (process.env.CSC_KEY_PASSWORD == null) {
   })
 }
 
-const tmpDir = new TmpDir()
+const tmpDir = new TmpDir("mac-code-sign-test")
 
 test.ifMac("create keychain", async () => {
   const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})

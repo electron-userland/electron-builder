@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "temp-file": "^3.1.0",
+    "temp-file": "^3.1.1",
     "fs-extra-p": "^4.5.0",
     "is-ci": "^1.1.0",
     "stat-mode": "^0.2.2",

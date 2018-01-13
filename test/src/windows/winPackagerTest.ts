@@ -1,4 +1,4 @@
-import { Platform } from "electron-builder"
+import { Platform, DIR_TARGET } from "electron-builder"
 import { rename, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -55,4 +55,25 @@ test.ifMac("custom icon", () => {
       expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },
   })
+})
+
+test.ifAll("win icon from icns", () => {
+  let platformPackager: CheckingWinPackager | null = null
+  return app({
+    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    config: {
+      mac: {
+        icon: "icons/icon.icns",
+      },
+    },
+    platformPackagerFactory: packager => platformPackager = new CheckingWinPackager(packager)
+  }, {
+    projectDirCreated: projectDir => Promise.all([
+      unlink(path.join(projectDir, "build", "icon.ico")),
+    ]),
+    packed: async () => {
+      const file = await platformPackager!!.getIconPath()
+      expect(file).toBeDefined()
+    },
+  })()
 })

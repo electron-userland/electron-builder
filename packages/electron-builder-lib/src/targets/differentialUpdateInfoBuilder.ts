@@ -37,8 +37,23 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
    * dict size  4 MB: Full: 34,628.73 KB, To download: 3,782.97 KB (11%)
 
    as we can see, if file changed in one place, all block is invalidated (and update size approximately equals to dict size)
+
+   1 MB is used:
+
+   1MB:
+
+   2018/01/11 11:54:41:0045 File has 59 changed blocks
+   2018/01/11 11:54:41:0050 Full: 71,588.59 KB, To download: 1,243.39 KB (2%)
+
+   4MB:
+
+   2018/01/11 11:31:43:0440 Full: 70,303.55 KB, To download: 4,843.27 KB (7%)
+   2018/01/11 11:31:43:0435 File has 234 changed blocks
+
    */
-  archiveOptions.dictSize = 4
+  archiveOptions.dictSize = 1
+  // solid compression leads to a lot of changed blocks
+  archiveOptions.solid = false
   // do not allow to change compression level to avoid different packages
   archiveOptions.compression = "normal"
   return archiveOptions

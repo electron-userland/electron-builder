@@ -8,7 +8,7 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
 
-const tmpDir = new TmpDir()
+const tmpDir = new TmpDir("updater-test-util")
 
 export function createTestApp(version: string, appPath = "") {
   class MockApp {

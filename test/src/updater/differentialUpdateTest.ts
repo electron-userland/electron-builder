@@ -44,7 +44,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
   if (process.env.__SKIP_BUILD == null) {
     await buildApp("1.0.0")
 
-    const tmpDir = new TmpDir()
+    const tmpDir = new TmpDir("differential-updater-test")
     try {
       // move dist temporarily out of project dir
       const oldDir = await tmpDir.getTempDir()
@@ -214,7 +214,7 @@ async function buildApp(version: string, outDirs: Array<string>, targets: Map<Pl
 async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, extraConfig?: Configuration | null) {
   await buildApp("1.0.0", outDirs, targets, extraConfig)
 
-  const tmpDir = new TmpDir()
+  const tmpDir = new TmpDir("differential-updater-test")
   try {
     // move dist temporarily out of project dir
     const oldDir = await tmpDir.getTempDir()

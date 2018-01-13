@@ -8,7 +8,7 @@ import sanitizeFileName from "sanitize-filename"
 
 /** @internal */
 export async function createSelfSignedCert(publisher: string) {
-  const tmpDir = new TmpDir()
+  const tmpDir = new TmpDir("create-self-signed-cert")
   const targetDir = process.cwd()
   const tempPrefix = path.join(await tmpDir.getTempDir({prefix: "self-signed-cert-creator"}), sanitizeFileName(publisher))
   const cer = `${tempPrefix}.cer`

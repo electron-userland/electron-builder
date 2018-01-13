@@ -68,7 +68,7 @@ export class Packager {
 
   appInfo: AppInfo
 
-  readonly tempDirManager = new TmpDir()
+  readonly tempDirManager = new TmpDir("packager")
 
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
