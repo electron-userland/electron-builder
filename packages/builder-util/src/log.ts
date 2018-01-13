@@ -53,6 +53,10 @@ export class Logger {
   }
 
   private doLog(message: string | undefined, messageOrFields: Fields | null | string, level: LogLevel) {
+    if (message instanceof Error) {
+      message = message.stack
+    }
+
     if (message === undefined) {
       this._doLog(messageOrFields as string, null, level)
     }
