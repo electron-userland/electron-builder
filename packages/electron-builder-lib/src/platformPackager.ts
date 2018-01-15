@@ -579,7 +579,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourcesDir = this.info.buildResourcesDir
     const sourceNames = [`icon.${format}`, "icon.png", "icons"]
     if (format === "ico") {
-      sourceNames.push("icns")
+      sourceNames.push("icon.icns")
     }
     for (const fileName of sourceNames) {
       if (resourceList.includes(fileName)) {
