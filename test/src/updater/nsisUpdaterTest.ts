@@ -357,3 +357,25 @@ test("cancel download with progress", async () => {
   expect(downloadPromise.isRejected()).toBe(true)
   expect(cancelled).toBe(true)
 })
+
+test.ifAll.ifWindows("test download and install", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Vladimir Krivosheev"],
+  })
+
+  const tempDir = tmpdir()
+  updater.setDownloadFolder(tempDir)
+
+  await validateDownload(updater)
+  const downloadResult = await validateDownload(updater)
+
+  // Installer path exists
+  updater.quitAndInstall(true, false, path.join(tmpdir(), downloadResult.updateInfo.path))
+
+  // Installer path does not exist.
+  updater.quitAndInstall(true, false, path.join(tmpdir(), downloadResult.updateInfo.path))
+})

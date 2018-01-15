@@ -41,8 +41,9 @@ export class AppImageUpdater extends BaseUpdater {
       sha512: fileInfo.info.sha512,
     }
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
+    let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
     if (installerPath != null) {
+      this._logger.info('Update installer has already been downloaded (' + installerPath + ').')
       return [installerPath]
     }
 

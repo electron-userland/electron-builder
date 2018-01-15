@@ -130,7 +130,8 @@ Emitted on progress.
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
-        * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
+        * [`.setDownloadFolder(downloadFolder)`](#module_electron-updater.AppUpdater+setDownloadFolder)
+        * [`.quitAndInstall(isSilent, isForceRunAfter, installerPath)`](#module_electron-updater.AppUpdater+quitAndInstall)
     * [`.Logger`](#Logger)
         * [`.debug(message)`](#module_electron-updater.Logger+debug)
         * [`.error(message)`](#module_electron-updater.Logger+error)
@@ -168,7 +169,8 @@ Emitted on progress.
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
-    * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
+    * [`.setDownloadFolder(downloadFolder)`](#module_electron-updater.AppUpdater+downloadFolder)
+    * [`.quitAndInstall(isSilent, isForceRunAfter, installerPath)`](#module_electron-updater.AppUpdater+quitAndInstall)
 
 <a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
 #### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
@@ -193,8 +195,12 @@ Configure update provider. If value is `string`, [GenericServerOptions](/configu
 
 - options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
+<a name="module_electron-updater.AppUpdater+setDownloadFolder"></a>
+#### `appUpdater.setDownloadFolder(downloadFolder)`
+Configure the download folder path. Useful for custom installation of updates (without using the quitAndInstall method or using the quitAndInstall method providing the installer's path.
+
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
-#### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`
+#### `appUpdater.quitAndInstall(isSilent, isForceRunAfter, installerPath)`
 Restarts the app and installs the update after it has been downloaded.
 It should only be called after `update-downloaded` has been emitted.
 

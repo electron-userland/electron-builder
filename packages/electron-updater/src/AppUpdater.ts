@@ -15,6 +15,7 @@ import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient } from "./providerFactory"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -47,6 +48,8 @@ export abstract class AppUpdater extends EventEmitter {
   readonly currentVersion: string
 
   private _channel: string | null = null
+
+  protected readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
 
   /**
    * Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
@@ -194,6 +197,14 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /**
+     * Configure update download location.
+     * @param downloadFolder The path of the folder to download updates.
+     */
+  setDownloadFolder(downloadFolder: string) {
+    this.downloadedUpdateHelper.setDownloadFolder(downloadFolder)
+  }
+
+  /**
    * Asks the server whether there is an update.
    */
   checkForUpdates(): Promise<UpdateCheckResult> {
@@ -305,7 +316,7 @@ export abstract class AppUpdater extends EventEmitter {
       versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
-      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
+      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null
     }
   }
 
@@ -353,7 +364,7 @@ export abstract class AppUpdater extends EventEmitter {
    * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
    * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
    */
-  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
+  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean, installerPath?: string): void
 
   private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {

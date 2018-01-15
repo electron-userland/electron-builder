@@ -28,14 +28,16 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     let packagePath: string | null = this.downloadedUpdateHelper.packagePath
-
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
+    let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
     if (installerPath != null) {
+      this._logger.info('Update installer has already been downloaded (' + installerPath + ').')
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 
+    let installerFolderPath: string
     await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
       installerPath = destinationFile
+      installerFolderPath = tempDir
       if (await this.differentialDownloadInstaller(fileInfo, "OLD", installerPath, requestHeaders, provider)) {
         await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
       }
@@ -61,9 +63,10 @@ export class NsisUpdater extends BaseUpdater {
       }
     })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, updateInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerFolderPath!!, packagePath, updateInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.updateInfo)
+
     return packagePath == null ? [installerPath!!] : [installerPath!!, packagePath]
   }
 

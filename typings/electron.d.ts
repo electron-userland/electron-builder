@@ -773,6 +773,12 @@ declare namespace Electron {
      * Sets the url and initialize the auto updater.
      */
     setFeedURL(url: string, requestHeaders?: any): void;
+
+    /**
+     * Configure the update download location.
+     * @param downloadFolder The path of the folder to download updates.
+     */
+    setDownloadFolder(downloadFolder: string): void;
   }
 
   interface BluetoothDevice {
