@@ -95,6 +95,7 @@ Array [
   "update-downloaded",
   "checking-for-update",
   "update-available",
+  "update-downloaded",
 ]
 `;
 

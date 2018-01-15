@@ -374,8 +374,8 @@ test.ifAll.ifWindows("test download and install", async () => {
   const downloadResult = await validateDownload(updater)
 
   // Installer path exists
-  updater.quitAndInstall(true, false, path.join(tmpdir(), downloadResult.updateInfo.path))
+  updater.quitAndInstall(true, false, path.join(tempDir, downloadResult.versionInfo.path))
 
   // Installer path does not exist.
-  updater.quitAndInstall(true, false, path.join(tmpdir(), downloadResult.updateInfo.path))
+  updater.quitAndInstall(true, false, path.join(tempDir, downloadResult.versionInfo.path))
 })
