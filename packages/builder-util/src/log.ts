@@ -22,7 +22,7 @@ export class Logger {
   constructor(protected readonly stream: WritableStream) {
   }
 
-  messageTransformer: ((message: string, level: LogLevel) => string) = it => it
+  messageTransformer: ((message: string, level: LogLevel) => string) = it => it.toString()
 
   filePath(file: string) {
     const cwd = process.cwd()
