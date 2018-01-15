@@ -17,7 +17,9 @@ export abstract class BaseUpdater extends AppUpdater {
     this._logger.info(`Install on explicit quitAndInstall`)
     if (this.install(isSilent, isSilent ? isForceRunAfter : true, installerPath)) {
       setImmediate(() => {
-        (this.app.quit != undefined) && this.app.quit()
+        if (this.app.quit !== undefined) {
+          this.app.quit()
+        }
         this.quitAndInstallCalled = false
       })
     }
@@ -29,8 +31,8 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     // Set the download folder.
-    const downloadFolder = this.downloadedUpdateHelper.folder;
-    let tempDir : string;
+    const downloadFolder = this.downloadedUpdateHelper.folder
+    let tempDir: string
     if (downloadFolder != null) {
       tempDir = downloadFolder
       if (!existsSync(downloadFolder)) {
@@ -74,7 +76,7 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
     let installerPath
-    if (customPath != undefined && customPath.length > 0 && existsSync(customPath)) {
+    if (customPath !== undefined && customPath.length > 0 && existsSync(customPath)) {
       installerPath = customPath
     } else {
       installerPath = this.downloadedUpdateHelper.file

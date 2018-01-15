@@ -43,7 +43,7 @@ export class AppImageUpdater extends BaseUpdater {
 
     let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
     if (installerPath != null) {
-      this._logger.info('Update installer has already been downloaded (' + installerPath + ').')
+      this._logger.info("Update installer has already been downloaded (" + installerPath + ").")
       return [installerPath]
     }
 

@@ -30,7 +30,7 @@ export class NsisUpdater extends BaseUpdater {
     let packagePath: string | null = this.downloadedUpdateHelper.packagePath
     let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
     if (installerPath != null) {
-      this._logger.info('Update installer has already been downloaded (' + installerPath + ').')
+      this._logger.info("Update installer has already been downloaded (" + installerPath + ").")
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 

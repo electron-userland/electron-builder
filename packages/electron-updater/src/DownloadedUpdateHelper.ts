@@ -28,7 +28,7 @@ export class DownloadedUpdateHelper {
   }
 
   getDownloadedPath(versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo): string | null {
-    if (this.setupFolderPath == null || this.setupFolderPath.length == 0) {
+    if (this.setupFolderPath == null) {
       return null
     }
 
