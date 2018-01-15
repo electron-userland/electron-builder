@@ -374,7 +374,7 @@ test.ifAll.ifWindows("test download and install", async () => {
   const downloadResult = await validateDownload(updater)
 
   // Installer path exists
-  let customInstallerPath = path.join(customDownloadFolder, downloadResult.versionInfo.path.toString())
+  let customInstallerPath = path.join(customDownloadFolder, downloadResult.versionInfo.files[0].url)
   updater.quitAndInstall(true, false, customInstallerPath)
 
   // Installer path does not exist.
