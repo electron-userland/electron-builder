@@ -367,15 +367,17 @@ test.ifAll.ifWindows("test download and install", async () => {
     publisherName: ["Vladimir Krivosheev"],
   })
 
-  const tempDir = tmpdir()
-  updater.setDownloadFolder(tempDir)
+  const customDownloadFolder = tmpdir()
+  updater.setDownloadFolder(customDownloadFolder)
 
   await validateDownload(updater)
   const downloadResult = await validateDownload(updater)
 
   // Installer path exists
-  updater.quitAndInstall(true, false, path.join(tempDir, downloadResult.versionInfo.path))
+  let customInstallerPath = path.join(customDownloadFolder, downloadResult.versionInfo.path)
+  updater.quitAndInstall(true, false, customInstallerPath)
 
   // Installer path does not exist.
-  updater.quitAndInstall(true, false, path.join(tempDir, downloadResult.versionInfo.path))
+  customInstallerPath = path.join(customDownloadFolder, "test.exe")
+  updater.quitAndInstall(true, false, customInstallerPath)
 })
