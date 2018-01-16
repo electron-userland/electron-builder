@@ -118,12 +118,12 @@ export function getAppBuilderTool() {
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.4.0",
-    mac: "c9Be84NmHjF3Yg+ZVWXiYn/BUTYtChqSVBPs++hqG0sqUCnWO/NLcNfvhSTh6OObmnTw2xKjde2CXZvDtZi+7w==",
-    "linux-ia32": "eD+X4OWbjr7INncux2RLqpNF5jFzGSoI9R16XMCXP6j/NE+lWYuvHTTHMSEgKZ7QtJwZz8RMSVqJ3T0J3osUMA==",
-    "linux-x64": "ObpN4OoTedDpOFKctwJSDyZgOp2VUuX0xew+3ooqb0JEiHTISLermk7pvEXSDGes9c7P6AqwajFQVvV43fWlyQ==",
-    "linux-armv7": "7eNQmppJtG/soje7YYfhYh47ZY0eDdOZ3XD2lHkLvo0CYZWBSzJcS6HnSp/C4NHT+M5KXbQ78g2/JKQ6hAWEdA==",
-    "win-ia32": "+CRXAhFTzlHJIPWSmB2dAmw7WrzVZ1iglPOYSdbYceLf/5wUsnKGNl2dLR9V28o0pc6zfLNEuvnc/mBEtqIboQ==",
-    "win-x64": "VML8bDt1wChh+RlJImTyAE6nQ9pqqUVOMjI8x4QCJ26fG5GxUg6cS+hIlNrIjyccEAPGH05jMXbVUAFeD7b9WQ==",
+    version: "0.5.0",
+    mac: "tsOS/dtPCSa+WI4a01nrbQNQ5QB8FMNLQENc/KLmKiQMwMIS9hifZJ1GiUK/O59aYUoCypM3semW+SRtidV5RQ==",
+    "linux-ia32": "d7MgEmrw4Zmuro5crVJO7euY0+nH7yM1+zS5uh6n26J0cYMP2KKgVQrMtfoyqzGUxxtfgUc+gKxMGTqWUbF0yQ==",
+    "linux-x64": "FxLl2Q6cWxqYCwW3brgkWmt6Gp2iS9yTVp3HfI0TUWq/ei2n1asZ4WeGyrkYTi+Rw0qpZm85UpDQzT9/yKkEZw==",
+    "linux-armv7": "qAMXrqF5Ek3R5sUKNRPOGceOxXxgxL50KAtrLUfqOaYaUdg78VFJym1Io8o1NdLG7eayfjjwK/VJK4m/kB0OCA==",
+    "win-ia32": "sDr7H4oVd2EI8n1zKRc+ic315b2ezyHoNZzk5w57rStReBk7jUL7D7Wqd3NueP5meNfQLtoA3u0T9daOCSWG3w==",
+    "win-x64": "WB1rxDGF5V2Wy0Su2IAF0iIXSOlZWOyTAQathEatkTLlBuD6wAcQiTvxM/j+wgXMpWItXQULOK0Yk1rA78VU3w==",
   })
 }
