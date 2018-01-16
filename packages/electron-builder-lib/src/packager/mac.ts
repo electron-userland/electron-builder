@@ -46,7 +46,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
   const helperEHPlist = parsePlist(fileContents[2])
   const helperNPPlist = parsePlist(fileContents[3])
 
-  // If an extend-info file was supplied, copy its contents in first
+  // if an extend-info file was supplied, copy its contents in first
   if (fileContents[4] != null) {
     Object.assign(appPlist, parsePlist(fileContents[4]))
   }
@@ -91,6 +91,10 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
 
   appPlist.CFBundleShortVersionString = macOptions.bundleShortVersion || appInfo.version
   appPlist.CFBundleVersion = appInfo.buildVersion
+
+  if (macOptions.minimumSystemVersion != null) {
+    appPlist.LSMinimumSystemVersion = macOptions.minimumSystemVersion
+  }
 
   const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
