@@ -23,11 +23,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
-    const basePath = this.basePath
     const cancellationToken = new CancellationToken()
     const channelFile = getChannelFilename(getDefaultChannelName())
 
-    const releaseInfo = await this.getLatestVersionInfo(basePath, cancellationToken)
+    const releaseInfo = await this.getLatestVersionInfo(cancellationToken)
     const asset = releaseInfo.assets.find(it => it.name === channelFile)
     if (asset == null) {
       // html_url must be always, but just to be sure
@@ -61,8 +60,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
   }
 
-  private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<ReleaseInfo> {
-    const url = newUrlFromBase(`${basePath}/latest`, this.baseUrl)
+  private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<ReleaseInfo> {
+    const url = newUrlFromBase(`${this.basePath}/latest`, this.baseUrl)
     try {
       return (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
     }

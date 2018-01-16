@@ -3,10 +3,9 @@ You decided to contribute to this project? Great, thanks a lot for pushing it.
 This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. By participating, you are expected to uphold this code. Please file issue to report unacceptable behavior.
 
 ## Pull Requests
-To check that your contributions match the project coding style make sure `npm test` passes.
+To check that your contributions match the project coding style make sure `yarn test` passes.
 
-1. [yarn](https://yarnpkg.com) is required because NPM is not reliable.
-2. [git-lfs](https://git-lfs.github.com) is required (use `git lfs pull` to download files when git-lfs was installed after git clone).
+[yarn](https://yarnpkg.com) is required because NPM is not reliable.
 
 To build project: `yarn && yarn compile`
 
@@ -23,9 +22,9 @@ Documentation files located in the `/docs`.
 
 ## Debug Tests
 
-Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), [WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug. Please prefer to use 2017.2.
+Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), [WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug.
 
-If you use IntelliJ IDEA or WebStorm 2017.2 — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you can run tests from an editor (just click on `Run` green gutter icon).
+If you use IntelliJ IDEA or WebStorm — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you can run tests from an editor (just click on `Run` green gutter icon).
 
 Or you can create Node.js run configuration manually:
 * Ensure that `Before launch` contains `Compile TypeScript`.
