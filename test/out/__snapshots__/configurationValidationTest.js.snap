@@ -21,30 +21,4 @@ Object {
 }
 `;
 
-exports[`validation 1`] = `
-"Configuration is invalid.
- - configuration has an unknown property 'foo'. These properties are valid:
-   object { afterPack?, afterSign?, apk?, appId?, appImage?, appx?, artifactName?, asar?, asarUnpack?, beforeBuild?, buildDependenciesFromSource?, buildVersion?, compression?, copyright?, deb?, detectUpdateChannel?, directories?, dmg?, electronCompile?, electronDist?, electronDownload?, electronVersion?, extends?, extraFiles?, extraMetadata?, extraResources?, fileAssociations?, files?, forceCodeSigning?, freebsd?, generateUpdatesFilesForAllChannels?, icon?, linux?, mac?, mas?, msi?, muonVersion?, nodeGypRebuild?, npmArgs?, npmRebuild?, npmSkipBuildFromSource?, nsis?, nsisWeb?, p5p?, pacman?, pkg?, portable?, productName?, protocols?, publish?, releaseInfo?, remoteBuild?, rpm?, snap?, squirrelWindows?, target?, win? }
-   Configuration Options
-
- - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
-     \\"type\\": \\"null\\"
-   }
-   Options related to how build macOS targets.
-   
-   Details:
-    * configuration.mac has an unknown property 'foo'. These properties are valid:
-      object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? }
-    * configuration.mac should be null:
-      {
-        \\"type\\": \\"null\\"
-      }
-
-How to fix:
-1. Open https://electron.build/configuration/configuration
-2. Search the option name on the page.
-  * Not found? The option was deprecated or not exists (check spelling).
-  * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
-"
-`;
+exports[`validation 1`] = `"ERR_CONFIG_INVALID"`;

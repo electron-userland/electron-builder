@@ -1,25 +1,13 @@
-import { exec, isEmptyOrSpaces, log } from "builder-util"
-import { statOrNull } from "builder-util/out/fs"
-import { ExecFileOptions } from "child_process"
+import { isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { LinuxConfiguration, LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
+import { IconInfo } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
-import { getAppBuilderTool } from "./tools"
 
 export const installPrefix = "/opt"
-
-export interface IconInfo {
-  file: string
-  size: number
-}
-
-export interface IconListResult {
-  maxIconPath: string
-  readonly icons: Array<IconInfo>
-}
 
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
@@ -36,58 +24,26 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
-    const execOptions: ExecFileOptions = {
-      env: {
-        ...process.env,
-        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
-        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-        TMPDIR: await this.packager.info.tempDirManager.rootTempDir,
-      },
+    const iconDir = packager.platformSpecificBuildOptions.icon
+    const sources = [iconDir == null ? "icons" : iconDir]
+    const icnsPath = this.getIcns()
+    if (icnsPath != null) {
+      sources.push(icnsPath)
     }
+    sources.push(path.join(getTemplatePath("linux"), "electron-icons"))
 
-    async function collectIcons(sourceDir: string) {
-      return JSON.parse(await exec(await getAppBuilderTool(), ["collect-icons", "--source", sourceDir], execOptions))
-    }
-
-    let iconDir = packager.platformSpecificBuildOptions.icon
-    if (iconDir != null) {
-      const iconDirCandidate = path.resolve(packager.info.buildResourcesDir, iconDir)
-      if (await statOrNull(iconDirCandidate) == null) {
-        iconDir = path.resolve(packager.projectDir, iconDir)
-      }
-      else {
-        iconDir = iconDirCandidate
-      }
-    }
-    else if ((await packager.resourceList).includes("icons")) {
-      iconDir = path.join(packager.info.buildResourcesDir, "icons")
-    }
-
-    let result: IconListResult
-    if (iconDir == null) {
-      const icnsPath = await this.getIcns()
-      if (icnsPath == null) {
-        result = await collectIcons(path.join(getTemplatePath("linux"), "electron-icons"))
-      }
-      else {
-        result = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", icnsPath], execOptions))
-      }
-    }
-    else {
-      result = await collectIcons(iconDir)
-    }
-
-    this.maxIconPath = result.maxIconPath
-    return result.icons
+    const result = await packager.resolveIcon(sources, "set")
+    this.maxIconPath = result[result.length - 1].file
+    return result
   }
 
-  private async getIcns(): Promise<string | null> {
+  private getIcns(): string | null {
     const build = this.packager.info.config
     let iconPath = (build.mac || {}).icon || build.icon
     if (iconPath != null && !iconPath.endsWith(".icns")) {
       iconPath += ".icns"
     }
-    return iconPath == null ? await this.packager.getDefaultIcon("icns") : path.resolve(this.packager.projectDir, iconPath)
+    return iconPath == null ? null : path.resolve(this.packager.projectDir, iconPath)
   }
 
   getDescription(options: LinuxConfiguration) {

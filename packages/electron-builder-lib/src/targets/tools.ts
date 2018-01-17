@@ -82,7 +82,8 @@ export interface ToolDescriptor {
   mac: string
   "linux-ia32"?: string
   "linux-x64"?: string
-  "linux-armv7"?: string
+  "linux-armV7"?: string
+  "linux-armV8"?: string
 
   "win-ia32": string
   "win-x64": string
@@ -118,12 +119,13 @@ export function getAppBuilderTool() {
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.5.0",
-    mac: "tsOS/dtPCSa+WI4a01nrbQNQ5QB8FMNLQENc/KLmKiQMwMIS9hifZJ1GiUK/O59aYUoCypM3semW+SRtidV5RQ==",
-    "linux-ia32": "d7MgEmrw4Zmuro5crVJO7euY0+nH7yM1+zS5uh6n26J0cYMP2KKgVQrMtfoyqzGUxxtfgUc+gKxMGTqWUbF0yQ==",
-    "linux-x64": "FxLl2Q6cWxqYCwW3brgkWmt6Gp2iS9yTVp3HfI0TUWq/ei2n1asZ4WeGyrkYTi+Rw0qpZm85UpDQzT9/yKkEZw==",
-    "linux-armv7": "qAMXrqF5Ek3R5sUKNRPOGceOxXxgxL50KAtrLUfqOaYaUdg78VFJym1Io8o1NdLG7eayfjjwK/VJK4m/kB0OCA==",
-    "win-ia32": "sDr7H4oVd2EI8n1zKRc+ic315b2ezyHoNZzk5w57rStReBk7jUL7D7Wqd3NueP5meNfQLtoA3u0T9daOCSWG3w==",
-    "win-x64": "WB1rxDGF5V2Wy0Su2IAF0iIXSOlZWOyTAQathEatkTLlBuD6wAcQiTvxM/j+wgXMpWItXQULOK0Yk1rA78VU3w==",
+    version: "0.6.0",
+    mac: "d27p1TYhPVlWFS+3TO8dh80sHP5imMnZTS04ODvL9xHpCQ7KZEUqFEWYi7zDFXKfzBU6zwBcRGrb8BwQAawvzg==",
+    "linux-ia32": "1aLAsDliV/kCYfOQR/NX43pRwO/v4nC7F98Z9ZRO8r8iXEpTLYVJC19FNup81WpD0hvxLBspnbq73YiSE3aX8g==",
+    "linux-x64": "6iu/0BzEKTIuCZ/pVPorpLTXjTzqcquTfrlyB9mEyPXQcHPTueK+tBBDQ6SIO7eaGq+W3PDe1oEjgiz2q3Zd4g==",
+    "linux-armV7": "zUxn5fAxeGylF7mqVP+Aaas3vD3ITTS26EBty9VkGz51EYgCVYnQVTacDIQjwB6s1zit6jt8EJy5Jj0Y+6U+7w==",
+    "linux-armV8": "69napXVwaPqQcNp7tozNyo7VJbB90E2RToN0pqGppdfUBzTLJUNnZL5D7H4MoUUPS/WgNRalEswb7GfZOsK4XA==",
+    "win-ia32": "HW+pZS96d0v96iq0y8BX4vg5J97oFMujPaqziatRNZif26EI75lS5S58qCEmooyr9lXDLwbIlNIhrKg7ZzlNhw==",
+    "win-x64": "eO8eJq2N/t0/3g3EuRut0LU460WUqzywiRhr+OjEUQH1Gt7GuIdc4gYOfDazYjyeTqlATCfT/OzQMdplaac2wQ==",
   })
 }

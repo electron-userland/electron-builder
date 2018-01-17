@@ -51,20 +51,20 @@ async function runTests() {
       testPatterns.push("macArchiveTest")
       testPatterns.push("macCodeSignTest")
       testPatterns.push("extraMetadataTest")
+      testPatterns.push("HoistedNodeModuleTest")
+      testPatterns.push("configurationValidationTest")
     }
     else if (circleNodeIndex === 1) {
       testPatterns.push("oneClickInstallerTest")
     }
     else if (circleNodeIndex === 2) {
       testPatterns.push("snapTest")
-      testPatterns.push("configurationValidationTest")
       testPatterns.push("mainEntryTest")
       testPatterns.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
       testPatterns.push("macPackagerTest")
       testPatterns.push("portableTest")
       testPatterns.push("linuxPackagerTest")
       testPatterns.push("ignoreTest")
-      testPatterns.push("HoistedNodeModuleTest")
     }
     else {
       testPatterns.push("BuildTest")

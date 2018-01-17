@@ -516,18 +516,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return `${deployment ? this.appInfo.name : this.appInfo.productFilename}${separator}${this.appInfo.version}${classifier == null ? "" : `${separator}${classifier}`}${dotExt}`
   }
 
-  async getDefaultIcon(ext: string) {
-    const resourceList = await this.resourceList
-    const name = `icon.${ext}`
-    if (resourceList.includes(name)) {
-      return path.join(this.info.buildResourcesDir, name)
-    }
-    else {
-      log.warn({reason: "application icon is not set"}, "default Electron icon is used")
-      return null
-    }
-  }
-
   getTempFile(suffix: string): Promise<string> {
     return this.info.tempDirManager.getTempFile({suffix})
   }
@@ -569,21 +557,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) || false
   }
 
-  protected async getOrConvertIcon(format: "icns" | "ico") {
+  protected async getOrConvertIcon(format: IconFormat): Promise<string | null> {
     const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
     if (iconPath != null) {
-      return await this.resolveIcon(iconPath, format)
+      return (await this.resolveIcon([iconPath], format))[0].file
     }
 
     const resourceList = await this.resourceList
     const resourcesDir = this.info.buildResourcesDir
-    const sourceNames = [`icon.${format}`, "icon.png", "icons"]
+    const sourceNames = [`icon.${format === "set" ? "png" : format}`, "icon.png", "icons"]
     if (format === "ico") {
       sourceNames.push("icon.icns")
     }
     for (const fileName of sourceNames) {
       if (resourceList.includes(fileName)) {
-        return await this.resolveIcon(path.join(resourcesDir, fileName), format)
+        return (await this.resolveIcon([path.join(resourcesDir, fileName)], format))[0].file
       }
     }
 
@@ -592,19 +580,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
-  private async resolveIcon(source: string, outputFormat: "icns" | "ico") {
-    const rawResult = await exec(await getAppBuilderTool(), ["icon", "--input", source, "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir], {
-      cwd: this.buildResourcesDir,
+  async resolveIcon(sources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
+    const arg = ["icon", "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir]
+    for (const source of sources) {
+      arg.push("--input", source)
+    }
+
+    const rawResult = await exec(await getAppBuilderTool(), arg, {
+      cwd: this.projectDir,
       env: {
         ...process.env,
-        // icns-to-png creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
+        // command creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
         // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-        TMPDIR: await this.info.tempDirManager.createTempDir({prefix: "icons"}),
+        TMPDIR: await this.info.tempDirManager.rootTempDir,
         DEBUG: log.isDebugEnabled ? "true" : "false",
       },
     })
 
-    let result: any
+    let result: IconConvertResult
     try {
       result = JSON.parse(rawResult)
     }
@@ -616,9 +609,23 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (errorMessage != null) {
       throw new MisConfigurationError(errorMessage, result.errorCode)
     }
-    return result.file
+    return result.icons!!
   }
 }
+
+export interface IconInfo {
+  file: string
+  size: number
+}
+
+interface IconConvertResult {
+  icons?: Array<IconInfo>
+
+  error?: string
+  errorCode?: string
+}
+
+export type IconFormat = "icns" | "ico" | "set"
 
 export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)
