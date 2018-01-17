@@ -82,27 +82,29 @@ export interface ToolDescriptor {
   mac: string
   "linux-ia32"?: string
   "linux-x64"?: string
-  "linux-armV7"?: string
-  "linux-armV8"?: string
+  "linux-armv7"?: string
+  "linux-armv8"?: string
 
   "win-ia32": string
   "win-x64": string
 }
 
 export function getTool(descriptor: ToolDescriptor): Promise<string> {
-  const platform = Platform.current()
-  const checksum = platform === Platform.MAC ? descriptor.mac : (descriptor as any)[`${platform.buildConfigurationKey}-${process.arch}`]
-  if (checksum == null) {
-    throw new Error(`Checksum not specified for ${platform}:${process.arch}`)
+  let arch = process.arch;
+  if (arch === "arm") {
+    arch = "armv7"
+  }
+  else if (arch === "arm64") {
+    arch = "armv8"
   }
 
-  let archQualifier = platform === Platform.MAC ? "" : `-${process.arch}`
-  if (archQualifier === "arm") {
-    archQualifier = "armv7"
+  const platform = Platform.current()
+  const checksum = platform === Platform.MAC ? descriptor.mac : (descriptor as any)[`${platform.buildConfigurationKey}-${arch}`]
+  if (checksum == null) {
+    throw new Error(`Checksum not specified for ${platform}:${arch}`)
   }
-  else if (archQualifier === "arm64") {
-    archQualifier = "armv8"
-  }
+
+  let archQualifier = platform === Platform.MAC ? "" : `-${arch}`
 
   // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
   const version = descriptor.version
@@ -126,8 +128,8 @@ export function getAppBuilderTool() {
     mac: "d27p1TYhPVlWFS+3TO8dh80sHP5imMnZTS04ODvL9xHpCQ7KZEUqFEWYi7zDFXKfzBU6zwBcRGrb8BwQAawvzg==",
     "linux-ia32": "1aLAsDliV/kCYfOQR/NX43pRwO/v4nC7F98Z9ZRO8r8iXEpTLYVJC19FNup81WpD0hvxLBspnbq73YiSE3aX8g==",
     "linux-x64": "6iu/0BzEKTIuCZ/pVPorpLTXjTzqcquTfrlyB9mEyPXQcHPTueK+tBBDQ6SIO7eaGq+W3PDe1oEjgiz2q3Zd4g==",
-    "linux-armV7": "zUxn5fAxeGylF7mqVP+Aaas3vD3ITTS26EBty9VkGz51EYgCVYnQVTacDIQjwB6s1zit6jt8EJy5Jj0Y+6U+7w==",
-    "linux-armV8": "69napXVwaPqQcNp7tozNyo7VJbB90E2RToN0pqGppdfUBzTLJUNnZL5D7H4MoUUPS/WgNRalEswb7GfZOsK4XA==",
+    "linux-armv7": "zUxn5fAxeGylF7mqVP+Aaas3vD3ITTS26EBty9VkGz51EYgCVYnQVTacDIQjwB6s1zit6jt8EJy5Jj0Y+6U+7w==",
+    "linux-armv8": "69napXVwaPqQcNp7tozNyo7VJbB90E2RToN0pqGppdfUBzTLJUNnZL5D7H4MoUUPS/WgNRalEswb7GfZOsK4XA==",
     "win-ia32": "HW+pZS96d0v96iq0y8BX4vg5J97oFMujPaqziatRNZif26EI75lS5S58qCEmooyr9lXDLwbIlNIhrKg7ZzlNhw==",
     "win-x64": "eO8eJq2N/t0/3g3EuRut0LU460WUqzywiRhr+OjEUQH1Gt7GuIdc4gYOfDazYjyeTqlATCfT/OzQMdplaac2wQ==",
   })
