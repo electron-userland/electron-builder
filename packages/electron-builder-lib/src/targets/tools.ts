@@ -100,6 +100,9 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
   if (archQualifier === "arm") {
     archQualifier = "armv7"
   }
+  else if (archQualifier === "arm64") {
+    archQualifier = "armv8"
+  }
 
   // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
   const version = descriptor.version
