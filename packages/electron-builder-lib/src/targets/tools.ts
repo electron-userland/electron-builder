@@ -90,7 +90,7 @@ export interface ToolDescriptor {
 }
 
 export function getTool(descriptor: ToolDescriptor): Promise<string> {
-  let arch = process.arch;
+  let arch = process.arch
   if (arch === "arm") {
     arch = "armv7"
   }
@@ -104,7 +104,7 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
     throw new Error(`Checksum not specified for ${platform}:${arch}`)
   }
 
-  let archQualifier = platform === Platform.MAC ? "" : `-${arch}`
+  const archQualifier = platform === Platform.MAC ? "" : `-${arch}`
 
   // https://github.com/develar/block-map-builder/releases/download/v0.0.1/block-map-builder-v0.0.1-win-x64.7z
   const version = descriptor.version
