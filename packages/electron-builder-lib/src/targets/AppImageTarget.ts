@@ -109,7 +109,7 @@ export default class AppImageTarget extends Target {
         ...process.env,
         PATH: `${vendorToolDir}:${process.env.PATH}`,
         // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
-        ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
+        ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : (arch === Arch.arm64 ? "arm_aarch64" : "arm")),
       }
     })
 
@@ -177,6 +177,9 @@ function archToRuntimeName(arch: Arch) {
   switch (arch) {
     case Arch.armv7l:
       return "armv7"
+
+    case Arch.arm64:
+      return "arm64"
 
     case Arch.ia32:
       return "i686"
