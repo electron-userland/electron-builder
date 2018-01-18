@@ -1,6 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -12,7 +12,7 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
-import { CompressionLevel, MisConfigurationError, Platform, Target, TargetSpecificOptions } from "./core"
+import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
@@ -458,14 +458,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             const envName = p1.substring("env.".length)
             const envValue = process.env[envName]
             if (envValue == null) {
-              throw new Error(`Env ${envName} is not defined`)
+              throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": env ${envName} is not defined`)
             }
             return envValue
           }
 
           const value = extra[p1]
           if (value == null) {
-            throw new Error(`Macro ${p1} is not defined`)
+            throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": macro ${p1} is not defined`)
           }
           else {
             return value
@@ -544,7 +544,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (await statOrNull(p) == null) {
         p = path.resolve(this.projectDir, custom)
         if (await statOrNull(p) == null) {
-          throw new Error(`Cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`)
+          throw new InvalidConfigurationError(`cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`)
         }
       }
       return p
@@ -607,7 +607,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const errorMessage = result.error
     if (errorMessage != null) {
-      throw new MisConfigurationError(errorMessage, result.errorCode)
+      throw new InvalidConfigurationError(errorMessage, result.errorCode)
     }
     return result.icons!!
   }

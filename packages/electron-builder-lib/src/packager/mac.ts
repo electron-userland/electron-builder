@@ -1,6 +1,6 @@
 import { AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { asArray, getPlatformIconFileName, log, use } from "builder-util"
+import { asArray, getPlatformIconFileName, InvalidConfigurationError, log, use } from "builder-util"
 import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -101,7 +101,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
       const schemes = asArray(protocol.schemes)
       if (schemes.length === 0) {
-        throw new Error(`Protocol "${protocol.name}": must be at least one scheme specified`)
+        throw new InvalidConfigurationError(`Protocol "${protocol.name}": must be at least one scheme specified`)
       }
       return {
         CFBundleURLName: protocol.name,

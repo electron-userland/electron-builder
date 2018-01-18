@@ -1,4 +1,5 @@
-import S3, { ClientConfiguration, StorageClass, ServerSideEncryption } from "aws-sdk/clients/s3"
+import S3, { ClientConfiguration, ServerSideEncryption, StorageClass } from "aws-sdk/clients/s3"
+import { InvalidConfigurationError } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
@@ -13,7 +14,7 @@ export default class S3Publisher extends BaseS3Publisher {
   static async checkAndResolveOptions(options: S3Options, channelFromAppVersion: string | null) {
     const bucket = options.bucket
     if (bucket == null) {
-      throw new Error(`Please specify "bucket" for "s3" publish provider`)
+      throw new InvalidConfigurationError(`Please specify "bucket" for "s3" publish provider`)
     }
 
     if (options.endpoint == null && (bucket.includes(".") && options.region == null)) {

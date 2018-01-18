@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
+import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
@@ -126,14 +126,14 @@ export class Packager {
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
     if ("project" in options) {
-      throw new Error("Use projectDir instead of project")
+      throw new InvalidConfigurationError("Use projectDir instead of project")
     }
 
     if ("devMetadata" in options) {
-      throw new Error("devMetadata in the options is deprecated, please use config instead")
+      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
     }
     if ("extraMetadata" in options) {
-      throw new Error("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
+      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
     }
 
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
@@ -338,7 +338,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new Error("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
       }
 
       const packager = this.createHelper(platform)

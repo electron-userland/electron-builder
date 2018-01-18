@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, log } from "builder-util"
+import { Arch, asArray, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, walk } from "builder-util/out/fs"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -174,7 +174,7 @@ export default class AppXTarget extends Target {
           case "publisherDisplayName":
             const name = options.publisherDisplayName || appInfo.companyName
             if (name == null) {
-              throw new Error(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
+              throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
             }
             return name
 
@@ -188,7 +188,7 @@ export default class AppXTarget extends Target {
               if (options.applicationId == null) {
                 message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
               }
-              throw new Error(message)
+              throw new InvalidConfigurationError(message)
             }
             return result
 

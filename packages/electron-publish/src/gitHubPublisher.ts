@@ -1,11 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
+import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
 import { Fields } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import mime from "mime"
-import { parse as parseUrl } from "url"
 import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export interface Release {
@@ -52,20 +51,20 @@ export class GitHubPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.GH_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
+        throw new InvalidConfigurationError(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
       }
 
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new Error(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
+        throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
       }
     }
 
     this.token = token!
 
     if (version.startsWith("v")) {
-      throw new Error(`Version must not starts with "v": ${version}`)
+      throw new InvalidConfigurationError(`Version must not starts with "v": ${version}`)
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`

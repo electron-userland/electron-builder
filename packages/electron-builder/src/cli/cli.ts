@@ -1,8 +1,7 @@
 #! /usr/bin/env node
 
-import { exec, log } from "builder-util"
+import { exec, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
-import { MisConfigurationError } from "electron-builder-lib"
 import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
 import { getGypEnv } from "electron-builder-lib/out/util/yarn"
 import { readJson } from "fs-extra-p"
@@ -46,7 +45,7 @@ function wrap(task: (args: any) => Promise<any>) {
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {
-        console.error(chalk.red(error instanceof MisConfigurationError ? error.message : (error.stack || error).toString()))
+        console.error(chalk.red(error instanceof InvalidConfigurationError ? error.message : (error.stack || error).toString()))
         process.exitCode = 1
       })
   }

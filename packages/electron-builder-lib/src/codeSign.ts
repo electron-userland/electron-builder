@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, getCacheDirectory, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
+import { exec, getCacheDirectory, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -362,6 +362,6 @@ export function findIdentity(certType: CertType, qualifier?: string | null, keyc
 
 function checkPrefix(name: string, prefix: string) {
   if (name.startsWith(prefix)) {
-    throw new Error(`Please remove prefix "${prefix}" from the specified name — appropriate certificate will be chosen automatically`)
+    throw new InvalidConfigurationError(`Please remove prefix "${prefix}" from the specified name — appropriate certificate will be chosen automatically`)
   }
 }

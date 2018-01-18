@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -383,7 +383,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   if (provider === "generic") {
     const o = options as GenericServerOptions
     if (o.url == null) {
-      throw new Error(`Please specify "url" for "generic" update server`)
+      throw new InvalidConfigurationError(`Please specify "url" for "generic" update server`)
     }
 
     if (channelFromAppVersion != null) {

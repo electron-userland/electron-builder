@@ -1,6 +1,6 @@
-import { WinPackager } from "../winPackager"
-import { isEmptyOrSpaces } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
+import { WinPackager } from "../winPackager"
 
 export interface CommonWindowsInstallerConfiguration {
   readonly oneClick?: boolean
@@ -60,7 +60,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
     if (options.menuCategory === true) {
       const companyName = packager.appInfo.companyName
       if (companyName == null) {
-        throw new Error(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
+        throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
       }
       menuCategory = sanitizeFileName(companyName)
     }

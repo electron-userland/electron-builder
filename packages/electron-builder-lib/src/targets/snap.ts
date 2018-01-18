@@ -1,4 +1,4 @@
-import { Arch, exec, replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
+import { Arch, exec, InvalidConfigurationError, replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
@@ -63,7 +63,7 @@ export default class SnapTarget extends Target {
 
     if (options.assumes != null) {
       if (!Array.isArray(options.assumes)) {
-        throw new Error("snap.assumes must be an array of strings")
+        throw new InvalidConfigurationError("snap.assumes must be an array of strings")
       }
       snap.assumes = options.assumes
     }
