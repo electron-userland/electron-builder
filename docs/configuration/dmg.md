@@ -2,7 +2,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 
 <!-- do not edit. start of generated block -->
 * <code id="DmgOptions-background">background</code> String - The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use `window.size`. Default locations expected background size to be 540x380. See: [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).
-* <code id="DmgOptions-backgroundColor">backgroundColor</code> String - The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
+* <code id="DmgOptions-backgroundColor">backgroundColor</code> String - The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image. NOTE: You may only set either the background (image) or backgroundColor, not both.
 * <code id="DmgOptions-icon">icon</code> String - The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to the application icon (`build/icon.icns`).
 * <code id="DmgOptions-iconSize">iconSize</code> = `80` Number - The size of all the icons inside the DMG.
 * <code id="DmgOptions-iconTextSize">iconTextSize</code> = `12` Number - The size of all the icon texts inside the DMG.
