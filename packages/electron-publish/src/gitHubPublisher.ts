@@ -5,6 +5,7 @@ import { Fields } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import mime from "mime"
+import { parse as parseUrl } from "url"
 import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export interface Release {
