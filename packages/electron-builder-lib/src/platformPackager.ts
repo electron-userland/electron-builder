@@ -456,14 +456,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             const envName = p1.substring("env.".length)
             const envValue = process.env[envName]
             if (envValue == null) {
-              throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": env ${envName} is not defined`)
+              throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": env ${envName} is not defined`, "ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED")
             }
             return envValue
           }
 
           const value = extra[p1]
           if (value == null) {
-            throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": macro ${p1} is not defined`)
+            throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": macro ${p1} is not defined`, "ERR_ELECTRON_BUILDER_MACRO_NOT_DEFINED")
           }
           else {
             return value

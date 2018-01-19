@@ -86,7 +86,7 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   protected addQuitHandler() {
-    if (this.quitHandlerAdded) {
+    if (this.quitHandlerAdded || !this.autoInstallOnAppQuit) {
       return
     }
 

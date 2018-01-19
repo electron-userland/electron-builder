@@ -20,26 +20,33 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Whether to automatically download an update when it is found.
    */
-  autoDownload = true
+  autoDownload: boolean = true
+
+  /**
+   * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
+   *
+   * Applicable only on Windows and Linux.
+   */
+  autoInstallOnAppQuit: boolean = true
 
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
    *
    * If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
    */
-  allowPrerelease = false
+  allowPrerelease: boolean = false
 
   /**
    * *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
    * @default false
    */
-  fullChangelog = false
+  fullChangelog: boolean = false
 
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
    * @default false
    */
-  allowDowngrade = false
+  allowDowngrade: boolean = false
 
   /**
    * The current application version.
