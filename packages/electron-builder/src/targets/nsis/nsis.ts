@@ -508,11 +508,6 @@ export class NsisTarget extends Target {
 
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
-      if (options.perMachine !== true) {
-        // https://github.com/electron-userland/electron-builder/issues/772
-        throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
-      }
-
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
