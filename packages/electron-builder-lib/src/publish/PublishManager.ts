@@ -27,7 +27,7 @@ export class PublishManager implements PublishContext {
 
   private readonly taskManager: AsyncTaskManager
 
-  private readonly isPublish: boolean
+  private readonly isPublish: boolean = false
 
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 

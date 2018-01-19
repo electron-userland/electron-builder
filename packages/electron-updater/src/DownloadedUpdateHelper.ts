@@ -4,11 +4,11 @@ import { ResolvedUpdateFileInfo } from "./main"
 
 /** @private **/
 export class DownloadedUpdateHelper {
-  private setupPath: string | null
-  private _packagePath: string | null
+  private setupPath: string | null = null
+  private _packagePath: string | null = null
 
-  private versionInfo: UpdateInfo | null
-  private fileInfo: ResolvedUpdateFileInfo | null
+  private versionInfo: UpdateInfo | null = null
+  private fileInfo: ResolvedUpdateFileInfo | null = null
 
   get file() {
     return this.setupPath

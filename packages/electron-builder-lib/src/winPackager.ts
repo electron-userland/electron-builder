@@ -125,7 +125,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   constructor(info: Packager) {
-    super(info)
+    super(info, Platform.WINDOWS)
   }
 
   get defaultTarget(): Array<string> {
@@ -190,10 +190,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name))
       }
     }
-  }
-
-  get platform() {
-    return Platform.WINDOWS
   }
 
   getIconPath() {

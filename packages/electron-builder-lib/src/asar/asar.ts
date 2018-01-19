@@ -9,9 +9,9 @@ export class Node {
 
   unpacked?: boolean
 
-  size: number
+  size?: number
   // electron expects string
-  offset: string
+  offset?: string
 
   executable?: boolean
 
@@ -147,8 +147,9 @@ export async function readAsarJson(archive: string, file: string): Promise<any> 
 }
 
 async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, info: Node): Promise<Buffer> {
-  const buffer = Buffer.allocUnsafe(info.size)
-  if (info.size <= 0) {
+  const size = info.size!!
+  const buffer = Buffer.allocUnsafe(size)
+  if (size <= 0) {
     return buffer
   }
 
@@ -158,8 +159,8 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
 
   const fd = await open(filesystem.src, "r")
   try {
-    const offset = 8 + filesystem.headerSize + parseInt(info.offset, 10)
-    await read(fd, buffer, 0, info.size, offset)
+    const offset = 8 + filesystem.headerSize + parseInt(info.offset!!, 10)
+    await read(fd, buffer, 0, size, offset)
   }
   finally {
     await close(fd)

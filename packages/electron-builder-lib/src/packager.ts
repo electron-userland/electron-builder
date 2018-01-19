@@ -40,33 +40,36 @@ export class Packager {
     return this._appDir
   }
 
-  private _metadata: Metadata
+  private _metadata: Metadata | null = null
   get metadata(): Metadata {
-    return this._metadata
+    return this._metadata!!
   }
 
-  private _isPrepackedAppAsar: boolean
+  private _isPrepackedAppAsar: boolean = false
 
   get isPrepackedAppAsar(): boolean {
     return this._isPrepackedAppAsar
   }
 
-  private _devMetadata: Metadata | null
+  private _devMetadata: Metadata | null = null
   get devMetadata(): Metadata | null {
     return this._devMetadata
   }
 
-  private _configuration: Configuration
+  private _configuration: Configuration | null = null
 
   get config(): Configuration {
-    return this._configuration
+    return this._configuration!!
   }
 
   isTwoPackageJsonProjectLayoutUsed = false
 
   readonly eventEmitter = new EventEmitter()
 
-  appInfo: AppInfo
+  _appInfo: AppInfo | null = null
+  get appInfo(): AppInfo {
+    return this._appInfo!!
+  }
 
   readonly tempDirManager = new TmpDir("packager")
 
@@ -108,7 +111,7 @@ export class Packager {
     return path.join(target.outDir, `__${target.name}-${Arch[arch]}`)
   }
 
-  private _buildResourcesDir: string | null
+  private _buildResourcesDir: string | null = null
 
   get buildResourcesDir(): string {
     let result = this._buildResourcesDir
@@ -289,7 +292,7 @@ export class Packager {
       }
       configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
     }
-    this.appInfo = new AppInfo(this)
+    this._appInfo = new AppInfo(this)
 
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
 

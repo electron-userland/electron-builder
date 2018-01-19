@@ -23,7 +23,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
   constructor(info: Packager) {
-    super(info)
+    super(info, Platform.MAC)
 
     if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
       this.codeSigningInfo = BluebirdPromise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
@@ -79,10 +79,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  get platform() {
-    return Platform.MAC
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
@@ -91,7 +87,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
+      nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
         .then(() => this.sign(appPath, null, null))
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }

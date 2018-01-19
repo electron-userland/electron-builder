@@ -18,7 +18,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
 
   constructor(info: Packager) {
-    super(info)
+    super(info, Platform.LINUX)
 
     const executableName = this.platformSpecificBuildOptions.executableName
     this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
@@ -79,10 +79,6 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         return target
       })
     }
-  }
-
-  get platform() {
-    return Platform.LINUX
   }
 
   protected postInitApp(packContext: AfterPackContext): Promise<any> {

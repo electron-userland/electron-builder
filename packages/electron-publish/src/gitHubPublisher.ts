@@ -27,7 +27,7 @@ interface Asset {
 
 export class GitHubPublisher extends HttpPublisher {
   private tag: string
-  private _releasePromise: Promise<Release | null>
+  private _releasePromise: Promise<Release | null> | null = null
 
   private readonly token: string
 
@@ -35,7 +35,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private readonly releaseType: "draft" | "prerelease" | "release"
 
-  private releaseLogFields: Fields | null
+  private releaseLogFields: Fields | null = null
 
   /** @private */
   get releasePromise(): Promise<Release | null> {

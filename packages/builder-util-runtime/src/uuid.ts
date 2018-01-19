@@ -33,9 +33,9 @@ for (let i = 0; i < 256; i++) {
 
 // UUID class
 export class UUID {
-  private ascii: string | null
-  private binary: Buffer
-  private version: number
+  private ascii: string | null = null
+  private binary: Buffer | null = null
+  private readonly version: number
 
   // from rfc4122#appendix-C
   static readonly URL = new UUID("6ba7b811-9dad-11d1-80b4-00c04fd430c8")
@@ -67,7 +67,7 @@ export class UUID {
 
   toString() {
     if (this.ascii == null) {
-      this.ascii = stringify(this.binary)
+      this.ascii = stringify(this.binary!!)
     }
     return this.ascii
   }

@@ -49,12 +49,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.info.buildResourcesDir), []))
 
-  abstract get platform(): Platform
-
   readonly appInfo: AppInfo
 
-  protected constructor(readonly info: Packager) {
-    this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[this.platform.buildConfigurationKey])
+  protected constructor(readonly info: Packager, readonly platform: Platform) {
+    this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
   }
 

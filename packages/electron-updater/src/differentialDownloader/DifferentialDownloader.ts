@@ -10,7 +10,7 @@ import { checkIsRangesSupported, executeTasks } from "./multipleRangeDownloader"
 
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
 
-export class DifferentialDownloaderOptions {
+export interface DifferentialDownloaderOptions {
   readonly oldFile: string
   readonly newUrl: string
   readonly logger: Logger
@@ -24,7 +24,7 @@ export class DifferentialDownloaderOptions {
 export abstract class DifferentialDownloader {
   private readonly baseRequestOptions: RequestOptions
 
-  fileMetadataBuffer: Buffer | null
+  fileMetadataBuffer: Buffer | null = null
 
   private readonly logger: Logger
 

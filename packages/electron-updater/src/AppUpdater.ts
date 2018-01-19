@@ -77,7 +77,7 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    *  The request headers.
    */
-  requestHeaders: OutgoingHttpHeaders | null
+  requestHeaders: OutgoingHttpHeaders | null = null
 
   protected _logger: Logger = console
 
@@ -98,7 +98,7 @@ export abstract class AppUpdater extends EventEmitter {
    */
   readonly signals = new UpdaterSignal(this)
 
-  private _appUpdateConfigPath: string | null
+  private _appUpdateConfigPath: string | null = null
 
   // noinspection JSUnusedGlobalSymbols
   /**
@@ -113,7 +113,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected updateAvailable = false
 
-  private clientPromise: Promise<Provider<any>> | null
+  private clientPromise: Promise<Provider<any>> | null = null
 
   protected get provider(): Promise<Provider<any>> {
     return this.clientPromise!!
@@ -125,11 +125,11 @@ export abstract class AppUpdater extends EventEmitter {
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private readonly untilAppReady: Promise<any>
-  private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
+  private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
 
   protected readonly app: Electron.App
 
-  protected updateInfo: UpdateInfo | null
+  protected updateInfo: UpdateInfo | null = null
 
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
@@ -143,12 +143,13 @@ export abstract class AppUpdater extends EventEmitter {
 
     if (app != null || (global as any).__test_app != null) {
       this.app = app || (global as any).__test_app
-      this.untilAppReady = BluebirdPromise.resolve()
+      this.untilAppReady = Promise.resolve()
+      this.httpExecutor = null as any
     }
     else {
       this.app = require("electron").app
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
-      this.untilAppReady = new BluebirdPromise(resolve => {
+      this.untilAppReady = new Promise(resolve => {
         if (this.app.isReady()) {
           resolve()
         }

@@ -17,9 +17,9 @@ export class BuildCacheManager {
   readonly cacheInfoFile: string
   readonly cacheFile: string
 
-  cacheInfo: BuildCacheInfo | null
+  cacheInfo: BuildCacheInfo | null = null
 
-  private newDigest: string | null
+  private newDigest: string | null = null
 
   constructor(outDir: string, private readonly executableFile: string, arch: Arch) {
     this.cacheDir = path.join(outDir, ".cache", Arch[arch])

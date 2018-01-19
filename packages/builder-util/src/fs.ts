@@ -128,7 +128,8 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
-  return (isEnsureDir ? ensureDir(path.dirname(dest)) : BluebirdPromise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
+  return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve())
+    .then(() => copyOrLinkFile(src, dest, null, false))
 }
 
 /**
