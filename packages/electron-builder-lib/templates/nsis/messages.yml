@@ -11,6 +11,7 @@ win7Required:
   hu: Windows 7 vagy újabb szükséges
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
+  zh_CN: 需要 Windows 7 或以上系统
 x64WinRequired:
   de: 64-Bit-Windows wird vorausgesetzt
   it: È necessario disporre di un sistema operativo Windows a 64 bit
@@ -23,6 +24,7 @@ x64WinRequired:
   hu: 64-bit Windows szükséges
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
+  zh_CN: 需要 64 位 Windows 系统
 appRunning:
   de: "${PRODUCT_NAME} ist geöffnet. \nKlicken Sie zum Schliessen auf «OK»."
   it: "${PRODUCT_NAME} è in esecuzione. \nPremi OK per chiudere."
@@ -35,6 +37,7 @@ appRunning:
   hu: "${PRODUCT_NAME} éppen fut. \nKattiontson az «OK»-ra a bezárásához."
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
+  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
 installing:
   de: Installation läuft, bitte warten...
   it: Attendere prego. Installazione in corso...
@@ -47,6 +50,7 @@ installing:
   hu: Telepítés, kérem várjon...
   pl: Zaczekaj na ukończenie instalacji...
   pt_BR: Instalando, por favor aguarde...
+  zh_CN: 正在安装, 请稍后...
 areYouSureToUninstall:
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
   it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
@@ -59,3 +63,4 @@ areYouSureToUninstall:
   hu: Biztos benne, hogy szeretné eltávolítani a ${PRODUCT_NAME} alkalmazást?
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
+  zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
