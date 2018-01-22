@@ -16,7 +16,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
   switch (provider) {
     case "github":
       const githubOptions = data as GithubOptions
-      const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
+      const token = (githubOptions.private ? process.env.GH_TOKEN || process.env.GITHUB_TOKEN : null) || githubOptions.token
       if (token == null) {
         return new GitHubProvider(githubOptions, updater, httpExecutor)
       }

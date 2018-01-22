@@ -325,7 +325,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
-    if (!isEmptyOrSpaces(process.env.GH_TOKEN)) {
+    if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
     }
     else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
