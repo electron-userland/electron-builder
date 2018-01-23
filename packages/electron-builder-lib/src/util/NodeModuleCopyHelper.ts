@@ -50,6 +50,8 @@ export class NodeModuleCopyHelper {
     const filter = this.filter
     const metadata = this.metadata
 
+    const isIncludePdb = this.packager.config.includePdb === true
+
     const result: Array<string> = []
     const queue: Array<string> = []
     for (const dep of list) {
@@ -74,7 +76,7 @@ export class NodeModuleCopyHelper {
         const dirs: Array<string> = []
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
-          if (excludedFiles.has(name) || name.endsWith(".h") || name.endsWith(".o") || name.endsWith(".obj") || name.endsWith(".cc") || name.endsWith(".pdb") || name.endsWith(".d.ts") || name.endsWith(".suo") || name.endsWith(".npmignore") || name.endsWith(".sln")) {
+          if (excludedFiles.has(name) || name.endsWith(".h") || name.endsWith(".o") || name.endsWith(".obj") || name.endsWith(".cc") || (!isIncludePdb && name.endsWith(".pdb")) || name.endsWith(".d.ts") || name.endsWith(".suo") || name.endsWith(".npmignore") || name.endsWith(".sln")) {
             return null
           }
 

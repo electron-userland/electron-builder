@@ -7,7 +7,7 @@ import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 export abstract class Provider<T extends UpdateInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null = null
 
-  constructor(protected readonly executor: HttpExecutor<any>, readonly useMultipleRangeRequest = true) {
+  protected constructor(protected readonly executor: HttpExecutor<any>, readonly useMultipleRangeRequest = true) {
   }
 
   get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
