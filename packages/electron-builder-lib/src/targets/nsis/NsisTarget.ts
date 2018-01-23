@@ -514,7 +514,7 @@ export class NsisTarget extends Target {
 
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
-      if (options.perMachine !== true) {
+      if (options.perMachine !== true && options.oneClick !== false) {
         // https://github.com/electron-userland/electron-builder/issues/772
         throw new InvalidConfigurationError(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
       }
