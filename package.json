@@ -17,7 +17,7 @@
     "set-versions": "node test/out/helpers/setVersions.js",
     "release": "yarn set-versions && yarn compile && sh ./__publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder-lib/tsconfig.json Configuration --out packages/electron-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
-    "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/electron-updater packages/builder-util packages/electron-builder packages/electron-publish",
+    "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/electron-updater packages/builder-util packages/electron-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md && gitbook",
     "deploy-docs": "rm -rf _book && gitbook && ./scripts/publish.sh",
