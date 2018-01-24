@@ -119,6 +119,7 @@
         ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
+      CopyFiles /SILENT "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
     !endif
   !endif
 

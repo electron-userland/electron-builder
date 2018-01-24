@@ -36,7 +36,7 @@ export class NsisUpdater extends BaseUpdater {
 
     await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
       installerPath = destinationFile
-      if (await this.differentialDownloadInstaller(fileInfo, "OLD", installerPath, requestHeaders, provider)) {
+      if (await this.differentialDownloadInstaller(fileInfo, path.join(this.app.getPath("userData"), "installer.exe"), installerPath, requestHeaders, provider)) {
         await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
       }
 

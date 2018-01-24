@@ -393,6 +393,7 @@ export class NsisTarget extends Target {
     if (defines.APP_FILENAME !== appInfo.productFilename) {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
+    defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\installer.exe`
 
     const options = this.options
 
