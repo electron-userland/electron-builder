@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
+import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
 import { BintrayOptions, configureRequestOptions, HttpError } from "builder-util-runtime"
 import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -20,13 +20,13 @@ export class BintrayPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
+        throw new InvalidConfigurationError(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
       }
 
       token = token.trim()
 
       if (!isTokenCharValid(token)) {
-        throw new Error(`Bintray token (${JSON.stringify(token)}) contains invalid characters, please check env "BT_TOKEN"`)
+        throw new InvalidConfigurationError(`Bintray token (${JSON.stringify(token)}) contains invalid characters, please check env "BT_TOKEN"`)
       }
     }
 

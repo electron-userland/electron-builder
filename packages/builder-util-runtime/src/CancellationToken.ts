@@ -9,7 +9,7 @@ export class CancellationToken extends EventEmitter {
     return this._cancelled || (this._parent != null && this._parent.cancelled)
   }
 
-  private _parent: CancellationToken | null
+  private _parent: CancellationToken | null = null
   set parent(value: CancellationToken) {
     this.removeParentCancelHandler()
 

@@ -157,7 +157,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     patterns.push("!**/node_modules/**/*.{dll,exe}")
   }
 
-  patterns.push(`!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,pdb}`)
+  patterns.push(`!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc${packager.config.includePdb === true ? "" : ",pdb"}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
   //noinspection SpellCheckingInspection

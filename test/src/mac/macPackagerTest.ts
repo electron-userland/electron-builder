@@ -35,6 +35,7 @@ test.ifMac("one-package", app({
       extendInfo: {
         LSUIElement: true,
       },
+      minimumSystemVersion: "10.12.0",
       fileAssociations: [
         {
           ext: "foo",

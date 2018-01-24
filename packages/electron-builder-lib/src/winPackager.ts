@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, exec, execWine, log, use } from "builder-util"
+import { Arch, asArray, exec, execWine, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
@@ -125,7 +125,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   constructor(info: Packager) {
-    super(info)
+    super(info, Platform.WINDOWS)
   }
 
   get defaultTarget(): Array<string> {
@@ -173,7 +173,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
                 return require("electron-builder-squirrel-windows").default
               }
               catch (e) {
-                throw new Error(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
+                throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
             case "appx":
@@ -190,10 +190,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name))
       }
     }
-  }
-
-  get platform() {
-    return Platform.WINDOWS
   }
 
   getIconPath() {
@@ -214,7 +210,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         await sign(signOptions, this)
       }
       else if (this.forceCodeSigning) {
-        throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
+        throw new InvalidConfigurationError(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
       }
       return
     }

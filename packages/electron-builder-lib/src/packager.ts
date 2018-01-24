@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
+import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
@@ -40,33 +40,36 @@ export class Packager {
     return this._appDir
   }
 
-  private _metadata: Metadata
+  private _metadata: Metadata | null = null
   get metadata(): Metadata {
-    return this._metadata
+    return this._metadata!!
   }
 
-  private _isPrepackedAppAsar: boolean
+  private _isPrepackedAppAsar: boolean = false
 
   get isPrepackedAppAsar(): boolean {
     return this._isPrepackedAppAsar
   }
 
-  private _devMetadata: Metadata | null
+  private _devMetadata: Metadata | null = null
   get devMetadata(): Metadata | null {
     return this._devMetadata
   }
 
-  private _configuration: Configuration
+  private _configuration: Configuration | null = null
 
   get config(): Configuration {
-    return this._configuration
+    return this._configuration!!
   }
 
   isTwoPackageJsonProjectLayoutUsed = false
 
   readonly eventEmitter = new EventEmitter()
 
-  appInfo: AppInfo
+  _appInfo: AppInfo | null = null
+  get appInfo(): AppInfo {
+    return this._appInfo!!
+  }
 
   readonly tempDirManager = new TmpDir("packager")
 
@@ -108,7 +111,7 @@ export class Packager {
     return path.join(target.outDir, `__${target.name}-${Arch[arch]}`)
   }
 
-  private _buildResourcesDir: string | null
+  private _buildResourcesDir: string | null = null
 
   get buildResourcesDir(): string {
     let result = this._buildResourcesDir
@@ -126,14 +129,14 @@ export class Packager {
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
     if ("project" in options) {
-      throw new Error("Use projectDir instead of project")
+      throw new InvalidConfigurationError("Use projectDir instead of project")
     }
 
     if ("devMetadata" in options) {
-      throw new Error("devMetadata in the options is deprecated, please use config instead")
+      throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
     }
     if ("extraMetadata" in options) {
-      throw new Error("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
+      throw new InvalidConfigurationError("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
     }
 
     const targets = options.targets || new Map<Platform, Map<Arch, Array<string>>>()
@@ -289,7 +292,7 @@ export class Packager {
       }
       configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
     }
-    this.appInfo = new AppInfo(this)
+    this._appInfo = new AppInfo(this)
 
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
 
@@ -338,7 +341,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new Error("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
+        throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
       }
 
       const packager = this.createHelper(platform)

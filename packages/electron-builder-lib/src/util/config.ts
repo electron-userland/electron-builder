@@ -1,4 +1,4 @@
-import { asArray, DebugLogger, log } from "builder-util"
+import { asArray, DebugLogger, InvalidConfigurationError, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -103,10 +103,10 @@ export async function validateConfig(config: Configuration, debugLogger: DebugLo
   const extraMetadata = config.extraMetadata
   if (extraMetadata != null) {
     if (extraMetadata.build != null) {
-      throw new Error(`--em.build is deprecated, please specify as -c"`)
+      throw new InvalidConfigurationError(`--em.build is deprecated, please specify as -c"`)
     }
     if (extraMetadata.directories != null) {
-      throw new Error(`--em.directories is deprecated, please specify as -c.directories"`)
+      throw new InvalidConfigurationError(`--em.directories is deprecated, please specify as -c.directories"`)
     }
   }
 
@@ -138,10 +138,10 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     const absolutePath = path.resolve(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)
     if (stat == null) {
-      throw new Error(`Application directory ${userAppDir} doesn't exists`)
+      throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exists`)
     }
     else if (!stat.isDirectory()) {
-      throw new Error(`Application directory ${userAppDir} is not a directory`)
+      throw new InvalidConfigurationError(`Application directory ${userAppDir} is not a directory`)
     }
     else if (projectDir === absolutePath) {
       log.warn({appDirectory: userAppDir}, `Specified application directory equals to project dir — superfluous or wrong configuration`)

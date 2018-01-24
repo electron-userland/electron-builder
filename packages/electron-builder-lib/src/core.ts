@@ -121,11 +121,3 @@ export interface SourceRepositoryInfo {
   user: string
   project: string
 }
-
-export class MisConfigurationError extends Error {
-  constructor(message: string, code: string = "ERR_ELECTRON_BUILDER_MIS_CONFIGURATION") {
-    super(message);
-
-    (this as any).code = code
-  }
-}

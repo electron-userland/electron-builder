@@ -87,7 +87,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const electronUpdaterCompatibility = (packager.platformSpecificBuildOptions as any).electronUpdaterCompatibility
   for (let publishConfiguration of publishConfigs) {
     if (publishConfiguration.provider === "github" && "releaseType" in publishConfiguration) {
-      publishConfiguration = {...publishConfiguration}
+      publishConfiguration = {...publishConfiguration!!}
       delete (publishConfiguration as GithubOptions).releaseType
     }
 

@@ -31,7 +31,7 @@ export class CheckingWinPackager extends WinPackager {
 
 export class CheckingMacPackager extends MacPackager {
   effectiveDistOptions: any
-  effectiveSignOptions: MacSignOptions
+  effectiveSignOptions: MacSignOptions | null = null
 
   constructor(info: Packager) {
     super(info)

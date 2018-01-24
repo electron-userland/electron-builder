@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, log, spawnAndWrite, use } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull } from "builder-util/out/fs"
@@ -341,7 +341,7 @@ export class NsisTarget extends Target {
 
     if (options.allowToChangeInstallationDirectory) {
       if (oneClick) {
-        throw new Error("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
+        throw new InvalidConfigurationError("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
       }
       defines.allowToChangeInstallationDirectory = null
     }
@@ -393,6 +393,7 @@ export class NsisTarget extends Target {
     if (defines.APP_FILENAME !== appInfo.productFilename) {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
+    defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\installer.exe`
 
     const options = this.options
 
@@ -514,9 +515,9 @@ export class NsisTarget extends Target {
 
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
-      if (options.perMachine !== true) {
+      if (options.perMachine !== true && options.oneClick !== false) {
         // https://github.com/electron-userland/electron-builder/issues/772
-        throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
+        throw new InvalidConfigurationError(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
       }
 
       scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))

@@ -109,7 +109,7 @@ export default class AppImageTarget extends Target {
         ...process.env,
         PATH: `${vendorToolDir}:${process.env.PATH}`,
         // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
-        ARCH: arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "x86_64" : "arm"),
+        ARCH: toAppImageArch(arch),
       }
     })
 
@@ -156,6 +156,22 @@ export default class AppImageTarget extends Target {
   }
 }
 
+function toAppImageArch(arch: Arch): string {
+  switch (arch) {
+    case Arch.x64:
+      return "x86_64"
+    case Arch.ia32:
+      return "i386"
+    case Arch.armv7l:
+      return "arm"
+    case Arch.arm64:
+      return "arm_aarch64"
+
+    default:
+      throw new Error(`Unsupported arch ${arch}`)
+  }
+}
+
 // https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
 function copyDirUsingHardLinks(source: string, destination: string) {
   if (process.platform !== "darwin") {
@@ -177,6 +193,9 @@ function archToRuntimeName(arch: Arch) {
   switch (arch) {
     case Arch.armv7l:
       return "armv7"
+
+    case Arch.arm64:
+      return "arm64"
 
     case Arch.ia32:
       return "i686"

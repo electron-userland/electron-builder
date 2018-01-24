@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, exec, log } from "builder-util"
+import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, log } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -23,7 +23,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
   constructor(info: Packager) {
-    super(info)
+    super(info, Platform.MAC)
 
     if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
       this.codeSigningInfo = BluebirdPromise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
@@ -79,10 +79,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  get platform() {
-    return Platform.MAC
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
@@ -91,7 +87,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
+      nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
         .then(() => this.sign(appPath, null, null))
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }
@@ -135,7 +131,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!isMas && qualifier === null) {
       if (this.forceCodeSigning) {
-        throw new Error("identity explicitly is set to null, but forceCodeSigning is set to true")
+        throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
       log.info({reason: "identity explicitly is set to null"}, "skipped macOS code signing")
       return
@@ -194,7 +190,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
       const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
       if (masInstallerIdentity == null) {
-        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
+        throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
 
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
@@ -207,10 +203,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
     const resourceList = await this.resourceList
     if (resourceList.includes(`entitlements.osx.plist`)) {
-      throw new Error("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
+      throw new InvalidConfigurationError("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
     }
     if (resourceList.includes(`entitlements.osx.inherit.plist`)) {
-      throw new Error("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
+      throw new InvalidConfigurationError("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
     }
 
     const customSignOptions = masOptions || this.platformSpecificBuildOptions

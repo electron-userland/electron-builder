@@ -52,10 +52,10 @@
     "builder-util": "0.0.0-semantic-release",
     "fs-extra-p": "^4.5.0",
     "is-ci": "^1.1.0",
-    "read-config-file": "2.0.1",
+    "read-config-file": "2.1.1",
     "sanitize-filename": "^1.6.1",
     "update-notifier": "^2.3.0",
-    "yargs": "^10.1.1",
+    "yargs": "^11.0.0",
     "lazy-val": "^1.0.3",
     "electron-builder-lib": "0.0.0-semantic-release",
     "electron-download-tf": "4.3.4"

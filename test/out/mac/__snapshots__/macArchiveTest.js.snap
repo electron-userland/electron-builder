@@ -12,46 +12,7 @@ Object {
 }
 `;
 
-exports[`invalid target 1`] = `
-"Configuration is invalid.
- - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, detectUpdateChannel?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, protocols?, publish?, releaseInfo?, requirements?, target?, type? } | {
-     \\"type\\": \\"null\\"
-   }
-   Options related to how build macOS targets.
-   
-   Details:
-    * configuration.mac.target should be an object.
-    * configuration.mac.target[0] should be an object.
-    * configuration.mac.target[0] should be one of these:
-      string
-    * configuration.mac.target[0] should be one of these:
-      object { arch?, target } | string
-    * configuration.mac.target should be a string.
-    * configuration.mac.target should be one of these:
-      string
-    * configuration.mac.target should be null:
-      {
-        \\"type\\": \\"null\\"
-      }
-    * configuration.mac.target should be one of these:
-      object { arch?, target } | [object { arch?, target } | string] | string | {
-        \\"type\\": \\"null\\"
-      }
-      The target package type: list of \`default\`, \`dmg\`, \`mas\`, \`mas-dev\`, \`pkg\`, \`7z\`, \`zip\`, \`tar.xz\`, \`tar.lz\`, \`tar.gz\`, \`tar.bz2\`, \`dir\`. Defaults to \`default\` (dmg and zip for Squirrel.Mac).
-   
-    * configuration.mac should be null:
-      {
-        \\"type\\": \\"null\\"
-      }
-
-How to fix:
-1. Open https://electron.build/configuration/configuration
-2. Search the option name on the page.
-  * Not found? The option was deprecated or not exists (check spelling).
-  * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
-"
-`;
+exports[`invalid target 1`] = `"ERR_CONFIG_INVALID"`;
 
 exports[`only zip 1`] = `
 Object {

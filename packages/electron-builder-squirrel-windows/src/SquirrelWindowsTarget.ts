@@ -1,4 +1,4 @@
-import { log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "electron-builder-lib"
 import { WinPackager } from "electron-builder-lib/out/winPackager"
@@ -61,7 +61,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new Error("iconUrl is not specified, please see https://electron.build/configuration/configuration#WinBuildOptions-iconUrl")
+        throw new InvalidConfigurationError("iconUrl is not specified, please see https://electron.build/configuration/configuration#WinBuildOptions-iconUrl")
       }
     }
 
@@ -87,7 +87,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (options.remoteToken == null) {
-      options.remoteToken = process.env.GH_TOKEN
+      options.remoteToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     }
 
     if (!("loadingGif" in options)) {
@@ -115,7 +115,7 @@ export default class SquirrelWindowsTarget extends Target {
 function checkConflictingOptions(options: any) {
   for (const name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
     if (name in options) {
-      throw new Error(`Option ${name} is ignored, do not specify it.`)
+      throw new InvalidConfigurationError(`Option ${name} is ignored, do not specify it.`)
     }
   }
 
@@ -126,6 +126,6 @@ function checkConflictingOptions(options: any) {
 
   const msi = options.msi
   if (msi != null && typeof msi !== "boolean") {
-    throw new Error(`msi expected to be boolean value, but string '"${msi}"' was specified`)
+    throw new InvalidConfigurationError(`msi expected to be boolean value, but string '"${msi}"' was specified`)
   }
 }

@@ -1,6 +1,6 @@
+import { DebugLogger, exec, ExtraSpawnOptions, InvalidConfigurationError, spawn } from "builder-util"
+import { ExecFileOptions, SpawnOptions } from "child_process"
 import * as path from "path"
-import { SpawnOptions, ExecFileOptions } from "child_process"
-import { DebugLogger, exec, ExtraSpawnOptions, spawn } from "builder-util"
 import { ParallelsVmManager, parseVmList } from "./ParallelsVm"
 
 export class VmManager {
@@ -24,7 +24,7 @@ export class VmManager {
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
   const vmList = (await parseVmList(debugLogger)).filter(it => it.os === "win-10")
   if (vmList.length === 0) {
-    throw new Error("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
+    throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
   }
 
   // prefer running or suspended vm

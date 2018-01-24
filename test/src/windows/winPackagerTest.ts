@@ -1,5 +1,5 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { rename, unlink, writeFile } from "fs-extra-p"
+import { remove, rename, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
@@ -70,6 +70,7 @@ test.ifAll("win icon from icns", () => {
   }, {
     projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.ico")),
+      remove(path.join(projectDir, "build", "icons")),
     ]),
     packed: async () => {
       const file = await platformPackager!!.getIconPath()

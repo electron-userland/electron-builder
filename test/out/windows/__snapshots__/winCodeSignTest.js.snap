@@ -11,4 +11,4 @@ Map {
 
 exports[`sign electronDist 1`] = `"ENOENT"`;
 
-exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing"`;
+exports[`sign forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;

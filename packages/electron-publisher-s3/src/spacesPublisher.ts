@@ -1,5 +1,5 @@
 import { ClientConfiguration, CreateMultipartUploadRequest } from "aws-sdk/clients/s3"
-import { isEmptyOrSpaces } from "builder-util"
+import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
@@ -13,10 +13,10 @@ export default class SpacesPublisher extends BaseS3Publisher {
 
   static async checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null) {
     if (options.name == null) {
-      throw new Error(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
+      throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
     }
     if (options.region == null) {
-      throw new Error(`Please specify "region" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
+      throw new InvalidConfigurationError(`Please specify "region" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
     }
 
     if (options.channel == null && channelFromAppVersion != null) {
@@ -34,10 +34,10 @@ export default class SpacesPublisher extends BaseS3Publisher {
     const accessKeyId = process.env.DO_KEY_ID
     const secretAccessKey = process.env.DO_SECRET_KEY
     if (isEmptyOrSpaces(accessKeyId)) {
-      throw new Error("Please set env DO_KEY_ID (see https://www.electron.build/configuration/publish#spacesoptions)")
+      throw new InvalidConfigurationError("Please set env DO_KEY_ID (see https://www.electron.build/configuration/publish#spacesoptions)")
     }
     if (isEmptyOrSpaces(secretAccessKey)) {
-      throw new Error("Please set env DO_SECRET_KEY (see https://www.electron.build/configuration/publish#spacesoptions)")
+      throw new InvalidConfigurationError("Please set env DO_SECRET_KEY (see https://www.electron.build/configuration/publish#spacesoptions)")
     }
 
     configuration.credentials = {accessKeyId, secretAccessKey}

@@ -8,7 +8,7 @@ import * as path from "path"
 import { parse as parseUrl } from "url"
 
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
-  private httpsAgentPromise: Promise<Agent> | null
+  private httpsAgentPromise: Promise<Agent> | null = null
 
   async download(url: string, destination: string, options: DownloadOptions = {cancellationToken: new CancellationToken()}): Promise<string> {
     if (!options.skipDirCreation) {

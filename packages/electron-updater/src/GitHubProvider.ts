@@ -8,11 +8,14 @@ import { parseUpdateInfo, resolveFiles } from "./Provider"
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: URL
+  protected readonly baseApiUrl: URL
 
   protected constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
     super(executor, false /* because GitHib uses S3 */)
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
+    const apiHost = defaultHost === "github.com" ? "api.github.com" : defaultHost
+    this.baseApiUrl = newBaseUrl(githubUrl(options, apiHost))
   }
 
   protected computeGithubBasePath(result: string) {
@@ -28,10 +31,9 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
-    const basePath = this.basePath
     const cancellationToken = new CancellationToken()
 
-    const feedXml: string = (await this.httpRequest(newUrlFromBase(`${basePath}.atom`, this.baseUrl), {
+    const feedXml: string = (await this.httpRequest(newUrlFromBase(`${this.basePath}.atom`, this.baseUrl), {
       Accept: "application/xml, application/atom+xml, text/xml, */*",
     }, cancellationToken))!
 
@@ -44,7 +46,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
         version = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
       }
       else {
-        version = await this.getLatestVersionString(basePath, cancellationToken)
+        version = await this.getLatestVersionString(cancellationToken)
       }
     }
     catch (e) {
@@ -84,8 +86,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return result
   }
 
-  private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string | null> {
-    const url = newUrlFromBase(`${basePath}/latest`, this.baseUrl)
+  private async getLatestVersionString(cancellationToken: CancellationToken): Promise<string | null> {
+    const url = new URL(`${this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)}/latest`, this.baseApiUrl)
     try {
       // do not use API to avoid limit
       const rawData = await this.httpRequest(url, {Accept: "application/json"}, cancellationToken)
@@ -102,7 +104,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private get basePath() {
-    return this.computeGithubBasePath(`/${this.options.owner}/${this.options.repo}/releases`)
+    return `/${this.options.owner}/${this.options.repo}/releases`
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {

@@ -52,11 +52,7 @@ export class Logger {
     }
   }
 
-  private doLog(message: string | undefined, messageOrFields: Fields | null | string, level: LogLevel) {
-    if (message instanceof Error) {
-      message = message.stack
-    }
-
+  private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel) {
     if (message === undefined) {
       this._doLog(messageOrFields as string, null, level)
     }
@@ -65,7 +61,15 @@ export class Logger {
     }
   }
 
-  private _doLog(message: string, fields: Fields | null, level: LogLevel) {
+  private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
+    // noinspection SuspiciousInstanceOfGuard
+    if (message instanceof Error) {
+      message = message.stack || message.toString()
+    }
+    else {
+      message = message.toString()
+    }
+
     const levelIndicator = "•"
     const color = LEVEL_TO_COLOR[level]
     this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)

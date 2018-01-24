@@ -27,7 +27,7 @@ export class BintrayClient {
   readonly distribution: string | null
   readonly packageName: string
 
-  private requestHeaders: RequestHeaders | null
+  private requestHeaders: RequestHeaders | null = null
 
   setRequestHeaders(value: RequestHeaders | null) {
     this.requestHeaders = value

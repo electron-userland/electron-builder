@@ -9,7 +9,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
 
-  constructor(options?: AllPublishOptions | null, app?: any) {
+  protected constructor(options?: AllPublishOptions | null, app?: any) {
     super(options, app)
   }
 
@@ -101,7 +101,7 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   protected addQuitHandler() {
-    if (this.quitHandlerAdded) {
+    if (this.quitHandlerAdded || !this.autoInstallOnAppQuit) {
       return
     }
 

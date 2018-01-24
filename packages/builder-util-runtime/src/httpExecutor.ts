@@ -236,7 +236,7 @@ export function configureRequestOptionsFromUrl(url: string, options: RequestOpti
 export class DigestTransform extends Transform {
   private readonly digester: Hash
 
-  private _actual: string
+  private _actual: string | null = null
 
   // noinspection JSUnusedGlobalSymbols
   get actual() {

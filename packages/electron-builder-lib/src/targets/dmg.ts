@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isCanSignDmg, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
@@ -173,13 +173,13 @@ export class DmgTarget extends Target {
       })
 
     if (specification.icon != null && isEmptyOrSpaces(specification.icon)) {
-      throw new Error("dmg.icon cannot be specified as empty string")
+      throw new InvalidConfigurationError("dmg.icon cannot be specified as empty string")
     }
 
     const background = specification.background
     if (specification.backgroundColor != null) {
       if (background != null) {
-        throw new Error("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
+        throw new InvalidConfigurationError("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
       }
       specification.backgroundColor = computeBackgroundColor(specification.backgroundColor)
     }

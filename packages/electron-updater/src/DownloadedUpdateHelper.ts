@@ -6,11 +6,10 @@ import * as path from "path"
 
 /** @private **/
 export class DownloadedUpdateHelper {
-  private setupFolderPath: string | null
-  private _packagePath: string | null
-
-  private versionInfo: UpdateInfo | null
-  private fileInfo: ResolvedUpdateFileInfo | null
+  private setupFolderPath: string | null = null
+  private _packagePath: string | null = null
+  private versionInfo: UpdateInfo | null = null
+  private fileInfo: ResolvedUpdateFileInfo | null = null
 
   get file() {
     if (this.setupFolderPath != null && this.versionInfo != null) {

@@ -1,8 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec } from "builder-util"
 import { DIR_TARGET, Platform } from "electron-builder"
-import { IconListResult } from "electron-builder-lib/out/targets/LinuxTargetHelper"
-import { getAppBuilderTool } from "electron-builder-lib/out/targets/tools"
 import { copy, move, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
@@ -12,15 +9,8 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
   expect(file).toBeDefined()
 
-  const result: IconListResult = JSON.parse(await exec(await getAppBuilderTool(), ["icns-to-png", "--input", file!!], {
-      env: {
-        ...process.env,
-        TMPDIR: await platformPackager.info.tempDirManager.rootTempDir,
-      },
-    }
-  ))
-  result.maxIconPath = path.basename(result.maxIconPath)
-  result.icons.forEach(it => {
+  const result = await platformPackager.resolveIcon([file!!], "set")
+  result.forEach(it => {
     it.file = path.basename(it.file)
   })
   expect(result).toMatchSnapshot()
@@ -71,7 +61,7 @@ test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
     },
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
       copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
@@ -92,7 +82,7 @@ test.ifMac.ifAll("png icon", () => {
     },
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
     ]),

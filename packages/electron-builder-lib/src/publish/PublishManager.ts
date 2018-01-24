@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -27,7 +27,7 @@ export class PublishManager implements PublishContext {
 
   private readonly taskManager: AsyncTaskManager
 
-  private readonly isPublish: boolean
+  private readonly isPublish: boolean = false
 
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
@@ -325,7 +325,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
-    if (!isEmptyOrSpaces(process.env.GH_TOKEN)) {
+    if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
       serviceName = "github"
     }
     else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
@@ -383,7 +383,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   if (provider === "generic") {
     const o = options as GenericServerOptions
     if (o.url == null) {
-      throw new Error(`Please specify "url" for "generic" update server`)
+      throw new InvalidConfigurationError(`Please specify "url" for "generic" update server`)
     }
 
     if (channelFromAppVersion != null) {

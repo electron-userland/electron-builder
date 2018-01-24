@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, isEmptyOrSpaces, log } from "builder-util"
+import { addValue, Arch, archFromString, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally } from "builder-util/out/promise"
 import chalk from "chalk"
@@ -59,10 +59,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     if (args.platform != null) {
-      throw new Error(`--platform cannot be used if --${platform.buildConfigurationKey} is passed`)
+      throw new InvalidConfigurationError(`--platform cannot be used if --${platform.buildConfigurationKey} is passed`)
     }
     if (args.arch != null) {
-      throw new Error(`--arch cannot be used if --${platform.buildConfigurationKey} is passed`)
+      throw new InvalidConfigurationError(`--arch cannot be used if --${platform.buildConfigurationKey} is passed`)
     }
 
     let archToType = targets.get(platform)

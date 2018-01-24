@@ -8,7 +8,7 @@ import pathSorter from "path-sort"
 import { assertThat } from "../helpers/fileAssert"
 import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
-test.ifMac("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
+test.ifMac.ifAll("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
 test.ifNotWindows("only zip", createMacTargetTest(["zip"]))
 

@@ -182,6 +182,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly remoteBuild?: boolean
+
+  /**
+   * Whether to include PDB files.
+   */
+  readonly includePdb?: boolean
 }
 
 export interface AfterPackContext {

@@ -1,4 +1,3 @@
-!include "nsProcess.nsh"
 !include "getProcessInfo.nsh"
 
 # http://nsis.sourceforge.net/Allow_only_one_installer_instance
@@ -26,19 +25,27 @@
 !macro CHECK_APP_RUNNING
   ${GetProcessInfo} 0 $0 $1 $2 $3 $4
   ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
-    ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
+    nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
+    Pop $R0
+    nsProcess::_Unload
     ${If} $R0 == 0
       ${if} ${isUpdated}
+        # allow app to exit without explicit kill
+        Sleep 1000
         Goto doStopProcess
       ${endIf}
       MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
       Quit
       doStopProcess:
-        DetailPrint "Closing running ${PRODUCT_NAME} ..."
-        ${nsProcess::KillProcess} "${APP_EXECUTABLE_FILENAME}" $R0
-        DetailPrint "Waiting for ${PRODUCT_NAME} to close."
-        Sleep 2000
+        DetailPrint 'Closing running "${PRODUCT_NAME}"...'
+        ExecWait 'taskkill /f /t /im "${APP_EXECUTABLE_FILENAME}"' $R0
+        ${If} $R0 == 0
+          # to ensure that files are not "in-use"
+          Sleep 100
+        ${else}
+          DetailPrint 'Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).'
+          Sleep 2000
+        ${endIf}
     ${endIf}
-    ${nsProcess::Unload}
   ${endIf}
 !macroend

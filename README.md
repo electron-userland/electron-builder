@@ -131,6 +131,8 @@ Public [archive](http://electron-builder.slackarchive.io) without registration.
 ## Further Reading
 See [docs](https://electron.build).
 
+[Brief guide](https://nicholaslee119.github.io/2018/01/11/electronBuilder全家桶使用指南/) in Chinese (maybe outdated and not accurate).
+
 ## Debug
 
 Set the [DEBUG](https://github.com/visionmedia/debug#windows-note) environment variable to debug what electron-builder is doing:
