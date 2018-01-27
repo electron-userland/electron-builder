@@ -243,7 +243,7 @@ export class Packager {
     this._devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
 
     const devMetadata = this.devMetadata
-    const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
+    const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
     if (log.isDebugEnabled) {
       log.debug({config: serializeToYaml(JSON.parse(safeStringifyJson(configuration)))}, "effective config")
     }
@@ -278,7 +278,7 @@ export class Packager {
     this._devMetadata = devMetadata
 
     if (repositoryInfo != null) {
-      this._repositoryInfo.value = BluebirdPromise.resolve(repositoryInfo)
+      this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }
 
     const projectDir = this.projectDir
@@ -290,7 +290,7 @@ export class Packager {
           throw new Error(`Cannot compute electron version for prepacked asar`)
         }
       }
-      configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
+      configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => Promise.resolve(this.metadata)))
     }
     this._appInfo = new AppInfo(this)
 

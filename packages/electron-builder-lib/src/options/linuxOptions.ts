@@ -75,6 +75,12 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
    */
   readonly depends?: Array<string> | null
 
+  /**
+   * The compression type.
+   * @default xz
+   */
+  readonly compression?: "gz" | "bzip2" | "xz" | null
+
   readonly icon?: string
 
   /**
@@ -95,12 +101,6 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
 }
 
 export interface DebOptions extends LinuxTargetSpecificOptions {
-  /**
-   * The compression type.
-   * @default xz
-   */
-  readonly compression?: "gz" | "bzip2" | "xz" | null
-
   /**
    * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
    */
