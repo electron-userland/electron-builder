@@ -1,5 +1,5 @@
 import { AllPublishOptions, CancellationError, DownloadOptions } from "builder-util-runtime"
-import { existsSync, mkdirSync, mkdtemp, remove } from "fs-extra-p"
+import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater"
@@ -13,9 +13,10 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false, installerPath?: string): void {
+  async quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): Promise<void> {
     this._logger.info(`Install on explicit quitAndInstall`)
-    if (this.install(isSilent, isSilent ? isForceRunAfter : true, installerPath)) {
+    const isInstalled = await this.install(isSilent, isSilent ? isForceRunAfter : true)
+    if (isInstalled) {
       setImmediate(() => {
         if (this.app.quit !== undefined) {
           this.app.quit()
@@ -30,18 +31,8 @@ export abstract class BaseUpdater extends AppUpdater {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
 
-    // Set the download folder.
-    const downloadFolder = this.downloadedUpdateHelper.folder
-    let tempDir: string
-    if (downloadFolder != null) {
-      tempDir = downloadFolder
-      if (!existsSync(downloadFolder)) {
-        mkdirSync(downloadFolder)
-      }
-    } else {
-      // use TEST_APP_TMP_DIR if defined and developer machine (must be not windows due to security reasons - we must not use env var in the production)
-      tempDir = await mkdtemp(`${path.join((process.platform === "darwin" ? process.env.TEST_APP_TMP_DIR : null) || tmpdir(), "up")}-`)
-    }
+    // use TEST_APP_TMP_DIR if defined and developer machine (must be not windows due to security reasons - we must not use env var in the production)
+    const tempDir = await mkdtemp(`${path.join((process.platform === "darwin" ? process.env.TEST_APP_TMP_DIR : null) || tmpdir(), "up")}-`)
 
     const removeTempDirIfAny = () => {
       this.downloadedUpdateHelper.clear()
@@ -70,21 +61,17 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
 
-  protected install(isSilent: boolean, isRunAfter: boolean, customPath?: string): boolean {
+  protected async install(isSilent: boolean, isRunAfter: boolean): Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
-    let installerPath
-    if (customPath !== undefined && customPath.length > 0 && existsSync(customPath)) {
-      installerPath = customPath
-    } else {
-      installerPath = this.downloadedUpdateHelper.file
 
-      if (!this.updateAvailable || installerPath == null) {
-        this.dispatchError(new Error("No update available, can't quit and install"))
-        return false
-      }
+    const installerPath = this.downloadedUpdateHelper.file
+    const isValid = await this.isUpdaterValid(installerPath)
+    if (installerPath == null || !isValid) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
+      return false
     }
 
     // prevent calling several times
@@ -107,10 +94,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
     this.quitHandlerAdded = true
 
-    this.app.once("quit", () => {
+    this.app.once("quit", async () => {
       if (!this.quitAndInstallCalled) {
         this._logger.info("Auto install update on quit")
-        this.install(true, false)
+        await this.install(true, false)
       }
     })
   }

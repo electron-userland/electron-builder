@@ -775,10 +775,11 @@ declare namespace Electron {
     setFeedURL(url: string, requestHeaders?: any): void;
 
     /**
-     * Configure the update download location.
+     * Configure download related data.
      * @param downloadFolder The path of the folder to download updates.
+     * @param installerName The name of the persisting downloaded installer.
      */
-    setDownloadFolder(downloadFolder: string): void;
+    setDownloadData(downloadFolder: string, installerName?: string): void;
   }
 
   interface BluetoothDevice {

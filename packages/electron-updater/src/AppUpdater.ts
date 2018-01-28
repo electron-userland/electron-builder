@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
+import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, WindowsUpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
 import { EventEmitter } from "events"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile, readFile, existsSync } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -16,6 +16,7 @@ import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient } from "./providerFactory"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
+import { hashFile } from "builder-util"
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -205,11 +206,12 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /**
-     * Configure update download location.
-     * @param downloadFolder The path of the folder to download updates.
-     */
-  setDownloadFolder(downloadFolder: string) {
-    this.downloadedUpdateHelper.setDownloadFolder(downloadFolder)
+   * Configure download related data.
+   * @param downloadFolder The path of the folder to download updates.
+   * @param installerName The name of the persisting downloaded installer.
+   */
+  setDownloadData(downloadFolder: string, installerName?: string) {
+    this.downloadedUpdateHelper.setDownloadData(downloadFolder, installerName)
   }
 
   /**
@@ -287,7 +289,9 @@ export abstract class AppUpdater extends EventEmitter {
     return headers
   }
 
-  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+  protected async getUpdateInfo(): Promise<UpdateInfo> {
+    await this.untilAppReady
+
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this))
     }
@@ -295,7 +299,11 @@ export abstract class AppUpdater extends EventEmitter {
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
-    const updateInfo = await client.getLatestVersion()
+    return await client.getLatestVersion()
+  }
+
+  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+    const updateInfo = await this.getUpdateInfo()
 
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
@@ -331,6 +339,48 @@ export abstract class AppUpdater extends EventEmitter {
   protected onUpdateAvailable(updateInfo: UpdateInfo) {
     this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.files).map(it => it.url).join(", ")})`)
     this.emit("update-available", updateInfo)
+  }
+
+  protected async isUpdaterValid(updaterPath?: string | null): Promise<boolean> {
+    if (updaterPath == null) {
+      updaterPath = this.downloadedUpdateHelper.file
+    }
+
+    if (updaterPath == null) {
+      return false
+    }
+
+    if (!existsSync(updaterPath)) {
+      this._logger.warn("No update available")
+      return false
+    }
+
+    let installerInfo = this.updateInfo
+    if (installerInfo == null) {
+      installerInfo = await this.getUpdateInfo()
+    }
+
+    if (installerInfo == null) {
+      this._logger.warn("Cannot verify the validity of the downloaded installer")
+      return false
+    }
+
+    const sha512 = await hashFile(updaterPath)
+    // TODO: installerInfo.sha512 is deprecated.
+    // Need to switch to installerInfo.files[i].sha512. But how many files can coexist and of which type?
+    if (installerInfo.sha512 !== sha512) {
+      this._logger.warn("sha512 checksum doesn't match the latest available update. new installer should be downloaded")
+      return false
+    }
+
+    const sha256 = await hashFile(updaterPath, "sha256", "hex")
+    // TODO: installerInfo.sha2 is deprecated. Should we even check this? sha512 is taking over
+    if ((installerInfo as WindowsUpdateInfo).sha2 && (installerInfo as WindowsUpdateInfo).sha2 !== sha256) {
+      this._logger.warn("sha256 checksum doesn't match the latest available update. new installer should be downloaded")
+      return false
+    }
+
+    return true
   }
 
   /**
@@ -372,7 +422,7 @@ export abstract class AppUpdater extends EventEmitter {
    * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
    * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
    */
-  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean, installerPath?: string): void
+  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
   private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {

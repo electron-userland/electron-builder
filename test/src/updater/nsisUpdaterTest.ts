@@ -367,17 +367,27 @@ test.ifAll.ifWindows("test download and install", async () => {
     publisherName: ["Vladimir Krivosheev"],
   })
 
-  const customDownloadFolder = tmpdir()
-  updater.setDownloadFolder(customDownloadFolder)
-
   await validateDownload(updater)
-  const downloadResult = await validateDownload(updater)
+  await validateDownload(updater)
 
-  // Installer path exists
-  let customInstallerPath = path.join(customDownloadFolder, downloadResult.versionInfo.files[0].url)
-  updater.quitAndInstall(true, false, customInstallerPath)
+  const actualEvents = trackEvents(updater)
+  await updater.quitAndInstall(true, false)
+  expect(actualEvents.length).toBe(0)
+})
 
-  // Installer path does not exist.
-  customInstallerPath = path.join(customDownloadFolder, "test.exe")
-  updater.quitAndInstall(true, false, customInstallerPath)
+test.ifAll.ifWindows("test downloaded installer", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Vladimir Krivosheev"],
+  })
+  tuneNsisUpdater(updater)
+
+  const actualEvents = trackEvents(updater)
+
+  await updater.quitAndInstall(true, false)
+
+  expect(actualEvents).toMatchSnapshot()
 })
