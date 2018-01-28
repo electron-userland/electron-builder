@@ -1,4 +1,4 @@
-import { path7za, pathCompressStdIn } from "7zip-bin"
+import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
 import { computeEnv } from "builder-util/out/bundledTool"
@@ -11,7 +11,7 @@ import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { fpmPath, getLinuxToolsPath } from "./tools"
+import { fpmPath, getAppBuilderTool, getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
   maintainer: string | undefined
@@ -149,11 +149,13 @@ export default class FpmTarget extends Target {
       args.push("--category", packageCategory)
     }
 
+    const compression = options.compression
     if (target === "deb") {
-      args.push("--deb-compression", (options as DebOptions).compression || "xz")
+      args.push("--deb-compression", compression || "xz")
       use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
+      args.push("--rpm-compression", (compression === "xz" ? "xzmt" : compression) || "xzmt")
       args.push("--rpm-os", "linux")
 
       if (synopsis != null) {
@@ -212,7 +214,7 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      FPM_COMPRESS_PROGRAM: pathCompressStdIn,
+      FPM_COMPRESS_PROGRAM: await getAppBuilderTool(),
       SZA_PATH: path7za,
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
       SZA_ARCHIVE_TYPE: "xz",

@@ -1,5 +1,4 @@
 import { path7za } from "7zip-bin"
-import BluebirdPromise from "bluebird-lst"
 import { debug7z, debug7zArgs, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
 import { move } from "fs-extra-p"
@@ -15,7 +14,7 @@ export async function tar(compression: CompressionLevel | any | any, format: str
   tarArgs.push(tarFile)
   tarArgs.push(path.basename(dirToArchive))
 
-  await BluebirdPromise.all([
+  await Promise.all([
     exec(path7za, tarArgs, {cwd: path.dirname(dirToArchive)}),
     // remove file before - 7z doesn't overwrite file, but update
     unlinkIfExists(outFile),

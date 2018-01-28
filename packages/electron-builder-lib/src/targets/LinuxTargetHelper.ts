@@ -2,7 +2,7 @@ import { isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { LinuxConfiguration, LinuxTargetSpecificOptions } from ".."
+import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
 import { IconInfo } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
@@ -46,7 +46,7 @@ export class LinuxTargetHelper {
     return iconPath == null ? null : path.resolve(this.packager.projectDir, iconPath)
   }
 
-  getDescription(options: LinuxConfiguration) {
+  getDescription(options: LinuxTargetSpecificOptions) {
     return options.description || this.packager.appInfo.description
   }
 

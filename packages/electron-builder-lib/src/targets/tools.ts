@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { isEnvTrue } from "builder-util"
 import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { Lazy } from "lazy-val"
@@ -17,20 +16,20 @@ export function getAppImage() {
 
 export const fpmPath = new Lazy(() => {
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
-    return BluebirdPromise.resolve("fpm")
+    return Promise.resolve("fpm")
   }
 
   const osAndArch = process.platform === "darwin" ? "mac" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`
 
   if (process.platform === "darwin") {
     //noinspection SpellCheckingInspection
-    return getBinFromGithub("fpm", "1.9.2.1-20150715-2.2.2-mac", "6sZZoRKkxdmv3a6E5dnZgVl23apGnImhDtGHKhgCE1WOtXBUJnx+w0WvB2HD2/sitz4f93Mf7+QqDCIbfP7LOw==")
+    return getBinFromGithub("fpm", "1.9.3-20150715-2.2.2-mac", "oXfq+0H2SbdrbMik07mYloAZ8uHrmf6IJk+Q3P1kwywuZnKTXSaaeZUJNlWoVpRDWNu537YxxpBQWuTcF+6xfw==")
       .then(it => path.join(it, "fpm"))
   }
 
   //noinspection SpellCheckingInspection
-  const checksum = process.arch === "ia32" ? "cTT/HdjrQ6qTJQhTZaZC3lyDkRCyNFtNBZ0F7n6mh5B3YmD5ttJZ0xn65pQS03dhEi67A8K1xXNO+tyEEviiIg==" : "0zKxWlHuQEUsXJpWll5Bc4OTI8d0jcMVlme9OeHI+Y+s3sv1S4KyGLOEVEkNw6pRU8F+A1Dj5IR95/+U8YzB0A=="
-  return getBinFromGithub("fpm", `1.9.2-2.3.1-${osAndArch}`, checksum)
+  const checksum = process.arch === "ia32" ? "OnzvBdsHE5djcXcAT87rwbnZwS789ZAd2ehuIO42JWtBAHNzXKxV4o/24XFX5No4DJWGO2YSGQttW+zn7d/4rQ==" : "fcKdXPJSso3xFs5JyIJHG1TfHIRTGDP0xhSBGZl7pPZlz4/TJ4rD/q3wtO/uaBBYeX0qFFQAFjgu1uJ6HLHghA=="
+  return getBinFromGithub("fpm", `1.9.3-2.3.1-${osAndArch}`, checksum)
     .then(it => path.join(it, "fpm"))
 })
 
@@ -124,13 +123,13 @@ export function getAppBuilderTool() {
   return getTool({
     repository: "develar/app-builder",
     name: "app-builder",
-    version: "0.6.0",
-    mac: "d27p1TYhPVlWFS+3TO8dh80sHP5imMnZTS04ODvL9xHpCQ7KZEUqFEWYi7zDFXKfzBU6zwBcRGrb8BwQAawvzg==",
-    "linux-ia32": "1aLAsDliV/kCYfOQR/NX43pRwO/v4nC7F98Z9ZRO8r8iXEpTLYVJC19FNup81WpD0hvxLBspnbq73YiSE3aX8g==",
-    "linux-x64": "6iu/0BzEKTIuCZ/pVPorpLTXjTzqcquTfrlyB9mEyPXQcHPTueK+tBBDQ6SIO7eaGq+W3PDe1oEjgiz2q3Zd4g==",
-    "linux-armv7": "zUxn5fAxeGylF7mqVP+Aaas3vD3ITTS26EBty9VkGz51EYgCVYnQVTacDIQjwB6s1zit6jt8EJy5Jj0Y+6U+7w==",
-    "linux-armv8": "69napXVwaPqQcNp7tozNyo7VJbB90E2RToN0pqGppdfUBzTLJUNnZL5D7H4MoUUPS/WgNRalEswb7GfZOsK4XA==",
-    "win-ia32": "HW+pZS96d0v96iq0y8BX4vg5J97oFMujPaqziatRNZif26EI75lS5S58qCEmooyr9lXDLwbIlNIhrKg7ZzlNhw==",
-    "win-x64": "eO8eJq2N/t0/3g3EuRut0LU460WUqzywiRhr+OjEUQH1Gt7GuIdc4gYOfDazYjyeTqlATCfT/OzQMdplaac2wQ==",
+    version: "0.6.1",
+    "linux-armv7": "oDOrB1Cv65OkNF1+bLTpw50xG+C1p6wjbWEwYGR+WbQs6ScrqcN7bPbHrSW1t578d5Y+x/sU5PYrfpBJTE9I2w==",
+    "linux-armv8": "f10m8QnQr7V2bf1rZnun+uGc1piZjYLZx2OWKyNwsL+IRpT0VCnTUpuL0TV4UJbw1QzPg/JdzGAKubRfuXaWMw==",
+    "linux-ia32": "qb14V2GfUIZ64ytrJemW0tgcvyrOPzWfWJQ8SJ6O+MmXC+zNGFBR2FYxfTzGOeB9iaXZucdAImxBxCrqUwZgew==",
+    "linux-x64": "xPYAnXx535ZSMktNwbvsV4U1BadXaad0LtVtQBoFJuuRUQFqyOImK5XBvnhRhac7Ufx1S1jLoVfTMocPWvKutw==",
+    mac: "ONEM+jbw48kBkqFXkxHQiEXEjLtm0TWVqDEjw7X4SX5GKtejfAGus9efMBcghG9O2ooRqcj5PGtbpV65LQs5ug==",
+    "win-ia32": "XHQRnsLhuu+O20wf24bKWHT4I8sXT5e16970guutZjqcAC07O6/wQk527R6DBSoGHe+71neUK/oYK6B23glrAw==",
+    "win-x64": "m1kR07Nz0fHvwPHcfYnJvd8puQfh71qbLoySXJHNS88xyEZNKMJXOTlwjUbv2D05LpzrhgIbBZFH5GOedlCQpA==",
   })
 }
