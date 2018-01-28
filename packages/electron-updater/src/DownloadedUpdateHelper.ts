@@ -1,7 +1,7 @@
 import { UpdateInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
 import { ResolvedUpdateFileInfo } from "./main"
-import { existsSync, mkdirSync } from "fs-extra-p"
+import { existsSync, mkdirsSync } from "fs-extra-p"
 import * as path from "path"
 
 /** @private **/
@@ -55,7 +55,7 @@ export class DownloadedUpdateHelper {
     if (downloadFolder.length > 0) {
       if (!existsSync(downloadFolder)) {
         // TODO: Handle error
-        mkdirSync(downloadFolder)
+        mkdirsSync(downloadFolder)
       }
 
       this.setupFolderPath = downloadFolder
