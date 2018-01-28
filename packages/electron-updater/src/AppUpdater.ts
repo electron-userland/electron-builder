@@ -16,7 +16,7 @@ import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient } from "./providerFactory"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { hashFile } from "builder-util"
+import { hashFile } from "builder-util/out/hash"
 
 export abstract class AppUpdater extends EventEmitter {
   /**

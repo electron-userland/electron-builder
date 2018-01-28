@@ -19,6 +19,7 @@
     "semver": "^5.5.0",
     "source-map-support": "^0.5.3",
     "builder-util-runtime": "~0.0.0-semantic-release",
+    "builder-util": "0.0.0-semantic-release",
     "electron-is-dev": "^0.3.0",
     "lodash.isequal": "^4.5.0"
   },
