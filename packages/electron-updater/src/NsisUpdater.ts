@@ -44,7 +44,8 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     if (installerPath != null) {
-      this._logger.info("Update installer has already been downloaded (" + installerPath + ").")
+      this._logger.info(`Update installer has already been downloaded (${installerPath}).`)
+      this.emit(UPDATE_DOWNLOADED, this.updateInfo) // Maintaining backwards compatibility
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 

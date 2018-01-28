@@ -360,12 +360,11 @@ test("cancel download with progress", async () => {
 
 test.ifAll.ifWindows("test download and install", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig({
-    provider: "github",
-    owner: "develar",
-    repo: "__test_nsis_release",
-    publisherName: ["Vladimir Krivosheev"],
+  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
 
   await validateDownload(updater)
   await validateDownload(updater)
@@ -377,11 +376,9 @@ test.ifAll.ifWindows("test download and install", async () => {
 
 test.ifAll.ifWindows("test downloaded installer", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig({
-    provider: "github",
-    owner: "develar",
-    repo: "__test_nsis_release",
-    publisherName: ["Vladimir Krivosheev"],
+  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
   })
   tuneNsisUpdater(updater)
 

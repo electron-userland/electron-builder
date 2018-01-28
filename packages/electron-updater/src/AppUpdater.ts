@@ -211,6 +211,7 @@ export abstract class AppUpdater extends EventEmitter {
    * @param installerName The name of the persisting downloaded installer.
    */
   setDownloadData(downloadFolder: string, installerName?: string) {
+    this._logger.info(`Setting custom download data: ${this.app.getPath("userData")}`)
     this.downloadedUpdateHelper.setDownloadData(downloadFolder, installerName)
   }
 
@@ -344,10 +345,10 @@ export abstract class AppUpdater extends EventEmitter {
   protected async isUpdaterValid(updaterPath?: string | null): Promise<boolean> {
     if (updaterPath == null) {
       updaterPath = this.downloadedUpdateHelper.file
-    }
 
-    if (updaterPath == null) {
-      return false
+      if (updaterPath == null) {
+        return false
+      }
     }
 
     if (!existsSync(updaterPath)) {
@@ -358,11 +359,11 @@ export abstract class AppUpdater extends EventEmitter {
     let installerInfo = this.updateInfo
     if (installerInfo == null) {
       installerInfo = await this.getUpdateInfo()
-    }
 
-    if (installerInfo == null) {
-      this._logger.warn("Cannot verify the validity of the downloaded installer")
-      return false
+      if (installerInfo == null) {
+        this._logger.warn("Cannot verify the validity of the downloaded installer")
+        return false
+      }
     }
 
     const sha512 = await hashFile(updaterPath)
@@ -375,6 +376,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const sha256 = await hashFile(updaterPath, "sha256", "hex")
     // TODO: installerInfo.sha2 is deprecated. Should we even check this? sha512 is taking over
+    //       This code could cause problems on a non windows environment.
     if ((installerInfo as WindowsUpdateInfo).sha2 && (installerInfo as WindowsUpdateInfo).sha2 !== sha256) {
       this._logger.warn("sha256 checksum doesn't match the latest available update. new installer should be downloaded")
       return false
