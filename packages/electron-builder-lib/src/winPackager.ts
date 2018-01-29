@@ -28,9 +28,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
     const platformSpecificBuildOptions = this.platformSpecificBuildOptions
     if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
-      if (platformSpecificBuildOptions.sign != null) {
-        return BluebirdPromise.resolve(null)
-      }
       return this.vm.value.then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
     }
 
