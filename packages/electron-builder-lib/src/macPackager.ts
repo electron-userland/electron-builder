@@ -64,8 +64,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "zip":
-          const electronUpdaterCompatibility = this.platformSpecificBuildOptions.electronUpdaterCompatibility
-          mapper(name, outDir => new ArchiveTarget(name, outDir, this, targets.some(it => it === "dmg") && (electronUpdaterCompatibility == null || semver.satisfies("2.16.0", electronUpdaterCompatibility))))
+          // https://github.com/electron-userland/electron-builder/issues/2313
+          mapper(name, outDir => new ArchiveTarget(name, outDir, this, true))
           break
 
         case "pkg":

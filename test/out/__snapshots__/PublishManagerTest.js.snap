@@ -2,134 +2,116 @@
 
 exports[`generic, github and spaces 1`] = `
 Object {
-  "linux": Array [
+  "mac": Array [
+    Object {
+      "file": "alpha-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "alpha-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "beta-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "beta-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "TestApp-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "TestApp-1.1.0-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
     Object {
       "arch": "x64",
-      "file": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "file": "alpha-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "alpha-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "beta-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "beta-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-    Object {
-      "file": "latest-linux.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-x86_64.AppImage",
-          },
-        ],
-        "path": "TestApp-1.1.0-x86_64.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
   ],
 }

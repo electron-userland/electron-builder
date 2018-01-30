@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { copyOrLinkFile } from "builder-util/out/fs"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readJson } from "fs-extra-p"
@@ -6,7 +5,7 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../helpers/packTester"
 
-test.ifMac("two-package", () => assertPack("test-app", {
+test.ifMac.ifAll("two-package", () => assertPack("test-app", {
   targets: createTargets([Platform.MAC], null, "all"),
   config: {
     extraMetadata: {
@@ -52,7 +51,7 @@ test.ifMac("one-package", app({
           ext: "bar",
           name: "Bar",
           role: "Shell",
-          // If I specify `fileAssociations.icon` as `build/lhtmldoc.icns` will it know to use `build/lhtmldoc.ico` for Windows?
+          // If I specify `fileAssociations.icon` as `build/foo.icns` will it know to use `build/foo.ico` for Windows?
           icon: "someFoo.ico"
         },
       ]
@@ -60,7 +59,7 @@ test.ifMac("one-package", app({
   }
 }, {
   signed: true,
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
     copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),
   ]),

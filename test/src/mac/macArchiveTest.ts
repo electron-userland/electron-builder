@@ -10,9 +10,9 @@ import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList }
 
 test.ifMac.ifAll("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
-test.ifNotWindows("only zip", createMacTargetTest(["zip"]))
+test.ifNotWindows.ifAll("only zip", createMacTargetTest(["zip"]))
 
-test.ifNotWindows("tar.gz", createMacTargetTest(["tar.gz"]))
+test.ifNotWindows.ifAll("tar.gz", createMacTargetTest(["tar.gz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
 

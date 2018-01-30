@@ -4,9 +4,12 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("generic, github and spaces", app({
-  targets: Platform.LINUX.createTarget(),
+  targets: Platform.MAC.createTarget("zip"),
   config: {
     generateUpdatesFilesForAllChannels: true,
+    mac: {
+      electronUpdaterCompatibility: ">=2.16",
+    },
     publish: [
       {
         provider: "generic",

@@ -150,10 +150,10 @@ export class PublishManager implements PublishContext {
       }
     }
 
-    if (event.isWriteUpdateInfo && target != null && eventFile != null && !this.cancellationToken.cancelled) {
-      if (packager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target)) {
-        this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
-      }
+    if (event.isWriteUpdateInfo && target != null && eventFile != null &&
+      !this.cancellationToken.cancelled &&
+      (packager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
+      this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
     }
   }
 
@@ -169,6 +169,7 @@ export class PublishManager implements PublishContext {
     return publisher
   }
 
+  // noinspection JSUnusedGlobalSymbols
   cancelTasks() {
     this.taskManager.cancelTasks()
     this.nameToPublisher.clear()
