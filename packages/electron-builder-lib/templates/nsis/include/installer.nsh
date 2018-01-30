@@ -235,3 +235,14 @@
     ${endIf}
   !endif
 !macroend
+
+Var /GLOBAL isTryToKeepShortcuts
+
+!macro setIsTryToKeepShortcuts
+  StrCpy $isTryToKeepShortcuts "true"
+  !ifdef allowToChangeInstallationDirectory
+    ${ifNot} ${isUpdated}
+      StrCpy $isTryToKeepShortcuts "false"
+    ${endIf}
+  !endif
+!macroend
