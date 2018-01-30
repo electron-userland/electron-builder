@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, exec, execWine, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
@@ -29,7 +28,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const platformSpecificBuildOptions = this.platformSpecificBuildOptions
     if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
       if (platformSpecificBuildOptions.sign != null) {
-        return BluebirdPromise.resolve(null)
+        return Promise.resolve(null)
       }
       return this.vm.value.then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
     }
@@ -37,7 +36,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const certificateFile = platformSpecificBuildOptions.certificateFile
     if (certificateFile != null) {
       const certificatePassword = this.getCscPassword()
-      return BluebirdPromise.resolve({
+      return Promise.resolve({
         file: certificateFile,
         password: certificatePassword == null ? null : certificatePassword.trim(),
       })
@@ -45,7 +44,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
     if (cscLink == null) {
-      return BluebirdPromise.resolve(null)
+      return Promise.resolve(null)
     }
 
     return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
@@ -59,7 +58,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
-  readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? BluebirdPromise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
+  readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
 
   readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
     const cscInfo = await this.cscInfo.value
