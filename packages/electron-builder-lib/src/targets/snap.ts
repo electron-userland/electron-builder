@@ -7,6 +7,7 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
+import BluebirdPromise from "bluebird-lst"
 
 // usr/share/fonts is required, cannot run otherwise
 const unnecessaryFiles = [
@@ -110,8 +111,14 @@ export default class SnapTarget extends Target {
     }
     else {
       if (options.buildPackages != null && options.buildPackages.length > 0) {
-        await spawn("apt-get", ["-qq", "update"])
-        await spawn("apt-get", ["-qq", "install", "--no-install-recommends"].concat(options.buildPackages))
+        const notInstalledPackages = await BluebirdPromise.filter(options.buildPackages, (it): Promise<boolean> => {
+          return exec("dpkg", ["-s", it])
+            .then(result => result.includes("is not installed"))
+        })
+        if (notInstalledPackages.length > 0) {
+          await spawn("apt-get", ["-qq", "update"])
+          await spawn("apt-get", ["-qq", "install", "--no-install-recommends"].concat(notInstalledPackages))
+        }
       }
       const spawnOptions = {
         cwd: stageDir.dir,
