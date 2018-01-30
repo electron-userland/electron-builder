@@ -42,3 +42,23 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
     })
   }
 })
+
+test.ifAll.ifDevOrLinuxCi("custom env", app({
+  targets: Platform.LINUX.createTarget("snap"),
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+    snap: {
+      environment: {
+        FOO: "bar",
+      },
+    }
+  },
+  effectiveOptionComputed: async ({snap}) => {
+    delete snap.parts.app.source
+    expect(snap).toMatchSnapshot()
+    return true
+  },
+}))

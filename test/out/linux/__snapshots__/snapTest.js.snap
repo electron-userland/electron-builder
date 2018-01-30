@@ -1,10 +1,71 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`custom env 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/sep",
+      "environment": Object {
+        "FOO": "bar",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-gtk2",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libasound2",
+        "libgconf2-4",
+        "libnotify4",
+        "libnspr4",
+        "libnss3",
+        "libpcre3",
+        "libpulse0",
+        "libxss1",
+        "libxtst6",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`custom env 2`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`default stagePackages 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
+      "command": "desktop-launch $SNAP/sep",
+      "environment": Object {
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
       "plugs": Array [
         "desktop",
         "desktop-legacy",
@@ -58,7 +119,10 @@ exports[`default stagePackages 3`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
+      "command": "desktop-launch $SNAP/sep",
+      "environment": Object {
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
       "plugs": Array [
         "desktop",
         "desktop-legacy",
@@ -114,7 +178,10 @@ exports[`default stagePackages 5`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
+      "command": "desktop-launch $SNAP/sep",
+      "environment": Object {
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
       "plugs": Array [
         "custom",
         "desktop",
@@ -170,7 +237,10 @@ exports[`default stagePackages 7`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
+      "command": "desktop-launch $SNAP/sep",
+      "environment": Object {
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
       "plugs": Array [
         "foo1",
         "desktop",
