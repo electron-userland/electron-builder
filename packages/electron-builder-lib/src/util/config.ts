@@ -46,16 +46,16 @@ export async function getConfig(projectDir: string, configPath: string | null, c
 
   let extendsSpec = config.extends
   if (extendsSpec == null && extendsSpec !== null) {
-    const devDependencies = (await packageMetadata.value || {}).devDependencies
-    if (devDependencies != null) {
-      if ("react-scripts" in devDependencies) {
-        extendsSpec = "react-cra"
-        config.extends = extendsSpec
-      }
-      else if ("electron-webpack" in devDependencies) {
-        extendsSpec = "electron-webpack/electron-builder.yml"
-        config.extends = extendsSpec
-      }
+    const metadata = await packageMetadata.value || {}
+    const devDependencies = metadata.devDependencies
+    const dependencies = metadata.dependencies
+    if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
+      extendsSpec = "react-cra"
+      config.extends = extendsSpec
+    }
+    else if (devDependencies != null && "electron-webpack" in devDependencies) {
+      extendsSpec = "electron-webpack/electron-builder.yml"
+      config.extends = extendsSpec
     }
   }
 
