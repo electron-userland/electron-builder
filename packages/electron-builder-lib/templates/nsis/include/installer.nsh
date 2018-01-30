@@ -40,14 +40,16 @@
         StrCpy $0 "/allusers"
       ${endif}
 
-      !ifndef allowToChangeInstallationDirectory
+      !insertMacro setIsTryToKeepShortcuts
+
+      ${if} $isTryToKeepShortcuts == "true"
         ReadRegStr $R5 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
         # if true, it means that old uninstaller supports --keep-shortcuts flag
         ${if} $R5 == "true"
         ${andIf} ${FileExists} "$appExe"
           StrCpy $0 "$0 --keep-shortcuts"
         ${endIf}
-      !endif
+      ${endIf}
 
       ${if} ${isDeleteAppData}
         StrCpy $0 "$0 --delete-app-data"

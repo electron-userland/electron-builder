@@ -1,6 +1,6 @@
 !ifndef BUILD_UNINSTALLER
   !ifmacrodef licensePage
-    !insertmacro licensePageHelper
+    !insertmacro skipPageIfUpdated
     !insertmacro licensePage
   !endif
 !endif

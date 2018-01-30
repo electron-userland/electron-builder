@@ -19,9 +19,7 @@ test.ifNotCiMac("assisted", app({
   }
 }, {
   signedWin: true,
-  projectDirCreated: projectDir => {
-    return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
-  },
+  projectDirCreated: projectDir => copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
 }))
 
 test.ifAll.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", app({
@@ -132,6 +130,7 @@ test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
 }, {
   projectDirCreated: async projectDir => {
     await writeFile(path.join(projectDir, "build", "release-notes.md"), "New release with new bugs and\n\nwithout features")
+    await copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
   },
   packed: async context => {
     await expectUpdateMetadata(context, archFromString(process.arch))

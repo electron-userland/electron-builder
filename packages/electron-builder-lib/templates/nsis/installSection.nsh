@@ -36,14 +36,15 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
 Var /GLOBAL keepShortcuts
 StrCpy $keepShortcuts "false"
-!ifndef allowToChangeInstallationDirectory
+!insertMacro setIsTryToKeepShortcuts
+${if} $isTryToKeepShortcuts == "true"
   ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
 
   ${if} $R1 == "true"
   ${andIf} ${FileExists} "$appExe"
     StrCpy $keepShortcuts "true"
   ${endIf}
-!endif
+${endif}
 
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 ${if} $installMode == "all"

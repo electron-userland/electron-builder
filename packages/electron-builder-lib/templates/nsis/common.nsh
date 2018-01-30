@@ -63,14 +63,17 @@ Name "${PRODUCT_NAME}"
   !endif
 !macroend
 
-!macro licensePageHelper
-  Function licensePre
+!macro skipPageIfUpdated
+  !define UniqueID ${__LINE__}
+
+  Function skipPageIfUpdated_${UniqueID}
     ${if} ${isUpdated}
       Abort
     ${endif}
   FunctionEnd
 
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE skipPageIfUpdated_${UniqueID}
+  !undef UniqueID
 !macroend
 
 !macro StartApp
@@ -83,3 +86,16 @@ Name "${PRODUCT_NAME}"
 
   ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
 !macroend
+
+!ifndef BUILD_UNINSTALLER
+  Var isTryToKeepShortcuts
+
+  !macro setIsTryToKeepShortcuts
+    StrCpy $isTryToKeepShortcuts "true"
+    !ifdef allowToChangeInstallationDirectory
+      ${ifNot} ${isUpdated}
+        StrCpy $isTryToKeepShortcuts "false"
+      ${endIf}
+    !endif
+  !macroend
+!endif

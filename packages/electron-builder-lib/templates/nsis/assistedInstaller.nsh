@@ -21,7 +21,7 @@
   !endif
 
   !ifmacrodef licensePage
-    !insertmacro licensePageHelper
+    !insertmacro skipPageIfUpdated
     !insertmacro licensePage
   !endif
 
@@ -32,6 +32,7 @@
   !ifdef allowToChangeInstallationDirectory
     !include StrContains.nsh
 
+    !insertmacro skipPageIfUpdated
     !insertmacro MUI_PAGE_DIRECTORY
 
     # pageDirectory leave doesn't work (it seems because $INSTDIR is set after custom leave function)
