@@ -94,7 +94,7 @@ export class DmgTarget extends Target {
       return
     }
 
-    const keychainName = (await packager.codeSigningInfo).keychainName
+    const keychainName = (await packager.codeSigningInfo.value).keychainName
     const certificateType = "Developer ID Application"
     let identity = await findIdentity(certificateType, qualifier, keychainName)
     if (identity == null) {

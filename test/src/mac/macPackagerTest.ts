@@ -21,7 +21,9 @@ test.ifMac.ifAll("two-package", () => assertPack("test-app", {
 }, {
   signed: true,
   checkMacApp: async appDir => {
-    expect((await readdir(path.join(appDir, "Contents", "Resources"))).filter(it => !it.startsWith("."))).toMatchSnapshot()
+    expect((await readdir(path.join(appDir, "Contents", "Resources")))
+      .filter(it => !it.startsWith("."))
+      .sort()).toMatchSnapshot()
   },
 }))
 

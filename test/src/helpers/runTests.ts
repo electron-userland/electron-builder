@@ -62,11 +62,11 @@ async function runTests() {
       testPatterns.push("mainEntryTest")
       testPatterns.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
       testPatterns.push("macPackagerTest")
-      testPatterns.push("portableTest")
       testPatterns.push("linuxPackagerTest")
       testPatterns.push("ignoreTest")
     }
     else {
+      testPatterns.push("portableTest")
       testPatterns.push("BuildTest")
       testPatterns.push("assistedInstallerTest")
       testPatterns.push("linuxArchiveTest")

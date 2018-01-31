@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, use } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
@@ -38,14 +37,14 @@ export class PkgTarget extends Target {
 
     this.logBuilding("pkg", artifactPath, arch)
 
-    const keychainName = (await packager.codeSigningInfo).keychainName
+    const keychainName = (await packager.codeSigningInfo.value).keychainName
 
     const appOutDir = this.outDir
     // https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
     const distInfoFile = path.join(appOutDir, "distribution.xml")
 
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)
-    const identity = (await BluebirdPromise.all([
+    const identity = (await Promise.all([
       findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainName),
       this.customizeDistributionConfiguration(distInfoFile, appPath),
       this.buildComponentPackage(appPath, innerPackageFile),
@@ -62,7 +61,7 @@ export class PkgTarget extends Target {
     await exec("productbuild", args, {
       cwd: appOutDir,
     })
-    await BluebirdPromise.all([unlink(innerPackageFile), unlink(distInfoFile)])
+    await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
 
     packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
   }

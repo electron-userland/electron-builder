@@ -22,26 +22,25 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { CONCURRENCY } from "builder-util/out/fs"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
-  readonly codeSigningInfo: Promise<CodeSigningInfo>
+  readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
+    if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
+      return Promise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
+    }
+
+    return createKeychain({
+      tmpDir: this.info.tempDirManager,
+      cscLink: this.packagerOptions.cscLink!,
+      cscKeyPassword: this.getCscPassword(),
+      cscILink: this.packagerOptions.cscInstallerLink,
+      cscIKeyPassword: this.packagerOptions.cscInstallerKeyPassword,
+      currentDir: this.projectDir
+    })
+  })
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
   constructor(info: Packager) {
     super(info, Platform.MAC)
-
-    if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
-      this.codeSigningInfo = BluebirdPromise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
-    }
-    else {
-      this.codeSigningInfo = createKeychain({
-        tmpDir: info.tempDirManager,
-        cscLink: this.packagerOptions.cscLink!,
-        cscKeyPassword: this.getCscPassword(),
-        cscILink: this.packagerOptions.cscInstallerLink,
-        cscIKeyPassword: this.packagerOptions.cscInstallerKeyPassword,
-        currentDir: this.projectDir
-      })
-    }
   }
 
   get defaultTarget(): Array<string> {
@@ -141,7 +140,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       return
     }
 
-    const keychainName = (await this.codeSigningInfo).keychainName
+    const keychainName = (await this.codeSigningInfo.value).keychainName
     const explicitType = isMas ? masOptions!.type : macOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
@@ -264,7 +263,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     await createMacApp(this, appOutDir, asarIntegrity)
 
     const wantedLanguages = asArray(this.platformSpecificBuildOptions.electronLanguages)
-    if (wantedLanguages == null) {
+    if (wantedLanguages.length === 0) {
       return
     }
 

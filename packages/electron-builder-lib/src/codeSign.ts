@@ -141,7 +141,7 @@ async function createCustomCertKeychain() {
   // copy to temp and then atomic rename to final path
   const tmpKeychainPath = path.join(getCacheDirectory(), getTempName("electron-builder-root-certs"))
   const keychainPath = path.join(getCacheDirectory(), "electron-builder-root-certs.keychain")
-  const results = await BluebirdPromise.all<any>([
+  const results = await Promise.all<any>([
     listUserKeychains(),
     copyFile(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
       .then(() => rename(tmpKeychainPath, keychainPath)),
@@ -210,7 +210,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
   }
 
-  await BluebirdPromise.all([
+  await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
     BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
     BluebirdPromise.mapSeries(securityCommands, it => exec("security", it))
