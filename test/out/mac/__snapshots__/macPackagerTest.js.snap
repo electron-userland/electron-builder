@@ -162,3 +162,14 @@ Object {
   ],
 }
 `;
+
+exports[`two-package 2`] = `
+Array [
+  "TestApp.icns",
+  "app-update.yml",
+  "app.asar",
+  "bn.lproj",
+  "electron.asar",
+  "en.lproj",
+]
+`;

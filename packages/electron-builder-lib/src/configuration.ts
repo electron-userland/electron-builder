@@ -155,7 +155,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
    * @default false
    */
-  readonly forceCodeSigning?: boolean
+  readonly ?: boolean
 
   /**
    * The version of muon you are packaging for.

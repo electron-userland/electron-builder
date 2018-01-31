@@ -93,6 +93,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * 2.16.0 files
    */
   readonly electronUpdaterCompatibility?: string | null
+
+  /**
+   * The electron locales. By default Electron locales used as is.
+   */
+  readonly electronLanguages?: Array<string> | string
 }
 
 /**

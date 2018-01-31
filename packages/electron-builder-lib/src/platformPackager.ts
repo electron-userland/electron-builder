@@ -9,6 +9,7 @@ import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
+import { AsarIntegrity } from "asar-integrity"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
@@ -18,7 +19,6 @@ import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
-import { createMacApp } from "./packager/mac"
 import { PackagerOptions } from "./packagerApi"
 import { getAppBuilderTool } from "./targets/tools"
 import { copyAppFiles } from "./util/appFileCopier"
@@ -198,11 +198,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     await taskManager.awaitTasks()
-
-    if (platformName === "darwin" || platformName === "mas") {
-      await createMacApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
-    }
-
+    await this.beforeCopyExtraFiles(appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
     await BluebirdPromise.each([extraResourceMatchers, extraFileMatchers], it => copyFiles(it))
 
     if (this.info.cancellationToken.cancelled) {
@@ -213,6 +209,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
     await this.signApp(packContext)
     await this.info.afterSign(packContext)
+  }
+
+  protected async beforeCopyExtraFiles(appOutDir: string, asarIntegrity: AsarIntegrity | null) {
+    // empty impl
   }
 
   private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
@@ -256,7 +256,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected signApp(packContext: AfterPackContext): Promise<any> {
-    return BluebirdPromise.resolve()
+    return Promise.resolve()
   }
 
   async getIconPath(): Promise<string | null> {
