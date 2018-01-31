@@ -44,6 +44,12 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly stagePackages?: Array<string> | null
 
   /**
+   * The [hooks](https://docs.snapcraft.io/build-snaps/hooks) directory, relative to `build` (build resources directory).
+   * @default build/snap-hooks
+   */
+  readonly hooks?: string | null
+
+  /**
    * The list of [plugs](https://snapcraft.io/docs/reference/interfaces).
    * Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
    *

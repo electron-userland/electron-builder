@@ -74,7 +74,7 @@ export function getAria() {
 
 export function getSnapTemplate() {
   // noinspection SpellCheckingInspection
-  return getBinFromGithub("snap-template", "0.1.0", "EMgRw05KOmXqD2O5ifpfdaEa2BgTLlO/BKTJAAyDwxla556OAKib0Fd81fP9MBen+Xi14cufunxayBecEozRyw==")
+  return getBinFromGithub("snap-template", "0.1.1", "W8JXQMwsrqH7T8kFD3KuULNVJRqygmcQPDPGhr9BXeRQS9U+A6jSsUEopQIwfQxlhuA6f7Jerc9XA0/ZLlK60w==")
 }
 
 export interface ToolDescriptor {

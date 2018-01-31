@@ -293,15 +293,12 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
 
 // https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
 export function copyDirUsingHardLinks(source: string, destination: string) {
+  const promise = ensureDir(destination)
   if (process.platform !== "darwin") {
-    const args = ["-d", "--recursive", "--preserve=mode"]
-    args.push("--link")
-    args.push(source + "/", destination + "/")
-    return ensureDir(path.dirname(destination)).then(() => exec("cp", args))
+    return promise
+      .then(() => exec("cp", ["-d", "--recursive", "--preserve=mode", "--link", "-T" /* to merge */, source + "/", destination + "/"]))
   }
 
-  // pax requires created dir
-  const promise = ensureDir(destination)
   return promise
     .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
       cwd: source,

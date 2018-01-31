@@ -52,9 +52,9 @@ export class LinuxTargetHelper {
 
   async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
-    const tempFile = destination || await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`)
-    await outputFile(tempFile, data)
-    return tempFile
+    const file = destination || await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`)
+    await outputFile(file, data)
+    return file
   }
 
   async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {

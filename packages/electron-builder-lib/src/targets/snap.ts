@@ -32,8 +32,18 @@ const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "bro
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
 
+  private isUsePrepackedSnap = true
+
   constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name)
+  }
+
+  private replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>) {
+    const result = _replaceDefault(inList, defaultList)
+    if (result !== defaultList) {
+      this.isUsePrepackedSnap = false
+    }
+    return result
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -43,15 +53,7 @@ export default class SnapTarget extends Target {
     const snapName = packager.executableName.toLowerCase()
     const buildPackages = asArray(options.buildPackages)
     const isUseDocker = process.platform !== "linux" || isEnvTrue(process.env.SNAP_USE_DOCKER)
-    let isUsePrepackedSnap = arch === Arch.x64 && buildPackages.length === 0
-
-    function replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>) {
-      const result = _replaceDefault(inList, defaultList)
-      if (result !== defaultList) {
-        isUsePrepackedSnap = false
-      }
-      return result
-    }
+    this.isUsePrepackedSnap = arch === Arch.x64 && buildPackages.length === 0
 
     const snap: any = {
       name: snapName,
@@ -67,38 +69,55 @@ export default class SnapTarget extends Target {
             TMPDIR: "$XDG_RUNTIME_DIR",
             ...options.environment,
           },
-          plugs: replaceDefault(options.plugs, defaultPlugs),
+          plugs: this.replaceDefault(options.plugs, defaultPlugs),
         }
       },
       parts: {
         app: {
           plugin: "dump",
-          "stage-packages": replaceDefault(options.stagePackages, defaultStagePackages),
+          "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
           source: isUseDocker ? "/appOutDir" : appOutDir,
-          after: replaceDefault(options.after, ["desktop-gtk2"]),
+          after: this.replaceDefault(options.after, ["desktop-gtk2"]),
         }
       },
     }
 
-    if (options.assumes != null) {
-      snap.assumes = asArray(options.assumes)
+    const wrapperFileName = `command-${packager.executableName}.wrapper`
+    if (this.isUsePrepackedSnap) {
+      delete snap.parts
+      snap.apps[snapName].command = wrapperFileName
     }
 
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const artifactPath = path.join(this.outDir, snapFileName)
     this.logBuilding("snap", artifactPath, arch)
 
+    if (options.assumes != null) {
+      snap.assumes = asArray(options.assumes)
+    }
+
     const stageDir = await createStageDir(this, packager, arch)
     // snapcraft.yaml inside a snap directory
     const snapDir = path.join(stageDir.dir, "snap")
+    const snapMetaDir = this.isUsePrepackedSnap ? path.join(stageDir.dir, "meta") : snapDir
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
-      snap.icon = "snap/gui/icon.png"
-      await copyFile(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
+      if (!this.isUsePrepackedSnap) {
+        snap.icon = "snap/gui/icon.png"
+      }
+      await copyFile(this.helper.maxIconPath, path.join(snapMetaDir, "gui", "icon.png"))
     }
 
-    const desktopFile = await this.helper.writeDesktopEntry(this.options, packager.executableName, path.join(snapDir, "gui", `${snap.name}.desktop`), {
+    const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
+    if (hooksDir != null) {
+      await copyDir(hooksDir, path.join(snapMetaDir, "hooks"), {
+        isUseHardLink: USE_HARD_LINKS,
+      })
+    }
+
+    const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
+    await this.helper.writeDesktopEntry(this.options, packager.executableName, desktopFile, {
       // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png"
     })
@@ -107,12 +126,11 @@ export default class SnapTarget extends Target {
       return
     }
 
-    const snapcraftFile = isUsePrepackedSnap ? path.join(stageDir.dir, "meta", "snap.yaml") : path.join(snapDir, "snapcraft.yaml")
+    const snapcraftFile = path.join(snapMetaDir, this.isUsePrepackedSnap ? "snap.yaml" : "snapcraft.yaml")
     await outputFile(snapcraftFile, serializeToYaml(snap))
-    const snapTemplateDir = isUsePrepackedSnap ? await getSnapTemplate() : null
-    if (isUsePrepackedSnap) {
+    if (this.isUsePrepackedSnap) {
       // noinspection SpellCheckingInspection
-      await writeFile(path.join(stageDir.dir, `command-${packager.executableName}`), `#!/bin/sh
+      await writeFile(path.join(stageDir.dir, wrapperFileName), `#!/bin/sh
 export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
 export LD_LIBRARY_PATH="$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$LD_LIBRARY_PATH"
@@ -120,15 +138,15 @@ export LD_LIBRARY_PATH="$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linu
 export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
 exec "desktop-launch" "$SNAP/${packager.executableName}" "$@"
 `, {mode: "0755"})
-      await copyDir(path.join(snapDir, "gui"), path.join(stageDir.dir, "meta", "gui"))
-      await copyDir(snapTemplateDir!!, stageDir.dir, {
+
+      await copyDir(await getSnapTemplate(), stageDir.dir, {
         isUseHardLink: USE_HARD_LINKS,
       })
       await copyDirUsingHardLinks(appOutDir, stageDir.dir)
     }
 
     if (isUseDocker) {
-      if (isUsePrepackedSnap) {
+      if (this.isUsePrepackedSnap) {
         await this.buildUsingDockerAndPrepackedSnap(snapFileName, stageDir)
       }
       else {
@@ -136,14 +154,14 @@ exec "desktop-launch" "$SNAP/${packager.executableName}" "$@"
       }
     }
     else {
-      await this.buildWithoutDocker(buildPackages, stageDir.dir, isUsePrepackedSnap, arch, artifactPath)
+      await this.buildWithoutDocker(buildPackages, stageDir.dir, arch, artifactPath)
     }
 
     await stageDir.cleanup()
     packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
 
-  private async buildWithoutDocker(buildPackages: Array<string>, stageDir: string, isUsePrepackedSnap: boolean, arch: Arch, artifactPath: string) {
+  private async buildWithoutDocker(buildPackages: Array<string>, stageDir: string, arch: Arch, artifactPath: string) {
     if (buildPackages.length > 0) {
       const notInstalledPackages = await BluebirdPromise.filter(buildPackages, (it): Promise<boolean> => {
         return exec("dpkg", ["-s", it])
@@ -160,7 +178,7 @@ exec "desktop-launch" "$SNAP/${packager.executableName}" "$@"
     }
 
     let primeDir: string
-    if (isUsePrepackedSnap) {
+    if (this.isUsePrepackedSnap) {
       primeDir = stageDir
     }
     else {
