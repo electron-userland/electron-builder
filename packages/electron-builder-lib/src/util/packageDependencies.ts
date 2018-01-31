@@ -32,7 +32,6 @@ const knownAlwaysIgnoredDevDeps = new Set([
   "electron-forge", "electron-packager", "electron-compilers",
   "jest", "jest-cli", "prebuild-install", "nan",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
-  "react-scripts",
   "@types",
 ])
 
