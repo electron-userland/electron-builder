@@ -4,6 +4,7 @@ import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
 import { log } from "./log"
+import { exec } from "./util"
 import { orNullIfFileNotExist } from "./promise"
 
 export const MAX_FILE_REQUESTS = 8
@@ -288,6 +289,23 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
     }
   })
     .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
+}
+
+// https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
+export function copyDirUsingHardLinks(source: string, destination: string) {
+  if (process.platform !== "darwin") {
+    const args = ["-d", "--recursive", "--preserve=mode"]
+    args.push("--link")
+    args.push(source + "/", destination + "/")
+    return ensureDir(path.dirname(destination)).then(() => exec("cp", args))
+  }
+
+  // pax requires created dir
+  const promise = ensureDir(destination)
+  return promise
+    .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
+      cwd: source,
+    }))
 }
 
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false

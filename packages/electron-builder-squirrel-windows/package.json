@@ -18,7 +18,7 @@
     "sanitize-filename": "^1.6.1"
   },
   "optionalDependencies": {
-    "7zip-bin": "~2.2.7"
+    "7zip-bin": "~3.0.0"
   },
   "peerDependencies": {
     "electron-builder-lib": "~0.0.0-semantic-release"

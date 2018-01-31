@@ -19,6 +19,20 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
   },
 }))
 
+// custom packages to test not-prepacked snap build
+test.ifAll.ifDevOrLinuxCi("snap full", app({
+  targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "sep2",
+    },
+    productName: "Sep2",
+    snap: {
+      stagePackages: ["libgconf2-4", "libnspr4", "libnss3", "libpcre3", "libxss1", "libxtst6"]
+    },
+  },
+}))
+
 test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack("test-app-one", {

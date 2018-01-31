@@ -1,6 +1,9 @@
 <component name="ProjectDictionaryState">
   <dictionary name="develar">
     <words>
+      <w>WINEDEBUG</w>
+      <w>WINEPREFIX</w>
+      <w>Zstd</w>
       <w>aarch</w>
       <w>actperepo</w>
       <w>addincludedir</w>
@@ -238,6 +241,7 @@
       <w>micromatch</w>
       <w>minami</w>
       <w>minimatch</w>
+      <w>mkdir</w>
       <w>mkdirp</w>
       <w>mkdtemp</w>
       <w>mksnapshot</w>

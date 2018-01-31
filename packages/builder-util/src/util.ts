@@ -310,7 +310,7 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
 }
 
 export function replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>): Array<string> {
-  if (inList == null) {
+  if (inList == null || (inList.length === 1 && inList[0] === "default")) {
     return defaultList
   }
 

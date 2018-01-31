@@ -153,6 +153,21 @@ export class GitHubPublisher extends HttpPublisher {
     return null
   }
 
+  private async overwriteArtifact(fileName: string, release: Release) {
+    // delete old artifact and re-upload
+    log.notice({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
+
+    const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
+    for (const asset of assets) {
+      if (asset!.name === fileName) {
+        await this.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
+        return
+      }
+    }
+
+    log.debug({file: fileName, reason: "not found on GitHub"}, "trying to upload again")
+  }
+
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this.releasePromise
     if (release == null) {
@@ -162,7 +177,7 @@ export class GitHubPublisher extends HttpPublisher {
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
     let attemptNumber = 0
-    uploadAttempt: for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       try {
         return await httpExecutor.doApiRequest(configureRequestOptions({
           hostname: parsedUrl.hostname,
@@ -176,31 +191,14 @@ export class GitHubPublisher extends HttpPublisher {
         }, this.token), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
-        if (e instanceof HttpError) {
-          if (e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
-            // delete old artifact and re-upload
-            log.notice({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
-
-            const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
-            for (const asset of assets) {
-              if (asset!.name === fileName) {
-                await this.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
-                continue uploadAttempt
-              }
-            }
-
-            log.debug({file: fileName, reason: "not found on GitHub"}, "trying to upload again")
-            continue
-          }
-          else if (attemptNumber++ < 3 && e.statusCode === 502) {
-            continue
-          }
-        }
-        else if (attemptNumber++ < 3 && (e.code === "EPIPE" || e.code === "ECONNRESET")) {
+        if (e instanceof HttpError && e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+          await this.overwriteArtifact(fileName, release)
           continue
         }
 
-        throw e
+        if (!(attemptNumber++ < 3 && (e instanceof HttpError || (e.code === "EPIPE" || e.code === "ECONNRESET")))) {
+          throw e
+        }
       }
     }
   }

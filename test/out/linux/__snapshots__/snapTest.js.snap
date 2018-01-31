@@ -304,3 +304,14 @@ Object {
   ],
 }
 `;
+
+exports[`snap full 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "sep2_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, serializeToYaml } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { copyDir, copyOrLinkFile, unlinkIfExists, USE_HARD_LINKS } from "builder-util/out/fs"
+import { copyDir, copyOrLinkFile, unlinkIfExists, copyDirUsingHardLinks, USE_HARD_LINKS } from "builder-util/out/fs"
 import * as ejs from "ejs"
 import { ensureDir, readFile, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -170,23 +170,6 @@ function toAppImageArch(arch: Arch): string {
     default:
       throw new Error(`Unsupported arch ${arch}`)
   }
-}
-
-// https://unix.stackexchange.com/questions/202430/how-to-copy-a-directory-recursively-using-hardlinks-for-each-file
-function copyDirUsingHardLinks(source: string, destination: string) {
-  if (process.platform !== "darwin") {
-    const args = ["-d", "--recursive", "--preserve=mode"]
-    args.push("--link")
-    args.push(source + "/", destination + "/")
-    return ensureDir(path.dirname(destination)).then(() => exec("cp", args))
-  }
-
-  // pax requires created dir
-  const promise = ensureDir(destination)
-  return promise
-    .then(() => exec("pax", ["-rwl", "-p", "amp" /* Do not preserve file access times, Do not preserve file modification times, Preserve the file mode	bits */, ".", destination], {
-      cwd: source,
-    }))
 }
 
 function archToRuntimeName(arch: Arch) {

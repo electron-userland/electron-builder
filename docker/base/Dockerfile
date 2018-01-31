@@ -3,7 +3,7 @@ FROM buildpack-deps:xenial-curl
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn && \
-  apt-get update -y && \
+  apt-get -qq update && apt-get -qq dist-upgrade && \
   # add repo for git-lfs
   curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
   # git ssh for using as docker image on CircleCI

@@ -28,7 +28,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * The list of features that must be supported by the core in order for this snap to install.
    */
-  readonly assumes?: Array<string> | null
+  readonly assumes?: Array<string> | string | null
 
   /**
    * The list of debian packages needs to be installed for building this snap.

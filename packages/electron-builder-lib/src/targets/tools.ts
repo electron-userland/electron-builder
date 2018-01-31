@@ -36,7 +36,7 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools() {
   // yes, we starting to use native Promise
-  return Promise.all([getAppImage(), fpmPath.value, getAppBuilderTool()])
+  return Promise.all([getAppImage(), fpmPath.value, getAppBuilderTool(), getSnapTemplate()])
 }
 
 export function getZstd() {
@@ -70,6 +70,11 @@ export function getAria() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub(`aria2-${platform.buildConfigurationKey}${archQualifier}`, "1.33.1", checksum)
     .then(it => path.join(it, `aria2c${platform === Platform.WINDOWS ? ".exe" : ""}`))
+}
+
+export function getSnapTemplate() {
+  // noinspection SpellCheckingInspection
+  return getBinFromGithub("snap-template", "0.1.0", "EMgRw05KOmXqD2O5ifpfdaEa2BgTLlO/BKTJAAyDwxla556OAKib0Fd81fP9MBen+Xi14cufunxayBecEozRyw==")
 }
 
 export interface ToolDescriptor {
