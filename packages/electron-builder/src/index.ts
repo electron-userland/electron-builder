@@ -11,7 +11,7 @@ export {
   NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions, SquirrelWindowsOptions,
   WindowsSignOptions, CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo,
   Metadata, AuthorMetadata, RepositoryInfo, AppInfo,
-  UploadTask, PublishManager, PublishOptions
+  UploadTask, PublishManager, PublishOptions, ProgressInfo
 } from "electron-builder-lib"
 export { buildForge, ForgeOptions } from "electron-builder-lib"
 export { CancellationToken } from "builder-util-runtime"
