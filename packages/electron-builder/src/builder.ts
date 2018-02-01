@@ -1,10 +1,7 @@
-import BluebirdPromise from "bluebird-lst"
 import { addValue, Arch, archFromString, InvalidConfigurationError, log } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
-import { executeFinally } from "builder-util/out/promise"
 import chalk from "chalk"
-import { Configuration, DIR_TARGET, PackagerOptions, Platform, PublishManager } from "electron-builder-lib"
-import { Packager } from "electron-builder-lib/out/packager"
+import { Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
+import { build as _build } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
 import { deepAssign } from "read-config-file/out/deepAssign"
 
@@ -216,48 +213,6 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
 
 export function build(rawOptions?: CliOptions): Promise<Array<string>> {
   return _build(normalizeOptions(rawOptions || {}))
-}
-
-export async function _build(options: PackagerOptions & PublishOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
-  const packager = new Packager(options, cancellationToken)
-
-  let electronDownloader: any = null
-  packager.electronDownloader = options => {
-    if (electronDownloader ==  null) {
-      electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
-    }
-    return electronDownloader(options)
-  }
-
-  // because artifact event maybe dispatched several times for different publish providers
-  const artifactPaths = new Set<string>()
-  packager.artifactCreated(event => {
-    if (event.file != null) {
-      artifactPaths.add(event.file)
-    }
-  })
-
-  const publishManager = new PublishManager(packager, options)
-  const sigIntHandler = () => {
-    log.warn("cancelled by SIGINT")
-    cancellationToken.cancel()
-    publishManager.cancelTasks()
-  }
-  process.once("SIGINT", sigIntHandler)
-
-  return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
-    let promise: Promise<any>
-    if (errorOccurred) {
-      publishManager.cancelTasks()
-      promise = Promise.resolve(null)
-    }
-    else {
-      promise = publishManager.awaitTasks()
-    }
-
-    return promise
-      .then(() => process.removeListener("SIGINT", sigIntHandler))
-  })
 }
 
 /**

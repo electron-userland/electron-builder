@@ -13,5 +13,5 @@ export {
   Metadata, AuthorMetadata, RepositoryInfo, AppInfo,
   UploadTask, PublishManager, PublishOptions
 } from "electron-builder-lib"
-export { buildForge, ForgeOptions } from "./forge/forge-maker"
+export { buildForge, ForgeOptions } from "electron-builder-lib"
 export { CancellationToken } from "builder-util-runtime"

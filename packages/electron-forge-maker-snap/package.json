@@ -11,6 +11,6 @@
     "*.js"
   ],
   "dependencies": {
-    "electron-builder": "^0.0.0-semantic-release"
+    "electron-builder-lib": "^0.0.0-semantic-release"
   }
 }

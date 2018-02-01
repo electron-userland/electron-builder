@@ -1,11 +1,12 @@
 import * as path from "path"
-import { build, CliOptions } from "../builder"
+import { build } from "./index"
+import { PackagerOptions } from "./packagerApi"
 
 export interface ForgeOptions {
   readonly dir: string
 }
 
-export function buildForge(forgeOptions: ForgeOptions, options: CliOptions) {
+export function buildForge(forgeOptions: ForgeOptions, options: PackagerOptions) {
   const appDir = forgeOptions.dir
   return build({
     prepackaged: appDir,
