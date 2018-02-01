@@ -96,4 +96,10 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly releaseInfo?: ReleaseInfo
 
   readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
+
+  /** @private */
+  cscLink?: string | null
+
+  /** @private */
+  cscKeyPassword?: string | null
 }

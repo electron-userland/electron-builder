@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { addValue, Arch, archFromString, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { addValue, Arch, archFromString, InvalidConfigurationError, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally } from "builder-util/out/promise"
 import chalk from "chalk"
@@ -148,7 +148,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.project
 
   let config = result.config
-  const deprecatedExtraMetadata = r.extraMetadata
   delete r.extraMetadata
 
   // config is array when combining dot-notation values with a config file value (#2016)
@@ -166,22 +165,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
     config = newConfig
     result.config = newConfig
-  }
-
-  if (deprecatedExtraMetadata != null) {
-    if (typeof config === "string") {
-      // transform to object and specify path to config as extends
-      config = {
-        extends: config,
-        extraMetadata: deprecatedExtraMetadata,
-      };
-      (result as any).config = config
-    }
-    else if (config == null) {
-      config = {};
-      (result as any).config = config
-    }
-    (config as any).extraMetadata = deprecatedExtraMetadata
   }
 
   if (config != null && typeof config !== "string") {
@@ -239,48 +222,10 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
 }
 
 export function build(rawOptions?: CliOptions): Promise<Array<string>> {
-  const options = normalizeOptions(rawOptions || {})
-
-  if (options.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
-    options.cscLink = process.env.CSC_LINK
-  }
-  if (options.cscInstallerLink === undefined && !isEmptyOrSpaces(process.env.CSC_INSTALLER_LINK)) {
-    options.cscInstallerLink = process.env.CSC_INSTALLER_LINK
-  }
-  if (options.cscKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_KEY_PASSWORD)) {
-    options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
-  }
-  if (options.cscInstallerKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_INSTALLER_KEY_PASSWORD)) {
-    options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
-  }
-
-  // emoji doesn't improve output a lot, so, do not use it
-  // if ((process.stdout as any).isTTY) {
-  //   log.messageTransformer = (m, level) => {
-  //     let separator = "  "
-  //     let emoji: string | null = null
-  //     if (level === "warn") {
-  //       emoji = "warning"
-  //     }
-  //     else if (m === "packaging") {
-  //       emoji = "package"
-  //       separator = " "
-  //     }
-  //     else if (m === "building") {
-  //       emoji = "building_construction"
-  //     }
-  //     else if (m === "uploading") {
-  //       emoji = "rocket"
-  //       separator = " "
-  //     }
-  //     return emoji == null ? m : `${getEmoji(emoji)}${separator}${m}`
-  //   }
-  // }
-
-  return _build(options)
+  return _build(normalizeOptions(rawOptions || {}))
 }
 
-export async function _build(options: CliOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
+export async function _build(options: PackagerOptions & PublishOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
   const packager = new Packager(options, cancellationToken)
 
   let electronDownloader: any = null
@@ -311,7 +256,7 @@ export async function _build(options: CliOptions, cancellationToken: Cancellatio
     let promise: Promise<any>
     if (errorOccurred) {
       publishManager.cancelTasks()
-      promise = BluebirdPromise.resolve(null)
+      promise = Promise.resolve(null)
     }
     else {
       promise = publishManager.awaitTasks()
@@ -397,11 +342,6 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       group: deprecated,
       description: "The target arch (preferred to use --x64 or --ia32)",
       choices: ["ia32", "x64", "all", undefined as any],
-    })
-    .option("extraMetadata", {
-      alias: ["em"],
-      group: buildGroup,
-      description: "Deprecated. Use -c.extraMetadata.",
     })
     .option("prepackaged", {
       alias: ["pd"],

@@ -74,14 +74,20 @@ export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPac
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
+  let configuration = packagerOptions.config as Configuration
+  if (configuration == null) {
+    configuration = {};
+    (packagerOptions as any).config = configuration
+  }
+
   if (checkOptions.signed) {
     packagerOptions = signed(packagerOptions)
   }
   if (checkOptions.signedWin) {
-    packagerOptions.cscLink = WIN_CSC_LINK
-    packagerOptions.cscKeyPassword = ""
+    configuration.cscLink = WIN_CSC_LINK
+    configuration.cscKeyPassword = ""
   }
-  else if (packagerOptions.cscLink == null) {
+  else if (configuration == null || (configuration as Configuration).cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, {config: {mac: {identity: null}}})
   }
 
@@ -322,7 +328,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     await checkOptions.checkMacApp(packedAppDir, info)
   }
 
-  if (packagerOptions.cscLink != null) {
+  if (packagerOptions.config != null && (packagerOptions.config as Configuration).cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
     expect(result).not.toMatch(/is not signed at all/)
   }
@@ -422,7 +428,10 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
     log.warn({reason: "CSC_KEY_PASSWORD is not defined"}, "macOS code signing is not tested")
   }
   else {
-    packagerOptions.cscLink = CSC_LINK
+    if (packagerOptions.config == null) {
+      (packagerOptions as any).config = {}
+    }
+    (packagerOptions.config as any).cscLink = CSC_LINK
   }
   return packagerOptions
 }

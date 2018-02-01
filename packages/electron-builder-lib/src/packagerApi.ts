@@ -15,12 +15,6 @@ export interface PackagerOptions {
 
   projectDir?: string | null
 
-  cscLink?: string | null
-  cscKeyPassword?: string | null
-
-  cscInstallerLink?: string | null
-  cscInstallerKeyPassword?: string | null
-
   platformPackagerFactory?: ((info: Packager, platform: Platform) => PlatformPackager<any>) | null
 
   readonly config?: Configuration | string | null

@@ -98,6 +98,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * The electron locales. By default Electron locales used as is.
    */
   readonly electronLanguages?: Array<string> | string
+
+  /** @private */
+  readonly cscInstallerLink?: string | null
+  /** @private */
+  readonly cscInstallerKeyPassword?: string | null
 }
 
 /**

@@ -34,9 +34,9 @@ it2.ifNotCi("certificateSubjectName", app({
 // todo - check manifest
 it("languages and not signed (windows store only)", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.ia32, Arch.x64),
-  cscLink: protectedCscLink,
-  cscKeyPassword: "test",
   config: {
+    cscLink: protectedCscLink,
+    cscKeyPassword: "test",
     appx: {
       languages: ["de-DE", "ru-RU"]
     }

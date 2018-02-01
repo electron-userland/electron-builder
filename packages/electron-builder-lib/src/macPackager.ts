@@ -14,7 +14,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { createMacApp } from "./packager/mac"
-import { PlatformPackager } from "./platformPackager"
+import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
@@ -23,16 +23,17 @@ import { CONCURRENCY } from "builder-util/out/fs"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
-    if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
+    const cscLink = this.getCscLink()
+    if (cscLink == null || process.platform !== "darwin") {
       return Promise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
     }
 
     return createKeychain({
       tmpDir: this.info.tempDirManager,
-      cscLink: this.packagerOptions.cscLink!,
+      cscLink,
       cscKeyPassword: this.getCscPassword(),
-      cscILink: this.packagerOptions.cscInstallerLink,
-      cscIKeyPassword: this.packagerOptions.cscInstallerKeyPassword,
+      cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+      cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
       currentDir: this.projectDir
     })
   })

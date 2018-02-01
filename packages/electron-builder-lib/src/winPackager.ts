@@ -11,7 +11,7 @@ import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
-import { PlatformPackager } from "./platformPackager"
+import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/AppxTarget"
 import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
@@ -42,7 +42,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       })
     }
 
-    const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
+    const cscLink = this.getCscLink("WIN_CSC_LINK")
     if (cscLink == null) {
       return Promise.resolve(null)
     }
@@ -131,8 +131,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return ["nsis"]
   }
 
-  protected doGetCscPassword(): string | undefined {
-    return this.platformSpecificBuildOptions.certificatePassword || process.env.WIN_CSC_KEY_PASSWORD || super.doGetCscPassword()
+  protected doGetCscPassword(): string | undefined | null {
+    return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {

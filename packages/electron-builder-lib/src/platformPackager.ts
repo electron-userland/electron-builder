@@ -91,10 +91,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected doGetCscPassword(): string | undefined {
-    const cscKeyPassword = this.packagerOptions.cscKeyPassword
+  protected getCscLink(envName: string = "CSC_LINK"): string | null | undefined {
     // allow to specify as empty string
-    return cscKeyPassword == null ? process.env.CSC_KEY_PASSWORD : cscKeyPassword
+    return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), process.env[envName])
+  }
+
+  protected doGetCscPassword(): string | null | undefined {
+    // allow to specify as empty string
+    return chooseNotNull(chooseNotNull(this.info.config.cscKeyPassword, this.platformSpecificBuildOptions.cscKeyPassword), process.env.CSC_KEY_PASSWORD)
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
@@ -652,4 +656,8 @@ export function resolveFunction<T>(executor: T | string): T {
 
   const m = require(p)
   return m.default || m
+}
+
+export function chooseNotNull(v1: string | null | undefined, v2: string | null | undefined): string | null | undefined {
+  return v1 == null ? v2 : v1
 }
