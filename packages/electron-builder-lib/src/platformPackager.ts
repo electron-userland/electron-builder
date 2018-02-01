@@ -227,7 +227,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         matcher.excludePatterns = excludePatterns
       }
     }
-    const transformer = createTransformer(appDir, isElectronCompile ? {
+    const transformer = createTransformer(appDir, config, isElectronCompile ? {
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME, ...config.extraMetadata
     } : config.extraMetadata)

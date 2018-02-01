@@ -185,8 +185,16 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether to include PDB files.
+   * @default false
    */
   readonly includePdb?: boolean
+
+  /**
+   * Whether to remove `scripts` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageScripts?: boolean
 }
 
 export interface AfterPackContext {
