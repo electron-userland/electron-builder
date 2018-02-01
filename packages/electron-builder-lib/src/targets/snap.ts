@@ -1,11 +1,11 @@
 import { isEnvTrue, Arch, exec, replaceDefault as _replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
 import { copyFile, copyDir, copyDirUsingHardLinks, USE_HARD_LINKS } from "builder-util/out/fs"
-import { outputFile, writeFile } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
+import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
 import BluebirdPromise from "bluebird-lst"
@@ -46,9 +46,10 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private createDescriptor(snapName: string, appOutDir: string, isUseDocker: boolean): any {
+  private createDescriptor(snapName: string, appOutDir: string, arch: Arch, isUseDocker: boolean): any {
     const appInfo = this.packager.appInfo
     const options = this.options
+    const linuxArchName = toAppImageOrSnapArch(arch)
     const snap: any = {
       name: snapName,
       version: appInfo.version,
@@ -58,9 +59,19 @@ export default class SnapTarget extends Target {
       grade: options.grade || "stable",
       apps: {
         [snapName]: {
-          command: `desktop-launch $SNAP/${this.packager.executableName}`,
+          command: `bin/desktop-launch $SNAP/${this.packager.executableName}`,
+          adapter: "none",
           environment: {
             TMPDIR: "$XDG_RUNTIME_DIR",
+            PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+            LD_LIBRARY_PATH: [
+              "$SNAP_LIBRARY_PATH",
+              "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
+              "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
+              "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
+              "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
+              "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
+            ].join(":"),
             ...options.environment,
           },
           plugs: this.replaceDefault(options.plugs, defaultPlugs),
@@ -94,11 +105,9 @@ export default class SnapTarget extends Target {
     const artifactPath = path.join(this.outDir, snapFileName)
     this.logBuilding("snap", artifactPath, arch)
 
-    const snap: any = this.createDescriptor(snapName, appOutDir, isUseDocker)
-    const wrapperFileName = `command-${packager.executableName}.wrapper`
+    const snap: any = this.createDescriptor(snapName, appOutDir, arch, isUseDocker)
     if (this.isUseTemplateApp) {
       delete snap.parts
-      snap.apps[snapName].command = wrapperFileName
     }
 
     const stageDir = await createStageDir(this, packager, arch)
@@ -134,16 +143,6 @@ export default class SnapTarget extends Target {
     const snapcraftFile = path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml")
     await outputFile(snapcraftFile, serializeToYaml(snap))
     if (this.isUseTemplateApp) {
-      // noinspection SpellCheckingInspection
-      await writeFile(path.join(stageDir.dir, wrapperFileName), `#!/bin/sh
-export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu"
-export LD_LIBRARY_PATH="$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH="$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-exec "desktop-launch" "$SNAP/${packager.executableName}" "$@"
-`, {mode: "0755"})
-
       await copyDir(await getSnapTemplate(), stageDir.dir, {
         isUseHardLink: USE_HARD_LINKS,
       })

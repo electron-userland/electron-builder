@@ -118,3 +118,19 @@ class RemoteTarget extends Target {
     this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)
   }
 }
+
+export function toAppImageOrSnapArch(arch: Arch): string {
+  switch (arch) {
+    case Arch.x64:
+      return "x86_64"
+    case Arch.ia32:
+      return "i386"
+    case Arch.armv7l:
+      return "arm"
+    case Arch.arm64:
+      return "arm_aarch64"
+
+    default:
+      throw new Error(`Unsupported arch ${arch}`)
+  }
+}

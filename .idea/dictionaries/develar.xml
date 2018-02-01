@@ -1,9 +1,6 @@
 <component name="ProjectDictionaryState">
   <dictionary name="develar">
     <words>
-      <w>WINEDEBUG</w>
-      <w>WINEPREFIX</w>
-      <w>Zstd</w>
       <w>aarch</w>
       <w>actperepo</w>
       <w>addincludedir</w>
@@ -241,7 +238,6 @@
       <w>micromatch</w>
       <w>minami</w>
       <w>minimatch</w>
-      <w>mkdir</w>
       <w>mkdirp</w>
       <w>mkdtemp</w>
       <w>mksnapshot</w>
@@ -332,6 +328,7 @@
       <w>thenable</w>
       <w>tiffutil</w>
       <w>timestamping</w>
+      <w>tmpdir</w>
       <w>toml</w>
       <w>tsconfig</w>
       <w>typicalname</w>

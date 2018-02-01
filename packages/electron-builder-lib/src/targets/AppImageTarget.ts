@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppImageOptions } from ".."
 import { Target } from "../core"
-import { LinuxPackager } from "../linuxPackager"
+import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getTemplatePath } from "../util/pathManager"
 import { appendBlockmap } from "./differentialUpdateInfoBuilder"
@@ -109,7 +109,7 @@ export default class AppImageTarget extends Target {
         ...process.env,
         PATH: `${vendorToolDir}:${process.env.PATH}`,
         // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
-        ARCH: toAppImageArch(arch),
+        ARCH: toAppImageOrSnapArch(arch),
       }
     })
 
@@ -153,22 +153,6 @@ export default class AppImageTarget extends Target {
       installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
     }
     return installIcons
-  }
-}
-
-function toAppImageArch(arch: Arch): string {
-  switch (arch) {
-    case Arch.x64:
-      return "x86_64"
-    case Arch.ia32:
-      return "i386"
-    case Arch.armv7l:
-      return "arm"
-    case Arch.arm64:
-      return "arm_aarch64"
-
-    default:
-      throw new Error(`Unsupported arch ${arch}`)
   }
 }
 
