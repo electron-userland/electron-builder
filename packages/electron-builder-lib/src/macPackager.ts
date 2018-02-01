@@ -16,7 +16,6 @@ import { Packager } from "./packager"
 import { createMacApp } from "./packager/mac"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
-import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { CONCURRENCY } from "builder-util/out/fs"
@@ -64,6 +63,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "dmg":
+          const { DmgTarget } = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
 

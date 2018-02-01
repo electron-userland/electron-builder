@@ -3,7 +3,7 @@ import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder-lib/out/codeSign"
 import MacPackager from "electron-builder-lib/out/macPackager"
-import { DmgTarget } from "electron-builder-lib/out/targets/dmg"
+import { DmgTarget } from "dmg-builder"
 import { WinPackager } from "electron-builder-lib/out/winPackager"
 import { SignOptions as MacSignOptions } from "electron-osx-sign"
 

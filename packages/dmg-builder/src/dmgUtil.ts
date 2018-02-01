@@ -8,6 +8,8 @@ import { outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 
+export { DmgTarget } from "./dmg"
+
 const root = path.join(__dirname, "..")
 
 export function getDmgTemplatePath() {

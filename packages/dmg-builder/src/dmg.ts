@@ -1,17 +1,16 @@
 import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isCanSignDmg, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
-import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
-import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach, transformBackgroundFileIfNeed } from "dmg-builder/out/dmgUtil"
+import { addLicenseToDmg } from "./dmgLicense"
+import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach, transformBackgroundFileIfNeed } from "./dmgUtil"
 import { stat } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
-import { DmgOptions } from ".."
-import { findIdentity, isSignAllowed } from "../codeSign"
-import { Target } from "../core"
-import MacPackager from "../macPackager"
-import { createBlockmap } from "./differentialUpdateInfoBuilder"
+import { findIdentity, isSignAllowed } from "electron-builder-lib/out/codeSign"
+import { Target, DmgOptions } from "electron-builder-lib"
+import MacPackager from "electron-builder-lib/out/macPackager"
+import { createBlockmap } from "electron-builder-lib/out/targets/differentialUpdateInfoBuilder"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)

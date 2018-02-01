@@ -18,7 +18,8 @@
     "parse-color": "^1.0.0",
     "builder-util": "^0.0.0-semantic-release",
     "iconv-lite": "^0.4.19",
-    "js-yaml": "^3.10.0"
+    "js-yaml": "^3.10.0",
+    "electron-builder-lib": "~0.0.0-semantic-release"
   },
   "typings": "./out/dmg.d.ts"
 }

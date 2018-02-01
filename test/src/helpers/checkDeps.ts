@@ -28,7 +28,9 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   // console.log(result)
 
-  const unusedDependencies = result.dependencies.filter(it => it !== "electron-download-tf")
+  const unusedDependencies = packageName === "electron-builder" ?
+    result.dependencies.filter(it => it !== "electron-download-tf" && it !== "dmg-builder") :
+    result.dependencies
   if (unusedDependencies.length > 0) {
     console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
     return false
