@@ -22,8 +22,6 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   dir?: boolean
 
   platform?: string
-
-  project?: string
 }
 
 /** @internal */
@@ -141,11 +139,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.ia32
   delete result.x64
   delete result.armv7l
-
-  if (result.project != null && result.projectDir == null) {
-    result.projectDir = result.project
-  }
-  delete result.project
 
   let config = result.config
   delete r.extraMetadata

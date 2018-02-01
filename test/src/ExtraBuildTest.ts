@@ -39,7 +39,7 @@ test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   packed: async context => {
     await build({
       prepackaged: path.join(context.outDir, "linux-unpacked"),
-      project: context.projectDir,
+      projectDir: context.projectDir,
       linux: [],
       config: {
         // test target
