@@ -1,8 +1,7 @@
-import { addValue, Arch, archFromString, InvalidConfigurationError, log } from "builder-util"
+import { addValue, Arch, archFromString, InvalidConfigurationError, log, deepAssign } from "builder-util"
 import chalk from "chalk"
 import { build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
-import { deepAssign } from "read-config-file/out/deepAssign"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {

@@ -19,7 +19,8 @@
     "builder-util": "^0.0.0-semantic-release",
     "iconv-lite": "^0.4.19",
     "js-yaml": "^3.10.0",
-    "electron-builder-lib": "~0.0.0-semantic-release"
+    "electron-builder-lib": "~0.0.0-semantic-release",
+    "sanitize-filename": "^1.6.1"
   },
   "typings": "./out/dmg.d.ts"
 }

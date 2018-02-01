@@ -1,10 +1,9 @@
-import { asArray, DebugLogger, InvalidConfigurationError, log } from "builder-util"
+import { asArray, DebugLogger, InvalidConfigurationError, log, deepAssign } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"
-import { deepAssign } from "read-config-file/out/deepAssign"
 import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
 

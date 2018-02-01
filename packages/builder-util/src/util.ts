@@ -23,6 +23,8 @@ export { hashFile } from "./hash"
 export { copyFile } from "./fs"
 export { asArray } from "builder-util-runtime"
 
+export { deepAssign } from "./deepAssign"
+
 export const debug7z = _debug("electron-builder:7z")
 
 export function serializeToYaml(object: object) {

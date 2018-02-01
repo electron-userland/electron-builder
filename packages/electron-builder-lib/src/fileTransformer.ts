@@ -1,8 +1,7 @@
-import { debug, log } from "builder-util"
+import { debug, log, deepAssign } from "builder-util"
 import { FileTransformer } from "builder-util/out/fs"
 import { readFile } from "fs-extra-p"
 import * as path from "path"
-import { deepAssign } from "read-config-file/out/deepAssign"
 import { Configuration } from "./configuration"
 import { Packager } from "./packager"
 

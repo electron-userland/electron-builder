@@ -18,7 +18,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
-  const result = await new BluebirdPromise<DepCheckResult>(resolve => {
+  const result = await new Promise<DepCheckResult>(resolve => {
     depCheck(projectDir, {
       ignoreDirs: [
         "src", "test", "docs", "typings", "docker", "certs", "templates", "vendor",
@@ -49,7 +49,8 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   for (const name of Object.keys(result.missing)) {
-    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" || name === "electron-download-tf") {
+    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" || name === "electron-download-tf" ||
+      (packageName === "electron-builder-lib" && name === "dmg-builder")) {
       delete (result.missing as any)[name]
     }
   }
