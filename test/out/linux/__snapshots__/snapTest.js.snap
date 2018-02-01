@@ -4,7 +4,7 @@ exports[`custom env 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "command": "command-sep.wrapper",
       "environment": Object {
         "FOO": "bar",
         "TMPDIR": "$XDG_RUNTIME_DIR",
@@ -26,27 +26,7 @@ Object {
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
-  "icon": "snap/gui/icon.png",
   "name": "sep",
-  "parts": Object {
-    "app": Object {
-      "after": Array [
-        "desktop-gtk2",
-      ],
-      "plugin": "dump",
-      "stage-packages": Array [
-        "libasound2",
-        "libgconf2-4",
-        "libnotify4",
-        "libnspr4",
-        "libnss3",
-        "libpcre3",
-        "libpulse0",
-        "libxss1",
-        "libxtst6",
-      ],
-    },
-  },
   "summary": "Sep",
   "version": "1.1.0",
 }

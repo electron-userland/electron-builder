@@ -64,4 +64,9 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
    */
   readonly after?: Array<string> | null
+
+  /**
+   * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
+   */
+  readonly useTemplateApp?: boolean
 }

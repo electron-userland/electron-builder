@@ -63,7 +63,6 @@ async function runTests() {
       testPatterns.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
       testPatterns.push("macPackagerTest")
       testPatterns.push("linuxPackagerTest")
-      testPatterns.push("ignoreTest")
     }
     else {
       testPatterns.push("portableTest")
@@ -74,6 +73,7 @@ async function runTests() {
       testPatterns.push("globTest")
       testPatterns.push("webInstallerTest")
       testPatterns.push("msiTest")
+      testPatterns.push("ignoreTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }

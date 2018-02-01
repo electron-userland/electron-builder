@@ -71,6 +71,6 @@ test("cli", async () => {
     return result
   }
 
-  expect(parseExtraMetadata("--em.foo=bar")).toMatchSnapshot()
-  expect(parseExtraMetadata("--em.dev.login-url")).toMatchSnapshot()
+  expect(parseExtraMetadata("--c.extraMetadata.foo=bar")).toMatchSnapshot()
+  expect(parseExtraMetadata("--c.extraMetadata.dev.login-url")).toMatchSnapshot()
 })

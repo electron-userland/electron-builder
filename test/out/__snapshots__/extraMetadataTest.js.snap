@@ -17,6 +17,7 @@ Object {
 
 exports[`cli 2`] = `
 Object {
+  "cExtraMetadataDevLoginUrl": true,
   "config": Object {
     "extraMetadata": Object {
       "dev": Object {
@@ -25,7 +26,6 @@ Object {
     },
   },
   "draft": undefined,
-  "emDevLoginUrl": true,
   "prepackaged": undefined,
   "prerelease": undefined,
   "projectDir": undefined,

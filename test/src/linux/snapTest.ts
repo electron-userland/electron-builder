@@ -46,6 +46,8 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
           stagePackages: p,
           plugs: p,
           confinement: "classic",
+          // otherwise "parts" will be removed
+          useTemplateApp: false,
         }
       },
       effectiveOptionComputed: async ({snap}) => {
@@ -71,7 +73,6 @@ test.ifAll.ifDevOrLinuxCi("custom env", app({
     }
   },
   effectiveOptionComputed: async ({snap}) => {
-    delete snap.parts.app.source
     expect(snap).toMatchSnapshot()
     return true
   },
