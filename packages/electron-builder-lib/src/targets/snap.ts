@@ -50,6 +50,10 @@ export default class SnapTarget extends Target {
     const appInfo = this.packager.appInfo
     const options = this.options
     const linuxArchName = toAppImageOrSnapArch(arch)
+
+    const plugs: { [key: string]: object | null } | null = normalizePlugConfiguration(options.plugs == null ? null : asArray(options.plugs))
+    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
+
     const snap: any = {
       name: snapName,
       version: appInfo.version,
@@ -74,7 +78,7 @@ export default class SnapTarget extends Target {
             ].join(":"),
             ...options.environment,
           },
-          plugs: this.replaceDefault(options.plugs, defaultPlugs),
+          plugs: plugNames,
         }
       },
       parts: {
@@ -85,6 +89,20 @@ export default class SnapTarget extends Target {
           after: this.replaceDefault(options.after, ["desktop-gtk2"]),
         }
       },
+    }
+
+    if (plugs != null) {
+      for (const plugName of plugNames) {
+        const plugOptions = plugs[plugName]
+        if (plugOptions == null) {
+          continue
+        }
+
+        if (snap.plugs == null) {
+          snap.plugs = {}
+        }
+        snap.plugs[plugName] = plugOptions
+      }
     }
 
     if (options.assumes != null) {
@@ -234,4 +252,21 @@ export default class SnapTarget extends Target {
       stdio: ["ignore", "inherit", "inherit"],
     })
   }
+}
+
+function normalizePlugConfiguration(raw: Array<string | object> | null) {
+  if (raw == null) {
+    return null
+  }
+
+  const result: any = {}
+  for (const item of raw) {
+    if (typeof item === "string") {
+      result[item] = null
+    }
+    else {
+      Object.assign(result, item)
+    }
+  }
+  return result
 }

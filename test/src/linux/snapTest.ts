@@ -59,7 +59,44 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
-test.ifAll.ifDevOrLinuxCi("custom env", app({
+test.ifDevOrLinuxCi("plugs option", async () => {
+  for (const p of [
+    [
+      {
+        "browser-sandbox": {
+          interface: "browser-support",
+          "allow-sandbox": true
+        },
+      },
+      "another-simple-plug-name",
+    ],
+    {
+      "browser-sandbox": {
+        interface: "browser-support",
+        "allow-sandbox": true
+      },
+      "another-simple-plug-name": null,
+    },
+  ]) {
+    await assertPack("test-app-one", {
+      targets: Platform.LINUX.createTarget("snap"),
+      config: {
+        snap: {
+          plugs: p,
+          // otherwise "parts" will be removed
+          useTemplateApp: false,
+        }
+      },
+      effectiveOptionComputed: async ({snap}) => {
+        delete snap.parts.app.source
+        expect(snap).toMatchSnapshot()
+        return true
+      },
+    })
+  }
+})
+
+test.ifDevOrLinuxCi("custom env", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     extraMetadata: {

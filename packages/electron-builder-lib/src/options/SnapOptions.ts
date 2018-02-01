@@ -54,8 +54,21 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
    *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
+   *
+   * Additional attributes can be specified using object instead of just name of plug:
+   * ```
+   *[
+   *  {
+   *    "browser-sandbox": {
+   *      "interface": "browser-support",
+   *      "allow-sandbox": true
+   *    },
+   *  },
+   *  "another-simple-plug-name"
+   *]
+   * ```
    */
-  readonly plugs?: Array<string> | null
+  readonly plugs?: Array<string | object> | object | null
 
   /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.

@@ -21,6 +21,10 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
 
 /** @internal */
 export function normalizeOptions(args: CliOptions): BuildOptions {
+  if ((args as any).extraMetadata != null) {
+    throw new InvalidConfigurationError("Please specify extraMetadata under config field")
+  }
+
   if (args.targets != null) {
     return args
   }

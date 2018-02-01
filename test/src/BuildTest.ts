@@ -3,7 +3,7 @@ import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder-lib/out/asar/asar"
-import { move, outputJson, readFileSync, readJson } from "fs-extra-p"
+import { move, outputJson, readFileSync } from "fs-extra-p"
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
@@ -68,25 +68,6 @@ test("relative index", appTwo({
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
   }, true)
-}))
-
-test("extraMetadata and config as path", app(Object.assign(require("electron-builder/out/builder").normalizeOptions({
-  extraMetadata: {
-    field: "bar.js"
-  },
-  config: "foo.json",
-}), {
-  targets: linuxDirTarget,
-}), {
-  projectDirCreated: projectDir => {
-    return outputJson(path.join(projectDir, "foo.json"), {
-      asar: false
-    })
-  },
-  packed: async context => {
-    const resourceDir = context.getResources(Platform.LINUX)
-    expect(await readJson(path.join(resourceDir, "app", "package.json"))).toMatchSnapshot()
-  }
 }))
 
 it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({

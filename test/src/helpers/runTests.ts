@@ -59,8 +59,7 @@ async function runTests() {
     }
     else if (circleNodeIndex === 2) {
       testPatterns.push("snapTest")
-      testPatterns.push("mainEntryTest")
-      testPatterns.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
+      testPatterns.push("PublishManagerTest")
       testPatterns.push("macPackagerTest")
       testPatterns.push("linuxPackagerTest")
     }
@@ -74,6 +73,10 @@ async function runTests() {
       testPatterns.push("webInstallerTest")
       testPatterns.push("msiTest")
       testPatterns.push("ignoreTest")
+      testPatterns.push("mainEntryTest")
+      testPatterns.push("ArtifactPublisherTest")
+      testPatterns.push("RepoSlugTest")
+      testPatterns.push("httpRequestTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }

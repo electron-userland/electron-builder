@@ -4,9 +4,12 @@ exports[`custom env 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "command-sep.wrapper",
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/sep",
       "environment": Object {
         "FOO": "bar",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "TMPDIR": "$XDG_RUNTIME_DIR",
       },
       "plugs": Array [
@@ -42,8 +45,11 @@ exports[`default stagePackages 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/sep",
       "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "TMPDIR": "$XDG_RUNTIME_DIR",
       },
       "plugs": Array [
@@ -99,8 +105,11 @@ exports[`default stagePackages 3`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/sep",
       "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "TMPDIR": "$XDG_RUNTIME_DIR",
       },
       "plugs": Array [
@@ -158,8 +167,11 @@ exports[`default stagePackages 5`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/sep",
       "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "TMPDIR": "$XDG_RUNTIME_DIR",
       },
       "plugs": Array [
@@ -217,8 +229,11 @@ exports[`default stagePackages 7`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/sep",
       "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         "TMPDIR": "$XDG_RUNTIME_DIR",
       },
       "plugs": Array [
@@ -269,6 +284,122 @@ Object {
 `;
 
 exports[`default stagePackages 8`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`plugs option 1`] = `
+Object {
+  "apps": Object {
+    "testapp": Object {
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/testapp",
+      "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-gtk2",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libasound2",
+        "libgconf2-4",
+        "libnotify4",
+        "libnspr4",
+        "libnss3",
+        "libpcre3",
+        "libpulse0",
+        "libxss1",
+        "libxtst6",
+      ],
+    },
+  },
+  "plugs": Object {
+    "browser-sandbox": Object {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`plugs option 2`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`plugs option 3`] = `
+Object {
+  "apps": Object {
+    "testapp": Object {
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/testapp",
+      "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "browser-sandbox",
+        "another-simple-plug-name",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "testapp",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-gtk2",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libasound2",
+        "libgconf2-4",
+        "libnotify4",
+        "libnspr4",
+        "libnss3",
+        "libpcre3",
+        "libpulse0",
+        "libxss1",
+        "libxtst6",
+      ],
+    },
+  },
+  "plugs": Object {
+    "browser-sandbox": Object {
+      "allow-sandbox": true,
+      "interface": "browser-support",
+    },
+  },
+  "summary": "Test App ßW",
+  "version": "1.1.0",
+}
+`;
+
+exports[`plugs option 4`] = `
 Object {
   "linux": Array [],
 }

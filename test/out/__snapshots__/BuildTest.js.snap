@@ -257,26 +257,6 @@ Object {
 }
 `;
 
-exports[`extraMetadata and config as path 1`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
-exports[`extraMetadata and config as path 2`] = `
-Object {
-  "author": "Foo Bar <foo@example.com>",
-  "description": "Test Application (test quite \\" #378)",
-  "field": "bar.js",
-  "homepage": "http://foo.example.com",
-  "license": "MIT",
-  "name": "TestApp",
-  "private": true,
-  "productName": "Test App ßW",
-  "version": "1.1.0",
-}
-`;
-
 exports[`posix smart unpack 1`] = `
 Object {
   "linux": Array [],
