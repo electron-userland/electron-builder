@@ -3,7 +3,7 @@ import { readFile } from "fs-extra-p"
 import { fromUrl, Info } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"
-import { Metadata, RepositoryInfo } from "../options/metadata"
+import { Metadata, RepositoryInfo } from ".."
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata | null): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
@@ -35,20 +35,25 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }
 
-  let url: string | undefined | null = process.env.TRAVIS_REPO_SLUG
-  if (url == null) {
-    const user: string | null | undefined = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
-    const project: string | null | undefined = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
-    if (user != null && project != null) {
-      return {
-        user,
-        project,
-      }
+  const slug = process.env.TRAVIS_REPO_SLUG || process.env.APPVEYOR_REPO_NAME
+  if (slug != null) {
+    const splitted = slug.split("/")
+    return {
+      user: splitted[0],
+      project: splitted[1],
     }
-
-    url = await getGitUrlFromGitConfig(projectDir)
   }
 
+  const user = process.env.CIRCLE_PROJECT_USERNAME
+  const project = process.env.CIRCLE_PROJECT_REPONAME
+  if (user != null && project != null) {
+    return {
+      user,
+      project,
+    }
+  }
+
+  const url = await getGitUrlFromGitConfig(projectDir)
   return url == null ? null : parseRepositoryUrl(url)
 }
 

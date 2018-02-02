@@ -9,10 +9,7 @@ Object {
 
 exports[`repo slug from TRAVIS_REPO_SLUG 1`] = `
 Object {
-  "auth": null,
-  "domain": "github.com",
   "project": "travis-build",
-  "type": "github",
   "user": "travis-ci",
 }
 `;

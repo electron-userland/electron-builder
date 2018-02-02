@@ -25,22 +25,19 @@ test("repo slug from TRAVIS_REPO_SLUG", async () => {
 })
 
 test("repo slug from APPVEYOR", async () => {
-  const oldAppveyorAccountName = process.env.APPVEYOR_ACCOUNT_NAME
-  const oldAppveyorProjectName = process.env.APPVEYOR_PROJECT_NAME
+  const oldAppveyorRepoName = process.env.APPVEYOR_REPO_NAME
   const travisSlug = process.env.TRAVIS_REPO_SLUG
   try {
     if (travisSlug != null) {
       delete process.env.TRAVIS_REPO_SLUG
     }
 
-    process.env.APPVEYOR_ACCOUNT_NAME = "travis-ci"
-    process.env.APPVEYOR_PROJECT_NAME = "travis-build"
+    process.env.APPVEYOR_REPO_NAME = "travis-ci/travis-build"
     const info = await getRepositoryInfo(process.cwd())
     checkInfo(info)
   }
   finally {
-    restoreEnv("APPVEYOR_ACCOUNT_NAME", oldAppveyorAccountName)
-    restoreEnv("APPVEYOR_PROJECT_NAME", oldAppveyorProjectName)
+    restoreEnv("APPVEYOR_REPO_NAME", oldAppveyorRepoName)
     if (travisSlug != null) {
       process.env.TRAVIS_REPO_SLUG = travisSlug
     }

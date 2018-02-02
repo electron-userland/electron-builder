@@ -73,7 +73,7 @@ Detected automatically using:
 * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
 * if not set, env 
   * `TRAVIS_REPO_SLUG` 
-  * or `APPVEYOR_ACCOUNT_NAME`/`APPVEYOR_PROJECT_NAME` 
+  * or `APPVEYOR_REPO_NAME` 
   * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
  
