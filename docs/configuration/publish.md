@@ -97,6 +97,7 @@ Generic (any HTTP(S) server) options.
 * **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
 * **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
 * <code id="GenericServerOptions-channel">channel</code> = `latest` String - The channel.
+* <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
 
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.

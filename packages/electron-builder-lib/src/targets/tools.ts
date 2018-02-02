@@ -34,7 +34,7 @@ export const fpmPath = new Lazy(() => {
 })
 
 // noinspection JSUnusedGlobalSymbols
-export function prefetchBuildTools() {
+export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
   return Promise.all([getAppImage(), fpmPath.value, getAppBuilderTool(), getSnapTemplate()])
 }

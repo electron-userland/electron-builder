@@ -99,7 +99,7 @@
     "jsdoc-to-markdown": "^4.0.1",
     "path-sort": "^0.1.0",
     "ts-babel": "^4.1.8",
-    "ts-jsdoc": "^2.0.6",
+    "ts-jsdoc": "^3.0.0",
     "tslint": "^5.9.1",
     "typescript": "2.7.0-rc",
     "v8-compile-cache": "^1.1.2",

@@ -1,10 +1,12 @@
 * <code id="LinuxTargetSpecificOptions-depends">depends</code> Array&lt;String&gt; - Package dependencies.
+* <code id="LinuxTargetSpecificOptions-compression">compression</code> = `xz` "gz" | "bzip2" | "xz" - The compression type.
 * <code id="LinuxTargetSpecificOptions-icon">icon</code> String
 * <code id="LinuxTargetSpecificOptions-packageCategory">packageCategory</code> String - The package category.
 * <code id="LinuxTargetSpecificOptions-vendor">vendor</code> String
 * <code id="LinuxTargetSpecificOptions-maintainer">maintainer</code> String
 * <code id="LinuxTargetSpecificOptions-afterInstall">afterInstall</code> String
 * <code id="LinuxTargetSpecificOptions-afterRemove">afterRemove</code> String
+* <code id="LinuxTargetSpecificOptions-fpm">fpm</code> Array&lt;String&gt; - **Advanced only** The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options. Example: `["--before-install=build/deb-preinstall.sh", "--after-upgrade=build/deb-postinstall.sh"]`
 
 Inherited from `CommonLinuxOptions`:
 * <code id="LinuxTargetSpecificOptions-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).

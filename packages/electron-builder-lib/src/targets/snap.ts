@@ -6,6 +6,7 @@ import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
+import { PlugDescriptor } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir, StageDir } from "./targetUtil"
 import BluebirdPromise from "bluebird-lst"
@@ -51,7 +52,7 @@ export default class SnapTarget extends Target {
     const options = this.options
     const linuxArchName = toAppImageOrSnapArch(arch)
 
-    const plugs: { [key: string]: object | null } | null = normalizePlugConfiguration(options.plugs == null ? null : asArray(options.plugs))
+    const plugs = normalizePlugConfiguration(options.plugs)
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
 
     const snap: any = {
@@ -254,13 +255,13 @@ export default class SnapTarget extends Target {
   }
 }
 
-function normalizePlugConfiguration(raw: Array<string | object> | null) {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: PlugDescriptor | null } | null {
   if (raw == null) {
     return null
   }
 
   const result: any = {}
-  for (const item of raw) {
+  for (const item of (Array.isArray(raw) ? raw : [raw])) {
     if (typeof item === "string") {
       result[item] = null
     }

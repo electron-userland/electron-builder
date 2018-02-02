@@ -2,20 +2,24 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 
 <!-- do not edit. start of generated block -->
 * <code id="SnapOptions-confinement">confinement</code> = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
-* <code id="SnapOptions-summary">summary</code> String - The 78 character long summary. Defaults to [productName](configuration.md#Configuration-productName).
+* <code id="SnapOptions-environment">environment</code> any - The custom environment. Defaults to `{"TMPDIR: "$XDG_RUNTIME_DIR"}`. If you set custom, it will be merged with default.
+* <code id="SnapOptions-summary">summary</code> String
 * <code id="SnapOptions-grade">grade</code> = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).
-* <code id="SnapOptions-assumes">assumes</code> Array&lt;String&gt; - The list of features that must be supported by the core in order for this snap to install.
+* <code id="SnapOptions-assumes">assumes</code> Array&lt;String&gt; | String - The list of features that must be supported by the core in order for this snap to install.
 * <code id="SnapOptions-buildPackages">buildPackages</code> Array&lt;String&gt; - The list of debian packages needs to be installed for building this snap.
 * <code id="SnapOptions-stagePackages">stagePackages</code> Array&lt;String&gt; - The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`. Defaults to `["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]`.
-
+  
   If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
-* <code id="SnapOptions-plugs">plugs</code> Array&lt;String&gt; - The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
-
+* <code id="SnapOptions-hooks">hooks</code> = `build/snap-hooks` String - The [hooks](https://docs.snapcraft.io/build-snaps/hooks) directory, relative to `build` (build resources directory).
+* <code id="SnapOptions-plugs">plugs</code> Array&lt;String | module:electron-builder-lib/out/options/SnapOptions.PlugDescriptor&gt; | module:electron-builder-lib/out/options/SnapOptions.PlugDescriptor - The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
+  
   If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
+  
+  Additional attributes can be specified using object instead of just name of plug: ``` [  {    "browser-sandbox": {      "interface": "browser-support",      "allow-sandbox": true    },  },  "another-simple-plug-name" ] ```
 * <code id="SnapOptions-after">after</code> Array&lt;String&gt; - Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part. Defaults to `["desktop-gtk2""]`.
-
+  
   If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
-* <code id="SnapOptions-ubuntuAppPlatformContent">ubuntuAppPlatformContent</code> String - Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
+* <code id="SnapOptions-useTemplateApp">useTemplateApp</code> Boolean - Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
 
 Inherited from `CommonLinuxOptions`:
 * <code id="SnapOptions-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).

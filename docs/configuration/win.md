@@ -26,6 +26,10 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 * <code id="WindowsConfiguration-publisherName">publisherName</code> String | Array&lt;String&gt; - [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.
 * <code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](#publisherName) will be used for the signature verification.
 * <code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = `asInvoker` "asInvoker" | "highestAvailable" | "requireAdministrator" - The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed. Cannot be specified per target, allowed only in the `win`.
+* <code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = `true` Boolean - Whether to sign and add metadata to executable. Advanced option.
+* <code id="WindowsConfiguration-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
+  
+  1.0.0 sha2 2.15.0 path 2.16.0 files
 <!-- end of generated block -->
 
 ---

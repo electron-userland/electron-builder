@@ -68,7 +68,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    *]
    * ```
    */
-  readonly plugs?: Array<string | object> | object | null
+  readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
   /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
@@ -82,4 +82,8 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
    */
   readonly useTemplateApp?: boolean
+}
+
+export interface PlugDescriptor {
+  [key: string]: {[key: string]: any} | null
 }
