@@ -10,7 +10,8 @@ import { Logger } from "./main"
 export function verifySignature(publisherNames: Array<string>, tempUpdateFile: string, logger: Logger): Promise<string | null> {
   return new BluebirdPromise<string | null>((resolve, reject) => {
     // https://github.com/electron-userland/electron-builder/issues/2421
-    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
+    // https://github.com/electron-userland/electron-builder/issues/2535
+    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
       timeout: 30 * 1000
     }, (error, stdout, stderr) => {
       if (error != null || stderr) {
