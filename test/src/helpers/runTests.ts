@@ -76,7 +76,6 @@ async function runTests() {
       testPatterns.push("mainEntryTest")
       testPatterns.push("ArtifactPublisherTest")
       testPatterns.push("RepoSlugTest")
-      testPatterns.push("httpRequestTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }

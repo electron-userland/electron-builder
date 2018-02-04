@@ -3,12 +3,12 @@ version: 2
 jobs:
     build:
       docker:
-        - image: circleci/node:9.3
+        - image: circleci/node:9.5
       steps:
         - checkout
         - restore_cache:
             keys:
-              - dependencies-{{ checksum "yarn.lock" }}
+              - deps-{{ checksum "yarn.lock" }}
         - restore_cache:
             keys:
               - v-1.7.11-electron
@@ -17,7 +17,7 @@ jobs:
         - run:
             command: yarn pretest
         - save_cache:
-            key: dependencies-{{ checksum "yarn.lock" }}
+            key: deps-{{ checksum "yarn.lock" }}
             paths:
               - node_modules
         - run:
@@ -38,7 +38,7 @@ jobs:
         - checkout
         - restore_cache:
             keys:
-              - dependencies-{{ checksum "yarn.lock" }}
+              - deps-{{ checksum "yarn.lock" }}
         - restore_cache:
             keys:
               - v-1.7.11-electron

@@ -1,4 +1,5 @@
 import { path7za } from "7zip-bin"
+import { appBuilderPath } from "app-builder-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
 import { computeEnv } from "builder-util/out/bundledTool"
@@ -11,7 +12,7 @@ import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { fpmPath, getAppBuilderTool, getLinuxToolsPath } from "./tools"
+import { fpmPath, getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
   maintainer: string | undefined
@@ -214,7 +215,7 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      FPM_COMPRESS_PROGRAM: await getAppBuilderTool(),
+      FPM_COMPRESS_PROGRAM: appBuilderPath,
       SZA_PATH: path7za,
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
       SZA_ARCHIVE_TYPE: "xz",

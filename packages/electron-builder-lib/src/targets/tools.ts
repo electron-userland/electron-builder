@@ -1,4 +1,3 @@
-import { isEnvTrue } from "builder-util"
 import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -36,7 +35,7 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
-  return Promise.all([getAppImage(), fpmPath.value, getAppBuilderTool(), getSnapTemplate()])
+  return Promise.all([getAppImage(), fpmPath.value, getSnapTemplate()])
 }
 
 export function getZstd() {
@@ -117,24 +116,4 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
   const tagPrefix = descriptor.repository == null ? `${name}-` : "v"
   return getBin(name, `${name}-v${version}-${process.arch}`, `https://github.com/${repository}/releases/download/${tagPrefix}${version}/${name}-v${version}-${platform.buildConfigurationKey}${archQualifier}.7z`, checksum)
     .then(it => path.join(it, `${name}${platform === Platform.WINDOWS ? ".exe" : ""}`))
-}
-
-export function getAppBuilderTool() {
-  if (isEnvTrue(process.env.USE_SYSTEM_AB)) {
-    return Promise.resolve("app-builder")
-  }
-
-  // noinspection SpellCheckingInspection
-  return getTool({
-    repository: "develar/app-builder",
-    name: "app-builder",
-    version: "0.6.1",
-    "linux-armv7": "oDOrB1Cv65OkNF1+bLTpw50xG+C1p6wjbWEwYGR+WbQs6ScrqcN7bPbHrSW1t578d5Y+x/sU5PYrfpBJTE9I2w==",
-    "linux-armv8": "f10m8QnQr7V2bf1rZnun+uGc1piZjYLZx2OWKyNwsL+IRpT0VCnTUpuL0TV4UJbw1QzPg/JdzGAKubRfuXaWMw==",
-    "linux-ia32": "qb14V2GfUIZ64ytrJemW0tgcvyrOPzWfWJQ8SJ6O+MmXC+zNGFBR2FYxfTzGOeB9iaXZucdAImxBxCrqUwZgew==",
-    "linux-x64": "xPYAnXx535ZSMktNwbvsV4U1BadXaad0LtVtQBoFJuuRUQFqyOImK5XBvnhRhac7Ufx1S1jLoVfTMocPWvKutw==",
-    mac: "ONEM+jbw48kBkqFXkxHQiEXEjLtm0TWVqDEjw7X4SX5GKtejfAGus9efMBcghG9O2ooRqcj5PGtbpV65LQs5ug==",
-    "win-ia32": "XHQRnsLhuu+O20wf24bKWHT4I8sXT5e16970guutZjqcAC07O6/wQk527R6DBSoGHe+71neUK/oYK6B23glrAw==",
-    "win-x64": "m1kR07Nz0fHvwPHcfYnJvd8puQfh71qbLoySXJHNS88xyEZNKMJXOTlwjUbv2D05LpzrhgIbBZFH5GOedlCQpA==",
-  })
 }

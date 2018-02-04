@@ -12,7 +12,7 @@ import { NsisTarget } from "./NsisTarget"
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
 // noinspection SpellCheckingInspection
-export const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057"))
+export const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "WtEinikNm5ES8WSf1ZDefuUahn7iewbtVmJrRg4xWfm4eaESSJKy9pKIMRMgszdKw5e3YooCOqObnC5qJIfTLA=="))
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()

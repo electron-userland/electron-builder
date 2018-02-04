@@ -129,7 +129,7 @@ test("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.ifNotCiWin("sha512 mismatch error event", async () => {
+test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -250,7 +250,7 @@ test("test error", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test("test download progress", async () => {
+test.skip("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
@@ -300,7 +300,8 @@ test.ifAll.ifWindows("invalid signature", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test("90 staging percentage", async () => {
+// disable for now
+test.skip("90 staging percentage", async () => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
@@ -328,7 +329,7 @@ test("1 staging percentage", async () => {
   await validateDownload(updater, false)
 })
 
-test("cancel download with progress", async () => {
+test.skip("cancel download with progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",

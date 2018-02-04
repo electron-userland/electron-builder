@@ -41,7 +41,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "7zip-bin": "~3.0.0",
+    "7zip-bin": "~3.1.0",
+    "app-builder-bin": "1.0.5",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.5",
     "chromium-pickle-js": "^0.2.0",
@@ -54,7 +55,7 @@
     "is-ci": "^1.1.0",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.10.0",
-    "read-config-file": "2.1.1",
+    "read-config-file": "3.0.0",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.4.0",
     "plist": "^2.1.0",
