@@ -85,7 +85,7 @@ It is also important to set the Application User Model ID (AUMID) to the [appId]
 It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
 
 ```nsis
-macro preInit
+!macro preInit
 	SetRegView 64
 	WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
 	WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
