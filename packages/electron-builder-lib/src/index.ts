@@ -1,10 +1,8 @@
-import { CancellationToken } from "builder-util-runtime"
 import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish/out/publisher"
 import { log } from "builder-util"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-import BluebirdPromise from "bluebird-lst"
 import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
@@ -32,17 +30,7 @@ export { PublishManager } from "./publish/PublishManager"
 export { PlatformPackager } from "./platformPackager"
 export { buildForge, ForgeOptions } from "./forge-maker"
 
-export async function build(options: PackagerOptions & PublishOptions, cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
-  const packager = new Packager(options, cancellationToken)
-
-  let electronDownloader: any = null
-  packager.electronDownloader = options => {
-    if (electronDownloader ==  null) {
-      electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
-    }
-    return electronDownloader(options)
-  }
-
+export async function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
   // because artifact event maybe dispatched several times for different publish providers
   const artifactPaths = new Set<string>()
   packager.artifactCreated(event => {
@@ -54,7 +42,7 @@ export async function build(options: PackagerOptions & PublishOptions, cancellat
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
     log.warn("cancelled by SIGINT")
-    cancellationToken.cancel()
+    packager.cancellationToken.cancel()
     publishManager.cancelTasks()
   }
   process.once("SIGINT", sigIntHandler)

@@ -49,8 +49,8 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   for (const name of Object.keys(result.missing)) {
-    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" || name === "electron-download-tf" ||
-      (packageName === "electron-builder-lib" && name === "dmg-builder")) {
+    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
+      (packageName === "electron-builder-lib" && (name === "dmg-builder" || name === "electron-download-tf"))) {
       delete (result.missing as any)[name]
     }
   }

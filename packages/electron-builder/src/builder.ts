@@ -1,7 +1,8 @@
 import { addValue, Arch, archFromString, InvalidConfigurationError, log, deepAssign } from "builder-util"
 import chalk from "chalk"
-import { build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
+import { Packager, build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
+import BluebirdPromise from "bluebird-lst"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -214,7 +215,17 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
 }
 
 export function build(rawOptions?: CliOptions): Promise<Array<string>> {
-  return _build(normalizeOptions(rawOptions || {}))
+  const buildOptions = normalizeOptions(rawOptions || {})
+  const packager = new Packager(buildOptions)
+
+  let electronDownloader: any = null
+  packager.electronDownloader = options => {
+    if (electronDownloader == null) {
+      electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
+    }
+    return electronDownloader(options)
+  }
+  return _build(buildOptions, packager)
 }
 
 /**
