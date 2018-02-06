@@ -3,7 +3,7 @@ import { deepAssign, addValue, Arch, archFromString, AsyncTaskManager, DebugLogg
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
-import { ensureDir, outputFile } from "fs-extra-p"
+import { ensureDir, outputFile, existsSync } from "fs-extra-p"
 import isCI from "is-ci"
 import { dump } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -91,8 +91,13 @@ export class Packager {
   get productionDeps(): Lazy<Array<Dependency>> {
     let result = this._productionDeps
     if (result == null) {
-      result = createLazyProductionDeps(this.appDir)
-      this._productionDeps = result
+      if (!this.config.beforeBuild || existsSync(path.join(this.appDir, "node_modules"))) {
+        result = createLazyProductionDeps(this.appDir)
+        this._productionDeps = result
+      } else {
+        // https://github.com/electron-userland/electron-builder/issues/2551
+        return new Lazy(() => Promise.resolve([]))
+      }
     }
     return result
   }

@@ -114,7 +114,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ---
 
 * <code id="Configuration-afterSign">afterSign</code> (context: AfterPackContext) => Promise | null - The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format).
-* <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
+* <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. If provided and `node_modules` are missing it will not invoke production dependencies check. Resolving to `false` will skip dependencies install or rebuild.
 * <code id="Configuration-remoteBuild">remoteBuild</code> = `true` Boolean - Whether to build using Electron Build Service if target not supported on current OS.
 * <code id="Configuration-includePdb">includePdb</code> = `false` Boolean - Whether to include PDB files.
 * <code id="Configuration-removePackageScripts">removePackageScripts</code> = `true` Boolean - Whether to remove `scripts` field from `package.json` files.
