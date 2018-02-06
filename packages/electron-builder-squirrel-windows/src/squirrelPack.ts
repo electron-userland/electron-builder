@@ -165,7 +165,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   </metadata>
 </package>`
   debug(`Created NuSpec file:\n${nuspecContent}`)
-  archive.append(nuspecContent.replace(/\n/, "\r\n"), {name: `${encodeURI(options.name).replace(/%5B/g, "[").replace(/%5D/g, "]")}.nuspec`})
+  archive.append(nuspecContent.replace(/\n/, "\r\n"), {name: `${options.name}.nuspec`})
 
   //noinspection SpellCheckingInspection
   archive.append(`<?xml version="1.0" encoding="utf-8"?>
@@ -242,7 +242,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
       }
 
       // GBK file name encoding (or Non-English file name) caused a problem
-      const relativeSafeFilePath = encodeURI(file.substring(dir.length + 1).replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]")
+      const relativeSafeFilePath = file.substring(dir.length + 1).replace(/\\/g, "/"))
       archive._append(file, {
         name: relativeSafeFilePath,
         prefix,
