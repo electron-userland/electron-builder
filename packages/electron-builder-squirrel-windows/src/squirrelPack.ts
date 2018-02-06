@@ -242,7 +242,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
       }
 
       // GBK file name encoding (or Non-English file name) caused a problem
-      const relativeSafeFilePath = file.substring(dir.length + 1).replace(/\\/g, "/"))
+      const relativeSafeFilePath = file.substring(dir.length + 1).replace(/\\/g, "/")
       archive._append(file, {
         name: relativeSafeFilePath,
         prefix,
