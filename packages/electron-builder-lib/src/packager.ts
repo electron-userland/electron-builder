@@ -8,6 +8,7 @@ import isCI from "is-ci"
 import { dump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { exists } from "builder-util/out/fs"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
 import { AfterPackContext, Configuration } from "./configuration"
@@ -19,7 +20,7 @@ import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./util/electronVersion"
-import { createLazyProductionDeps, Dependency } from "./util/packageDependencies"
+import { Dependency, getProductionDependencies } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
@@ -91,7 +92,15 @@ export class Packager {
   get productionDeps(): Lazy<Array<Dependency>> {
     let result = this._productionDeps
     if (result == null) {
-      result = createLazyProductionDeps(this.appDir)
+      // https://github.com/electron-userland/electron-builder/issues/2551
+      result = new Lazy(async () => {
+        if (this.config.beforeBuild == null || (await exists(path.join(this.appDir, "node_modules")))) {
+          return await getProductionDependencies(this.appDir)
+        }
+        else {
+          return []
+        }
+      })
       this._productionDeps = result
     }
     return result

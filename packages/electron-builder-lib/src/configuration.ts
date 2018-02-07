@@ -174,6 +174,8 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
+   *
+   * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
   readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
 
