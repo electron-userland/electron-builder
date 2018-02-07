@@ -1,6 +1,6 @@
 import { appBuilderPath } from "app-builder-bin"
 import BluebirdPromise from "bluebird-lst"
-import { exec, getCacheDirectory, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes } from "crypto"
@@ -132,16 +132,15 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   }
 }
 
-const bundledCertKeychainAdded = new Lazy<void>(createCustomCertKeychain)
-
 // "Note that filename will not be searched to resolve the signing identity's certificate chain unless it is also on the user's keychain search list."
 // but "security list-keychains" doesn't support add - we should 1) get current list 2) set new list - it is very bad http://stackoverflow.com/questions/10538942/add-a-keychain-to-search-list
 // "overly complicated and introduces a race condition."
 // https://github.com/electron-userland/electron-builder/issues/398
-async function createCustomCertKeychain() {
+const bundledCertKeychainAdded = new Lazy<void>(async () => {
   // copy to temp and then atomic rename to final path
-  const tmpKeychainPath = path.join(getCacheDirectory(), getTempName("electron-builder-root-certs"))
-  const keychainPath = path.join(getCacheDirectory(), "electron-builder-root-certs.keychain")
+  const cacheDir = getCacheDirectory()
+  const tmpKeychainPath = path.join(cacheDir, getTempName("electron-builder-root-certs"))
+  const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
     copyFile(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
@@ -151,6 +150,11 @@ async function createCustomCertKeychain() {
   if (!list.includes(keychainPath)) {
     await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
   }
+})
+
+function getCacheDirectory(): string {
+  const env = process.env.ELECTRON_BUILDER_CACHE
+  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : env!!
 }
 
 function listUserKeychains(): Promise<Array<string>> {

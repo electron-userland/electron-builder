@@ -5,7 +5,6 @@ import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions 
 import { createHash } from "crypto"
 import _debug from "debug"
 import { safeDump } from "js-yaml"
-import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 import { debug, log } from "./log"
@@ -147,8 +146,8 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
 
   options.env = getProcessEnv(options.env)
 
-  const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
   if (options.stdio == null) {
+    const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
     // do not ignore stdout/stderr if not debug, because in this case we will read into buffer and print on error
     options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"]
   }
@@ -178,7 +177,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   const childProcess = doSpawn(command, args, options, {isPipeInput: true, isDebugEnabled})
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new BluebirdPromise<any>((resolve, reject) => {
-    handleProcess("close", childProcess, command, () => {
+    handleProcess("close", childProcess, command, false, () => {
       try {
         clearTimeout(timeout)
       }
@@ -200,15 +199,16 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
+    const isCollectOutput = options != null && (options.stdio === "pipe" || (Array.isArray(options.stdio) && options.stdio.length === 3 && options.stdio[1] === "pipe"))
+    handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, isCollectOutput, resolve, reject)
   })
 }
 
-export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
+function handleProcess(event: string, childProcess: ChildProcess, command: string, isCollectOutput: boolean, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
   childProcess.on("error", reject)
 
   let out = ""
-  if (!debug.enabled && childProcess.stdout != null) {
+  if (isCollectOutput && childProcess.stdout != null) {
     childProcess.stdout.on("data", (data: string) => {
       out += data
     })
@@ -232,7 +232,7 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
 
     if (code === 0) {
       if (resolve != null) {
-        resolve()
+        resolve(out)
       }
     }
     else {
@@ -263,28 +263,6 @@ export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | 
 
 export function isTokenCharValid(token: string) {
   return /^[\w\/=+-]+$/.test(token)
-}
-
-export function getCacheDirectory(): string {
-  const env = process.env.ELECTRON_BUILDER_CACHE
-  if (!isEmptyOrSpaces(env)) {
-    return env!
-  }
-
-  if (process.platform === "darwin") {
-    return path.join(homedir(), "Library", "Caches", "electron-builder")
-  }
-
-  const localappdata = process.env.LOCALAPPDATA
-  if (process.platform === "win32" && localappdata != null) {
-    // https://github.com/electron-userland/electron-builder/issues/1164
-    if (localappdata.toLowerCase().includes("\\windows\\system32\\") || (process.env.USERNAME || "").toLowerCase() === "system") {
-      return path.join(tmpdir(), "electron-builder-cache")
-    }
-    return path.join(localappdata, "electron-builder", "cache")
-  }
-
-  return path.join(homedir(), ".cache", "electron-builder")
 }
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote

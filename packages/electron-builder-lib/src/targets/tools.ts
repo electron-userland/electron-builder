@@ -114,6 +114,6 @@ export function getTool(descriptor: ToolDescriptor): Promise<string> {
   const name = descriptor.name
   const repository = descriptor.repository || "electron-userland/electron-builder-binaries"
   const tagPrefix = descriptor.repository == null ? `${name}-` : "v"
-  return getBin(name, `${name}-v${version}-${process.arch}`, `https://github.com/${repository}/releases/download/${tagPrefix}${version}/${name}-v${version}-${platform.buildConfigurationKey}${archQualifier}.7z`, checksum)
+  return getBin(`${name}-${version}-${process.arch}`, `https://github.com/${repository}/releases/download/${tagPrefix}${version}/${name}-v${version}-${platform.buildConfigurationKey}${archQualifier}.7z`, checksum)
     .then(it => path.join(it, `${name}${platform === Platform.WINDOWS ? ".exe" : ""}`))
 }
