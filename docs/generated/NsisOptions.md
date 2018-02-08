@@ -28,7 +28,7 @@
   
   Appropriate license file will be selected by user OS language.
 * <code id="NsisOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
-* <code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
+* <code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall. Ignored if `perMachine` is set to `true`.
 * <code id="NsisOptions-differentialPackage">differentialPackage</code> Boolean - Defaults to `true` for web installer (`nsis-web`)
 
 ---
