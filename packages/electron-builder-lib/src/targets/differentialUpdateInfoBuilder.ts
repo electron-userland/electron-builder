@@ -70,7 +70,7 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
   const updateInfo: BlockMapDataHolder = JSON.parse(await exec(appBuilderPath, ["blockmap", "--input", file, "--output", blockMapFile]))
   packager.info.dispatchArtifactCreated({
     file: blockMapFile,
-    safeArtifactName: `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
+    safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,
     arch: null,
     packager,
