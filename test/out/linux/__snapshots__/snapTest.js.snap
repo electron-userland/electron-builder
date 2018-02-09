@@ -1,11 +1,76 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`buildPackages 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "adapter": "none",
+      "command": "bin/desktop-launch $SNAP/app/sep",
+      "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-gtk2",
+      ],
+      "build-packages": Array [
+        "foo1",
+        "default",
+        "foo2",
+      ],
+      "plugin": "nil",
+      "stage-packages": Array [
+        "libasound2",
+        "libgconf2-4",
+        "libnotify4",
+        "libnspr4",
+        "libnss3",
+        "libpcre3",
+        "libpulse0",
+        "libxss1",
+        "libxtst6",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`buildPackages 2`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`custom env 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/sep",
+      "command": "bin/desktop-launch $SNAP/app/sep",
       "environment": Object {
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
@@ -46,7 +111,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/sep",
+      "command": "bin/desktop-launch $SNAP/app/sep",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -76,7 +141,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "libasound2",
         "libgconf2-4",
@@ -106,7 +171,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/sep",
+      "command": "bin/desktop-launch $SNAP/app/sep",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -137,7 +202,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "libasound2",
         "libgconf2-4",
@@ -168,7 +233,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/sep",
+      "command": "bin/desktop-launch $SNAP/app/sep",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -199,7 +264,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "custom",
         "libasound2",
@@ -230,7 +295,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/sep",
+      "command": "bin/desktop-launch $SNAP/app/sep",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -262,7 +327,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "foo1",
         "libasound2",
@@ -294,7 +359,7 @@ Object {
   "apps": Object {
     "testapp": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/testapp",
+      "command": "bin/desktop-launch $SNAP/app/testapp",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -316,7 +381,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "libasound2",
         "libgconf2-4",
@@ -352,7 +417,7 @@ Object {
   "apps": Object {
     "testapp": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/testapp",
+      "command": "bin/desktop-launch $SNAP/app/testapp",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -374,7 +439,7 @@ Object {
       "after": Array [
         "desktop-gtk2",
       ],
-      "plugin": "dump",
+      "plugin": "nil",
       "stage-packages": Array [
         "libasound2",
         "libgconf2-4",

@@ -59,11 +59,11 @@ async function runTests() {
     }
     else if (circleNodeIndex === 2) {
       testPatterns.push("snapTest")
-      testPatterns.push("PublishManagerTest")
       testPatterns.push("macPackagerTest")
       testPatterns.push("linuxPackagerTest")
     }
     else {
+      testPatterns.push("PublishManagerTest")
       testPatterns.push("portableTest")
       testPatterns.push("BuildTest")
       testPatterns.push("assistedInstallerTest")

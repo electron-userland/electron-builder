@@ -13,7 +13,6 @@ Object {
     },
     Object {
       "file": "BundleShortVersion-2017.1-alpha5.dmg.blockmap",
-      "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -2282,7 +2281,6 @@ Object {
     },
     Object {
       "file": "NoApplicationsLink-1.1.0.dmg.blockmap",
-      "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -2310,7 +2308,6 @@ Object {
     },
     Object {
       "file": "NoBackground-1.1.0.dmg.blockmap",
-      "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -2348,7 +2345,6 @@ Object {
     },
     Object {
       "file": "NoBuildDirectory-1.1.0.dmg.blockmap",
-      "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

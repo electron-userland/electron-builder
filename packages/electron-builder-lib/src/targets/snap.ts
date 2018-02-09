@@ -41,6 +41,9 @@ export default class SnapTarget extends Target {
     const plugs = normalizePlugConfiguration(options.plugs)
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
 
+    const buildPackages = asArray(options.buildPackages)
+    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
+
     const snap: any = {
       name: snapName,
       version: appInfo.version,
@@ -77,6 +80,10 @@ export default class SnapTarget extends Target {
       },
     }
 
+    if (buildPackages.length > 0) {
+      snap.parts.app["build-packages"] = buildPackages
+    }
+
     if (plugs != null) {
       for (const plugName of plugNames) {
         const plugOptions = plugs[plugName]
@@ -101,9 +108,6 @@ export default class SnapTarget extends Target {
     const packager = this.packager
     const options = this.options
     const snapName = packager.executableName.toLowerCase()
-    const buildPackages = asArray(options.buildPackages)
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
-
     const snapFileName = `${snapName}_${packager.appInfo.version}_${toLinuxArchString(arch)}.snap`
     const artifactPath = path.join(this.outDir, snapFileName)
     this.logBuilding("snap", artifactPath, arch)

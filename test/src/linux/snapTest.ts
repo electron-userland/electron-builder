@@ -59,6 +59,28 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
+test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
+  await assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget("snap"),
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+      snap: {
+        buildPackages: ["foo1", "default", "foo2"],
+        // otherwise "parts" will be removed
+        useTemplateApp: false,
+      }
+    },
+    effectiveOptionComputed: async ({snap}) => {
+      delete snap.parts.app.source
+      expect(snap).toMatchSnapshot()
+      return true
+    },
+  })
+})
+
 test.ifDevOrLinuxCi("plugs option", async () => {
   for (const p of [
     [

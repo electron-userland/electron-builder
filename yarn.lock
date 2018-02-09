@@ -262,25 +262,25 @@ anymatch@^1.3.0:
     micromatch "^2.1.5"
     normalize-path "^2.0.0"
 
-app-builder-bin-linux@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.2.0.tgz#eebfa34141baa8734c02cc27c0ff7cf213bd9372"
+app-builder-bin-linux@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.2.1.tgz#dbcc72f662cfc5ee9945c69a3ffae538137aa822"
 
-app-builder-bin-mac@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.2.0.tgz#57b627ebfcb1407ca14d49968952e8bcd942ab33"
+app-builder-bin-mac@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.2.1.tgz#e5f6123947ab397bf8e6b76a0a7ad5e22c51a877"
 
-app-builder-bin-win@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.2.0.tgz#bf0c33d830a376cfa13bea523db97e729c318f1d"
+app-builder-bin-win@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.2.1.tgz#66480c537c662d29a2ff396254d96c31ba32e303"
 
-app-builder-bin@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.2.0.tgz#40e79deec807d82b0f3ddc8782c3b8a2e618ff3a"
+app-builder-bin@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.2.1.tgz#a4d06a3e4a7555260eaf1f4cd9fe610c839ad4ee"
   optionalDependencies:
-    app-builder-bin-linux "1.2.0"
-    app-builder-bin-mac "1.2.0"
-    app-builder-bin-win "1.2.0"
+    app-builder-bin-linux "1.2.1"
+    app-builder-bin-mac "1.2.1"
+    app-builder-bin-win "1.2.1"
 
 append-transform@^0.4.0:
   version "0.4.0"

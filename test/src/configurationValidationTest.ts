@@ -22,7 +22,7 @@ test.skip.ifDevOrLinuxCi("appId as object", appThrows({
 
 // https://github.com/electron-userland/electron-builder/issues/1302
 test.ifAll.ifDevOrLinuxCi("extraFiles", app({
-  targets: Platform.LINUX.createTarget([]),
+  targets: Platform.LINUX.createTarget("appimage"),
   config: {
     linux: {
       target: "zip:ia32",

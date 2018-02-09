@@ -128,7 +128,6 @@ Object {
     },
     Object {
       "file": "TestApp-1.1.0-mac.dmg.blockmap",
-      "safeArtifactName": "null.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

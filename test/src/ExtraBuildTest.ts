@@ -1,14 +1,13 @@
-import { Arch, build, DIR_TARGET, Platform } from "electron-builder"
+import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import { move } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
-function createBuildResourcesTest(platform: Platform) {
+function createBuildResourcesTest(packagerOptions: PackagerOptions) {
   return app({
-    // only dir - avoid DMG
-    targets: platform.createTarget(platform === Platform.MAC ? DIR_TARGET : null),
+    ...packagerOptions,
     config: {
       publish: null,
       directories: {
@@ -29,9 +28,9 @@ function createBuildResourcesTest(platform: Platform) {
   })
 }
 
-test.ifAll.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
-test.ifAll.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
-test.ifAll.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
+test.ifAll.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest({mac: ["dir"]}))
+test.ifAll.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest({win: ["nsis"]}))
+test.ifAll.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest({linux: ["appimage"]}))
 
 test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   targets: linuxDirTarget,

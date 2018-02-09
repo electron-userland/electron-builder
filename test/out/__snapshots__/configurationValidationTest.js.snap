@@ -12,11 +12,6 @@ Object {
         "size": "@size",
       },
     },
-    Object {
-      "arch": "ia32",
-      "file": "TestApp-1.1.0-ia32.zip",
-      "safeArtifactName": "TestApp-1.1.0-ia32.zip",
-    },
   ],
 }
 `;

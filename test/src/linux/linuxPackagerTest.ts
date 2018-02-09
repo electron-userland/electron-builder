@@ -5,8 +5,10 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
+const appImageTarget = Platform.LINUX.createTarget("appimage")
+
 test.ifNotWindows("AppImage", app({
-  targets: Platform.LINUX.createTarget(),
+  targets: appImageTarget,
   config: {
     publish: {
       provider: "generic",
@@ -33,7 +35,7 @@ test.ifAll.ifNotWindows.ifNotCiMac("AppImage arm", app({
 }))
 
 test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
-  targets: Platform.LINUX.createTarget(),
+  targets: appImageTarget,
   config: {
     appImage: {
       systemIntegration: "doNotAsk",
@@ -45,7 +47,7 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
 }))
 
 test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and custom desktop", app({
-  targets: Platform.LINUX.createTarget("appimage"),
+  targets: appImageTarget,
   config: {
     linux: {
       executableName: "Foo",
@@ -74,7 +76,7 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
 
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
 test.ifNotWindows("icons from ICNS", app({
-  targets: Platform.LINUX.createTarget(),
+  targets: appImageTarget,
   config: {
     publish: null,
   },
@@ -86,7 +88,7 @@ test.ifNotWindows("icons from ICNS", app({
     await rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))
 
     await build({
-      targets: Platform.LINUX.createTarget(),
+      targets: appImageTarget,
       projectDir,
       publish: "never",
       config: {

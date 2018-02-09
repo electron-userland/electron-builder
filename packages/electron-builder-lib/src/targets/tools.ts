@@ -3,9 +3,9 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Platform } from "../core"
 
-export const SNAP_TEMPLATE_VERSION = "0.1.1"
+export const SNAP_TEMPLATE_VERSION = "0.2.0"
 // noinspection SpellCheckingInspection
-export const SNAP_TEMPLATE_SHA512 = "W8JXQMwsrqH7T8kFD3KuULNVJRqygmcQPDPGhr9BXeRQS9U+A6jSsUEopQIwfQxlhuA6f7Jerc9XA0/ZLlK60w=="
+export const SNAP_TEMPLATE_SHA512 = "2Uxlk/+BkZt5T4CePfi5Cbt35TLlCuO34M5kGaFeT/V1JCx5D6i+EAdMMp1AX9vi6/4zSKW/wB5Z+DZIaHacNg=="
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
