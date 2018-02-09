@@ -1,4 +1,4 @@
-import { exec, spawn, DebugLogger, ExtraSpawnOptions } from "builder-util"
+import { exec, spawn, DebugLogger, ExtraSpawnOptions, log } from "builder-util"
 import { SpawnOptions, execFileSync, ExecFileOptions } from "child_process"
 import { VmManager } from "./vm"
 
@@ -50,6 +50,8 @@ export class ParallelsVmManager extends VmManager {
     if (error.message.includes("Unable to open new session in this virtual machine")) {
       throw new Error(`Please ensure that your are logged in "${this.vm.name}" parallels virtual machine. In the future please do not stop VM, but suspend.\n\n${error.message}`)
     }
+
+    log.warn("ensure that 'Share folders' is set to 'All Disks', see https://goo.gl/E6XphP")
     throw error
   }
 
