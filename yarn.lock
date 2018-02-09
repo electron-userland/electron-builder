@@ -99,9 +99,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^22.1.1":
-  version "22.1.1"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.1.1.tgz#231d7c60ed130200af9e96c82469ed25b59a7ea2"
+"@types/jest@^22.1.2":
+  version "22.1.2"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.1.2.tgz#813a79ec98221633845627636dbc606f31220dbc"
 
 "@types/js-yaml@^3.10.1":
   version "3.10.1"
@@ -262,25 +262,25 @@ anymatch@^1.3.0:
     micromatch "^2.1.5"
     normalize-path "^2.0.0"
 
-app-builder-bin-linux@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.1.0.tgz#923a6d8af2e18514415bc16ace2f8ef9c16a2153"
+app-builder-bin-linux@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.2.0.tgz#eebfa34141baa8734c02cc27c0ff7cf213bd9372"
 
-app-builder-bin-mac@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.1.0.tgz#9b02001b38edef4189dfb134f8bba220836f8e0c"
+app-builder-bin-mac@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.2.0.tgz#57b627ebfcb1407ca14d49968952e8bcd942ab33"
 
-app-builder-bin-win@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.1.0.tgz#575accb70f8b77b60fa48d376da9730b662cad95"
+app-builder-bin-win@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.2.0.tgz#bf0c33d830a376cfa13bea523db97e729c318f1d"
 
-app-builder-bin@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.1.0.tgz#2de4d922fdd61cfcd8bff0216ec4d7fa6df6617f"
+app-builder-bin@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.2.0.tgz#40e79deec807d82b0f3ddc8782c3b8a2e618ff3a"
   optionalDependencies:
-    app-builder-bin-linux "1.1.0"
-    app-builder-bin-mac "1.1.0"
-    app-builder-bin-win "1.1.0"
+    app-builder-bin-linux "1.2.0"
+    app-builder-bin-mac "1.2.0"
+    app-builder-bin-win "1.2.0"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -451,9 +451,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.190.0:
-  version "2.190.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.190.0.tgz#c7b48b3845345b60795943eb919700cf7edf5734"
+aws-sdk@^2.191.0:
+  version "2.191.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.191.0.tgz#f6e7d0e952b43110702c126f6747b8ec66553da5"
   dependencies:
     buffer "4.9.1"
     events "^1.1.1"

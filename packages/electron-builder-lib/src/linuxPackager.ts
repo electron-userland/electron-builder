@@ -25,7 +25,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   }
 
   get defaultTarget(): Array<string> {
-    return ["appimage"]
+    return ["snap", "appimage"]
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
