@@ -24,11 +24,11 @@ test.ifAll.ifDevOrLinuxCi("snap full", app({
   targets: snapTarget,
   config: {
     extraMetadata: {
-      name: "sep2",
+      name: "se-wo-template",
     },
-    productName: "Sep2",
+    productName: "Snap Electron App (full build)",
     snap: {
-      stagePackages: ["libgconf2-4", "libnspr4", "libnss3", "libpcre3", "libxss1", "libxtst6"]
+      useTemplateApp: false,
     },
   },
 }))

@@ -1,6 +1,6 @@
 FROM electronuserland/builder:base
 
-ENV NODE_VERSION 9.4.0
+ENV NODE_VERSION 9.5.0
 
 # this package is used for snapcraft and we should not clear apt list - to avoid apt-get update during snap build
 RUN apt-get -qq update && \

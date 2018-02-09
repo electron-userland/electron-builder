@@ -2,7 +2,7 @@ import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { addValue, exec, log, spawn, deepAssign } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { copyDir, FileCopier, walk } from "builder-util/out/fs"
+import { copyDir, FileCopier, walk, USE_HARD_LINKS } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
@@ -11,7 +11,7 @@ import { computeArchToTargetNamesMap } from "electron-builder-lib/out/targets/ta
 import { getLinuxToolsPath } from "electron-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, readFile, readJson, writeJson } from "fs-extra-p"
+import { emptyDir, readFile, readJson, unlink, writeJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -108,7 +108,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
       return basename !== OUT_DIR_NAME && (packagerOptions.projectDir != null || basename !== "node_modules") && !basename.startsWith(".")
     },
-    isUseHardLink: it => path.basename(it) !== "package.json",
+    isUseHardLink: USE_HARD_LINKS,
   })
   projectDir = dir
 
@@ -413,6 +413,8 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   const file = isApp ? path.join(projectDir, "app", "package.json") : path.join(projectDir, "package.json")
   const data = await readJson(file)
   task(data)
+  // because copied as hard link
+  await unlink(file)
   return await writeJson(file, data)
 }
 

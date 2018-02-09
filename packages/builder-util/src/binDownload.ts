@@ -40,6 +40,6 @@ function doGetBin(name: string, url: string, checksum: string): Promise<string> 
       ...process.env,
       SZA_PATH: path7za,
     },
-    stdio: ["ignore", "pipe", "inherit"]
+    stdio: ["ignore", "pipe", process.stdout]
   })
 }

@@ -421,7 +421,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "sep2_1.1.0_amd64.snap",
+      "file": "se-wo-template_1.1.0_amd64.snap",
     },
   ],
 }

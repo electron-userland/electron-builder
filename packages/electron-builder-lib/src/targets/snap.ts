@@ -1,5 +1,6 @@
-import { isEnvTrue, Arch, exec, replaceDefault as _replaceDefault, serializeToYaml, spawn, toLinuxArchString } from "builder-util"
-import { copyFile, copyDir, copyDirUsingHardLinks, USE_HARD_LINKS } from "builder-util/out/fs"
+import { path7za } from "7zip-bin"
+import { appBuilderPath } from "app-builder-bin"
+import { isEnvTrue, Arch, replaceDefault as _replaceDefault, serializeToYaml, spawn, toLinuxArchString, log } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { SnapOptions } from ".."
@@ -8,23 +9,8 @@ import { Target } from "../core"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDir, StageDir } from "./targetUtil"
-import BluebirdPromise from "bluebird-lst"
-import { getSnapTemplate } from "./tools"
-
-// usr/share/fonts is required, cannot run otherwise
-const unnecessaryFiles = [
-  "usr/share/doc",
-  "usr/share/man",
-  "usr/share/icons",
-  "usr/share/bash-completion",
-  "usr/share/lintian",
-  "usr/share/dh-python",
-  "usr/share/python3",
-
-  "usr/lib/python*",
-  "usr/bin/python*",
-]
+import { createStageDir } from "./targetUtil"
+import { SNAP_TEMPLATE_SHA512, SNAP_TEMPLATE_VERSION } from "./tools"
 
 // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
 const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]
@@ -47,7 +33,7 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private createDescriptor(snapName: string, appOutDir: string, arch: Arch, isUseDocker: boolean): any {
+  private createDescriptor(snapName: string, arch: Arch): any {
     const appInfo = this.packager.appInfo
     const options = this.options
     const linuxArchName = toAppImageOrSnapArch(arch)
@@ -64,7 +50,7 @@ export default class SnapTarget extends Target {
       grade: options.grade || "stable",
       apps: {
         [snapName]: {
-          command: `bin/desktop-launch $SNAP/${this.packager.executableName}`,
+          command: `bin/desktop-launch $SNAP/app/${this.packager.executableName}`,
           adapter: "none",
           environment: {
             TMPDIR: "$XDG_RUNTIME_DIR",
@@ -84,9 +70,8 @@ export default class SnapTarget extends Target {
       },
       parts: {
         app: {
-          plugin: "dump",
+          plugin: "nil",
           "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
-          source: isUseDocker ? "/appOutDir" : appOutDir,
           after: this.replaceDefault(options.after, ["desktop-gtk2"]),
         }
       },
@@ -117,36 +102,36 @@ export default class SnapTarget extends Target {
     const options = this.options
     const snapName = packager.executableName.toLowerCase()
     const buildPackages = asArray(options.buildPackages)
-    const isUseDocker = process.platform !== "linux" || isEnvTrue(process.env.SNAP_USE_DOCKER)
     this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
 
     const snapFileName = `${snapName}_${packager.appInfo.version}_${toLinuxArchString(arch)}.snap`
     const artifactPath = path.join(this.outDir, snapFileName)
     this.logBuilding("snap", artifactPath, arch)
 
-    const snap: any = this.createDescriptor(snapName, appOutDir, arch, isUseDocker)
+    const snap: any = this.createDescriptor(snapName, arch)
     if (this.isUseTemplateApp) {
       delete snap.parts
     }
 
     const stageDir = await createStageDir(this, packager, arch)
     // snapcraft.yaml inside a snap directory
-    const snapDir = path.join(stageDir.dir, "snap")
-    const snapMetaDir = this.isUseTemplateApp ? path.join(stageDir.dir, "meta") : snapDir
+    const snapMetaDir = path.join(stageDir.dir, this.isUseTemplateApp ? "meta" : "snap")
+
+    const args = [
+      "snap",
+      "--app", appOutDir,
+      "--stage", stageDir.dir,
+      "--arch", toLinuxArchString(arch),
+      "--output", artifactPath,
+      "--docker-image", "electronuserland/builder:latest"
+    ]
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
       if (!this.isUseTemplateApp) {
         snap.icon = "snap/gui/icon.png"
       }
-      await copyFile(this.helper.maxIconPath, path.join(snapMetaDir, "gui", "icon.png"))
-    }
-
-    const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
-    if (hooksDir != null) {
-      await copyDir(hooksDir, path.join(snapMetaDir, "hooks"), {
-        isUseHardLink: USE_HARD_LINKS,
-      })
+      args.push("--icon", this.helper.maxIconPath)
     }
 
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
@@ -159,99 +144,33 @@ export default class SnapTarget extends Target {
       return
     }
 
-    const snapcraftFile = path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml")
-    await outputFile(snapcraftFile, serializeToYaml(snap))
+    await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
+
+    if (log.isDebugEnabled && !isEnvTrue(process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG)) {
+      args.push("--no-remove-stage")
+    }
+
+    const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
+    if (hooksDir != null) {
+      args.push("--hooks", hooksDir)
+    }
+
     if (this.isUseTemplateApp) {
-      await copyDir(await getSnapTemplate(), stageDir.dir, {
-        isUseHardLink: USE_HARD_LINKS,
-      })
-      await copyDirUsingHardLinks(appOutDir, stageDir.dir)
+      const templateDirName = `snap-template-${SNAP_TEMPLATE_VERSION}`
+      args.push(
+        "--template-url", `https://github.com/electron-userland/electron-builder-binaries/releases/download/${templateDirName}/${templateDirName}.7z`,
+        "--template-sha512", SNAP_TEMPLATE_SHA512,
+      )
     }
 
-    if (isUseDocker) {
-      if (this.isUseTemplateApp) {
-        await this.buildUsingDockerAndPrepackedSnap(snapFileName, stageDir)
-      }
-      else {
-        await this.buildUsingDocker(options, arch, snapFileName, stageDir, appOutDir)
-      }
-    }
-    else {
-      await this.buildWithoutDocker(buildPackages, stageDir.dir, arch, artifactPath)
-    }
-
-    await stageDir.cleanup()
+    await spawn(appBuilderPath, args, {
+      env: {
+        ...process.env,
+        SZA_PATH: path7za,
+      },
+      stdio: ["ignore", "inherit", "inherit"]
+    })
     packager.dispatchArtifactCreated(artifactPath, this, arch)
-  }
-
-  private async buildWithoutDocker(buildPackages: Array<string>, stageDir: string, arch: Arch, artifactPath: string) {
-    if (buildPackages.length > 0) {
-      const notInstalledPackages = await BluebirdPromise.filter(buildPackages, (it): Promise<boolean> => {
-        return exec("dpkg", ["-s", it])
-          .then(result => result.includes("is not installed"))
-      })
-      if (notInstalledPackages.length > 0) {
-        await spawn("apt-get", ["-qq", "update"])
-        await spawn("apt-get", ["-qq", "install", "--no-install-recommends"].concat(notInstalledPackages))
-      }
-    }
-    const spawnOptions = {
-      cwd: stageDir,
-      stdio: ["ignore", "inherit", "inherit"],
-    }
-
-    let primeDir: string
-    if (this.isUseTemplateApp) {
-      primeDir = stageDir
-    }
-    else {
-      await spawn("snapcraft", ["prime", "--target-arch", toLinuxArchString(arch)], spawnOptions)
-      primeDir = stageDir + path.sep + "prime"
-      await exec("/bin/bash", ["-c", `rm -rf ${unnecessaryFiles.join(" ")}`], {
-        cwd: primeDir,
-      })
-    }
-    await spawn("snapcraft", ["pack", primeDir, "--output", artifactPath], spawnOptions)
-  }
-
-  private async buildUsingDockerAndPrepackedSnap(snapFileName: string, stageDir: StageDir) {
-    await spawn("docker", ["run", "--rm",
-      // dist dir can be outside of project dir
-      "-v", `${this.outDir}:/out`,
-      "-v", `${stageDir.dir}:/stage:ro`,
-      "electronuserland/builder:latest",
-      "/bin/bash", "-c", `snapcraft pack /stage --output /out/${snapFileName}`,
-    ], {
-      cwd: this.packager.info.projectDir,
-      stdio: ["ignore", "inherit", "inherit"],
-    })
-  }
-
-  private async buildUsingDocker(options: SnapOptions, arch: Arch, snapFileName: string, stageDir: StageDir, appOutDir: string) {
-    const commands: Array<string> = []
-    if (options.buildPackages != null && options.buildPackages.length > 0) {
-      commands.push(`apt-get install --no-install-recommends -y ${options.buildPackages.join(" ")}`)
-    }
-
-    // copy stage to linux fs to avoid performance issues (https://docs.docker.com/docker-for-mac/osxfs-caching/)
-    commands.push("cp -R /stage /s/")
-    commands.push("cd /s")
-    commands.push(`snapcraft prime --target-arch ${toLinuxArchString(arch)}`)
-    commands.push(`rm -rf ${unnecessaryFiles.map(it => `prime/${it}`).join(" ")}`)
-    commands.push(`snapcraft pack /s/prime --output /out/${snapFileName}`)
-
-    await spawn("docker", ["run", "--rm",
-      "-v", `${this.packager.info.projectDir}:/project:delegated`,
-      // dist dir can be outside of project dir
-      "-v", `${this.outDir}:/out`,
-      "-v", `${stageDir.dir}:/stage:ro`,
-      "-v", `${appOutDir}:/appOutDir:ro`,
-      "electronuserland/builder:latest",
-      "/bin/bash", "-c", commands.join(" && "),
-    ], {
-      cwd: this.packager.info.projectDir,
-      stdio: ["ignore", "inherit", "inherit"],
-    })
   }
 }
 

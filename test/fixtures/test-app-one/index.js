@@ -1,10 +1,9 @@
-'use strict'
+"use strict"
 
 const { app, ipcMain, BrowserWindow, Menu, Tray } = require("electron")
 const fs = require("fs")
 const path = require("path")
 
-// this should be placed at top of main.js to handle setup events quickly
 if (handleSquirrelEvent()) {
   // squirrel event handled and app will exit in 1000ms, so don't do anything else
   return;
@@ -71,13 +70,7 @@ function handleSquirrelEvent() {
   }
 }
 
-// Module to control application life.
-// Module to create native browser window.
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow;
-
+let mainWindow
 let tray = null
 
 function createWindow () {

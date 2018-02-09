@@ -3,6 +3,10 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Platform } from "../core"
 
+export const SNAP_TEMPLATE_VERSION = "0.1.1"
+// noinspection SpellCheckingInspection
+export const SNAP_TEMPLATE_SHA512 = "W8JXQMwsrqH7T8kFD3KuULNVJRqygmcQPDPGhr9BXeRQS9U+A6jSsUEopQIwfQxlhuA6f7Jerc9XA0/ZLlK60w=="
+
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
@@ -35,7 +39,11 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
-  return Promise.all([getAppImage(), fpmPath.value, getSnapTemplate()])
+  return Promise.all([
+    getAppImage(),
+    fpmPath.value,
+    getBinFromGithub("snap-template", SNAP_TEMPLATE_VERSION, SNAP_TEMPLATE_SHA512),
+  ])
 }
 
 export function getZstd() {
@@ -69,11 +77,6 @@ export function getAria() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub(`aria2-${platform.buildConfigurationKey}${archQualifier}`, "1.33.1", checksum)
     .then(it => path.join(it, `aria2c${platform === Platform.WINDOWS ? ".exe" : ""}`))
-}
-
-export function getSnapTemplate() {
-  // noinspection SpellCheckingInspection
-  return getBinFromGithub("snap-template", "0.1.1", "W8JXQMwsrqH7T8kFD3KuULNVJRqygmcQPDPGhr9BXeRQS9U+A6jSsUEopQIwfQxlhuA6f7Jerc9XA0/ZLlK60w==")
 }
 
 export interface ToolDescriptor {

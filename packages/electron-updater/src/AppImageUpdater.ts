@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { AllPublishOptions, CancellationToken, DownloadOptions, newError, UpdateInfo } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
@@ -17,12 +16,17 @@ export class AppImageUpdater extends BaseUpdater {
 
   checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
     if (isDev) {
-      return BluebirdPromise.resolve(null)
+      return Promise.resolve(null)
     }
 
     if (process.env.APPIMAGE == null) {
-      this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
-      return BluebirdPromise.resolve(null)
+      if (process.env.SNAP == null) {
+        this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
+      }
+      else {
+        this._logger.info("SNAP env is defined, updater is disabled")
+      }
+      return Promise.resolve(null)
     }
 
     return super.checkForUpdatesAndNotify()
