@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { remove, rename } from "fs-extra-p"
+import { move, remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
@@ -71,6 +71,24 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
   packed: async context => {
     const projectDir = context.getContent(Platform.LINUX)
     await assertThat(path.join(projectDir, "Foo")).isFile()
+  },
+}))
+
+// test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
+test.ifNotWindows("icons from ICNS (mac)", app({
+  targets: appImageTarget,
+  config: {
+    publish: null,
+    mac: {
+      icon: "resources/time.icns",
+    },
+  },
+}, {
+  projectDirCreated: it => move(path.join(it, "build", "icon.icns"), path.join(it, "resources", "time.icns"))
+    .then(() => remove(path.join(it, "build"))),
+  packed: async context => {
+    const projectDir = context.getResources(Platform.LINUX)
+    await assertThat(projectDir).isDirectory()
   },
 }))
 

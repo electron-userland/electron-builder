@@ -45,7 +45,7 @@ You can use [Docker](#docker) to avoid installing system dependencies.
 
 To build app in distributable format for Linux:
 ```
-sudo apt-get install --no-install-recommends -y icnsutils
+sudo apt-get install --no-install-recommends -y libopenjp2-tools
 ```
 
 To build rpm: `sudo apt-get install --no-install-recommends -y rpm`.
@@ -68,7 +68,7 @@ sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
 ## Travis Linux
-[Trusty](https://docs.travis-ci.com/user/trusty-ci-environment/) is required — default Travis Linux dist is outdated and `icnsutils` version is non-functional.
+[Trusty](https://docs.travis-ci.com/user/trusty-ci-environment/) is required.
 ```yaml
 sudo: required
 dist: trusty

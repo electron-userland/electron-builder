@@ -20,7 +20,8 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
 }))
 
 // custom packages to test not-prepacked snap build
-test.ifAll.ifDevOrLinuxCi("snap full", app({
+// very slow
+test.skip("snap full", app({
   targets: snapTarget,
   config: {
     extraMetadata: {

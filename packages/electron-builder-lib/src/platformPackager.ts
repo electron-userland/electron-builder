@@ -560,7 +560,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected async getOrConvertIcon(format: IconFormat): Promise<string | null> {
     const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
     if (iconPath != null) {
-      return (await this.resolveIcon([iconPath], format))[0].file
+      const iconInfos = await this.resolveIcon([iconPath], format)
+      return (iconInfos)[0].file
     }
 
     const resourceList = await this.resourceList
@@ -581,7 +582,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
-    const arg = ["icon", "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir]
+    const arg = [
+      "icon",
+      "--format", outputFormat,
+      "--root", this.buildResourcesDir, "--root", this.projectDir,
+    ]
     for (const source of sources) {
       arg.push("--input", source)
     }
@@ -593,7 +598,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         // command creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
         // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
         TMPDIR: await this.info.tempDirManager.rootTempDir,
-        DEBUG: log.isDebugEnabled ? "true" : "false",
       },
     })
 

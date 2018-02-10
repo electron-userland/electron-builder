@@ -129,7 +129,7 @@ test("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.ifNotCiWin.skip("sha512 mismatch error event", async () => {
+test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",

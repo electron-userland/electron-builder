@@ -12,11 +12,6 @@ export function getLinuxToolsPath() {
   return getBinFromGithub("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }
 
-export function getAppImage() {
-  //noinspection SpellCheckingInspection
-  return getBinFromGithub("appimage", "9.0.5", "AZbiBSeyow/pKCzeyIwVtogIUSWD4GxAxkqwL9GQcL1vq+EhcNPeMKOdlSI045SU4pknU4ceLwO5tzV7o0tNOw==")
-}
-
 export const fpmPath = new Lazy(() => {
   if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
     return Promise.resolve("fpm")
@@ -40,7 +35,6 @@ export const fpmPath = new Lazy(() => {
 export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
   return Promise.all([
-    getAppImage(),
     fpmPath.value,
     getBinFromGithub("snap-template", SNAP_TEMPLATE_VERSION, SNAP_TEMPLATE_SHA512),
   ])

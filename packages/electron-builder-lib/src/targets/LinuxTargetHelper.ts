@@ -26,24 +26,21 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const iconDir = packager.platformSpecificBuildOptions.icon
     const sources = [iconDir == null ? "icons" : iconDir]
-    const icnsPath = this.getIcns()
+
+    const commonConfiguration = packager.config
+    let icnsPath = (commonConfiguration.mac || {}).icon || commonConfiguration.icon
     if (icnsPath != null) {
+      if (!icnsPath.endsWith(".icns")) {
+        icnsPath += ".icns"
+      }
       sources.push(icnsPath)
     }
+
     sources.push(path.join(getTemplatePath("linux"), "electron-icons"))
 
     const result = await packager.resolveIcon(sources, "set")
     this.maxIconPath = result[result.length - 1].file
     return result
-  }
-
-  private getIcns(): string | null {
-    const build = this.packager.info.config
-    let iconPath = (build.mac || {}).icon || build.icon
-    if (iconPath != null && !iconPath.endsWith(".icns")) {
-      iconPath += ".icns"
-    }
-    return iconPath == null ? null : path.resolve(this.packager.projectDir, iconPath)
   }
 
   getDescription(options: LinuxTargetSpecificOptions) {

@@ -9,15 +9,12 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # git ssh for using as docker image on CircleCI
   # python for node-gyp
   # rpm is required for FPM to build rpm package
-  # libpng16-16 is required for libicns1_0.8.1-3.1 (on xenial)
   # libsecret-1-0 and libgnome-keyring-dev are required even for prebuild keytar
   # libgtk2.0-dev for snap desktop-gtk2 (see https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml#L248)
   apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
-  libpng16-16 icnsutils libopenjp2-7 \
   libsecret-1-0 libgnome-keyring-dev \
+  libopenjp2-tools \
   libgtk2.0-dev && \
-  # libicns
-  curl -O http://mirrors.kernel.org/ubuntu/pool/universe/libi/libicns/libicns1_0.8.1-3.1_amd64.deb && dpkg --install libicns1_0.8.1-3.1_amd64.deb && unlink libicns1_0.8.1-3.1_amd64.deb && \
   # git-lfs
   git lfs install && \
   # snap

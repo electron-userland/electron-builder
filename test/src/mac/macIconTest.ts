@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { copy, move, remove, unlink } from "fs-extra-p"
 import * as path from "path"
@@ -22,7 +21,7 @@ test.ifMac.ifAll("icon set", () => {
     targets: Platform.MAC.createTarget(DIR_TARGET),
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
     ]),
@@ -41,7 +40,7 @@ test.ifMac.ifAll("custom icon set", () => {
     },
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
       move(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
@@ -96,7 +95,7 @@ test.ifMac.ifAll("default png icon", () => {
     targets: Platform.MAC.createTarget(DIR_TARGET),
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
       copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
@@ -117,7 +116,7 @@ test.ifMac.ifAll("png icon small", () => {
     },
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
     ]),
@@ -126,7 +125,9 @@ test.ifMac.ifAll("png icon small", () => {
         await platformPackager!!.getIconPath()
       }
       catch (e) {
-        expect(e.message).toMatch(/must be at least 512x512/)
+        if (!e.message.includes("must be at least 512x512")) {
+          throw e
+        }
         return
       }
 

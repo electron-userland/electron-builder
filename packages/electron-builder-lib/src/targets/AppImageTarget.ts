@@ -1,20 +1,21 @@
+import { path7za } from "7zip-bin"
+import { appBuilderPath } from "app-builder-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, serializeToYaml } from "builder-util"
+import { Arch, log, serializeToYaml, isEnvTrue, spawn } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { copyDir, copyOrLinkFile, unlinkIfExists, copyDirUsingHardLinks, USE_HARD_LINKS } from "builder-util/out/fs"
+import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import * as ejs from "ejs"
-import { ensureDir, readFile, symlink, writeFile } from "fs-extra-p"
+import { ensureDir, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppImageOptions } from ".."
 import { Target } from "../core"
-import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
+import { LinuxPackager } from "../linuxPackager"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getTemplatePath } from "../util/pathManager"
 import { appendBlockmap } from "./differentialUpdateInfoBuilder"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
-import { getAppImage } from "./tools"
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -46,14 +47,11 @@ export default class AppImageTarget extends Target {
 
     // pax doesn't like dir with leading dot (e.g. `.__appimage`)
     const stageDir = await createStageDir(this, packager, arch)
-    const appInStageDir = stageDir.getTempFile("app")
-    await copyDirUsingHardLinks(appOutDir, appInStageDir)
-
     const resourceName = `appimagekit-${this.packager.executableName}`
     const installIcons = await this.copyIcons(stageDir.dir, resourceName)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
-    await BluebirdPromise.all([
+    await Promise.all([
       unlinkIfExists(artifactPath),
       writeFile(stageDir.getTempFile("/AppRun"), (await appRunTemplate.value)({
         systemIntegration: this.options.systemIntegration || "ask",
@@ -72,48 +70,28 @@ export default class AppImageTarget extends Target {
       throw new Error("Icon is not provided")
     }
 
-    //noinspection SpellCheckingInspection
-    const vendorDir = await getAppImage()
-
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
       return
     }
 
-    if (arch === Arch.x64 || arch === Arch.ia32) {
-      await copyDir(path.join(vendorDir, "lib", arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), stageDir.getTempFile("usr/lib"), {
-        isUseHardLink: USE_HARD_LINKS,
-      })
-    }
-
     const publishConfig = await getAppUpdatePublishConfiguration(packager, arch)
     if (publishConfig != null) {
-      await writeFile(path.join(packager.getResourcesDir(appInStageDir), "app-update.yml"), serializeToYaml(publishConfig))
+      await outputFile(path.join(packager.getResourcesDir(stageDir.getTempFile("app")), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
-    const vendorToolDir = path.join(vendorDir, process.platform === "darwin" ? "darwin" : `linux-${process.arch}`)
-    // default gzip compression - 51.9, xz - 50.4 difference is negligible, start time - well, it seems, a little bit longer (but on Parallels VM on external SSD disk)
-    // so, to be decided later, is it worth to use xz by default
-    const args = [
-      "--runtime-file", path.join(vendorDir, `runtime-${(archToRuntimeName(arch))}`),
-      "--no-appstream",
-    ]
-    if (debug.enabled) {
-      args.push("--verbose")
-    }
+    const args = ["appimage", "--stage", stageDir.dir, "--arch", Arch[arch], "--output", artifactPath, "--app", appOutDir]
     if (packager.compression === "maximum") {
-      args.push("--comp", "xz")
+      args.push("--compression", "xz")
     }
-    args.push(stageDir.dir, artifactPath)
-    await exec(path.join(vendorToolDir, "appimagetool"), args, {
+    if (log.isDebugEnabled && !isEnvTrue(process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG)) {
+      args.push("--no-remove-stage")
+    }
+    await spawn(appBuilderPath, args, {
       env: {
         ...process.env,
-        PATH: `${vendorToolDir}:${process.env.PATH}`,
-        // to avoid detection by appimagetool (see extract_arch_from_text about expected arch names)
-        ARCH: toAppImageOrSnapArch(arch),
-      }
+        SZA_PATH: path7za,
+      },
     })
-
-    await stageDir.cleanup()
 
     const updateInfo = await appendBlockmap(artifactPath)
     packager.info.dispatchArtifactCreated({
@@ -153,24 +131,5 @@ export default class AppImageTarget extends Target {
       installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
     }
     return installIcons
-  }
-}
-
-function archToRuntimeName(arch: Arch) {
-  switch (arch) {
-    case Arch.armv7l:
-      return "armv7"
-
-    case Arch.arm64:
-      return "arm64"
-
-    case Arch.ia32:
-      return "i686"
-
-    case Arch.x64:
-      return "x86_64"
-
-    default:
-      throw new Error(`AppImage for arch ${Arch[arch]} not supported`)
   }
 }

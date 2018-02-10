@@ -128,6 +128,22 @@ Object {
 }
 `;
 
+exports[`icons from ICNS (mac) 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`icons from ICNS 1`] = `
 Object {
   "linux": Array [
