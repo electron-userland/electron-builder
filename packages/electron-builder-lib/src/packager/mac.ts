@@ -1,10 +1,10 @@
-import { AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log, use } from "builder-util"
 import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
+import { AsarIntegrity } from "../asar/integrity"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 
 function doRename(basePath: string, oldName: string, newName: string) {

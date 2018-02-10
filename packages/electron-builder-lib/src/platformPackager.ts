@@ -1,5 +1,4 @@
 import { appBuilderPath } from "app-builder-bin"
-import { computeData, AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, deepAssign } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
@@ -21,6 +20,7 @@ import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
+import { AsarIntegrity, computeData } from "./asar/integrity"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
   get packagerOptions(): PackagerOptions {

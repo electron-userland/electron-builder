@@ -1,6 +1,6 @@
+import { AsarIntegrityOptions } from "../asar/integrity"
 import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { Protocol, ReleaseInfo } from "../configuration"
-import { AsarIntegrityOptions } from "asar-integrity"
 import { FileAssociation } from "./FileAssociation"
 import { Publish } from "builder-util-runtime"
 
