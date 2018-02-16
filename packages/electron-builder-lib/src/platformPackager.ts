@@ -1,6 +1,5 @@
-import { appBuilderPath } from "app-builder-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, deepAssign } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, deepAssign } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -582,25 +581,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
-    const arg = [
+    const args = [
       "icon",
       "--format", outputFormat,
-      "--root", this.buildResourcesDir, "--root", this.projectDir,
+      "--root", this.buildResourcesDir,
+      "--root", this.projectDir,
+      "--out", path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`),
     ]
     for (const source of sources) {
-      arg.push("--input", source)
+      args.push("--input", source)
     }
 
-    const rawResult = await exec(appBuilderPath, arg, {
-      cwd: this.projectDir,
-      env: {
-        ...process.env,
-        // command creates temp dir amd cannot delete it automatically since result files located in and it is our responsibility remove it after use,
-        // so, we just set TMPDIR to tempDirManager.rootTempDir and tempDirManager in any case will delete rootTempDir on exit
-        TMPDIR: await this.info.tempDirManager.rootTempDir,
-      },
-    })
-
+    const rawResult = await executeAppBuilder(args)
     let result: IconConvertResult
     try {
       result = JSON.parse(rawResult)

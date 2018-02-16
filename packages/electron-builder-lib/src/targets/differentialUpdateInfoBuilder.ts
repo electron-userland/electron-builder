@@ -1,5 +1,4 @@
-import { appBuilderPath } from "app-builder-bin"
-import { exec, log } from "builder-util"
+import { log, executeAppBuilder } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
 import { Target } from "../core"
@@ -61,13 +60,13 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
 
 export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {
   log.info({file: log.filePath(file)}, "building embedded block map")
-  return JSON.parse(await exec(appBuilderPath, ["blockmap", "--input", file, "--compression", "deflate"]))
+  return JSON.parse(await executeAppBuilder(["blockmap", "--input", file, "--compression", "deflate"]))
 }
 
 export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null): Promise<BlockMapDataHolder> {
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({blockMapFile: log.filePath(blockMapFile)}, "building block map")
-  const updateInfo: BlockMapDataHolder = JSON.parse(await exec(appBuilderPath, ["blockmap", "--input", file, "--output", blockMapFile]))
+  const updateInfo: BlockMapDataHolder = JSON.parse(await executeAppBuilder(["blockmap", "--input", file, "--output", blockMapFile]))
   packager.info.dispatchArtifactCreated({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,

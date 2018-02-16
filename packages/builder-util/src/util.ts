@@ -1,4 +1,5 @@
-import BluebirdPromise from "bluebird-lst"
+import { path7za } from "7zip-bin"
+import { appBuilderPath } from "app-builder-bin"
 import { safeStringifyJson } from "builder-util-runtime"
 import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions } from "child_process"
@@ -83,7 +84,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
     log.debug(logFields, "executing")
   }
 
-  return new BluebirdPromise<string>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     execFile(file, args, {
     ...options,
     maxBuffer: 10 * 1024 * 1024,
@@ -139,6 +140,22 @@ export interface ExtraSpawnOptions {
   isPipeInput?: boolean
 }
 
+function logSpawn(command: string, args: Array<string>, options: SpawnOptions) {
+  // use general debug.enabled to log spawn, because it doesn't produce a lot of output (the only line), but important in any case
+  if (!log.isDebugEnabled) {
+    return
+  }
+
+  const argsString = args.join(" ")
+  const logFields: any = {
+    command: command + " " + (command === "docker" ? argsString : removePassword(argsString)),
+  }
+  if (options != null && options.cwd != null) {
+    logFields.cwd = options.cwd
+  }
+  log.debug(logFields, "spawning")
+}
+
 export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): ChildProcess {
   if (options == null) {
     options = {}
@@ -152,19 +169,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
     options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"]
   }
 
-  // use general debug.enabled to log spawn, because it doesn't produce a lot of output (the only line), but important in any case
-  if (log.isDebugEnabled) {
-    const argsString = args.join(" ")
-    const logFields: any = {
-      command,
-      args: command === "docker" ? argsString : removePassword(argsString),
-    }
-    if (options != null && options.cwd != null) {
-      logFields.cwd = options.cwd
-    }
-    log.debug(logFields, "spawning")
-  }
-
+  logSpawn(command, args, options)
   try {
     return _spawn(command, args, options)
   }
@@ -176,7 +181,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
 export function spawnAndWrite(command: string, args: Array<string>, data: string, options?: SpawnOptions, isDebugEnabled: boolean = false) {
   const childProcess = doSpawn(command, args, options, {isPipeInput: true, isDebugEnabled})
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
-  return new BluebirdPromise<any>((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     handleProcess("close", childProcess, command, false, () => {
       try {
         clearTimeout(timeout)
@@ -198,7 +203,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
 }
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
-  return new BluebirdPromise<any>((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
     const isCollectOutput = options != null && (options.stdio === "pipe" || (Array.isArray(options.stdio) && options.stdio.length === 3 && options.stdio[1] === "pipe"))
     handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, isCollectOutput, resolve, reject)
   })
@@ -344,4 +349,17 @@ export class InvalidConfigurationError extends Error {
 
     (this as any).code = code
   }
+}
+
+export function executeAppBuilder(args: Array<string>): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const command = appBuilderPath
+    handleProcess("close", doSpawn(command, args, {
+      env: {
+        ...process.env,
+        SZA_PATH: path7za,
+      },
+      stdio: ["ignore", "pipe", "inherit"]
+    }), command, true, resolve, reject)
+  })
 }

@@ -1,6 +1,4 @@
-import { path7za } from "7zip-bin"
-import { appBuilderPath } from "app-builder-bin"
-import { spawn } from "./util"
+import { executeAppBuilder } from "./util"
 
 const versionToPromise = new Map<string, Promise<string>>()
 
@@ -9,7 +7,7 @@ export function download(url: string, output: string, checksum?: string | null):
   if (checksum != null) {
     args.push("--sha512", checksum)
   }
-  return spawn(appBuilderPath, args)
+  return executeAppBuilder(args) as Promise<any>
 }
 
 export function getBinFromGithub(name: string, version: string, checksum: string): Promise<string> {
@@ -35,11 +33,5 @@ function doGetBin(name: string, url: string, checksum: string): Promise<string> 
     args.push("--sha512", checksum)
   }
 
-  return spawn(appBuilderPath, args, {
-    env: {
-      ...process.env,
-      SZA_PATH: path7za,
-    },
-    stdio: ["ignore", "pipe", process.stdout]
-  })
+  return executeAppBuilder(args)
 }

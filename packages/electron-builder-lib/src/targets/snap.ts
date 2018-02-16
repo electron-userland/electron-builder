@@ -1,6 +1,4 @@
-import { path7za } from "7zip-bin"
-import { appBuilderPath } from "app-builder-bin"
-import { isEnvTrue, Arch, replaceDefault as _replaceDefault, serializeToYaml, spawn, toLinuxArchString, log } from "builder-util"
+import { Arch, replaceDefault as _replaceDefault, serializeToYaml, executeAppBuilder, toLinuxArchString } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { SnapOptions } from ".."
@@ -150,10 +148,6 @@ export default class SnapTarget extends Target {
 
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
-    if (log.isDebugEnabled && !isEnvTrue(process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG)) {
-      args.push("--no-remove-stage")
-    }
-
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {
       args.push("--hooks", hooksDir)
@@ -166,14 +160,7 @@ export default class SnapTarget extends Target {
         "--template-sha512", SNAP_TEMPLATE_SHA512,
       )
     }
-
-    await spawn(appBuilderPath, args, {
-      env: {
-        ...process.env,
-        SZA_PATH: path7za,
-      },
-      stdio: ["ignore", "inherit", "inherit"]
-    })
+    await executeAppBuilder(args)
     packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
 }

@@ -1,7 +1,5 @@
-import { path7za } from "7zip-bin"
-import { appBuilderPath } from "app-builder-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, log, serializeToYaml, isEnvTrue, spawn } from "builder-util"
+import { Arch, serializeToYaml, executeAppBuilder } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -13,7 +11,6 @@ import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { getTemplatePath } from "../util/pathManager"
-import { appendBlockmap } from "./differentialUpdateInfoBuilder"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
 
@@ -83,17 +80,7 @@ export default class AppImageTarget extends Target {
     if (packager.compression === "maximum") {
       args.push("--compression", "xz")
     }
-    if (log.isDebugEnabled && !isEnvTrue(process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG)) {
-      args.push("--no-remove-stage")
-    }
-    await spawn(appBuilderPath, args, {
-      env: {
-        ...process.env,
-        SZA_PATH: path7za,
-      },
-    })
 
-    const updateInfo = await appendBlockmap(artifactPath)
     packager.info.dispatchArtifactCreated({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
@@ -101,7 +88,7 @@ export default class AppImageTarget extends Target {
       arch,
       packager,
       isWriteUpdateInfo: true,
-      updateInfo,
+      updateInfo: JSON.parse(await executeAppBuilder(args)),
     })
   }
 
