@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isCanSignDmg, isEmptyOrSpaces, log, spawn, deepAssign } from "builder-util"
+import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isCanSignDmg, isEmptyOrSpaces, log, spawn, deepAssign, executeAppBuilder } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "./dmgLicense"
@@ -255,12 +255,6 @@ async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: s
 }
 
 async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null | undefined) {
-  const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
-
-  if (backgroundFile != null) {
-    asyncTaskManager.addTask(copyFile(backgroundFile, path.join(volumePath, ".background", path.basename(backgroundFile))))
-  }
-
   const window = specification.window!
   const env: any = {
     ...process.env,
@@ -273,15 +267,6 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
     windowY: window.y,
 
     VERSIONER_PERL_PREFER_32_BIT: "true"
-  }
-
-  if (specification.icon == null) {
-    delete env.volumeIcon
-  }
-  else {
-    const volumeIcon = `${volumePath}/.VolumeIcon.icns`
-    asyncTaskManager.addTask(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
-    env.volumeIcon = volumeIcon
   }
 
   if (specification.backgroundColor != null || specification.background == null) {
@@ -304,12 +289,19 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
     else {
       env.windowHeight = window.height.toString()
     }
-
-    if (backgroundFile != null) {
-      env.backgroundFilename = path.basename(backgroundFile)
-    }
   }
 
+  const args = ["dmg", "--volume", volumePath]
+  if (specification.icon != null) {
+    args.push("--icon", (await packager.getResource(specification.icon))!!)
+  }
+  if (backgroundFile != null) {
+    env.backgroundFilename = path.basename(backgroundFile)
+    args.push("--background", backgroundFile)
+  }
+  await executeAppBuilder(args)
+
+  const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
   await applyProperties(await computeDmgEntries(specification, volumePath, packager, asyncTaskManager), env, asyncTaskManager, packager)
   return packager.packagerOptions.effectiveOptionComputed == null || !(await packager.packagerOptions.effectiveOptionComputed({volumePath, specification, packager}))
 }

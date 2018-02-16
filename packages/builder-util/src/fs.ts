@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
 import { access, chmod, copyFile as _nodeCopyFile, createReadStream, createWriteStream, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
-import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
 import { log } from "./log"
@@ -125,7 +124,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
+const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (require("is-ci") || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve())

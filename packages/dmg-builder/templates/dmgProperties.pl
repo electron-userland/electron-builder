@@ -27,13 +27,6 @@ if (defined($ENV{'backgroundFilename'}) && !defined($ENV{'windowWidth'}) && !def
 # perl DOESN'T DECODE incoming env variables properly, so, you MUST explicitly decode it using Encode::decode("UTF-8", ...)
 # see http://stackoverflow.com/questions/2437877/how-can-i-properly-use-environment-variables-encoded-as-windows-1251-in-perl
 
-if (defined($ENV{'volumeIcon'})) {
-  # kIsInvisible
-  &syscall_setfinderinfo(Encode::decode("UTF-8", $ENV{'volumeIcon'}), 'icns', "\0\0\0\0",  0x4000);
-  # kHasCustomIcon
-  &syscall_setfinderinfo("$ENV{'volumePath'}/.", "\0\0\0\0", "\0\0\0\0", 0x0400);
-}
-
 &writeDSDBEntries("$ENV{'volumePath'}/.DS_Store",
     &makeEntries(".background", Iloc_xy => [ 2560, 170 ]),
     &makeEntries(".DS_Store", Iloc_xy => [ 2610, 170 ]),
@@ -49,26 +42,3 @@ if (defined($ENV{'volumeIcon'})) {
     ),
     $ENTRIES
 );
-
-sub syscall_setfinderinfo {
-  use constant { SYS_setattrlist => 221 };
-
-  my($path, $type, $creator, $finderFlags) = @_;
-
-  # This is just a special case of setattrlist(). The syscall takes a buffer
-  # in the same format as returned by getattrlist, above, except without the initial length word.
-
-  my($bits) = pack('SSLLLLL',
-                   5,       # bitmapcount
-                   0,       # reserved/padding
-                   0x4000,  # ATTR_CMN_FNDRINFO
-                   0, 0, 0, 0);
-  my($data) = pack('a4a4nnnn n8',
-                  $type, $creator,
-                  $finderFlags,
-                  0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0);
-  my($r) = syscall(SYS_setattrlist, $path, $bits, $data, length($data), 0);
-  die "setattrlist($path): $!\n"
-      if $r == -1;
-}

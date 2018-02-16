@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { exec } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
@@ -53,7 +52,7 @@ test.ifMac("custom background - new way", () => {
       return true
     },
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(projectDir, customBackground)),
       // copy, but not rename to test that default icon is not used
       copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "customIcon.icns")),
@@ -120,7 +119,7 @@ test.ifMac.ifAll("no Applications link", () => {
       }
 
       const volumePath = it.volumePath
-      await BluebirdPromise.all([
+      await Promise.all([
         assertThat(path.join(volumePath, ".background", "background.tiff")).isFile(),
         assertThat(path.join(volumePath, "Applications")).doesNotExist(),
         assertThat(path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
@@ -145,7 +144,7 @@ test.ifMac("unset dmg icon", app({
 }, {
   packed: context => {
     return attachAndExecute(path.join(context.outDir, "Test ß No Volume Icon-1.1.0.dmg"), false, () => {
-      return BluebirdPromise.all([
+      return Promise.all([
         assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
         assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
       ])
@@ -219,7 +218,7 @@ const packagerOptions = {
 
 test.ifAll.ifMac("multi language license", app(packagerOptions, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
       writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo"),
       writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
@@ -254,7 +253,7 @@ test.ifAll.ifMac("license buttons config", app({
     return false
   },
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt")),
     copyTestAsset("license_fr.txt", path.join(projectDir, "build", "license_fr.txt")),
     copyTestAsset("license_ja.txt", path.join(projectDir, "build", "license_ja.txt")),
