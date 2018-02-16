@@ -130,7 +130,8 @@ Emitted on progress.
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
-        * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
+        * [`.setDownloadData(downloadFolder, installerName)`](#module_electron-updater.AppUpdater+setDownloadData)
+        * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.Logger`](#Logger)
         * [`.debug(message)`](#module_electron-updater.Logger+debug)
         * [`.error(message)`](#module_electron-updater.Logger+error)
@@ -168,7 +169,8 @@ Emitted on progress.
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
-    * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
+    * [`.setDownloadData(downloadFolder, installerName)`](#module_electron-updater.AppUpdater+setDownloadData)
+    * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall) ⇒ <code>Promise&lt;void&gt;</code>
 
 <a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
 #### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
@@ -193,10 +195,16 @@ Configure update provider. If value is `string`, [GenericServerOptions](/configu
 
 - options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
+<a name="module_electron-updater.AppUpdater+setDownloadData"></a>
+#### `appUpdater.setDownloadData(downloadFolder, installerName)`
+Configure the download related data. Useful for not downloading the same installer by another running instance.
+
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 #### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`
 Restarts the app and installs the update after it has been downloaded.
 It should only be called after `update-downloaded` has been emitted.
+
+**Returns**: <code>Promise&lt;void&gt;</code>
 
 **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
 This is different from the normal quit event sequence.

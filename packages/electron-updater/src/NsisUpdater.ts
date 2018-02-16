@@ -9,10 +9,13 @@ import { GenericDifferentialDownloader } from "./differentialDownloader/GenericD
 import { newUrlFromBase, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED } from "./main"
 import { findFile, Provider } from "./Provider"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
+import { existsSync } from "fs-extra-p"
+import { copyFile } from "builder-util/out/fs"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
     super(options, app)
+    this.setDownloadData(this.app.getPath("userData"), "new-installer.exe")
   }
 
   /*** @private */
@@ -27,44 +30,65 @@ export class NsisUpdater extends BaseUpdater {
       sha512: fileInfo.info.sha512,
     }
 
-    let packagePath: string | null = this.downloadedUpdateHelper.packagePath
+    const installerPersistingFolderPath = this.downloadedUpdateHelper.folder
+    const installerPersistingPath = this.downloadedUpdateHelper.file
+    const packageInfo = fileInfo.packageInfo
+    const packagePersistingPath: string | null = (packageInfo != null && installerPersistingFolderPath != null ? path.join(installerPersistingFolderPath, `package-${path.extname(packageInfo.path) || ".7z"}`) : null)
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
+    let packagePath: string | null = this.downloadedUpdateHelper.packagePath
+    let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
+    if (installerPath == null) {
+      if (await this.isUpdaterValid(installerPersistingPath)) {
+        installerPath = installerPersistingPath
+      }
+    }
+
     if (installerPath != null) {
+      this._logger.info(`Update installer has already been downloaded (${installerPath}).`)
+      this.emit(UPDATE_DOWNLOADED, this.updateInfo) // Maintaining backwards compatibility
       return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 
     await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
-      installerPath = destinationFile
-      if (await this.differentialDownloadInstaller(fileInfo, path.join(this.app.getPath("userData"), "installer.exe"), installerPath, requestHeaders, provider)) {
-        await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
+      const oldInstaller = path.join(this.app.getPath("userData"), "installer.exe")
+
+      if (await this.differentialDownloadInstaller(fileInfo, oldInstaller, destinationFile, requestHeaders, provider)) {
+        await this.httpExecutor.download(fileInfo.url.href, destinationFile, downloadOptions)
       }
 
-      const signatureVerificationStatus = await this.verifySignature(installerPath)
+      const signatureVerificationStatus = await this.verifySignature(destinationFile)
       if (signatureVerificationStatus != null) {
         await removeTempDirIfAny()
         // noinspection ThrowInsideFinallyBlockJS
         throw newError(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
       }
 
-      const packageInfo = fileInfo.packageInfo
-      if (packageInfo != null) {
+      // Copy to persisting location
+      if (existsSync(destinationFile) && installerPersistingPath != null) {
+        // TODO: Handle copy error
+        await copyFile(destinationFile, installerPersistingPath, false)
+      }
+
+      if (packageInfo != null && packagePersistingPath != null) {
         packagePath = path.join(tempDir, `package-${updateInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
         if (await this.differentialDownloadWebPackage(packageInfo, packagePath, provider)) {
-          await this.httpExecutor.download(packageInfo.path, packagePath!!, {
+          if (await this.httpExecutor.download(packageInfo.path, packagePath!!, {
             skipDirCreation: true,
             headers: requestHeaders,
             cancellationToken,
             sha512: packageInfo.sha512,
-          })
+          })) {
+            await copyFile(packagePath, packagePersistingPath, false)
+          }
         }
       }
     })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, updateInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPersistingFolderPath!!, packagePath, updateInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.updateInfo)
-    return packagePath == null ? [installerPath!!] : [installerPath!!, packagePath]
+
+    return packagePersistingPath == null ? [installerPersistingPath!!] : [installerPersistingPath!!, packagePersistingPath]
   }
 
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'

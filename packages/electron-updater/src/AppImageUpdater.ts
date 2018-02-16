@@ -1,17 +1,19 @@
 import { AllPublishOptions, CancellationToken, DownloadOptions, newError, UpdateInfo } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
-import { chmod, unlinkSync } from "fs-extra-p"
+import { chmod, unlinkSync, existsSync } from "fs-extra-p"
 import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
 import { findFile } from "./Provider"
+import { copyFile } from "builder-util/out/fs"
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
     super(options, app)
+    this.setDownloadData(this.app.getPath("userData"), "new-installer.exe")
   }
 
   checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
@@ -45,8 +47,17 @@ export class AppImageUpdater extends BaseUpdater {
       sha512: fileInfo.info.sha512,
     }
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
+    const installerPersistingFolderPath = this.downloadedUpdateHelper.folder
+    const installerPersistingPath = this.downloadedUpdateHelper.file
+
+    let installerPath = this.downloadedUpdateHelper.getDownloadedPath(updateInfo, fileInfo)
+    if (installerPath == null) {
+      if (await this.isUpdaterValid(installerPersistingPath)) {
+        installerPath = installerPersistingPath
+      }
+    }
     if (installerPath != null) {
+      this._logger.info("Update installer has already been downloaded (" + installerPath + ").")
       return [installerPath]
     }
 
@@ -81,9 +92,14 @@ export class AppImageUpdater extends BaseUpdater {
       }
 
       await chmod(installerPath, 0o755)
+
+      // Copy to persisting location
+      if (existsSync(installerPath) && installerPersistingPath != null) {
+        await copyFile(destinationFile, installerPersistingPath, false)
+      }
     })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, null, updateInfo, fileInfo)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPersistingFolderPath!!, null, updateInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.updateInfo)
     return [installerPath!!]

@@ -3,12 +3,9 @@ import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater"
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
-  protected readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
-
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
 
@@ -16,11 +13,15 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
+  async quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): Promise<void> {
     this._logger.info(`Install on explicit quitAndInstall`)
-    if (this.install(isSilent, isSilent ? isForceRunAfter : true)) {
+    const isInstalled = await this.install(isSilent, isSilent ? isForceRunAfter : true)
+    if (isInstalled) {
       setImmediate(() => {
-        this.app.quit()
+        if (this.app.quit !== undefined) {
+          this.app.quit()
+        }
+        this.quitAndInstallCalled = false
       })
     }
   }
@@ -60,15 +61,16 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
 
-  protected install(isSilent: boolean, isRunAfter: boolean): boolean {
+  protected async install(isSilent: boolean, isRunAfter: boolean): Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
 
     const installerPath = this.downloadedUpdateHelper.file
-    if (!this.updateAvailable || installerPath == null) {
-      this.dispatchError(new Error("No update available, can't quit and install"))
+    const isValid = await this.isUpdaterValid(installerPath)
+    if (installerPath == null || !isValid) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
 
@@ -92,10 +94,10 @@ export abstract class BaseUpdater extends AppUpdater {
 
     this.quitHandlerAdded = true
 
-    this.app.once("quit", () => {
+    this.app.once("quit", async () => {
       if (!this.quitAndInstallCalled) {
         this._logger.info("Auto install update on quit")
-        this.install(true, false)
+        await this.install(true, false)
       }
     })
   }

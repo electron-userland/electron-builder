@@ -358,3 +358,34 @@ test.skip("cancel download with progress", async () => {
   expect(downloadPromise.isRejected()).toBe(true)
   expect(cancelled).toBe(true)
 })
+
+test.ifAll.ifWindows("test download and install", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  })
+  tuneNsisUpdater(updater)
+
+  await validateDownload(updater)
+  await validateDownload(updater)
+
+  const actualEvents = trackEvents(updater)
+  await updater.quitAndInstall(true, false)
+  expect(actualEvents.length).toBe(0)
+})
+
+test.ifAll.ifWindows("test downloaded installer", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  })
+  tuneNsisUpdater(updater)
+
+  const actualEvents = trackEvents(updater)
+
+  await updater.quitAndInstall(true, false)
+
+  expect(actualEvents).toMatchSnapshot()
+})
