@@ -6,8 +6,9 @@ import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { newUrlFromBase, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED } from "./main"
+import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./Provider"
+import { unlink } from "fs-extra-p"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends BaseUpdater {
@@ -27,44 +28,48 @@ export class NsisUpdater extends BaseUpdater {
       sha512: fileInfo.info.sha512,
     }
 
-    let packagePath: string | null = this.downloadedUpdateHelper.packagePath
-
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
-    if (installerPath != null) {
-      return packagePath == null ? [installerPath] : [installerPath, packagePath]
-    }
-
-    await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile, removeTempDirIfAny) => {
-      installerPath = destinationFile
-      if (await this.differentialDownloadInstaller(fileInfo, path.join(this.app.getPath("userData"), "installer.exe"), installerPath, requestHeaders, provider)) {
-        await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
-      }
-
-      const signatureVerificationStatus = await this.verifySignature(installerPath)
-      if (signatureVerificationStatus != null) {
-        await removeTempDirIfAny()
-        // noinspection ThrowInsideFinallyBlockJS
-        throw newError(`New version ${this.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
-      }
-
-      const packageInfo = fileInfo.packageInfo
-      if (packageInfo != null) {
-        packagePath = path.join(tempDir, `package-${updateInfo.version}${path.extname(packageInfo.path) || ".7z"}`)
-        if (await this.differentialDownloadWebPackage(packageInfo, packagePath, provider)) {
-          await this.httpExecutor.download(packageInfo.path, packagePath!!, {
-            skipDirCreation: true,
-            headers: requestHeaders,
-            cancellationToken,
-            sha512: packageInfo.sha512,
-          })
+    return await this.executeDownload({
+      fileExtension: "exe",
+      downloadOptions,
+      fileInfo,
+      updateInfo,
+      task: async (destinationFile, packageFile, removeTempDirIfAny) => {
+        if (await this.differentialDownloadInstaller(fileInfo, destinationFile, requestHeaders, provider)) {
+          await this.httpExecutor.download(fileInfo.url.href, destinationFile, downloadOptions)
         }
-      }
-    })
 
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, packagePath, updateInfo, fileInfo)
-    this.addQuitHandler()
-    this.emit(UPDATE_DOWNLOADED, this.updateInfo)
-    return packagePath == null ? [installerPath!!] : [installerPath!!, packagePath]
+        const signatureVerificationStatus = await this.verifySignature(destinationFile)
+        if (signatureVerificationStatus != null) {
+          await removeTempDirIfAny()
+          // noinspection ThrowInsideFinallyBlockJS
+          throw newError(`New version ${updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
+        }
+
+        const packageInfo = fileInfo.packageInfo
+        if (packageInfo != null && packageFile != null) {
+          if (await this.differentialDownloadWebPackage(packageInfo, packageFile, provider)) {
+            try {
+              await this.httpExecutor.download(packageInfo.path, packageFile, {
+                skipDirCreation: true,
+                headers: requestHeaders,
+                cancellationToken,
+                sha512: packageInfo.sha512,
+              })
+            }
+            catch (e) {
+              try {
+                await unlink(packageFile)
+              }
+              catch (ignored) {
+                // ignore
+              }
+
+              throw e
+            }
+          }
+        }
+      },
+    })
   }
 
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
@@ -98,7 +103,7 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
-    const packagePath = this.downloadedUpdateHelper.packagePath
+    const packagePath = this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
       args.push(`--package-file=${packagePath}`)
@@ -134,7 +139,7 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, oldFile: string, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
+  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     if (process.env.__NSIS_DIFFERENTIAL_UPDATE__ == null) {
       return true
     }
@@ -143,7 +148,7 @@ export class NsisUpdater extends BaseUpdater {
       const blockMapData = JSON.parse((await provider.httpRequest(newUrlFromBase(`${fileInfo.url.pathname}.blockMap.json`, fileInfo.url)))!!)
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
         newUrl: fileInfo.url.href,
-        oldFile,
+        oldFile: path.join(this.app.getPath("userData"), "installer.exe"),
         logger: this._logger,
         newFile: installerPath,
         useMultipleRangeRequest: provider.useMultipleRangeRequest,

@@ -15,6 +15,7 @@ import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient } from "./providerFactory"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -54,6 +55,8 @@ export abstract class AppUpdater extends EventEmitter {
   readonly currentVersion: string
 
   private _channel: string | null = null
+
+  protected readonly downloadedUpdateHelper: DownloadedUpdateHelper
 
   /**
    * Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
@@ -141,7 +144,7 @@ export abstract class AppUpdater extends EventEmitter {
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
-  protected constructor(options: AllPublishOptions | null | undefined, app?: any) {
+  protected constructor(options: AllPublishOptions | null | undefined, app?: Electron.App) {
     super()
 
     this.on("error", (error: Error) => {
@@ -165,6 +168,8 @@ export abstract class AppUpdater extends EventEmitter {
         }
       })
     }
+
+    this.downloadedUpdateHelper = new DownloadedUpdateHelper(this.app.getPath("userData"))
 
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
@@ -276,7 +281,9 @@ export abstract class AppUpdater extends EventEmitter {
     return headers
   }
 
-  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+  protected async getUpdateInfo(): Promise<UpdateInfo> {
+    await this.untilAppReady
+
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this))
     }
@@ -284,7 +291,11 @@ export abstract class AppUpdater extends EventEmitter {
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
-    const updateInfo = await client.getLatestVersion()
+    return await client.getLatestVersion()
+  }
+
+  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+    const updateInfo = await this.getUpdateInfo()
 
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
@@ -313,7 +324,7 @@ export abstract class AppUpdater extends EventEmitter {
       versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
-      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
+      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null
     }
   }
 

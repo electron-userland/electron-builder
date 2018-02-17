@@ -292,7 +292,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
   const port = 8000 + updaterClass.name.charCodeAt(0)
 
   // noinspection SpellCheckingInspection
-  const httpServerProcess = doSpawn(path.join(await getBinFromGithub("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`])
+  const httpServerProcess = doSpawn(path.join(await getBinFromGithub("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false"])
   {
     (process as any).resourcesPath = path.join(oldDir, "win-unpacked", "resources")
   }

@@ -112,9 +112,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^22.1.2":
-  version "22.1.2"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.1.2.tgz#813a79ec98221633845627636dbc606f31220dbc"
+"@types/jest@^22.1.3":
+  version "22.1.3"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.1.3.tgz#25da391935e6fac537551456f077ce03144ec168"
 
 "@types/js-yaml@^3.10.1":
   version "3.10.1"
@@ -484,9 +484,9 @@ atob@^2.0.0:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.0.3.tgz#19c7a760473774468f20b2d2d03372ad7d4cbf5d"
 
-aws-sdk@^2.196.0:
-  version "2.196.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.196.0.tgz#0fabf9b1d22997c59d77a025c6bd4666924f147c"
+aws-sdk@^2.197.0:
+  version "2.197.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.197.0.tgz#986e3749f4d1944c6253d7824aa8035efb1db0e4"
   dependencies:
     buffer "4.9.1"
     events "^1.1.1"
@@ -2113,6 +2113,13 @@ fs-extra-p@^4.4.4, fs-extra-p@^4.5.0:
     bluebird-lst "^1.0.5"
     fs-extra "^5.0.0"
 
+fs-extra-p@^4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-4.5.2.tgz#0a22aba489284d17f375d5dc5139aa777fe2df51"
+  dependencies:
+    bluebird-lst "^1.0.5"
+    fs-extra "^5.0.0"
+
 fs-extra@^4.0.1:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.3.tgz#0d852122e5bc5beb453fb028e9c0c9bf36340c94"
@@ -2336,9 +2343,9 @@ globals@^9.18.0:
   version "9.18.0"
   resolved "https://registry.yarnpkg.com/globals/-/globals-9.18.0.tgz#aa3896b3e69b487f17e31ed2143d69a8e30c2d8a"
 
-globby@^8.0.0:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/globby/-/globby-8.0.0.tgz#e6f8340ead9a52fa417ec0e75ae664ae0026f5c6"
+globby@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/globby/-/globby-8.0.1.tgz#b5ad48b8aa80b35b814fc1281ecc851f1d2b5b50"
   dependencies:
     array-union "^1.0.1"
     dir-glob "^2.0.0"

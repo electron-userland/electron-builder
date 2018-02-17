@@ -50,7 +50,7 @@
     "chalk": "^2.3.0",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
-    "fs-extra-p": "^4.5.0",
+    "fs-extra-p": "^4.5.2",
     "is-ci": "^1.1.0",
     "read-config-file": "3.0.0",
     "sanitize-filename": "^1.6.1",

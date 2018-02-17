@@ -1,14 +1,10 @@
-import { AllPublishOptions, CancellationError, DownloadOptions } from "builder-util-runtime"
-import { mkdtemp, remove } from "fs-extra-p"
-import { tmpdir } from "os"
+import { UpdateInfo, AllPublishOptions, CancellationError, DownloadOptions } from "builder-util-runtime"
+import { ensureDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater"
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
-  protected readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
-
   protected quitAndInstallCalled = false
   private quitHandlerAdded = false
 
@@ -16,59 +12,103 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
+  async quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): Promise<void> {
     this._logger.info(`Install on explicit quitAndInstall`)
-    if (this.install(isSilent, isSilent ? isForceRunAfter : true)) {
+    const isInstalled = await this.install(isSilent, isSilent ? isForceRunAfter : true)
+    if (isInstalled) {
       setImmediate(() => {
-        this.app.quit()
+        if (this.app.quit !== undefined) {
+          this.app.quit()
+        }
+        this.quitAndInstallCalled = false
       })
     }
   }
 
-  protected async executeDownload(downloadOptions: DownloadOptions, fileInfo: ResolvedUpdateFileInfo, task: (tempDir: string, destinationFile: string, removeTempDirIfAny: () => Promise<any>) => Promise<any>) {
+  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
-      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      taskOptions.downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
 
-    // use TEST_APP_TMP_DIR if defined and developer machine (must be not windows due to security reasons - we must not use env var in the production)
-    const tempDir = await mkdtemp(`${path.join((process.platform === "darwin" ? process.env.TEST_APP_TMP_DIR : null) || tmpdir(), "up")}-`)
+    const updateInfo = taskOptions.updateInfo
+    const version = updateInfo.version
+    const fileInfo = taskOptions.fileInfo
+    const packageInfo = fileInfo.packageInfo
 
-    const removeTempDirIfAny = () => {
+    const cacheDir = this.downloadedUpdateHelper.cacheDir
+    await ensureDir(cacheDir)
+    const updateFileName = `installer-${version}.${taskOptions.fileExtension}`
+    const updateFile = path.join(cacheDir, updateFileName)
+    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}.${path.extname(packageInfo.path) || "7z"}`)
+
+    const done = () => {
+      this.downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
+      this.addQuitHandler()
+      this.emit(UPDATE_DOWNLOADED, updateInfo)
+      return packageFile == null ? [updateFile] : [updateFile, packageFile]
+    }
+
+    const log = this._logger
+    if (await this.downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)) {
+      return done()
+    }
+
+    const removeFileIfAny = () => {
       this.downloadedUpdateHelper.clear()
-      return remove(tempDir)
+      return unlink(updateFile)
         .catch(() => {
           // ignored
         })
     }
 
-    try {
-      const destinationFile = path.join(tempDir, path.posix.basename(fileInfo.info.url))
-      await task(tempDir, destinationFile, removeTempDirIfAny)
+    // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
+    let nameCounter = 0
+    let tempUpdateFile = path.join(cacheDir, `temp-${updateFileName}`)
+    for (let i = 0; i < 3; i++) {
+      try {
+        await unlink(tempUpdateFile)
+      }
+      catch (e) {
+        if (e.code === "ENOENT") {
+          break
+        }
 
-      this._logger.info(`New version ${this.updateInfo!.version} has been downloaded to ${destinationFile}`)
+        log.warn(`Error on remove temp update file: ${e}`)
+        tempUpdateFile = path.join(cacheDir, `temp-${nameCounter++}-${updateFileName}`)
+      }
+    }
+
+    try {
+      await taskOptions.task(tempUpdateFile, packageFile, removeFileIfAny)
+      await rename(tempUpdateFile, updateFile)
     }
     catch (e) {
-      await removeTempDirIfAny()
+      await removeFileIfAny()
 
       if (e instanceof CancellationError) {
-        this.emit("update-cancelled", this.updateInfo)
-        this._logger.info("Cancelled")
+        log.info("Cancelled")
+        this.emit("update-cancelled", updateInfo)
       }
       throw e
     }
+
+    log.info(`New version ${version} has been downloaded to ${updateFile}`)
+    return done()
   }
 
   protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
 
-  protected install(isSilent: boolean, isRunAfter: boolean): boolean {
+  protected async install(isSilent: boolean, isRunAfter: boolean): Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
 
     const installerPath = this.downloadedUpdateHelper.file
-    if (!this.updateAvailable || installerPath == null) {
-      this.dispatchError(new Error("No update available, can't quit and install"))
+    // todo check (for now it is ok to no check as before, cached (from previous launch) update file checked in any case)
+    // const isValid = await this.isUpdateValid(installerPath)
+    if (installerPath == null) {
+      this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
 
@@ -92,11 +132,19 @@ export abstract class BaseUpdater extends AppUpdater {
 
     this.quitHandlerAdded = true
 
-    this.app.once("quit", () => {
+    this.app.once("quit", async () => {
       if (!this.quitAndInstallCalled) {
         this._logger.info("Auto install update on quit")
-        this.install(true, false)
+        await this.install(true, false)
       }
     })
   }
+}
+
+export interface DownloadExecutorTask {
+  readonly fileExtension: string
+  readonly downloadOptions: DownloadOptions
+  readonly fileInfo: ResolvedUpdateFileInfo
+  readonly updateInfo: UpdateInfo
+  readonly task: (destinationFile: string, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 }

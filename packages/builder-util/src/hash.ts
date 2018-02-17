@@ -1,9 +1,8 @@
-import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
 
 export function hashFile(file: string, algorithm: string = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {
-  return new BluebirdPromise<string>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
       .on("error", reject)

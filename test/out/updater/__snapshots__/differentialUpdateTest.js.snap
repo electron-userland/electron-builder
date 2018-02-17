@@ -84,7 +84,7 @@ Object {
 
 exports[`AppImage 4`] = `
 Array [
-  "TestApp-1.0.1-x86_64.AppImage",
+  "installer-1.0.1.AppImage",
 ]
 `;
 
@@ -382,7 +382,7 @@ Object {
 
 exports[`web installer 4`] = `
 Array [
-  "Test App ßW Web Setup 1.0.1.exe",
-  "package-1.0.1.7z",
+  "installer-1.0.1.exe",
+  "package-1.0.1..7z",
 ]
 `;

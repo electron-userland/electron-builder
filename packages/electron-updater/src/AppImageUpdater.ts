@@ -6,7 +6,7 @@ import * as path from "path"
 import "source-map-support/register"
 import { BaseUpdater } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { UPDATE_DOWNLOADED, UpdateCheckResult } from "./main"
+import { UpdateCheckResult } from "./main"
 import { findFile } from "./Provider"
 
 export class AppImageUpdater extends BaseUpdater {
@@ -45,48 +45,42 @@ export class AppImageUpdater extends BaseUpdater {
       sha512: fileInfo.info.sha512,
     }
 
-    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(updateInfo, fileInfo)
-    if (installerPath != null) {
-      return [installerPath]
-    }
+    return await this.executeDownload({
+      fileExtension: "AppImage",
+      downloadOptions,
+      fileInfo,
+      updateInfo,
+      task: async updateFile => {
+        const oldFile = process.env.APPIMAGE!!
+        if (oldFile == null) {
+          throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
+        }
 
-    await this.executeDownload(downloadOptions, fileInfo, async (tempDir, destinationFile) => {
-      installerPath = destinationFile
+        let isDownloadFull = false
+        try {
+          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+            newUrl: fileInfo.url.href,
+            oldFile,
+            logger: this._logger,
+            newFile: updateFile,
+            useMultipleRangeRequest: provider.useMultipleRangeRequest,
+            requestHeaders,
+          })
+            .download()
+        }
+        catch (e) {
+          this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+          // during test (developer machine mac) we must throw error
+          isDownloadFull = process.platform === "linux"
+        }
 
-      const oldFile = process.env.APPIMAGE!!
-      if (oldFile == null) {
-        throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
-      }
+        if (isDownloadFull) {
+          await this.httpExecutor.download(fileInfo.url.href, updateFile, downloadOptions)
+        }
 
-      let isDownloadFull = false
-      try {
-        await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
-          newUrl: fileInfo.url.href,
-          oldFile,
-          logger: this._logger,
-          newFile: installerPath,
-          useMultipleRangeRequest: provider.useMultipleRangeRequest,
-          requestHeaders,
-        })
-          .download()
-      }
-      catch (e) {
-        this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
-        // during test (developer machine mac) we must throw error
-        isDownloadFull = process.platform === "linux"
-      }
-
-      if (isDownloadFull) {
-        await this.httpExecutor.download(fileInfo.url.href, installerPath, downloadOptions)
-      }
-
-      await chmod(installerPath, 0o755)
+        await chmod(updateFile, 0o755)
+      },
     })
-
-    this.downloadedUpdateHelper.setDownloadedFile(installerPath!!, null, updateInfo, fileInfo)
-    this.addQuitHandler()
-    this.emit(UPDATE_DOWNLOADED, this.updateInfo)
-    return [installerPath!!]
   }
 
   protected doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean {

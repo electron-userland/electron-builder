@@ -407,6 +407,26 @@ Array [
 ]
 `;
 
+exports[`test download and install 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`test download and install 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`test error 1`] = `"ERR_INVALID_ARG_TYPE"`;
 
 exports[`test error 2`] = `
