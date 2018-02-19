@@ -11,6 +11,7 @@
     "out"
   ],
   "dependencies": {
+    "lazy-val": "^1.0.3",
     "fs-extra-p": "^4.5.2",
     "mime": "^2.2.0",
     "bluebird-lst": "^1.0.5",

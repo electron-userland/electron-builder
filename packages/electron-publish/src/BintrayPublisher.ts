@@ -1,13 +1,13 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
 import { BintrayOptions, configureRequestOptions, HttpError } from "builder-util-runtime"
 import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest, RequestOptions } from "http"
+import { Lazy } from "lazy-val"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export class BintrayPublisher extends HttpPublisher {
-  private _versionPromise: BluebirdPromise<Version>
+  private readonly _versionPromise = new Lazy(() => this.init())
 
   private readonly client: BintrayClient
 
@@ -31,7 +31,6 @@ export class BintrayPublisher extends HttpPublisher {
     }
 
     this.client = new BintrayClient(info, httpExecutor, this.context.cancellationToken, token)
-    this._versionPromise = this.init() as BluebirdPromise<Version>
   }
 
   private async init(): Promise<Version | null> {
@@ -54,7 +53,7 @@ export class BintrayPublisher extends HttpPublisher {
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
-    const version = await this._versionPromise
+    const version = await this._versionPromise.value
     if (version == null) {
       log.notice({file: fileName, reason: "version doesn't exist and is not created", version: this.version}, "skipped publishing")
       return
@@ -62,7 +61,7 @@ export class BintrayPublisher extends HttpPublisher {
 
     const options: RequestOptions = {
       hostname: "api.bintray.com",
-      path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
+      path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${encodeURI(`${version.name}/${fileName}`)}`,
       method: "PUT",
       headers: {
         "Content-Length": dataLength,
@@ -97,13 +96,15 @@ export class BintrayPublisher extends HttpPublisher {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  deleteRelease(): Promise<any> {
-    if (!this._versionPromise.isFulfilled()) {
-      return BluebirdPromise.resolve()
+  async deleteRelease(): Promise<void> {
+    if (!this._versionPromise.hasValue) {
+      return
     }
 
-    const version = this._versionPromise.value()
-    return version == null ? BluebirdPromise.resolve() : this.client.deleteVersion(version.name)
+    const version = (await this._versionPromise.value)
+    if (version != null) {
+      await this.client.deleteVersion(version.name)
+    }
   }
 
   toString() {

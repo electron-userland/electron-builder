@@ -1,9 +1,9 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
 import { Fields } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
+import { Lazy } from "lazy-val"
 import mime from "mime"
 import { parse as parseUrl } from "url"
 import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
@@ -26,8 +26,8 @@ interface Asset {
 }
 
 export class GitHubPublisher extends HttpPublisher {
-  private tag: string
-  private _releasePromise: Promise<Release | null> | null = null
+  private readonly tag: string
+  readonly _release = new Lazy(() => this.token === "__test__" ? Promise.resolve(null as any) : this.getOrCreateRelease())
 
   private readonly token: string
 
@@ -36,14 +36,6 @@ export class GitHubPublisher extends HttpPublisher {
   private readonly releaseType: "draft" | "prerelease" | "release"
 
   private releaseLogFields: Fields | null = null
-
-  /** @private */
-  get releasePromise(): Promise<Release | null> {
-    if (this._releasePromise == null) {
-      this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(null as any) : this.getOrCreateRelease()
-    }
-    return this._releasePromise
-  }
 
   constructor(context: PublishContext, private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
     super(context, true)
@@ -169,7 +161,7 @@ export class GitHubPublisher extends HttpPublisher {
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
-    const release = await this.releasePromise
+    const release = await this._release.value
     if (release == null) {
       log.warn({file: fileName, ...this.releaseLogFields}, "skipped publishing")
       return
@@ -215,16 +207,16 @@ export class GitHubPublisher extends HttpPublisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise)!.id}`, this.token)
+    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._release.value)!.id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols
   async deleteRelease(): Promise<any> {
-    const release = await this._releasePromise
-    if (release == null) {
+    if (!this._release.hasValue) {
       return
     }
 
+    const release = await this._release.value
     for (let i = 0; i < 3; i++) {
       try {
         return await this.githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")

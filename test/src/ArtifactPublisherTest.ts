@@ -38,7 +38,7 @@ const publishContext: PublishContext = {
 
 test("GitHub unauthorized", async () => {
   try {
-    await new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber()).releasePromise
+    await new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber())._release.value
   }
   catch (e) {
     expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
@@ -78,7 +78,7 @@ test("Bintray upload", async () => {
   const version = versionNumber()
 
   const tmpDir = new TmpDir("artifact-publisher-test")
-  const artifactPath = await tmpDir.getTempFile({suffix: ".icns"})
+  const artifactPath = await tmpDir.getTempFile({suffix: " test space.icns"})
   await copyFile(iconPath, artifactPath)
 
   //noinspection SpellCheckingInspection
