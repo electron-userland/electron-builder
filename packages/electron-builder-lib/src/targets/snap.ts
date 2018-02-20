@@ -49,6 +49,7 @@ export default class SnapTarget extends Target {
       description: this.helper.getDescription(options),
       confinement: options.confinement || "strict",
       grade: options.grade || "stable",
+      architectures: [toLinuxArchString(arch)],
       apps: {
         [snapName]: {
           command: `bin/desktop-launch $SNAP/app/${this.packager.executableName}`,
