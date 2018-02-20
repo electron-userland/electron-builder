@@ -20,10 +20,13 @@ export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packag
   const packages: { [arch: string]: PackageFileInfo } = {}
   for (const arch of keys) {
     const packageFileInfo = packageFiles[arch]
+    const file = path.basename(packageFileInfo.path)
     packages[arch] = {
       ...packageFileInfo,
-      path: path.basename(packageFileInfo.path)
-    }
+      path: file,
+      // https://github.com/electron-userland/electron-builder/issues/2583
+      file,
+    } as any
   }
   return {packages}
 }
