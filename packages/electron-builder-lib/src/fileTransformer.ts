@@ -56,7 +56,7 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "bugs", "tags"])
+const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "tags"])
 
 interface CleanupPackageFileOptions {
   readonly isRemovePackageScripts: boolean
@@ -74,7 +74,9 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
       if (prop[0] === "_" ||
         ignoredPackageMetadataProperties.has(prop) ||
         (options.isRemovePackageScripts && prop === "scripts") ||
-        (options.isMain && prop === "devDependencies") || (isRemoveBabel && prop === "babel")) {
+        (options.isMain && prop === "devDependencies") ||
+        (!options.isMain && prop === "bugs") ||
+        (isRemoveBabel && prop === "babel")) {
         delete data[prop]
         changed = true
       }
