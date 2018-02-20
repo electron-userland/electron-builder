@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, log } from "builder-util"
+import { Arch, AsyncTaskManager, log, executeAppBuilder } from "builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -81,8 +81,15 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
     }
   }
 
-  protected postInitApp(packContext: AfterPackContext): Promise<any> {
-    return rename(path.join(packContext.appOutDir, this.electronDistExecutableName), path.join(packContext.appOutDir, this.executableName))
+  protected async postInitApp(packContext: AfterPackContext): Promise<void> {
+    const executable = path.join(packContext.appOutDir, this.executableName)
+    await rename(path.join(packContext.appOutDir, this.electronDistExecutableName), executable)
+    try {
+      await executeAppBuilder(["clear-exec-stack", "--input", executable])
+    }
+    catch (e) {
+      log.debug({error: e}, "cannot clear exec stack")
+    }
   }
 }
 
