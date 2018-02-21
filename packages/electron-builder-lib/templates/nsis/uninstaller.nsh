@@ -42,7 +42,7 @@ Section "un.install"
       ${if} $R1 == ""
         Delete "$oldStartMenuLink"
       ${else}
-        RMDir /r "$SMPROGRAMS\$R1"
+        RMDir "$SMPROGRAMS\$R1"
       ${endIf}
     !endif
   ${endIf}
