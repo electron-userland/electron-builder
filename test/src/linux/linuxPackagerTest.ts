@@ -74,7 +74,6 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
   },
 }))
 
-// test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
 test.ifNotWindows("icons from ICNS (mac)", app({
   targets: appImageTarget,
   config: {
@@ -86,6 +85,27 @@ test.ifNotWindows("icons from ICNS (mac)", app({
 }, {
   projectDirCreated: it => move(path.join(it, "build", "icon.icns"), path.join(it, "resources", "time.icns"))
     .then(() => remove(path.join(it, "build"))),
+  packed: async context => {
+    const projectDir = context.getResources(Platform.LINUX)
+    await assertThat(projectDir).isDirectory()
+  },
+}))
+
+test.ifNotWindows("icons dir with images without size in the filename", app({
+  targets: appImageTarget,
+  config: {
+    publish: null,
+    win: {
+      // doesn't matter, but just to be sure that presense of this configuration doesn't lead to errors
+      icon: "icons/icon.ico",
+    },
+  },
+}, {
+  projectDirCreated: async projectDir => {
+    await rename(path.join(projectDir, "build", "icons", "256x256.png"), path.join(projectDir, "build", "icon.png"))
+    await remove(path.join(projectDir, "build", "icons"))
+    await rename(path.join(projectDir, "build"), path.join(projectDir, "icons"))
+  },
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
     await assertThat(projectDir).isDirectory()

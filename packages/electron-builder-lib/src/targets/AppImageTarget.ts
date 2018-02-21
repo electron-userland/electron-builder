@@ -42,7 +42,6 @@ export default class AppImageTarget extends Target {
     const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("AppImage", artifactPath, arch)
 
-    // pax doesn't like dir with leading dot (e.g. `.__appimage`)
     const stageDir = await createStageDir(this, packager, arch)
     const resourceName = `appimagekit-${this.packager.executableName}`
     const installIcons = await this.copyIcons(stageDir.dir, resourceName)

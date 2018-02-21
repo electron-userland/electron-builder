@@ -228,11 +228,15 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
 
   childProcess.once(event, (code: number) => {
     if (log.isDebugEnabled) {
-      log.debug({
+      const fields: any = {
         command: path.basename(command),
         code,
         pid: childProcess.pid,
-      }, "exited")
+      }
+      if (out.length > 0) {
+        fields.out = out
+      }
+      log.debug(fields, "exited")
     }
 
     if (code === 0) {
