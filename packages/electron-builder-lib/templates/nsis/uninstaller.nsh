@@ -38,10 +38,9 @@ Section "un.install"
     !ifndef DO_NOT_CREATE_START_MENU_SHORTCUT
       WinShell::UninstShortcut "$oldStartMenuLink"
 
+      Delete "$oldStartMenuLink"
       ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory
-      ${if} $R1 == ""
-        Delete "$oldStartMenuLink"
-      ${else}
+      ${ifNot} $R1 == ""
         RMDir "$SMPROGRAMS\$R1"
       ${endIf}
     !endif
