@@ -53,7 +53,6 @@ export default class SnapTarget extends Target {
       apps: {
         [snapName]: {
           command: `bin/desktop-launch $SNAP/app/${this.packager.executableName}`,
-          adapter: "none",
           environment: {
             TMPDIR: "$XDG_RUNTIME_DIR",
             PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -77,6 +76,10 @@ export default class SnapTarget extends Target {
           after: this.replaceDefault(options.after, ["desktop-gtk2"]),
         }
       },
+    }
+
+    if (!this.isUseTemplateApp) {
+      snap[snapName].adapter = "none"
     }
 
     if (buildPackages.length > 0) {
