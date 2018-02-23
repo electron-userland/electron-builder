@@ -12,7 +12,7 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # libsecret-1-0 and libgnome-keyring-dev are required even for prebuild keytar
   # libgtk2.0-dev for snap desktop-gtk2 (see https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml#L248)
   apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
-  libsecret-1-0 libgnome-keyring-dev \
+  libsecret-1-dev libgnome-keyring-dev \
   libopenjp2-tools \
   libgtk2.0-dev && \
   # git-lfs
@@ -24,9 +24,9 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   curl -L $(curl -H 'X-Ubuntu-Series: 16' 'https://api.snapcraft.io/api/v1/snaps/details/snapcraft?channel=edge' | jq '.download_url' -r) --output snapcraft.snap && \
   mkdir -p /snap/snapcraft && unsquashfs -d /snap/snapcraft/current snapcraft.snap && rm snapcraft.snap && \
   mkdir -p /snap/bin && \
-  echo "#!/bin/sh" > /snap/bin/snapcraft && \
-  echo 'exec $SNAP/usr/bin/python3 $SNAP/bin/snapcraft "$@"' >> /snap/bin/snapcraft && \
-  chmod a+x /snap/bin/snapcraft && \
+  echo "#!/bin/sh" > /usr/bin/snapcraft && \
+  echo 'exec $SNAP/usr/bin/python3 $SNAP/bin/snapcraft "$@"' >> /usr/bin/snapcraft && \
+  chmod a+x /usr/bin/snapcraft && \
   apt-get -qq purge jq squashfs-tools && \
   rm -rf /var/lib/apt/lists/*
 
@@ -50,4 +50,3 @@ ENV SNAP=/snap/snapcraft/current
 ENV SNAP_ARCH=amd64
 ENV SNAP_NAME=snapcraft
 ENV SNAP_VERSION=edge
-ENV PATH=/snap/bin:$PATH

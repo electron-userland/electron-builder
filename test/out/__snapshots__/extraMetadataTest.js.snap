@@ -17,7 +17,6 @@ Object {
 
 exports[`cli 2`] = `
 Object {
-  "cExtraMetadataDevLoginUrl": true,
   "config": Object {
     "extraMetadata": Object {
       "dev": Object {

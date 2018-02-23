@@ -1567,15 +1567,15 @@ direction@0.1.5:
   resolved "https://registry.yarnpkg.com/direction/-/direction-0.1.5.tgz#ce5d797f97e26f8be7beff53f7dc40e1c1a9ec4c"
 
 dmd@^3.0.10:
-  version "3.0.10"
-  resolved "https://registry.yarnpkg.com/dmd/-/dmd-3.0.10.tgz#fa72e1150e2aba1ffe35fe2d5d4b7716cce8344b"
+  version "3.0.11"
+  resolved "https://registry.yarnpkg.com/dmd/-/dmd-3.0.11.tgz#f4df8a09801bf70bef0693c48b841cfb0a03d384"
   dependencies:
     array-back "^2.0.0"
     cache-point "^0.4.1"
     common-sequence "^1.0.2"
-    file-set "^1.1.1"
+    file-set "^2.0.0"
     handlebars "^4.0.11"
-    marked "^0.3.12"
+    marked "^0.3.16"
     object-get "^2.1.0"
     reduce-flatten "^1.0.1"
     reduce-unique "^1.0.0"
@@ -1994,12 +1994,12 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "^2.0.0"
 
-file-set@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/file-set/-/file-set-1.1.1.tgz#d3ec70c080ec8f18f204ba1de106780c9056926b"
+file-set@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/file-set/-/file-set-2.0.0.tgz#11831a388ec378aba881311a94f69814118849c3"
   dependencies:
-    array-back "^1.0.3"
-    glob "^7.1.0"
+    array-back "^2.0.0"
+    glob "^7.1.2"
 
 filename-regex@^2.0.0:
   version "2.0.1"
@@ -2323,7 +2323,7 @@ glob-to-regexp@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/glob-to-regexp/-/glob-to-regexp-0.3.0.tgz#8c5a1494d2066c570cc3bfe4496175acc4d502ab"
 
-glob@^7.0.0, glob@^7.0.3, glob@^7.0.5, glob@^7.1.0, glob@^7.1.1, glob@^7.1.2, glob@~7.1.2:
+glob@^7.0.0, glob@^7.0.3, glob@^7.0.5, glob@^7.1.1, glob@^7.1.2, glob@~7.1.2:
   version "7.1.2"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.2.tgz#c19c9df9a028702d678612384a6552404c636d15"
   dependencies:
@@ -3263,13 +3263,13 @@ jsbn@~0.1.0:
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"
 
 jsdoc-api@^4.0.1:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/jsdoc-api/-/jsdoc-api-4.0.2.tgz#fb7bbb0fb10d5276bdeedb86657ffd08693b0150"
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/jsdoc-api/-/jsdoc-api-4.0.3.tgz#f87357856349a0be40a03e64711c34c74754ba20"
   dependencies:
     array-back "^2.0.0"
     cache-point "^0.4.1"
     collect-all "^1.0.3"
-    file-set "^1.1.1"
+    file-set "^2.0.0"
     fs-then-native "^2.0.0"
     jsdoc "~3.5.5"
     object-to-spawn-args "^1.1.1"
@@ -3688,7 +3688,7 @@ map-visit@^1.0.0:
   dependencies:
     object-visit "^1.0.0"
 
-marked@^0.3.12, marked@~0.3.6:
+marked@^0.3.16, marked@~0.3.6:
   version "0.3.16"
   resolved "https://registry.yarnpkg.com/marked/-/marked-0.3.16.tgz#2f188b7dfcfa6540fe9940adaf0f3b791c9a5cba"
 
@@ -3857,8 +3857,8 @@ ms@2.0.0:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
 nan@^2.3.0:
-  version "2.8.0"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.8.0.tgz#ed715f3fe9de02b57a5e6252d90a96675e1f085a"
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.9.2.tgz#f564d75f5f8f36a6d9456cca7a6c4fe488ab7866"
 
 nanomatch@^1.2.5:
   version "1.2.9"
@@ -5438,8 +5438,8 @@ tslint@^5.9.1:
     tsutils "^2.12.1"
 
 tsutils@^2.12.1:
-  version "2.21.1"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.21.1.tgz#5b23c263233300ed7442b4217855cbc7547c296a"
+  version "2.21.2"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.21.2.tgz#902aa5987e1440c47673543d96752df8d44ab9c7"
   dependencies:
     tslib "^1.8.1"
 
@@ -5494,10 +5494,6 @@ uglify-to-browserify@~1.0.0:
 uid-number@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/uid-number/-/uid-number-0.0.6.tgz#0ea10e8035e8eb5b8e4449f06da1c730663baa81"
-
-ultron@~1.1.0:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/ultron/-/ultron-1.1.1.tgz#9fe1536a10a664a65266a1e3ccf85fd36302bc9c"
 
 underscore-contrib@~0.3.0:
   version "0.3.0"
@@ -5804,12 +5800,11 @@ write-file-atomic@^2.0.0, write-file-atomic@^2.1.0:
     signal-exit "^3.0.2"
 
 ws@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-4.0.0.tgz#bfe1da4c08eeb9780b986e0e4d10eccd7345999f"
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-4.1.0.tgz#a979b5d7d4da68bf54efe0408967c324869a7289"
   dependencies:
     async-limiter "~1.0.0"
     safe-buffer "~5.1.0"
-    ultron "~1.1.0"
 
 xdg-basedir@^3.0.0:
   version "3.0.0"
