@@ -36,6 +36,8 @@ export class LinuxTargetHelper {
       sources.push(icnsPath)
     }
 
+    sources.push("icon.icns")
+
     sources.push(path.join(getTemplatePath("linux"), "electron-icons"))
 
     const result = await packager.resolveIcon(sources, "set")

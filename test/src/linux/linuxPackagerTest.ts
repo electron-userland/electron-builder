@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { move, remove, rename } from "fs-extra-p"
+import { copyFile, move, remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
@@ -83,8 +83,36 @@ test.ifNotWindows("icons from ICNS (mac)", app({
     },
   },
 }, {
-  projectDirCreated: it => move(path.join(it, "build", "icon.icns"), path.join(it, "resources", "time.icns"))
-    .then(() => remove(path.join(it, "build"))),
+  projectDirCreated: async projectDir => {
+    await move(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns"))
+    await remove(path.join(projectDir, "build"))
+  },
+  packed: async context => {
+    const projectDir = context.getResources(Platform.LINUX)
+    await assertThat(projectDir).isDirectory()
+  },
+}))
+
+test.ifNotWindows("icons from ICNS if nothing specified", app({
+  targets: appImageTarget,
+  config: {
+    publish: null,
+  },
+}, {
+  projectDirCreated: async projectDir => {
+    await remove(path.join(projectDir, "build", "icons"))
+  },
+}))
+
+test.ifNotWindows("icons from dir and one icon with suffix", app({
+  targets: appImageTarget,
+  config: {
+    publish: null,
+  },
+}, {
+  projectDirCreated: async projectDir => {
+    await copyFile(path.join(projectDir, "build", "icons", "16x16.png"), path.join(projectDir, "build", "icons", "16x16-dev.png"))
+  },
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
     await assertThat(projectDir).isDirectory()
