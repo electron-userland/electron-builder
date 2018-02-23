@@ -5,7 +5,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -72,8 +72,7 @@ exports[`custom env 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "FOO": "bar",
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
@@ -117,7 +116,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -180,7 +179,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -245,7 +244,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -310,7 +309,7 @@ Object {
   "apps": Object {
     "sep": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/sep",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -377,7 +376,7 @@ Object {
   "apps": Object {
     "testapp": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/testapp",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -438,7 +437,7 @@ Object {
   "apps": Object {
     "testapp": Object {
       "adapter": "none",
-      "command": "bin/desktop-launch $SNAP/app/testapp",
+      "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
         "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",

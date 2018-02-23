@@ -1,5 +1,5 @@
 import { Arch, replaceDefault as _replaceDefault, serializeToYaml, executeAppBuilder, toLinuxArchString } from "builder-util"
-import { outputFile } from "fs-extra-p"
+import { chmod, outputFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
@@ -7,8 +7,7 @@ import { Target } from "../core"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { createStageDir } from "./targetUtil"
-import { SNAP_TEMPLATE_SHA512, SNAP_TEMPLATE_VERSION } from "./tools"
+import { createStageDirPath } from "./targetUtil"
 
 // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
 const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]
@@ -42,6 +41,23 @@ export default class SnapTarget extends Target {
     const buildPackages = asArray(options.buildPackages)
     this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
 
+    const appDescriptor: any = {
+      command: `command.sh`,
+      environment: {
+        TMPDIR: "$XDG_RUNTIME_DIR",
+        PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        LD_LIBRARY_PATH: [
+          "$SNAP_LIBRARY_PATH",
+          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
+          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
+          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
+          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
+          "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
+        ].join(":"),
+        ...options.environment,
+      },
+      plugs: plugNames,
+    }
     const snap: any = {
       name: snapName,
       version: appInfo.version,
@@ -51,23 +67,7 @@ export default class SnapTarget extends Target {
       grade: options.grade || "stable",
       architectures: [toLinuxArchString(arch)],
       apps: {
-        [snapName]: {
-          command: `bin/desktop-launch $SNAP/app/${this.packager.executableName}`,
-          environment: {
-            TMPDIR: "$XDG_RUNTIME_DIR",
-            PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-            LD_LIBRARY_PATH: [
-              "$SNAP_LIBRARY_PATH",
-              "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
-              "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
-              "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
-              "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-              "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
-            ].join(":"),
-            ...options.environment,
-          },
-          plugs: plugNames,
-        }
+        [snapName]: appDescriptor
       },
       parts: {
         app: {
@@ -79,7 +79,7 @@ export default class SnapTarget extends Target {
     }
 
     if (!this.isUseTemplateApp) {
-      snap[snapName].adapter = "none"
+      appDescriptor.adapter = "none"
     }
 
     if (buildPackages.length > 0) {
@@ -119,17 +119,17 @@ export default class SnapTarget extends Target {
       delete snap.parts
     }
 
-    const stageDir = await createStageDir(this, packager, arch)
+    const stageDir = await createStageDirPath(this, packager, arch)
     // snapcraft.yaml inside a snap directory
-    const snapMetaDir = path.join(stageDir.dir, this.isUseTemplateApp ? "meta" : "snap")
+    const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
 
     const args = [
       "snap",
       "--app", appOutDir,
-      "--stage", stageDir.dir,
+      "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
-      "--docker-image", "electronuserland/builder:latest"
+      "--docker-image", "electronuserland/builder:latest",
     ]
 
     await this.helper.icons
@@ -152,17 +152,18 @@ export default class SnapTarget extends Target {
 
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
+    const commandWrapperFile = path.join(stageDir, "command.sh")
+    // noinspection SpellCheckingInspection
+    await writeFile(commandWrapperFile, `#!/bin/bash\nexec $SNAP/bin/desktop-launch "$SNAP/${this.isUseTemplateApp ? "" : "app/"}${this.packager.executableName}"`)
+    await chmod(commandWrapperFile, 0o755)
+
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {
       args.push("--hooks", hooksDir)
     }
 
     if (this.isUseTemplateApp) {
-      const templateDirName = `snap-template-${SNAP_TEMPLATE_VERSION}`
-      args.push(
-        "--template-url", `https://github.com/electron-userland/electron-builder-binaries/releases/download/${templateDirName}/${templateDirName}.7z`,
-        "--template-sha512", SNAP_TEMPLATE_SHA512,
-      )
+      args.push("--template-url", "electron1")
     }
     await executeAppBuilder(args)
     packager.dispatchArtifactCreated(artifactPath, this, arch)

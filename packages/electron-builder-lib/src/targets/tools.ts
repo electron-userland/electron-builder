@@ -3,10 +3,6 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Platform } from "../core"
 
-export const SNAP_TEMPLATE_VERSION = "0.2.0"
-// noinspection SpellCheckingInspection
-export const SNAP_TEMPLATE_SHA512 = "2Uxlk/+BkZt5T4CePfi5Cbt35TLlCuO34M5kGaFeT/V1JCx5D6i+EAdMMp1AX9vi6/4zSKW/wB5Z+DZIaHacNg=="
-
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
@@ -34,10 +30,7 @@ export const fpmPath = new Lazy(() => {
 // noinspection JSUnusedGlobalSymbols
 export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
-  return Promise.all([
-    fpmPath.value,
-    getBinFromGithub("snap-template", SNAP_TEMPLATE_VERSION, SNAP_TEMPLATE_SHA512),
-  ])
+  return fpmPath.value
 }
 
 export function getZstd() {

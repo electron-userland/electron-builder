@@ -25,7 +25,6 @@ Object {
 exports[`bundleShortVersion 2`] = `
 Object {
   "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"hash\\",\\"electron.asar\\":\\"hash\\"}}",
-  "BuildMachineOSBuild": "16G1114",
   "CFBundleDisplayName": "BundleShortVersion",
   "CFBundleExecutable": "BundleShortVersion",
   "CFBundleIconFile": "BundleShortVersion.icns",

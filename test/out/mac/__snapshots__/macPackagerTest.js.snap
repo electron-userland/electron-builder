@@ -57,7 +57,6 @@ Object {
 exports[`one-package 2`] = `
 Object {
   "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"hash\\",\\"electron.asar\\":\\"hash\\"}}",
-  "BuildMachineOSBuild": "16G1114",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleDocumentTypes": Array [
     Object {

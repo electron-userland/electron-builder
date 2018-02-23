@@ -2,15 +2,10 @@ import { emptyDir, remove } from "fs-extra-p"
 import * as path from "path"
 import { Target } from "../core"
 import { Arch, debug } from "builder-util"
-import BluebirdPromise from "bluebird-lst"
 import { PlatformPackager } from "../platformPackager"
 
 export class StageDir {
   constructor(readonly dir: string) {
-  }
-
-  ensureEmpty() {
-    return emptyDir(this.dir)
   }
 
   getTempFile(name: string) {
@@ -21,7 +16,7 @@ export class StageDir {
     if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
       return remove(this.dir)
     }
-    return BluebirdPromise.resolve()
+    return Promise.resolve()
   }
 
   toString() {
@@ -30,8 +25,11 @@ export class StageDir {
 }
 
 export async function createStageDir(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<StageDir> {
+  return new StageDir(await createStageDirPath(target, packager, arch))
+}
+
+export async function createStageDirPath(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<string> {
   const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
-  const stageDir = new StageDir(tempDir)
-  await stageDir.ensureEmpty()
-  return stageDir
+  await emptyDir(tempDir)
+  return tempDir
 }

@@ -272,6 +272,7 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
             "path": "TestApp-1.0.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
@@ -292,6 +293,7 @@ Object {
         "packages": Object {
           "x64": Object {
             "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
             "path": "TestApp-1.0.0-x64.nsis.7z",
             "sha512": "@sha512",
             "size": "@size",
