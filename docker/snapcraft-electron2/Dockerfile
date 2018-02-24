@@ -1,0 +1,5 @@
+FROM snapcore/snapcraft:latest
+
+# list from snapcraft message "Installing build dependencies"
+RUN apt-get -qq update && apt-get -qq install --no-install-recommends acl adwaita-icon-theme at-spi2-core colord colord-data dbus dconf-gsettings-backend dconf-service gir1.2-atspi-2.0 gir1.2-gtk-3.0 glib-networking glib-networking-common glib-networking-services gsettings-desktop-schemas hicolor-icon-theme humanity-icon-theme libatk-bridge2.0-0 libatk-bridge2.0-dev libatspi2.0-0 libatspi2.0-dev libcap-ng0 libcolord2 libcolorhug2 libcroco3 libdbus-1-dev libdconf1 libepoxy-dev libepoxy0 libexif12 libgd3 libgmp-dev libgmpxx4ldbl libgphoto2-6 libgphoto2-l10n libgphoto2-port12 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk-3-dev libgusb2 libieee1284-3 libjson-glib-1.0-0 libjson-glib-1.0-common libltdl7 libpam-systemd libpolkit-agent-1-0 libpolkit-backend-1-0 libpolkit-gobject-1-0 librest-0.7-0 librsvg2-2 librsvg2-common libsane libsane-common libsoup-gnome2.4-1 libsoup2.4-1 libusb-1.0-0 libvpx3 libxpm4 libxtst-dev libxtst6 nettle-dev policykit-1 ubuntu-mono x11proto-record-dev
+

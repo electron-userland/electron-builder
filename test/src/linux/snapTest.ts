@@ -19,6 +19,17 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
   },
 }))
 
+test.ifAll.ifDevOrLinuxCi("snap electron 2", app({
+  targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "sep-electron2",
+    },
+    productName: "Sep Electron 2",
+    electronVersion: "2.0.0-beta.1",
+  },
+}))
+
 // custom packages to test not-prepacked snap build
 // very slow
 test.skip("snap full", app({
@@ -28,6 +39,20 @@ test.skip("snap full", app({
       name: "se-wo-template",
     },
     productName: "Snap Electron App (full build)",
+    snap: {
+      useTemplateApp: false,
+    },
+  },
+}))
+
+test.skip("snap full electron 2", app({
+  targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "se-electron2",
+    },
+    electronVersion: "2.0.0-beta.1",
+    productName: "Snap Electron 2 App (full build)",
     snap: {
       useTemplateApp: false,
     },

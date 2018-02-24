@@ -2,6 +2,7 @@ import { Arch, AsyncTaskManager, log, executeAppBuilder } from "builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
+import * as semver from "semver"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
@@ -22,6 +23,10 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
     const executableName = this.platformSpecificBuildOptions.executableName
     this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
+  }
+
+  get isElectron2(): boolean {
+    return semver.gte(this.config.electronVersion || "1.8.3", "2.0.0-beta.1")
   }
 
   get defaultTarget(): Array<string> {
@@ -84,11 +89,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   protected async postInitApp(packContext: AfterPackContext): Promise<void> {
     const executable = path.join(packContext.appOutDir, this.executableName)
     await rename(path.join(packContext.appOutDir, this.electronDistExecutableName), executable)
-    try {
-      await executeAppBuilder(["clear-exec-stack", "--input", executable])
-    }
-    catch (e) {
-      log.debug({error: e}, "cannot clear exec stack")
+
+    if (!this.isElectron2) {
+      try {
+        await executeAppBuilder(["clear-exec-stack", "--input", executable])
+      }
+      catch (e) {
+        log.debug({error: e}, "cannot clear exec stack")
+      }
     }
   }
 }

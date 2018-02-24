@@ -275,25 +275,25 @@ anymatch@^1.3.0:
     micromatch "^2.1.5"
     normalize-path "^2.0.0"
 
-app-builder-bin-linux@1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.4.1.tgz#00eca4fbd3e9bdb04073b94b06c5a2c4a659f3d1"
+app-builder-bin-linux@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.5.0.tgz#c22df1ab9ee7fb0270ec27a3c8a6993966ea4220"
 
-app-builder-bin-mac@1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.4.1.tgz#7385b1ed97e58ac4d8e3dc3b5dc6d76b67d97d8d"
+app-builder-bin-mac@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.5.0.tgz#40821128a1f20e0559f1fca71a59ecab81bb59b5"
 
-app-builder-bin-win@1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.4.1.tgz#30806d14b13bdb7fce4021a7d4f5a9c9ecc9708e"
+app-builder-bin-win@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.5.0.tgz#0a12437d825ac89fc2357e8be0ba855f54c083e9"
 
-app-builder-bin@1.4.1:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.4.1.tgz#3ae86df2d3eb624ad93d097abe986fe07c2f5aca"
+app-builder-bin@1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.5.0.tgz#dc768af9704876959c68af5456ef31f67a4663fe"
   optionalDependencies:
-    app-builder-bin-linux "1.4.1"
-    app-builder-bin-mac "1.4.1"
-    app-builder-bin-win "1.4.1"
+    app-builder-bin-linux "1.5.0"
+    app-builder-bin-mac "1.5.0"
+    app-builder-bin-win "1.5.0"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -484,9 +484,9 @@ atob@^2.0.0:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.0.3.tgz#19c7a760473774468f20b2d2d03372ad7d4cbf5d"
 
-aws-sdk@^2.201.0:
-  version "2.201.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.201.0.tgz#7a4528262d9097abe37ebf4e6bf9d1851db47003"
+aws-sdk@^2.202.0:
+  version "2.202.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.202.0.tgz#c1bd90c1dc0bfe835522fe81f29cf8bb71bf00cc"
   dependencies:
     buffer "4.9.1"
     events "^1.1.1"

@@ -73,7 +73,7 @@ export default class SnapTarget extends Target {
         app: {
           plugin: "nil",
           "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
-          after: this.replaceDefault(options.after, ["desktop-gtk2"]),
+          after: this.replaceDefault(options.after, [this.packager.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"]),
         }
       },
     }
@@ -129,7 +129,7 @@ export default class SnapTarget extends Target {
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
-      "--docker-image", "electronuserland/builder:latest",
+      "--docker-image", this.packager.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
     ]
 
     await this.helper.icons
@@ -163,7 +163,7 @@ export default class SnapTarget extends Target {
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", "electron1")
+      args.push("--template-url", this.packager.isElectron2 ? "electron2" : "electron1")
     }
     await executeAppBuilder(args)
     packager.dispatchArtifactCreated(artifactPath, this, arch)

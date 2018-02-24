@@ -8,3 +8,5 @@ docker build -t electronuserland/builder:9 -t electronuserland/builder:latest -t
 docker build -t electronuserland/builder:wine docker/wine
 docker build -t electronuserland/builder:wine-mono docker/wine-mono
 docker build -t electronuserland/builder:wine-chrome docker/wine-chrome
+
+docker build -t electronuserland/snapcraft-electron:2 docker/snapcraft-electron2
