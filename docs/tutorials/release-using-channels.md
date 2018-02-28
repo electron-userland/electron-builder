@@ -1,5 +1,4 @@
-> !!! This documentation is in "beta" and needed to be tested !!!
-
+<a name="release_using_channels"></a>
 # Release Using Channels / Auto-Updates With Channels
 
 ## Description
@@ -36,20 +35,15 @@ All you have to do to release using channels is to define the channel in the ver
 
 
 ### Your Application
-All you need to do here is to define which channel the user will receive.
+All you need to do here is to define which channel the user will receive with:
 
-`autoUpdater.channel('beta')`
+`autoUpdater.channel = 'beta'` (see [the documentation here](../auto-update.md#module_electron-updater.AppUpdater+channel))
 
 The following versions will be distributed to users depending on the channel defined:
 - "stable" or nothing: users will only get "stable" versions
 - "beta": users will get "beta" and "stable" version
 - "alpha": users will get "alpha", "beta" and "stable" version
 
-
-### Advanced (optional)
-todo:
-- `allowDowngrade`
-- 
 
 ## How To Use It / Example
 Imagine your application version is 1.0.1 (stable).

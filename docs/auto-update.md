@@ -192,14 +192,12 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 #### `appUpdater.setFeedURL(options)`
 Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
+
 - options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+channel"></a>
-#### `appUpdater.channel()` (getter)
-Get the current channel.
-
-#### `appUpdater.channel(option)` (setter)
-Define the channel which the Auto-Updater will follow (see [the auto-update with channels tutorial](/tutorials/release-using-channels.md). `option` is a `string` which define the channel (like `option='beta'`).
+#### `appUpdater.channel` (getter and setter)
+Define the channel which the Auto-Updater will follow (see [the auto-update with channels tutorial](tutorials/release-using-channels.md#release_using_channels)) using `appUpdater.channel = 'beta'` or get the current channel with `currentChannel = appUpdater.channel`.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 #### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`
