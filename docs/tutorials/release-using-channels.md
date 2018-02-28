@@ -1,6 +1,6 @@
 > !!! This documentation is in "beta" and needed to be tested !!!
 
-# Release using channels / Auto-updates with channels
+# Release Using Channels / Auto-Updates With Channels
 
 ## Description
 Channels are useful to distribute "beta" or "alpha" releases of your application to a choosen set of users. This allow to test an application before release it as "stable".
@@ -8,9 +8,9 @@ Channels are useful to distribute "beta" or "alpha" releases of your application
 Users which receive "beta" version will get "stable" versions too. Otherwise users who doesn't wanna "beta" will only get "stable" releases.
 
 They are tree channels level ordered by stability :
-1. "stable", your application is stable and this is the default one (example: 1.3.2)
-2. "beta" which mean your application works, but should have some bugs (example: 1.3.2-beta)
-3. "alpha" which mean your application is not stable and in active development (example: 1.3.2-alpha)
+1. "stable", your application is stable and this is the default one (example: "1.3.2")
+2. "beta" which mean your application works, but should have some bugs (example: "1.3.2-beta")
+3. "alpha" which mean your application is not stable and in active development (example: "1.3.2-alpha")
 
 
 ## Configuration
@@ -35,25 +35,23 @@ If you want to use channels, you should add this to your package.json:
 All you have to do to release using channels is to define the channel in the version tag of the `package.json`. Add "-beta" or "-alpha" (nothing for stable) to automatically build for the related channel.
 
 
-### Your application
+### Your Application
 All you need to do here is to define which channel the user will receive.
 
-`autoUpdater.setFeedURL({url: 'https://www.yoursite.com', channel: 'beta'});`
+`autoUpdater.channel('beta')`
 
-> note: remove the need to define url !
-
-The following versions will be distributed to the users according to the channel you set in `setFeedURL()` :
-- "stable": users will only get "stable" versions
+The following versions will be distributed to users depending on the channel defined:
+- "stable" or nothing: users will only get "stable" versions
 - "beta": users will get "beta" and "stable" version
 - "alpha": users will get "alpha", "beta" and "stable" version
 
 
 ### Advanced (optional)
 todo:
-- allow downgrade
+- `allowDowngrade`
 - 
 
-## How to use it / Example
+## How To Use It / Example
 Imagine your application version is 1.0.1 (stable).
 
 If you want to release a beta for the 1.1.0 version, you only need to update the package.json "version" with "1.1.0-beta".
