@@ -70,7 +70,7 @@ export class CopyElevateHelper {
     }
 
     if (isPackElevateHelper === false) {
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
 
     let promise = this.copied.get(appOutDir)

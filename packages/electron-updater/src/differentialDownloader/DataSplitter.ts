@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { newError } from "builder-util-runtime"
 import { createReadStream } from "fs-extra-p"
 import { Writable } from "stream"
@@ -158,7 +157,7 @@ export class DataSplitter extends Writable {
   }
 
   private copyExistingData(index: number, end: number) {
-    return new BluebirdPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const w = () => {
         if (index === end) {
           resolve()
@@ -218,10 +217,10 @@ export class DataSplitter extends Writable {
     this.actualPartLength += end - start
     const out = this.out
     if (out.write(start === 0 && data.length === end ? data : data.slice(start, end))) {
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
     else {
-      return new BluebirdPromise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         out.on("error", reject)
         out.once("drain", () => {
           out.removeListener("error", reject)

@@ -229,7 +229,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
 /** @internal */
 export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
   if (matchers == null || matchers.length === 0) {
-    return BluebirdPromise.resolve()
+    return Promise.resolve()
   }
 
   return BluebirdPromise.map(matchers, async (matcher: FileMatcher) => {

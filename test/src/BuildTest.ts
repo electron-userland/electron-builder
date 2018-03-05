@@ -120,7 +120,7 @@ test.ifLinuxOrDevMac("afterPack", () => {
     config: {
       afterPack: () => {
         called++
-        return BluebirdPromise.resolve()
+        return Promise.resolve()
       }
     }
   }, {
@@ -137,7 +137,7 @@ test.ifLinuxOrDevMac("afterSign", () => {
     config: {
       afterSign: () => {
         called++
-        return BluebirdPromise.resolve()
+        return Promise.resolve()
       }
     }
   }, {
@@ -236,6 +236,6 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   packed: context => verifySmartUnpack(context.getResources(Platform.LINUX))}))
 
 test("wine version", async () => {
-  await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))
-  await checkWineVersion(BluebirdPromise.resolve("2.0-rc2"))
+  await checkWineVersion(Promise.resolve("1.9.23 (Staging)"))
+  await checkWineVersion(Promise.resolve("2.0-rc2"))
 })

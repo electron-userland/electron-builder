@@ -50,7 +50,7 @@ export async function installAppDeps(args: any) {
   const muonVersion = config.muonVersion
   const results = await BluebirdPromise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
-    muonVersion == null ? getElectronVersion(projectDir, config, packageMetadata) : BluebirdPromise.resolve(muonVersion),
+    muonVersion == null ? getElectronVersion(projectDir, config, packageMetadata) : Promise.resolve(muonVersion),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)

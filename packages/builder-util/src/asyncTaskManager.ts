@@ -29,7 +29,7 @@ export class AsyncTaskManager {
       .catch(it => {
         log.debug({error: it.message || it.toString()}, "async task error")
         this.errors.push(it)
-        return BluebirdPromise.resolve(null)
+        return Promise.resolve(null)
       }))
   }
 

@@ -40,7 +40,7 @@ test.ifAll("custom mas", () => {
         entitlements: "mas-entitlements file path",
         "entitlements-inherit": "mas-entitlementsInherit file path",
       })
-      return BluebirdPromise.resolve(null)
+      return Promise.resolve(null)
     }
   })
 })
@@ -62,7 +62,7 @@ test.ifAll("entitlements in the package.json", () => {
         entitlements: "osx-entitlements file path",
         "entitlements-inherit": "osx-entitlementsInherit file path",
       })
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
   })
 })
@@ -82,7 +82,7 @@ test.ifAll("entitlements in build dir", () => {
         entitlements: path.join(context.projectDir, "build", "entitlements.mac.plist"),
         "entitlements-inherit": path.join(context.projectDir, "build", "entitlements.mac.inherit.plist"),
       })
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
   })
 })

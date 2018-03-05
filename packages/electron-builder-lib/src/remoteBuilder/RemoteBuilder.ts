@@ -45,7 +45,7 @@ export class RemoteBuilder {
 
   build(): Promise<any> {
     if (this.buildStarted) {
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
 
     this.buildStarted = true

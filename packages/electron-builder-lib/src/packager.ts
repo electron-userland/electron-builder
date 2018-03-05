@@ -497,7 +497,7 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
       return ensureDir(it)
     })
   }
-  return BluebirdPromise.resolve()
+  return Promise.resolve()
 }
 
 export interface BuildResult {

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { outputFile } from "fs-extra-p"
 import { serializeToYaml } from "./util"
 
@@ -46,7 +45,7 @@ export class DebugLogger {
       return outputFile(file, serializeToYaml(this.data))
     }
     else {
-      return BluebirdPromise.resolve()
+      return Promise.resolve()
     }
   }
 }

@@ -9,7 +9,7 @@ const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisi
 export function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually
   if (process.env.CIRCLECI || !isCi) {
-    return BluebirdPromise.resolve()
+    return Promise.resolve()
   }
 
   const cacheDir = require("env-paths")("electron", {suffix: ""}).cache

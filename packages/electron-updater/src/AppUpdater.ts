@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
@@ -226,7 +225,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
     if (isDev) {
-      return BluebirdPromise.resolve(null)
+      return Promise.resolve(null)
     }
 
     this.signals.updateDownloaded(it => {

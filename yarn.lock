@@ -275,25 +275,25 @@ anymatch@^1.3.0:
     micromatch "^2.1.5"
     normalize-path "^2.0.0"
 
-app-builder-bin-linux@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.6.0.tgz#d7731d7988b8a740e74d591cbd565f168a266111"
+app-builder-bin-linux@1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.7.0.tgz#83894c51e224382a7268997cc8af1283c1be21e3"
 
-app-builder-bin-mac@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.6.0.tgz#c976da70796d67aeb7134a57899636f2581d1c67"
+app-builder-bin-mac@1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.7.0.tgz#067a91d612fd3c2b687a097343ec4bb5f42c2e5f"
 
-app-builder-bin-win@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.6.0.tgz#528ef96430d519c270b4de260bea0ddc70df1733"
+app-builder-bin-win@1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.7.0.tgz#caf81af88c5506717e4015880981b4ed3508414f"
 
-app-builder-bin@1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.6.0.tgz#c0e88a488d4c23c2e7fe0bbfb70c1d61165be206"
+app-builder-bin@1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.7.0.tgz#cb83e469d511f3516af7bca5288b692604bbd5c1"
   optionalDependencies:
-    app-builder-bin-linux "1.6.0"
-    app-builder-bin-mac "1.6.0"
-    app-builder-bin-win "1.6.0"
+    app-builder-bin-linux "1.7.0"
+    app-builder-bin-mac "1.7.0"
+    app-builder-bin-win "1.7.0"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -3255,6 +3255,13 @@ js-tokens@^3.0.0, js-tokens@^3.0.2:
 js-yaml@^3.10.0, js-yaml@^3.4.2, js-yaml@^3.7.0, js-yaml@^3.9.1:
   version "3.10.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.10.0.tgz#2e78441646bd4682e963f22b6e92823c309c62dc"
+  dependencies:
+    argparse "^1.0.7"
+    esprima "^4.0.0"
+
+js-yaml@^3.11.0:
+  version "3.11.0"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.11.0.tgz#597c1a8bd57152f26d622ce4117851a51f5ebaef"
   dependencies:
     argparse "^1.0.7"
     esprima "^4.0.0"

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { walk } from "builder-util/out/fs"
 import { Arch, Platform } from "electron-builder"
 import { readAsarJson } from "electron-builder-lib/out/asar/asar"
@@ -31,7 +30,7 @@ export async function checkHelpers(resourceDir: string, packElevateHelper: boole
 
 export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null, packElevateHelper = true) {
   if (process.env.DO_WINE !== "true") {
-    return BluebirdPromise.resolve()
+    return Promise.resolve()
   }
 
   const wine = new WineManager()
