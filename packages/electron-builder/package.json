@@ -47,7 +47,7 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "bluebird-lst": "^1.0.5",
-    "chalk": "^2.3.0",
+    "chalk": "^2.3.2",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
     "fs-extra-p": "^4.5.2",

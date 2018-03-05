@@ -33,7 +33,7 @@ If directory matched, all contents are copied. So, you can just specify `foo` to
    "foo/bar.js",
  ]
  ```
- 
+
 ## Excluding Directories
 
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
@@ -44,6 +44,7 @@ Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
 You can use macros in the file patterns, artifact file name patterns and publish configuration url:
 * `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
 * `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+* `${platform}` — expanded to `darwin`, `linux` or `win32` according to Node.js `process.platform` property.
 * `${name}` – `package.json` `name`.
 * `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
 * `${version}`

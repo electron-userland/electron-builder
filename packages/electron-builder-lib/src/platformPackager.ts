@@ -445,6 +445,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         case "os":
           return this.platform.buildConfigurationKey
 
+        case "platform":
+          return process.platform
+
         case "channel":
           return appInfo.channel || "latest"
 
