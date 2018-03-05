@@ -89,9 +89,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected getCscLink(envName: string = "CSC_LINK"): string | null | undefined {
+  protected getCscLink(extraEnvName?: string | null): string | null | undefined {
     // allow to specify as empty string
-    return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), process.env[envName])
+    const envValue = chooseNotNull(extraEnvName == null ? null : process.env[extraEnvName], process.env.CSC_LINK)
+    return chooseNotNull(chooseNotNull(this.info.config.cscLink, this.platformSpecificBuildOptions.cscLink), envValue)
   }
 
   protected doGetCscPassword(): string | null | undefined {
