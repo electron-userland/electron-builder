@@ -48,7 +48,7 @@ To build app in distributable format for Linux:
 sudo apt-get install --no-install-recommends -y libopenjp2-tools
 ```
 
-To build rpm: `sudo apt-get install --no-install-recommends -y rpm`.
+To build rpm: `sudo apt-get install --no-install-recommends -y rpm` (or `sudo yum install rpm-build`).
 
 To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
@@ -82,7 +82,7 @@ osx_image: xcode9.0
 
 ## Docker
 
-To build Linux or Windows on any platform. You cannot build for Windows using Docker if you have native dependencies and native dependency doesn't use [prebuild](https://www.npmjs.com/package/prebuild). 
+To build Linux or Windows on any platform. You cannot build for Windows using Docker if you have native dependencies and native dependency doesn't use [prebuild](https://www.npmjs.com/package/prebuild).
 
 See example Docker usage on a CI server in the [sample .travis.yml](https://github.com/develar/onshape-desktop-shell/blob/master/.travis.yml).
 
@@ -101,11 +101,11 @@ See example Docker usage on a CI server in the [sample .travis.yml](https://gith
      -v ~/.cache/electron-builder:/root/.cache/electron-builder \
      electronuserland/builder:wine
    ```
-   
+
 2. Type in `yarn && yarn dist`
-   
+
    If you don't have `dist` npm script in your `package.json`, call `./node_modules/.bin/electron-builder` directly.
-   
+
 Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dist"` You can use `/test.sh` to install dependencies and run tests.
 
 If you don't need to build Windows, use image `electronuserland/builder` (wine is not installed in this image).
