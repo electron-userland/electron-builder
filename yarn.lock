@@ -112,9 +112,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^22.1.4":
-  version "22.1.4"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.1.4.tgz#5c0c06a9bb495c67e0a78002a952f151e2ae58a1"
+"@types/jest@^22.2.0":
+  version "22.2.0"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.2.0.tgz#55ce83139f7ad1b48b414c3927746614c6963c0f"
 
 "@types/js-yaml@^3.10.1":
   version "3.10.1"
@@ -275,25 +275,25 @@ anymatch@^1.3.0:
     micromatch "^2.1.5"
     normalize-path "^2.0.0"
 
-app-builder-bin-linux@1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.7.0.tgz#83894c51e224382a7268997cc8af1283c1be21e3"
+app-builder-bin-linux@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.7.1.tgz#925967add77c13d387e3fe88359a4b4dce82c525"
 
-app-builder-bin-mac@1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.7.0.tgz#067a91d612fd3c2b687a097343ec4bb5f42c2e5f"
+app-builder-bin-mac@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.7.1.tgz#e5c2b49be82473a737e000cfccfc65a68f9cc62d"
 
-app-builder-bin-win@1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.7.0.tgz#caf81af88c5506717e4015880981b4ed3508414f"
+app-builder-bin-win@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.7.1.tgz#e1ba3d6d645896552b28e4dd05525b39561b9b88"
 
-app-builder-bin@1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.7.0.tgz#cb83e469d511f3516af7bca5288b692604bbd5c1"
+app-builder-bin@1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.7.1.tgz#c2540eb8b164c91c30bc8cf3f16b5c181f3f5c31"
   optionalDependencies:
-    app-builder-bin-linux "1.7.0"
-    app-builder-bin-mac "1.7.0"
-    app-builder-bin-win "1.7.0"
+    app-builder-bin-linux "1.7.1"
+    app-builder-bin-mac "1.7.1"
+    app-builder-bin-win "1.7.1"
 
 append-transform@^0.4.0:
   version "0.4.0"

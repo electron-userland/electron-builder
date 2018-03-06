@@ -79,7 +79,7 @@ Object {
 }
 `;
 
-exports[`AppImage arm 1`] = `
+exports[`AppImage arm, max compression 1`] = `
 Object {
   "linux": Array [
     Object {
