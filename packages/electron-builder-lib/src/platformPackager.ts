@@ -399,12 +399,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (ext === "AppImage" || ext === "rpm") {
         archName = "x86_64"
       }
-      else if (ext === "deb") {
+      else if (ext === "deb" || ext === "snap") {
         archName = "amd64"
       }
     }
     else if (arch === Arch.ia32) {
-      if (ext === "deb" || ext === "AppImage") {
+      if (ext === "deb" || ext === "AppImage" || ext === "snap") {
         archName = "i386"
       }
       else if (ext === "pacman" || ext === "rpm") {

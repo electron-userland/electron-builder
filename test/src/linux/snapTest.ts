@@ -25,6 +25,10 @@ test.ifAll.ifDevOrLinuxCi("snap electron 2", app({
     extraMetadata: {
       name: "sep-electron2",
     },
+    linux: {
+      //tslint:disable-next-line:no-invalid-template-strings
+      artifactName: "${name}_v${version}.${ext}",
+    },
     productName: "Sep Electron 2",
     electronVersion: "2.0.0-beta.1",
   },

@@ -30,8 +30,9 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private createDescriptor(snapName: string, arch: Arch): any {
+  private createDescriptor(arch: Arch): any {
     const appInfo = this.packager.appInfo
+    const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
     const linuxArchName = toAppImageOrSnapArch(arch)
 
@@ -109,12 +110,12 @@ export default class SnapTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
     const options = this.options
-    const snapName = packager.executableName.toLowerCase()
-    const snapFileName = `${snapName}_${packager.appInfo.version}_${toLinuxArchString(arch)}.snap`
-    const artifactPath = path.join(this.outDir, snapFileName)
+    // tslint:disable-next-line:no-invalid-template-strings
+    const artifactName = packager.expandArtifactNamePattern(this.options, "snap", arch, "${name}_${version}_${arch}.${ext}", false)
+    const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("snap", artifactPath, arch)
 
-    const snap: any = this.createDescriptor(snapName, arch)
+    const snap: any = this.createDescriptor(arch)
     if (this.isUseTemplateApp) {
       delete snap.parts
     }
@@ -166,7 +167,7 @@ export default class SnapTarget extends Target {
       args.push("--template-url", this.packager.isElectron2 ? "electron2" : "electron1")
     }
     await executeAppBuilder(args)
-    packager.dispatchArtifactCreated(artifactPath, this, arch)
+    packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
   }
 }
 

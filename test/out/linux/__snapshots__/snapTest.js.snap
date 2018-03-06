@@ -509,7 +509,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "sep-electron2_1.1.0_amd64.snap",
+      "file": "sep-electron2_v1.1.0.snap",
     },
   ],
 }
