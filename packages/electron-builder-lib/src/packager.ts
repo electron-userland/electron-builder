@@ -136,10 +136,6 @@ export class Packager {
 
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
-    if ("project" in options) {
-      throw new InvalidConfigurationError("Use projectDir instead of project")
-    }
-
     if ("devMetadata" in options) {
       throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
     }

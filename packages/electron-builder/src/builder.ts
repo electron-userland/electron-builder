@@ -122,8 +122,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.arch
 
   const r = result as any
-  delete r.em
-
   delete r.m
   delete r.o
   delete r.l
@@ -141,7 +139,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.armv7l
 
   let config = result.config
-  delete r.extraMetadata
 
   // config is array when combining dot-notation values with a config file value (#2016)
   if (Array.isArray(config)) {
@@ -170,6 +167,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
   }
 
+  if ("project" in r && !("projectDir" in result)) {
+    result.projectDir = r.project
+    delete r.project
+  }
   return result as BuildOptions
 }
 
