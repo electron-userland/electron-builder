@@ -108,7 +108,7 @@ export function checkIsRangesSupported(response: IncomingMessage, reject: (error
   if (response.statusCode !== 206) {
     const acceptRanges = safeGetHeader(response, "accept-ranges")
     if (acceptRanges == null || acceptRanges === "none") {
-      reject(new Error("Server doesn't support Accept-Ranges"))
+      reject(new Error(`Server doesn't support Accept-Ranges (response code ${response.statusCode})`))
       return false
     }
   }
