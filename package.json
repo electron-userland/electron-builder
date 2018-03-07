@@ -40,7 +40,7 @@
     "ejs": "^2.5.7",
     "electron-download-tf": "4.3.4",
     "electron-is-dev": "^0.3.0",
-    "electron-osx-sign": "0.4.8",
+    "electron-osx-sign": "0.4.9",
     "fs-extra-p": "^4.5.2",
     "gitbook-plugin-footer": "^0.0.6",
     "hosted-git-info": "^2.5.0",

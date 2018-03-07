@@ -12,7 +12,7 @@ test.ifNotWindows("AppImage", app({
   config: {
     publish: {
       provider: "generic",
-      url: "https://example.com/downloads"
+      url: "https://example.com/downloads",
     },
   },
 }))

@@ -15,7 +15,23 @@ Section
   StrCpy $INSTDIR $PLUGINSDIR\app
 	SetOutPath $INSTDIR
 
-	!insertmacro extractEmbeddedAppPackage
+	!ifdef APP_DIR_64
+    !ifdef APP_DIR_32
+      ${if} ${RunningX64}
+        File /r "${APP_DIR_64}/*.*"
+      ${else}
+        File /r "${APP_DIR_32}/*.*"
+      ${endIf}
+    !else
+      File /r "${APP_DIR_64}/*.*"
+    !endif
+  !else
+    !ifdef APP_DIR_32
+      File /r "${APP_DIR_32}/*.*"
+    !else
+      !insertmacro extractEmbeddedAppPackage
+    !endif
+  !endif
 
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
   ${StdUtils.GetAllParameters} $R0 0

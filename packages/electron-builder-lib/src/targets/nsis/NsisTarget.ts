@@ -161,7 +161,12 @@ export class NsisTarget extends Target {
     }
 
     const packageFiles: { [arch: string]: PackageFileInfo } = {}
-    if (USE_NSIS_BUILT_IN_COMPRESSOR && this.archs.size === 1) {
+    if (this.isPortable && options.useZip) {
+      for (const [arch, dir] of this.archs.entries()) {
+        defines[arch === Arch.x64 ? "APP_DIR_64" : "APP_DIR_32"] = dir
+      }
+    }
+    else if (USE_NSIS_BUILT_IN_COMPRESSOR && this.archs.size === 1) {
       defines.APP_BUILD_DIR = this.archs.get(this.archs.keys().next().value)
     }
     else {
@@ -194,6 +199,8 @@ export class NsisTarget extends Target {
     }
     else {
       // difference - 33.540 vs 33.601, only 61 KB (but zip is faster to decompress)
+      // do not use /SOLID - "With solid compression, files are uncompressed to temporary file before they are copied to their final destination",
+      // it is not good for portable installer (where built-in NSIS compression is used). http://forums.winamp.com/showpost.php?p=2982902&postcount=6
       commands.SetCompressor = "zlib"
       if (!this.isWebInstaller) {
         defines.COMPRESS = "auto"
