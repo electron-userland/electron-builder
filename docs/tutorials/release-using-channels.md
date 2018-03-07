@@ -46,10 +46,8 @@ The following versions will be distributed to users depending on the channel def
 
 
 ## How To Use It / Example
-Imagine your application version is 1.0.1 (stable).
+Imagine that your application is stable and in version 1.0.1.
 
-If you want to release a beta for the 1.1.0 version, you only need to update the package.json "version" with "1.1.0-beta".
+If you want to release a beta for the new 1.1.0 version, you only need to update the package.json "version" with "1.1.0-beta".
 
-And when your application is stable enough and you want to release it to all users, only remove the "-beta" tag from the package.json "version" tag.
-
-
+When your application is stable enough, you want to release it to all users. For that, you only need to remove the "-beta" label from the package.json "version" tag.
