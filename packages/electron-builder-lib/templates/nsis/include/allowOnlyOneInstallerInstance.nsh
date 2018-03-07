@@ -22,8 +22,10 @@
   launch:
 !macroend
 
+Var pid
+
 !macro CHECK_APP_RUNNING
-  ${GetProcessInfo} 0 $0 $1 $2 $3 $4
+  ${GetProcessInfo} 0 $pid $1 $2 $3 $4
   ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
     nsProcess::_FindProcess /NOUNLOAD "${APP_EXECUTABLE_FILENAME}"
     Pop $R0
@@ -38,7 +40,7 @@
       Quit
       doStopProcess:
         DetailPrint 'Closing running "${PRODUCT_NAME}"...'
-        ExecWait 'taskkill /f /t /im "${APP_EXECUTABLE_FILENAME}"' $R0
+        ExecWait 'taskkill /f /t /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"' $R0
         ${If} $R0 == 0
           # to ensure that files are not "in-use"
           Sleep 100
