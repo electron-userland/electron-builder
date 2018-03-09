@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder"
 import { writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -41,7 +40,7 @@ test.ifAll.ifNotCiMac("multi language license", app({
   },
 }, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
       writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
       writeFile(path.join(projectDir, "build", "license_ko.txt"), "Привет"),
@@ -61,7 +60,7 @@ test.ifAll.ifNotCiMac("html license", app({
   },
 }, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       writeFile(path.join(projectDir, "build", "license.html"), '<html><body><p>Hi <a href="https://google.com" target="_blank">google</a></p></body></html>'),
     ])
   },
@@ -93,7 +92,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   },
 }, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico")),
       copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     ])
@@ -117,7 +116,7 @@ test.ifNotCiMac("installerHeaderIcon", () => {
     }, {
       projectDirCreated: projectDir => {
         headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
-        return BluebirdPromise.all([copyTestAsset("headerIcon.ico", headerIconPath), copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "uninstallerIcon.ico"))])
+        return Promise.all([copyTestAsset("headerIcon.ico", headerIconPath), copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "uninstallerIcon.ico"))])
       }
     }
   )
@@ -125,7 +124,7 @@ test.ifNotCiMac("installerHeaderIcon", () => {
 
 test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
   projectDirCreated: projectDir => copyTestAsset("installer.nsh", path.join(projectDir, "build", "installer.nsh")),
-  packed: context => BluebirdPromise.all([
+  packed: context => Promise.all([
     assertThat(path.join(context.projectDir, "build", "customHeader")).isFile(),
     assertThat(path.join(context.projectDir, "build", "customInit")).isFile(),
     assertThat(path.join(context.projectDir, "build", "customInstall")).isFile(),

@@ -43,7 +43,12 @@ export class AppInfo {
 
   get versionInWeirdWindowsForm(): string {
     const parsedVersion = new SemVer(this.version)
-    return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${this.buildNumber || "0"}`
+    // https://github.com/electron-userland/electron-builder/issues/2635#issuecomment-371792272
+    let buildNumber = this.buildNumber
+    if (buildNumber == null || !/^\d+$/.test(buildNumber)) {
+      buildNumber = "0"
+    }
+    return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${buildNumber}`
   }
 
   private get notNullDevMetadata() {

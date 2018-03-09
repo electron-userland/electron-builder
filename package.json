@@ -32,7 +32,7 @@
     "app-builder-bin": "1.7.2",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
-    "aws-sdk": "^2.205.0",
+    "aws-sdk": "^2.207.0",
     "bluebird-lst": "^1.0.5",
     "chalk": "^2.3.2",
     "chromium-pickle-js": "^0.2.0",
@@ -40,10 +40,10 @@
     "ejs": "^2.5.7",
     "electron-download-tf": "4.3.4",
     "electron-is-dev": "^0.3.0",
-    "electron-osx-sign": "0.4.8",
+    "electron-osx-sign": "0.4.10",
     "fs-extra-p": "^4.5.2",
     "gitbook-plugin-footer": "^0.0.6",
-    "hosted-git-info": "^2.5.0",
+    "hosted-git-info": "^2.6.0",
     "iconv-lite": "^0.4.19",
     "ini": "^1.3.5",
     "is-ci": "^1.1.0",
@@ -105,7 +105,7 @@
     "typescript": "2.7.2",
     "v8-compile-cache": "^1.1.2",
     "whitespace": "^2.1.0",
-    "worker-farm": "^1.5.4"
+    "worker-farm": "^1.6.0"
   },
   "jest": {
     "testEnvironment": "node",
