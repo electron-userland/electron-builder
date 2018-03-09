@@ -13,7 +13,7 @@ test.ifAll.ifNotCiMac("portable", app({
   }
 }))
 
-test.ifAll.ifNotCi("portable zip", app({
+test.ifAll.ifWinCi("portable zip", app({
   targets: Platform.WINDOWS.createTarget("portable"),
   config: {
     publish: null,

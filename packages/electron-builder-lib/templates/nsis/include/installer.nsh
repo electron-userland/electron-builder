@@ -69,7 +69,7 @@
 
 !macro installApplicationFiles
   !ifdef APP_BUILD_DIR
-    File /r "${APP_BUILD_DIR}/*.*"
+    File /r "${APP_BUILD_DIR}\*.*"
   !else
     !ifdef APP_PACKAGE_URL
       Var /GLOBAL packageFile
