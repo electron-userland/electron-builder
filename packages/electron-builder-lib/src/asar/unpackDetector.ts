@@ -75,8 +75,9 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
       continue
     }
 
+    // https://github.com/electron-userland/electron-builder/issues/2679
     let shouldUnpack = false
-    if (file.endsWith(".dll") || file.endsWith(".exe")) {
+    if (file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib")) {
       shouldUnpack = true
     }
     else if (!file.includes(".", nextSlashIndex) && path.extname(file) === "") {
