@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { writeFile } from "fs-extra-p"
+import { copy, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -122,13 +122,28 @@ test.ifNotCiMac("installerHeaderIcon", () => {
   )
 })
 
-test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
+test.ifDevOrLinuxCi("custom include", app({targets: nsisTarget}, {
   projectDirCreated: projectDir => copyTestAsset("installer.nsh", path.join(projectDir, "build", "installer.nsh")),
   packed: context => Promise.all([
     assertThat(path.join(context.projectDir, "build", "customHeader")).isFile(),
     assertThat(path.join(context.projectDir, "build", "customInit")).isFile(),
     assertThat(path.join(context.projectDir, "build", "customInstall")).isFile(),
   ]),
+}))
+
+test.skip("big file pack", app(
+  {
+    targets: nsisTarget,
+    config: {
+      extraResources: ["**/*.mov"],
+      nsis: {
+        differentialPackage: false,
+      },
+    },
+  }, {
+  projectDirCreated: async projectDir => {
+    await copy("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
+  },
 }))
 
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {

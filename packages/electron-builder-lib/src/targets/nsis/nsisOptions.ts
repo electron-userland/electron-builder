@@ -146,6 +146,12 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    * @default true
    */
   readonly packElevateHelper?: boolean
+
+  /**
+   * The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files.
+   * @default [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"]
+   */
+  readonly preCompressedFileExtensions?: Array<string> | string | null
 }
 
 /**

@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { statOrNull } from "builder-util/out/fs"
+import { statOrNull, walk } from "builder-util/out/fs"
 import { hashFile } from "builder-util/out/hash"
 import _debug from "debug"
 import { readFile, stat, unlink } from "fs-extra-p"
@@ -42,7 +42,11 @@ export class NsisTarget extends Target {
 
     this.packageHelper.refCount++
 
-    this.options = targetName === "portable" ? Object.create(null) : {...this.packager.config.nsis}
+    this.options = targetName === "portable" ? Object.create(null) : {
+      ...this.packager.config.nsis,
+      preCompressedFileExtensions: [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"],
+    }
+
     if (targetName !== "nsis") {
       Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
@@ -61,6 +65,11 @@ export class NsisTarget extends Target {
     return !this.isPortable && this.options.differentialPackage !== false
   }
 
+  private getPreCompressedFileExtensions(): Array<string> | null {
+    const result = this.isWebInstaller ? null : this.options.preCompressedFileExtensions
+    return result == null ? null : asArray(result).map(it => it.startsWith(".") ? it : `.${it}`)
+  }
+
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
     const options = this.options
@@ -69,9 +78,11 @@ export class NsisTarget extends Target {
     const isBuildDifferentialAware = this.isBuildDifferentialAware
     const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
       compression: packager.compression,
+      excluded: preCompressedFileExtensions == null ? null : preCompressedFileExtensions.map(it => `*${it}`)
     }
 
     const timer = time(`nsis package, ${Arch[arch]}`)
@@ -518,6 +529,20 @@ export class NsisTarget extends Target {
 
     if (this.isPortable) {
       return scriptGenerator.build() + originalScript
+    }
+
+    const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
+    if (preCompressedFileExtensions != null) {
+      for (const [arch, dir] of this.archs.entries()) {
+        const preCompressedAssets = await walk(path.join(dir, "resources"), (file, stat) => stat.isDirectory() || preCompressedFileExtensions.some(it => file.endsWith(it)))
+        if (preCompressedAssets.length !== 0) {
+          const macro = new NsisScriptGenerator()
+          for (const file of preCompressedAssets) {
+            macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+          }
+          scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
+        }
+      }
     }
 
     const fileAssociations = packager.fileAssociations

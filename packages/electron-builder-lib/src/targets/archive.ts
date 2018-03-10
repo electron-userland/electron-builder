@@ -68,7 +68,7 @@ export interface ArchiveOptions {
   listFile?: string
 
   dictSize?: number
-  excluded?: Array<string>
+  excluded?: Array<string> | null
 
   // DEFAULT allows to disable custom logic and do not pass method switch at all
   method?: "Copy" | "LZMA" | "Deflate" | "DEFAULT"
@@ -149,7 +149,9 @@ export async function archive(format: string, outFile: string, dirToArchive: str
 
   args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)
   if (options.excluded != null) {
-    args.push(...options.excluded)
+    for (const mask of options.excluded) {
+      args.push(`-xr!${mask}`)
+    }
   }
 
   try {

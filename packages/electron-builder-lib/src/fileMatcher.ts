@@ -102,7 +102,11 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   const packager = platformPackager.info
   const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
 
-  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", appDir, destination, macroExpander, platformSpecificBuildOptions)
+  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", appDir, destination, {
+    macroExpander,
+    customBuildOptions: platformSpecificBuildOptions,
+    outDir,
+  })
   if (matchers == null) {
     matchers = [new FileMatcher(appDir, destination, macroExpander)]
   }
@@ -179,12 +183,18 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   return matchers
 }
 
-/** @internal */
-export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
-  const globalPatterns: Array<string | FileSet> | string | null | undefined | FileSet = (config as any)[name]
-  const platformSpecificPatterns: Array<string | FileSet> | string | null | undefined = (customBuildOptions as any)[name]
+export interface GetFileMatchersOptions {
+  readonly macroExpander: (pattern: string) => string
+  readonly customBuildOptions: PlatformSpecificBuildOptions
+  readonly outDir: string
+}
 
-  const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, macroExpander)
+/** @internal */
+export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
+  const globalPatterns: Array<string | FileSet> | string | null | undefined | FileSet = (config as any)[name]
+  const platformSpecificPatterns: Array<string | FileSet> | string | null | undefined = (options.customBuildOptions as any)[name]
+
+  const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
   function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
@@ -210,7 +220,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
       else {
         const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
-        fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
+        fileMatchers.push(new FileMatcher(from, to, options.macroExpander, pattern.filter))
       }
     }
   }
@@ -221,6 +231,12 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
   if (!defaultMatcher.isEmpty()) {
     // default matcher should be first in the array
     fileMatchers.unshift(defaultMatcher)
+  }
+
+  // we cannot exclude the whole out dir, because sometimes users want to use some file in the out dir in the patterns
+  const relativeOutDir = defaultMatcher.normalizePattern(path.relative(defaultSrc, options.outDir))
+  if (!relativeOutDir.startsWith(".")) {
+    defaultMatcher.addPattern(`!${relativeOutDir}/*-unpacked{,/**/*}`)
   }
 
   return fileMatchers.length === 0 ? null : fileMatchers

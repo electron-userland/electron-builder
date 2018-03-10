@@ -11,7 +11,7 @@ import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
 import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
-import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
@@ -124,9 +124,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     )
   }
 
-  private getExtraFileMatchers(isResources: boolean, appOutDir: string, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
+  private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, macroExpander, customBuildOptions)
+    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, options)
   }
 
   get electronDistMacOsAppName() {
@@ -177,9 +177,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
+    const getFileMatchersOptions: GetFileMatchersOptions = {
+      macroExpander,
+      customBuildOptions: platformSpecificBuildOptions,
+      outDir,
+    }
+    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, getFileMatchersOptions)
     computeParsedPatterns(extraResourceMatchers)
-    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
+    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, getFileMatchersOptions)
     computeParsedPatterns(extraFileMatchers)
 
     const packContext: AfterPackContext = {
@@ -246,7 +251,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info)))
     }
     else {
-      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, macroExpander, platformSpecificBuildOptions)
+      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, {
+        macroExpander,
+        customBuildOptions: platformSpecificBuildOptions,
+        outDir,
+      })
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       taskManager.addTask(_computeFileSets(mainMatchers)
         .then(fileSets => new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)))
@@ -332,6 +341,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (pathParsed.dir.includes(".asar")) {
       // The path needs to be split to the part with an asar archive which acts like a directory and the part with
       // the path to main file itself. (e.g. path/arch.asar/dir/index.js -> path/arch.asar, dir/index.js)
+      // noinspection TypeScriptValidateJSTypes
       const pathSplit: Array<string> = pathParsed.dir.split(path.sep)
       let partWithAsarIndex = 0
       pathSplit.some((pathPart: string, index: number) => {

@@ -21,8 +21,8 @@ export class NsisScriptGenerator {
     )
   }
 
-  file(outputName: string, file: string) {
-    this.lines.push(`File "/oname=${outputName}" "${file}"`)
+  file(outputName: string | null, file: string) {
+    this.lines.push(`File${outputName == null ? "" : ` "/oname=${outputName}"`} "${file}"`)
   }
 
   insertMacro(name: string, parameters: string) {
