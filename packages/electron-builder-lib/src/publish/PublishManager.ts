@@ -84,7 +84,7 @@ export class PublishManager implements PublishContext {
         return
       }
 
-      const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch)
+      const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch, this.isPublish)
       if (publishConfig != null) {
         await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), serializeToYaml(publishConfig))
       }
@@ -125,7 +125,7 @@ export class PublishManager implements PublishContext {
   private async artifactCreated(event: ArtifactCreated) {
     const packager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
+    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch, this.isPublish) : [event.publishConfig]
 
     if (debug.enabled) {
       debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfigs: ${safeStringifyJson(publishConfigs)}`)
@@ -188,8 +188,8 @@ export class PublishManager implements PublishContext {
   }
 }
 
-export async function getAppUpdatePublishConfiguration(packager: PlatformPackager<any>, arch: Arch) {
-  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch), arch)
+export async function getAppUpdatePublishConfiguration(packager: PlatformPackager<any>, arch: Arch, errorIfCannot: boolean) {
+  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, arch, errorIfCannot), arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
     return null
   }
@@ -297,7 +297,7 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
   return `${baseUrl}/${encodeURI(fileName)}`
 }
 
-export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)
@@ -335,7 +335,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
     if (serviceName != null) {
       log.debug(null, `Detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(packager, {provider: serviceName}, arch))!]
+      return [(await getResolvedPublishConfig(packager, {provider: serviceName}, arch, errorIfCannot))!]
     }
   }
 
@@ -344,7 +344,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)) as Promise<Array<PublishConfiguration>>)
+  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch, errorIfCannot)) as Promise<Array<PublishConfiguration>>)
 }
 
 function isSuitableWindowsTarget(target: Target) {
@@ -371,7 +371,7 @@ function isDetectUpdateChannel(packager: PlatformPackager<any>) {
   return value == null ? packager.config.detectUpdateChannel !== false : value
 }
 
-async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
+async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
   options = {...options}
   expandPublishConfig(options, packager, arch)
 
@@ -395,7 +395,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
 
   const providerClass = requireProviderClass(options.provider)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
-    await providerClass.checkAndResolveOptions(options, channelFromAppVersion)
+    await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options
   }
 

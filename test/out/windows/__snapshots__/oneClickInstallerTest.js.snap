@@ -1,5 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`big file pack 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`custom include 1`] = `
 Object {
   "win": Array [

@@ -1,5 +1,5 @@
 import S3, { ClientConfiguration, ServerSideEncryption, StorageClass } from "aws-sdk/clients/s3"
-import { InvalidConfigurationError } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
@@ -11,7 +11,7 @@ export default class S3Publisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  static async checkAndResolveOptions(options: S3Options, channelFromAppVersion: string | null) {
+  static async checkAndResolveOptions(options: S3Options, channelFromAppVersion: string | null, errorIfCannot: boolean) {
     const bucket = options.bucket
     if (bucket == null) {
       throw new InvalidConfigurationError(`Please specify "bucket" for "s3" publish provider`)
@@ -20,7 +20,17 @@ export default class S3Publisher extends BaseS3Publisher {
     if (options.endpoint == null && (bucket.includes(".") && options.region == null)) {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
       const s3 = new S3({signatureVersion: "v4"})
-      options.region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+      try {
+        options.region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+      }
+      catch (e) {
+        if (errorIfCannot) {
+          throw e
+        }
+        else {
+          log.warn(`cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL): ${e}`)
+        }
+      }
     }
 
     if (options.channel == null && channelFromAppVersion != null) {

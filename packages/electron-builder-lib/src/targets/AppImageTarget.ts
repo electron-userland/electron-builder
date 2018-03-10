@@ -70,7 +70,7 @@ export default class AppImageTarget extends Target {
       return
     }
 
-    const publishConfig = await getAppUpdatePublishConfiguration(packager, arch)
+    const publishConfig = await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
     if (publishConfig != null) {
       await outputFile(path.join(packager.getResourcesDir(stageDir.getTempFile("app")), "app-update.yml"), serializeToYaml(publishConfig))
     }

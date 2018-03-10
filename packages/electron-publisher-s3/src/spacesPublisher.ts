@@ -11,7 +11,7 @@ export default class SpacesPublisher extends BaseS3Publisher {
     super(context, info)
   }
 
-  static async checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null) {
+  static async checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, errorIfCannot: boolean) {
     if (options.name == null) {
       throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
     }

@@ -52,3 +52,16 @@ test.ifAll.ifNotWindows("os macro", app({
     await checkDirContents(dir)
   }
 }))
+
+// https://github.com/electron-userland/electron-builder/issues/2670
+test.ifAll.ifNotWindows("dotted s3 bucket", app({
+  targets: createTargets([Platform.LINUX], "zip"),
+  config: {
+    publish: {
+      provider: "s3",
+      bucket: "bucket.dotted.name",
+    },
+  },
+}, {
+  publish: "never"
+}))

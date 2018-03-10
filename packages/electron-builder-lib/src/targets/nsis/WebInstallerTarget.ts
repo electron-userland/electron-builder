@@ -23,7 +23,7 @@ export class WebInstallerTarget extends NsisTarget {
 
     let appPackageUrl = options.appPackageUrl
     if (appPackageUrl == null) {
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, null), null)
+      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, null, false), null)
       if (publishConfigs == null || publishConfigs.length === 0) {
         throw new Error("Cannot compute app package download URL")
       }
