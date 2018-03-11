@@ -48,7 +48,7 @@ export class BintrayClient {
     this.component = options.component || null
     this.distribution = options.distribution || "stable"
     this.auth = apiKey == null ? null : `Basic ${Buffer.from(`${this.user}:${apiKey}`).toString("base64")}`
-    this.basePath = `/packages/${this.owner}/${this.repo}/${this.packageName}`
+    this.basePath = `/content/${this.owner}/${this.repo}/${this.packageName}`
   }
 
   private bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
