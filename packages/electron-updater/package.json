@@ -17,7 +17,7 @@
     "fs-extra-p": "^4.5.2",
     "js-yaml": "^3.11.0",
     "semver": "^5.5.0",
-    "source-map-support": "^0.5.3",
+    "source-map-support": "^0.5.4",
     "builder-util-runtime": "~0.0.0-semantic-release",
     "electron-is-dev": "^0.3.0",
     "lodash.isequal": "^4.5.0"

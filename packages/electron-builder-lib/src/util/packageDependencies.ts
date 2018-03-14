@@ -35,6 +35,7 @@ const knownAlwaysIgnoredDevDeps = new Set([
   "@types",
 ])
 
+// noinspection JSUnusedGlobalSymbols
 export function createLazyProductionDeps(projectDir: string) {
   return new Lazy(() => getProductionDependencies(projectDir))
 }
@@ -42,15 +43,11 @@ export function createLazyProductionDeps(projectDir: string) {
 /** @internal */
 export async function getProductionDependencies(folder: string): Promise<Array<Dependency>> {
   const sorted: Array<Dependency> = []
-  computeSortedPaths(await computeDependencies(folder), sorted, false)
+  computeSortedPaths(await new Collector().collect(folder), sorted, false)
   return sorted
 }
 
-function computeDependencies(folder: string): Promise<Dependency> {
-  return new Collector().collect(folder)
-}
-
-const ignoredProperties = new Set(["description", "author", "bugs", "engines", "repository", "build", "main", "license", "homepage", "scripts", "maintainers", "contributors", "keywords", "devDependencies", "files", "typings", "types"])
+const ignoredProperties = new Set(["description", "author", "bugs", "engines", "repository", "build", "main", "license", "homepage", "scripts", "maintainers", "contributors", "keywords", "devDependencies", "files", "typings", "types", "xo", "resolutions"])
 
 function readJson(file: string) {
   return readFile(file, "utf-8")

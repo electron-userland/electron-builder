@@ -19,7 +19,9 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
     }
     else {
       // hoisted node_modules
-      const index = file.lastIndexOf(NODE_MODULES_PATTERN)
+      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
+      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
+      const index = file.indexOf(NODE_MODULES_PATTERN)
       if (index < 0) {
         throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
       }

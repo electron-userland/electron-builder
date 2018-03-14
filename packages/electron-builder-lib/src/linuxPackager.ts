@@ -26,7 +26,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   }
 
   get isElectron2(): boolean {
-    return semver.gte(this.config.electronVersion || "1.8.3", "2.0.0-beta.1")
+    return semver.gte(this.config.electronVersion || "1.8.3", "1.8.3")
   }
 
   get defaultTarget(): Array<string> {

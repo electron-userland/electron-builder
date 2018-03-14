@@ -20,7 +20,7 @@
     "chalk": "^2.3.2",
     "debug": "^3.1.0",
     "builder-util-runtime": "^0.0.0-semantic-release",
-    "source-map-support": "^0.5.3",
+    "source-map-support": "^0.5.4",
     "7zip-bin": "~3.1.0",
     "semver": "^5.5.0",
     "lazy-val": "^1.0.3",
