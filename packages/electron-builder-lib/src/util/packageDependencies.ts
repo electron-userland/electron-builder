@@ -208,6 +208,9 @@ class Collector {
     }
     else {
       metadata.parent = parent
+
+      // overwrite if already set by project package.json
+      metadata.link = undefined
     }
 
     metadata.path = rawDir
