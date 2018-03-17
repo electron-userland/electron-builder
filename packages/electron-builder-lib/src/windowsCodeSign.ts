@@ -241,6 +241,10 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
     args.push(isWin ? "/ac" : "-ac", vm.toVmFile(options.options.additionalCertificateFile))
   }
 
+  if (!isWin && process.env.HTTPS_PROXY) {
+    args.push("-p", process.env.HTTPS_PROXY)
+  }
+
   if (isWin) {
     // must be last argument
     args.push(inputFile)
