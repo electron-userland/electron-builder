@@ -47,7 +47,7 @@ function createTransformer(options) {
       // console.log(`Do ${filename}`)
 
       if (babel == null) {
-        babel = require('babel-core')
+        babel = require('@babel/core')
       }
 
       if (isFullyCompiled(src)) {

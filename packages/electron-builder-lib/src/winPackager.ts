@@ -27,10 +27,18 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
     const platformSpecificBuildOptions = this.platformSpecificBuildOptions
     if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
-      if (platformSpecificBuildOptions.sign != null) {
-        return Promise.resolve(null)
-      }
-      return this.vm.value.then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
+      return this.vm.value
+        .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
+        .catch(e => {
+          // https://github.com/electron-userland/electron-builder/pull/2397
+          if (platformSpecificBuildOptions.sign == null) {
+            throw e
+          }
+          else {
+            log.debug({error: e}, "getCertificateFromStoreInfo error")
+            return null
+          }
+        })
     }
 
     const certificateFile = platformSpecificBuildOptions.certificateFile
@@ -323,7 +331,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const timer = time("wine&sign")
-    await execWine(path.join(await getSignVendorPath(), `rcedit-${process.arch}.exe`), args)
+    // wine supports only ia32
+    await execWine(path.join(await getSignVendorPath(), `rcedit-${process.platform === "win32" ? process.arch : "ia32"}.exe`), args)
     await this.sign(file)
     timer.end()
 
