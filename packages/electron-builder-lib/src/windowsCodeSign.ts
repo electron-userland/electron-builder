@@ -14,7 +14,7 @@ import { WinPackager } from "./winPackager"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("winCodeSign", "1.9.0", "cyhO9Mv5MTP2o9dwk/+qs0KvuO9CbDhjEJXA2ujpvhcsk5zmc+zY9iqiWXVzOuibTLYNC3qZiuFlJrrCT2kldw==")
+  return getBinFromGithub("winCodeSign", "2.0.0", "QT51iAVlWZlKeip3FPc8FHG/HKhCdWR/Wg+cevhrKHQ1d/oHl49EqXgeztO//DrdyN1X+GCvglaHifXnWR5VXQ==")
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>

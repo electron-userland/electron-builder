@@ -323,7 +323,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const timer = time("wine&sign")
-    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
+    await execWine(path.join(await getSignVendorPath(), `rcedit-${process.arch}.exe`), args)
     await this.sign(file)
     timer.end()
 
