@@ -42,9 +42,9 @@ export function createLazyProductionDeps(projectDir: string) {
 
 /** @internal */
 export async function getProductionDependencies(folder: string): Promise<Array<Dependency>> {
-  const sorted: Array<Dependency> = []
-  computeSortedPaths(await new Collector().collect(folder), sorted, false)
-  return sorted
+  const result: Array<Dependency> = []
+  computeSortedPaths(await new Collector().collect(folder), result, false)
+  return result
 }
 
 const ignoredProperties = new Set(["description", "author", "bugs", "engines", "repository", "build", "main", "license", "homepage", "scripts", "maintainers", "contributors", "keywords", "devDependencies", "files", "typings", "types", "xo", "resolutions"])
@@ -78,13 +78,13 @@ class Collector {
     this.unmarkExtraneous(rootDependency)
 
     if (this.unresolved.size > 0) {
-      log.debug({unresolved: Array.from(this.unresolved.keys()).join(", ")}, "Unresolved dependencies after first round")
+      log.debug({unresolved: Array.from(this.unresolved.keys()).join(", ")}, "unresolved dependencies after first round")
       await this.resolveUnresolvedHoisted(rootDependency, dir)
     }
     return rootDependency
   }
 
-  private async resolveUnresolvedHoisted(rootDependency: Dependency, dir: string) {
+  private async resolveUnresolvedHoisted(rootDependency: Dependency, dir: string): Promise<void> {
     let nameToMetadata = rootDependency.dependencies
     if (nameToMetadata == null) {
       rootDependency.dependencies = new Map<string, Dependency>()
@@ -112,30 +112,50 @@ class Collector {
       const parentNodeModulesDir = parentDir + path.sep + "node_modules"
       const dirStat = await statOrNull(parentNodeModulesDir)
       if (dirStat == null || !dirStat.isDirectory()) {
-        continue
-      }
-
-      const unresolved = Array.from(this.unresolved.keys())
-      this.unresolved.clear()
-
-      const resolved = await BluebirdPromise.map(unresolved, it => {
-        return this.readChildPackage(it, parentNodeModulesDir, rootDependency)
-          .catch(e => {
-            if ((e as any).code === "ENOENT") {
-              return null
-            }
-            else {
-              throw e
-            }
-          })
-      }, CONCURRENCY)
-      for (const dep of resolved) {
-        if (dep != null) {
-          nameToMetadata.set(dep.realName, dep)
+        if (dirStat == null || !dirStat.isDirectory()) {
+          continue
         }
       }
 
-      this.unmarkExtraneous(rootDependency)
+      // https://github.com/electron-userland/electron-builder/issues/2222#issuecomment-339060335
+      // step 1: resolve current unresolved
+      // step n: try to resolve new unresolved in the same parent dir until at least something is resolved in the dir
+      while (true) {
+        const unresolved = Array.from(this.unresolved.keys())
+        this.unresolved.clear()
+
+        const resolved = await BluebirdPromise.map(unresolved, it => {
+          return this.readChildPackage(it, parentNodeModulesDir, rootDependency)
+            .catch(e => {
+              if ((e as any).code === "ENOENT") {
+                return null
+              }
+              else {
+                throw e
+              }
+            })
+        }, CONCURRENCY)
+
+        let hasResolved = false
+
+        for (const dep of resolved) {
+          if (dep != null) {
+            hasResolved = true
+            this.unmarkExtraneous(dep)
+            nameToMetadata.set(dep.realName, dep)
+          }
+        }
+
+        if (!hasResolved) {
+          break
+        }
+
+        this.unmarkExtraneous(rootDependency)
+
+        if (this.unresolved.size === 0) {
+          return
+        }
+      }
     }
     while (this.unresolved.size > 0)
   }

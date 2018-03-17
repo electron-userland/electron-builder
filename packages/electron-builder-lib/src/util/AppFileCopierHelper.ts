@@ -79,7 +79,7 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
       return false
     }, CONCURRENCY)
 
-    fileSets.push({src: matcher.from, files, metadata, transformedFiles, destination: matcher.to})
+    fileSets.push(validateFileSet({src: matcher.from, files, metadata, transformedFiles, destination: matcher.to}))
   }
 
   if (isElectronCompile) {
@@ -92,11 +92,23 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
   return fileSets
 }
 
+function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
+  if (fileSet.src == null || fileSet.src.length === 0) {
+    throw new Error("fileset src is empty")
+  }
+  return fileSet
+}
+
 async function copyHoistedNodeModules(packager: Packager, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
   const productionDeps = await packager.productionDeps.value
   const rootPathToCopier = new Map<string, Array<Dependency>>()
   for (const dep of productionDeps) {
-    const root = dep.path.substring(0, dep.path.indexOf(NODE_MODULES_PATTERN))
+    const index = dep.path.indexOf(NODE_MODULES_PATTERN)
+    if (index < 0) {
+      throw new Error("cannot find node_modules in the path " + dep.path)
+    }
+
+    const root = dep.path.substring(0, index)
     let list = rootPathToCopier.get(root)
     if (list == null) {
       list = []
@@ -111,7 +123,7 @@ async function copyHoistedNodeModules(packager: Packager, mainMatcher: FileMatch
     const matcher = new FileMatcher(source, mainMatcher.to, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, packager)
     const files = await copier.collectNodeModules(rootPathToCopier.get(source)!!)
-    return {src: matcher.from, destination: matcher.to, files, metadata: copier.metadata}
+    return validateFileSet({src: matcher.from, destination: matcher.to, files, metadata: copier.metadata})
   })
 }
 

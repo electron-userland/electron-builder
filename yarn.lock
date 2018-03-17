@@ -794,9 +794,9 @@ babel-preset-jest@^23.0.0-alpha.0:
     babel-plugin-jest-hoist "^23.0.0-alpha.0"
     babel-plugin-syntax-object-rest-spread "^6.13.0"
 
-babel-preset-ts-node6-bluebird@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/babel-preset-ts-node6-bluebird/-/babel-preset-ts-node6-bluebird-2.0.1.tgz#846f137112e0f8c0fca76dda696d8bd64e9be25e"
+babel-preset-ts-node6-bluebird@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/babel-preset-ts-node6-bluebird/-/babel-preset-ts-node6-bluebird-2.0.3.tgz#d246288f9261f93ec0812e757aa217554ff020ae"
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0-beta.42"
     "@babel/plugin-transform-modules-commonjs" "^7.0.0-beta.42"
@@ -5615,9 +5615,9 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-5.0.1.tgz#0b096306ff3180704441bdeecd61b51b37b8c434"
+ts-babel@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-5.0.2.tgz#fefeb9a26ca5e6195fde67961665a4e27d9cada0"
   dependencies:
     "@babel/core" "^7.0.0-beta.42"
     bluebird-lst "^1.0.5"
