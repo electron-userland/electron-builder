@@ -794,9 +794,9 @@ babel-preset-jest@^23.0.0-alpha.0:
     babel-plugin-jest-hoist "^23.0.0-alpha.0"
     babel-plugin-syntax-object-rest-spread "^6.13.0"
 
-babel-preset-ts-node6-bluebird@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/babel-preset-ts-node6-bluebird/-/babel-preset-ts-node6-bluebird-2.0.3.tgz#d246288f9261f93ec0812e757aa217554ff020ae"
+babel-preset-ts-node6-bluebird@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/babel-preset-ts-node6-bluebird/-/babel-preset-ts-node6-bluebird-2.0.4.tgz#7f7a9a61e697f6ca7d96a6765a2cf4766e45dd87"
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0-beta.42"
     "@babel/plugin-transform-modules-commonjs" "^7.0.0-beta.42"

@@ -117,6 +117,33 @@ Object {
 }
 `;
 
+exports[`mac artifactName  1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW_1.1.0_mac.zip",
+          },
+        ],
+        "path": "Test App ßW_1.1.0_mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW_1.1.0_mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
+`;
+
 exports[`os macro 1`] = `
 Object {
   "linux": Array [

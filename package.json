@@ -83,7 +83,7 @@
     "@types/semver": "^5.5.0",
     "@types/source-map-support": "^0.4.0",
     "@types/stat-mode": "^0.2.0",
-    "babel-preset-ts-node6-bluebird": "^2.0.3",
+    "babel-preset-ts-node6-bluebird": "^2.0.4",
     "convert-source-map": "^1.5.1",
     "decompress-zip": "^0.3.0",
     "depcheck": "^0.6.9",

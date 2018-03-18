@@ -28,6 +28,24 @@ test.ifDevOrLinuxCi("generic, github and spaces", app({
   },
 }))
 
+test.ifDevOrLinuxCi.ifAll("mac artifactName ", app({
+  targets: Platform.MAC.createTarget("zip"),
+  config: {
+    // tslint:disable-next-line:no-invalid-template-strings
+    artifactName: "${productName}_${version}_${os}.${ext}",
+    mac: {
+      electronUpdaterCompatibility: ">=2.16",
+    },
+    publish: [
+      {
+        provider: "spaces",
+        name: "mySpaceName",
+        region: "nyc3"
+      },
+    ]
+  },
+}))
+
 // otherwise test "os macro" always failed for pull requests
 process.env.PUBLISH_FOR_PULL_REQUEST = "true"
 
