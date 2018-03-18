@@ -28,6 +28,27 @@ test.ifDevOrLinuxCi("generic, github and spaces", app({
   },
 }))
 
+test.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
+  targets: Platform.LINUX.createTarget("AppImage"),
+  config: {
+    mac: {
+      electronUpdaterCompatibility: ">=2.16",
+    },
+    publish: [
+      {
+        provider: "github",
+        repo: "foo/foo"
+      },
+      {
+        provider: "spaces",
+        name: "mySpaceName",
+        region: "nyc3",
+        publishAutoUpdate: false
+      },
+    ]
+  },
+}))
+
 test.ifDevOrLinuxCi.ifAll("mac artifactName ", app({
   targets: Platform.MAC.createTarget("zip"),
   config: {

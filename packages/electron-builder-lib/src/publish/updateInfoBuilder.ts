@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, hashFile, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, hashFile, safeStringifyJson, serializeToYaml, log } from "builder-util"
 import { GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -184,6 +184,15 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const releaseDate = new Date().toISOString()
   await BluebirdPromise.map(updateChannelFileToInfo.values(), async task => {
+    const publishConfig = task.publishConfiguration
+    if (publishConfig.publishAutoUpdate === false) {
+      log.debug({
+        provider: publishConfig.provider,
+        reason: "publishAutoUpdate is set to false"
+      }, "auto update metadata file not published")
+      return
+    }
+
     task.info.releaseDate = releaseDate
     const fileContent = Buffer.from(serializeToYaml(task.info))
     await outputFile(task.file, fileContent)
@@ -193,7 +202,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       arch: null,
       packager: task.packager,
       target: null,
-      publishConfig: task.publishConfiguration,
+      publishConfig,
     })
   }, {concurrency: 4})
 }
