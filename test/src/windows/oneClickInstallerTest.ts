@@ -179,7 +179,7 @@ test.ifAll.ifNotCiMac("string menuCategory", app({
   config: {
     extraMetadata: {
       name: "test-menu-category",
-      productName: "Test Menu Category"
+      productName: "Test Menu Category '"
     },
     publish: null,
     nsis: {

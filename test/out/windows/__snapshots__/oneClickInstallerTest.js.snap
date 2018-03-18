@@ -259,7 +259,7 @@ Object {
   "win": Array [
     Object {
       "arch": "ia32",
-      "file": "Test Menu Category CustomName 1.1.0.exe",
+      "file": "Test Menu Category ' CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
@@ -267,7 +267,7 @@ Object {
       },
     },
     Object {
-      "file": "Test Menu Category CustomName 1.1.0.exe.blockmap",
+      "file": "Test Menu Category ' CustomName 1.1.0.exe.blockmap",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",

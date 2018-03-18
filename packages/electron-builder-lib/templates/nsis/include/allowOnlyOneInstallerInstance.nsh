@@ -45,10 +45,10 @@ Var pid
 
       doStopProcess:
 
-      DetailPrint 'Closing running "${PRODUCT_NAME}"...'
+      DetailPrint `Closing running "${PRODUCT_NAME}"...`
 
       # https://github.com/electron-userland/electron-builder/issues/2516#issuecomment-372009092
-      ExecWait 'taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"' $R0
+      ExecWait `taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"` $R0
       # to ensure that files are not "in-use"
       Sleep 100
 
@@ -57,9 +57,9 @@ Var pid
         # wait to give a chance to exit gracefully
         Sleep 1000
         # do not use /t tree kill - app was killed softly already
-        ExecWait 'taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"' $R0
+        ExecWait `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"` $R0
         ${If} $R0 != 0
-          DetailPrint 'Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).'
+          DetailPrint `Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).`
           Sleep 2000
         ${endIf}
       ${endIf}
