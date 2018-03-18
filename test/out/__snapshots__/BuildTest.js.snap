@@ -4026,6 +4026,44 @@ Array [
 ]
 `;
 
+exports[`win smart unpack 4`] = `
+Array [
+  "CHANGELOG.md",
+  "README.md",
+  "karma.conf.js",
+  "node.js",
+  "package.json",
+  "browser.js",
+  "debug.js",
+  "index.js",
+  "node.js",
+  "LICENSE.txt",
+  "README.md",
+  "package.json",
+  "install.js",
+  "Edge.js.CSharp",
+  "EdgeCompiler.cs",
+  "edge-cs.csproj",
+  "edge-cs.sln",
+  "AssemblyInfo.cs",
+  "EdgeCompiler.cs",
+  "edge-cs-coreclr.sln",
+  "edge-cs-coreclr.xproj",
+  "gulpfile.js",
+  "package.json",
+  "project.json",
+  "edge-cs.js",
+  "Dummy.cs",
+  "project.json",
+  "index.js",
+  "license.md",
+  "package.json",
+  "readme.md",
+  "package.json",
+  "package.json",
+]
+`;
+
 exports[`www as default dir 1`] = `
 Object {
   "linux": Array [],

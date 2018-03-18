@@ -4,6 +4,7 @@ import { lstat, readdir, readlink, stat, Stats } from "fs-extra-p"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
+import { resolveFunction } from "../platformPackager"
 import { Dependency } from "./packageDependencies"
 
 const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
@@ -52,6 +53,8 @@ export class NodeModuleCopyHelper {
 
     const isIncludePdb = this.packager.config.includePdb === true
 
+    const onNodeModuleFile = resolveFunction(this.packager.config.onNodeModuleFile)
+
     const result: Array<string> = []
     const queue: Array<string> = []
     for (const dep of list) {
@@ -76,6 +79,10 @@ export class NodeModuleCopyHelper {
         const dirs: Array<string> = []
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
+          if (onNodeModuleFile != null) {
+            onNodeModuleFile(dirPath + path.sep + name)
+          }
+
           if (excludedFiles.has(name) || name.endsWith(".h") || name.endsWith(".o") || name.endsWith(".obj") || name.endsWith(".cc") || (!isIncludePdb && name.endsWith(".pdb")) || name.endsWith(".d.ts") ||
             name.endsWith(".suo") || name.endsWith(".sln") || name.endsWith(".xproj") || name.endsWith(".csproj")) {
             return null

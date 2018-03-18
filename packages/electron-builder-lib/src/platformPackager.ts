@@ -647,7 +647,7 @@ export function normalizeExt(ext: string) {
 }
 
 export function resolveFunction<T>(executor: T | string): T {
-  if (typeof executor !== "string") {
+  if (executor == null || typeof executor !== "string") {
     return executor
   }
 

@@ -76,7 +76,6 @@ export class Packager {
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
-
   private readonly afterSignHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
   readonly options: PackagerOptions

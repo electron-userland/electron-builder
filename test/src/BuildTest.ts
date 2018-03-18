@@ -165,22 +165,35 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", app({
-  targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-  config: {
-    npmRebuild: true,
-  },
-}, {
-  projectDirCreated: packageJson(it => {
-    it.dependencies = {
-      debug: "3.1.0",
-      "edge-cs": "1.2.1",
-      "@electron-builder/test-smart-unpack": "1.0.0",
-      "@electron-builder/test-smart-unpack-empty": "1.0.0",
+test.ifDevOrLinuxCi("win smart unpack", () => {
+  // test onNodeModuleFile hook
+  const nodeModuleFiles: Array<string> = []
+  return app({
+    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    config: {
+      npmRebuild: true,
+      onNodeModuleFile: file => {
+        const name = path.basename(file)
+        if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
+          nodeModuleFiles.push(name)
+        }
+      },
+    },
+  }, {
+    projectDirCreated: packageJson(it => {
+      it.dependencies = {
+        debug: "3.1.0",
+        "edge-cs": "1.2.1",
+        "@electron-builder/test-smart-unpack": "1.0.0",
+        "@electron-builder/test-smart-unpack-empty": "1.0.0",
+      }
+    }),
+    packed: async context => {
+      await verifySmartUnpack(context.getResources(Platform.WINDOWS))
+      expect(nodeModuleFiles).toMatchSnapshot()
     }
-  }),
-  packed: context => verifySmartUnpack(context.getResources(Platform.WINDOWS))
-}))
+  })()
+})
 
 export function removeUnstableProperties(data: any) {
   return JSON.parse(JSON.stringify(data, (name, value) => {

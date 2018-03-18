@@ -173,6 +173,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly afterSign?: ((context: AfterPackContext) => Promise<any>) | string | null
 
   /**
+   * The function (or path to file or module id) to be run on each node module file.
+   */
+  readonly onNodeModuleFile?: ((file: string) => void) | string | null
+
+  /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
