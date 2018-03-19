@@ -183,3 +183,20 @@ test.ifDevOrLinuxCi("custom after, no desktop", app({
     return true
   },
 }))
+
+test.ifDevOrLinuxCi("no desktop plugs", app({
+  targets: Platform.LINUX.createTarget("snap"),
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+    snap: {
+      plugs: ["foo", "bar"]
+    }
+  },
+  effectiveOptionComputed: async ({ snap }) => {
+    expect(snap).toMatchSnapshot()
+    return true
+  },
+}))

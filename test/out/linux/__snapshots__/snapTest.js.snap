@@ -70,6 +70,9 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
     fi
   fi
 done",
+      "stage": Array [
+        "-./usr/share/fonts/**",
+      ],
     },
   },
   "summary": "Sep",
@@ -254,6 +257,9 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
     fi
   fi
 done",
+      "stage": Array [
+        "-./usr/share/fonts/**",
+      ],
     },
   },
   "summary": "Sep",
@@ -334,6 +340,9 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
     fi
   fi
 done",
+      "stage": Array [
+        "-./usr/share/fonts/**",
+      ],
     },
   },
   "summary": "Sep",
@@ -414,6 +423,9 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
     fi
   fi
 done",
+      "stage": Array [
+        "-./usr/share/fonts/**",
+      ],
     },
   },
   "summary": "Sep",
@@ -496,6 +508,9 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
     fi
   fi
 done",
+      "stage": Array [
+        "-./usr/share/fonts/**",
+      ],
     },
   },
   "summary": "Sep",
@@ -504,6 +519,40 @@ done",
 `;
 
 exports[`default stagePackages 8`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`no desktop plugs 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "command.sh",
+      "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": Array [
+    "amd64",
+  ],
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "sep",
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`no desktop plugs 2`] = `
 Object {
   "linux": Array [],
 }

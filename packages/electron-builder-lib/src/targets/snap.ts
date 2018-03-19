@@ -123,6 +123,10 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
 done`
       }
 
+      if (appDescriptor.plugs.indexOf("desktop") >= 0 || appDescriptor.plugs.indexOf("desktop-legacy") >= 0) {
+        desktopPartOverride.stage = ["-./usr/share/fonts/**"]
+      }
+
       snap.parts[desktopPart] = desktopPartOverride
     }
 
