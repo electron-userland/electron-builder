@@ -1,12 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, getPlatformIconFileName, InvalidConfigurationError, log, use } from "builder-util"
+import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
-import { normalizeExt, PlatformPackager } from "../platformPackager"
+import MacPackager from "../macPackager"
+import { normalizeExt } from "../platformPackager"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -21,11 +22,11 @@ function moveHelpers(frameworksPath: string, appName: string, prefix: string): P
 }
 
 /** @internal */
-export async function createMacApp(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
+export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
-  const contentsPath = path.join(appOutDir, packager.electronDistMacOsAppName, "Contents")
+  const contentsPath = path.join(appOutDir, packager.info.framework.distMacOsAppName, "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
 
   const appPlistFilename = path.join(contentsPath, "Info.plist")
@@ -50,23 +51,15 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     Object.assign(appPlist, macOptions.extendInfo)
   }
 
-  const appBundleIdentifier = appInfo.macBundleIdentifier
-
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
-  const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appBundleIdentifier}.helper`)
+  const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
 
-  const icon = await packager.getIconPath()
   const oldIcon = appPlist.CFBundleIconFile
-  if (icon != null) {
-    appPlist.CFBundleIconFile = `${appFilename}.icns`
-  }
 
-  appPlist.CFBundleDisplayName = appInfo.productName
-  appPlist.CFBundleIdentifier = appBundleIdentifier
-  appPlist.CFBundleName = appInfo.productName
+  await packager.applyCommonInfo(appPlist)
 
   // https://github.com/electron-userland/electron-builder/issues/1278
   appPlist.CFBundleExecutable = !appFilename.endsWith(" Helper") ? appFilename : appFilename.substring(0, appFilename.length - " Helper".length)
@@ -82,13 +75,6 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
   helperPlist.CFBundleIdentifier = helperBundleIdentifier
   helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
   helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
-
-  appPlist.CFBundleShortVersionString = macOptions.bundleShortVersion || appInfo.version
-  appPlist.CFBundleVersion = appInfo.buildVersion
-
-  if (macOptions.minimumSystemVersion != null) {
-    appPlist.LSMinimumSystemVersion = macOptions.minimumSystemVersion
-  }
 
   const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
@@ -132,9 +118,6 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     })
   }
 
-  use(packager.platformSpecificBuildOptions.category || (buildMetadata as any).category, it => appPlist.LSApplicationCategoryType = it)
-  appPlist.NSHumanReadableCopyright = appInfo.copyright
-
   if (asarIntegrity != null) {
     appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
@@ -149,12 +132,13 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ]
 
+  const icon = await packager.getIconPath()
   if (icon != null) {
     promises.push(unlinkIfExists(path.join(resourcesPath, oldIcon)))
     promises.push(copyFile(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
   }
 
-  await BluebirdPromise.all(promises)
+  await Promise.all(promises)
 
   await moveHelpers(frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
   const appPath = path.join(appOutDir, `${appFilename}.app`)

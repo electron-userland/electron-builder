@@ -1,14 +1,18 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { debug7zArgs, exec, isEnvTrue, log, spawn } from "builder-util"
-import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull } from "builder-util/out/fs"
-import { chmod, emptyDir } from "fs-extra-p"
+import { debug7zArgs, exec, isEnvTrue, log, spawn, asArray } from "builder-util"
+import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, CONCURRENCY } from "builder-util/out/fs"
+import { chmod, emptyDir, readdir, remove } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { AsarIntegrity } from "../asar/integrity"
 import { Configuration, ElectronDownloadOptions } from "../configuration"
+import { Platform } from "../core"
 import { Framework, UnpackFrameworkTaskOptions } from "../Framework"
+import MacPackager from "../macPackager"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 
 interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
@@ -26,7 +30,46 @@ function createDownloadOpts(opts: Configuration, platform: string, arch: string,
   }
 }
 
+async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
+  if (packager.platform !== Platform.MAC) {
+    return
+  }
+
+  await createMacApp(packager as MacPackager, appOutDir, asarIntegrity)
+
+  const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
+  if (wantedLanguages.length === 0) {
+    return
+  }
+
+  // noinspection SpellCheckingInspection
+  const langFileExt = ".lproj"
+  const resourcesDir = packager.getResourcesDir(appOutDir)
+  await BluebirdPromise.map(readdir(resourcesDir), file => {
+    if (!file.endsWith(langFileExt)) {
+      return
+    }
+
+    const language = file.substring(0, file.length - langFileExt.length)
+    if (!wantedLanguages.includes(language)) {
+      return remove(path.join(resourcesDir, file))
+    }
+    return
+  }, CONCURRENCY)
+}
+
 export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
+  if (configuration.muonVersion != null) {
+    return {
+      name: "muon",
+      version: configuration.muonVersion!!,
+      distMacOsAppName: "Brave.app",
+      unpackFramework: unpackMuon,
+      isNpmRebuildRequired: true,
+      beforeCopyExtraFiles,
+    }
+  }
+
   let version = configuration.electronVersion
   if (version == null) {
     // for prepacked app asar no dev deps in the app.asar
@@ -48,6 +91,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     distMacOsAppName: "Electron.app",
     isNpmRebuildRequired: true,
     unpackFramework: options => unpack(options.packager, options.appOutDir, options.platformName, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!)),
+    beforeCopyExtraFiles,
   }
 }
 

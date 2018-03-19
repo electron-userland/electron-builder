@@ -1,23 +1,18 @@
-import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log } from "builder-util"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
-import { ensureDir, readdir, remove } from "fs-extra-p"
+import { ensureDir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { asArray } from "builder-util-runtime/out"
 import { AppInfo } from "./appInfo"
-import { AsarIntegrity } from "./asar/integrity"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
-import { createMacApp } from "./electron/mac"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { CONCURRENCY } from "builder-util/out/fs"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -252,35 +247,35 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   public getElectronSrcDir(dist: string) {
-    return path.resolve(this.projectDir, dist, this.electronDistMacOsAppName)
+    return path.resolve(this.projectDir, dist, this.info.framework.distMacOsAppName)
   }
 
   public getElectronDestinationDir(appOutDir: string) {
-    return path.join(appOutDir, this.electronDistMacOsAppName)
+    return path.join(appOutDir, this.info.framework.distMacOsAppName)
   }
 
-  protected async beforeCopyExtraFiles(appOutDir: string, asarIntegrity: AsarIntegrity | null): Promise<any> {
-    await createMacApp(this, appOutDir, asarIntegrity)
+  // todo fileAssociations
+  async applyCommonInfo(appPlist: any) {
+    const appInfo = this.appInfo
+    const icon = await this.getIconPath()
+    if (icon != null) {
+      appPlist.CFBundleIconFile = `${appInfo.productFilename}.icns`
+    }
+    appPlist.CFBundleName = appInfo.productName
+    appPlist.CFBundleDisplayName = appInfo.productName
 
-    const wantedLanguages = asArray(this.platformSpecificBuildOptions.electronLanguages)
-    if (wantedLanguages.length === 0) {
-      return
+    const minimumSystemVersion = this.platformSpecificBuildOptions.minimumSystemVersion
+    if (minimumSystemVersion != null) {
+      appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
 
-    // noinspection SpellCheckingInspection
-    const langFileExt = ".lproj"
-    const resourcesDir = this.getResourcesDir(appOutDir)
-    await BluebirdPromise.map(readdir(resourcesDir), file => {
-      if (!file.endsWith(langFileExt)) {
-        return
-      }
+    appPlist.CFBundleIdentifier = appInfo.macBundleIdentifier
 
-      const language = file.substring(0, file.length - langFileExt.length)
-      if (!wantedLanguages.includes(language)) {
-        return remove(path.join(resourcesDir, file))
-      }
-      return
-    }, CONCURRENCY)
+    appPlist.CFBundleShortVersionString = this.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
+    appPlist.CFBundleVersion = appInfo.buildVersion
+
+    use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => appPlist.LSApplicationCategoryType = it)
+    appPlist.NSHumanReadableCopyright = appInfo.copyright
   }
 }
 

@@ -1160,9 +1160,6 @@ Object {
                     "package.json": Object {
                       "size": 532,
                     },
-                    "test.js": Object {
-                      "size": 1585,
-                    },
                   },
                 },
                 "co": Object {
@@ -1266,9 +1263,6 @@ Object {
                     },
                     "package.json": Object {
                       "size": 507,
-                    },
-                    "test.js": Object {
-                      "size": 2101,
                     },
                   },
                 },
@@ -1462,9 +1456,6 @@ Object {
                     },
                     "package.json": Object {
                       "size": 701,
-                    },
-                    "test.js": Object {
-                      "size": 682,
                     },
                   },
                 },
@@ -2138,9 +2129,6 @@ Object {
                     "package.json": Object {
                       "size": 528,
                     },
-                    "test.js": Object {
-                      "size": 1095,
-                    },
                   },
                 },
                 "isarray": Object {
@@ -2157,9 +2145,6 @@ Object {
                     "package.json": Object {
                       "size": 870,
                     },
-                    "test.js": Object {
-                      "size": 320,
-                    },
                   },
                 },
                 "isstream": Object {
@@ -2172,9 +2157,6 @@ Object {
                     },
                     "package.json": Object {
                       "size": 551,
-                    },
-                    "test.js": Object {
-                      "size": 6975,
                     },
                   },
                 },
@@ -2848,9 +2830,6 @@ Object {
                     "package.json": Object {
                       "size": 433,
                     },
-                    "test.js": Object {
-                      "size": 526,
-                    },
                   },
                 },
                 "punycode": Object {
@@ -3123,9 +3102,6 @@ Object {
                     },
                     "package.json": Object {
                       "size": 554,
-                    },
-                    "test.js": Object {
-                      "size": 2806,
                     },
                   },
                 },

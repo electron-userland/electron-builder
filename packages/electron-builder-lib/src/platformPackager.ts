@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, deepAssign } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -10,15 +10,16 @@ import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
+import { computeData } from "./asar/integrity"
 import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
+import { isElectronBased } from "./Framework"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
-import { AsarIntegrity, computeData } from "./asar/integrity"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
   get packagerOptions(): PackagerOptions {
@@ -128,10 +129,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, options)
   }
 
-  get electronDistMacOsAppName() {
-    return this.config.muonVersion == null ? "Electron.app" : "Brave.app"
-  }
-
   get electronDistExecutableName() {
     return this.config.muonVersion == null ? "electron" : "brave"
   }
@@ -145,7 +142,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
 
     const framework = this.info.framework
@@ -193,6 +189,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
 
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, outDir, platformSpecificBuildOptions, excludePatterns, macroExpander)
 
     taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))
@@ -203,7 +200,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     await taskManager.awaitTasks()
-    await this.beforeCopyExtraFiles(appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
+
+    const beforeCopyExtraFiles = this.info.framework.beforeCopyExtraFiles
+    if (beforeCopyExtraFiles != null) {
+      await beforeCopyExtraFiles(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
+    }
     await BluebirdPromise.each([extraResourceMatchers, extraFileMatchers], it => copyFiles(it))
 
     if (this.info.cancellationToken.cancelled) {
@@ -214,10 +215,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
     await this.signApp(packContext)
     await this.info.afterSign(packContext)
-  }
-
-  protected async beforeCopyExtraFiles(appOutDir: string, asarIntegrity: AsarIntegrity | null) {
-    // empty impl
   }
 
   private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
@@ -233,20 +230,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         matcher.excludePatterns = excludePatterns
       }
     }
+
     const transformer = createTransformer(appDir, config, isElectronCompile ? {
       originalMain: this.info.metadata.main,
-      main: ELECTRON_COMPILE_SHIM_FILENAME, ...config.extraMetadata
+      main: ELECTRON_COMPILE_SHIM_FILENAME,
+      ...config.extraMetadata
     } : config.extraMetadata)
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
-      return computeFileSets(matchers, transformer, this.info, isElectronCompile)
+      return computeFileSets(matchers, (this.info.isPrepackedAppAsar || asarOptions == null) ? null : transformer, this.info, isElectronCompile)
         .then(it => it.filter(it => it.files.length > 0))
     }
 
     if (this.info.isPrepackedAppAsar) {
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info)))
+      taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info, transformer)))
     }
     else if (asarOptions == null) {
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info)))
+      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, transformer)))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, {
@@ -273,6 +272,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
+    if (!isElectronBased(this.info.framework)) {
+      return null
+    }
+
     function errorMessage(name: string) {
       return `${name} is deprecated is deprecated and not supported — please use asarUnpack`
     }

@@ -28,6 +28,7 @@ export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { PublishManager } from "./publish/PublishManager"
 export { PlatformPackager } from "./platformPackager"
+export { Framework } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
 
 export async function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {

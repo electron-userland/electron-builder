@@ -16,7 +16,7 @@ import { Platform, SourceRepositoryInfo, Target } from "./core"
 import { Framework } from "./Framework"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
-import { createElectronFrameworkSupport, unpackMuon } from "./electron/ElectronFramework"
+import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { createProtonFrameworkSupport } from "./ProtonFramework"
@@ -35,17 +35,9 @@ function addHandler(emitter: EventEmitter, event: string, handler: (...args: Arr
 declare const PACKAGE_VERSION: string
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  if (configuration.muonVersion != null) {
-    return {
-      name: "muon",
-      version: configuration.muonVersion!!,
-      distMacOsAppName: "Brave.app",
-      unpackFramework: unpackMuon,
-      isNpmRebuildRequired: true,
-    }
-  }
-  else if (configuration.protonNodeVersion != null) {
-    return createProtonFrameworkSupport(configuration.protonNodeVersion!!)
+  if (configuration.protonNodeVersion != null) {
+    // require("proton-builder/out/ProtonFramework")
+    return createProtonFrameworkSupport(configuration.protonNodeVersion!!, packager.appInfo)
   }
   else {
     return await createElectronFrameworkSupport(configuration, packager)
@@ -309,8 +301,8 @@ export class Packager {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }
 
-    this._framework = await createFrameworkInfo(this.config, this)
     this._appInfo = new AppInfo(this)
+    this._framework = await createFrameworkInfo(this.config, this)
 
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
 

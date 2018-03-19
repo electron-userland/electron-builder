@@ -1,3 +1,4 @@
+import { AsarIntegrity } from "./asar/integrity"
 import { PlatformPackager } from "./platformPackager"
 
 export interface Framework {
@@ -8,6 +9,8 @@ export interface Framework {
   readonly isNpmRebuildRequired: boolean
 
   unpackFramework(options: UnpackFrameworkTaskOptions): Promise<any>
+
+  beforeCopyExtraFiles?(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null): Promise<any>
 }
 
 export interface UnpackFrameworkTaskOptions {
@@ -16,4 +19,8 @@ export interface UnpackFrameworkTaskOptions {
   readonly platformName: string
   readonly arch: string
   readonly version: string
+}
+
+export function isElectronBased(framework: Framework) {
+  return framework.name === "electron" || framework.name === "muon"
 }

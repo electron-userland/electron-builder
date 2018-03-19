@@ -97,16 +97,22 @@ class Collector {
       if (parentDir === "" || parentDir.endsWith("/") || parentDir.endsWith("\\")) {
         // https://github.com/electron-userland/electron-builder/issues/2220
         const list = Array.from(this.unresolved.keys()).filter(it => !this.unresolved.get(it))
-        if (list.length !== 0) {
-          const message = `Unresolved node modules: ${list.join(", ")}`
-          if (isEnvTrue(process.env.ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES)) {
-            log.warn(message)
-          }
-          else {
-            throw new Error(message)
-          }
+        if (list.length === 1 && list[0] === "proton-native") {
+          // resolve in tests
+          parentDir = process.cwd()
         }
-        break
+        else {
+          if (list.length !== 0) {
+            const message = `Unresolved node modules: ${list.join(", ")}`
+            if (isEnvTrue(process.env.ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES)) {
+              log.warn(message)
+            }
+            else {
+              throw new Error(message)
+            }
+          }
+          break
+        }
       }
 
       const parentNodeModulesDir = parentDir + path.sep + "node_modules"

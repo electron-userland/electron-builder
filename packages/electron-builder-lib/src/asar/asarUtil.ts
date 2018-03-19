@@ -1,12 +1,12 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
+import { createReadStream, createWriteStream, ensureDir, readFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarOptions } from ".."
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { getDestinationPath } from "../util/appFileCopier"
+import { copyFileOrData, getDestinationPath } from "../util/appFileCopier"
 import { ResolvedFileSet } from "../util/AppFileCopierHelper"
 import { AsarFilesystem, Node } from "./asar"
 import { detectUnpackedDirs } from "./unpackDetector"
@@ -207,15 +207,6 @@ export class AsarPackager {
 
       writeStream.write(headerBuf, () => w(0))
     })
-  }
-}
-
-export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
-  if (data == null) {
-    return fileCopier.copy(source, destination, stats)
-  }
-  else {
-    return writeFile(destination, data)
   }
 }
 

@@ -23,7 +23,7 @@ export interface ResolvedFileSet {
   transformedFiles?: Map<number, string | Buffer> | null
 }
 
-export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
   let hoistedNodeModuleFileSets: Array<ResolvedFileSet> | null = null
   let isHoistedNodeModuleChecked = false
@@ -55,30 +55,31 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
     }
 
     const transformedFiles = new Map<number, string | Buffer>()
-    await BluebirdPromise.filter(files, (it, index) => {
-      const fileStat = metadata.get(it)
-      if (fileStat == null || !fileStat.isFile()) {
+    if (transformer != null) {
+      await BluebirdPromise.filter(files, (it, index) => {
+        const fileStat = metadata.get(it)
+        if (fileStat == null || !fileStat.isFile()) {
+          return false
+        }
+
+        const transformedValue = transformer(it)
+        if (transformedValue == null) {
+          return false
+        }
+
+        if (typeof transformedValue === "object" && "then" in transformedValue) {
+          return (transformedValue as Promise<any>)
+            .then(it => {
+              if (it != null) {
+                transformedFiles.set(index, it)
+              }
+              return false
+            })
+        }
+        transformedFiles.set(index, transformedValue as string | Buffer)
         return false
-      }
-
-      const transformedValue = transformer(it)
-      if (transformedValue == null) {
-        return false
-      }
-
-      if (typeof transformedValue === "object" && "then" in transformedValue) {
-        return (transformedValue as BluebirdPromise<any>)
-          .then(it => {
-            if (it != null) {
-              transformedFiles.set(index, it)
-            }
-            return false
-          })
-      }
-      transformedFiles.set(index, transformedValue as string | Buffer)
-      return false
-    }, CONCURRENCY)
-
+      }, CONCURRENCY)
+    }
     fileSets.push(validateFileSet({src: matcher.from, files, metadata, transformedFiles, destination: matcher.to}))
   }
 

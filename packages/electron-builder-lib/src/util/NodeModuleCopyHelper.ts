@@ -8,7 +8,7 @@ import { resolveFunction } from "../platformPackager"
 import { Dependency } from "./packageDependencies"
 
 const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
-const topLevelExcludedFiles = new Set(["karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples"])
+const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples"])
 
 /** @internal */
 export class NodeModuleCopyHelper {
@@ -88,7 +88,8 @@ export class NodeModuleCopyHelper {
             return null
           }
 
-          if (isTopLevel && topLevelExcludedFiles.has(name)) {
+          // noinspection SpellCheckingInspection
+          if (isTopLevel && (topLevelExcludedFiles.has(name) || (dep.name === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
             return null
           }
 

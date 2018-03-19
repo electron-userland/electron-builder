@@ -108,6 +108,10 @@
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"
   },
+  "/////": "proton-native is required only for proton tests",
+  "optionalDependencies": {
+    "proton-native": "1.0.15"
+  },
   "jest": {
     "testEnvironment": "node",
     "roots": [

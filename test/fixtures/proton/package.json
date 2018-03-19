@@ -4,7 +4,7 @@
   "description": "a notepad app built using proton-native",
   "main": "index.js",
   "dependencies": {
-    "proton-native": "^1.0.11"
+    "proton-native": "^1.0.15"
   },
   "devDependencies": {},
   "scripts": {

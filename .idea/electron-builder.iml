@@ -24,6 +24,7 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-publish/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-publisher-s3/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-updater/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/proton-builder/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/wine-bin/out" />
       <excludeFolder url="file://$MODULE_DIR$/scripts/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/scripts/renderer/out" />
