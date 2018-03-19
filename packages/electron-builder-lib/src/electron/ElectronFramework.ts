@@ -3,9 +3,13 @@ import BluebirdPromise from "bluebird-lst"
 import { debug7zArgs, exec, isEnvTrue, log, spawn } from "builder-util"
 import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull } from "builder-util/out/fs"
 import { chmod, emptyDir } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration, ElectronDownloadOptions } from "../configuration"
+import { Framework, UnpackFrameworkTaskOptions } from "../Framework"
+import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 
 interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
   version: string
@@ -22,18 +26,38 @@ function createDownloadOpts(opts: Configuration, platform: string, arch: string,
   }
 }
 
-/** @internal */
-export function unpackElectron(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
-  return unpack(packager, out, platform, createDownloadOpts(packager.config, platform, arch, version))
+export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
+  let version = configuration.electronVersion
+  if (version == null) {
+    // for prepacked app asar no dev deps in the app.asar
+    if (packager.isPrepackedAppAsar) {
+      version = await getElectronVersionFromInstalled(packager.projectDir)
+      if (version == null) {
+        throw new Error(`Cannot compute electron version for prepacked asar`)
+      }
+    }
+    else {
+      version = await computeElectronVersion(packager.projectDir, new Lazy(() => Promise.resolve(packager.metadata)))
+    }
+    configuration.electronVersion = version
+  }
+
+  return {
+    name: "electron",
+    version,
+    distMacOsAppName: "Electron.app",
+    isNpmRebuildRequired: true,
+    unpackFramework: options => unpack(options.packager, options.appOutDir, options.platformName, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!)),
+  }
 }
 
 /** @internal */
-export function unpackMuon(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
-  return unpack(packager, out, platform, {
+export function unpackMuon(options: UnpackFrameworkTaskOptions) {
+  return unpack(options.packager, options.appOutDir, options.platformName, {
     mirror: "https://github.com/brave/muon/releases/download/v",
-    customFilename: `brave-v${version}-${platform}-${arch}.zip`,
+    customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
     verifyChecksum: false,
-    ...createDownloadOpts(packager.config, platform, arch, version),
+    ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
   })
 }
 

@@ -15,7 +15,6 @@ import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMai
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
-import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
@@ -149,23 +148,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
 
-    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, this.electronDistMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
-
-    const muonVersion = this.config.muonVersion
-    const isElectron = muonVersion == null
-    const config = this.config
+    const framework = this.info.framework
+    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
     log.info({
       platform: platformName,
-      arch: Arch[arch], [isElectron ? `electron` : `muon`]: isElectron ? config.electronVersion!! : muonVersion!!,
+      arch: Arch[arch],
+      [`${framework.name}`]: framework.version,
       appOutDir: log.filePath(appOutDir),
     }, `packaging`)
 
-    if (this.info.isPrepackedAppAsar) {
-      await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
-    }
-    else {
-      await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
-    }
+    await framework.unpackFramework({
+      packager: this,
+      appOutDir,
+      platformName,
+      arch: Arch[arch],
+      version: framework.version,
+    })
 
     const excludePatterns: Array<Minimatch> = []
 

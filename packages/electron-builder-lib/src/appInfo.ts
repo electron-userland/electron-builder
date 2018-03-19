@@ -79,6 +79,10 @@ export class AppInfo {
     return appId == null ? generateDefaultAppId() : appId
   }
 
+  get macBundleIdentifier(): string {
+    return filterCFBundleIdentifier(this.id)
+  }
+
   get name(): string {
     return this.info.metadata.name!
   }
@@ -104,4 +108,11 @@ export class AppInfo {
     const info = await this.info.repositoryInfo
     return info == null || info.type !== "github"  ? null : `https://${info.domain}/${info.user}/${info.project}`
   }
+}
+
+/** @internal */
+export function filterCFBundleIdentifier(identifier: string) {
+  // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.)
+  // Apple documentation: https://developer.apple.com/library/mac/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
+  return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }

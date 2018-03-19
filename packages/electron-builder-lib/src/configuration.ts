@@ -163,6 +163,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly muonVersion?: string | null
 
   /**
+   * The version of NodeJS that will be used for Proton you are packaging for.
+   */
+  readonly protonNodeVersion?: string | null
+
+  /**
    * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
    */
   readonly afterPack?: ((context: AfterPackContext) => Promise<any>) | string | null

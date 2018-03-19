@@ -12,7 +12,7 @@ import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, fi
 import { DIR_TARGET, Platform, Target } from "./core"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
-import { createMacApp } from "./packager/mac"
+import { createMacApp } from "./electron/mac"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"

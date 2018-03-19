@@ -2,7 +2,7 @@
 
 import { exec, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
-import { getElectronVersion } from "electron-builder-lib/out/util/electronVersion"
+import { getElectronVersion } from "electron-builder-lib/out/electron/electronVersion"
 import { getGypEnv } from "electron-builder-lib/out/util/yarn"
 import { readJson } from "fs-extra-p"
 import isCi from "is-ci"

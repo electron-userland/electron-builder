@@ -65,7 +65,7 @@ export function appTwoThrows(packagerOptions: PackagerOptions, checkOptions: Ass
 }
 
 export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertPack("test-app-one", packagerOptions, checkOptions)
+  return () => assertPack(packagerOptions.config != null && (packagerOptions.config as any).protonNodeVersion != null ? "proton" : "test-app-one", packagerOptions, checkOptions)
 }
 
 export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {

@@ -5,8 +5,8 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
 import { Configuration } from "../configuration"
-import { getConfig } from "./config"
-import { versionFromDependencyRange } from "./packageMetadata"
+import { getConfig } from "../util/config"
+import { versionFromDependencyRange } from "../util/packageMetadata"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 

@@ -4,10 +4,10 @@ import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { PkgOptions } from ".."
+import { filterCFBundleIdentifier } from "../appInfo"
 import { findIdentity, Identity } from "../codeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
-import { filterCFBundleIdentifier } from "../packager/mac"
 
 const certType = "Developer ID Installer"
 

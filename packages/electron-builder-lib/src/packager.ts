@@ -13,13 +13,15 @@ import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
 import { AfterPackContext, Configuration } from "./configuration"
 import { Platform, SourceRepositoryInfo, Target } from "./core"
+import { Framework } from "./Framework"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
+import { createElectronFrameworkSupport, unpackMuon } from "./electron/ElectronFramework"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
+import { createProtonFrameworkSupport } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
-import { computeElectronVersion, getElectronVersionFromInstalled } from "./util/electronVersion"
 import { Dependency, getProductionDependencies } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
@@ -31,6 +33,24 @@ function addHandler(emitter: EventEmitter, event: string, handler: (...args: Arr
 }
 
 declare const PACKAGE_VERSION: string
+
+async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
+  if (configuration.muonVersion != null) {
+    return {
+      name: "muon",
+      version: configuration.muonVersion!!,
+      distMacOsAppName: "Brave.app",
+      unpackFramework: unpackMuon,
+      isNpmRebuildRequired: true,
+    }
+  }
+  else if (configuration.protonNodeVersion != null) {
+    return createProtonFrameworkSupport(configuration.protonNodeVersion!!)
+  }
+  else {
+    return await createElectronFrameworkSupport(configuration, packager)
+  }
+}
 
 export class Packager {
   readonly projectDir: string
@@ -131,6 +151,11 @@ export class Packager {
 
   get relativeBuildResourcesDirname(): string {
     return this.config.directories!!.buildResources!!
+  }
+
+  private _framework: Framework | null = null
+  get framework(): Framework {
+    return this._framework!!
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -284,17 +309,7 @@ export class Packager {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }
 
-    const projectDir = this.projectDir
-    if (configuration.electronVersion == null) {
-      // for prepacked app asar no dev deps in the app.asar
-      if (this.isPrepackedAppAsar) {
-        configuration.electronVersion = await getElectronVersionFromInstalled(projectDir)
-        if (configuration.electronVersion == null) {
-          throw new Error(`Cannot compute electron version for prepacked asar`)
-        }
-      }
-      configuration.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => Promise.resolve(this.metadata)))
-    }
+    this._framework = await createFrameworkInfo(this.config, this)
     this._appInfo = new AppInfo(this)
 
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
@@ -407,11 +422,11 @@ export class Packager {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.options.prepackaged != null) {
+    if (this.options.prepackaged != null || this.framework.isNpmRebuildRequired !== true) {
       return
     }
 
-    const frameworkInfo = {version: this.config.muonVersion || this.config.electronVersion!, useCustomDist: this.config.muonVersion == null}
+    const frameworkInfo = {version: this.framework.version, useCustomDist: this.config.muonVersion == null}
     const config = this.config
     if (config.nodeGypRebuild === true) {
       log.info({arch: Arch[arch]}, "executing node-gyp rebuild")

@@ -15,7 +15,7 @@ export function getBinFromGithub(name: string, version: string, checksum: string
   return getBin(dirName, `https://github.com/electron-userland/electron-builder-binaries/releases/download/${dirName}/${dirName}.7z`, checksum)
 }
 
-export function getBin(name: string, url: string, checksum: string): Promise<string> {
+export function getBin(name: string, url: string, checksum: string | null): Promise<string> {
   let promise = versionToPromise.get(name)
   // if rejected, we will try to download again
   if (promise != null) {
@@ -27,7 +27,7 @@ export function getBin(name: string, url: string, checksum: string): Promise<str
   return promise
 }
 
-function doGetBin(name: string, url: string, checksum: string): Promise<string> {
+function doGetBin(name: string, url: string, checksum: string | null): Promise<string> {
   const args = ["download-artifact", "--url", url, "--name", name]
   if (checksum != null) {
     args.push("--sha512", checksum)

@@ -4,6 +4,7 @@ import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
+import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 
@@ -17,13 +18,6 @@ function moveHelpers(frameworksPath: string, appName: string, prefix: string): P
     return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)
       .then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
   })
-}
-
-/** @internal */
-export function filterCFBundleIdentifier(identifier: string) {
-  // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.)
-  // Apple documentation: https://developer.apple.com/library/mac/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
-  return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
 /** @internal */
@@ -56,7 +50,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     Object.assign(appPlist, macOptions.extendInfo)
   }
 
-  const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
+  const appBundleIdentifier = appInfo.macBundleIdentifier
 
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {

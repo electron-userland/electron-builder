@@ -343,8 +343,8 @@ ajv@^5.1.0:
     json-schema-traverse "^0.3.0"
 
 ajv@^6.1.1:
-  version "6.2.1"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.2.1.tgz#28a6abc493a2abe0fb4c8507acaedb43fa550671"
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.3.0.tgz#1650a41114ef00574cac10b8032d8f4c14812da7"
   dependencies:
     fast-deep-equal "^1.0.0"
     fast-json-stable-stringify "^2.0.0"
@@ -410,25 +410,25 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin-linux@1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.7.2.tgz#a764c8e52ecf1b5b068f32c820c6daf1ffed6a8f"
+app-builder-bin-linux@1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.7.3.tgz#d92d0523de7e4737806177a16a83c1fd2789d360"
 
-app-builder-bin-mac@1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.7.2.tgz#c4ee0d950666c97c12a45ac74ec6396be3357644"
+app-builder-bin-mac@1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.7.3.tgz#43067bdb65a7b0923b2c4e2ed92547168417413b"
 
-app-builder-bin-win@1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.7.2.tgz#7acac890782f4118f09941b343ba06c56452a6f6"
+app-builder-bin-win@1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.7.3.tgz#9913b7f572aaa17109ea4630a2bc5b70750d8a89"
 
-app-builder-bin@1.7.2:
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.7.2.tgz#daf67060a6bad8f5f611a0d2876d9db897a83f06"
+app-builder-bin@1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.7.3.tgz#63fac486ddbd61181aeef3239dbe3b202bddda22"
   optionalDependencies:
-    app-builder-bin-linux "1.7.2"
-    app-builder-bin-mac "1.7.2"
-    app-builder-bin-win "1.7.2"
+    app-builder-bin-linux "1.7.3"
+    app-builder-bin-mac "1.7.3"
+    app-builder-bin-win "1.7.3"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -909,7 +909,7 @@ base64-js@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.2.0.tgz#a39992d723584811982be5e290bb6a53d86700f1"
 
-base64-js@^1.0.2:
+base64-js@^1.0.2, base64-js@^1.2.3:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.2.3.tgz#fb13668233d9614cf5fb4bce95a9ba4096cdf801"
 
@@ -2786,8 +2786,8 @@ iconv-lite@0.4.19, iconv-lite@^0.4.19:
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
 
 ieee754@^1.1.4:
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.1.9.tgz#13acbc76462de80959be14b2d4ac93b96761b195"
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.1.10.tgz#719a6f7b026831e64bdb838b0de1bb0029bbf716"
 
 ignore@^3.3.5:
   version "3.3.7"
@@ -4513,6 +4513,14 @@ plist@^2.1.0:
     xmlbuilder "8.2.2"
     xmldom "0.1.x"
 
+plist@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/plist/-/plist-3.0.0.tgz#abd589fac72bd20146bab839556dc970cae5fcd2"
+  dependencies:
+    base64-js "^1.2.3"
+    xmlbuilder "^9.0.7"
+    xmldom "0.1.x"
+
 pn@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/pn/-/pn-1.1.0.tgz#e2f4cef0e219f463c179ab37463e4e1ecdccbafb"
@@ -6054,6 +6062,10 @@ xmlbuilder@4.2.1, xmlbuilder@^4.1.0:
 xmlbuilder@8.2.2:
   version "8.2.2"
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-8.2.2.tgz#69248673410b4ba42e1a6136551d2922335aa773"
+
+xmlbuilder@^9.0.7:
+  version "9.0.7"
+  resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-9.0.7.tgz#132ee63d2ec5565c557e20f4c22df9aca686b10d"
 
 xmlcreate@^1.0.1:
   version "1.0.2"
