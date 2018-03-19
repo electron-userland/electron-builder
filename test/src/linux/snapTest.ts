@@ -166,3 +166,20 @@ test.ifDevOrLinuxCi("custom env", app({
     return true
   },
 }))
+
+test.ifDevOrLinuxCi("custom after, no desktop", app({
+  targets: Platform.LINUX.createTarget("snap"),
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+    snap: {
+      after: ["bar"],
+    }
+  },
+  effectiveOptionComputed: async ({ snap }) => {
+    expect(snap).toMatchSnapshot()
+    return true
+  },
+}))

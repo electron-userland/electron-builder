@@ -56,6 +56,21 @@ Object {
         "libxtst6",
       ],
     },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
+    },
   },
   "summary": "Sep",
   "version": "1.1.0",
@@ -63,6 +78,69 @@ Object {
 `;
 
 exports[`buildPackages 2`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`custom after, no desktop 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "adapter": "none",
+      "command": "command.sh",
+      "environment": Object {
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu/pulseaudio:$SNAP/usr/lib/x86_64-linux-gnu/mesa-egl:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "architectures": Array [
+    "amd64",
+  ],
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "bar",
+      ],
+      "plugin": "nil",
+      "stage-packages": Array [
+        "libasound2",
+        "libgconf2-4",
+        "libnotify4",
+        "libnspr4",
+        "libnss3",
+        "libpcre3",
+        "libpulse0",
+        "libxss1",
+        "libxtst6",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`custom after, no desktop 2`] = `
 Object {
   "linux": Array [],
 }
@@ -162,6 +240,21 @@ Object {
         "libxtst6",
       ],
     },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
+    },
   },
   "summary": "Sep",
   "version": "1.1.0",
@@ -227,6 +320,21 @@ Object {
         "custom",
       ],
     },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
+    },
   },
   "summary": "Sep",
   "version": "1.1.0",
@@ -291,6 +399,21 @@ Object {
         "libxss1",
         "libxtst6",
       ],
+    },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
     },
   },
   "summary": "Sep",
@@ -359,6 +482,21 @@ Object {
         "foo2",
       ],
     },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
+    },
   },
   "summary": "Sep",
   "version": "1.1.0",
@@ -413,6 +551,21 @@ Object {
         "libxss1",
         "libxtst6",
       ],
+    },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
     },
   },
   "plugs": Object {
@@ -474,6 +627,21 @@ Object {
         "libxss1",
         "libxtst6",
       ],
+    },
+    "desktop-gtk2": Object {
+      "install": "set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done",
     },
   },
   "plugs": Object {

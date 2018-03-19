@@ -38,6 +38,7 @@ export default class SnapTarget extends Target {
 
     const plugs = normalizePlugConfiguration(options.plugs)
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
+    const desktopPart = this.packager.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
 
     const buildPackages = asArray(options.buildPackages)
     this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
@@ -74,7 +75,7 @@ export default class SnapTarget extends Target {
         app: {
           plugin: "nil",
           "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
-          after: this.replaceDefault(options.after, [this.packager.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"]),
+          after: this.replaceDefault(options.after, [desktopPart]),
         }
       },
     }
@@ -104,6 +105,27 @@ export default class SnapTarget extends Target {
     if (options.assumes != null) {
       snap.assumes = asArray(options.assumes)
     }
+
+    if (snap.parts.app.after && snap.parts.app.after.indexOf(desktopPart) >= 0) {
+      const desktopPartOverride: any = {
+        install: `set -x
+export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
+update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
+
+for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
+  if [ -f $dir/index.theme ]; then
+    if which gtk-update-icon-cache-3.0 &> /dev/null; then
+      gtk-update-icon-cache-3.0 -q $dir
+    elif which gtk-update-icon-cache &> /dev/null; then
+      gtk-update-icon-cache -q $dir
+    fi
+  fi
+done`
+      }
+
+      snap.parts[desktopPart] = desktopPartOverride
+    }
+
     return snap
   }
 
