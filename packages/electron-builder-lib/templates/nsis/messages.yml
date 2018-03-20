@@ -12,6 +12,7 @@ win7Required:
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
+  tr_TR: Windows 7 ve üstü gereklidir
 x64WinRequired:
   de: 64-Bit-Windows wird vorausgesetzt
   it: È necessario disporre di un sistema operativo Windows a 64 bit
@@ -25,6 +26,7 @@ x64WinRequired:
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
+  tr_TR: 64 bit Windows gerekli
 appRunning:
   de: "${PRODUCT_NAME} ist geöffnet. \nKlicken Sie zum Schliessen auf «OK»."
   it: "${PRODUCT_NAME} è in esecuzione. \nPremi OK per chiudere."
@@ -38,6 +40,7 @@ appRunning:
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
+  tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
 installing:
   de: Installation läuft, bitte warten...
   it: Attendere prego. Installazione in corso...
@@ -51,6 +54,7 @@ installing:
   pl: Zaczekaj na ukończenie instalacji...
   pt_BR: Instalando, por favor aguarde...
   zh_CN: 正在安装, 请稍后...
+  tr_TR: Yükleniyor, lütfen bekleyin...
 areYouSureToUninstall:
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
   it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
@@ -64,3 +68,4 @@ areYouSureToUninstall:
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
+  tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
