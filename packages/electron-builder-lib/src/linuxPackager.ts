@@ -1,9 +1,6 @@
-import { Arch, AsyncTaskManager, log, executeAppBuilder } from "builder-util"
-import { rename } from "fs-extra-p"
-import * as path from "path"
+import { Arch, AsyncTaskManager, log } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 import * as semver from "semver"
-import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
@@ -83,20 +80,6 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         }
         return target
       })
-    }
-  }
-
-  protected async postInitApp(packContext: AfterPackContext): Promise<void> {
-    const executable = path.join(packContext.appOutDir, this.executableName)
-    await rename(path.join(packContext.appOutDir, this.electronDistExecutableName), executable)
-
-    if (!this.isElectron2) {
-      try {
-        await executeAppBuilder(["clear-exec-stack", "--input", executable])
-      }
-      catch (e) {
-        log.debug({error: e}, "cannot clear exec stack")
-      }
     }
   }
 }

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { move } from "fs-extra-p"
 import * as path from "path"
@@ -16,7 +15,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json", appTwoThrows(packag
 
 test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", appTwoThrows(packagerOptions, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       modifyPackageJson(projectDir, data => {
         data.main = "main.js"
       }, true),
@@ -29,7 +28,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", appTwoThr
 
 test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", appTwoThrows(packagerOptions, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       modifyPackageJson(projectDir, data => {
         data.main = "path/app.asar/main.js"
       }, true),
@@ -42,7 +41,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", appTw
 
 test.ifLinuxOrDevMac("main in the app package.json (no asar)", () => assertPack("test-app", packagerOptions, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
       modifyPackageJson(projectDir, data => {
         data.main = "main.js"
@@ -56,7 +55,7 @@ test.ifLinuxOrDevMac("main in the app package.json (no asar)", () => assertPack(
 
 test.ifLinuxOrDevMac("main in the app package.json (custom asar)", () => assertPack("test-app", packagerOptions, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       modifyPackageJson(projectDir, data => {
         data.main = "path/app.asar/index.js"
       }, true),

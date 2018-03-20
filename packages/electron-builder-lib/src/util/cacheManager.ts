@@ -67,7 +67,7 @@ export class BuildCacheManager {
 
     try {
       await ensureDir(this.cacheDir)
-      await BluebirdPromise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
+      await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     }
     catch (e) {
       log.warn({error: e.stack || e}, `cannot save build cache`)

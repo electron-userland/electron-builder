@@ -1,14 +1,16 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { debug7zArgs, exec, isEnvTrue, log, spawn, asArray } from "builder-util"
-import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, CONCURRENCY } from "builder-util/out/fs"
-import { chmod, emptyDir, readdir, remove } from "fs-extra-p"
+import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, CONCURRENCY, unlinkIfExists } from "builder-util/out/fs"
+import { chmod, emptyDir, readdir, remove, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { executeAppBuilder } from "builder-util/out/util"
 import { AsarIntegrity } from "../asar/integrity"
 import { Configuration, ElectronDownloadOptions } from "../configuration"
 import { Platform } from "../core"
-import { Framework, UnpackFrameworkTaskOptions } from "../Framework"
+import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
@@ -31,40 +33,64 @@ function createDownloadOpts(opts: Configuration, platform: string, arch: string,
 }
 
 async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
-  if (packager.platform !== Platform.MAC) {
-    return
+  if (packager.platform === Platform.LINUX) {
+    const linuxPackager = (packager as LinuxPackager)
+    const executable = path.join(appOutDir, linuxPackager.executableName)
+    await rename(path.join(appOutDir, packager.electronDistExecutableName), executable)
+
+    if (!linuxPackager.isElectron2) {
+      try {
+        await executeAppBuilder(["clear-exec-stack", "--input", executable])
+      }
+      catch (e) {
+        log.debug({error: e}, "cannot clear exec stack")
+      }
+    }
   }
-
-  await createMacApp(packager as MacPackager, appOutDir, asarIntegrity)
-
-  const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
-  if (wantedLanguages.length === 0) {
-    return
+  else if (packager.platform === Platform.WINDOWS) {
+    const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
+    await rename(path.join(appOutDir, `${packager.electronDistExecutableName}.exe`), executable)
   }
+  else {
+    await createMacApp(packager as MacPackager, appOutDir, asarIntegrity)
 
-  // noinspection SpellCheckingInspection
-  const langFileExt = ".lproj"
-  const resourcesDir = packager.getResourcesDir(appOutDir)
-  await BluebirdPromise.map(readdir(resourcesDir), file => {
-    if (!file.endsWith(langFileExt)) {
+    const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
+    if (wantedLanguages.length === 0) {
       return
     }
 
-    const language = file.substring(0, file.length - langFileExt.length)
-    if (!wantedLanguages.includes(language)) {
-      return remove(path.join(resourcesDir, file))
-    }
-    return
-  }, CONCURRENCY)
+    // noinspection SpellCheckingInspection
+    const langFileExt = ".lproj"
+    const resourcesDir = packager.getResourcesDir(appOutDir)
+    await BluebirdPromise.map(readdir(resourcesDir), file => {
+      if (!file.endsWith(langFileExt)) {
+        return
+      }
+
+      const language = file.substring(0, file.length - langFileExt.length)
+      if (!wantedLanguages.includes(language)) {
+        return remove(path.join(resourcesDir, file))
+      }
+      return
+    }, CONCURRENCY)
+  }
 }
 
 export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
   if (configuration.muonVersion != null) {
+    const distMacOsAppName = "Brave.app"
     return {
       name: "muon",
       version: configuration.muonVersion!!,
-      distMacOsAppName: "Brave.app",
-      unpackFramework: unpackMuon,
+      distMacOsAppName,
+      prepareApplicationStageDirectory: options => {
+        return unpack(options, {
+          mirror: "https://github.com/brave/muon/releases/download/v",
+          customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
+          verifyChecksum: false,
+          ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
+        }, distMacOsAppName)
+      },
       isNpmRebuildRequired: true,
       beforeCopyExtraFiles,
     }
@@ -85,30 +111,24 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     configuration.electronVersion = version
   }
 
+  const distMacOsAppName = "Electron.app"
   return {
     name: "electron",
     version,
-    distMacOsAppName: "Electron.app",
+    distMacOsAppName,
     isNpmRebuildRequired: true,
-    unpackFramework: options => unpack(options.packager, options.appOutDir, options.platformName, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!)),
+    prepareApplicationStageDirectory: options => unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!), distMacOsAppName),
     beforeCopyExtraFiles,
   }
 }
 
-/** @internal */
-export function unpackMuon(options: UnpackFrameworkTaskOptions) {
-  return unpack(options.packager, options.appOutDir, options.platformName, {
-    mirror: "https://github.com/brave/muon/releases/download/v",
-    customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
-    verifyChecksum: false,
-    ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
-  })
-}
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: InternalElectronDownloadOptions, distMacOsAppName: string) {
+  const packager = prepareOptions.packager
+  const out = prepareOptions.appOutDir
 
-async function unpack(packager: PlatformPackager<any>, out: string, platform: string, options: InternalElectronDownloadOptions) {
   let dist: string | null | undefined = packager.config.electronDist
   if (dist != null) {
-    const zipFile = `electron-v${options.version}-${platform}-${options.arch}.zip`
+    const zipFile = `electron-v${options.version}-${prepareOptions.platformName}-${options.arch}.zip`
     const resolvedDist = path.resolve(packager.projectDir, dist)
     if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
       options.cache = resolvedDist
@@ -117,7 +137,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
   }
 
   if (dist == null) {
-    const zipPath = (await BluebirdPromise.all<any>([
+    const zipPath = (await Promise.all<any>([
       packager.info.electronDownloader(options),
       emptyDir(out)
     ]))[0]
@@ -128,10 +148,10 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
     }
     else {
       await spawn(path7za, debug7zArgs("x").concat(zipPath, "-aoa", `-o${out}`))
-      if (platform === "linux") {
+      if (prepareOptions.platformName === "linux") {
         // https://github.com/electron-userland/electron-builder/issues/786
         // fix dir permissions — opposite to extract-zip, 7za creates dir with no-access for other users, but dir must be readable for non-root users
-        await BluebirdPromise.all([
+        await Promise.all([
           chmod(path.join(out, "locales"), "0755"),
           chmod(path.join(out, "resources"), "0755")
         ])
@@ -147,4 +167,17 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
       isUseHardLink: DO_NOT_USE_HARD_LINKS,
     })
   }
+
+  await cleanupAfterUnpack(prepareOptions, distMacOsAppName)
+}
+
+function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string) {
+  const out = prepareOptions.appOutDir
+  const isMac = prepareOptions.packager.platform === Platform.MAC
+  const resourcesPath = isMac ? path.join(out, distMacOsAppName, "Contents", "Resources") : path.join(out, "resources")
+  return Promise.all([
+    unlinkIfExists(path.join(resourcesPath, "default_app.asar")),
+    unlinkIfExists(path.join(out, "version")),
+    isMac ? Promise.resolve() : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {/* ignore */}),
+  ])
 }

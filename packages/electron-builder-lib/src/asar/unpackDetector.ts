@@ -3,8 +3,9 @@ import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
+import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { getDestinationPath } from "../util/appFileCopier"
-import { NODE_MODULES_PATTERN, ResolvedFileSet } from "../util/AppFileCopierHelper"
+import { ResolvedFileSet } from "../util/AppFileCopierHelper"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 

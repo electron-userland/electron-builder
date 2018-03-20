@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
 import { writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -73,7 +72,7 @@ test.ifAll("entitlements in build dir", () => {
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
   }), {
-    projectDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => Promise.all([
       writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
       writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
     ]),

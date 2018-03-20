@@ -1,6 +1,5 @@
 import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
-import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
 import { computeEnv } from "builder-util/out/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
@@ -47,7 +46,7 @@ export default class FpmTarget extends Target {
       return path.resolve(packager.projectDir, value)
     }
 
-    return await BluebirdPromise.all<string>([
+    return await Promise.all<string>([
       writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
       writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions)
     ])

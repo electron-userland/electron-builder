@@ -164,6 +164,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * The version of NodeJS that will be used for Proton you are packaging for.
+   * You can set it to `current` to set the Node.js version that you use to run electron-builder.
    */
   readonly protonNodeVersion?: string | null
 

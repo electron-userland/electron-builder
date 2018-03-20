@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir } from "builder-util"
 import { copyDir } from "builder-util/out/fs"
@@ -27,7 +26,7 @@ test.ifDevOrLinuxCi("files", app({
     files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
   }
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
     outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
     outputFile(path.join(projectDir, "test.h"), "test that"),
@@ -56,7 +55,7 @@ test.ifDevOrLinuxCi("files.from asar", app({
     ],
   },
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     move(path.join(projectDir, "index.js"), path.join(projectDir, "app/node/index.js")),
     modifyPackageJson(projectDir, data => {
       data.main = "app/node/index.js"
@@ -80,13 +79,13 @@ test.ifDevOrLinuxCi("map resources", app({
     ],
   }
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     outputFile(path.join(projectDir, "foo", "old"), "data"),
     outputFile(path.join(projectDir, "license.txt"), "data"),
   ]),
   packed: context => {
     const resources = path.join(context.getResources(Platform.LINUX))
-    return BluebirdPromise.all([
+    return Promise.all([
       assertThat(path.join(resources, "app", "foo", "old")).doesNotExist(),
       assertThat(path.join(resources, "foo", "new")).isFile(),
       assertThat(path.join(resources, "license.txt")).isFile(),
@@ -119,7 +118,7 @@ async function doExtraResourcesTest(platform: Platform) {
     },
   }, {
     projectDirCreated: projectDir => {
-      return BluebirdPromise.all([
+      return Promise.all([
         outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
         outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
         outputFile(path.join(projectDir, "dir-relative/f.txt"), "data"),
@@ -136,7 +135,7 @@ async function doExtraResourcesTest(platform: Platform) {
         resourcesDir = path.join(base, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
       }
 
-      return BluebirdPromise.all([
+      return Promise.all([
         assertThat(path.join(resourcesDir, "foo")).isDirectory(),
         assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
         assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
@@ -187,7 +186,7 @@ test.ifNotCiWin("extraResources - two-package", () => {
     },
   }, {
     projectDirCreated: projectDir => {
-      return BluebirdPromise.all([
+      return Promise.all([
         outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
         outputFile(path.join(projectDir, "bar/hello.txt"), "data", {mode: "400"}),
         outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
@@ -206,7 +205,7 @@ test.ifNotCiWin("extraResources - two-package", () => {
       }
       const appDir = path.join(resourcesDir, "app")
 
-      await BluebirdPromise.all([
+      await Promise.all([
         assertThat(path.join(resourcesDir, "foo")).isDirectory(),
         assertThat(path.join(appDir, "foo")).doesNotExist(),
 

@@ -4,14 +4,11 @@ import { CONCURRENCY, FileTransformer, statOrNull, walk } from "builder-util/out
 import { ensureDir, Stats } from "fs-extra-p"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher"
-import { createElectronCompilerHost } from "../fileTransformer"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { Dependency } from "./packageDependencies"
-
-/** @internal */
-export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
 // os path separator is used
 export interface ResolvedFileSet {

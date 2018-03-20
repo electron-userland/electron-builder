@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
@@ -73,7 +72,7 @@ test("relative index", appTwo({
 it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({
   targets: linuxDirTarget,
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
       version: ELECTRON_VERSION
     }),
@@ -87,7 +86,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({
 test.ifDevOrLinuxCi("electron version from electron dependency", app({
   targets: linuxDirTarget,
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
       version: ELECTRON_VERSION
     }),

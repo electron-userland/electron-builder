@@ -1,6 +1,5 @@
 #! /usr/bin/env node
 
-import BluebirdPromise from "bluebird-lst"
 import { log, use } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
 import { computeDefaultAppDirectory, getConfig } from "electron-builder-lib/out/util/config"
@@ -48,7 +47,7 @@ export async function installAppDeps(args: any) {
   const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const muonVersion = config.muonVersion
-  const results = await BluebirdPromise.all<string>([
+  const results = await Promise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
     muonVersion == null ? getElectronVersion(projectDir, config, packageMetadata) : Promise.resolve(muonVersion),
   ])

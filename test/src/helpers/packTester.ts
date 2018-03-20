@@ -106,7 +106,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     filter: it => {
       const basename = path.basename(it)
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
-      return basename !== OUT_DIR_NAME && (packagerOptions.projectDir != null || basename !== "node_modules") && !basename.startsWith(".")
+      return basename !== OUT_DIR_NAME && (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
     },
     isUseHardLink: USE_HARD_LINKS,
   })

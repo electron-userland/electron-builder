@@ -11,6 +11,13 @@ const printErrorAndExit = require("../../../packages/builder-util/out/promise").
 const knownUnusedDevDependencies = new Set<string>([
 ])
 
+const knownMissedDependencies = new Set<string>([
+  "babel-core",
+  "babel-preset-env",
+  "babel-preset-stage-0",
+  "babel-preset-react",
+])
+
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
 
@@ -50,7 +57,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   for (const name of Object.keys(result.missing)) {
     if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
-      (packageName === "electron-builder-lib" && (name === "dmg-builder" || name === "electron-download-tf"))) {
+      (packageName === "electron-builder-lib" && (name === "dmg-builder" || name === "electron-download-tf" || knownMissedDependencies.has(name)))) {
       delete (result.missing as any)[name]
     }
   }

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder-lib/out/asar/asar"
 import { mkdirs, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
@@ -7,7 +6,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, modifyPackageJson, PackedContext } from "./helpers/packTester"
 
 async function createFiles(appDir: string) {
-  await BluebirdPromise.all([
+  await Promise.all([
     outputFile(path.join(appDir, "assets", "file"), "data"),
     outputFile(path.join(appDir, "b2", "file"), "data"),
     outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}")
@@ -31,7 +30,7 @@ test.ifDevOrLinuxCi("unpackDir one", app({
 
 async function assertDirs(context: PackedContext) {
   const resourceDir = context.getResources(Platform.LINUX)
-  await BluebirdPromise.all([
+  await Promise.all([
     assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
     assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
     assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),

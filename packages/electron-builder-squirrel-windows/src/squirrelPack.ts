@@ -63,10 +63,10 @@ export class SquirrelBuilder {
     const outputDirectory = this.outputDirectory
     const options = this.options
     const appUpdate = path.join(dirToArchive, "Update.exe")
-    await BluebirdPromise.all([
+    await Promise.all([
       copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
         .then(() => packager.sign(appUpdate)),
-      BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
+      Promise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
         .then(() => ensureDir(outputDirectory))
     ])
 
@@ -78,7 +78,7 @@ export class SquirrelBuilder {
     const nupkgPath = path.join(outputDirectory, outFileNames.packageFile)
     const setupPath = path.join(outputDirectory, outFileNames.setupFile)
 
-    await BluebirdPromise.all<any>([
+    await Promise.all<any>([
       pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
       copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
       copyFile(options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), path.join(dirToArchive, "background.gif")),
@@ -226,7 +226,7 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
   })
 
   //noinspection SpellCheckingInspection
-  await BluebirdPromise.all([
+  await Promise.all([
     unlink(path.join(outputDirectory, "Setup.wxs")),
     unlink(path.join(outputDirectory, "Setup.wixobj")),
     unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),

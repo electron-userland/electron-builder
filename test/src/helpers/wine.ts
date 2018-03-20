@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { exec, safeStringifyJson } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, ensureDir, readFile, writeFile } from "fs-extra-p"
@@ -61,7 +60,7 @@ export class WineManager {
     // remove links to host OS
     const userDir = this.userDir!!
     const desktopDir = path.join(userDir, "Desktop")
-    await BluebirdPromise.all([
+    await Promise.all([
       unlinkIfExists(desktopDir),
       unlinkIfExists(path.join(userDir, "My Documents")),
       unlinkIfExists(path.join(userDir, "My Music")),

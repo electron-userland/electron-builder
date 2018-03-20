@@ -3,8 +3,9 @@ import { AsyncTaskManager } from "builder-util"
 import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer } from "builder-util/out/fs"
 import { ensureDir, readlink, Stats, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
-import { ensureEndSlash, NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
+import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -43,7 +44,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     }
 
     if (transformedContent != null && typeof transformedContent === "object" && "then" in transformedContent) {
-      return transformedContent
+      return transformedContent as Promise<any>
     }
     else {
       return Promise.resolve(transformedContent)
@@ -82,7 +83,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
   if (links.length > 0) {
-    BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY)
+    await BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY)
   }
 }
 

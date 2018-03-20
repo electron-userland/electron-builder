@@ -38,6 +38,8 @@ function createTransformer(options) {
         return src
       }
 
+      return src
+
       const nodeModulesIndexOf = filename.indexOf("node_modules")
       if ((nodeModulesIndexOf > 0 && !filename.includes("electron-builder", nodeModulesIndexOf)) || !(filename.includes("/out/") || filename.includes("\\out\\"))) {
         // console.log(`Skip ${filename}`)
@@ -70,6 +72,7 @@ function createTransformer(options) {
         plugins,
         inputSourceMap: JSON.parse(fs.readFileSync(sourceMapFile, "utf-8")),
         sourceMaps: "inline",
+        ast: false,
       })
       if (transformOptions != null && transformOptions.instrument) {
         finalOptions.auxiliaryCommentBefore = ' istanbul ignore next '
@@ -77,6 +80,7 @@ function createTransformer(options) {
       }
 
       const result = babel.transform(src, finalOptions)
+
       fs.writeFileSync(sourceMapFile, JSON.stringify(result.map))
       return result.code + `\n//# sourceMappingURL=file://${sourceMapFile}`
     }
@@ -85,3 +89,17 @@ function createTransformer(options) {
 
 module.exports = createTransformer()
 module.exports.createTransformer = createTransformer
+
+const innerRegex = /[#@] sourceMappingURL=([^\s'"]*)/
+const regex = RegExp(
+  "(?:" +
+  "/\\*" +
+  "(?:\\s*\r?\n(?://)?)?" +
+  "(?:" + innerRegex.source + ")" +
+  "\\s*" +
+  "\\*/" +
+  "|" +
+  "//(?:" + innerRegex.source + ")" +
+  ")" +
+  "\\s*"
+)

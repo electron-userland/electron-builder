@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "builder-util-runtime"
 import { log } from "./log"
 import { NestedError } from "./promise"
@@ -63,7 +62,7 @@ export class AsyncTaskManager {
     let list = tasks.slice()
     tasks.length = 0
     while (list.length > 0) {
-      const subResult = await BluebirdPromise.all(list)
+      const subResult = await Promise.all(list)
       result = result == null ? subResult : result.concat(subResult)
       checkErrors()
       if (tasks.length === 0) {

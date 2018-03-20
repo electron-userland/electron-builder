@@ -72,3 +72,4 @@ if (!process.env.SZA_COMPRESSION_LEVEL) {
 }
 
 process.env.FORCE_YARN = "true"
+process.env.TEST_SET_BABEL_PRESET = "true"

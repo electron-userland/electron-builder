@@ -639,12 +639,13 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.211.0:
-  version "2.211.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.211.0.tgz#902b7525e76ff9fa72cd038b73b8a47c8c671a62"
+aws-sdk@^2.212.1:
+  version "2.212.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.212.1.tgz#833dbe8d837d46058a3772ac9bb73b69113136e4"
   dependencies:
     buffer "4.9.1"
-    events "^1.1.1"
+    events "1.1.1"
+    ieee754 "1.1.8"
     jmespath "0.15.0"
     querystring "0.2.0"
     sax "1.2.1"
@@ -2736,7 +2737,7 @@ event-emitter@~0.3.4:
     d "1"
     es5-ext "~0.10.14"
 
-events@^1.1.1:
+events@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/events/-/events-1.1.1.tgz#9ebdb7635ad099c70dcc4c2a1f5004288e8bd924"
 
@@ -3557,6 +3558,10 @@ iconv-lite@0.4.13:
 iconv-lite@0.4.19, iconv-lite@^0.4.19, iconv-lite@~0.4.13:
   version "0.4.19"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
+
+ieee754@1.1.8:
+  version "1.1.8"
+  resolved "https://registry.yarnpkg.com/ieee754/-/ieee754-1.1.8.tgz#be33d40ac10ef1926701f6f08a2d86fbfd1ad3e4"
 
 ieee754@^1.1.4:
   version "1.1.10"
@@ -4664,7 +4669,7 @@ libui-download@0.1.0:
     request "^2.72.0"
     tar.gz "^1.0.5"
 
-"libui-node@github:kusti8/libui-node":
+libui-node@kusti8/libui-node:
   version "0.0.12"
   resolved "https://codeload.github.com/kusti8/libui-node/tar.gz/d0dd94a2c2a67c597902b51f0640500f06038bea"
   dependencies:
@@ -7012,9 +7017,9 @@ type-is@~1.6.10:
     media-typer "0.3.0"
     mime-types "~2.1.18"
 
-typescript@2.7.2:
-  version "2.7.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.7.2.tgz#2d615a1ef4aee4f574425cdff7026edf81919836"
+typescript@2.8.0-rc:
+  version "2.8.0-rc"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.8.0-rc.tgz#a0256b7d1d39fb7493ba0403f55e95d31e8bc374"
 
 typescript@~2.6.2:
   version "2.6.2"

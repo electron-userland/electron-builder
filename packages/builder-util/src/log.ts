@@ -99,6 +99,12 @@ export class Logger {
       else if (Array.isArray(fieldValue)) {
         fieldValue = JSON.stringify(fieldValue)
       }
+      else if (Array.isArray(fieldValue)) {
+        fieldValue = JSON.stringify(fieldValue)
+      }
+      else if (typeof fieldValue === "object") {
+        // fieldValue = safeStringifyJson(fieldValue)
+      }
 
       text += `${color(name)}=${fieldValue}`
       if (++counter !== fieldNames.length) {

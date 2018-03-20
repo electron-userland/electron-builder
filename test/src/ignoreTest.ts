@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
@@ -48,7 +47,7 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
     asar: false
   }
 }, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
+  projectDirCreated: projectDir => Promise.all([
     outputFile(path.join(projectDir, ".svn", "foo"), "data"),
     outputFile(path.join(projectDir, ".git", "foo"), "data"),
     outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
@@ -68,7 +67,7 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
   },
 }, {
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       modifyPackageJson(projectDir, data => {
         data.devDependencies = {
           "electron-osx-sign": "*", ...data.devDependencies}
@@ -78,7 +77,7 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
     ])
   },
   packed: context => {
-    return BluebirdPromise.all([
+    return Promise.all([
       assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign")).doesNotExist(),
       assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
     ])

@@ -4,6 +4,7 @@ import * as path from "path"
 import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
+import { isElectronBased } from "../Framework"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
@@ -130,7 +131,7 @@ export default class SnapTarget extends Target {
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
-      "--docker-image", this.packager.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
+      "--docker-image", isElectronBased(this.packager.info.framework) && this.packager.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
     ]
 
     await this.helper.icons

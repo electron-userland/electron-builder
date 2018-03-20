@@ -2,7 +2,6 @@ import { Arch, asArray, exec, execWine, InvalidConfigurationError, log, use } fr
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { rename } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -339,11 +338,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (buildCacheManager != null) {
       await buildCacheManager.save()
     }
-  }
-
-  protected async postInitApp(packContext: AfterPackContext) {
-    const executable = path.join(packContext.appOutDir, `${this.appInfo.productFilename}.exe`)
-    await rename(path.join(packContext.appOutDir, `${this.electronDistExecutableName}.exe`), executable)
   }
 
   protected async signApp(packContext: AfterPackContext): Promise<any> {

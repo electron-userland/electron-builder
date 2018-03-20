@@ -1,9 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
-import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
-import { readdir, rename } from "fs-extra-p"
+import { readdir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -145,7 +145,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
 
     const framework = this.info.framework
-    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
     log.info({
       platform: platformName,
       arch: Arch[arch],
@@ -153,7 +152,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       appOutDir: log.filePath(appOutDir),
     }, `packaging`)
 
-    await framework.unpackFramework({
+    await framework.prepareApplicationStageDirectory({
       packager: this,
       appOutDir,
       platformName,
@@ -188,18 +187,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
-
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    this.copyAppFiles(taskManager, asarOptions, resourcesPath, outDir, platformSpecificBuildOptions, excludePatterns, macroExpander)
-
-    taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))
-    taskManager.addTask(unlinkIfExists(path.join(appOutDir, "version")))
-    taskManager.addTask(this.postInitApp(packContext))
-    if (this.platform !== Platform.MAC) {
-      taskManager.addTask(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
-    }
-
+    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : (isElectronBased(framework) ? path.join(appOutDir, "resources") : appOutDir)
+    this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), outDir, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
+
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
 
     const beforeCopyExtraFiles = this.info.framework.beforeCopyExtraFiles
     if (beforeCopyExtraFiles != null) {
@@ -217,12 +212,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.info.afterSign(packContext)
   }
 
-  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
+  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, defaultDestination: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
     const appDir = this.info.appDir
     const config = this.config
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
-
-    const defaultDestination = path.join(resourcePath, "app")
 
     const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, outDir, isElectronCompile)
     if (excludePatterns.length > 0) {
@@ -231,11 +224,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
+    const framework = this.info.framework
     const transformer = createTransformer(appDir, config, isElectronCompile ? {
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME,
       ...config.extraMetadata
-    } : config.extraMetadata)
+    } : config.extraMetadata, framework.createTransformer == null ? null : framework.createTransformer())
+
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
       return computeFileSets(matchers, (this.info.isPrepackedAppAsar || asarOptions == null) ? null : transformer, this.info, isElectronCompile)
         .then(it => it.filter(it => it.files.length > 0))
@@ -257,10 +252,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(_computeFileSets(mainMatchers)
         .then(fileSets => new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)))
     }
-  }
-
-  // tslint:disable-next-line:no-empty
-  protected async postInitApp(packContext: AfterPackContext): Promise<any> {
   }
 
   protected signApp(packContext: AfterPackContext): Promise<any> {
@@ -321,8 +312,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return appOutDir
   }
 
-  public getResourcesDir(appOutDir: string): string {
-    return this.platform === Platform.MAC ? this.getMacOsResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+  getResourcesDir(appOutDir: string): string {
+    if (this.platform === Platform.MAC) {
+      return this.getMacOsResourcesDir(appOutDir)
+    }
+    else if (isElectronBased(this.info.framework)) {
+      return path.join(appOutDir, "resources")
+    }
+    else {
+      return appOutDir
+    }
   }
 
   public getMacOsResourcesDir(appOutDir: string): string {

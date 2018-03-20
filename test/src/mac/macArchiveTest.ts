@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
@@ -28,7 +27,7 @@ test.ifAll.ifMac("empty installLocation", app({
 }, {
   signed: false,
   projectDirCreated: projectDir => {
-    return BluebirdPromise.all([
+    return Promise.all([
       copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     ])
   },
@@ -64,7 +63,7 @@ test.ifAll.ifMac("pkg scripts", app({
     expect(info).toMatchSnapshot()
 
     const scriptDir = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "Scripts")
-    await BluebirdPromise.all([
+    await Promise.all([
       assertThat(path.join(scriptDir, "postinstall")).isFile(),
       assertThat(path.join(scriptDir, "preinstall")).isFile(),
     ])

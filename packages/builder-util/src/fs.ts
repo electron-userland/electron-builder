@@ -39,6 +39,9 @@ export interface FileConsumer {
   isIncludeDir?: boolean
 }
 
+/**
+ * Returns list of file paths (system-dependent file separator)
+ */
 export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer): Promise<Array<string>> {
   let result: Array<string> = []
   const queue: Array<string> = [initialDirPath]

@@ -316,7 +316,7 @@ export class RemoteBuildManager {
       return
     }
 
-    BluebirdPromise.all([this.projectInfoManager.infoFile.value, getZstd()])
+    Promise.all([this.projectInfoManager.infoFile.value, getZstd()])
       .then(results => {
         const infoFile = results[0]
         log.info("compressing and uploading to remote builder")

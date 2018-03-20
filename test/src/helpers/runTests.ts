@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { emptyDir, readJson, remove } from "fs-extra-p"
 import isCi from "is-ci"
@@ -26,7 +25,7 @@ async function runTests() {
     await emptyDir(TEST_TMP_DIR)
   }
   else {
-    await BluebirdPromise.all([
+    await Promise.all([
       deleteOldElectronVersion(),
       downloadAllRequiredElectronVersions(),
       emptyDir(TEST_TMP_DIR),

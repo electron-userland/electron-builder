@@ -6,6 +6,9 @@ import { Configuration } from "./configuration"
 import { Packager } from "./packager"
 
 /** @internal */
+export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
+
+/** @internal */
 export function isElectronCompileUsed(info: Packager): boolean {
   if (info.config.electronCompile != null) {
     return info.config.electronCompile
@@ -22,20 +25,25 @@ export function hasDep(name: string, info: Packager) {
 }
 
 /** @internal */
-export function createTransformer(srcDir: string, configuration: Configuration, extraMetadata: any): FileTransformer {
+export function createTransformer(srcDir: string, configuration: Configuration, extraMetadata: any, extraTransformer: FileTransformer | null): FileTransformer {
   const mainPackageJson = path.join(srcDir, "package.json")
   const isRemovePackageScripts = configuration.removePackageScripts !== false
+  const packageJson = path.sep + "package.json"
   return file => {
     if (file === mainPackageJson) {
       return modifyMainPackageJson(file, extraMetadata, isRemovePackageScripts)
     }
-    else if (file.endsWith("/package.json") && file.includes("/node_modules/")) {
+
+    if (file.endsWith(packageJson) && file.includes(NODE_MODULES_PATTERN)) {
       return readFile(file, "utf-8")
         .then(it => cleanupPackageJson(JSON.parse(it), {
           isMain: false,
           isRemovePackageScripts,
         }))
         .catch(e => log.warn(e))
+    }
+    else if (extraTransformer != null) {
+      return extraTransformer(file)
     }
     else {
       return null
