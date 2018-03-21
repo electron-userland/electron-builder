@@ -5,7 +5,6 @@ import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile } from "fs-extra-p"
 import isCI from "is-ci"
-import { dump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { exists } from "builder-util/out/fs"
@@ -307,10 +306,9 @@ export class Packager {
     const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
 
     if (!isCI && (process.stdout as any).isTTY) {
-      const effectiveConfigFile = path.join(outDir, "electron-builder.yaml")
+      const effectiveConfigFile = path.join(outDir, "electron-builder-effective-config.yaml")
       log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
-      // dump instead of safeDump to dump functions
-      await outputFile(effectiveConfigFile, dump(configuration))
+      await outputFile(effectiveConfigFile, serializeToYaml(configuration, true))
     }
 
     return {
