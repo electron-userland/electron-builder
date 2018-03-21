@@ -219,17 +219,27 @@
     ${ifNot} ${isNoDesktopShortcut}
       # The keepShortcuts mechanism is NOT enabled.
       # Shortcuts will be recreated.
-      ${if} $keepShortcuts  == "false"
+      ${if} $keepShortcuts == "false"
         CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
         ClearErrors
         WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
       # The keepShortcuts mechanism IS enabled.
       # The desktop shortcut could exist in an obsolete location (due to name change).
       ${elseif} $oldDesktopLink != $newDesktopLink
-      ${andIf} ${FileExists} "$oldDesktopLink"
+      ${orIf} ${FileExists} "$oldDesktopLink"
         Rename $oldDesktopLink $newDesktopLink
         WinShell::UninstShortcut "$oldDesktopLink"
         WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+
+      !ifdef RECREATE_DESKTOP_SHORTCUT
+      ${elseif} $oldDesktopLink != $newDesktopLink
+      ${orIfNot} ${FileExists} "$oldDesktopLink"
+        ${ifNot} ${isUpdated}
+          CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+          ClearErrors
+          WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+        ${endIf}
+      !endif
       ${endIf}
       System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
     ${endIf}

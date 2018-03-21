@@ -9,7 +9,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
 import { Target } from "../core"
-import { FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
@@ -209,10 +209,10 @@ export default class MsiTarget extends Target {
       else if (directoryId === null) {
         result += ` Id="${path.basename(packagePath)}_f"`
       }
-      if (isMainExecutable && (commonOptions.isCreateDesktopShortcut || commonOptions.isCreateStartMenuShortcut)) {
+      if (isMainExecutable && (commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER || commonOptions.isCreateStartMenuShortcut)) {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
-        if (commonOptions.isCreateDesktopShortcut) {
+        if (commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER) {
           result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="icon.ico"/>\n`
         }
 

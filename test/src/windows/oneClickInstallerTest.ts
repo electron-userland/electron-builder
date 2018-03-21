@@ -66,6 +66,16 @@ test.ifAll.ifNotCiMac("html license", app({
   },
 }))
 
+test.ifAll.ifDevOrWinCi("createDesktopShortcut always", app({
+  targets: Platform.WINDOWS.createTarget("nsis"),
+  config: {
+    publish: null,
+    nsis: {
+      createDesktopShortcut: "always",
+    }
+  },
+}))
+
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {

@@ -18,10 +18,10 @@ export interface CommonWindowsInstallerConfiguration {
   readonly runAfterFinish?: boolean
 
   /**
-   * Whether to create desktop shortcut.
+   * Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).
    * @default true
    */
-  readonly createDesktopShortcut?: boolean
+  readonly createDesktopShortcut?: boolean | "always"
 
   /**
    * Whether to create start menu shortcut.
@@ -48,7 +48,7 @@ export interface FinalCommonWindowsInstallerOptions {
   shortcutName: string
   menuCategory: string | null
 
-  isCreateDesktopShortcut: boolean
+  isCreateDesktopShortcut: DesktopShortcutCreationPolicy
   isCreateStartMenuShortcut: boolean
 }
 
@@ -74,8 +74,24 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
     isAssisted: options.oneClick === false,
 
     shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.productFilename : packager.expandMacro(options.shortcutName!!),
-    isCreateDesktopShortcut: options.createDesktopShortcut !== false,
+    isCreateDesktopShortcut: convertToDesktopShortcutCreationPolicy(options.createDesktopShortcut),
     isCreateStartMenuShortcut: options.createStartMenuShortcut !== false,
     menuCategory,
   }
+}
+
+function convertToDesktopShortcutCreationPolicy(value: boolean | undefined | string): DesktopShortcutCreationPolicy {
+  if (value === false) {
+    return DesktopShortcutCreationPolicy.NEVER
+  }
+  else if (value === "always") {
+    return DesktopShortcutCreationPolicy.ALWAYS
+  }
+  else {
+    return DesktopShortcutCreationPolicy.FRESH_INSTALL
+  }
+}
+
+export enum DesktopShortcutCreationPolicy {
+  FRESH_INSTALL, ALWAYS, NEVER
 }

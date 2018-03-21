@@ -9,7 +9,7 @@ import { readFile, stat, unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core"
-import { getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
+import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
@@ -386,8 +386,11 @@ export class NsisTarget extends Target {
     })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
-    if (!commonOptions.isCreateDesktopShortcut) {
+    if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.NEVER) {
       defines.DO_NOT_CREATE_DESKTOP_SHORTCUT = null
+    }
+    if (commonOptions.isCreateDesktopShortcut === DesktopShortcutCreationPolicy.ALWAYS) {
+      defines.RECREATE_DESKTOP_SHORTCUT = null
     }
     if (!commonOptions.isCreateStartMenuShortcut) {
       defines.DO_NOT_CREATE_START_MENU_SHORTCUT = null
