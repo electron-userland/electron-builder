@@ -37,7 +37,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
     const cacheDir = this.downloadedUpdateHelper.cacheDir
     await ensureDir(cacheDir)
-    const updateFileName = `installer-${version}.${taskOptions.fileExtension}`
+    const updateFileName = taskOptions.fileExtension === "AppImage" ? path.basename(updateInfo.path) : `installer-${version}.${taskOptions.fileExtension}`
     const updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}.${path.extname(packageInfo.path) || "7z"}`)
 
