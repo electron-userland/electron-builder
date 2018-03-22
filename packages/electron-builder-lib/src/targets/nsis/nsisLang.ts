@@ -94,7 +94,12 @@ function computeCustomMessageTranslations(messages: any, langConfigurator: LangC
         continue
       }
 
-      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
+      const value = langToTranslations[lang]
+      if (value == null) {
+        throw new Error(`${messageId} not specified for ${lang}`)
+      }
+
+      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${value.replace(/\n/g, "$\\r$\\n")}"`)
       unspecifiedLangs.delete(langWithRegion)
     }
 

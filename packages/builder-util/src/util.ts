@@ -136,7 +136,6 @@ function removeWineSpam(out: string) {
 }
 
 export interface ExtraSpawnOptions {
-  isDebugEnabled?: boolean
   isPipeInput?: boolean
 }
 
@@ -164,7 +163,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   options.env = getProcessEnv(options.env)
 
   if (options.stdio == null) {
-    const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
+    const isDebugEnabled = debug.enabled
     // do not ignore stdout/stderr if not debug, because in this case we will read into buffer and print on error
     options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"]
   }
@@ -178,11 +177,11 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 }
 
-export function spawnAndWrite(command: string, args: Array<string>, data: string, options?: SpawnOptions, isDebugEnabled: boolean = false) {
-  const childProcess = doSpawn(command, args, options, {isPipeInput: true, isDebugEnabled})
+export function spawnAndWrite(command: string, args: Array<string>, data: string, options?: SpawnOptions) {
+  const childProcess = doSpawn(command, args, options, {isPipeInput: true})
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new Promise<any>((resolve, reject) => {
-    handleProcess("close", childProcess, command, false, () => {
+    handleProcess("close", childProcess, command, true, () => {
       try {
         clearTimeout(timeout)
       }

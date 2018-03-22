@@ -184,7 +184,7 @@ test.ifAll.ifNotCiMac("menuCategory", app({
   }
 }))
 
-test.ifAll.ifNotCiMac("string menuCategory", app({
+test.ifNotCiMac("string menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
     extraMetadata: {

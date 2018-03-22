@@ -463,7 +463,7 @@ export class NsisTarget extends Target {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
       env: {...process.env, NSISDIR: nsisPath},
       cwd: nsisTemplatesDir,
-    }, debug.enabled)
+    })
   }
 
   private async computeCommonInstallerScriptHeader() {
