@@ -35,7 +35,7 @@ selectUserMode:
   sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
   pt_BR: Por favor, selecione se este software deve estar disponível apenas para você ou para todos usuários
   zh_CN: 请选择为当前用户还是所有用户安装该软件
-  tr_TR:
+  tr_TR: Lütfen bu yazılımı tüm kullanıcılar için mi yoksa sadece kendiniz mi kullanmak istediğinizi seçin
 whichInstallationRemove:
   en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
   de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
