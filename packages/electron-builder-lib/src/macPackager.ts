@@ -257,9 +257,14 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   // todo fileAssociations
   async applyCommonInfo(appPlist: any) {
     const appInfo = this.appInfo
+    const appFilename = appInfo.productFilename
+
+    // https://github.com/electron-userland/electron-builder/issues/1278
+    appPlist.CFBundleExecutable = appFilename.endsWith(" Helper") ? appFilename.substring(0, appFilename.length - " Helper".length) : appFilename
+
     const icon = await this.getIconPath()
     if (icon != null) {
-      appPlist.CFBundleIconFile = `${appInfo.productFilename}.icns`
+      appPlist.CFBundleIconFile = `${appFilename}.icns`
     }
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName

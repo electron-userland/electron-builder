@@ -61,9 +61,6 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   await packager.applyCommonInfo(appPlist)
 
-  // https://github.com/electron-userland/electron-builder/issues/1278
-  appPlist.CFBundleExecutable = !appFilename.endsWith(" Helper") ? appFilename : appFilename.substring(0, appFilename.length - " Helper".length)
-
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
   helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
   helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`

@@ -163,7 +163,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly muonVersion?: string | null
 
   /**
-   * The version of NodeJS that will be used for Proton you are packaging for.
+   * *Proton Native only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run electron-builder.
    */
   readonly protonNodeVersion?: string | null

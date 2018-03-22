@@ -7,6 +7,7 @@ import { Platform } from "./core"
 import { NODE_MODULES_PATTERN } from "./fileTransformer"
 import { Framework, AppInfo, PrepareApplicationStageDirectoryOptions } from "./index"
 import * as path from "path"
+import { LinuxPackager } from "./linuxPackager"
 import MacPackager from "./macPackager"
 import { build as buildPlist } from "plist"
 
@@ -60,13 +61,11 @@ class ProtonFramework implements Framework {
     await ensureDir(path.join(appContentsDir, "MacOS"))
     await copyFile(path.join(await getBin("node", `${this.version}-darwin-x64`, null), "node"), path.join(appContentsDir, "MacOS", "node"))
 
-    const appPlist: any = {
-      CFBundleExecutable: "main",
-    }
+    const appPlist: any = {}
     await packager.applyCommonInfo(appPlist)
     await Promise.all([
       writeFile(path.join(appContentsDir, "Info.plist"), buildPlist(appPlist)),
-      writeExecutableMain(path.join(appContentsDir, "MacOS", "main"), `#!/bin/sh
+      writeExecutableMain(path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable), `#!/bin/sh
 DIR=$(dirname "$0")
 "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"
 `),
@@ -76,7 +75,7 @@ DIR=$(dirname "$0")
   private async prepareLinuxApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     const appOutDir = options.appOutDir
     await copyFile(path.join(await getBin("node", `${this.version}-linux-${options.arch === "ia32" ? "x86" : options.arch}`, null), "node"), path.join(appOutDir, "node"))
-    const mainPath = path.join(appOutDir, "main")
+    const mainPath = path.join(appOutDir, (options.packager as LinuxPackager).executableName)
     await writeExecutableMain(mainPath, `#!/bin/sh
 DIR=$(dirname "$0")
 "$DIR/node" "$DIR/app/${options.packager.info.metadata.main || "index.js"}"

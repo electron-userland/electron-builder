@@ -27,8 +27,9 @@ export interface Dependency {
   stat?: Stats
 }
 
+// noinspection SpellCheckingInspection
 const knownAlwaysIgnoredDevDeps = new Set([
-  "electron-builder-tslint-config", "electron-download",
+  "electron-builder-tslint-config", "electron-download", "libui-download",
   "electron-forge", "electron-packager", "electron-compilers",
   "prebuild-install", "nan",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",

@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/Donate-Donorbox-green.svg)](https://www.electron.build/donate)
-A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) or [Muon](https://github.com/brave/muon) app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
   * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
@@ -11,7 +11,7 @@ A complete solution to package and build a ready for distribution Electron app f
   * [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
   * [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
-* [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.  
+* [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.
 * [Build version management](https://www.electron.build/configuration/configuration#build-version-management).
 * [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
@@ -19,6 +19,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
+* [Proton Native](https://proton-native.js.org/) and [Muon](https://github.com/brave/muon) support.
 
 | Question | Answer |
 |----------|-------|
@@ -74,7 +75,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
-   
+
 6. Install the [required system packages](https://www.electron.build/multi-platform-build) if you are not on macOS 10.12+.
 
 Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration/configuration#Configuration-asar).
@@ -114,7 +115,7 @@ Add `ia32: true` to build `ia32` (or `x64: true`, or `armv7l: true`). Several ca
 
 ## Pack Only in a Distributable Format
 
-You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`) 
+You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`)
 and other distributable formats.
 
 ```
@@ -137,8 +138,13 @@ See [docs](https://electron.build).
 
 Set the [DEBUG](https://github.com/visionmedia/debug#windows-note) environment variable to debug what electron-builder is doing:
 ```bash
-DEBUG=electron-builder,electron-builder:*
+DEBUG=electron-builder
 ```
+
+## Proton Native
+
+To package [Proton Native](https://proton-native.js.org/) app, set `protonNodeVersion` option to `current` or specific NodeJS version that you are packaging for.
+Currently, only macOS and Linux supported.
 
 ## Donate
 
