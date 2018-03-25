@@ -106,7 +106,7 @@ export class NsisUpdater extends BaseUpdater {
     const packagePath = this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
-      args.push(`--package-file=${packagePath}`)
+      args.push(`--package-file="${packagePath}"`)
     }
 
     const spawnOptions = {
