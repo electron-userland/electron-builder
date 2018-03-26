@@ -20,8 +20,9 @@ export abstract class BaseUpdater extends AppUpdater {
         if (this.app.quit !== undefined) {
           this.app.quit()
         }
-        this.quitAndInstallCalled = false
       })
+    } else {
+      this.quitAndInstallCalled = false
     }
   }
 
@@ -136,6 +137,8 @@ export abstract class BaseUpdater extends AppUpdater {
       if (!this.quitAndInstallCalled) {
         this._logger.info("Auto install update on quit")
         await this.install(true, false)
+      } else {
+        this._logger.info("Update installer has already been triggered. Quitting application.")
       }
     })
   }
