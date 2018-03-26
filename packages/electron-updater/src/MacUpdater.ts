@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
@@ -41,7 +40,7 @@ export class MacUpdater extends AppUpdater {
 
     const requestHeaders = await this.computeRequestHeaders()
 
-    return await new BluebirdPromise<Array<string>>((resolve, reject) => {
+    return await new Promise<Array<string>>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         this._logger.info(`${requestUrl} requested`)

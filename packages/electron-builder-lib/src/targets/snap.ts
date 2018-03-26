@@ -107,7 +107,7 @@ export default class SnapTarget extends Target {
       snap.assumes = asArray(options.assumes)
     }
 
-    if (snap.parts.app.after && snap.parts.app.after.indexOf(desktopPart) >= 0) {
+    if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
       const desktopPartOverride: any = {
         install: `set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
@@ -124,7 +124,7 @@ for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
 done`
       }
 
-      if (appDescriptor.plugs.indexOf("desktop") >= 0 || appDescriptor.plugs.indexOf("desktop-legacy") >= 0) {
+      if (appDescriptor.plugs.includes("desktop") || appDescriptor.plugs.includes("desktop-legacy")) {
         desktopPartOverride.stage = ["-./usr/share/fonts/**"]
       }
 

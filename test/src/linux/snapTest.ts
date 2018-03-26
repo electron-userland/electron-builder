@@ -55,7 +55,7 @@ test.skip("snap full electron 2", app({
     extraMetadata: {
       name: "se-electron2",
     },
-    electronVersion: "2.0.0-beta.1",
+    electronVersion: "2.0.0-beta.5",
     productName: "Snap Electron 2 App (full build)",
     snap: {
       useTemplateApp: false,
