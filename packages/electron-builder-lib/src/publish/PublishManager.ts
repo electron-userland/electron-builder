@@ -119,6 +119,12 @@ export class PublishManager implements PublishContext {
       return
     }
 
+    const providerName = publisher.providerName
+    if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && !(providerName === "GitHub" || providerName === "Bintray")) {
+      log.info({file: event.file, reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft"}, `not published to ${providerName}`)
+      return
+    }
+
     this.taskManager.addTask(publisher.upload(event))
   }
 

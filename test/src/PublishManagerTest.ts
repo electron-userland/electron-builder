@@ -49,7 +49,7 @@ test.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
   },
 }))
 
-test.ifDevOrLinuxCi.ifAll("mac artifactName ", app({
+test.ifAll("mac artifactName ", app({
   targets: Platform.MAC.createTarget("zip"),
   config: {
     // tslint:disable-next-line:no-invalid-template-strings
@@ -65,6 +65,8 @@ test.ifDevOrLinuxCi.ifAll("mac artifactName ", app({
       },
     ]
   },
+}, {
+  publish: undefined,
 }))
 
 // otherwise test "os macro" always failed for pull requests
