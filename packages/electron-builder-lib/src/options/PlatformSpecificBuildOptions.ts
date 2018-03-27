@@ -1,6 +1,5 @@
 import { AsarIntegrityOptions } from "../asar/integrity"
 import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core"
-import { Protocol, ReleaseInfo } from "../configuration"
 import { FileAssociation } from "./FileAssociation"
 import { Publish } from "builder-util-runtime"
 
@@ -102,4 +101,49 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   /** @private */
   cscKeyPassword?: string | null
+}
+
+export interface ReleaseInfo {
+  /**
+   * The release name.
+   */
+  releaseName?: string | null
+
+  /**
+   * The release notes.
+   */
+  releaseNotes?: string | null
+
+  /**
+   * The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
+   */
+  releaseNotesFile?: string | null
+
+  /**
+   * The release date.
+   */
+  releaseDate?: string
+}
+
+/**
+ * URL Protocol Schemes. Protocols to associate the app with. macOS only.
+ *
+ * Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
+ */
+export interface Protocol {
+  /**
+   * The name. e.g. `IRC server URL`.
+   */
+  readonly name: string
+
+  /**
+   * The schemes. e.g. `["irc", "ircs"]`.
+  */
+  readonly schemes: Array<string>
+
+  /**
+   * *macOS-only* The app’s role with respect to the type.
+   * @default Editor
+   */
+  readonly role?: "Editor" | "Viewer" | "Shell" | "None"
 }

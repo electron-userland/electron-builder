@@ -5,7 +5,7 @@ import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { ReleaseInfo } from "../configuration"
+import { ReleaseInfo } from ".."
 import { Platform } from "../core"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
@@ -193,7 +193,10 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       return
     }
 
-    task.info.releaseDate = releaseDate
+    if (task.info.releaseDate == null) {
+      task.info.releaseDate = releaseDate
+    }
+
     const fileContent = Buffer.from(serializeToYaml(task.info))
     await outputFile(task.file, fileContent)
     packager.dispatchArtifactCreated({
