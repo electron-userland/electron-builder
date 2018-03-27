@@ -50,6 +50,8 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
+Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in YML format).
+
 ## Staged Rollouts
 
 Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
