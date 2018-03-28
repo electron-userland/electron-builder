@@ -38,7 +38,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }, cancellationToken))!
 
     const feed = parseXml(feedXml)
-    const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
+    let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     let version: string | null
     try {
       if (this.updater.allowPrerelease) {
@@ -47,6 +47,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       }
       else {
         version = await this.getLatestVersionString(cancellationToken)
+        for (const element of feed.getElements("entry")) {
+          if (element.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1] === version) {
+            latestRelease = element
+            break
+          }
+        }
+
       }
     }
     catch (e) {
