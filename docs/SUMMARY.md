@@ -26,6 +26,7 @@
   * [Loading App Dependencies Manually](tutorials/loading-app-dependencies-manually.md)
   * [Two package.json Structure](tutorials/two-package-structure.md)
   * [macOS Kernel Extensions](tutorials/macos-kernel-extensions.md)
+  * [Release Using Channels](tutorials/release-using-channels.md)
   
 * Programmatic API
   * [electron-builder](api/electron-builder.md)
