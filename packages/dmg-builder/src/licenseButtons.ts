@@ -32,9 +32,7 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
     }
 
     try {
-      const fileData = safeLoad(await
-        readFile(item.file, "utf-8")
-      )
+      const fileData = safeLoad(await readFile(item.file, "utf-8")) as any
       const buttonsStr = labelToHex(fileData.lang, item.lang, item.langWithRegion) +
         labelToHex(fileData.agree, item.lang, item.langWithRegion) +
         labelToHex(fileData.disagree, item.lang, item.langWithRegion) +

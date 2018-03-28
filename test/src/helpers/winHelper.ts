@@ -9,7 +9,7 @@ import { PackedContext } from "./packTester"
 import { diff, WineManager } from "./wine"
 
 export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
-  const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))
+  const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
     expect(data.publisherName).toEqual(["Foo, Inc"])
     delete data.publisherName

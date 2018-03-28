@@ -17,6 +17,8 @@ export function createProtonFrameworkSupport(nodeVersion: string, appInfo: AppIn
 
 class ProtonFramework implements Framework {
   readonly name = "proton"
+  readonly isDefaultAppIconProvided = false
+
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = false
 

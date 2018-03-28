@@ -9,6 +9,8 @@ export interface Framework {
 
   readonly isNpmRebuildRequired: boolean
 
+  readonly isDefaultAppIconProvided: boolean
+
   prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions): Promise<any>
 
   beforeCopyExtraFiles?(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null): Promise<any>

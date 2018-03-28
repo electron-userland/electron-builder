@@ -244,9 +244,9 @@
   version "22.2.2"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-22.2.2.tgz#afe5dacbd00d65325f52da0ed3e76e259629ac9d"
 
-"@types/js-yaml@^3.10.1":
-  version "3.10.1"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.10.1.tgz#a4ddaf67fec34151e620cdbdd22e40b64217f577"
+"@types/js-yaml@^3.11.0":
+  version "3.11.0"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.11.0.tgz#63700da41777a1f3ae2e0006a711ca6cd0354afb"
 
 "@types/lodash.isequal@^4.5.2":
   version "4.5.2"
@@ -410,25 +410,25 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin-linux@1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.8.3.tgz#4bf638a7bd29365e5534d2ba554baf1350fb4a87"
+app-builder-bin-linux@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-linux/-/app-builder-bin-linux-1.8.4.tgz#9fa4f4f6af21f147cdedc69279940134c77d297f"
 
-app-builder-bin-mac@1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.8.3.tgz#8e2c63e9d822fce2eee8db2f9f817d7b68532df7"
+app-builder-bin-mac@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-mac/-/app-builder-bin-mac-1.8.4.tgz#abd35353167b037a15353fe44c84b0b17045d12f"
 
-app-builder-bin-win@1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.8.3.tgz#3598ec1c523dd197e8bb5dfeab3e2fe70905ae79"
+app-builder-bin-win@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/app-builder-bin-win/-/app-builder-bin-win-1.8.4.tgz#ba5f7a7d8ae48d32c400691b3c45f6f746c27748"
 
-app-builder-bin@1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.8.3.tgz#902174b5864521e5068fe1d8ae5566633a5b9c44"
+app-builder-bin@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.8.4.tgz#ca8fd02209c2e0681de97fdb4c559d93381cc812"
   optionalDependencies:
-    app-builder-bin-linux "1.8.3"
-    app-builder-bin-mac "1.8.3"
-    app-builder-bin-win "1.8.3"
+    app-builder-bin-linux "1.8.4"
+    app-builder-bin-mac "1.8.4"
+    app-builder-bin-win "1.8.4"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -627,9 +627,9 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.214.1:
-  version "2.214.1"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.214.1.tgz#ce4f23ef78a12d2ec89f543028920ec041327b64"
+aws-sdk@^2.215.1:
+  version "2.215.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.215.1.tgz#e9837dd5a0c26ad3be99c9b41f4f5458f5a30b8f"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -5952,9 +5952,9 @@ type-is@~1.6.10:
     media-typer "0.3.0"
     mime-types "~2.1.18"
 
-typescript@2.8.0-rc:
-  version "2.8.0-rc"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.8.0-rc.tgz#a0256b7d1d39fb7493ba0403f55e95d31e8bc374"
+typescript@2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.8.1.tgz#6160e4f8f195d5ba81d4876f9c0cc1fbc0820624"
 
 typescript@~2.6.2:
   version "2.6.2"

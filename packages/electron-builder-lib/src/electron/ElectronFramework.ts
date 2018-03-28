@@ -81,6 +81,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     const distMacOsAppName = "Brave.app"
     return {
       name: "muon",
+      isDefaultAppIconProvided: true,
       version: configuration.muonVersion!!,
       distMacOsAppName,
       prepareApplicationStageDirectory: options => {
@@ -113,6 +114,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 
   const distMacOsAppName = "Electron.app"
   return {
+    isDefaultAppIconProvided: true,
     name: "electron",
     version,
     distMacOsAppName,

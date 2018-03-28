@@ -5,6 +5,8 @@ import { AppUpdater } from "./AppUpdater"
 import { getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
+const hrefRegExp = /\/tag\/v?([^\/]+)$/
+
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: URL
@@ -43,12 +45,12 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     try {
       if (this.updater.allowPrerelease) {
         // noinspection TypeScriptValidateJSTypes
-        version = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
+        version = latestRelease.element("link").attribute("href").match(hrefRegExp)!![1]
       }
       else {
         version = await this.getLatestVersionString(cancellationToken)
         for (const element of feed.getElements("entry")) {
-          if (element.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1] === version) {
+          if (element.element("link").attribute("href").match(hrefRegExp)!![1] === version) {
             latestRelease = element
             break
           }
