@@ -12,8 +12,8 @@
   ],
   "dependencies": {
     "fs-extra-p": "^4.5.2",
-    "aws-sdk": "^2.215.1",
-    "mime": "^2.2.0",
+    "aws-sdk": "^2.218.1",
+    "mime": "^2.2.2",
     "electron-publish": "~0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",
     "bluebird-lst": "^1.0.5"
