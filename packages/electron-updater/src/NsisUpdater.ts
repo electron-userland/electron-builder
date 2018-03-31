@@ -145,7 +145,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     try {
-      const blockMapData = JSON.parse((await provider.httpRequest(newUrlFromBase(`${fileInfo.url.pathname}.blockMap.json`, fileInfo.url)))!!)
+      const blockMapData = JSON.parse((await provider.httpRequest(newUrlFromBase(`${fileInfo.url.pathname}.blockMap.json`, fileInfo.url, true)))!!)
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
         newUrl: fileInfo.url.href,
         oldFile: path.join(this.app.getPath("userData"), "installer.exe"),

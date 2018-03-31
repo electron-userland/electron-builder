@@ -154,11 +154,14 @@ export function newBaseUrl(url: string) {
 }
 
 /** @internal */
-export function newUrlFromBase(pathname: string, baseUrl: URL): URL {
+export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching = false): URL {
   const result = new URL(pathname, baseUrl)
-  // search is not propagated
+  // search is not propagated (search is an empty string if not specified)
   if (!result.search && baseUrl.search) {
     result.search = baseUrl.search
+  }
+  if (addRandomQueryToAvoidCaching && !result.search) {
+    result.search = `noCache=${Date.now().toString(32)}`
   }
   return result
 }
