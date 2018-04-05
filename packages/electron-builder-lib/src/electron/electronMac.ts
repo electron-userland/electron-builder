@@ -73,6 +73,10 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
   helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
 
+  helperPlist.CFBundleVersion = appPlist.CFBundleVersion
+  helperEHPlist.CFBundleVersion = appPlist.CFBundleVersion
+  helperNPPlist.CFBundleVersion = appPlist.CFBundleVersion
+
   const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
