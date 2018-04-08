@@ -228,6 +228,11 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly internetEnabled?: boolean
+
+  /**
+   * The path to the provisioning profile to use when signing, absolute or relative to the app root.
+   */
+  readonly provisioningProfile?: string | null
 }
 
 export interface DmgWindow {
@@ -282,6 +287,11 @@ export interface MasConfiguration extends MacConfiguration {
    * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
    */
   readonly entitlementsInherit?: string | null
+
+  /**
+   * The path to the provisioning profile to use when signing, absolute or relative to the app root.
+   */
+  readonly provisioningProfile?: string | null
 
   /**
    * Paths of any extra binaries that need to be signed.
