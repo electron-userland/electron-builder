@@ -17,7 +17,7 @@
     "bluebird-lst": "^1.0.5",
     "parse-color": "^1.0.0",
     "builder-util": "^0.0.0-semantic-release",
-    "iconv-lite": "^0.4.19",
+    "iconv-lite": "^0.4.21",
     "js-yaml": "^3.11.0",
     "electron-builder-lib": "~0.0.0-semantic-release",
     "sanitize-filename": "^1.6.1"

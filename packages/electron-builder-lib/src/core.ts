@@ -79,6 +79,7 @@ export abstract class Target {
   protected constructor(readonly name: string, readonly isAsyncSupported: boolean = true) {
   }
 
+  // noinspection JSMethodCanBeStatic
   protected logBuilding(targetPresentableName: string, artifactPath: string, arch: Arch): void {
     log.info({target: targetPresentableName, arch: Arch[arch], file: log.filePath(artifactPath)}, "building")
   }

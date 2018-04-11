@@ -118,10 +118,31 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
-    taskManager.addTask(
-      BluebirdPromise.map(targets, it => it.isAsyncSupported ? it.build(appOutDir, arch) : null)
-        .then(() => BluebirdPromise.each(targets, it => it.isAsyncSupported ? null : it.build(appOutDir, arch)))
-    )
+    if (targets.find(it => !it.isAsyncSupported) == null) {
+      PlatformPackager.buildAsyncTargets(targets, taskManager, appOutDir, arch)
+      return
+    }
+
+    taskManager.add(async () => {
+      // BluebirdPromise.map doesn't invoke target.build immediately, but for RemoteTarget it is very critical to call build() before finishBuild()
+      const subTaskManager = new AsyncTaskManager(this.info.cancellationToken)
+      PlatformPackager.buildAsyncTargets(targets, subTaskManager, appOutDir, arch)
+      await subTaskManager.awaitTasks()
+
+      for (const target of targets) {
+        if (!target.isAsyncSupported) {
+          await target.build(appOutDir, arch)
+        }
+      }
+    })
+  }
+
+  private static buildAsyncTargets(targets: Array<Target>, taskManager: AsyncTaskManager, appOutDir: string, arch: Arch) {
+    for (const target of targets) {
+      if (target.isAsyncSupported) {
+        taskManager.addTask(target.build(appOutDir, arch))
+      }
+    }
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
