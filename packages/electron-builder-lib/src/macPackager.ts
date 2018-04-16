@@ -84,10 +84,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const prepackaged = this.packagerOptions.prepackaged
 
     if (!hasMas || targets.length > 1) {
-      const hasDmg = targets.length !== 0 && targets.some(it => it.name === "dmg")
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
-        .then(() => this.sign(appPath, null, null, (this.platformSpecificBuildOptions.identity && hasDmg ? "dmg" : null)))
+        .then(() => this.sign(appPath, null, null))
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }
 
@@ -100,17 +99,17 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (this.config as any).mas)
       if (targetName === "mas-dev") {
         deepAssign(masBuildOptions, (this.config as any)[targetName], {
-          type: "development",
+          type: "development"
         })
       }
 
       const targetOutDir = path.join(outDir, targetName)
       if (prepackaged == null) {
         await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
-        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, targetName)
+        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions)
       }
       else {
-        await this.sign(prepackaged, targetOutDir, masBuildOptions, targetName)
+        await this.sign(prepackaged, targetOutDir, masBuildOptions)
       }
     }
 
@@ -119,7 +118,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, targetName: string | null): Promise<void> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null): Promise<void> {
     if (!isSignAllowed()) {
       return
     }
@@ -176,7 +175,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null
     }
 
-    await this.adjustSignOptions(signOptions, masOptions, targetName)
+    await this.adjustSignOptions(signOptions, masOptions)
     log.info({
       file: log.filePath(appPath),
       identityName: identity.name,
@@ -200,7 +199,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null, targetName: string | null) {
+  private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
     const resourceList = await this.resourceList
     if (resourceList.includes(`entitlements.osx.plist`)) {
       throw new InvalidConfigurationError("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
@@ -231,12 +230,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
     }
 
-    if (targetName) {
-      const targetOptions = (this.config as any)[targetName]
-
-      if (targetOptions && targetOptions.provisioningProfile) {
-        signOptions["provisioning-profile"] = targetOptions.provisioningProfile
-      }
+    if (customSignOptions.provisioningProfile) {
+      signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
   }
 

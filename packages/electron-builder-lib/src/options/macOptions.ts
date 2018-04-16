@@ -44,6 +44,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly entitlementsInherit?: string | null
 
   /**
+   * The path to the provisioning profile to use when signing, absolute or relative to the app root.
+   */
+  readonly provisioningProfile?: string | null
+
+  /**
    * The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
    */
   readonly bundleVersion?: string | null
@@ -101,6 +106,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /** @private */
   readonly cscInstallerLink?: string | null
+
   /** @private */
   readonly cscInstallerKeyPassword?: string | null
 }
@@ -228,11 +234,6 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly internetEnabled?: boolean
-
-  /**
-   * The path to the provisioning profile to use when signing, absolute or relative to the app root.
-   */
-  readonly provisioningProfile?: string | null
 }
 
 export interface DmgWindow {
