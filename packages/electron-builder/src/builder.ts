@@ -324,7 +324,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
     .example("electron-builder --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("electron-builder --win --ia32", "build for Windows ia32")
-    .example("electron-builder --em.foo=bar", "set package.json property `foo` to `bar`")
+    .example("electron-builder -c.extraMetadata.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
 }
 
