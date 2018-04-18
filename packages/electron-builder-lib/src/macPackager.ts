@@ -180,6 +180,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       file: log.filePath(appPath),
       identityName: identity.name,
       identityHash: identity.hash,
+      provisioningProfile: signOptions["provisioning-profile"] || "none",
     }, "signing")
     await this.doSign(signOptions)
 
@@ -227,6 +228,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     else {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
+    }
+
+    if (customSignOptions.provisioningProfile != null) {
+      signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
   }
 
