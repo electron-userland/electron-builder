@@ -108,6 +108,7 @@ export default class SnapTarget extends Target {
     }
 
     if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
+      // todo change install to override-build when new snapcraft release will be installed on most user machines
       const desktopPartOverride: any = {
         install: `set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share

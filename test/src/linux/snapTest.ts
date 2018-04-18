@@ -34,7 +34,6 @@ test.ifAll.ifDevOrLinuxCi("snap electron 2", app({
   },
 }))
 
-// custom packages to test not-prepacked snap build
 // very slow
 test.skip("snap full", app({
   targets: snapTarget,
