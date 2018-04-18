@@ -99,7 +99,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (this.config as any).mas)
       if (targetName === "mas-dev") {
         deepAssign(masBuildOptions, (this.config as any)[targetName], {
-          type: "development",
+          type: "development"
         })
       }
 
@@ -180,6 +180,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       file: log.filePath(appPath),
       identityName: identity.name,
       identityHash: identity.hash,
+      provisioningProfile: signOptions["provisioning-profile"] || "none"
     }, "signing")
     await this.doSign(signOptions)
 
@@ -227,6 +228,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     else {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
+    }
+
+    if (customSignOptions.provisioningProfile) {
+      signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
   }
 
