@@ -142,12 +142,11 @@ else
    SYSTEM_WIDE="--mode system"
 fi
 
-# Check if the desktop file is already there
-# and if so, whether it points to the same AppImage
+# check if the desktop file is already there and if so, whether it points to the same AppImage
 if [ -e "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-<%= desktopFileName %>" ] ; then
   INSTALLED_APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-<%= desktopFileName %>" | head -n 1 | cut -d " " -f 1)
   APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESKTOP_FILE" | head -n 1 | cut -d " " -f 1)
-  echo "installed: $INSTALLED_APP_VERSION image: $APP_VERSION"
+  #echo "installed: $INSTALLED_APP_VERSION image: $APP_VERSION"
   if [ "$INSTALLED_APP_VERSION" == "$APP_VERSION" ] ; then
     exit 0
   fi
