@@ -30,7 +30,7 @@ test.ifAll.ifDevOrLinuxCi("snap electron 2", app({
       artifactName: "${name}_v${version}.${ext}",
     },
     productName: "Sep Electron 2",
-    electronVersion: "2.0.0-beta.1",
+    electronVersion: "2.0.0-beta.7",
   },
 }))
 
@@ -54,7 +54,7 @@ test.skip("snap full electron 2", app({
     extraMetadata: {
       name: "se-electron2",
     },
-    electronVersion: "2.0.0-beta.5",
+    electronVersion: "2.0.0-beta.7",
     productName: "Snap Electron 2 App (full build)",
     snap: {
       useTemplateApp: false,
