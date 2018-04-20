@@ -194,6 +194,7 @@ test.ifNotCiMac("string menuCategory", app({
     publish: null,
     nsis: {
       oneClick: false,
+      runAfterFinish: false,
       menuCategory: "Foo/Bar",
       // tslint:disable-next-line:no-invalid-template-strings
       artifactName: "${productName} CustomName ${version}.${ext}"

@@ -5,4 +5,4 @@
 docker: Error response from daemon: Mounts denied: o Docker.
       You can configure shared paths from Docker -> Preferences... -> File Sharing.
  */
-export const ELECTRON_VERSION = "1.8.2"
+export const ELECTRON_VERSION = "1.8.4"

@@ -12,7 +12,7 @@ export interface CommonWindowsInstallerConfiguration {
   readonly perMachine?: boolean
 
   /**
-   * *one-click installer only.*  Whether to run the installed application after finish.
+   * Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.
    * @default true
    */
   readonly runAfterFinish?: boolean

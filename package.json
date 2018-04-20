@@ -32,7 +32,7 @@
     "app-builder-bin": "1.8.6",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
-    "aws-sdk": "^2.224.1",
+    "aws-sdk": "^2.225.1",
     "bluebird-lst": "^1.0.5",
     "chalk": "^2.3.2",
     "chromium-pickle-js": "^0.2.0",
@@ -103,7 +103,7 @@
     "ts-babel": "^5.0.2",
     "ts-jsdoc": "^3.0.0",
     "tslint": "^5.9.1",
-    "typescript": "2.8.1",
+    "typescript": "2.8.3",
     "v8-compile-cache": "^1.1.2",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"

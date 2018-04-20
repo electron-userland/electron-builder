@@ -3,7 +3,7 @@ version: 2
 jobs:
     build:
       docker:
-        - image: circleci/node:9.8
+        - image: circleci/node:9.11.1
       steps:
         - checkout
         - restore_cache:
@@ -11,7 +11,7 @@ jobs:
               - deps-{{ checksum "yarn.lock" }}
         - restore_cache:
             keys:
-              - v-1.8.2-electron
+              - v-1.8.4-electron
         - run:
             command: yarn --frozen-lockfile
         - run:
@@ -23,7 +23,7 @@ jobs:
         - run:
             command: node ./test/out/helpers/downloadElectron.js
         - save_cache:
-            key: v-1.8.2-electron
+            key: v-1.8.4-electron
             paths:
               - ~/.cache/electron
 
@@ -41,7 +41,7 @@ jobs:
               - deps-{{ checksum "yarn.lock" }}
         - restore_cache:
             keys:
-              - v-1.8.2-electron
+              - v-1.8.4-electron
         # because in the build job we use circleci docker image and circleci restores cache to original user home
         - run:
             command: |

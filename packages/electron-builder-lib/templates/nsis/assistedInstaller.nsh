@@ -5,16 +5,18 @@
 !endif
 
 !ifndef BUILD_UNINSTALLER
-  Function StartApp
-    ${if} ${isUpdated}
-      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "--updated"
-    ${else}
-      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" ""
-    ${endif}
-  FunctionEnd
+  !ifndef HIDE_RUN_AFTER_FINISH
+    Function StartApp
+      ${if} ${isUpdated}
+        ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "--updated"
+      ${else}
+        ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" ""
+      ${endif}
+    FunctionEnd
 
-  !define MUI_FINISHPAGE_RUN
-  !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
+    !define MUI_FINISHPAGE_RUN
+    !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
+  !endif
 
   !ifmacrodef customWelcomePage
     !insertmacro customWelcomePage

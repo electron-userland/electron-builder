@@ -329,6 +329,10 @@ export class NsisTarget extends Target {
       })
     }
     else {
+      if (options.runAfterFinish === false) {
+        defines.HIDE_RUN_AFTER_FINISH = null
+      }
+
       asyncTaskManager.add(async () => {
         const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
         if (installerHeader != null) {
