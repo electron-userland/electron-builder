@@ -1,6 +1,7 @@
 import { Arch, replaceDefault as _replaceDefault, serializeToYaml, executeAppBuilder, toLinuxArchString } from "builder-util"
 import { chmod, outputFile, writeFile } from "fs-extra-p"
 import * as path from "path"
+import * as semver from "semver"
 import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
@@ -31,6 +32,10 @@ export default class SnapTarget extends Target {
     return result
   }
 
+  private get isElectron2(): boolean {
+    return semver.gte(this.packager.config.electronVersion || "1.8.3", "2.0.0-beta.1")
+  }
+
   private createDescriptor(arch: Arch): any {
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
@@ -39,7 +44,7 @@ export default class SnapTarget extends Target {
 
     const plugs = normalizePlugConfiguration(options.plugs)
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
-    const desktopPart = this.packager.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
+    const desktopPart = this.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
 
     const buildPackages = asArray(options.buildPackages)
     this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
@@ -158,7 +163,7 @@ done`
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
-      "--docker-image", isElectronBased(this.packager.info.framework) && this.packager.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
+      "--docker-image", isElectronBased(this.packager.info.framework) && this.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
     ]
 
     await this.helper.icons
@@ -192,7 +197,7 @@ done`
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", this.packager.isElectron2 ? "electron2" : "electron1")
+      args.push("--template-url", this.isElectron2 ? "electron2" : "electron1")
     }
     await executeAppBuilder(args)
     packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))

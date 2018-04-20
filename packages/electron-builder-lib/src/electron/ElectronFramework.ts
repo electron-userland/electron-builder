@@ -6,6 +6,7 @@ import { chmod, emptyDir, readdir, remove, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { executeAppBuilder } from "builder-util/out/util"
+import * as semver from "semver"
 import { AsarIntegrity } from "../asar/integrity"
 import { Configuration, ElectronDownloadOptions } from "../configuration"
 import { Platform } from "../core"
@@ -32,13 +33,13 @@ function createDownloadOpts(opts: Configuration, platform: string, arch: string,
   }
 }
 
-async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
+async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null, isClearExecStack: boolean) {
   if (packager.platform === Platform.LINUX) {
     const linuxPackager = (packager as LinuxPackager)
     const executable = path.join(appOutDir, linuxPackager.executableName)
     await rename(path.join(appOutDir, packager.electronDistExecutableName), executable)
 
-    if (!linuxPackager.isElectron2) {
+    if (isClearExecStack) {
       try {
         await executeAppBuilder(["clear-exec-stack", "--input", executable])
       }
@@ -93,7 +94,9 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
         }, distMacOsAppName)
       },
       isNpmRebuildRequired: true,
-      beforeCopyExtraFiles,
+      beforeCopyExtraFiles: (packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) => {
+        return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, false)
+      },
     }
   }
 
@@ -120,7 +123,9 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     distMacOsAppName,
     isNpmRebuildRequired: true,
     prepareApplicationStageDirectory: options => unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!), distMacOsAppName),
-    beforeCopyExtraFiles,
+    beforeCopyExtraFiles: (packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) => {
+      return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, semver.gte(version || "1.8.3", "1.8.3"))
+    },
   }
 }
 

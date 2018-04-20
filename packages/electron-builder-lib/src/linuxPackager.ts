@@ -1,6 +1,5 @@
 import { Arch, AsyncTaskManager, log } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
-import * as semver from "semver"
 import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
@@ -20,10 +19,6 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
 
     const executableName = this.platformSpecificBuildOptions.executableName
     this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
-  }
-
-  get isElectron2(): boolean {
-    return semver.gte(this.config.electronVersion || "1.8.3", "1.8.3")
   }
 
   get defaultTarget(): Array<string> {
