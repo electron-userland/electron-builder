@@ -9,6 +9,7 @@ import { GenericDifferentialDownloader } from "./differentialDownloader/GenericD
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./Provider"
 import { unlink } from "fs-extra-p"
+import * as fs from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends BaseUpdater {
@@ -104,7 +105,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const packagePath = this.downloadedUpdateHelper.packageFile
-    if (packagePath != null) {
+    if (packagePath != null && fs.existsSync(packagePath)) {
       // only = form is supported
       args.push(`--package-file="${packagePath}"`)
     }
