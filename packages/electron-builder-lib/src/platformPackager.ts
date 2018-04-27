@@ -537,13 +537,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async getOrConvertIcon(format: IconFormat): Promise<string | null> {
+    const sourceNames = [`icon.${format === "set" ? "png" : format}`, "icon.png", "icons"]
+
     const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
     if (iconPath != null) {
-      const iconInfos = await this.resolveIcon([iconPath], format)
-      return (iconInfos)[0].file
+      sourceNames.unshift(iconPath)
     }
 
-    const sourceNames = [`icon.${format === "set" ? "png" : format}`, "icon.png", "icons"]
     if (format === "ico") {
       sourceNames.push("icon.icns")
     }
