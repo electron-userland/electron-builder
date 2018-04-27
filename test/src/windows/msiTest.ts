@@ -14,6 +14,20 @@ test.ifAll.ifDevOrWinCi("msi", app({
   // signed: true,
 }))
 
+test.ifAll.ifDevOrWinCi("msi no asar", app({
+  targets: Platform.WINDOWS.createTarget("msi"),
+  config: {
+    appId: "build.electron.test.msi.oneClick.perMachine",
+    extraMetadata: {
+      // version: "1.0.0",
+    },
+    productName: "Test MSI",
+    asar: false,
+  }
+}, {
+  // signed: true,
+}))
+
 test.ifAll.ifDevOrWinCi("per-user", app({
   targets: Platform.WINDOWS.createTarget("msi"),
   config: {

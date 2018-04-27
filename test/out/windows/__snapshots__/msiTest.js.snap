@@ -24,6 +24,18 @@ Object {
 }
 `;
 
+exports[`msi no asar 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI-1.1.0.msi",
+      "safeArtifactName": "TestApp-1.1.0.msi",
+    },
+  ],
+}
+`;
+
 exports[`per-user 1`] = `
 Object {
   "win": Array [

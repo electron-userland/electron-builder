@@ -189,10 +189,10 @@ export default class MsiTarget extends Target {
         // This syntax is a shortcut to defining each directory in an individual Directory element.
         dirName = packagePath.substring(0, lastSlash)
         // add U (user) suffix just to be sure that will be not overwrite system WIX directory ids.
-        directoryId = `${dirName.toLowerCase()}_u`
+        directoryId = dirName.replace(path.sep === "/" ? /\//g : /\\/g, "_")
         if (!dirNames.has(dirName)) {
           dirNames.add(dirName)
-          dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName}\\"/>`)
+          dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)
         }
       }
       else if (!isRootDirAddedToRemoveTable) {
