@@ -17,7 +17,7 @@
     "is-ci": "^1.1.0",
     "stat-mode": "^0.2.2",
     "bluebird-lst": "^1.0.5",
-    "chalk": "^2.3.2",
+    "chalk": "^2.4.1",
     "debug": "^3.1.0",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "source-map-support": "^0.5.5",

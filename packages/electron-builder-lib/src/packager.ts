@@ -21,6 +21,7 @@ import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { createProtonFrameworkSupport } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
+import { expandMacro } from "./util/macroExpander"
 import { Dependency, getProductionDependencies } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
@@ -303,7 +304,7 @@ export class Packager {
     this._appInfo = new AppInfo(this)
     this._framework = await createFrameworkInfo(this.config, this)
 
-    const outDir = path.resolve(this.projectDir, configuration.directories!!.output!!)
+    const outDir = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo))
 
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(outDir, "electron-builder-effective-config.yaml")

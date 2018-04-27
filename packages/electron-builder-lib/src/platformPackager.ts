@@ -20,6 +20,7 @@ import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
+import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
   get packagerOptions(): PackagerOptions {
@@ -449,63 +450,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
-    if (arch == null) {
-      pattern = pattern
-      // tslint:disable-next-line:no-invalid-template-strings
-        .replace("-${arch}", "")
-        // tslint:disable-next-line:no-invalid-template-strings
-        .replace(" ${arch}", "")
-        // tslint:disable-next-line:no-invalid-template-strings
-        .replace("_${arch}", "")
-        // tslint:disable-next-line:no-invalid-template-strings
-        .replace("/${arch}", "")
-    }
-
-    const appInfo = this.appInfo
-    return pattern.replace(/\${([_a-zA-Z./*]+)}/g, (match, p1): string => {
-      switch (p1) {
-        case "productName":
-          return isProductNameSanitized ? appInfo.productFilename : appInfo.productName
-
-        case "arch":
-          if (arch == null) {
-            // see above, we remove macro if no arch
-            return ""
-          }
-          return arch
-
-        case "os":
-          return this.platform.buildConfigurationKey
-
-        case "platform":
-          return process.platform
-
-        case "channel":
-          return appInfo.channel || "latest"
-
-        default:
-          if (p1 in appInfo) {
-            return (appInfo as any)[p1]
-          }
-
-          if (p1.startsWith("env.")) {
-            const envName = p1.substring("env.".length)
-            const envValue = process.env[envName]
-            if (envValue == null) {
-              throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": env ${envName} is not defined`, "ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED")
-            }
-            return envValue
-          }
-
-          const value = extra[p1]
-          if (value == null) {
-            throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": macro ${p1} is not defined`, "ERR_ELECTRON_BUILDER_MACRO_NOT_DEFINED")
-          }
-          else {
-            return value
-          }
-      }
-    })
+    return doExpandMacro(pattern, arch, this.appInfo, {os: this.platform.buildConfigurationKey, ...extra}, isProductNameSanitized)
   }
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {

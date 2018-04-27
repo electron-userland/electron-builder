@@ -12,7 +12,8 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
       publish: null,
       directories: {
         buildResources: "custom",
-        output: "customDist",
+        // tslint:disable:no-invalid-template-strings
+        output: "customDist/${channel}",
         // https://github.com/electron-userland/electron-builder/issues/601
         app: ".",
       },
@@ -22,7 +23,7 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
     },
   }, {
     packed: async context => {
-      await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
+      await assertThat(path.join(context.projectDir, "customDist", "latest")).isDirectory()
     },
     projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   })
