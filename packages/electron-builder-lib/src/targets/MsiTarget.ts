@@ -150,6 +150,7 @@ export default class MsiTarget extends Target {
     const iconPath = await this.packager.getIconPath()
     return (await projectTemplate.value)({
       ...commonOptions,
+      isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
       compressionLevel: compression === "store" ? "none" : "high",
@@ -209,10 +210,12 @@ export default class MsiTarget extends Target {
       else if (directoryId === null) {
         result += ` Id="${path.basename(packagePath)}_f"`
       }
-      if (isMainExecutable && (commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER || commonOptions.isCreateStartMenuShortcut)) {
+
+      const isCreateDesktopShortcut = commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER
+      if (isMainExecutable && (isCreateDesktopShortcut || commonOptions.isCreateStartMenuShortcut)) {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
-        if (commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER) {
+        if (isCreateDesktopShortcut) {
           result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="icon.ico"/>\n`
         }
 

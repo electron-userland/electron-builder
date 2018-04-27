@@ -38,14 +38,15 @@
 * <code id="NsisOptions-language">language</code> String - [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
 * <code id="NsisOptions-multiLanguageInstaller">multiLanguageInstaller</code> Boolean - Whether to create multi-language installer. Defaults to `unicode` option value.
 * <code id="NsisOptions-packElevateHelper">packElevateHelper</code> = `true` Boolean - Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
+* <code id="NsisOptions-preCompressedFileExtensions">preCompressedFileExtensions</code> = `[".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"]` Array&lt;String&gt; | String - The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files.
 * <code id="NsisOptions-unicode">unicode</code> = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
 * <code id="NsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
 * <code id="NsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
-* <code id="NsisOptions-runAfterFinish">runAfterFinish</code> = `true` Boolean - *one-click installer only.*  Whether to run the installed application after finish.
+* <code id="NsisOptions-runAfterFinish">runAfterFinish</code> = `true` Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.
 
 ---
 
-* <code id="NsisOptions-createDesktopShortcut">createDesktopShortcut</code> = `true` Boolean - Whether to create desktop shortcut.
+* <code id="NsisOptions-createDesktopShortcut">createDesktopShortcut</code> = `true` Boolean | "always" - Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).
 * <code id="NsisOptions-createStartMenuShortcut">createStartMenuShortcut</code> = `true` Boolean - Whether to create start menu shortcut.
 * <code id="NsisOptions-menuCategory">menuCategory</code> = `false` Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
 * <code id="NsisOptions-shortcutName">shortcutName</code> String - The name that will be used for all shortcuts. Defaults to the application name.

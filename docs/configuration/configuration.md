@@ -106,6 +106,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * <code id="Configuration-extraMetadata">extraMetadata</code> any - Inject properties to `package.json`.
 * <code id="Configuration-readonly">readonly</code> = `false` Boolean - Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
 * <code id="Configuration-muonVersion">muonVersion</code> String - The version of muon you are packaging for.
+* <code id="Configuration-protonNodeVersion">protonNodeVersion</code> String - *Proton Native only* The version of NodeJS you are packaging for. You can set it to `current` to set the Node.js version that you use to run electron-builder.
 
 ---
 
@@ -114,7 +115,10 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ---
 
 * <code id="Configuration-afterSign">afterSign</code> (context: AfterPackContext) => Promise | null - The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format).
-* <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. If provided and `node_modules` are missing it will not invoke production dependencies check. Resolving to `false` will skip dependencies install or rebuild.
+* <code id="Configuration-onNodeModuleFile">onNodeModuleFile</code> module:electron-builder-lib/out/configuration.__type | String - The function (or path to file or module id) to be run on each node module file.
+* <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
+  
+  If provided and `node_modules` are missing, it will not invoke production dependencies check.
 * <code id="Configuration-remoteBuild">remoteBuild</code> = `true` Boolean - Whether to build using Electron Build Service if target not supported on current OS.
 * <code id="Configuration-includePdb">includePdb</code> = `false` Boolean - Whether to include PDB files.
 * <code id="Configuration-removePackageScripts">removePackageScripts</code> = `true` Boolean - Whether to remove `scripts` field from `package.json` files.

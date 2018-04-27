@@ -16,6 +16,10 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 }
 ```
 
+## Macros
+
+In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
+
 ## How to Publish
 
 Excerpt from [CLI Usage](https://github.com/electron-userland/electron-builder#cli-usage) of `electron-builder` command:
@@ -91,13 +95,24 @@ Define `BT_TOKEN` environment variable.
 * <code id="BintrayOptions-user">user</code> String - The Bintray user account. Used in cases where the owner is an organization.
 * <code id="BintrayOptions-token">token</code> String
 
+Inherited from `PublishConfiguration`:
+* <code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+  
+  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
 ## GenericServerOptions
 Generic (any HTTP(S) server) options.
+In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
 
 * **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
-* **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+* **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
 * <code id="GenericServerOptions-channel">channel</code> = `latest` String - The channel.
 * <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
+
+Inherited from `PublishConfiguration`:
+* <code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+  
+  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
@@ -116,6 +131,11 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
   
   Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRELEASE`is set to `true` — `prerelease`.
+
+Inherited from `PublishConfiguration`:
+* <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+  
+  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 
 <!-- end of generated block -->
 

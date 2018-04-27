@@ -93,6 +93,7 @@ export function githubUrl(options: GithubOptions, defaultHost: string = "github.
 
 /**
  * Generic (any HTTP(S) server) options.
+ * In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**
@@ -101,7 +102,7 @@ export interface GenericServerOptions extends PublishConfiguration {
   readonly provider: "generic"
 
   /**
-   * The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+   * The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
    */
   readonly url: string
 
