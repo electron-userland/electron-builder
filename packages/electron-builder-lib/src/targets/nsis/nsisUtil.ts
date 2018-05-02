@@ -60,7 +60,7 @@ export class AppPackageHelper {
 }
 
 export class CopyElevateHelper {
-  private readonly copied = new Map<string, Promise<string>>()
+  private readonly copied = new Map<string, Promise<any>>()
 
   copy(appOutDir: string, target: NsisTarget): Promise<any> {
     let isPackElevateHelper = target.options.packElevateHelper
@@ -78,7 +78,15 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH.value.then(it => copyFile(path.join(it, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false))
+    promise = NSIS_PATH.value
+      .then(it => {
+        const outFile = path.join(appOutDir, "resources", "elevate.exe")
+        const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
+        if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
+          return promise.then(() => target.packager.sign(outFile))
+        }
+        return promise
+      })
     this.copied.set(appOutDir, promise)
     return promise
   }

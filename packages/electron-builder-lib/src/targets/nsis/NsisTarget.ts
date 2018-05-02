@@ -37,7 +37,7 @@ export class NsisTarget extends Target {
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
 
-  constructor(protected readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
+  constructor(readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
     super(targetName)
 
     this.packageHelper.refCount++

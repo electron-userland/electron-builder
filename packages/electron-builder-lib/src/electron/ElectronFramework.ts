@@ -124,7 +124,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     isNpmRebuildRequired: true,
     prepareApplicationStageDirectory: options => unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!), distMacOsAppName),
     beforeCopyExtraFiles: (packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) => {
-      return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, semver.gte(version || "1.8.3", "1.8.3"))
+      return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, semver.lte(version || "1.8.3", "1.8.3"))
     },
   }
 }

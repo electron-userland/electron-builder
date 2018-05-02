@@ -2,12 +2,14 @@ import { Arch, asArray, exec, execWine, InvalidConfigurationError, log, use } fr
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
+import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
+import { isElectronBased } from "./Framework"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
@@ -21,6 +23,7 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
+import BluebirdPromise from "bluebird-lst"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -342,9 +345,33 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext): Promise<any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    if (this.platformSpecificBuildOptions.signAndEditExecutable !== false) {
-      await this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
+    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+      return
     }
+
+    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+      if (file === exeFileName) {
+        return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
+      }
+      else if (file.endsWith(".exe")) {
+        return this.sign(path.join(packContext.appOutDir, file))
+      }
+      return null
+    })
+
+    if (!isElectronBased(this.info.framework)) {
+      return
+    }
+
+    const outResourcesDir = path.join(packContext.appOutDir, "resources")
+    await BluebirdPromise.map(readdir(outResourcesDir), (file: string): any => {
+      if (file.endsWith(".exe")) {
+        return this.sign(path.join(outResourcesDir, file))
+      }
+      else {
+        return null
+      }
+    })
   }
 }
 
