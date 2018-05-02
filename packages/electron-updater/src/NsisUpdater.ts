@@ -8,8 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./Provider"
-import { unlink } from "fs-extra-p"
-import * as fs from "fs-extra"
+import { unlink, pathExists } from "fs-extra-p"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends BaseUpdater {
@@ -94,7 +93,7 @@ export class NsisUpdater extends BaseUpdater {
     return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
+  protected async doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
     const args = ["--updated"]
     if (isSilent) {
       args.push("/S")
@@ -105,7 +104,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const packagePath = this.downloadedUpdateHelper.packageFile
-    if (packagePath != null && fs.existsSync(packagePath)) {
+    if (packagePath != null && await pathExists(packagePath)) {
       // only = form is supported
       args.push(`--package-file="${packagePath}"`)
     }
