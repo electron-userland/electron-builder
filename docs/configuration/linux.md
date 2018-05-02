@@ -3,7 +3,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 <!-- do not edit. start of generated block -->
 * <code id="LinuxConfiguration-target">target</code> = `AppImage` String | [TargetConfiguration](/configuration/target.md#targetconfiguration) - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
   
-  electron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.
+  electron-builder [docker image](https://github.com/electron-userland/electron-builder/blob/master/docs/multi-platform-build.md#docker) can be used to build Linux targets on any platform.
   
   Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
 * <code id="LinuxConfiguration-maintainer">maintainer</code> String - The maintainer. Defaults to [author](/configuration/configuration.md#Metadata-author).
