@@ -228,13 +228,24 @@ export abstract class AppUpdater extends EventEmitter {
       return Promise.resolve(null)
     }
 
-    this.signals.updateDownloaded(it => {
-      new Notification({
-        title: "A new update is ready to install",
-        body: `${this.app.getName()} version ${it.version} is downloaded and will be automatically installed on exit`
-      }).show()
+    const checkForUpdatesPromise = this.checkForUpdates()
+    checkForUpdatesPromise.then(it => {
+      const downloadPromise = it.downloadPromise
+      if (downloadPromise == null) {
+        this._logger.warn("checkForUpdatesAndNotify called, but downloadPromise is null")
+        return
+      }
+
+      downloadPromise
+        .then(() => {
+          new Notification({
+            title: "A new update is ready to install",
+            body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
+          }).show()
+        })
     })
-    return this.checkForUpdates()
+
+    return checkForUpdatesPromise
   }
 
   private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
