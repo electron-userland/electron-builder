@@ -84,8 +84,6 @@ Object {
 }
 `;
 
-exports[`file associations only perMachine 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
-
 exports[`html license 1`] = `
 Object {
   "win": Array [
