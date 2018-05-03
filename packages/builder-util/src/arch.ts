@@ -20,6 +20,10 @@ export function toLinuxArchString(arch: Arch): string {
   }
 }
 
+export function getArchCliNames(): Array<string> {
+  return [Arch[Arch.ia32], Arch[Arch.x64], Arch[Arch.armv7l], Arch[Arch.arm64]]
+}
+
 export function getArchSuffix(arch: Arch): string {
   return arch === Arch.x64 ? "" : `-${Arch[arch]}`
 }

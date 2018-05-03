@@ -617,9 +617,9 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.230.1:
-  version "2.230.1"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.230.1.tgz#494cef6aed2e16db1ed9c12acf4bd2a7317f5365"
+aws-sdk@^2.231.1:
+  version "2.231.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.231.1.tgz#ff0a63f73c71b6b098389b926b857b13816bd5f9"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -4752,9 +4752,9 @@ prop-types@^15.6.0, prop-types@^15.6.1:
     loose-envify "^1.3.1"
     object-assign "^4.1.1"
 
-proton-native@1.0.18:
-  version "1.0.18"
-  resolved "https://registry.yarnpkg.com/proton-native/-/proton-native-1.0.18.tgz#fc134c3ff6f61ea979f33041965a045609caf4c7"
+proton-native@1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/proton-native/-/proton-native-1.1.1.tgz#7a9765f7c761dc445760091ca37998d527104699"
   dependencies:
     color "^3.0.0"
     fbjs "^0.8.16"
@@ -4763,6 +4763,7 @@ proton-native@1.0.18:
     react "^16.3.0"
     react-dom "^16.3.0"
     react-reconciler "^0.7.0"
+    svg-path-parser "^1.1.0"
 
 prr@~1.0.1:
   version "1.0.1"
@@ -5609,6 +5610,10 @@ supports-color@^5.3.0:
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-5.4.0.tgz#1c6b337402c2137605efe19f10fec390f6faab54"
   dependencies:
     has-flag "^3.0.0"
+
+svg-path-parser@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/svg-path-parser/-/svg-path-parser-1.1.0.tgz#e16b4b39df0d2b0d39e8347db79fdda1453a6046"
 
 "symbol-tree@>= 3.1.0 < 4.0.0", symbol-tree@^3.2.2:
   version "3.2.2"

@@ -1,4 +1,4 @@
-osx_image: xcode9.3beta
+osx_image: xcode9.3
 language: node_js
 
 env:
@@ -9,15 +9,15 @@ matrix:
   include:
     - os: osx
       env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macIconTest
-      node_js: "9"
+      node_js: "10"
 
     - os: osx
       env: TEST_FILES=CodeSignTest,macArchiveTest,macPackagerTest
-      node_js: "9"
+      node_js: "10"
 
     - os: osx
       env: TEST_FILES=masTest,dmgTest
-      node_js: "9"
+      node_js: "10"
 
 cache:
   yarn: true

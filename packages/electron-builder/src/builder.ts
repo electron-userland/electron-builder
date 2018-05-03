@@ -3,6 +3,7 @@ import chalk from "chalk"
 import { Packager, build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
 import BluebirdPromise from "bluebird-lst"
+import { getArchCliNames } from "builder-util/out/arch"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -303,7 +304,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("arch", {
       group: deprecated,
       description: "The target arch (preferred to use --x64 or --ia32)",
-      choices: ["ia32", "x64", "all", undefined as any],
+      choices: getArchCliNames().concat("all", undefined as any),
     })
     .option("prepackaged", {
       alias: ["pd"],

@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { log, use } from "builder-util"
+import { log, use,  } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
 import { computeDefaultAppDirectory, getConfig } from "electron-builder-lib/out/util/config"
 import { getElectronVersion } from "electron-builder-lib/out/electron/electronVersion"
@@ -11,6 +11,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
 import yargs from "yargs"
+import { getArchCliNames } from "builder-util/out/arch"
 
 declare const PACKAGE_VERSION: string
 
@@ -25,7 +26,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs 
       description: "The target platform",
     })
     .option("arch", {
-      choices: ["ia32", "x64", "all"],
+      choices: getArchCliNames().concat("all"),
       default: process.arch,
       description: "The target arch",
     })
