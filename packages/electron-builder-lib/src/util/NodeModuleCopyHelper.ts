@@ -83,7 +83,8 @@ export class NodeModuleCopyHelper {
             onNodeModuleFile(dirPath + path.sep + name)
           }
 
-          if (excludedFiles.has(name) || name.endsWith(".h") || name.endsWith(".o") || name.endsWith(".obj") || name.endsWith(".cc") || (!isIncludePdb && name.endsWith(".pdb")) || name.endsWith(".d.ts") ||
+          // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
+          if (excludedFiles.has(name) || name.endsWith(".o") || name.endsWith(".obj") || name.endsWith(".cc") || (!isIncludePdb && name.endsWith(".pdb")) || name.endsWith(".d.ts") ||
             name.endsWith(".suo") || name.endsWith(".sln") || name.endsWith(".xproj") || name.endsWith(".csproj")) {
             return null
           }
