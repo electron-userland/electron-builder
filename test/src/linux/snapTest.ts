@@ -19,43 +19,14 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
   },
 }))
 
-test.ifAll.ifDevOrLinuxCi("snap electron 2", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "sep-electron2",
-    },
-    linux: {
-      //tslint:disable-next-line:no-invalid-template-strings
-      artifactName: "${name}_v${version}.${ext}",
-    },
-    productName: "Sep Electron 2",
-    electronVersion: "2.0.0-beta.7",
-  },
-}))
-
 // very slow
-test.skip("snap full", app({
+test("snap full", app({
   targets: snapTarget,
   config: {
     extraMetadata: {
       name: "se-wo-template",
     },
     productName: "Snap Electron App (full build)",
-    snap: {
-      useTemplateApp: false,
-    },
-  },
-}))
-
-test.skip("snap full electron 2", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "se-electron2",
-    },
-    electronVersion: "2.0.0-beta.7",
-    productName: "Snap Electron 2 App (full build)",
     snap: {
       useTemplateApp: false,
     },

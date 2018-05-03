@@ -1,9 +1,8 @@
-import { addValue, Arch, archFromString, InvalidConfigurationError, log, deepAssign } from "builder-util"
+import { addValue, Arch, archFromString, InvalidConfigurationError, log, deepAssign, getArchCliNames } from "builder-util"
 import chalk from "chalk"
 import { Packager, build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
 import BluebirdPromise from "bluebird-lst"
-import { getArchCliNames } from "builder-util/out/arch"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -15,6 +14,7 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   x64?: boolean
   ia32?: boolean
   armv7l?: boolean
+  arm64?: boolean
 
   dir?: boolean
 
@@ -49,6 +49,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
       if (args.armv7l) {
         result.push(Arch.armv7l)
+      }
+      if (args.arm64) {
+        result.push(Arch.arm64)
       }
       if (args.ia32) {
         result.push(Arch.ia32)
@@ -138,6 +141,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.ia32
   delete result.x64
   delete result.armv7l
+  delete result.arm64
 
   let config = result.config
 
@@ -271,6 +275,11 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("armv7l", {
       group: buildGroup,
       description: "Build for armv7l",
+      type: "boolean",
+    })
+    .option("arm64", {
+      group: buildGroup,
+      description: "Build for arm64",
       type: "boolean",
     })
     .option("dir", {

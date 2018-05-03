@@ -15,7 +15,7 @@ export { TmpDir } from "temp-file"
 export { log, debug } from "./log"
 export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
-export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
+export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 

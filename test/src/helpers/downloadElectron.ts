@@ -38,7 +38,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
 
   const versions: Array<any> = []
   for (const platform of platforms) {
-    const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : ["ia32", "x64", "armv7l"])
+    const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames())
     for (const arch of archs) {
       versions.push({
         version: ELECTRON_VERSION,

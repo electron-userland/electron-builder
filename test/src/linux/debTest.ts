@@ -6,7 +6,7 @@ test.ifNotWindows("deb", app({
   targets: Platform.LINUX.createTarget("deb"),
 }))
 
-test.ifNotWindows("arm", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
+test.ifNotWindows("arm", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l, Arch.arm64)}))
 
 test.ifNotWindows("custom depends", app({
   targets: Platform.LINUX.createTarget("deb"),

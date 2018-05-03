@@ -70,6 +70,8 @@ test.ifMac("one-package", app({
     copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),
   ]),
   checkMacApp: async (appDir, info) => {
+    delete info.DTXcode
+    delete info.DTXcodeBuild
     expect(info).toMatchSnapshot()
     await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
     await assertThat(path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
