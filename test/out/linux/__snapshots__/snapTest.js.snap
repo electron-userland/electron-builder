@@ -36,7 +36,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "build-packages": Array [
         "foo1",
@@ -56,7 +56,7 @@ Object {
         "libxtst6",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -228,7 +228,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -243,7 +243,7 @@ Object {
         "libxtst6",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -310,7 +310,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -326,7 +326,7 @@ Object {
         "custom",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -393,7 +393,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -409,7 +409,7 @@ Object {
         "libxtst6",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -477,7 +477,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -494,7 +494,7 @@ Object {
         "foo2",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -586,7 +586,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -601,7 +601,7 @@ Object {
         "libxtst6",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
@@ -662,7 +662,7 @@ Object {
   "parts": Object {
     "app": Object {
       "after": Array [
-        "desktop-gtk2",
+        "desktop-gtk3",
       ],
       "plugin": "nil",
       "stage-packages": Array [
@@ -677,7 +677,7 @@ Object {
         "libxtst6",
       ],
     },
-    "desktop-gtk2": Object {
+    "desktop-gtk3": Object {
       "install": "set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime

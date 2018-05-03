@@ -415,6 +415,16 @@ Object {
             "package.json": Object {
               "size": 774,
             },
+            "src": Object {
+              "files": Object {
+                "async.h": Object {
+                  "size": 1500,
+                },
+                "keytar.h": Object {
+                  "size": 979,
+                },
+              },
+            },
           },
         },
         "lzma-native": Object {
@@ -510,7 +520,7 @@ Object {
                 },
               },
             },
-            "binding-v3.0.1-electron-v1.8-linux-x64": Object {
+            "binding-v3.0.1-electron-v2.0-linux-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,
@@ -3680,6 +3690,9 @@ Object {
                 },
                 "index-parser.cpp": Object {
                   "size": 16667,
+                },
+                "index-parser.h": Object {
+                  "size": 7386,
                 },
                 "liblzma-functions.cpp": Object {
                   "size": 2928,

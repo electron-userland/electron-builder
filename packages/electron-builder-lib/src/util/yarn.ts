@@ -31,10 +31,11 @@ function getElectronGypCacheDir() {
 }
 
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
+  const npmConfigArch = arch === "armv7l" ? "arm" : arch
   const common = {
     ...process.env,
-    npm_config_arch: arch,
-    npm_config_target_arch: arch,
+    npm_config_arch: npmConfigArch,
+    npm_config_target_arch: npmConfigArch,
     npm_config_platform: platform,
     npm_config_build_from_source: buildFromSource,
     // required for node-pre-gyp

@@ -20,7 +20,7 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
 }))
 
 // very slow
-test("snap full", app({
+test.skip("snap full", app({
   targets: snapTarget,
   config: {
     extraMetadata: {
