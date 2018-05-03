@@ -84,7 +84,29 @@ Object {
 }
 `;
 
-exports[`file associations only perMachine 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+exports[`file associations per user 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "ia32",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
 
 exports[`html license 1`] = `
 Object {

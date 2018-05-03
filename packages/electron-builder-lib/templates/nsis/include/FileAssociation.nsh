@@ -26,6 +26,9 @@
 ; APP_ASSOCIATE_EX macro. Here you can specify the verb and what verb is to be the
 ; standard action (default verb).
 ;
+; Note, that this script takes into account user versus global installs.
+; To properly work you must initialize the SHELL_CONTEXT variable via SetShellVarContext.
+;
 ; And finally: To remove the association from the registry use the APP_UNASSOCIATE
 ; macro. Here is another example just to wrap it up:
 ;   !insertmacro APP_UNASSOCIATE "txt" "myapp.textfile"
@@ -39,67 +42,79 @@
 ;   Photoshop.JPEGFile
 ;
 ; |> Tech info <|
-; The registry key layout for a file association is:
-; HKEY_CLASSES_ROOT
+; The registry key layout for a global file association is:
+;
+; HKEY_LOCAL_MACHINE\Software\Classes
+;     <".ext"> = <applicationID>
 ;     <applicationID> = <"description">
 ;         shell
 ;             <verb> = <"menu-item text">
 ;                 command = <"command string">
 ;
- 
+;
+; The registry key layout for a per-user file association is:
+;
+; HKEY_CURRENT_USER\Software\Classes
+;     <".ext"> = <applicationID>
+;     <applicationID> = <"description">
+;         shell
+;             <verb> = <"menu-item text">
+;                 command = <"command string">
+;
+
 !macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" ""
-  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
- 
-  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
- 
-  WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
-  WriteRegStr HKCR "${FILECLASS}\shell" "" "open"
-  WriteRegStr HKCR "${FILECLASS}\shell\open" "" `${COMMANDTEXT}`
-  WriteRegStr HKCR "${FILECLASS}\shell\open\command" "" `${COMMAND}`
+  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" ""
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "${FILECLASS}_backup" "$R0"
+
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
+
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}" "" `${DESCRIPTION}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\DefaultIcon" "" `${ICON}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell" "" "open"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\open" "" `${COMMANDTEXT}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\open\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_EX EXT FILECLASS DESCRIPTION ICON VERB DEFAULTVERB SHELLNEW COMMANDTEXT COMMAND
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" ""
-  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
- 
-  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
+  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" ""
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "${FILECLASS}_backup" "$R0"
+
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
   StrCmp "${SHELLNEW}" "0" +2
-  WriteRegStr HKCR ".${EXT}\ShellNew" "NullFile" ""
- 
-  WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
-  WriteRegStr HKCR "${FILECLASS}\shell" "" `${DEFAULTVERB}`
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}\ShellNew" "NullFile" ""
+
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}" "" `${DESCRIPTION}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\DefaultIcon" "" `${ICON}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell" "" `${DEFAULTVERB}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_ADDVERB FILECLASS VERB COMMANDTEXT COMMAND
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
-  WriteRegStr HKCR "${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\${VERB}" "" `${COMMANDTEXT}`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\shell\${VERB}\command" "" `${COMMAND}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_REMOVEVERB FILECLASS VERB
-  DeleteRegKey HKCR `${FILECLASS}\shell\${VERB}`
+  DeleteRegKey SHELL_CONTEXT `Software\Classes\${FILECLASS}\shell\${VERB}`
 !macroend
- 
- 
+
+
 !macro APP_UNASSOCIATE EXT FILECLASS
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
-  WriteRegStr HKCR ".${EXT}" "" "$R0"
- 
-  DeleteRegKey HKCR `${FILECLASS}`
+  ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" `${FILECLASS}_backup`
+  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "$R0"
+
+  DeleteRegKey SHELL_CONTEXT `Software\Classes\${FILECLASS}`
 !macroend
- 
+
 !macro APP_ASSOCIATE_GETFILECLASS OUTPUT EXT
-  ReadRegStr ${OUTPUT} HKCR ".${EXT}" ""
+  ReadRegStr ${OUTPUT} SHELL_CONTEXT "Software\Classes\.${EXT}" ""
 !macroend
- 
- 
+
+
 ; !defines for use with SHChangeNotify
 !ifdef SHCNE_ASSOCCHANGED
 !undef SHCNE_ASSOCCHANGED
@@ -109,7 +124,7 @@
 !undef SHCNF_FLUSH
 !endif
 !define SHCNF_FLUSH        0x1000
- 
+
 !macro UPDATEFILEASSOC
 ; Using the system.dll plugin to call the SHChangeNotify Win32 API function so we
 ; can update the shell.
