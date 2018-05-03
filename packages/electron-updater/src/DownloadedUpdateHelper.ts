@@ -49,6 +49,7 @@ export class DownloadedUpdateHelper {
 
   clear() {
     this._file = null
+    this._packageFile = null
     this.versionInfo = null
     this.fileInfo = null
   }
