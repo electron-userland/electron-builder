@@ -2,7 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import { copy, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
@@ -209,7 +209,8 @@ test.ifNotCiMac("string menuCategory", app({
   }
 }))
 
-test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
+
+test.ifDevOrLinuxCi("file associations per user", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
     publish: null,
@@ -218,6 +219,10 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
         ext: "foo",
         name: "Test Foo",
       }
-    ],
+    ]
+  },
+}, {
+  packed: async context => {
+    return doTest(context.outDir, true)
   },
 }))
