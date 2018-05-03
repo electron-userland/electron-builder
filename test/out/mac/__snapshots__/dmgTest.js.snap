@@ -35,8 +35,6 @@ Object {
   "CFBundleShortVersionString": "2017.1-alpha5",
   "DTSDKBuild": "14D125",
   "DTSDKName": "macosx10.1010.10",
-  "DTXcode": "0821",
-  "DTXcodeBuild": "8C1002",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSHighResolutionCapable": true,

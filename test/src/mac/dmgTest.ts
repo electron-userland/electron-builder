@@ -184,6 +184,8 @@ test.ifAll.ifMac("bundleShortVersion", app({
   }
 }, {
   checkMacApp: async (appDir, info) => {
+    delete info.DTXcode
+    delete info.DTXcodeBuild
     expect(info).toMatchSnapshot()
   },
 }))

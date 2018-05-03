@@ -4,20 +4,14 @@ Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-packa
 
 ```
 Commands:
-  build                    Build                                       [default]
+  build                    Build                                [default]
   install-app-deps         Install app deps
   node-gyp-rebuild         Rebuild own native code
-  create-self-signed-cert  Create self-signed code signing cert for Windows apps
+  create-self-signed-cert  Create self-signed code signing cert for
+                                  Windows apps
   start                    Run application in a development mode using
-                           electron-webpack
+                                  electron-webpack
 
-Options:
-  --help  Show help                               
-```
-
-## `electron-builder` (`build` command)
-
-```
 Building:
   --mac, -m, -o, --macos   Build for macOS, accepts target list (see
                            https://goo.gl/5uHuzj).                       [array]
@@ -28,8 +22,8 @@ Building:
   --x64                    Build for x64                               [boolean]
   --ia32                   Build for ia32                              [boolean]
   --armv7l                 Build for armv7l                            [boolean]
+  --arm64                  Build for arm64                             [boolean]
   --dir                    Build unpacked dir. Useful to test.         [boolean]
-  --extraMetadata, --em    Deprecated. Use -c.extraMetadata.
   --prepackaged, --pd      The path to prepackaged app (to pack in a
                            distributable format)
   --projectDir, --project  The path to project directory. Defaults to current
@@ -44,21 +38,25 @@ Publishing:
                 [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
 
 Deprecated:
-  --platform  The target platform (preferred to use --mac, --win or --linux)
+  --draft       Please set releaseType in the GitHub publish options instead
+                                                                       [boolean]
+  --prerelease  Please set releaseType in the GitHub publish options instead
+                                                                       [boolean]
+  --platform    The target platform (preferred to use --mac, --win or --linux)
            [choices: "mac", "win", "linux", "darwin", "win32", "all", undefined]
-  --arch      The target arch (preferred to use --x64 or --ia32)
-                                      [choices: "ia32", "x64", "all", undefined]
+  --arch        The target arch (preferred to use --x64 or --ia32)
+                   [choices: "ia32", "x64", "armv7l", "arm64", "all", undefined]
 
 Other:
   --help     Show help                                                 [boolean]
-  --version
+  --version  Show version number                                       [boolean]
 
 Examples:
   electron-builder -mwl                     build for macOS, Windows and Linux
   electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
   electron-builder --win --ia32             build for Windows ia32
   electron-builder -c.extraMetadata.foo=bar set package.json property `foo` to
-                                            `bar`
+                                           `bar`
   electron-builder                          configure unicode options for NSIS
   --config.nsis.unicode=false
 
