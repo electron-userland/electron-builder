@@ -127,7 +127,7 @@ export default class AppImageTarget extends Target {
     const mimeTypeFile = path.join(mimeTypeDir,  `${this.packager.appInfo.productFilename}.xml`)
     await ensureDir(mimeTypeDir)
 
-    let mimeXMLfileContents = `<?xml version="1.0"?>\n
+    const mimeXMLfileContents = `<?xml version="1.0"?>\n
 <mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>\n
   <mime-type type="${this.packager.fileAssociations[0].mimeType}">\n
     <comment>${this.packager.appInfo.productFilename} document</comment>\n
