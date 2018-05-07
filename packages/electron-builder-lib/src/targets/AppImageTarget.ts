@@ -45,6 +45,7 @@ export default class AppImageTarget extends Target {
     const stageDir = await createStageDir(this, packager, arch)
     const resourceName = `appimagekit-${this.packager.executableName}`
     const installIcons = await this.copyIcons(stageDir.dir, resourceName)
+    const installMimeTypes = await this.copyMimeTypes(stageDir.dir, resourceName)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await Promise.all([
@@ -55,6 +56,7 @@ export default class AppImageTarget extends Target {
         executableName: this.packager.executableName,
         resourceName,
         installIcons,
+        installMimeTypes
       }), {
         mode: "0755",
       }),
@@ -117,5 +119,27 @@ export default class AppImageTarget extends Target {
       installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
     }
     return installIcons
+  }
+
+  private async copyMimeTypes(stageDir: string, resourceName: string): Promise<string> {
+    const mimeTypeDirRelativePath = "usr/share/mime"
+    const mimeTypeDir = path.join(stageDir, mimeTypeDirRelativePath)
+    const mimeTypeFile = path.join(mimeTypeDir,  `${this.packager.appInfo.productFilename}.xml`)
+    await ensureDir(mimeTypeDir)
+
+    let mimeXMLfileContents = `<?xml version="1.0"?>\n
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>\n
+  <mime-type type="${this.packager.fileAssociations[0].mimeType}">\n
+    <comment>${this.packager.appInfo.productFilename} document</comment>\n
+    <glob pattern="*.${this.packager.fileAssociations[0].ext}"/>\n
+    <generic-icon name="x-office-document"/>\n
+  </mime-type>\n
+</mime-info>`
+
+    await writeFile(mimeTypeFile, mimeXMLfileContents)
+
+    let installMimeTypes = 'echo "INSTALLING MIME TYPES"\n'
+    installMimeTypes += `xdg-mime install --mode user --novendor ${mimeTypeFile}\n`
+    return installMimeTypes
   }
 }
