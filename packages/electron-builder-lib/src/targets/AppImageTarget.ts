@@ -127,13 +127,24 @@ export default class AppImageTarget extends Target {
     const mimeTypeFile = path.join(mimeTypeDir,  `${this.packager.appInfo.productFilename}.xml`)
     await ensureDir(mimeTypeDir)
 
+    let mimeTypes = ""
+    for (const fileAssociation of this.packager.fileAssociations) {
+      if (typeof fileAssociation.mimeType == "string") {
+        mimeTypes +=
+        `<mime-type type="${fileAssociation.mimeType}">\n
+          <comment>${this.packager.appInfo.productFilename} document</comment>\n
+          <glob pattern="*.${fileAssociation.ext}"/>\n
+          <generic-icon name="x-office-document"/>\n
+        </mime-type>\n`
+      }
+    }
+
+    // if no mime-types specified, return
+    if (mimeTypes == "") { return "" }
+
     const mimeXMLfileContents = `<?xml version="1.0"?>\n
 <mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>\n
-  <mime-type type="${this.packager.fileAssociations[0].mimeType}">\n
-    <comment>${this.packager.appInfo.productFilename} document</comment>\n
-    <glob pattern="*.${this.packager.fileAssociations[0].ext}"/>\n
-    <generic-icon name="x-office-document"/>\n
-  </mime-type>\n
+  ${mimeTypes}
 </mime-info>`
 
     await writeFile(mimeTypeFile, mimeXMLfileContents)
