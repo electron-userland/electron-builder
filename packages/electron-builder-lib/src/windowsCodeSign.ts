@@ -247,6 +247,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   }
 
   if (isWin) {
+    args.push('/debug')
     // must be last argument
     args.push(inputFile)
   }
