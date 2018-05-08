@@ -66,9 +66,9 @@ export class GitHubPublisher extends HttpPublisher {
       this.releaseType = "draft"
       log.info({reason: "env EP_DRAFT is set to true"}, "GitHub provider release type is set to draft")
     }
-    else if (isEnvTrue(process.env.EP_PRELEASE)) {
+    else if (isEnvTrue(process.env.EP_PRE_RELEASE) || isEnvTrue(process.env.EP_PRELEASE) /* https://github.com/electron-userland/electron-builder/issues/2878 */) {
       this.releaseType = "prerelease"
-      log.info({reason: "env EP_PRELEASE is set to true"}, "GitHub provider release type is set to prerelease")
+      log.info({reason: "env EP_PRE_RELEASE is set to true"}, "GitHub provider release type is set to prerelease")
     }
     else if (info.releaseType != null) {
       this.releaseType = info.releaseType

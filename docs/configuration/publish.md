@@ -130,7 +130,7 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
   
-  Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRELEASE`is set to `true` — `prerelease`.
+  Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
 
 Inherited from `PublishConfiguration`:
 * <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.

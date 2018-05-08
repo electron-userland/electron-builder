@@ -64,7 +64,7 @@
     "debug": "^3.1.0",
     "lazy-val": "^1.0.3",
     "temp-file": "^3.1.2",
-    "ejs": "^2.5.9"
+    "ejs": "^2.6.1"
   },
   "typings": "./out/index.d.ts"
 }
