@@ -38,6 +38,14 @@ Var installMode
       System::Store L
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
+        
+    # Allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
+    ${GetParameters} $R0
+    ${GetOptions} $R0 "/D=" $R1
+    ${IfNot} ${Errors}  
+      StrCpy $INSTDIR $R1
+    ${EndIf}
+
   !macroend
 !endif
 
@@ -74,5 +82,13 @@ Var installMode
 
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
+  
+    # Allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
+    ${GetParameters} $R0
+    ${GetOptions} $R0 "/D=" $R1
+    ${IfNot} ${Errors}  
+      StrCpy $INSTDIR $R1
+    ${EndIf}
+
   !macroend
 !endif
