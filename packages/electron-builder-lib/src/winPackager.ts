@@ -105,21 +105,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const cscFile = (cscInfo as FileCodeSigningInfo).file
     if (publisherName == null && cscFile != null) {
-      if (process.platform === "win32") {
-        try {
+      try {
+        if (process.platform === "win32") {
           const subject = await this.computedPublisherSubjectOnWindowsOnly.value
           const commonName = subject == null ? null : parseDn(subject).get("CN")
           if (commonName) {
             return asArray(commonName)
           }
         }
-        catch (e) {
-          log.warn({error: e.message}, "cannot get publisher name using powershell")
+        else {
+          publisherName = await extractCommonNameUsingOpenssl((cscInfo as FileCodeSigningInfo).password || "", cscFile)
         }
-      }
-
-      try {
-        publisherName = await extractCommonNameUsingOpenssl((cscInfo as FileCodeSigningInfo).password || "", cscFile)
       }
       catch (e) {
         throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)

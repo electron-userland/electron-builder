@@ -247,6 +247,8 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   }
 
   if (isWin) {
+    // https://github.com/electron-userland/electron-builder/issues/2875#issuecomment-387233610
+    args.push("/debug")
     // must be last argument
     args.push(inputFile)
   }
