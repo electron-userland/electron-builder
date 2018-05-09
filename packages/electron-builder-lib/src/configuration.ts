@@ -229,7 +229,7 @@ export interface MetadataDirectories {
   readonly buildResources?: string | null
 
   /**
-   * The output directory.
+   * The output directory. [File macros](/file-patterns.md#file-macros) are supported.
    * @default dist
    */
   readonly output?: string | null

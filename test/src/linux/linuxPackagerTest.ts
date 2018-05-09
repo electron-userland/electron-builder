@@ -30,7 +30,11 @@ test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({
 test.ifAll.ifNotWindows.ifNotCiMac("AppImage arm, max compression", app({
   targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
   config: {
-    publish: null,
+    // test update info file name
+    publish: {
+      provider: "generic",
+      url: "https://example.com/downloads"
+    },
     compression: "maximum",
   },
 }))

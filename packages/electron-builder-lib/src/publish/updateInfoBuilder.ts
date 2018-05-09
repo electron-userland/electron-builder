@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, hashFile, safeStringifyJson, serializeToYaml, log } from "builder-util"
+import { Arch, hashFile, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -57,8 +57,14 @@ function computeChannelNames(packager: PlatformPackager<any>, publishConfig: Pub
 
 function getUpdateInfoFileName(channel: string, packager: PlatformPackager<any>, arch: Arch | null): string {
   const osSuffix = packager.platform === Platform.WINDOWS ? "" : `-${packager.platform.buildConfigurationKey}`
-  const archSuffix = (arch != null && arch !== Arch.x64 && packager.platform === Platform.LINUX) ? `-${Arch[arch]}` : ""
-  return `${channel}${osSuffix}${archSuffix}.yml`
+  return `${channel}${osSuffix}${getArchPrefixForUpdateFile(arch, packager)}.yml`
+}
+
+function getArchPrefixForUpdateFile(arch: Arch | null, packager: PlatformPackager<any>) {
+  if (arch == null || arch === Arch.x64 || packager.platform !== Platform.LINUX) {
+    return ""
+  }
+  return arch === Arch.armv7l ? "-arm" : `-${Arch[arch]}`
 }
 
 export interface UpdateInfoFileTask {

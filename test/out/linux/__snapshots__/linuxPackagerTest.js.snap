@@ -91,6 +91,23 @@ Object {
         "size": "@size",
       },
     },
+    Object {
+      "file": "latest-linux-arm.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-armv7l.AppImage",
+          },
+        ],
+        "path": "TestApp-1.1.0-armv7l.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
   ],
 }
 `;

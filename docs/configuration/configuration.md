@@ -40,7 +40,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
   * <code id="MetadataDirectories-buildResources">buildResources</code> = `build` String - The path to build resources.
     
     Please note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
-  * <code id="MetadataDirectories-output">output</code> = `dist` String - The output directory.
+  * <code id="MetadataDirectories-output">output</code> = `dist` String - The output directory. [File macros](/file-patterns.md#file-macros) are supported.
   * <code id="MetadataDirectories-app">app</code> String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 ---
