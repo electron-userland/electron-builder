@@ -173,7 +173,7 @@ export abstract class AppUpdater extends EventEmitter {
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
-      throw newError(`App version is not a valid semver version: "${currentVersionString}`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(`App version is not a valid semver version: "${currentVersionString}"`, "ERR_UPDATER_INVALID_VERSION")
     }
     this.currentVersion = currentVersion
 
@@ -197,7 +197,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this)
+      provider = new GenericProvider({ provider: "generic", url: options }, this)
     }
     else {
       provider = createClient(options, this)
@@ -300,7 +300,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({ "X-User-Staging-Id": stagingUserId }))
     return await client.getLatestVersion()
   }
 
@@ -309,7 +309,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`Latest version (from update server) is not valid semver version: "${latestVersion}`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${latestVersion}"`, "ERR_UPDATER_INVALID_VERSION")
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
@@ -401,7 +401,7 @@ export abstract class AppUpdater extends EventEmitter {
         ...requestHeaders,
       }
     }
-    return this.computeFinalHeaders({Accept: "*/*"})
+    return this.computeFinalHeaders({ Accept: "*/*" })
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
