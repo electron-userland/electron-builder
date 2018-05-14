@@ -226,8 +226,8 @@ export default class MsiTarget extends Target {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
           result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="icon.ico">\n`
-          result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${this.packager.appInfo.id}"/>\n`;
-          result += `${fileSpace}  </Shortcut>\n`;
+          result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${this.packager.appInfo.id}"/>\n`
+          result += `${fileSpace}  </Shortcut>\n`
         }
         result += `${fileSpace}</File>`
 
