@@ -32,7 +32,7 @@ async function main(): Promise<void> {
 
 function getLatestVersions(packageData: Array<any>) {
   return BluebirdPromise.map(packageData, packageInfo => {
-    return exec(/^win/.test(process.platform) ? 'yarn.cmd' : 'yarn', ["info", "--json", packageInfo.name, "dist-tags"])
+    return exec(process.platform === "win32" ? "yarn.cmd" : "yarn", ["info", "--json", packageInfo.name, "dist-tags"])
       .then((it: string) => {
         if (it === "") {
           // {"type":"error","data":"Received invalid response from npm."}
