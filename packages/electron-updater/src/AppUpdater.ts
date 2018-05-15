@@ -197,7 +197,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({ provider: "generic", url: options }, this)
+      provider = new GenericProvider({provider: "generic", url: options}, this)
     }
     else {
       provider = createClient(options, this)
@@ -300,7 +300,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({ "X-User-Staging-Id": stagingUserId }))
+    client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
     return await client.getLatestVersion()
   }
 
@@ -401,7 +401,7 @@ export abstract class AppUpdater extends EventEmitter {
         ...requestHeaders,
       }
     }
-    return this.computeFinalHeaders({ Accept: "*/*" })
+    return this.computeFinalHeaders({Accept: "*/*"})
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
