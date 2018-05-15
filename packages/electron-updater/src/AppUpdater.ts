@@ -173,7 +173,7 @@ export abstract class AppUpdater extends EventEmitter {
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
-      throw newError(`App version is not a valid semver version: "${currentVersionString}`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(`App version is not a valid semver version: "${currentVersionString}"`, "ERR_UPDATER_INVALID_VERSION")
     }
     this.currentVersion = currentVersion
 
@@ -309,7 +309,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`Latest version (from update server) is not valid semver version: "${latestVersion}`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${latestVersion}"`, "ERR_UPDATER_INVALID_VERSION")
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
