@@ -76,23 +76,23 @@ ${endIf}
   !insertmacro customInstall
 !endif
 
-Var /GLOBAL isOneClickRun
-StrCpy $isOneClickRun "false"
-!ifdef ONE_CLICK
-  !ifdef RUN_AFTER_FINISH
-    ${IfNot} ${Silent}
-	    StrCpy $isOneClickRun "true"
-    ${EndIf}
-  !endif
-!endif
-
-${if} ${isForceRun}
-${orIf} $isOneClickRun == "true"
+!macro doStartApp
   # otherwise app window will be in background
   HideWindow
   !insertmacro StartApp
-${EndIf}
+!macroend
 
 !ifdef ONE_CLICK
+  ${ifNot} ${Silent}
+  ${orIf} ${isForceRun}
+    !insertmacro doStartApp
+  ${endIf}
+
   !insertmacro quitSuccess
+!else
+  # for assisted installer run only if silent, because assisted installer has run after finish option
+  ${if} ${isForceRun}
+  ${andIf} ${Silent}
+    !insertmacro doStartApp
+  ${endIf}
 !endif
