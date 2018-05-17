@@ -6,7 +6,7 @@ import { promisify } from "util"
 import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { ProjectInfoManager } from "./ProjectInfoManager"
-import { checkStatus, getConnectOptions, RemoteBuildManager } from "./RemoteBuildManager"
+import { ArtifactInfo, checkStatus, getConnectOptions, RemoteBuildManager } from "./RemoteBuildManager"
 
 interface TargetInfo {
   name: string
@@ -71,14 +71,16 @@ export class RemoteBuilder {
       const setTimeoutPromise = promisify(setTimeout)
       try {
         result = await buildManager.build({
-          "x-targets": JSON.stringify(targets.map(it => {
-            return {
-              name: it.name,
-              arch: it.arch,
-              unpackedDirName: path.basename(it.unpackedDirectory),
-            }
-          })),
-          "x-platform": packager.platform.buildConfigurationKey,
+          "x-build-request": JSON.stringify({
+            targets: targets.map(it => {
+              return {
+                name: it.name,
+                arch: it.arch,
+                unpackedDirName: path.basename(it.unpackedDirectory),
+              }
+            }),
+            platform: packager.platform.buildConfigurationKey,
+          })
         })
         break
       }
@@ -114,7 +116,7 @@ async function findBuildAgent(): Promise<string> {
     return result.startsWith("http") ? result : `https://${result}`
   }
 
-  const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "service.electron.build"
+  const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "206.189.255.57"
   // add random query param to prevent caching
   const routerUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`
   log.debug({routerUrl}, "")
@@ -161,5 +163,6 @@ async function findBuildAgent(): Promise<string> {
 }
 
 export interface RemoteBuilderResponse {
-  error?: string
+  files: Array<ArtifactInfo> | null
+  error: string | null
 }
