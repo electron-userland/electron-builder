@@ -3,7 +3,6 @@ import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -38,8 +37,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   get defaultTarget(): Array<string> {
-    const electronUpdaterCompatibility = this.platformSpecificBuildOptions.electronUpdaterCompatibility
-    return (electronUpdaterCompatibility == null || semver.satisfies("2.16.0", electronUpdaterCompatibility)) ? ["zip", "dmg"] : ["dmg"]
+    return this.info.framework.macOsDefaultTargets
   }
 
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
@@ -286,6 +284,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => appPlist.LSApplicationCategoryType = it)
     appPlist.NSHumanReadableCopyright = appInfo.copyright
+
+    const extendInfo = this.platformSpecificBuildOptions.extendInfo
+    if (extendInfo != null) {
+      Object.assign(appPlist, extendInfo)
+    }
   }
 }
 

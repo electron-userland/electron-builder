@@ -46,11 +46,6 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, parsePlist(fileContents[4]))
   }
 
-  const macOptions = buildMetadata.mac || {}
-  if (macOptions.extendInfo != null) {
-    Object.assign(appPlist, macOptions.extendInfo)
-  }
-
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")

@@ -303,9 +303,6 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
 
   expect(info).toMatchObject({
-    CFBundleDisplayName: appInfo.productName,
-    CFBundleIdentifier: "org.electron-builder.testApp",
-    LSApplicationCategoryType: "your.app.category.type",
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
   })
 
@@ -313,6 +310,10 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright
+  delete info.DTXcode
+  delete info.DTXcodeBuild
+
+  expect(info).toMatchSnapshot()
 
   const checksumData = info.AsarIntegrity
   if (checksumData != null) {

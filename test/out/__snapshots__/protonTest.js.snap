@@ -18,6 +18,33 @@ Object {
 
 exports[`mac 1`] = `
 Object {
-  "mac": Array [],
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "notepad-1.0.0.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "notepad-1.0.0.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`mac 2`] = `
+Object {
+  "CFBundleDisplayName": "notepad",
+  "CFBundleExecutable": "notepad",
+  "CFBundleIdentifier": "com.proton-native.notepad",
+  "CFBundleName": "notepad",
+  "CFBundleShortVersionString": "1.0.0",
+  "NSHighResolutionCapable": true,
 }
 `;

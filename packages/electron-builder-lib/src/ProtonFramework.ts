@@ -18,6 +18,8 @@ export function createProtonFrameworkSupport(nodeVersion: string, appInfo: AppIn
 class ProtonFramework implements Framework {
   readonly name = "proton"
   readonly isDefaultAppIconProvided = false
+  readonly macOsDefaultTargets = ["dmg"]
+  readonly defaultAppIdPrefix = "com.proton-native."
 
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = false
@@ -26,16 +28,20 @@ class ProtonFramework implements Framework {
   }
 
   createTransformer(): FileTransformer | null {
-    const babel = require("babel-core")
+    let babel: any
     const babelOptions: any = {ast: false, sourceMaps: "inline"}
     if (process.env.TEST_SET_BABEL_PRESET === "true") {
+      babel = require("@babel/core")
       // out test dir can be located outside of electron-builder node_modules and babel cannot resolve string names of preset
       babelOptions.presets = [
-        [require("babel-preset-env"), {targets: {node: this.version}}],
-        require("babel-preset-stage-0"),
-        require("babel-preset-react"),
+        [require("@babel/preset-env").default, {targets: {node: this.version}}],
+        [require("@babel/preset-stage-0"), {decoratorsLegacy: true}],
+        require("@babel/preset-react"),
       ]
       babelOptions.babelrc = false
+    }
+    else {
+      babel = require("babel-core")
     }
 
     log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
@@ -63,7 +69,10 @@ class ProtonFramework implements Framework {
     await ensureDir(path.join(appContentsDir, "MacOS"))
     await copyFile(path.join(await getBin("node", `${this.version}-darwin-x64`, null), "node"), path.join(appContentsDir, "MacOS", "node"))
 
-    const appPlist: any = {}
+    const appPlist: any = {
+      // https://github.com/albe-rosado/create-proton-app/issues/13
+      NSHighResolutionCapable: true,
+    }
     await packager.applyCommonInfo(appPlist)
     await Promise.all([
       writeFile(path.join(appContentsDir, "Info.plist"), buildPlist(appPlist)),

@@ -16,6 +16,10 @@ const knownMissedDependencies = new Set<string>([
   "babel-preset-env",
   "babel-preset-stage-0",
   "babel-preset-react",
+  "@babel/preset-react",
+  "@babel/preset-stage-0",
+  "@babel/preset-env",
+  "@babel/core",
 ])
 
 const rootDir = path.join(__dirname, "../../..")

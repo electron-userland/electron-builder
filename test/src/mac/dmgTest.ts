@@ -182,12 +182,6 @@ test.ifAll.ifMac("bundleShortVersion", app({
       bundleShortVersion: "2017.1-alpha5",
     },
   }
-}, {
-  checkMacApp: async (appDir, info) => {
-    delete info.DTXcode
-    delete info.DTXcodeBuild
-    expect(info).toMatchSnapshot()
-  },
 }))
 
 test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {

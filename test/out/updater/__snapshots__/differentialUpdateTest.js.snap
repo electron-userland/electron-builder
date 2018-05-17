@@ -202,15 +202,24 @@ Object {
         "files": Array [
           Object {
             "sha512": "@sha512",
+            "url": "Test App ßW-1.0.0-mac.zip",
+          },
+          Object {
+            "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0.dmg",
           },
         ],
-        "path": "Test App ßW-1.0.0.dmg",
+        "path": "Test App ßW-1.0.0-mac.zip",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0",
       },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0-mac.zip",
+      "safeArtifactName": "TestApp-1.0.0-mac.zip",
     },
   ],
 }
@@ -218,42 +227,23 @@ Object {
 
 exports[`dmg 2`] = `
 Object {
-  "mac": Array [
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.1.dmg",
-      "safeArtifactName": "TestApp-1.0.1.dmg",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.1.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.0.1.dmg.blockmap",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "file": "latest-mac.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1.dmg",
-          },
-        ],
-        "path": "Test App ßW-1.0.1.dmg",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.0.1",
-      },
-    },
-  ],
+  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"MKXEudw5/RqaksZhsP69oCb5bLDQVJVCT2Hf+BJPyqb9vHkeyP79XOZC2+TNpOKYtbnvbNhVmRAXnahbYkFzCw==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "DTSDKBuild": "14D125",
+  "DTSDKName": "macosx10.1010.10",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSMinimumSystemVersion": "10.9.0",
+  "NSHighResolutionCapable": true,
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 

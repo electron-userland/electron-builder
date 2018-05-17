@@ -67,7 +67,8 @@ export class AppInfo {
     }
 
     const generateDefaultAppId = () => {
-      return `com.electron.${this.info.metadata.name!.toLowerCase()}`
+      const info = this.info
+      return `${info.framework.defaultAppIdPrefix}${info.metadata.name!.toLowerCase()}`
     }
 
     if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {

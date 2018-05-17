@@ -6,6 +6,8 @@ export interface Framework {
   readonly name: string
   readonly version: string
   readonly distMacOsAppName: string
+  readonly macOsDefaultTargets: Array<string>
+  readonly defaultAppIdPrefix: string
 
   readonly isNpmRebuildRequired: boolean
 

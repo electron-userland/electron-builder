@@ -83,6 +83,8 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     return {
       name: "muon",
       isDefaultAppIconProvided: true,
+      macOsDefaultTargets: ["zip", "dmg"],
+      defaultAppIdPrefix: "com.electron.",
       version: configuration.muonVersion!!,
       distMacOsAppName,
       prepareApplicationStageDirectory: options => {
@@ -118,6 +120,8 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
   const distMacOsAppName = "Electron.app"
   return {
     isDefaultAppIconProvided: true,
+    macOsDefaultTargets: ["zip", "dmg"],
+    defaultAppIdPrefix: "com.electron.",
     name: "electron",
     version,
     distMacOsAppName,
