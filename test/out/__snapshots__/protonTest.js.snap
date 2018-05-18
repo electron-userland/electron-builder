@@ -42,6 +42,7 @@ exports[`mac 2`] = `
 Object {
   "CFBundleDisplayName": "notepad",
   "CFBundleExecutable": "notepad",
+  "CFBundleIconFile": "notepad.icns",
   "CFBundleIdentifier": "com.proton-native.notepad",
   "CFBundleName": "notepad",
   "CFBundleShortVersionString": "1.0.0",

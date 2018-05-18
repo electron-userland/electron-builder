@@ -265,7 +265,7 @@ export class Packager {
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
     if (log.isDebugEnabled) {
-      log.debug({config: serializeToYaml(JSON.parse(safeStringifyJson(configuration)))}, "effective config")
+      log.debug({config: getSafeEffectiveConfig(configuration)}, "effective config")
     }
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!!.app)
@@ -309,7 +309,7 @@ export class Packager {
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(outDir, "electron-builder-effective-config.yaml")
       log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
-      await outputFile(effectiveConfigFile, serializeToYaml(configuration, true))
+      await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
     }
 
     return {
@@ -504,4 +504,12 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
 export interface BuildResult {
   readonly outDir: string
   readonly platformToTargets: Map<Platform, Map<string, Target>>
+}
+
+function getSafeEffectiveConfig(configuration: Configuration): string {
+  const o = JSON.parse(safeStringifyJson(configuration))
+  if (o.cscLink != null) {
+    o.cscLink = "<hidden by builder>"
+  }
+  return serializeToYaml(o, true)
 }

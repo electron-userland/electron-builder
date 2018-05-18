@@ -1,5 +1,6 @@
 import { FileTransformer } from "builder-util/out/fs"
 import { AsarIntegrity } from "./asar/integrity"
+import { Platform } from "./core"
 import { PlatformPackager } from "./platformPackager"
 
 export interface Framework {
@@ -12,6 +13,7 @@ export interface Framework {
   readonly isNpmRebuildRequired: boolean
 
   readonly isDefaultAppIconProvided: boolean
+  getDefaultIcon?(platform: Platform): string
 
   prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions): Promise<any>
 

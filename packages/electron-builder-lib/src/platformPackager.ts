@@ -551,6 +551,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const result = await this.resolveIcon(sourceNames, format)
     if (result.length === 0) {
       const framework = this.info.framework
+      if (framework.getDefaultIcon != null) {
+        return framework.getDefaultIcon(this.platform)
+      }
+
       log.warn({reason: "application icon is not set"}, framework.isDefaultAppIconProvided ? `default ${capitalizeFirstLetter(framework.name)} icon is used` : `application doesn't have an icon`)
       return null
     }

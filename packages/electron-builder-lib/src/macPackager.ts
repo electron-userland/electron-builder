@@ -3,6 +3,7 @@ import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -258,7 +259,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   // todo fileAssociations
-  async applyCommonInfo(appPlist: any) {
+  async applyCommonInfo(appPlist: any, contentsPath: string) {
     const appInfo = this.appInfo
     const appFilename = appInfo.productFilename
 
@@ -267,7 +268,14 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const icon = await this.getIconPath()
     if (icon != null) {
-      appPlist.CFBundleIconFile = `${appFilename}.icns`
+      const oldIcon = appPlist.CFBundleIconFile
+      const resourcesPath = path.join(contentsPath, "Resources")
+      if (oldIcon != null) {
+        await unlinkIfExists(path.join(resourcesPath, oldIcon))
+      }
+      const iconFileName = `${appFilename}.icns`
+      appPlist.CFBundleIconFile = iconFileName
+      await copyFile(icon, path.join(resourcesPath, iconFileName))
     }
     appPlist.CFBundleName = appInfo.productName
     appPlist.CFBundleDisplayName = appInfo.productName

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
-import { copyFile, copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
+import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
@@ -52,9 +52,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
   const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
 
-  const oldIcon = appPlist.CFBundleIconFile
-
-  await packager.applyCommonInfo(appPlist)
+  await packager.applyCommonInfo(appPlist, contentsPath)
 
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
   helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
@@ -118,7 +116,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
 
-  const promises: Array<Promise<any | null | undefined>> = [
+  await Promise.all([
     writeFile(appPlistFilename, buildPlist(appPlist)),
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
     writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
@@ -126,15 +124,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     doRename(path.join(contentsPath, "MacOS"), packager.electronDistMacOsExecutableName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
-  ]
-
-  const icon = await packager.getIconPath()
-  if (icon != null) {
-    promises.push(unlinkIfExists(path.join(resourcesPath, oldIcon)))
-    promises.push(copyFile(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
-  }
-
-  await Promise.all(promises)
+  ])
 
   await moveHelpers(frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
   const appPath = path.join(appOutDir, `${appFilename}.app`)

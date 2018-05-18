@@ -1,6 +1,6 @@
-import { chmod, copyFile, emptyDir, ensureDir, writeFile } from "fs-extra-p"
+import { chmod, emptyDir, ensureDir, writeFile } from "fs-extra-p"
 import { getBin } from "builder-util/out/binDownload"
-import { FileTransformer } from "builder-util/out/fs"
+import { FileTransformer, copyFile } from "builder-util/out/fs"
 import { log } from "builder-util"
 import { safeStringifyJson } from "builder-util-runtime"
 import { Platform } from "./core"
@@ -10,6 +10,7 @@ import * as path from "path"
 import { LinuxPackager } from "./linuxPackager"
 import MacPackager from "./macPackager"
 import { build as buildPlist } from "plist"
+import { getTemplatePath } from "./util/pathManager"
 
 export function createProtonFrameworkSupport(nodeVersion: string, appInfo: AppInfo): Framework {
   return new ProtonFramework(nodeVersion === "current" ? process.versions.node : nodeVersion, `${appInfo.productFilename}.app`)
@@ -25,6 +26,10 @@ class ProtonFramework implements Framework {
   readonly isNpmRebuildRequired = false
 
   constructor(readonly version: string, readonly distMacOsAppName: string) {
+  }
+
+  getDefaultIcon() {
+    return getTemplatePath("proton-native.icns")
   }
 
   createTransformer(): FileTransformer | null {
@@ -73,7 +78,7 @@ class ProtonFramework implements Framework {
       // https://github.com/albe-rosado/create-proton-app/issues/13
       NSHighResolutionCapable: true,
     }
-    await packager.applyCommonInfo(appPlist)
+    await packager.applyCommonInfo(appPlist, appContentsDir)
     await Promise.all([
       writeFile(path.join(appContentsDir, "Info.plist"), buildPlist(appPlist)),
       writeExecutableMain(path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable), `#!/bin/sh
