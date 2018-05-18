@@ -153,7 +153,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
 
 function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : env!!
+  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env!!)
 }
 
 function listUserKeychains(): Promise<Array<string>> {

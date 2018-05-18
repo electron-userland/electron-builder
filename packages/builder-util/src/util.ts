@@ -357,11 +357,16 @@ export class InvalidConfigurationError extends Error {
 export function executeAppBuilder(args: Array<string>): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const command = appBuilderPath
+    const env: any = {
+      ...process.env,
+      SZA_PATH: path7za,
+    }
+    const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+    if (cacheEnv != null && cacheEnv.length > 0) {
+      env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
+    }
     handleProcess("close", doSpawn(command, args, {
-      env: {
-        ...process.env,
-        SZA_PATH: path7za,
-      },
+      env,
       stdio: ["ignore", "pipe", process.stdout]
     }), command, true, resolve, reject)
   })
