@@ -35,8 +35,6 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 
 `yarn add electron-builder --dev`
 
-Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional).
-
 ## Boilerplates
 
 * [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). This is a recommended way to create a new Electron application.
