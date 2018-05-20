@@ -29,7 +29,7 @@
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
     "7zip-bin": "~4.0.2",
-    "app-builder-bin": "1.9.0",
+    "app-builder-bin": "1.9.2",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
     "aws-sdk": "^2.243.1",

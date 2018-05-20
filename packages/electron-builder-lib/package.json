@@ -42,7 +42,7 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "7zip-bin": "~4.0.2",
-    "app-builder-bin": "1.9.0",
+    "app-builder-bin": "1.9.2",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.5",
     "chromium-pickle-js": "^0.2.0",

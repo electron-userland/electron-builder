@@ -15,7 +15,9 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   libsecret-1-dev libgnome-keyring-dev \
   libopenjp2-tools \
   # for snap desktop-gtk3 sudo (see https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml#L189)
-  libxkbcommon0 ttf-ubuntu-font-family dmz-cursor-theme light-themes adwaita-icon-theme gnome-themes-standard shared-mime-info libgtk-3-0 libgdk-pixbuf2.0-0 libglib2.0-bin libgtk-3-bin unity-gtk3-module libappindicator3-1 locales-all xdg-user-dirs ibus-gtk3 libibus-1.0-5 && \
+  libxkbcommon0 ttf-ubuntu-font-family dmz-cursor-theme light-themes adwaita-icon-theme gnome-themes-standard shared-mime-info libgtk-3-0 libgdk-pixbuf2.0-0 libglib2.0-bin libgtk-3-bin unity-gtk3-module libappindicator3-1 locales-all xdg-user-dirs ibus-gtk3 libibus-1.0-5 \
+  # snap build packages
+  autotools-dev bsdmainutils debhelper dh-strip-nondeterminism file gettext gettext-base gir1.2-atk-1.0 gir1.2-atspi-2.0 gir1.2-freedesktop gir1.2-gdkpixbuf-2.0 gir1.2-gtk-3.0 gir1.2-pango-1.0 groff-base intltool-debian libarchive-zip-perl libasprintf-dev libasprintf0v5 libatk-bridge2.0-dev libatk1.0-dev libatspi2.0-dev libcairo-script-interpreter2 libcairo2-dev libdbus-1-dev libepoxy-dev libexpat1-dev libfile-stripnondeterminism-perl libfontconfig1-dev libfreetype6-dev libgdk-pixbuf2.0-dev libgettextpo-dev libgettextpo0 libgmp-dev libgmpxx4ldbl libgtk-3-dev libharfbuzz-dev libharfbuzz-gobject0 libharfbuzz-icu0 libice-dev libmail-sendmail-perl libpango1.0-dev libpangoxft-1.0-0 libpipeline1 libpixman-1-dev libpng12-dev libsm-dev libsys-hostname-long-perl libtimedate-perl libunistring0 libxcb-shm0-dev libxcomposite-dev libxcursor-dev libxft-dev libxft2 libxi-dev libxinerama-dev libxrandr-dev libxrender-dev libxtst-dev libxtst6 man-db nettle-dev po-debconf x11proto-composite-dev x11proto-randr-dev x11proto-record-dev x11proto-render-dev x11proto-xinerama-dev && \
   # git-lfs
   git lfs install && \
   # snap

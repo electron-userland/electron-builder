@@ -5,14 +5,13 @@ import * as semver from "semver"
 import { SnapOptions } from ".."
 import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
-import { isElectronBased } from "../Framework"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
 
 // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]
+const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6", "libappindicator1"]
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
@@ -115,7 +114,7 @@ export default class SnapTarget extends Target {
     if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
       // todo change install to override-build when new snapcraft release will be installed on most user machines
       const desktopPartOverride: any = {
-        install: `set -x
+        "override-build": `set -x
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -163,7 +162,7 @@ done`
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
-      "--docker-image", isElectronBased(this.packager.info.framework) && this.isElectron2 ? "electronuserland/snapcraft-electron:2" : "electronuserland/builder:latest",
+      "--docker-image", "electronuserland/builder:latest",
     ]
 
     await this.helper.icons

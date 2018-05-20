@@ -9,6 +9,7 @@ import { safeDump } from "js-yaml"
 import * as path from "path"
 import "source-map-support/register"
 import { debug, log } from "./log"
+import isCI from "is-ci"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -358,6 +359,8 @@ export function executeAppBuilder(args: Array<string>): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const command = appBuilderPath
     const env: any = {
+      // before process.env to allow customize by user
+      SNAP_USE_HARD_LINKS_IF_POSSIBLE: isCI.toString(),
       ...process.env,
       SZA_PATH: path7za,
     }

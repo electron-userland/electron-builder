@@ -11,6 +11,9 @@ export async function readPackageJson(file: string): Promise<any> {
   const data = await readJson(file)
   await authors(file, data)
   normalizeData(data)
+  // remove not required fields because can be used for remote build
+  delete data.scripts
+  delete data.readme
   return data
 }
 

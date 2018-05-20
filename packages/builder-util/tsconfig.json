@@ -4,6 +4,7 @@
     "outDir": "out"
   },
   "include": [
+    "../../typings/is-ci.d.ts",
     "src/**/*.ts"
   ],
   "jsdoc": {
