@@ -54,10 +54,12 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -135,6 +137,7 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
   },
@@ -241,10 +244,12 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -323,11 +328,13 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
         "custom",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -407,10 +414,12 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -491,11 +500,13 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
         "foo2",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -599,10 +610,12 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -675,10 +688,12 @@ Object {
         "libpulse0",
         "libxss1",
         "libxtst6",
+        "libappindicator1",
       ],
     },
     "desktop-gtk3": Object {
-      "install": "set -x
+      "override-build": "set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 

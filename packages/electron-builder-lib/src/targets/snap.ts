@@ -1,9 +1,9 @@
-import { Arch, replaceDefault as _replaceDefault, serializeToYaml, executeAppBuilder, toLinuxArchString } from "builder-util"
+import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
+import { asArray } from "builder-util-runtime"
 import { chmod, outputFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
-import { asArray } from "builder-util-runtime"
 import { Target } from "../core"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
@@ -46,7 +46,7 @@ export default class SnapTarget extends Target {
     const desktopPart = this.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
 
     const buildPackages = asArray(options.buildPackages)
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
+    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0 && this.isElectron2
 
     const appDescriptor: any = {
       command: `command.sh`,
@@ -112,9 +112,10 @@ export default class SnapTarget extends Target {
     }
 
     if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
-      // todo change install to override-build when new snapcraft release will be installed on most user machines
+      // call super build (snapcraftctl build) otherwise /bin/desktop not created
       const desktopPartOverride: any = {
         "override-build": `set -x
+snapcraftctl build
 export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
 update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
 
@@ -187,7 +188,7 @@ done`
 
     const commandWrapperFile = path.join(stageDir, "command.sh")
     // noinspection SpellCheckingInspection
-    await writeFile(commandWrapperFile, `#!/bin/bash\nexec $SNAP/bin/desktop-launch "$SNAP/${this.isUseTemplateApp ? "" : "app/"}${this.packager.executableName}"`)
+    await writeFile(commandWrapperFile, `#!/bin/bash\nexec $SNAP/bin/desktop-launch "$SNAP/app/${this.packager.executableName}"`)
     await chmod(commandWrapperFile, 0o755)
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
@@ -196,7 +197,7 @@ done`
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", this.isElectron2 ? "electron2" : "electron1")
+      args.push("--template-url", "electron2")
     }
     await executeAppBuilder(args)
     packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))

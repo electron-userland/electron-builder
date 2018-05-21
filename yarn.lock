@@ -1050,9 +1050,9 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@1.9.2:
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.2.tgz#cc0d14bb1ebf0fd303bd953bbd83014cb71564cb"
+app-builder-bin@1.9.4:
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.4.tgz#2e032f9f2b10a28ef4d7feb99c93bbc81c298b28"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -1247,9 +1247,9 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.243.1:
-  version "2.243.1"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.243.1.tgz#c47b05431637c572177a1814c724cae8a5ee3f49"
+aws-sdk@^2.244.1:
+  version "2.244.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.244.1.tgz#8aa0334a0ee0a8bfc565e829717390aeebb5151c"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -5415,9 +5415,9 @@ prop-types@^15.6.0, prop-types@^15.6.1:
     loose-envify "^1.3.1"
     object-assign "^4.1.1"
 
-proton-native@1.1.4:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/proton-native/-/proton-native-1.1.4.tgz#68112dcdaa7c34c9fd440fd2a90778d26ebb361d"
+proton-native@1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/proton-native/-/proton-native-1.1.5.tgz#6b6ea3873d3f356490bc5bf7510cc9943ac0d0b8"
   dependencies:
     color "^3.0.0"
     fbjs "^0.8.16"

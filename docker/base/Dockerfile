@@ -12,6 +12,7 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # libsecret-1-0 and libgnome-keyring-dev are required even for prebuild keytar
   # sudo for snapcraft (install build packages)
   apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
+  apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
   libsecret-1-dev libgnome-keyring-dev \
   libopenjp2-tools \
   # for snap desktop-gtk3 sudo (see https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml#L189)
