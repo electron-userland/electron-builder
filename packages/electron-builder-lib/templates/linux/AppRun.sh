@@ -32,14 +32,14 @@ if [ -z $APPDIR ] ; then
   APPDIR=$(find-up "AppRun")
 fi
 
-export PATH="${APPDIR}/app:${APPDIR}/usr/sbin:${PATH}"
+export PATH="${APPDIR}:${APPDIR}/usr/sbin:${PATH}"
 export XDG_DATA_DIRS="./share/:/usr/share/gnome:/usr/local/share/:/usr/share/:${XDG_DATA_DIRS}"
 export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${APPDIR}"/usr/share/:"${XDG_DATA_DIRS}":/usr/share/gnome/:/usr/local/share/:/usr/share/
 export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
 
 DESKTOP_FILE="$APPDIR/<%= desktopFileName %>"
-BIN="$APPDIR/app/<%= executableName %>"
+BIN="$APPDIR/<%= executableName %>"
 
 trap atexit EXIT
 
@@ -186,14 +186,11 @@ xdg-icon-resource uninstall --noupdate --size 512 "<%= resourceName %>"
 xdg-icon-resource uninstall --noupdate --size 1024 "<%= resourceName %>"
 
 # Install the icon files for the application
-<%- installIcons %>
+<%- additionalInstall %>
 
 xdg-icon-resource forceupdate
 
-# Install mime type
-find "${APPDIR}/usr/share/mime/" -type f -name *xml -exec xdg-mime install $SYSTEM_WIDE --novendor {} \; 2>/dev/null || true
-
-# Install the icon files for the mime type; TODO: scalable
+# Install the icon files for the mime type
 ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/mimetypes/*.png" 2>/dev/null || true)
 for ICON in $ICONS ; do
   ICON_SIZE=$(echo "${ICON}" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)

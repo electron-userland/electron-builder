@@ -48,6 +48,13 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
     extraResources: {
       from: "build/icons"
     },
+    fileAssociations: [
+      {
+        ext: "my-app",
+        name: "Test Foo",
+        mimeType: "application/x-example",
+      }
+    ],
   }
 }))
 

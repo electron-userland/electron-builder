@@ -63,6 +63,11 @@ export interface CommonLinuxOptions {
   readonly category?: string | null
 
   /**
+   * The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing.
+   */
+  readonly mimeTypes?: Array<string> | null
+
+  /**
    * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
    */
   readonly desktop?: any | null
