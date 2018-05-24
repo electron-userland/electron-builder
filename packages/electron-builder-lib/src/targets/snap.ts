@@ -1,6 +1,6 @@
 import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray } from "builder-util-runtime"
-import { chmod, outputFile, writeFile } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
@@ -163,6 +163,7 @@ done`
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch),
       "--output", artifactPath,
+      "--executable", this.packager.executableName,
       "--docker-image", "electronuserland/builder:latest",
     ]
 
@@ -185,11 +186,6 @@ done`
     }
 
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
-
-    const commandWrapperFile = path.join(stageDir, "command.sh")
-    // noinspection SpellCheckingInspection
-    await writeFile(commandWrapperFile, `#!/bin/bash\nexec $SNAP/bin/desktop-launch "$SNAP/app/${this.packager.executableName}"`)
-    await chmod(commandWrapperFile, 0o755)
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
     if (hooksDir != null) {

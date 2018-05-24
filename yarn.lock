@@ -1050,9 +1050,9 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@1.9.4:
-  version "1.9.4"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.4.tgz#2e032f9f2b10a28ef4d7feb99c93bbc81c298b28"
+app-builder-bin@1.9.6:
+  version "1.9.6"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.6.tgz#9bdcc5ef9370850ed839025d9468c690b0ae5fd2"
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -1247,9 +1247,9 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.244.1:
-  version "2.244.1"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.244.1.tgz#8aa0334a0ee0a8bfc565e829717390aeebb5151c"
+aws-sdk@^2.245.1:
+  version "2.245.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.245.1.tgz#756b3b7a5314651920fdbce032d4730f516ef360"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -2141,9 +2141,9 @@ create-error-class@^3.0.0:
   dependencies:
     capture-stack-trace "^1.0.0"
 
-cross-env@^5.1.5:
-  version "5.1.5"
-  resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-5.1.5.tgz#31daf7f3a52ef337c8ddda585f08175cce5d1fa5"
+cross-env@^5.1.6:
+  version "5.1.6"
+  resolved "https://registry.yarnpkg.com/cross-env/-/cross-env-5.1.6.tgz#0dc05caf945b24e4b9e3b12871fe0e858d08b38d"
   dependencies:
     cross-spawn "^5.1.0"
     is-windows "^1.0.0"
