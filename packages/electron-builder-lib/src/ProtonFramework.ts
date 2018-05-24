@@ -1,4 +1,4 @@
-import { chmod, emptyDir, ensureDir, writeFile, readFile } from "fs-extra-p"
+import { chmod, emptyDir, ensureDir, writeFile } from "fs-extra-p"
 import { getBin } from "builder-util/out/binDownload"
 import { FileTransformer, copyFile } from "builder-util/out/fs"
 import { log } from "builder-util"
