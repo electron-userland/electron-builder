@@ -48,37 +48,30 @@ class ProtonFramework implements Framework {
     else {
       try {
         babel = require("babel-core")
-      } catch (e) {
+      }
+      catch (e) {
         // babel isn't installed
+        log.debug(null, "don't transpile source code using Babel")
+        return null
       }
     }
 
-    if (babel) {
-      log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
-    } else {
-      log.info("don't transpile source code using Babel")
-    }
-
+    log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
     return file => {
       if (!(file.endsWith(".js") || file.endsWith(".jsx")) || file.includes(NODE_MODULES_PATTERN)) {
         return null
       }
 
-      if (babel) {
-        return new Promise((resolve, reject) => {
-          return babel.transformFile(file, babelOptions, (error: Error, result: any) => {
-            if (error == null) {
-              resolve(result.code)
-            }
-            else {
-              reject(error)
-            }
-          })
+      return new Promise((resolve, reject) => {
+        return babel.transformFile(file, babelOptions, (error: Error, result: any) => {
+          if (error == null) {
+            resolve(result.code)
+          }
+          else {
+            reject(error)
+          }
         })
-      }
-      else {
-        return readFile(file, "utf8")
-      }
+      })
     }
   }
 
