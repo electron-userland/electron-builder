@@ -20,7 +20,8 @@ export function hasMagic(pattern: Minimatch) {
   return false
 }
 
-function findCommonPath(path1, path2) {
+/** @internal */
+function findCommonPath(path1: string, path2: string) {
   const longerPath = path1.length >= path2.length ? path1 : path2;
   const shorterPath = path1.length < path2.length ? path1 : path2;
 
