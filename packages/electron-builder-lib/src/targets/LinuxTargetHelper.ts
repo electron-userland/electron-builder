@@ -90,7 +90,7 @@ export class LinuxTargetHelper {
       }
     }
 
-    if (mimeTypes.length != 0) {
+    if (mimeTypes.length !== 0) {
       desktopMeta.MimeType = mimeTypes.join(";") + ";"
     }
 
