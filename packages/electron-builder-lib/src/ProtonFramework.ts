@@ -1,4 +1,4 @@
-import { chmod, emptyDir, ensureDir, writeFile } from "fs-extra-p"
+import { chmod, emptyDir, ensureDir, writeFile, readFile } from "fs-extra-p"
 import { getBin } from "builder-util/out/binDownload"
 import { FileTransformer, copyFile } from "builder-util/out/fs"
 import { log } from "builder-util"
@@ -46,25 +46,39 @@ class ProtonFramework implements Framework {
       babelOptions.babelrc = false
     }
     else {
-      babel = require("babel-core")
+      try {
+        babel = require("babel-core")
+      } catch (e) {
+        // babel isn't installed
+      }
     }
 
-    log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
+    if (babel) {
+      log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
+    } else {
+      log.info("don't transpile source code using Babel")
+    }
+
     return file => {
       if (!(file.endsWith(".js") || file.endsWith(".jsx")) || file.includes(NODE_MODULES_PATTERN)) {
         return null
       }
 
-      return new Promise((resolve, reject) => {
-        return babel.transformFile(file, babelOptions, (error: Error, result: any) => {
-          if (error == null) {
-            resolve(result.code)
-          }
-          else {
-            reject(error)
-          }
+      if (babel) {
+        return new Promise((resolve, reject) => {
+          return babel.transformFile(file, babelOptions, (error: Error, result: any) => {
+            if (error == null) {
+              resolve(result.code)
+            }
+            else {
+              reject(error)
+            }
+          })
         })
-      })
+      }
+      else {
+        return readFile(file, "utf8")
+      }
     }
   }
 
