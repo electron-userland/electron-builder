@@ -22,6 +22,11 @@ export interface FileAssociation {
   readonly description?: string | null
 
   /**
+   * *linux-only.* The mime-type.
+   */
+  readonly mimeType?: string | null
+
+  /**
    * The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
    */
   readonly icon?: string | null
