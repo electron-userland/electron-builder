@@ -17,8 +17,6 @@ function addAllPatternIfNeed(matcher: FileMatcher) {
 
 /** @internal */
 export class AppFileWalker extends NodeModuleCopyHelper implements FileConsumer {
-  isNodeModulesHandled = false
-
   constructor(matcher: FileMatcher, packager: Packager) {
     super(addAllPatternIfNeed(matcher), packager)
   }
@@ -43,9 +41,7 @@ export class AppFileWalker extends NodeModuleCopyHelper implements FileConsumer 
   private handleNodeModulesDir(nodeModulesDir: string, parent: string) {
     const packager = this.packager
     const isMainNodeModules = parent === packager.appDir
-    if (isMainNodeModules) {
-      this.isNodeModulesHandled = true
-    }
+
     return (isMainNodeModules ? packager.productionDeps.value : getProductionDependencies(parent))
       .then(it => {
         if (packager.debugLogger.enabled) {
