@@ -20,6 +20,34 @@ export function hasMagic(pattern: Minimatch) {
   return false
 }
 
+function findCommonPath(path1, path2) {
+  const longerPath = path1.length >= path2.length ? path1 : path2;
+  const shorterPath = path1.length < path2.length ? path1 : path2;
+
+  // If one of the paths *is* the full prefix, optimize for that
+  if (
+    longerPath.slice(0, shorterPath.length) === shorterPath &&
+    longerPath[shorterPath.length] === '/'
+  ) {
+    return shorterPath + '/';
+  }
+
+  const path1Parts = path1.split('/');
+  const path2Parts = path2.split('/');
+
+  let path = '';
+
+  for (let i = 0; i < path1Parts.length; i++) {
+    if (path1Parts[i] === path2Parts[i]) {
+      path += path2Parts[i] + '/';
+    } else {
+      break;
+    }
+  }
+
+  return path;
+}
+
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
   const pathSeparator = path.sep
@@ -29,7 +57,9 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return true
     }
 
-    let relative = it.substring(srcWithEndSlash.length)
+    let common = findCommonPath(srcWithEndSlash, it);
+    let relative = it.substring(common.length);
+
     if (pathSeparator === "\\") {
       if (relative.startsWith("\\")) {
         // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
