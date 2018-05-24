@@ -46,7 +46,14 @@ class ProtonFramework implements Framework {
       babelOptions.babelrc = false
     }
     else {
-      babel = require("babel-core")
+      try {
+        babel = require("babel-core")
+      }
+      catch (e) {
+        // babel isn't installed
+        log.debug(null, "don't transpile source code using Babel")
+        return null
+      }
     }
 
     log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
