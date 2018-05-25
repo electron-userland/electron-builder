@@ -28,25 +28,25 @@ function findCommonPath(path1: string, path2: string) {
   // If one of the paths *is* the full prefix, optimize for that
   if (
     longerPath.slice(0, shorterPath.length) === shorterPath &&
-    longerPath[shorterPath.length] === '/'
+    longerPath[shorterPath.length] === path.sep
   ) {
     return shorterPath + '/';
   }
 
-  const path1Parts = path1.split('/');
-  const path2Parts = path2.split('/');
+  const path1Parts = path1.split(path.sep);
+  const path2Parts = path2.split(path.sep);
 
-  let path = '';
+  let result = '';
 
   for (let i = 0; i < path1Parts.length; i++) {
     if (path1Parts[i] === path2Parts[i]) {
-      path += path2Parts[i] + '/';
+      result += path2Parts[i] + path.sep;
     } else {
       break;
     }
   }
 
-  return path;
+  return result;
 }
 
 /** @internal */
