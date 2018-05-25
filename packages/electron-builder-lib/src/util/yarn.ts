@@ -88,6 +88,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   return spawn(execPath, execArgs, {
     cwd: appDir,
     env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
+    stdio: "ignore",
   })
 }
 
@@ -152,6 +153,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
       return spawn(execPath!, execArgs, {
         cwd: dep.path,
         env,
+        stdio: "ignore",
       })
         .catch(error => {
           if (dep.optional) {
@@ -172,6 +174,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     await spawn(execPath, execArgs, {
       cwd: appDir,
       env,
+      stdio: "ignore",
     })
   }
 }
