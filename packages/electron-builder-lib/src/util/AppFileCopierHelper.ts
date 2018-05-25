@@ -37,17 +37,13 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
     const metadata = fileWalker.metadata
 
     // https://github.com/electron-userland/electron-builder/issues/2205 Support for hoisted node_modules (lerna + yarn workspaces)
-    // if no node_modules in the app dir, it means that probably dependencies are hoisted
-    // check that main node_modules doesn't exist in addition to isNodeModulesHandled because isNodeModulesHandled will be false if node_modules dir is ignored by filter
-    // here isNodeModulesHandled is required only because of performance reasons (avoid stat call)
-    if (!isHoistedNodeModuleChecked && matcher.from === packager.appDir && !fileWalker.isNodeModulesHandled) {
+    if (!isHoistedNodeModuleChecked && matcher.from === packager.appDir) {
       isHoistedNodeModuleChecked = true
-      if ((await statOrNull(path.join(packager.appDir, "node_modules"))) == null) {
-        // in the prepacked mode no package.json
-        const packageJsonStat = await statOrNull(path.join(packager.appDir, "package.json"))
-        if (packageJsonStat != null && packageJsonStat.isFile()) {
-          hoistedNodeModuleFileSets = await copyHoistedNodeModules(packager, matcher)
-        }
+
+      // in the prepacked mode no package.json
+      const packageJsonStat = await statOrNull(path.join(packager.appDir, "package.json"))
+      if (packageJsonStat != null && packageJsonStat.isFile()) {
+        hoistedNodeModuleFileSets = await copyHoistedNodeModules(packager, matcher)
       }
     }
 
