@@ -21,6 +21,35 @@ export function hasMagic(pattern: Minimatch) {
 }
 
 /** @internal */
+function findCommonPath(path1: string, path2: string) {
+  const longerPath = path1.length >= path2.length ? path1 : path2;
+  const shorterPath = path1.length < path2.length ? path1 : path2;
+
+  // If one of the paths *is* the full prefix, optimize for that
+  if (
+    longerPath.slice(0, shorterPath.length) === shorterPath &&
+    longerPath[shorterPath.length] === path.sep
+  ) {
+    return shorterPath + '/';
+  }
+
+  const path1Parts = path1.split(path.sep);
+  const path2Parts = path2.split(path.sep);
+
+  let result = '';
+
+  for (let i = 0; i < path1Parts.length; i++) {
+    if (path1Parts[i] === path2Parts[i]) {
+      result += path2Parts[i] + path.sep;
+    } else {
+      break;
+    }
+  }
+
+  return result;
+}
+
+/** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
   const pathSeparator = path.sep
   const srcWithEndSlash = ensureEndSlash(src)
@@ -29,7 +58,9 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return true
     }
 
-    let relative = it.substring(srcWithEndSlash.length)
+    let common = findCommonPath(srcWithEndSlash, it);
+    let relative = it.substring(common.length);
+
     if (pathSeparator === "\\") {
       if (relative.startsWith("\\")) {
         // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
