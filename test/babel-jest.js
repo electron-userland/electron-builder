@@ -33,7 +33,7 @@ function createTransformer(options) {
     process(src, filename, config, transformOptions) {
       // allow  ~/Documents/electron-builder/node_modules/electron-builder/out/targets/nsis.js:1
 
-      if (require("is-ci")) {
+      if (process.env.BABEL_JEST_SKIP === "true" || require("is-ci")) {
         // precompiled on CI
         return src
       }
