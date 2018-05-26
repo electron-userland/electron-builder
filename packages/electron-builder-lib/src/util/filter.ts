@@ -29,6 +29,10 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
       return true
     }
 
+    if (!it.startsWith(srcWithEndSlash)) {
+      throw new Error(`${it} must be under ${srcWithEndSlash}`)
+    }
+
     let relative = it.substring(srcWithEndSlash.length)
     if (pathSeparator === "\\") {
       if (relative.startsWith("\\")) {

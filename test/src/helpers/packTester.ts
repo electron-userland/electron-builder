@@ -1,8 +1,8 @@
 import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { addValue, exec, log, spawn, deepAssign } from "builder-util"
+import { addValue, deepAssign, exec, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { copyDir, FileCopier, walk, USE_HARD_LINKS } from "builder-util/out/fs"
+import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
@@ -23,8 +23,6 @@ import { assertThat } from "./fileAssert"
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
-
-const OUT_DIR_NAME = "dist"
 
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
@@ -106,7 +104,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     filter: it => {
       const basename = path.basename(it)
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
-      return basename !== OUT_DIR_NAME && (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
+      return (basename !== "dist" || it.includes("node_modules")) && (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
     },
     isUseHardLink: USE_HARD_LINKS,
   })

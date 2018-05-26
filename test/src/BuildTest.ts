@@ -237,12 +237,8 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     it.dependencies = {
       debug: "3.1.0",
       "edge-cs": "1.2.1",
-      "lzma-native": "3.0.1",
-      // test that prebuild-install is not copied
-      "keytar-prebuild": "4.0.4",
-    }
-    it.resolutions = {
-      "node-abi": "^2.1.1"
+      "lzma-native": "3.0.8",
+      keytar: "4.2.1",
     }
   }),
   packed: context => verifySmartUnpack(context.getResources(Platform.LINUX))}))

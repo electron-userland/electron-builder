@@ -4017,6 +4017,10 @@ Array [
 
 exports[`win smart unpack 4`] = `
 Array [
+  "index.js",
+  "license.md",
+  "package.json",
+  "readme.md",
   "CHANGELOG.md",
   "README.md",
   "karma.conf.js",
@@ -4044,10 +4048,6 @@ Array [
   "edge-cs.js",
   "Dummy.cs",
   "project.json",
-  "index.js",
-  "license.md",
-  "package.json",
-  "readme.md",
   "package.json",
   "package.json",
 ]

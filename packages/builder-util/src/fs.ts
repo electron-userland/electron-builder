@@ -78,7 +78,10 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
           }
 
           const consumerResult = consumer == null ? null : consumer.consume(filePath, stat, dirPath, childNames)
-          if (consumerResult == null || !("then" in consumerResult)) {
+          if (consumerResult === false) {
+            return null
+          }
+          else if (consumerResult == null || !("then" in consumerResult)) {
             if (stat.isDirectory()) {
               dirs.push(name)
               return null
