@@ -57,6 +57,12 @@ export class Packager {
     return this._metadata!!
   }
 
+  private _nodeModulesHandledExternally: boolean = false
+
+  get areNodeModulesHandledExternally(): boolean {
+    return this._nodeModulesHandledExternally
+  }
+
   private _isPrepackedAppAsar: boolean = false
 
   get isPrepackedAppAsar(): boolean {
@@ -439,6 +445,9 @@ export class Packager {
         platform,
         arch: Arch[arch]
       })
+
+      // If beforeBuild resolves to false, it means that handling node_modules is done outside of electron-builder.
+      this._nodeModulesHandledExternally = !performDependenciesInstallOrRebuild
       if (!performDependenciesInstallOrRebuild) {
         return
       }

@@ -256,7 +256,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
       return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile)
         .then(async result => {
-          if (!this.info.isPrepackedAppAsar) {
+          if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
             const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
             result = result.concat(await copyNodeModules(this, moduleFileMatcher, transformer))
           }
