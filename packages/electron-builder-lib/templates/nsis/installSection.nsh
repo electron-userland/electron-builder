@@ -88,9 +88,8 @@ ${endIf}
     ${orIf} ${isForceRun}
       !insertmacro doStartApp
     ${endIf}
-
-    !insertmacro quitSuccess
   !endif
+  !insertmacro quitSuccess
 !else
   # for assisted installer run only if silent, because assisted installer has run after finish option
   ${if} ${isForceRun}
