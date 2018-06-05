@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, serializeToYaml, executeAppBuilder } from "builder-util"
+import { Arch, executeAppBuilder, serializeToYaml } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
 import * as ejs from "ejs"
@@ -44,7 +44,8 @@ export default class AppImageTarget extends Target {
 
     const stageDir = await createStageDir(this, packager, arch)
     const resourceName = `appimagekit-${this.packager.executableName}`
-    const installIcons = await this.copyIcons(stageDir.dir, resourceName)
+    let additionalInstall = await this.copyIcons(stageDir.dir, resourceName)
+    additionalInstall += await this.copyMimeTypes(stageDir.dir)
 
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await Promise.all([
@@ -54,7 +55,7 @@ export default class AppImageTarget extends Target {
         desktopFileName: finalDesktopFilename,
         executableName: this.packager.executableName,
         resourceName,
-        installIcons,
+        additionalInstall,
       }), {
         mode: "0755",
       }),
@@ -72,7 +73,7 @@ export default class AppImageTarget extends Target {
 
     const publishConfig = await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
     if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(stageDir.getTempFile("app")), "app-update.yml"), serializeToYaml(publishConfig))
+      await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     const args = ["appimage", "--stage", stageDir.dir, "--arch", Arch[arch], "--output", artifactPath, "--app", appOutDir]
@@ -117,5 +118,38 @@ export default class AppImageTarget extends Target {
       installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
     }
     return installIcons
+  }
+
+  private async copyMimeTypes(stageDir: string): Promise<string> {
+    let mimeTypes = ""
+    for (const fileAssociation of this.packager.fileAssociations) {
+      if (fileAssociation.mimeType != null) {
+        mimeTypes +=
+        `<mime-type type="${fileAssociation.mimeType}">\n
+          <comment>${this.packager.appInfo.productFilename} document</comment>\n
+          <glob pattern="*.${fileAssociation.ext}"/>\n
+          <generic-icon name="x-office-document"/>\n
+        </mime-type>\n`
+      }
+    }
+
+    // if no mime-types specified, return
+    if (mimeTypes === "") {
+      return ""
+    }
+
+    const relativePath = "usr/share/mime"
+    const mimeTypeDir = path.join(stageDir, relativePath)
+    const fileName = `${this.packager.executableName}.xml`
+    const mimeTypeFile = path.join(mimeTypeDir, fileName)
+    await ensureDir(mimeTypeDir)
+
+    await writeFile(mimeTypeFile, `<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  ${mimeTypes}
+</mime-info>`)
+
+    // noinspection SpellCheckingInspection
+    return `xdg-mime install $SYSTEM_WIDE --novendor "$APPDIR/${relativePath}/${fileName}"\n`
   }
 }

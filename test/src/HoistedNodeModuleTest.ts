@@ -10,7 +10,14 @@ test.ifAll("yarn workspace", () => assertPack("test-app-yarn-workspace", {
   packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
 }))
 
-test("yarn several workspaces", () => assertPack("test-app-yarn-several-workspace", {
+test.ifAll("conflict versions", () => assertPack("test-app-yarn-workspace-version-conflict", {
+  targets: linuxDirTarget,
+  projectDir: "packages/test-app"
+}, {
+  packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
+}))
+
+test.ifAll("yarn several workspaces", () => assertPack("test-app-yarn-several-workspace", {
   targets: linuxDirTarget,
   projectDir: "packages/test-app"
 }, {
@@ -19,5 +26,6 @@ test("yarn several workspaces", () => assertPack("test-app-yarn-several-workspac
 
 async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
+  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
   expect(fs.header).toMatchSnapshot()
 }

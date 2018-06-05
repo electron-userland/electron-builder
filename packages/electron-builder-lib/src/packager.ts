@@ -100,7 +100,7 @@ export class Packager {
 
   private _productionDeps: Lazy<Array<Dependency>> | null = null
 
-  get productionDeps(): Lazy<Array<Dependency>> {
+  private get productionDeps(): Lazy<Array<Dependency>> {
     let result = this._productionDeps
     if (result == null) {
       // https://github.com/electron-userland/electron-builder/issues/2551

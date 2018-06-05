@@ -12,14 +12,14 @@ import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
 import { computeData } from "./asar/integrity"
 import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
-import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers } from "./fileMatcher"
+import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { isElectronBased } from "./Framework"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
-import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
+import { computeFileSets, copyNodeModules, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
@@ -254,8 +254,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     } : config.extraMetadata, framework.createTransformer == null ? null : framework.createTransformer())
 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
-      return computeFileSets(matchers, (this.info.isPrepackedAppAsar || asarOptions == null) ? null : transformer, this.info, isElectronCompile)
-        .then(it => it.filter(it => it.files.length > 0))
+      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile)
+        .then(async result => {
+          if (!this.info.isPrepackedAppAsar) {
+            const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
+            result = result.concat(await copyNodeModules(this, moduleFileMatcher, transformer))
+          }
+          return result.filter(it => it.files.length > 0)
+        })
     }
 
     if (this.info.isPrepackedAppAsar) {

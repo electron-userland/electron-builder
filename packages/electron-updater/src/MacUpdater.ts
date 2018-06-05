@@ -1,5 +1,6 @@
 import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
+import { AddressInfo } from "net"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
 import { findFile } from "./Provider"
@@ -34,7 +35,7 @@ export class MacUpdater extends AppUpdater {
     })
 
     function getServerUrl() {
-      const address = server.address()
+      const address = server.address() as AddressInfo
       return `http://${address.address}:${address.port}`
     }
 

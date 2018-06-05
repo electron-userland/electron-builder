@@ -25,7 +25,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
     import { autoUpdater } from "electron-updater"
     ```
 
-    Or if you don't use ES6: `const autoUpdater = require("electron-updater").autoUpdater`
+    Or if you don't use ES6: `const { autoUpdater } = require("electron-updater")`
 
 4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 

@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { asArray, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -61,24 +61,42 @@ export class LinuxTargetHelper {
       throw new Error("Specified exec is empty")
     }
 
-    const appInfo = this.packager.appInfo
+    const packager = this.packager
+    const appInfo = packager.appInfo
 
     const productFilename = appInfo.productFilename
 
     const desktopMeta: any = {
       Name: appInfo.productName,
       Comment: this.getDescription(targetSpecificOptions),
-      Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}" %U` : exec,
+      Exec: exec == null ? `"${installPrefix}/${productFilename}/${packager.executableName}" %U` : exec,
       Terminal: "false",
       Type: "Application",
-      Icon: this.packager.executableName,
+      Icon: packager.executableName,
       ...extra,
       ...targetSpecificOptions.desktop,
     }
 
+    const mimeTypes: Array<string> = asArray(targetSpecificOptions.mimeTypes)
+    for (const fileAssociation of packager.fileAssociations) {
+      if (fileAssociation.mimeType != null) {
+        mimeTypes.push(fileAssociation.mimeType)
+      }
+    }
+
+    for (const protocol of asArray(packager.config.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))) {
+      for (const scheme of asArray(protocol.schemes)) {
+        mimeTypes.push(`x-scheme-handler/${scheme}`)
+      }
+    }
+
+    if (mimeTypes.length !== 0) {
+      desktopMeta.MimeType = mimeTypes.join(";") + ";"
+    }
+
     let category = targetSpecificOptions.category
     if (isEmptyOrSpaces(category)) {
-      const macCategory = (this.packager.config.mac || {}).category
+      const macCategory = (packager.config.mac || {}).category
       if (macCategory != null) {
         category = macToLinuxCategory[macCategory]
       }

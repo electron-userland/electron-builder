@@ -1,14 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
-import { log } from "builder-util"
+import { log, executeAppBuilder } from "builder-util"
 import { CONCURRENCY, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
 import { ensureDir, Stats } from "fs-extra-p"
 import * as path from "path"
-import { FileMatcher } from "../fileMatcher"
+import { Platform } from "../core"
+import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
+import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
-import { Dependency } from "./packageDependencies"
 
 // os path separator is used
 export interface ResolvedFileSet {
@@ -20,10 +21,42 @@ export interface ResolvedFileSet {
   transformedFiles?: Map<number, string | Buffer> | null
 }
 
-export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+async function transformFiles(transformer: FileTransformer | null, files: Array<string>, metadata: Map<string, Stats>): Promise<Map<number, string | Buffer>> {
+  const transformedFiles = new Map<number, string | Buffer>()
+  if (transformer == null) {
+    return transformedFiles
+  }
+
+  await BluebirdPromise.filter(files, (it, index) => {
+    const fileStat = metadata.get(it)
+    if (fileStat == null || !fileStat.isFile()) {
+      return false
+    }
+
+    const transformedValue = transformer(it)
+    if (transformedValue == null) {
+      return false
+    }
+
+    if (typeof transformedValue === "object" && "then" in transformedValue) {
+      return (transformedValue as Promise<any>)
+        .then(it => {
+          if (it != null) {
+            transformedFiles.set(index, it)
+          }
+          return false
+        })
+    }
+    transformedFiles.set(index, transformedValue as string | Buffer)
+    return false
+  }, CONCURRENCY)
+  return transformedFiles
+}
+
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
-  let hoistedNodeModuleFileSets: Array<ResolvedFileSet> | null = null
-  let isHoistedNodeModuleChecked = false
+  const packager = platformPackager.info
+
   for (const matcher of matchers) {
     const fileWalker = new AppFileWalker(matcher, packager)
 
@@ -36,58 +69,28 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
     const files = await walk(matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
 
-    // https://github.com/electron-userland/electron-builder/issues/2205 Support for hoisted node_modules (lerna + yarn workspaces)
-    // if no node_modules in the app dir, it means that probably dependencies are hoisted
-    // check that main node_modules doesn't exist in addition to isNodeModulesHandled because isNodeModulesHandled will be false if node_modules dir is ignored by filter
-    // here isNodeModulesHandled is required only because of performance reasons (avoid stat call)
-    if (!isHoistedNodeModuleChecked && matcher.from === packager.appDir && !fileWalker.isNodeModulesHandled) {
-      isHoistedNodeModuleChecked = true
-      if ((await statOrNull(path.join(packager.appDir, "node_modules"))) == null) {
-        // in the prepacked mode no package.json
-        const packageJsonStat = await statOrNull(path.join(packager.appDir, "package.json"))
-        if (packageJsonStat != null && packageJsonStat.isFile()) {
-          hoistedNodeModuleFileSets = await copyHoistedNodeModules(packager, matcher)
-        }
-      }
-    }
-
-    const transformedFiles = new Map<number, string | Buffer>()
-    if (transformer != null) {
-      await BluebirdPromise.filter(files, (it, index) => {
-        const fileStat = metadata.get(it)
-        if (fileStat == null || !fileStat.isFile()) {
-          return false
-        }
-
-        const transformedValue = transformer(it)
-        if (transformedValue == null) {
-          return false
-        }
-
-        if (typeof transformedValue === "object" && "then" in transformedValue) {
-          return (transformedValue as Promise<any>)
-            .then(it => {
-              if (it != null) {
-                transformedFiles.set(index, it)
-              }
-              return false
-            })
-        }
-        transformedFiles.set(index, transformedValue as string | Buffer)
-        return false
-      }, CONCURRENCY)
-    }
-    fileSets.push(validateFileSet({src: matcher.from, files, metadata, transformedFiles, destination: matcher.to}))
+    fileSets.push(validateFileSet({src: matcher.from, files, metadata, transformedFiles: await transformFiles(transformer, files, metadata), destination: matcher.to}))
   }
 
   if (isElectronCompile) {
     // cache files should be first (better IO)
     fileSets.unshift(await compileUsingElectronCompile(fileSets[0], packager))
   }
-  if (hoistedNodeModuleFileSets != null) {
-    return fileSets.concat(hoistedNodeModuleFileSets)
-  }
   return fileSets
+}
+
+/** @internal */
+function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
+  const result = [".o", ".obj"].concat(excludedExts.split(",").map(it => `.${it}`))
+  if (platformPackager.config.includePdb !== true) {
+    result.push(".pdb")
+  }
+  if (platformPackager.platform !== Platform.WINDOWS) {
+    // https://github.com/electron-userland/electron-builder/issues/1738
+    result.push(".dll")
+    result.push(".exe")
+  }
+  return result
 }
 
 function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
@@ -97,31 +100,31 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
   return fileSet
 }
 
-async function copyHoistedNodeModules(packager: Packager, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const productionDeps = await packager.productionDeps.value
-  const rootPathToCopier = new Map<string, Array<Dependency>>()
-  for (const dep of productionDeps) {
-    const index = dep.path.indexOf(NODE_MODULES_PATTERN)
-    if (index < 0) {
-      throw new Error("cannot find node_modules in the path " + dep.path)
-    }
+/** @internal */
+export async function copyNodeModules(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher, transformer: FileTransformer): Promise<Array<ResolvedFileSet>> {
+  // const productionDeps = await platformPackager.info.productionDeps.value
 
-    const root = dep.path.substring(0, index)
-    let list = rootPathToCopier.get(root)
-    if (list == null) {
-      list = []
-      rootPathToCopier.set(root, list)
-    }
-    list.push(dep)
+  const rawJson = await executeAppBuilder(["node-dep-tree", "--dir", platformPackager.info.appDir])
+  let data: any
+  try {
+    data = JSON.parse(rawJson)
+  }
+  catch (e) {
+    throw new Error(`cannot parse: ${rawJson}\n error: ${e.stack}`)
   }
 
+  const nodeModuleDirToDependencyMap = data as { [key: string]: Array<string>; }
+  const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
+
   // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
-  return await BluebirdPromise.mapSeries(rootPathToCopier.keys(), async source => {
+  return await BluebirdPromise.mapSeries(Object.keys(nodeModuleDirToDependencyMap), async source => {
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
-    const matcher = new FileMatcher(source, mainMatcher.to, mainMatcher.macroExpander, mainMatcher.patterns)
-    const copier = new NodeModuleCopyHelper(matcher, packager)
-    const files = await copier.collectNodeModules(rootPathToCopier.get(source)!!)
-    return validateFileSet({src: matcher.from, destination: matcher.to, files, metadata: copier.metadata})
+    // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
+    const matcher = new FileMatcher(path.dirname(source), mainMatcher.to + path.sep + "node_modules", mainMatcher.macroExpander, mainMatcher.patterns)
+    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+    const names = nodeModuleDirToDependencyMap[source]
+    const files = await copier.collectNodeModules(source, names, nodeModuleExcludedExts)
+    return validateFileSet({src: source, destination: matcher.to, files, transformedFiles: await transformFiles(transformer, files, copier.metadata), metadata: copier.metadata})
   })
 }
 

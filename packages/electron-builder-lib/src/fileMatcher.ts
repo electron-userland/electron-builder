@@ -4,8 +4,7 @@ import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Platform } from "./core"
-import { Configuration, FileSet, PlatformSpecificBuildOptions } from "./index"
+import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
 
@@ -18,6 +17,8 @@ export const excludedNames = ".git,.hg,.svn,CVS,RCS,SCCS," +
   ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
   ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
   "appveyor.yml,.travis.yml,circle.yml,.nyc_output"
+
+export const excludedExts = "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts"
 
 /** @internal */
 export class FileMatcher {
@@ -125,13 +126,8 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
     customFirstPatterns.push("**/*")
   }
-  else {
-    // prependPattern - user pattern should be after to be able to override
-    // do not use **/node_modules/**/* because if pattern starts with **, all not explicitly excluded directories will be traversed (performance + empty dirs will be included into the asar)
-    customFirstPatterns.push("node_modules/**/*")
-    if (!patterns.includes("package.json")) {
-      patterns.push("package.json")
-    }
+  else if (!patterns.includes("package.json")) {
+    patterns.push("package.json")
   }
 
   // https://github.com/electron-userland/electron-builder/issues/1482
@@ -155,16 +151,9 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  // not moved to copyNodeModules because depends on platform packager (for now, not easy)
-  if (platformPackager.platform !== Platform.WINDOWS) {
-    // https://github.com/electron-userland/electron-builder/issues/1738
-    patterns.push("!**/node_modules/**/*.{dll,exe}")
-  }
-
-  patterns.push(`!**/*.{iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc${packager.config.includePdb === true ? "" : ",pdb"}`)
+  patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
-  //noinspection SpellCheckingInspection
   patterns.push(`!**/{${excludedNames}}`)
 
   if (isElectronCompile) {
@@ -183,6 +172,48 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   return matchers
 }
 
+/** @internal */
+export function getNodeModuleFileMatcher(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: Packager): FileMatcher {
+  // https://github.com/electron-userland/electron-builder/pull/2948#issuecomment-392241632
+  // grab only excludes
+  const matcher = new FileMatcher(appDir, destination, macroExpander)
+
+  function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
+    if (patterns == null) {
+      return
+    }
+    else if (!Array.isArray(patterns)) {
+      if (typeof patterns === "string" && patterns.startsWith("!")) {
+        matcher.addPattern(patterns)
+        return
+      }
+      // ignore object form
+      return
+    }
+
+    for (const pattern of patterns) {
+      if (typeof pattern === "string" && pattern.startsWith("!")) {
+        matcher.addPattern(pattern)
+      }
+    }
+  }
+
+  addPatterns(packager.config.files)
+  addPatterns(platformSpecificBuildOptions.files)
+
+  if (!matcher.isEmpty()) {
+    matcher.prependPattern("**/*")
+  }
+
+  const debugLogger = packager.debugLogger
+  if (debugLogger.enabled) {
+    //tslint:disable-next-line:no-invalid-template-strings
+    debugLogger.add(`${macroExpander("${arch}")}.nodeModuleFilePatterns`, matcher.patterns)
+  }
+
+  return matcher
+}
+
 export interface GetFileMatchersOptions {
   readonly macroExpander: (pattern: string) => string
   readonly customBuildOptions: PlatformSpecificBuildOptions
@@ -191,9 +222,6 @@ export interface GetFileMatchersOptions {
 
 /** @internal */
 export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-  const globalPatterns: Array<string | FileSet> | string | null | undefined | FileSet = (config as any)[name]
-  const platformSpecificPatterns: Array<string | FileSet> | string | null | undefined = (options.customBuildOptions as any)[name]
-
   const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
@@ -225,8 +253,8 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
     }
   }
 
-  addPatterns(globalPatterns)
-  addPatterns(platformSpecificPatterns)
+  addPatterns((config as any)[name])
+  addPatterns((options.customBuildOptions as any)[name])
 
   if (!defaultMatcher.isEmpty()) {
     // default matcher should be first in the array

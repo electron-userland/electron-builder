@@ -21,6 +21,8 @@ runTests()
   })
 
 async function runTests() {
+  process.env.BABEL_JEST_SKIP = "true"
+
   if (process.env.CIRCLECI) {
     await emptyDir(TEST_TMP_DIR)
   }

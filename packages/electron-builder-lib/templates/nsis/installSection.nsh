@@ -83,11 +83,12 @@ ${endIf}
 !macroend
 
 !ifdef ONE_CLICK
-  ${ifNot} ${Silent}
-  ${orIf} ${isForceRun}
-    !insertmacro doStartApp
-  ${endIf}
-
+  !ifdef RUN_AFTER_FINISH
+    ${ifNot} ${Silent}
+    ${orIf} ${isForceRun}
+      !insertmacro doStartApp
+    ${endIf}
+  !endif
   !insertmacro quitSuccess
 !else
   # for assisted installer run only if silent, because assisted installer has run after finish option

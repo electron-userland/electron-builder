@@ -182,7 +182,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
   const childProcess = doSpawn(command, args, options, {isPipeInput: true})
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new Promise<any>((resolve, reject) => {
-    handleProcess("close", childProcess, command, true, () => {
+    handleProcess("close", childProcess, command, () => {
       try {
         clearTimeout(timeout)
       }
@@ -204,16 +204,15 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new Promise<any>((resolve, reject) => {
-    const isCollectOutput = options != null && (options.stdio === "pipe" || (Array.isArray(options.stdio) && options.stdio.length === 3 && options.stdio[1] === "pipe"))
-    handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, isCollectOutput, resolve, reject)
+    handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
   })
 }
 
-function handleProcess(event: string, childProcess: ChildProcess, command: string, isCollectOutput: boolean, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
+function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
   childProcess.on("error", reject)
 
   let out = ""
-  if (isCollectOutput && childProcess.stdout != null) {
+  if (childProcess.stdout != null) {
     childProcess.stdout.on("data", (data: string) => {
       out += data
     })
@@ -371,6 +370,6 @@ export function executeAppBuilder(args: Array<string>): Promise<string> {
     handleProcess("close", doSpawn(command, args, {
       env,
       stdio: ["ignore", "pipe", process.stdout]
-    }), command, true, resolve, reject)
+    }), command, resolve, reject)
   })
 }
