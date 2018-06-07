@@ -91,7 +91,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
   const electronUpdaterCompatibility = (packager.platformSpecificBuildOptions as any).electronUpdaterCompatibility
-  for (let publishConfiguration of publishConfigs) {
+  for (const publishConfiguration of publishConfigs) {
     const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir
     // Bintray uses different variant of channel file info, better to generate it to a separate dir by always
