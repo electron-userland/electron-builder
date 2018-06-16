@@ -205,6 +205,27 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   })
 })
 
+test.ifMac("no block map", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  config: {
+    productName: "NoBlockMap",
+    publish: null,
+    dmg: {
+      differentialPackage: false,
+    }
+  },
+  effectiveOptionComputed: async it => {
+    if (!("specification" in it)) {
+      return false
+    }
+
+    expect(it.specification.differentialPackage).toBe(false)
+    return false
+  },
+}, {
+  projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
+}))
+
 const packagerOptions = {
   targets: Platform.MAC.createTarget("dmg"),
   config: {

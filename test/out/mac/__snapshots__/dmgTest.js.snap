@@ -2512,6 +2512,34 @@ Object {
 }
 `;
 
+exports[`no block map 1`] = `
+Object {
+  "mac": Array [],
+}
+`;
+
+exports[`no block map 2`] = `
+Object {
+  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
+  "CFBundleDisplayName": "NoBlockMap",
+  "CFBundleExecutable": "NoBlockMap",
+  "CFBundleIconFile": "electron.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "NoBlockMap",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "DTSDKBuild": "14D125",
+  "DTSDKName": "macosx10.1010.10",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSMinimumSystemVersion": "10.9.0",
+  "NSHighResolutionCapable": true,
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`no build directory 1`] = `
 Array [
   Object {
