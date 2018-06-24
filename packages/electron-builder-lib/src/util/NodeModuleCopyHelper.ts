@@ -55,8 +55,10 @@ export class NodeModuleCopyHelper {
     const result: Array<string> = []
     const queue: Array<string> = []
     for (const moduleName of moduleNames) {
-      const depPath = baseDir + path.sep + moduleName
+      const tmpPath = baseDir + path.sep + moduleName
       queue.length = 1
+      // The path should be corrected in Windows that when the moduleName is Scoped packages named.
+      const depPath = path.normalize(tmpPath)
       queue[0] = depPath
 
       // if (dep.link != null) {
