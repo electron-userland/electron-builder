@@ -73,6 +73,8 @@
   !else
     !ifdef APP_PACKAGE_URL
       Var /GLOBAL packageFile
+      Var /GLOBAL isPackageFileExplicitlySpecified
+
       ${StdUtils.GetParameter} $packageFile "package-file" ""
       ${if} $packageFile == ""
         !ifdef APP_64_NAME
@@ -94,10 +96,18 @@
         !endif
         StrCpy $4 "$packageFile"
         StrCpy $packageFile "$EXEDIR/$packageFile"
+        StrCpy $isPackageFileExplicitlySpecified "false"
+      ${else}
+        StrCpy $isPackageFileExplicitlySpecified "true"
+      ${endIf}
 
-        ${if} ${FileExists} "$packageFile"
-          # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
-          # 1. auto-updater uses --package-file and validates checksum 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
+      # 1. auto-updater uses --package-file and validates checksum
+      # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      ${if} ${FileExists} "$packageFile"
+        ${if} $isPackageFileExplicitlySpecified == "true"
+          Goto fun_extract
+        ${else}
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
           ${if} $3 == $1
             Goto fun_extract
@@ -105,8 +115,9 @@
             MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
           ${endIf}
         ${endIf}
-        !insertmacro downloadApplicationFiles
       ${endIf}
+
+      !insertmacro downloadApplicationFiles
 
       fun_extract:
         !insertmacro extractUsing7za "$packageFile"
