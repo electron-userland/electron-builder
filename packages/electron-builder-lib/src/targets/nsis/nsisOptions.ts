@@ -120,6 +120,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
+   * Whether to build block map.
    * Defaults to `true` for web installer (`nsis-web`)
    */
   differentialPackage?: boolean

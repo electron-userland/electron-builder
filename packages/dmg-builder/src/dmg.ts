@@ -12,7 +12,10 @@ import MacPackager from "electron-builder-lib/out/macPackager"
 import { createBlockmap } from "electron-builder-lib/out/targets/differentialUpdateInfoBuilder"
 
 export class DmgTarget extends Target {
-  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
+  readonly options: DmgOptions = {
+    differentialPackage: true,
+    ...this.packager.config.dmg
+  }
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("dmg")
@@ -60,19 +63,25 @@ export class DmgTarget extends Target {
       await packager.packagerOptions.effectiveOptionComputed({licenseData})
     }
 
+    if (packager.packagerOptions.effectiveOptionComputed != null) {
+      await packager.packagerOptions.effectiveOptionComputed({artifactPath})
+    }
+
     await this.signDmg(artifactPath)
 
-    const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
-    const updateInfo = await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    packager.info.dispatchArtifactCreated({
-      file: artifactPath,
-      safeArtifactName,
-      target: this,
-      arch,
-      packager,
-      isWriteUpdateInfo: true,
-      updateInfo,
-    })
+    if (this.options.differentialPackage) {
+      const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
+      const updateInfo = await createBlockmap(artifactPath, this, packager, safeArtifactName)
+      packager.info.dispatchArtifactCreated({
+        file: artifactPath,
+        safeArtifactName,
+        target: this,
+        arch,
+        packager,
+        isWriteUpdateInfo: true,
+        updateInfo,
+      })
+    }
   }
 
   private async signDmg(artifactPath: string) {

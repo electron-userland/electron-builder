@@ -22,6 +22,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
   * <code id="DmgWindow-width">width</code> Number - The width. Defaults to background image width or 540.
   * <code id="DmgWindow-height">height</code> Number - The height. Defaults to background image height or 380.
 * <code id="DmgOptions-internetEnabled">internetEnabled</code> = `false` Boolean - Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).
+* <code id="DmgOptions-differentialPackage">differentialPackage</code> Boolean - Whether to build block map.
 
 Inherited from `TargetSpecificOptions`:
 * <code id="DmgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).

@@ -271,6 +271,11 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly internetEnabled?: boolean
+
+  /**
+   * Whether to build block map.
+   */
+  differentialPackage?: boolean
 }
 
 export interface DmgWindow {
