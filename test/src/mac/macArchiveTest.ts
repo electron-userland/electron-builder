@@ -33,6 +33,48 @@ test.ifAll.ifMac("empty installLocation", app({
   },
 }))
 
+test.ifAll.ifMac("pkg extended configuration", app({
+  targets: Platform.MAC.createTarget("pkg"),
+  config: {
+    pkg: {
+      isRelocatable: false,
+      isVersionChecked: false,
+      hasStrictIdentifier: false,
+      overwriteAction: 'update',
+    }
+  }
+}, {
+  signed: false,
+  packed: async context => {
+    const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
+    const unpackedDir = path.join(context.outDir, "pkg-unpacked")
+    await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
+
+    const packageInfoFile = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "PackageInfo")
+    const info = parseXml(await readFile(packageInfoFile, "utf8"))
+
+    const relocateElement = info.elementOrNull('relocate')
+    if (relocateElement) {
+      expect(relocateElement.elements).toBeNull()
+    }
+
+    const upgradeBundleElement = info.elementOrNull('upgrade-bundle')
+    if (upgradeBundleElement) {
+      expect(upgradeBundleElement.elements).toBeNull()
+    }
+
+    const updateBundleElement = info.elementOrNull('update-bundle')
+    if (updateBundleElement) {
+      expect(updateBundleElement.elements).toHaveLength(1)
+    }
+
+    const strictIdentifierElement = info.elementOrNull('strict-identifier')
+    if (strictIdentifierElement) {
+      expect(strictIdentifierElement.elements).toBeNull()
+    }
+  }
+}))
+
 test.ifAll.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),
 }, {
