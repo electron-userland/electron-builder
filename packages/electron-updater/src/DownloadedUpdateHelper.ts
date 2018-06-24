@@ -28,7 +28,7 @@ export class DownloadedUpdateHelper {
     if (this.versionInfo != null && this.file === updateFile) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      return isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo, fileInfo) && (await pathExists(updateFile))
+      return isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))
     }
 
     // update has already been downloaded from some previous app launch
