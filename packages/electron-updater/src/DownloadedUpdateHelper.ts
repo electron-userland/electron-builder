@@ -25,10 +25,10 @@ export class DownloadedUpdateHelper {
   }
 
   async validateDownloadedPath(updateFile: string, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<boolean> {
-    if (this.versionInfo != null && this.file === updateFile) {
+    if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      return isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo, fileInfo) && (await pathExists(updateFile))
+      return isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))
     }
 
     // update has already been downloaded from some previous app launch
