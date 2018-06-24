@@ -40,7 +40,7 @@ test.ifAll.ifMac("pkg extended configuration", app({
       isRelocatable: false,
       isVersionChecked: false,
       hasStrictIdentifier: false,
-      overwriteAction: 'update',
+      overwriteAction: "update",
     }
   }
 }, {
@@ -53,22 +53,22 @@ test.ifAll.ifMac("pkg extended configuration", app({
     const packageInfoFile = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "PackageInfo")
     const info = parseXml(await readFile(packageInfoFile, "utf8"))
 
-    const relocateElement = info.elementOrNull('relocate')
+    const relocateElement = info.elementOrNull("relocate")
     if (relocateElement) {
       expect(relocateElement.elements).toBeNull()
     }
 
-    const upgradeBundleElement = info.elementOrNull('upgrade-bundle')
+    const upgradeBundleElement = info.elementOrNull("upgrade-bundle")
     if (upgradeBundleElement) {
       expect(upgradeBundleElement.elements).toBeNull()
     }
 
-    const updateBundleElement = info.elementOrNull('update-bundle')
+    const updateBundleElement = info.elementOrNull("update-bundle")
     if (updateBundleElement) {
       expect(updateBundleElement.elements).toHaveLength(1)
     }
 
-    const strictIdentifierElement = info.elementOrNull('strict-identifier')
+    const strictIdentifierElement = info.elementOrNull("strict-identifier")
     if (strictIdentifierElement) {
       expect(strictIdentifierElement.elements).toBeNull()
     }

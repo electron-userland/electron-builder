@@ -412,14 +412,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
-  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true): string | null {
+  // tslint:disable-next-line:no-invalid-template-strings
+  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
     // GitHub only allows the listed characters in file names.
     if (suggestedName != null && isSafeGithubName(suggestedName)) {
       return null
     }
 
-    // tslint:disable-next-line:no-invalid-template-strings
-    return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
+    return this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {

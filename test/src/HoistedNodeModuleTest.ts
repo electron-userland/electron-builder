@@ -26,6 +26,6 @@ test.ifAll("yarn several workspaces", () => assertPack("test-app-yarn-several-wo
 
 async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
+  console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
   expect(fs.header).toMatchSnapshot()
 }

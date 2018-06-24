@@ -81,6 +81,7 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
 /** @internal */
 function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
+  // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
   const result = [".o", ".obj"].concat(excludedExts.split(",").map(it => `.${it}`))
   if (platformPackager.config.includePdb !== true) {
     result.push(".pdb")
@@ -113,16 +114,16 @@ export async function copyNodeModules(platformPackager: PlatformPackager<any>, m
     throw new Error(`cannot parse: ${rawJson}\n error: ${e.stack}`)
   }
 
-  const nodeModuleDirToDependencyMap = data as { [key: string]: Array<string>; }
+  const deps = data as Array<any>
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
-
   // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
-  return await BluebirdPromise.mapSeries(Object.keys(nodeModuleDirToDependencyMap), async source => {
+  return await BluebirdPromise.mapSeries(deps, async info => {
+    const source = info.dir
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
     const matcher = new FileMatcher(path.dirname(source), mainMatcher.to + path.sep + "node_modules", mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const names = nodeModuleDirToDependencyMap[source]
+    const names = info.deps
     const files = await copier.collectNodeModules(source, names, nodeModuleExcludedExts)
     return validateFileSet({src: source, destination: matcher.to, files, transformedFiles: await transformFiles(transformer, files, copier.metadata), metadata: copier.metadata})
   })

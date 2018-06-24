@@ -25,7 +25,10 @@ export class ArchiveTarget extends Target {
       // tslint:disable-next-line:no-invalid-template-strings
       defaultPattern = "${productName}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + "-${os}.${ext}"
     }
-    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false))
+
+    const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
+    const artifactPath = path.join(this.outDir, artifactName)
+
     this.logBuilding(`${isMac ? "macOS " : ""}${format}`, artifactPath, arch)
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
@@ -39,7 +42,8 @@ export class ArchiveTarget extends Target {
 
     packager.info.dispatchArtifactCreated({
       file: artifactPath,
-      safeArtifactName: isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null),
+      // tslint:disable-next-line:no-invalid-template-strings
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, format, arch, false, defaultPattern.replace("${productName}", "${name}")),
       target: this,
       arch,
       packager,

@@ -83,7 +83,6 @@ export class NodeModuleCopyHelper {
             onNodeModuleFile(dirPath + path.sep + name)
           }
 
-          // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
           if (excludedFiles.has(name) || name.startsWith("._")) {
             return null
           }
