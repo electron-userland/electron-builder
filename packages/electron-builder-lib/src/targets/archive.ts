@@ -80,20 +80,16 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   let storeOnly = options.compression === "store"
   const args = debug7zArgs("a")
 
-  let isLevelSet = false
   if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
     storeOnly = false
     args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
-    isLevelSet = true
+  } else if (options.compression === "maximum") {
+    args.push("-mx=9")
   }
 
   if (format === "zip" && options.compression === "maximum") {
     // http://superuser.com/a/742034
     args.push("-mfb=258", "-mpass=15")
-  }
-
-  if (!isLevelSet && !storeOnly) {
-    args.push("-mx=9")
   }
 
   if (options.dictSize != null) {
