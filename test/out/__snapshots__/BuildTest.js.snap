@@ -25,12 +25,8 @@ exports[`build in the app package.json 1`] = `"'build' in the application packag
 
 exports[`cli 1`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "mac",
