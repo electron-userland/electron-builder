@@ -154,12 +154,12 @@ export class PublishManager implements PublishContext {
 
         this.scheduleUpload(publishConfig, event)
       }
-    }
 
-    if (event.isWriteUpdateInfo && target != null && eventFile != null &&
-      !this.cancellationToken.cancelled &&
-      (packager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
-      this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
+      if (event.isWriteUpdateInfo && target != null && eventFile != null &&
+        !this.cancellationToken.cancelled &&
+        (packager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
+        this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
+      }
     }
   }
 
