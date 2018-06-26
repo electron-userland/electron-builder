@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "app-builder-bin": "1.9.14",
+    "app-builder-bin": "1.9.15",
     "temp-file": "^3.1.2",
     "fs-extra-p": "^4.6.1",
     "is-ci": "^1.1.0",

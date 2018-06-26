@@ -8,6 +8,7 @@ import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+import { getDestinationPath } from "./appFileCopier"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 
@@ -68,7 +69,6 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
     const files = await walk(matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
-
     fileSets.push(validateFileSet({src: matcher.from, files, metadata, transformedFiles: await transformFiles(transformer, files, metadata), destination: matcher.to}))
   }
 
@@ -119,13 +119,22 @@ export async function copyNodeModules(platformPackager: PlatformPackager<any>, m
   // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
   return await BluebirdPromise.mapSeries(deps, async info => {
     const source = info.dir
+
+    let to: string
+    if (source.length > mainMatcher.from.length && source.startsWith(mainMatcher.from) && source[mainMatcher.from.length] === path.sep) {
+      to = getDestinationPath(source, {src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any})
+    }
+    else {
+      to = mainMatcher.to + path.sep + "node_modules"
+    }
+
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.dirname(source), mainMatcher.to + path.sep + "node_modules", mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(path.dirname(source), to, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const names = info.deps
     const files = await copier.collectNodeModules(source, names, nodeModuleExcludedExts)
-    return validateFileSet({src: source, destination: matcher.to, files, transformedFiles: await transformFiles(transformer, files, copier.metadata), metadata: copier.metadata})
+    return validateFileSet({src: source, destination: to, files, transformedFiles: await transformFiles(transformer, files, copier.metadata), metadata: copier.metadata})
   })
 }
 
@@ -177,9 +186,4 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
 require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
 `)
   return {src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination}
-}
-
-// sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
-export function ensureEndSlash(s: string) {
-  return s === "" || s.endsWith(path.sep) ? s : (s + path.sep)
 }

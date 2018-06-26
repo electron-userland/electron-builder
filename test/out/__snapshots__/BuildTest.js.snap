@@ -291,13 +291,13 @@ Object {
         "ansi-regex": Object {
           "files": Object {
             "index.js": Object {
-              "size": 253,
+              "size": 135,
             },
             "license": Object {
-              "size": 1109,
+              "size": 1119,
             },
             "package.json": Object {
-              "size": 420,
+              "size": 641,
             },
           },
         },
@@ -779,13 +779,13 @@ Object {
         "is-fullwidth-code-point": Object {
           "files": Object {
             "index.js": Object {
-              "size": 1393,
+              "size": 1463,
             },
             "license": Object {
               "size": 1119,
             },
             "package.json": Object {
-              "size": 481,
+              "size": 561,
             },
           },
         },
@@ -853,10 +853,10 @@ Object {
               "size": 1073,
             },
             "index.js": Object {
-              "size": 5589,
+              "size": 7189,
             },
             "package.json": Object {
-              "size": 698,
+              "size": 722,
             },
           },
         },
@@ -878,6 +878,23 @@ Object {
             },
             "index.js": Object {
               "size": 2630,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "minimist": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1073,
+                    },
+                    "index.js": Object {
+                      "size": 5589,
+                    },
+                    "package.json": Object {
+                      "size": 698,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 455,
@@ -1203,13 +1220,13 @@ Object {
               "size": 1078,
             },
             "index.js": Object {
-              "size": 2082,
+              "size": 2217,
             },
             "package.json": Object {
               "size": 375,
             },
             "test-browser.js": Object {
-              "size": 1030,
+              "size": 1094,
             },
             "test-node.js": Object {
               "size": 956,
@@ -1435,13 +1452,13 @@ Object {
         "string-width": Object {
           "files": Object {
             "index.js": Object {
-              "size": 649,
+              "size": 741,
             },
             "license": Object {
-              "size": 1109,
+              "size": 1119,
             },
             "package.json": Object {
-              "size": 554,
+              "size": 590,
             },
           },
         },
@@ -1465,13 +1482,13 @@ Object {
         "strip-ansi": Object {
           "files": Object {
             "index.js": Object {
-              "size": 150,
+              "size": 161,
             },
             "license": Object {
-              "size": 1109,
+              "size": 1119,
             },
             "package.json": Object {
-              "size": 446,
+              "size": 658,
             },
           },
         },
@@ -1495,6 +1512,26 @@ Object {
             },
             "index.js": Object {
               "size": 9349,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "pump": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1078,
+                    },
+                    "index.js": Object {
+                      "size": 2082,
+                    },
+                    "package.json": Object {
+                      "size": 375,
+                    },
+                    "test-browser.js": Object {
+                      "size": 1030,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 582,
@@ -1588,6 +1625,62 @@ Object {
             },
             "align.js": Object {
               "size": 1428,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "ansi-regex": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 253,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 420,
+                    },
+                  },
+                },
+                "is-fullwidth-code-point": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 1393,
+                    },
+                    "license": Object {
+                      "size": 1119,
+                    },
+                    "package.json": Object {
+                      "size": 481,
+                    },
+                  },
+                },
+                "string-width": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 649,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 554,
+                    },
+                  },
+                },
+                "strip-ansi": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 150,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 446,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 517,

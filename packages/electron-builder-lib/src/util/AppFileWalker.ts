@@ -1,8 +1,7 @@
-import { FileConsumer } from "builder-util/out/fs"
-import { Stats } from "fs-extra-p"
+import { Filter, FileConsumer } from "builder-util/out/fs"
+import { readlink, stat, Stats } from "fs-extra-p"
 import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
-import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import * as path from "path"
 
 const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
@@ -14,10 +13,67 @@ function addAllPatternIfNeed(matcher: FileMatcher) {
   return matcher
 }
 
+export abstract class FileCopyHelper {
+  readonly metadata = new Map<string, Stats>()
+
+  protected constructor(protected readonly matcher: FileMatcher, readonly filter: Filter | null, protected readonly packager: Packager) {
+  }
+
+  protected handleFile(file: string, fileStat: Stats): Promise<Stats | null> | null {
+    if (!fileStat.isSymbolicLink()) {
+      return null
+    }
+
+    return readlink(file)
+      .then((linkTarget): any => {
+        // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
+        return this.handleSymlink(fileStat, file, path.resolve(path.dirname(file), linkTarget))
+      })
+  }
+
+  protected handleSymlink(fileStat: Stats, file: string, linkTarget: string): Promise<Stats> | null {
+    const link = path.relative(this.matcher.from, linkTarget)
+    if (link.startsWith("..")) {
+      // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
+      return stat(linkTarget)
+        .then(targetFileStat => {
+          this.metadata.set(file, targetFileStat)
+          return targetFileStat
+        })
+    }
+    else {
+      (fileStat as any).relativeLink = link
+    }
+    return null
+  }
+}
+
+function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | null {
+  if (packager.areNodeModulesHandledExternally) {
+    return matcher.isEmpty() ? null : matcher.createFilter()
+  }
+
+  const nodeModulesFilter: Filter = (file, fileStat) => {
+    return !(fileStat.isDirectory() && file.endsWith(nodeModulesSystemDependentSuffix))
+  }
+
+  if (matcher.isEmpty()) {
+    return nodeModulesFilter
+  }
+
+  const filter = matcher.createFilter()
+  return (file, fileStat) => {
+    if (!nodeModulesFilter(file, fileStat)) {
+      return false
+    }
+    return filter(file, fileStat)
+  }
+}
+
 /** @internal */
-export class AppFileWalker extends NodeModuleCopyHelper implements FileConsumer {
+export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   constructor(matcher: FileMatcher, packager: Packager) {
-    super(addAllPatternIfNeed(matcher), packager)
+    super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
   }
 
   // noinspection JSUnusedGlobalSymbols

@@ -1,49 +1,19 @@
 import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY, Filter } from "builder-util/out/fs"
-import { lstat, readdir, readlink, stat, Stats } from "fs-extra-p"
+import { CONCURRENCY } from "builder-util/out/fs"
+import { lstat, readdir } from "fs-extra-p"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
+import { FileCopyHelper } from "./AppFileWalker"
 
 const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
 const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples"])
 
 /** @internal */
-export class NodeModuleCopyHelper {
-  readonly metadata = new Map<string, Stats>()
-  readonly filter: Filter | null
-
-  constructor(private readonly matcher: FileMatcher, protected readonly packager: Packager) {
-    this.filter = matcher.isEmpty() ? null : matcher.createFilter()
-  }
-
-  protected handleFile(file: string, fileStat: Stats): Promise<Stats | null> | null {
-    if (!fileStat.isSymbolicLink()) {
-      return null
-    }
-
-    return readlink(file)
-      .then((linkTarget): any => {
-        // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
-        return this.handleSymlink(fileStat, file, path.resolve(path.dirname(file), linkTarget))
-      })
-  }
-
-  protected handleSymlink(fileStat: Stats, file: string, linkTarget: string): Promise<Stats> | null {
-    const link = path.relative(this.matcher.from, linkTarget)
-    if (link.startsWith("..")) {
-      // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
-      return stat(linkTarget)
-        .then(targetFileStat => {
-          this.metadata.set(file, targetFileStat)
-          return targetFileStat
-        })
-    }
-    else {
-      (fileStat as any).relativeLink = link
-    }
-    return null
+export class NodeModuleCopyHelper extends FileCopyHelper {
+  constructor(matcher: FileMatcher, packager: Packager) {
+    super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
   async collectNodeModules(baseDir: string, moduleNames: Iterable<string>, nodeModuleExcludedExts: Array<string>): Promise<Array<string>> {

@@ -5,16 +5,16 @@ import { ensureDir, readlink, Stats, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { Packager } from "../packager"
-import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
+import { ResolvedFileSet } from "./AppFileCopierHelper"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
   }
   else {
-    const src = ensureEndSlash(fileSet.src)
-    const dest = ensureEndSlash(fileSet.destination)
-    if (file.startsWith(src)) {
+    const src = fileSet.src
+    const dest = fileSet.destination
+    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
       return dest + file.substring(src.length)
     }
     else {
