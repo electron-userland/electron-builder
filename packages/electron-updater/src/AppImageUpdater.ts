@@ -93,7 +93,10 @@ export class AppImageUpdater extends BaseUpdater {
     unlinkSync(appImageFile)
 
     let destination: string
-    if (path.basename(installerPath) === path.basename(appImageFile)) {
+    const existingBaseName = path.basename(appImageFile)
+    // https://github.com/electron-userland/electron-builder/issues/2964
+    // if no version in existing file name, it means that user wants to preserve current custom name
+    if (path.basename(installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
       // no version in the file name, overwrite existing
       destination = appImageFile
     }
