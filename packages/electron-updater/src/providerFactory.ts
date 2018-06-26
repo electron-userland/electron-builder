@@ -21,7 +21,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         return new GitHubProvider(githubOptions, updater, httpExecutor)
       }
       else {
-        return new PrivateGitHubProvider(githubOptions, token, httpExecutor)
+        return new PrivateGitHubProvider(githubOptions, updater, token, httpExecutor)
       }
 
     case "s3":

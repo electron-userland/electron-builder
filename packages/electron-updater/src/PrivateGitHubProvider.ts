@@ -2,6 +2,7 @@ import { CancellationToken, GithubOptions, HttpError, HttpExecutor, newError, Up
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
+import { AppUpdater } from "./AppUpdater"
 import { URL } from "url"
 import { BaseGitHubProvider } from "./GitHubProvider"
 import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
@@ -12,7 +13,7 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  constructor(options: GithubOptions, private readonly token: string, executor: HttpExecutor<any>) {
+  constructor(options: GithubOptions, private readonly updater: AppUpdater, private readonly token: string, executor: HttpExecutor<any>) {
     super(options, "api.github.com", executor)
   }
 
@@ -61,9 +62,20 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<ReleaseInfo> {
-    const url = newUrlFromBase(`${this.basePath}/latest`, this.baseUrl)
+    let baseUrl = this.basePath
+    const allowPrerelease = this.updater.allowPrerelease
+
+    if (!allowPrerelease) {
+      baseUrl = `${baseUrl}/latest`
+    }
+
+    const url = newUrlFromBase(`${baseUrl}`, this.baseUrl)
     try {
-      return (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
+      let version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
+      if (allowPrerelease) {
+        version = version.find((v: any) => v.prerelease)
+      }
+      return version
     }
     catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
