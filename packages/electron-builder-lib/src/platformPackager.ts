@@ -18,8 +18,7 @@ import { isElectronBased } from "./Framework"
 import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-import { copyAppFiles } from "./util/appFileCopier"
-import { computeFileSets, copyNodeModules, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
+import { copyAppFiles, transformFiles, computeFileSets, computeNodeModuleFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
@@ -258,7 +257,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         .then(async result => {
           if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
             const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-            result = result.concat(await copyNodeModules(this, moduleFileMatcher, transformer))
+            result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))
           }
           return result.filter(it => it.files.length > 0)
         })
@@ -278,7 +277,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       taskManager.addTask(_computeFileSets(mainMatchers)
-        .then(fileSets => new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)))
+        .then(async fileSets => {
+          for (const fileSet of fileSets) {
+            await transformFiles(transformer, fileSet)
+          }
+
+          await new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter())
+            .pack(fileSets, this)
+        }))
     }
   }
 

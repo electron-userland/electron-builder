@@ -191,7 +191,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
 function doCopyFile(src: string, dest: string, stats: Stats | null | undefined): Promise<any> {
   if (_nodeCopyFile == null) {
-    return new BluebirdPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const reader = createReadStream(src)
       const writer = createWriteStream(dest, stats == null ? undefined : {mode: stats!!.mode})
       reader.on("error", reject)
@@ -229,7 +229,7 @@ export class FileCopier {
     if (this.transformer != null && stat != null && stat.isFile()) {
       let data = this.transformer(src)
       if (data != null) {
-        if (typeof (data as any).then === "function") {
+        if (typeof data === "object" && "then" in data) {
           data = await data
         }
 

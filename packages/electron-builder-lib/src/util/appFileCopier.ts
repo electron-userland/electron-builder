@@ -1,11 +1,20 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager } from "builder-util"
-import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer } from "builder-util/out/fs"
-import { ensureDir, readlink, Stats, symlink, writeFile } from "fs-extra-p"
+import { AsyncTaskManager, log, executeAppBuilder } from "builder-util"
+import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
+import { ensureDir, readlink, Stats, symlink } from "fs-extra-p"
 import * as path from "path"
-import { NODE_MODULES_PATTERN } from "../fileTransformer"
+import { isLibOrExe } from "../asar/unpackDetector"
+import { Platform } from "../core"
 import { Packager } from "../packager"
-import { ResolvedFileSet } from "./AppFileCopierHelper"
+import { PlatformPackager } from "../platformPackager"
+import { excludedExts, FileMatcher } from "../fileMatcher"
+import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
+import { AppFileWalker } from "./AppFileWalker"
+import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
+
+const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
+/** @internal */
+export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
@@ -32,26 +41,14 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
   const metadata = fileSet.metadata
-  const transformedFiles = fileSet.transformedFiles
   // search auto unpacked dir
   const taskManager = new AsyncTaskManager(packager.cancellationToken)
   const createdParentDirs = new Set<string>()
 
-  function transformContentIfNeed(sourceFile: string, index: number): Promise<any> {
-    let transformedContent: string | Buffer | Promise<string | Buffer | null> | null | undefined = transformedFiles == null ? null : transformedFiles.get(index)
-    if (transformedContent == null) {
-      transformedContent = transformer(sourceFile)
-    }
-
-    if (transformedContent != null && typeof transformedContent === "object" && "then" in transformedContent) {
-      return transformedContent as Promise<any>
-    }
-    else {
-      return Promise.resolve(transformedContent)
-    }
-  }
-
-  const fileCopier = new FileCopier()
+  const fileCopier = new FileCopier(file => {
+    // https://github.com/electron-userland/electron-builder/issues/3038
+    return !(isLibOrExe(file) || file.endsWith(".node"))
+  }, transformer)
   const links: Array<Link> = []
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const sourceFile = fileSet.files[i]
@@ -73,7 +70,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
       await ensureDir(fileParent)
     }
 
-    taskManager.addTask(transformContentIfNeed(sourceFile, i).then(it => copyFileOrData(fileCopier, it, sourceFile, destinationFile, stat)))
+    taskManager.addTask(fileCopier.copy(sourceFile, destinationFile, stat))
     if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
       await taskManager.awaitTasks()
     }
@@ -87,11 +84,178 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   }
 }
 
-export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
-  if (data == null) {
-    return fileCopier.copy(source, destination, stats)
+// os path separator is used
+export interface ResolvedFileSet {
+  src: string
+  destination: string
+
+  files: Array<string>
+  metadata: Map<string, Stats>
+  transformedFiles?: Map<number, string | Buffer> | null
+}
+
+// used only for ASAR, if no asar, file transformed on the fly
+export async function transformFiles(transformer: FileTransformer, fileSet: ResolvedFileSet): Promise<void> {
+  if (transformer == null) {
+    return
   }
-  else {
-    return writeFile(destination, data)
+
+  let transformedFiles = fileSet.transformedFiles
+  if (fileSet.transformedFiles == null) {
+    transformedFiles = new Map()
+    fileSet.transformedFiles = transformedFiles
   }
+
+  const metadata = fileSet.metadata
+  await BluebirdPromise.filter(fileSet.files, (it, index) => {
+    const fileStat = metadata.get(it)
+    if (fileStat == null || !fileStat.isFile()) {
+      return false
+    }
+
+    const transformedValue = transformer(it)
+    if (transformedValue == null) {
+      return false
+    }
+
+    if (typeof transformedValue === "object" && "then" in transformedValue) {
+      return (transformedValue as Promise<any>)
+        .then(it => {
+          if (it != null) {
+            transformedFiles!!.set(index, it)
+          }
+          return false
+        })
+    }
+    transformedFiles!!.set(index, transformedValue as string | Buffer)
+    return false
+  }, CONCURRENCY)
+}
+
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+  const fileSets: Array<ResolvedFileSet> = []
+  const packager = platformPackager.info
+
+  for (const matcher of matchers) {
+    const fileWalker = new AppFileWalker(matcher, packager)
+
+    const fromStat = await statOrNull(matcher.from)
+    if (fromStat == null) {
+      log.debug({directory: matcher.from, reason: "doesn't exist"}, `skipped copying`)
+      continue
+    }
+
+    const files = await walk(matcher.from, fileWalker.filter, fileWalker)
+    const metadata = fileWalker.metadata
+    fileSets.push(validateFileSet({src: matcher.from, files, metadata, destination: matcher.to}))
+  }
+
+  if (isElectronCompile) {
+    // cache files should be first (better IO)
+    fileSets.unshift(await compileUsingElectronCompile(fileSets[0], packager))
+  }
+  return fileSets
+}
+
+function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
+  // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
+  const result = [".o", ".obj"].concat(excludedExts.split(",").map(it => `.${it}`))
+  if (platformPackager.config.includePdb !== true) {
+    result.push(".pdb")
+  }
+  if (platformPackager.platform !== Platform.WINDOWS) {
+    // https://github.com/electron-userland/electron-builder/issues/1738
+    result.push(".dll")
+    result.push(".exe")
+  }
+  return result
+}
+
+function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
+  if (fileSet.src == null || fileSet.src.length === 0) {
+    throw new Error("fileset src is empty")
+  }
+  return fileSet
+}
+
+/** @internal */
+export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
+  // const productionDeps = await platformPackager.info.productionDeps.value
+
+  const rawJson = await executeAppBuilder(["node-dep-tree", "--dir", platformPackager.info.appDir])
+  let data: any
+  try {
+    data = JSON.parse(rawJson)
+  }
+  catch (e) {
+    throw new Error(`cannot parse: ${rawJson}\n error: ${e.stack}`)
+  }
+
+  const deps = data as Array<any>
+  const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
+  // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
+  return await BluebirdPromise.mapSeries(deps, async info => {
+    const source = info.dir
+    let destination: string
+    if (source.length > mainMatcher.from.length && source.startsWith(mainMatcher.from) && source[mainMatcher.from.length] === path.sep) {
+      destination = getDestinationPath(source, {src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any})
+    }
+    else {
+      destination = mainMatcher.to + path.sep + "node_modules"
+    }
+
+    // use main matcher patterns, so, user can exclude some files in such hoisted node modules
+    // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
+    const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+    const names = info.deps
+    const files = await copier.collectNodeModules(source, names, nodeModuleExcludedExts)
+    return validateFileSet({src: source, destination, files, metadata: copier.metadata})
+  })
+}
+
+async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
+  log.info("compiling using electron-compile")
+
+  const electronCompileCache = await packager.tempDirManager.getTempDir({prefix: "electron-compile-cache"})
+  const cacheDir = path.join(electronCompileCache, ".cache")
+  // clear and create cache dir
+  await ensureDir(cacheDir)
+  const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
+  const nextSlashIndex = mainFileSet.src.length + 1
+  // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
+  await BluebirdPromise.map(mainFileSet.files, file => {
+    if (file.includes(NODE_MODULES_PATTERN) || file.includes(BOWER_COMPONENTS_PATTERN)
+      || !file.includes(path.sep, nextSlashIndex) // ignore not root files
+      || !mainFileSet.metadata.get(file)!.isFile()) {
+      return null
+    }
+    return compilerHost.compile(file)
+      .then(() => null)
+  }, CONCURRENCY)
+
+  await compilerHost.saveConfiguration()
+
+  const metadata = new Map<string, Stats>()
+  const cacheFiles = await walk(cacheDir, file => !file.startsWith("."), {
+    consume: (file, fileStat) => {
+      if (fileStat.isFile()) {
+        metadata.set(file, fileStat)
+      }
+      return null
+    }
+  })
+
+  // add shim
+  const shimPath = `${mainFileSet.src}${path.sep}${ELECTRON_COMPILE_SHIM_FILENAME}`
+  mainFileSet.files.push(shimPath)
+  mainFileSet.metadata.set(shimPath, {isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false} as any)
+  if (mainFileSet.transformedFiles == null) {
+    mainFileSet.transformedFiles = new Map()
+  }
+  mainFileSet.transformedFiles.set(mainFileSet.files.length - 1, `
+'use strict';
+require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
+`)
+  return {src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination}
 }
