@@ -176,7 +176,7 @@ export class GitHubPublisher extends HttpPublisher {
           path: parsedUrl.path,
           method: "POST",
           headers: {
-            Accept: "application/vnd.github.v3+json",
+            accept: "application/vnd.github.v3+json",
             "Content-Type": mime.getType(fileName) || "application/octet-stream",
             "Content-Length": dataLength
           }
@@ -246,7 +246,7 @@ export class GitHubPublisher extends HttpPublisher {
       hostname: baseUrl.hostname,
       port: baseUrl.port as any,
       path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
-      headers: {Accept: "application/vnd.github.v3+json"}
+      headers: {accept: "application/vnd.github.v3+json"}
     }, token, method), this.context.cancellationToken, data))
   }
 

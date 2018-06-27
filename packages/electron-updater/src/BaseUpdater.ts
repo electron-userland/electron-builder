@@ -1,4 +1,4 @@
-import { UpdateInfo, AllPublishOptions, CancellationError, DownloadOptions } from "builder-util-runtime"
+import { AllPublishOptions, CancellationError, DownloadOptions, UpdateInfo } from "builder-util-runtime"
 import { ensureDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { AppUpdater } from "./AppUpdater"
@@ -36,29 +36,50 @@ export abstract class BaseUpdater extends AppUpdater {
     const fileInfo = taskOptions.fileInfo
     const packageInfo = fileInfo.packageInfo
 
+    function getCacheUpdateFileName(): string {
+      // bloody NodeJS URL doesn't decode automatically
+      const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
+      if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
+        return path.posix.basename(urlPath)
+      }
+      else {
+        // url like /latest, generate name
+        return `update.${taskOptions.fileExtension}`
+      }
+    }
+
     const cacheDir = this.downloadedUpdateHelper.cacheDir
     await ensureDir(cacheDir)
-    const updateFileName = taskOptions.fileExtension === "AppImage" ? path.basename(updateInfo.path) : `installer-${version}.${taskOptions.fileExtension}`
-    const updateFile = path.join(cacheDir, updateFileName)
+    const updateFileName = getCacheUpdateFileName()
+    let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}.${path.extname(packageInfo.path) || "7z"}`)
 
-    const done = () => {
+    const done = async (isSaveCache: boolean) => {
       this.downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
+      if (isSaveCache) {
+        await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
+      }
+
       this.addQuitHandler()
       this.emit(UPDATE_DOWNLOADED, updateInfo)
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }
 
     const log = this._logger
-    if (await this.downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)) {
-      return done()
+    const cachedUpdateFile = await this.downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    if (cachedUpdateFile != null) {
+      updateFile = cachedUpdateFile
+      return await done(false)
     }
 
-    const removeFileIfAny = () => {
-      this.downloadedUpdateHelper.clear()
-      return unlink(updateFile)
+    const removeFileIfAny = async () => {
+      await this.downloadedUpdateHelper.clear()
         .catch(() => {
-          // ignored
+          // ignore
+        })
+      return await unlink(updateFile)
+        .catch(() => {
+          // ignore
         })
     }
 
@@ -94,7 +115,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
-    return done()
+    return await done(true)
   }
 
   protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean

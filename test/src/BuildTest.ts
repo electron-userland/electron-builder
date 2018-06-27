@@ -19,9 +19,10 @@ test("cli", async () => {
 
   function expected(opt: any): object {
     return {
-      publish: undefined,
       draft: undefined,
-      prerelease: undefined, ...opt}
+      prerelease: undefined,
+      ...opt
+    }
   }
 
   expect(parse("--platform mac")).toMatchSnapshot()

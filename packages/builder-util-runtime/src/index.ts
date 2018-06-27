@@ -6,6 +6,7 @@ export { parseDn } from "./rfc2253Parser"
 export { UUID } from "./uuid"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 export { parseXml, XElement } from "./xml"
+export { BlockMap } from "./blockMapApi"
 
 export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   if (v == null) {

@@ -56,8 +56,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
   private configureHeaders(accept: string) {
     return {
-      Accept: accept,
-      Authorization: `token ${this.token}`,
+      accept,
+      authorization: `token ${this.token}`,
     }
   }
 

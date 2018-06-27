@@ -1,9 +1,10 @@
-import { AllPublishOptions, CancellationToken, DownloadOptions, newError, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, DownloadOptions, newError } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
 import * as path from "path"
 import "source-map-support/register"
+import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { UpdateCheckResult } from "./main"
@@ -33,15 +34,14 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = await this.provider
-    const fileInfo = findFile(provider.resolveFiles(updateInfo), "AppImage")!!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfo), "AppImage")!!
 
-    const requestHeaders = await this.computeRequestHeaders()
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
-      headers: requestHeaders,
-      cancellationToken,
+      headers: downloadUpdateOptions.requestHeaders,
+      cancellationToken: downloadUpdateOptions.cancellationToken,
       sha512: fileInfo.info.sha512,
     }
 
@@ -49,7 +49,7 @@ export class AppImageUpdater extends BaseUpdater {
       fileExtension: "AppImage",
       downloadOptions,
       fileInfo,
-      updateInfo,
+      updateInfo: downloadUpdateOptions.updateInfo,
       task: async updateFile => {
         const oldFile = process.env.APPIMAGE!!
         if (oldFile == null) {
@@ -64,7 +64,7 @@ export class AppImageUpdater extends BaseUpdater {
             logger: this._logger,
             newFile: updateFile,
             useMultipleRangeRequest: provider.useMultipleRangeRequest,
-            requestHeaders,
+            requestHeaders: downloadUpdateOptions.requestHeaders,
           })
             .download()
         }

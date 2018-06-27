@@ -41,12 +41,8 @@ Object {
 
 exports[`cli 2`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "mac",
@@ -63,12 +59,8 @@ Object {
 
 exports[`cli 3`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -85,12 +77,8 @@ Object {
 
 exports[`cli 4`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -103,12 +91,8 @@ Object {
 
 exports[`cli 5`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",
@@ -121,12 +105,8 @@ Object {
 
 exports[`cli 6`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "mac",
@@ -149,12 +129,8 @@ Object {
 
 exports[`cli 7`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -171,12 +147,8 @@ Object {
 
 exports[`cli 8`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -193,12 +165,8 @@ Object {
 
 exports[`cli 9`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -215,12 +183,8 @@ Object {
 
 exports[`cli 10`] = `
 Object {
-  "config": undefined,
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",

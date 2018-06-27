@@ -168,7 +168,7 @@ export abstract class AppUpdater extends EventEmitter {
       })
     }
 
-    this.downloadedUpdateHelper = new DownloadedUpdateHelper(this.app.getPath("userData"))
+    this.downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.getPath("userData"), "__update__"))
 
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
@@ -300,7 +300,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({"x-user-staging-id": stagingUserId}))
     return await client.getLatestVersion()
   }
 
@@ -358,7 +358,11 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(`Downloading update from ${asArray(updateInfo.files).map(it => it.url).join(", ")}`)
 
     try {
-      return await this.doDownloadUpdate(updateInfo, cancellationToken)
+      return await this.doDownloadUpdate({
+        updateInfo,
+        requestHeaders: await this.computeRequestHeaders(),
+        cancellationToken,
+      })
     }
     catch (e) {
       this.dispatchError(e)
@@ -370,7 +374,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>>
+  protected async abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -391,8 +395,7 @@ export abstract class AppUpdater extends EventEmitter {
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
 
-  /*** @private */
-  protected async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
+  private async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
     const fileExtraDownloadHeaders = (await this.provider).fileExtraDownloadHeaders
     if (fileExtraDownloadHeaders != null) {
       const requestHeaders = this.requestHeaders
@@ -401,7 +404,7 @@ export abstract class AppUpdater extends EventEmitter {
         ...requestHeaders,
       }
     }
-    return this.computeFinalHeaders({Accept: "*/*"})
+    return this.computeFinalHeaders({accept: "*/*"})
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
@@ -431,6 +434,12 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return id
   }
+}
+
+export interface DownloadUpdateOptions {
+  readonly updateInfo: UpdateInfo
+  readonly requestHeaders: OutgoingHttpHeaders
+  readonly cancellationToken: CancellationToken
 }
 
 function hasPrereleaseComponents(version: string) {

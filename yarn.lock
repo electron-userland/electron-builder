@@ -1162,9 +1162,9 @@ autogypi@^0.2.2:
     commander "~2.9.0"
     resolve "~1.1.7"
 
-aws-sdk@^2.263.1:
-  version "2.263.1"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.263.1.tgz#217e2459ebff3702cc72260bcafca0bf16edc4cd"
+aws-sdk@^2.264.1:
+  version "2.264.1"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.264.1.tgz#7478f3de36dab354172fd30f006ba8a96acd42e1"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -5163,9 +5163,9 @@ stream-connect@^1.0.2:
   dependencies:
     array-back "^1.0.2"
 
-stream-json@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/stream-json/-/stream-json-1.0.2.tgz#5421e21892eded43a2bab809cf4d8f65c6ecdadd"
+stream-json@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/stream-json/-/stream-json-1.0.3.tgz#de6a414f12d5e5d2d7812ba27504b93828befc17"
   dependencies:
     stream-chain "^2.0.2"
 
@@ -5317,13 +5317,13 @@ tar@^4, tar@^4.4.0:
     safe-buffer "^5.1.2"
     yallist "^3.0.2"
 
-temp-file@^3.1.2:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-3.1.2.tgz#54ba4084097558e8ff2ad1e4bd84841ef2804043"
+temp-file@^3.1.3:
+  version "3.1.3"
+  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-3.1.3.tgz#24c144994f033be1ccf6773280c8f7f1c91691a9"
   dependencies:
     async-exit-hook "^2.0.1"
     bluebird-lst "^1.0.5"
-    fs-extra-p "^4.6.0"
+    fs-extra-p "^4.6.1"
     lazy-val "^1.0.3"
 
 temp-path@^1.0.0:

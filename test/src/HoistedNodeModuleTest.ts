@@ -3,7 +3,7 @@ import { assertPack, linuxDirTarget } from "./helpers/packTester"
 import { Platform } from "electron-builder"
 import * as path from "path"
 
-test.ifAll("yarn workspace", () => assertPack("test-app-yarn-workspace", {
+test.skip("yarn workspace", () => assertPack("test-app-yarn-workspace", {
   targets: linuxDirTarget,
   projectDir: "packages/test-app"
 }, {

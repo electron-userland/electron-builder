@@ -5,7 +5,7 @@ import { URL } from "url"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 
 export abstract class Provider<T extends UpdateInfo> {
-  protected requestHeaders: OutgoingHttpHeaders | null = null
+  private requestHeaders: OutgoingHttpHeaders | null = null
 
   protected constructor(protected readonly executor: HttpExecutor<any>, readonly useMultipleRangeRequest = true) {
   }
@@ -22,7 +22,10 @@ export abstract class Provider<T extends UpdateInfo> {
 
   abstract resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo>
 
-  httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken) {
+  /**
+   * Method to perform API request only to resolve update info, but not to download update.
+   */
+  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken) {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
@@ -37,14 +40,19 @@ export abstract class Provider<T extends UpdateInfo> {
       result.headers = headers == null ? this.requestHeaders : {...this.requestHeaders, ...headers}
     }
 
-    result.protocol = url.protocol
-    result.hostname = url.hostname
-    if (url.port) {
-      result.port = url.port
-    }
-    result.path = url.pathname + url.search
+    configureRequestOptionsFromUrl(url, result)
     return result
   }
+}
+
+export function configureRequestOptionsFromUrl(url: URL, result: RequestOptions): RequestOptions {
+  result.protocol = url.protocol
+  result.hostname = url.hostname
+  if (url.port) {
+    result.port = url.port
+  }
+  result.path = url.pathname + url.search
+  return result
 }
 
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {

@@ -8,6 +8,7 @@ import { parse as parseUrl, URL } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { newError } from "./index"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
+import { createGunzip } from "zlib"
 
 const debug = _debug("electron-builder")
 
@@ -70,7 +71,9 @@ export abstract class HttpExecutor<REQUEST> {
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest(options, cancellationToken, it => (it as any).end(encodedData))
+    return this.doApiRequest(options, cancellationToken, it => {
+      (it as any).end(encodedData)
+    })
   }
 
   doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<string> {
@@ -111,7 +114,12 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  protected handleResponse(response: IncomingMessage, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  private handleResponse(response: IncomingMessage,
+                         options: RequestOptions,
+                         cancellationToken: CancellationToken,
+                         resolve: (data?: any) => void,
+                         reject: (error: Error) => void,
+                         redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
     }
@@ -144,11 +152,18 @@ Please double check that your authentication token is correct. Due to security r
       return
     }
 
-    let data = ""
-    response.setEncoding("utf8")
-    response.on("data", (chunk: string) => data += chunk)
+    let stream: NodeJS.ReadableStream = response
+    if ((options as any).gzip) {
+      const gUnzip = createGunzip()
+      gUnzip.on("error", reject)
+      response.pipe(gUnzip)
+      stream = gUnzip
+    }
+    stream.setEncoding("utf8")
 
-    response.on("end", () => {
+    let data = ""
+    stream.on("data", (chunk: string) => data += chunk)
+    stream.on("end", () => {
       try {
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
@@ -207,10 +222,11 @@ Please double check that your authentication token is correct. Due to security r
 
   static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, {...options})
-    if (newOptions.headers != null && newOptions.headers.Authorization != null && (newOptions.headers!!.Authorization as string).startsWith("token")) {
+    const headers = newOptions.headers
+    if (headers != null && headers.authorization != null && (headers.authorization as string).startsWith("token")) {
       const parsedNewUrl = new URL(redirectUrl)
       if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
-        delete newOptions.headers.Authorization
+        delete headers.authorization
       }
     }
     return newOptions

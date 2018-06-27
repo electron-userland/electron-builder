@@ -1,7 +1,7 @@
-import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, ProgressCallbackTransform, RequestHeaders, safeGetHeader, safeStringifyJson } from "builder-util-runtime"
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AddressInfo } from "net"
-import { AppUpdater } from "./AppUpdater"
+import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
 import { findFile } from "./Provider"
 import AutoUpdater = Electron.AutoUpdater
@@ -22,8 +22,8 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected async doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
-    const files = (await this.provider).resolveFiles(updateInfo)
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+    const files = (await this.provider).resolveFiles(downloadUpdateOptions.updateInfo)
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
@@ -38,8 +38,6 @@ export class MacUpdater extends AppUpdater {
       const address = server.address() as AddressInfo
       return `http://${address.address}:${address.port}`
     }
-
-    const requestHeaders = await this.computeRequestHeaders()
 
     return await new Promise<Array<string>>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
@@ -68,7 +66,7 @@ export class MacUpdater extends AppUpdater {
           if (debug != null) {
             debug(`app.zip requested by Squirrel.Mac, download ${zipFileInfo.url.href}`)
           }
-          this.doProxyUpdateFile(response, zipFileInfo.url.href, requestHeaders, zipFileInfo.info.sha512, cancellationToken, error => {
+          this.doProxyUpdateFile(response, zipFileInfo.url.href, downloadUpdateOptions.requestHeaders, zipFileInfo.info.sha512, downloadUpdateOptions.cancellationToken, error => {
             errorOccurred = true
             try {
               response.writeHead(500)
@@ -149,10 +147,10 @@ export class MacUpdater extends AppUpdater {
     })
 
     downloadRequest.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-      if (headers.Authorization != null && (headers!!.Authorization as string).startsWith("token")) {
+      if (headers.authorization != null && (headers!!.authorization as string).startsWith("token")) {
         const parsedNewUrl = new URL(redirectUrl)
         if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
-          delete headers.Authorization
+          delete headers.authorization
         }
       }
       this.doProxyUpdateFile(nativeResponse, redirectUrl, headers, sha512, cancellationToken, errorHandler)

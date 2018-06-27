@@ -40,7 +40,7 @@ export abstract class DifferentialDownloader {
       method,
       headers: {
         ...this.options.requestHeaders,
-        Accept: "*/*",
+        accept: "*/*",
       } as any,
     }
   }
@@ -149,7 +149,7 @@ export abstract class DifferentialDownloader {
 
             const debug = this.logger.debug
             if (debug != null) {
-              debug(`effective url: ${actualUrl == null ? "" : removeQuery(actualUrl)}, range: ${range}`)
+              debug(`effective url: ${actualUrl == null ? "original" : removeQuery(actualUrl)}, range: ${range}`)
             }
 
             const request = this.httpExecutor.doRequest(requestOptions, response => {
@@ -205,7 +205,7 @@ export abstract class DifferentialDownloader {
   }
 
   private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void) {
-    return new BluebirdPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const request = this.httpExecutor.doRequest(requestOptions, response => {
         if (!checkIsRangesSupported(response, reject)) {
           return

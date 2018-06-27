@@ -92,8 +92,8 @@ export class RemoteBuildManager {
   }
 
   private doBuild(customHeaders: OutgoingHttpHeaders): Promise<RemoteBuilderResponse> {
-    const StreamJsonObjects = require("stream-json/utils/StreamJsonObjects")
-    return new BluebirdPromise((resolve, reject) => {
+    const StreamValues = require("stream-json/streamers/StreamValues")
+    return new Promise((resolve, reject) => {
       const zstdCompressionLevel = getZstdCompressionLevel(this.buildServiceEndpoint)
       const stream = this.client.request({
         [HTTP2_HEADER_PATH]: "/v2/build",
@@ -114,32 +114,31 @@ export class RemoteBuildManager {
           return
         }
 
-        const objectStream = StreamJsonObjects.make()
-        objectStream.output.on("data", (object: any) => {
-          const data = object.value
-          if (log.isDebugEnabled) {
-            log.debug({event: JSON.stringify(data, null, 2)}, "remote builder event")
-          }
+        stream.pipe(StreamValues.withParser())
+          .on("data", (object: any) => {
+            const data = object.value
+            if (log.isDebugEnabled) {
+              log.debug({event: JSON.stringify(data, null, 2)}, "remote builder event")
+            }
 
-          if (data.status != null) {
-            log.info({status: data.status}, "remote building")
-          }
-          else if ("error" in data) {
-            resolve({files: null, error: data.error})
-          }
-          else if ("files" in data) {
-            this.downloadArtifacts(data.files, data.fileSizes, data.baseUrl)
-              .then(() => {
-                stream.destroy()
-                resolve({files: data.files, error: null})
-              })
-              .catch(reject)
-          }
-          else {
-            log.warn(`Unknown builder event: ${JSON.stringify(data)}`)
-          }
-        })
-        stream.pipe(objectStream.input)
+            if (data.status != null) {
+              log.info({status: data.status}, "remote building")
+            }
+            else if ("error" in data) {
+              resolve({files: null, error: data.error})
+            }
+            else if ("files" in data) {
+              this.downloadArtifacts(data.files, data.fileSizes, data.baseUrl)
+                .then(() => {
+                  stream.destroy()
+                  resolve({files: data.files, error: null})
+                })
+                .catch(reject)
+            }
+            else {
+              log.warn(`Unknown builder event: ${JSON.stringify(data)}`)
+            }
+          })
       })
     })
   }
