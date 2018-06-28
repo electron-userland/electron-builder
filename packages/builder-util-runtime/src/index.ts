@@ -8,6 +8,11 @@ export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 export { parseXml, XElement } from "./xml"
 export { BlockMap } from "./blockMapApi"
 
+// nsis
+export const CURRENT_APP_INSTALLER_FILE_NAME = "__installer.exe"
+// nsis-web
+export const CURRENT_APP_PACKAGE_FILE_NAME = "__package.7z"
+
 export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   if (v == null) {
     return []

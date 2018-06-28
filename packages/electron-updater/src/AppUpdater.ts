@@ -229,21 +229,25 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const checkForUpdatesPromise = this.checkForUpdates()
-    checkForUpdatesPromise.then(it => {
-      const downloadPromise = it.downloadPromise
-      if (downloadPromise == null) {
-        this._logger.warn("checkForUpdatesAndNotify called, but downloadPromise is null")
-        return
-      }
+    checkForUpdatesPromise
+      .then(it => {
+        const downloadPromise = it.downloadPromise
+        if (downloadPromise == null) {
+          const debug = this._logger.debug
+          if (debug != null) {
+            debug("checkForUpdatesAndNotify called, downloadPromise is null")
+          }
+          return
+        }
 
-      downloadPromise
-        .then(() => {
-          new Notification({
-            title: "A new update is ready to install",
-            body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
-          }).show()
-        })
-    })
+        downloadPromise
+          .then(() => {
+            new Notification({
+              title: "A new update is ready to install",
+              body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
+            }).show()
+          })
+      })
 
     return checkForUpdatesPromise
   }

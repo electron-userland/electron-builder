@@ -52,7 +52,7 @@ export abstract class BaseUpdater extends AppUpdater {
     await ensureDir(cacheDir)
     const updateFileName = getCacheUpdateFileName()
     let updateFile = path.join(cacheDir, updateFileName)
-    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}.${path.extname(packageInfo.path) || "7z"}`)
+    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
     const done = async (isSaveCache: boolean) => {
       this.downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)

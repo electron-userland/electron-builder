@@ -1,4 +1,4 @@
-import { AllPublishOptions, DownloadOptions, newError, PackageFileInfo, BlockMap } from "builder-util-runtime"
+import { AllPublishOptions, DownloadOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
@@ -35,7 +35,9 @@ export class NsisUpdater extends BaseUpdater {
       fileInfo,
       updateInfo: downloadUpdateOptions.updateInfo,
       task: async (destinationFile, packageFile, removeTempDirIfAny) => {
-        if (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, downloadUpdateOptions.requestHeaders, provider)) {
+        const packageInfo = fileInfo.packageInfo
+        const isWebInstaller = packageInfo != null && packageFile != null
+        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, downloadUpdateOptions.requestHeaders, provider)) {
           await this.httpExecutor.download(fileInfo.url.href, destinationFile, downloadOptions)
         }
 
@@ -46,20 +48,19 @@ export class NsisUpdater extends BaseUpdater {
           throw newError(`New version ${downloadUpdateOptions.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
         }
 
-        const packageInfo = fileInfo.packageInfo
-        if (packageInfo != null && packageFile != null) {
-          if (await this.differentialDownloadWebPackage(packageInfo, packageFile, provider)) {
+        if (isWebInstaller) {
+          if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider)) {
             try {
-              await this.httpExecutor.download(packageInfo.path, packageFile, {
+              await this.httpExecutor.download(packageInfo!!.path, packageFile!!, {
                 skipDirCreation: true,
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
-                sha512: packageInfo.sha512,
+                sha512: packageInfo!!.sha512,
               })
             }
             catch (e) {
               try {
-                await unlink(packageFile)
+                await unlink(packageFile!!)
               }
               catch (ignored) {
                 // ignore
@@ -170,7 +171,7 @@ export class NsisUpdater extends BaseUpdater {
       const oldBlockMapData = await downloadBlockMap(oldBlockMapUrl)
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
         newUrl: fileInfo.url.href,
-        oldFile: path.join(this.app.getPath("userData"), "installer.exe"),
+        oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
         logger: this._logger,
         newFile: installerPath,
         useMultipleRangeRequest: provider.useMultipleRangeRequest,
@@ -194,7 +195,7 @@ export class NsisUpdater extends BaseUpdater {
     try {
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, {
         newUrl: packageInfo.path,
-        oldFile: path.join(process.resourcesPath!, "..", "package.7z"),
+        oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
         requestHeaders: this.requestHeaders,

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
-import { PackageFileInfo, UUID } from "builder-util-runtime"
+import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull, walk } from "builder-util/out/fs"
 import { hashFile } from "builder-util/out/hash"
@@ -418,11 +418,16 @@ export class NsisTarget extends Target {
     if (defines.APP_FILENAME !== appInfo.productFilename) {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
-    defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\installer.exe`
 
-    const options = this.options
+    if (this.isWebInstaller) {
+      defines.APP_PACKAGE_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_PACKAGE_FILE_NAME}`
+    }
+    else {
+      defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_INSTALLER_FILE_NAME}`
+    }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
+      const options = this.options
       if (options.useZip) {
         defines.ZIP_COMPRESSION = null
       }

@@ -86,10 +86,12 @@ export class DownloadedUpdateHelper {
       cachedInfo = await readJson(updateInfoFile)
     }
     catch (e) {
+      let message = `No cached update info available`
       if (e.code !== "ENOENT") {
         await this.cleanCacheDir()
+        message += ` (error on read: ${e.message})`
       }
-      logger.info(`No cached update info available (error on read: ${e.message})`)
+      logger.info(message)
       return null
     }
 

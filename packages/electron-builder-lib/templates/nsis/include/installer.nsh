@@ -122,17 +122,33 @@
       fun_extract:
         !insertmacro extractUsing7za "$packageFile"
 
+        # electron always uses per user app data
+        ${if} $installMode == "all"
+          SetShellVarContext current
+        ${endif}
+
         ClearErrors
-        Rename "$packageFile" "$INSTDIR\package.7z"
+        Rename "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
         ${if} ${errors}
           # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
           ClearErrors
-          CopyFiles /SILENT "$packageFile" "$INSTDIR\package.7z"
+          CopyFiles /SILENT "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
           Delete "$packageFile"
+        ${endif}
+
+        ${if} $installMode == "all"
+          SetShellVarContext all
         ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
+      # electron always uses per user app data
+      ${if} $installMode == "all"
+        SetShellVarContext current
+      ${endif}
       CopyFiles /SILENT "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
+      ${if} $installMode == "all"
+        SetShellVarContext all
+      ${endif}
     !endif
   !endif
 
