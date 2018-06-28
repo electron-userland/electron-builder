@@ -434,6 +434,12 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return id
   }
+
+  get isAddNoCacheQuery(): boolean {
+    const headers = this.requestHeaders
+    // https://github.com/electron-userland/electron-builder/issues/3021
+    return headers == null || (headers.Authorization == null && headers.authorization == null)
+  }
 }
 
 export interface DownloadUpdateOptions {
