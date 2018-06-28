@@ -17,6 +17,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
 import { TmpDir } from "temp-file"
+import { readAsar } from "electron-builder-lib/out/asar/asar"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -483,4 +484,10 @@ export function removeUnstableProperties(data: any) {
     }
     return value
   }))
+}
+
+export async function verifyAsarFileTree(resourceDir: string) {
+  const fs = await readAsar(path.join(resourceDir, "app.asar"))
+  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
+  expect(fs.header).toMatchSnapshot()
 }

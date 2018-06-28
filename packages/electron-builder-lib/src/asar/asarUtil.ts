@@ -1,11 +1,12 @@
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { symlink } from "fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarOptions } from ".."
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
+import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
 import { detectUnpackedDirs } from "./unpackDetector"
 
@@ -15,9 +16,11 @@ const pickle = require("chromium-pickle-js")
 export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
+  private readonly unpackedDest: string
 
   constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
+    this.unpackedDest = `${this.outFile}.unpacked`
   }
 
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
@@ -38,11 +41,10 @@ export class AsarPackager {
     const metadata = fileSet.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
-    const unpackedDest = `${this.outFile}.unpacked`
     const rootForAppFilesWithoutAsar = path.join(this.destination, "app")
 
     if (this.options.smartUnpack !== false) {
-      await detectUnpackedDirs(fileSet, unpackedDirs, unpackedDest, rootForAppFilesWithoutAsar)
+      await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, rootForAppFilesWithoutAsar)
     }
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
@@ -54,7 +56,7 @@ export class AsarPackager {
           unpackedDirs.add(filePathInArchive)
           // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
           // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-          await ensureDir(path.join(unpackedDest, filePathInArchive))
+          await ensureDir(path.join(this.unpackedDest, filePathInArchive))
           break
         }
       }
@@ -79,7 +81,9 @@ export class AsarPackager {
       const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
       if (stat.isSymbolicLink()) {
-        this.fs.getOrCreateNode(pathInArchive).link = (stat as any).relativeLink
+        const s = (stat as any)
+        this.fs.getOrCreateNode(pathInArchive).link = s.relativeLink
+        s.pathInArchive = pathInArchive
         unpackedFileIndexSet.add(i)
         continue
       }
@@ -114,10 +118,10 @@ export class AsarPackager {
       if (isUnpacked) {
         if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
           dirToCreateForUnpackedFiles.add(fileParent)
-          await ensureDir(path.join(unpackedDest, fileParent))
+          await ensureDir(path.join(this.unpackedDest, fileParent))
         }
 
-        const unpackedFile = path.join(unpackedDest, pathInArchive)
+        const unpackedFile = path.join(this.unpackedDest, pathInArchive)
         taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -173,6 +177,13 @@ export class AsarPackager {
 
           if (!unpackedFileIndexSet.has(index)) {
             break
+          }
+          else {
+            const stat = metadata.get(files[index])
+            if (stat != null && stat.isSymbolicLink()) {
+              symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), () => w(index + 1))
+              return
+            }
           }
           index++
         }

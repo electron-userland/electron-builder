@@ -189,8 +189,13 @@
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
 
+  # allow user to define ESTIMATED_SIZE to avoid GetSize call
+  !ifdef ESTIMATED_SIZE
+    IntFmt $0 "0x%08X" ${ESTIMATED_SIZE}
+  !else
 	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
 	IntFmt $0 "0x%08X" $0
+  !endif
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 

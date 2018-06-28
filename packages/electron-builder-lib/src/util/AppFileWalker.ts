@@ -19,7 +19,7 @@ export abstract class FileCopyHelper {
   protected constructor(protected readonly matcher: FileMatcher, readonly filter: Filter | null, protected readonly packager: Packager) {
   }
 
-  protected handleFile(file: string, fileStat: Stats): Promise<Stats | null> | null {
+  protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {
       return null
     }
@@ -27,22 +27,25 @@ export abstract class FileCopyHelper {
     return readlink(file)
       .then((linkTarget): any => {
         // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
-        return this.handleSymlink(fileStat, file, path.resolve(path.dirname(file), linkTarget))
+        return this.handleSymlink(fileStat, file, parent, linkTarget)
       })
   }
 
-  protected handleSymlink(fileStat: Stats, file: string, linkTarget: string): Promise<Stats> | null {
-    const link = path.relative(this.matcher.from, linkTarget)
+  private handleSymlink(fileStat: Stats, file: string, parent: string, linkTarget: string): Promise<Stats> | null {
+    const resolvedLinkTarget = path.resolve(parent, linkTarget)
+    const link = path.relative(this.matcher.from, resolvedLinkTarget)
     if (link.startsWith("..")) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
-      return stat(linkTarget)
+      return stat(resolvedLinkTarget)
         .then(targetFileStat => {
           this.metadata.set(file, targetFileStat)
           return targetFileStat
         })
     }
     else {
-      (fileStat as any).relativeLink = link
+      const s = (fileStat as any)
+      s.relativeLink = link
+      s.linkRelativeToFile = path.relative(parent, resolvedLinkTarget)
     }
     return null
   }
@@ -91,6 +94,6 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
       this.metadata.set(file, fileStat)
     }
 
-    return this.handleFile(file, fileStat)
+    return this.handleFile(file, parent, fileStat)
   }
 }

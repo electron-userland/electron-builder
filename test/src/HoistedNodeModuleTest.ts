@@ -1,7 +1,5 @@
-import { readAsar } from "electron-builder-lib/out/asar/asar"
-import { assertPack, linuxDirTarget } from "./helpers/packTester"
+import { assertPack, linuxDirTarget, verifyAsarFileTree } from "./helpers/packTester"
 import { Platform } from "electron-builder"
-import * as path from "path"
 
 test.skip("yarn workspace", () => assertPack("test-app-yarn-workspace", {
   targets: linuxDirTarget,
@@ -23,9 +21,3 @@ test.ifAll("yarn several workspaces", () => assertPack("test-app-yarn-several-wo
 }, {
   packed: context => verifyAsarFileTree(context.getResources(Platform.LINUX)),
 }))
-
-async function verifyAsarFileTree(resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
-  expect(fs.header).toMatchSnapshot()
-}

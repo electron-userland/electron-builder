@@ -93,7 +93,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
               if (!stat.isDirectory()) {
                 metadata.set(filePath, stat)
               }
-              const consumerResult = this.handleFile(filePath, stat)
+              const consumerResult = this.handleFile(filePath, dirPath, stat)
               if (consumerResult == null) {
                 if (stat.isDirectory()) {
                   dirs.push(name)
