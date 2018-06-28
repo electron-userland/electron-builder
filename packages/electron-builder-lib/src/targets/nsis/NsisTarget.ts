@@ -217,7 +217,8 @@ export class NsisTarget extends Target {
     }
 
     if (estimatedSize !== 0) {
-      defines.ESTIMATED_SIZE = estimatedSize
+      // in kb
+      defines.ESTIMATED_SIZE = Math.round(estimatedSize / 1024)
     }
 
     if (packager.compression === "store") {
