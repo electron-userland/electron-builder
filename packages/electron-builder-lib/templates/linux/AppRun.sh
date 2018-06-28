@@ -17,19 +17,15 @@ NUMBER_OF_ARGS="$#"
 # such as desktop integration daemons
 VENDORPREFIX=appimagekit
 
-find-up () {
-  path="$(dirname "$(readlink -f "${THIS}")")"
-  while [[ "$path" != "" && ! -e "$path/$1" ]]; do
-    path=${path%/*}
-  done
-  # echo "$path"
-}
-
 if [ -z $APPDIR ] ; then
   # Find the AppDir. It is the directory that contains AppRun.
   # This assumes that this script resides inside the AppDir or a subdirectory.
   # If this script is run inside an AppImage, then the AppImage runtime likely has already set $APPDIR
-  APPDIR=$(find-up "AppRun")
+  path="$(dirname "$(readlink -f "${THIS}")")"
+  while [[ "$path" != "" && ! -e "$path/$1" ]]; do
+    path=${path%/*}
+  done
+  APPDIR="$path"
 fi
 
 export PATH="${APPDIR}:${APPDIR}/usr/sbin:${PATH}"
