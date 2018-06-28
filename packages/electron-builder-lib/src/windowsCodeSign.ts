@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { asArray, isMacOsSierra, log } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
@@ -150,7 +149,7 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   }
   catch (e) {
     if (e.message.includes("The file is being used by another process")) {
-      await new BluebirdPromise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         setTimeout(() => {
           vm.exec(tool, args, {timeout, env})
             .then(resolve)

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
@@ -136,7 +135,7 @@ export class AsarPackager {
   }
 
   private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
-    return new BluebirdPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const headerPickle = pickle.createEmpty()
       headerPickle.writeString(JSON.stringify(this.fs.header))
       const headerBuf = headerPickle.toBuffer()

@@ -83,7 +83,7 @@ export abstract class DifferentialDownloader {
     const oldFileFd = await open(this.options.oldFile, "r")
     const newFileFd = await open(this.options.newFile, "w")
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
-    await new BluebirdPromise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const streams: Array<any> = []
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
       // to simply debug, do manual validation to allow file to be fully written

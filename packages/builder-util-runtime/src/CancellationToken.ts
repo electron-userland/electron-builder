@@ -44,7 +44,7 @@ export class CancellationToken extends EventEmitter {
 
   createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error: Error) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
     if (this.cancelled) {
-      return BluebirdPromise.reject<R>(new CancellationError())
+      return Promise.reject<R>(new CancellationError())
     }
 
     let cancelHandler: (() => void) | null = null

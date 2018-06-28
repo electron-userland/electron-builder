@@ -87,7 +87,7 @@ export class Uploader extends EventEmitter {
 
   private putObject(md5: string) {
     this.loaded = 0
-    return new BluebirdPromise<any>((resolve, reject) => {
+    return new Promise<any>((resolve, reject) => {
       this.s3.putObject({
         Body: this.fileContent || createReadStream(this.localFile),
         ContentMD5: md5,
@@ -150,7 +150,7 @@ export class Uploader extends EventEmitter {
     const contentLength = part.end - part.start
     return this.runOrRetry(() => {
       let partLoaded = 0
-      return new BluebirdPromise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         this.s3.uploadPart({
           ContentLength: contentLength,
           PartNumber: part.part.PartNumber,
@@ -180,7 +180,7 @@ export class Uploader extends EventEmitter {
   }
 
   private async runOrRetry<T>(task: () => Promise<T>): Promise<T> {
-    return new BluebirdPromise<T>((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
       let attemptNumber = 0
       const tryRun = () => {
         if (this.cancelled) {
