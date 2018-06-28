@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
-import { createClient } from "./providerFactory"
+import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -197,7 +197,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this)
+      provider = new GenericProvider({provider: "generic", url: options}, this, isUrlProbablySupportMultiRangeRequests(options))
     }
     else {
       provider = createClient(options, this)
