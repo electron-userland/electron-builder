@@ -34,11 +34,10 @@ for (let i = 0; i < 256; i++) {
 // UUID class
 export class UUID {
   private ascii: string | null = null
-  private binary: Buffer | null = null
+  private readonly binary: Buffer | null = null
   private readonly version: number
 
   // from rfc4122#appendix-C
-  static readonly URL = new UUID("6ba7b811-9dad-11d1-80b4-00c04fd430c8")
   static readonly OID = UUID.parse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
 
   constructor(uuid: Buffer | string) {
@@ -72,13 +71,6 @@ export class UUID {
     return this.ascii
   }
 
-  toBuffer() {
-    if (this.binary == null) {
-      this.binary = UUID.parse(this.ascii!!)
-    }
-    return Buffer.from(this.binary)
-  }
-
   inspect() {
     return `UUID v${this.version} ${this.toString()}`
   }
@@ -87,7 +79,7 @@ export class UUID {
     if (typeof uuid === "string") {
       uuid = uuid.toLowerCase()
 
-      if (!/^[a-f0-9]{8}(\-[a-f0-9]{4}){3}\-([a-f0-9]{12})$/.test(uuid)) {
+      if (!/^[a-f0-9]{8}(-[a-f0-9]{4}){3}-([a-f0-9]{12})$/.test(uuid)) {
         return false
       }
 
@@ -153,14 +145,6 @@ function getVariant(bits: number) {
         default:
             return "future"
     }
-}
-
-export interface UuidOptions {
-  encoding?: string
-
-  name?: string
-
-  namespace?: string | UUID | Buffer
 }
 
 enum UuidEncoding {
@@ -253,7 +237,7 @@ function uuidNamed(name: string | Buffer, hashMethod: string, version: number, n
   }
 
   hash.update(namespace)
-  hash.update(name, nameIsNotAString ? "latin1" : "utf8")
+  hash.update(name)
 
   const buffer = hash.digest()
   let result: any

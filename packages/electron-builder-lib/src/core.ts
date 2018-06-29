@@ -20,11 +20,7 @@ export class Platform {
   static LINUX = new Platform("linux", "linux", "linux")
   static WINDOWS = new Platform("windows", "win", "win32")
 
-  // deprecated
-  //noinspection JSUnusedGlobalSymbols
-  static OSX = Platform.MAC
-
-  constructor(public name: string, public buildConfigurationKey: string, public nodeName: string) {
+  constructor(public name: string, public buildConfigurationKey: string, public nodeName: NodeJS.Platform) {
   }
 
   toString() {
