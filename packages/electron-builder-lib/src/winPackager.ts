@@ -349,7 +349,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (file === exeFileName) {
         return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
       }
-      else if (file.endsWith(".exe")) {
+      else if (file.endsWith(".exe") || file.endsWith(".dll")) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
@@ -361,7 +361,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources")
     await BluebirdPromise.map(readdir(outResourcesDir), (file: string): any => {
-      if (file.endsWith(".exe")) {
+      if (file.endsWith(".exe") || file.endsWith(".dll")) {
         return this.sign(path.join(outResourcesDir, file))
       }
       else {
