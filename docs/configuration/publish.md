@@ -142,8 +142,6 @@ Inherited from `PublishConfiguration`:
 ## S3Options
 [Amazon S3](https://aws.amazon.com/s3/) options.
 
-To use Amazon S3 please add `electron-publisher-s3` dependency to `devDependencies` (`yarn add electron-publisher-s3 --dev`).
-
 AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
 Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
 Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).

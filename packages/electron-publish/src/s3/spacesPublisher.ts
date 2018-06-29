@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
-import { PublishContext } from "electron-publish"
+import { PublishContext } from "../publisher"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class SpacesPublisher extends BaseS3Publisher {
@@ -29,6 +29,7 @@ export default class SpacesPublisher extends BaseS3Publisher {
 
   protected configureS3Options(args: Array<string>): void {
     args.push("--endpoint", `${this.info.region}.digitaloceanspaces.com`)
+    args.push("--region", this.info.region)
 
     const accessKey = process.env.DO_KEY_ID
     const secretKey = process.env.DO_SECRET_KEY

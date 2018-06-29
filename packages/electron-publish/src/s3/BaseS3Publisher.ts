@@ -1,6 +1,6 @@
 import { log, executeAppBuilder } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
-import { PublishContext, Publisher, UploadTask } from "electron-publish"
+import { PublishContext, Publisher, UploadTask } from "../publisher"
 import { ensureDir, symlink } from "fs-extra-p"
 import * as path from "path"
 

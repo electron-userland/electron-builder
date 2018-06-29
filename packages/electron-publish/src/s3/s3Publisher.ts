@@ -1,7 +1,6 @@
-import { InvalidConfigurationError, log } from "builder-util"
+import { executeAppBuilder, InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
-import { PublishContext } from "electron-publish"
-import { executeAppBuilder } from "../../builder-util/src/util"
+import { PublishContext } from "../publisher"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class S3Publisher extends BaseS3Publisher {
@@ -46,6 +45,9 @@ export default class S3Publisher extends BaseS3Publisher {
 
     if (this.info.endpoint != null) {
       args.push("--endpoint", this.info.endpoint)
+    }
+    if (this.info.region != null) {
+      args.push("--region", this.info.region)
     }
 
     if (this.info.storageClass != null) {

@@ -997,9 +997,9 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@1.9.16:
-  version "1.9.16"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.9.16.tgz#c9e8bc837bfc5452b5396bc6959ed81cfff5fb6a"
+app-builder-bin@1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-1.10.0.tgz#190cde50c01aa812d11b1e22e990e8fda47d4d02"
 
 append-transform@^1.0.0:
   version "1.0.0"
