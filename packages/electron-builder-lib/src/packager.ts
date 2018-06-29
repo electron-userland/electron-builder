@@ -250,6 +250,7 @@ export class Packager {
     }
     else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
       configPath = configFromOptions.extends
+      delete configFromOptions.extends
     }
 
     const projectDir = this.projectDir
