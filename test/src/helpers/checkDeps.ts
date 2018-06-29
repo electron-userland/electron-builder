@@ -40,7 +40,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   // console.log(result)
 
   const unusedDependencies = (packageName === "electron-builder" ?
-    result.dependencies.filter(it => it !== "electron-download-tf" && it !== "dmg-builder") :
+    result.dependencies.filter(it => it !== "dmg-builder") :
     result.dependencies).filter(it => it !== "bluebird-lst")
   if (unusedDependencies.length > 0) {
     console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
@@ -61,7 +61,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   for (const name of Object.keys(result.missing)) {
     if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
-      (packageName === "electron-builder-lib" && (name === "dmg-builder" || name === "electron-download-tf" || knownMissedDependencies.has(name)))) {
+      (packageName === "electron-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name)))) {
       delete (result.missing as any)[name]
     }
   }

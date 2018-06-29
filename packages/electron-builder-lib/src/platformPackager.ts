@@ -11,13 +11,10 @@ import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
 import { computeData } from "./asar/integrity"
-import { CompressionLevel, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { isElectronBased } from "./Framework"
-import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./index"
-import { Packager } from "./packager"
-import { PackagerOptions } from "./packagerApi"
+import { PackagerOptions, Packager, AfterPackContext, AsarOptions, Configuration, ElectronPlatformName, FileAssociation, PlatformSpecificBuildOptions, CompressionLevel, Platform, Target, TargetSpecificOptions } from "./index"
 import { copyAppFiles, transformFiles, computeFileSets, computeNodeModuleFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
@@ -113,7 +110,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets)
+    await this.doPack(outDir, appOutDir, this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
     this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)
   }
 
@@ -158,7 +155,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.config.muonVersion == null ? "Electron" : "Brave"
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
     if (this.packagerOptions.prepackaged != null) {
       return
     }

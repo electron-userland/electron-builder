@@ -71,9 +71,7 @@ export async function computeBackground(packager: PackageBuilder): Promise<strin
 
 export async function applyProperties(entries: any, env: any, asyncTaskManager: AsyncTaskManager, packager: PackageBuilder) {
   const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
-
   asyncTaskManager.addTask(outputFile(dmgPropertiesFile, (await readFile(path.join(getDmgTemplatePath(), "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
-
   await asyncTaskManager.awaitTasks()
 
   await exec("/usr/bin/perl", [dmgPropertiesFile], {

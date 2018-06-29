@@ -1,4 +1,3 @@
-import { ClientConfiguration, CreateMultipartUploadRequest } from "aws-sdk/clients/s3"
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
 import { SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
@@ -28,23 +27,18 @@ export default class SpacesPublisher extends BaseS3Publisher {
     return this.info.name
   }
 
-  protected createClientConfiguration(): ClientConfiguration {
-    const configuration = super.createClientConfiguration()
-    configuration.endpoint = `${this.info.region}.digitaloceanspaces.com`
-    const accessKeyId = process.env.DO_KEY_ID
-    const secretAccessKey = process.env.DO_SECRET_KEY
-    if (isEmptyOrSpaces(accessKeyId)) {
+  protected configureS3Options(args: Array<string>): void {
+    args.push("--endpoint", `${this.info.region}.digitaloceanspaces.com`)
+
+    const accessKey = process.env.DO_KEY_ID
+    const secretKey = process.env.DO_SECRET_KEY
+    if (isEmptyOrSpaces(accessKey)) {
       throw new InvalidConfigurationError("Please set env DO_KEY_ID (see https://www.electron.build/configuration/publish#spacesoptions)")
     }
-    if (isEmptyOrSpaces(secretAccessKey)) {
+    if (isEmptyOrSpaces(secretKey)) {
       throw new InvalidConfigurationError("Please set env DO_SECRET_KEY (see https://www.electron.build/configuration/publish#spacesoptions)")
     }
-
-    configuration.credentials = {accessKeyId, secretAccessKey}
-    return configuration
-  }
-
-  protected configureS3Options(s3Options: CreateMultipartUploadRequest): void {
-    super.configureS3Options(s3Options)
+    args.push("--accessKey", accessKey)
+    args.push("--secretKey", secretKey)
   }
 }

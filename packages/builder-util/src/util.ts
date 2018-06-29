@@ -354,7 +354,7 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>): Promise<string> {
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const command = appBuilderPath
     const env: any = {
@@ -367,9 +367,13 @@ export function executeAppBuilder(args: Array<string>): Promise<string> {
     if (cacheEnv != null && cacheEnv.length > 0) {
       env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
     }
-    handleProcess("close", doSpawn(command, args, {
+    const childProcess = doSpawn(command, args, {
       env,
       stdio: ["ignore", "pipe", process.stdout]
-    }), command, resolve, reject)
+    })
+    if (childProcessConsumer != null) {
+      childProcessConsumer(childProcess)
+    }
+    handleProcess("close", childProcess, command, resolve, reject)
   })
 }

@@ -7,6 +7,7 @@ import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
+import { ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
@@ -84,7 +85,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
+      nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets))
         .then(() => this.sign(appPath, null, null))
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }

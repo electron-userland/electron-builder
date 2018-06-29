@@ -1,11 +1,8 @@
-import S3, { ClientConfiguration, CreateMultipartUploadRequest, ObjectCannedACL } from "aws-sdk/clients/s3"
-import { log } from "builder-util"
+import { log, executeAppBuilder } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
-import { ProgressCallback, PublishContext, Publisher, UploadTask } from "electron-publish"
-import { ensureDir, stat, symlink } from "fs-extra-p"
-import mime from "mime"
+import { PublishContext, Publisher, UploadTask } from "electron-publish"
+import { ensureDir, symlink } from "fs-extra-p"
 import * as path from "path"
-import { Uploader } from "./uploader"
 
 export abstract class BaseS3Publisher extends Publisher {
   protected constructor(context: PublishContext, private options: BaseS3Options) {
@@ -14,15 +11,11 @@ export abstract class BaseS3Publisher extends Publisher {
 
   protected abstract getBucketName(): string
 
-  protected configureS3Options(s3Options: CreateMultipartUploadRequest) {
+  protected configureS3Options(args: Array<string>) {
     // if explicitly set to null, do not add
     if (this.options.acl !== null) {
-      s3Options.ACL = this.options.acl as ObjectCannedACL || "public-read"
+      args.push("--acl", this.options.acl || "public-read")
     }
-  }
-
-  protected createClientConfiguration(): ClientConfiguration {
-    return {signatureVersion: "v4"}
   }
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
@@ -32,6 +25,9 @@ export abstract class BaseS3Publisher extends Publisher {
 
     const target = (this.options.path == null ? "" : `${this.options.path}/`) + fileName
 
+    const args = ["publish-s3", "--bucket", this.getBucketName(), "--key", target, "--file", task.file]
+    this.configureS3Options(args)
+
     if (process.env.__TEST_S3_PUBLISHER__ != null) {
       const testFile = path.join(process.env.__TEST_S3_PUBLISHER__!, target)
       await ensureDir(path.dirname(testFile))
@@ -39,29 +35,23 @@ export abstract class BaseS3Publisher extends Publisher {
       return
     }
 
-    const s3Options: CreateMultipartUploadRequest  = {
-      Key: target,
-      Bucket: this.getBucketName(),
-      ContentType: mime.getType(task.file) || "application/octet-stream"
-    }
-    this.configureS3Options(s3Options)
-
-    const contentLength = task.fileContent == null ? (await stat(task.file)).size : task.fileContent.length
-    const uploader = new Uploader(new S3(this.createClientConfiguration()), s3Options, task.file, contentLength, task.fileContent)
-
-    const progressBar = this.createProgressBar(fileName, uploader.contentLength)
-    if (progressBar != null) {
-      const callback = new ProgressCallback(progressBar)
-      uploader.on("progress", () => {
-        if (!cancellationToken.cancelled) {
-          callback.update(uploader.loaded, uploader.contentLength)
-        }
-      })
-    }
+    // https://github.com/aws/aws-sdk-go/issues/279
+    this.createProgressBar(fileName, -1)
+    // if (progressBar != null) {
+    //   const callback = new ProgressCallback(progressBar)
+    //   uploader.on("progress", () => {
+    //     if (!cancellationToken.cancelled) {
+    //       callback.update(uploader.loaded, uploader.contentLength)
+    //     }
+    //   })
+    // }
 
     return await cancellationToken.createPromise((resolve, reject, onCancel) => {
-      onCancel(() => uploader.abort())
-      uploader.upload()
+      executeAppBuilder(args, process => {
+        onCancel(() => {
+          process.kill("SIGINT")
+        })
+      })
         .then(() => {
           try {
             log.debug({provider: this.providerName, file: fileName, bucket: this.getBucketName()}, "uploaded")

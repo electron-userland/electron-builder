@@ -1,7 +1,7 @@
-import S3, { ClientConfiguration, ServerSideEncryption, StorageClass } from "aws-sdk/clients/s3"
 import { InvalidConfigurationError, log } from "builder-util"
 import { S3Options } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
+import { executeAppBuilder } from "../../builder-util/src/util"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class S3Publisher extends BaseS3Publisher {
@@ -19,9 +19,8 @@ export default class S3Publisher extends BaseS3Publisher {
 
     if (options.endpoint == null && (bucket.includes(".") && options.region == null)) {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
-      const s3 = new S3({signatureVersion: "v4"})
       try {
-        options.region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+        options.region = await executeAppBuilder(["get-bucket-location", "--bucket", bucket])
       }
       catch (e) {
         if (errorIfCannot) {
@@ -38,29 +37,22 @@ export default class S3Publisher extends BaseS3Publisher {
     }
   }
 
-  protected createClientConfiguration(): ClientConfiguration {
-    const configuration = super.createClientConfiguration()
-    const endpoint = this.info.endpoint
-    if (endpoint != null) {
-      configuration.endpoint = endpoint
-      configuration.s3ForcePathStyle = true
-    }
-    return configuration
-  }
-
   protected getBucketName(): string {
     return this.info.bucket!
   }
 
-  protected configureS3Options(s3Options: S3.CreateMultipartUploadRequest): void {
-    super.configureS3Options(s3Options)
+  protected configureS3Options(args: Array<string>): void {
+    super.configureS3Options(args)
 
-    if (this.info.storageClass != null) {
-      s3Options.StorageClass = this.info.storageClass as StorageClass
+    if (this.info.endpoint != null) {
+      args.push("--endpoint", this.info.endpoint)
     }
 
+    if (this.info.storageClass != null) {
+      args.push("--storageClass", this.info.storageClass)
+    }
     if (this.info.encryption != null) {
-      s3Options.ServerSideEncryption = this.info.encryption as ServerSideEncryption
+      args.push("--encryption", this.info.encryption)
     }
   }
 
