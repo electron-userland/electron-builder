@@ -8,7 +8,14 @@ import { orNullIfFileNotExist } from "./promise"
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}
 
-export type FileTransformer = (path: string) => Promise<null | string | Buffer> | null | string | Buffer
+export type AfterCopyFileTransformer = (file: string) => Promise<void>
+
+export class CopyFileTransformer {
+  constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {
+  }
+}
+
+export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
 export type Filter = (file: string, stat: Stats) => boolean
 
 export function unlinkIfExists(file: string) {
@@ -226,6 +233,7 @@ export class FileCopier {
   }
 
   async copy(src: string, dest: string, stat: Stats | undefined) {
+    let afterCopyTransformer: AfterCopyFileTransformer | null = null
     if (this.transformer != null && stat != null && stat.isFile()) {
       let data = this.transformer(src)
       if (data != null) {
@@ -234,12 +242,18 @@ export class FileCopier {
         }
 
         if (data != null) {
-          await writeFile(dest, data)
-          return
+          if (data instanceof CopyFileTransformer) {
+            afterCopyTransformer = data.afterCopyTransformer
+          }
+          else {
+            await writeFile(dest, data)
+            return
+          }
         }
       }
     }
-    const isUseHardLink = (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest)
+
+    const isUseHardLink = afterCopyTransformer == null && ((!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
     await copyOrLinkFile(src, dest, stat, isUseHardLink, isUseHardLink ? () => {
       // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
       if (this.isUseHardLink) {
@@ -250,6 +264,10 @@ export class FileCopier {
         return false
       }
     } : null)
+
+    if (afterCopyTransformer != null) {
+      await afterCopyTransformer(dest)
+    }
   }
 }
 

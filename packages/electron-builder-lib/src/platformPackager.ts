@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
-import { statOrNull } from "builder-util/out/fs"
+import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -204,10 +204,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
 
-    const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : (isElectronBased(framework) ? path.join(appOutDir, "resources") : appOutDir)
-    this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), outDir, platformSpecificBuildOptions, excludePatterns, macroExpander)
+    const taskManager = new AsyncTaskManager(this.info.cancellationToken)
+    this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
 
     if (this.info.cancellationToken.cancelled) {
@@ -218,24 +218,32 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (beforeCopyExtraFiles != null) {
       await beforeCopyExtraFiles(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
     }
-    await BluebirdPromise.each([extraResourceMatchers, extraFileMatchers], it => copyFiles(it))
+
+    const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
+    await copyFiles(extraResourceMatchers, transformerForExtraFiles)
+    await copyFiles(extraFileMatchers, transformerForExtraFiles)
 
     if (this.info.cancellationToken.cancelled) {
       return
     }
 
     await this.info.afterPack(packContext)
-    await this.sanityCheckPackage(appOutDir, asarOptions != null)
-    await this.signApp(packContext)
+    const isAsar = asarOptions != null
+    await this.sanityCheckPackage(appOutDir, isAsar)
+    await this.signApp(packContext, isAsar)
     await this.info.afterSign(packContext)
   }
 
-  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, defaultDestination: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
+  protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
+    return null
+  }
+
+  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, defaultDestination: string, packContext: AfterPackContext, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
     const appDir = this.info.appDir
     const config = this.config
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
 
-    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, outDir, isElectronCompile)
+    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, packContext.outDir, isElectronCompile)
     if (excludePatterns.length > 0) {
       for (const matcher of mainMatchers) {
         matcher.excludePatterns = excludePatterns
@@ -264,13 +272,27 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info, transformer)))
     }
     else if (asarOptions == null) {
-      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, transformer)))
+      // for ASAR all asar unpacked files will be extra transformed (e.g. sign of EXE and DLL) later,
+      // for prepackaged asar extra transformation not supported yet,
+      // so, extra transform if asar is disabled
+      const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
+      const combinedTransformer: FileTransformer = file => {
+        if (transformerForExtraFiles != null) {
+          const result = transformerForExtraFiles(file)
+          if (result != null) {
+            return result
+          }
+        }
+        return transformer(file)
+      }
+
+      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, combinedTransformer)))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, {
         macroExpander,
         customBuildOptions: platformSpecificBuildOptions,
-        outDir,
+        outDir: packContext.outDir,
       })
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       taskManager.addTask(_computeFileSets(mainMatchers)
@@ -285,7 +307,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected signApp(packContext: AfterPackContext): Promise<any> {
+  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     return Promise.resolve()
   }
 
@@ -460,42 +482,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
     return doExpandMacro(pattern, arch, this.appInfo, {os: this.platform.buildConfigurationKey, ...extra}, isProductNameSanitized)
-  }
-
-  generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {
-    let c: string | null = null
-    let e: string | null = null
-    if (arch === Arch.x64) {
-      if (ext === "AppImage") {
-        c = "x86_64"
-      }
-      else if (ext === "deb") {
-        c = "amd64"
-      }
-    }
-    else if (arch === Arch.ia32 && ext === "deb") {
-      c = "i386"
-    }
-    else if (ext === "pacman") {
-      if (arch === Arch.ia32) {
-        c = "i686"
-      }
-      e = "pkg.tar.xz"
-    }
-    else {
-      c = Arch[arch]
-    }
-
-    if (c == null) {
-      c = classifier
-    }
-    else if (classifier != null) {
-      c += `-${classifier}`
-    }
-    if (e == null) {
-      e = ext
-    }
-    return this.generateName2(e, c, deployment)
   }
 
   generateName2(ext: string | null, classifier: string | null | undefined, deployment: boolean): string {

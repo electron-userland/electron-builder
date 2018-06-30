@@ -198,7 +198,8 @@ export class NsisTarget extends Target {
         }
 
         const archiveInfo = (await exec(path7za, ["l", file])).trim()
-        const match = archiveInfo.match(/(\d+)\s+\d+.+$/)
+        // after adding blockmap data will be "Warnings: 1" in the end of output
+        const match = archiveInfo.match(/(\d+)\s+\d+\s+\d+\s+files/)
         if (match == null) {
           log.warn({output: archiveInfo}, "cannot compute size of app package")
         }
