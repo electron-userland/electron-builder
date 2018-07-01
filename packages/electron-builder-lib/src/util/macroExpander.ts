@@ -26,6 +26,13 @@ export function expandMacro(pattern: string, arch: string | null | undefined, ap
         }
         return arch
 
+      case "author":
+        const companyName = appInfo.companyName
+        if (companyName == null) {
+          throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": author is not specified`, "ERR_ELECTRON_BUILDER_AUTHOR_UNSPECIFIED")
+        }
+        return companyName
+
       case "platform":
         return process.platform
 
