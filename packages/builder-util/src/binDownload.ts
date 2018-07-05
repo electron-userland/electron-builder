@@ -10,6 +10,11 @@ export function download(url: string, output: string, checksum?: string | null):
   return executeAppBuilder(args) as Promise<any>
 }
 
+export function getBinFromCustomLoc(name: string, version: string, binariesLocUrl: string, checksum: string): Promise<string> {
+  const dirName = `${name}-${version}`;
+  return getBin(dirName, binariesLocUrl, checksum);
+}
+
 export function getBinFromGithub(name: string, version: string, checksum: string): Promise<string> {
   const dirName = `${name}-${version}`
   return getBin(dirName, `https://github.com/electron-userland/electron-builder-binaries/releases/download/${dirName}/${dirName}.7z`, checksum)

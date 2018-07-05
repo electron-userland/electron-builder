@@ -1,24 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromGithub } from "builder-util/out/binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
-import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
-
-export const NSIS_PATH = new Lazy(() => {
-  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
-  if (custom != null && custom.length > 0) {
-    return Promise.resolve(custom.trim())
-  }
-  // noinspection SpellCheckingInspection
-  return getBinFromGithub("nsis", "3.0.3.1", "rYRTO0OqNStw1uFP1RJ4aCGyK+GCz4AIy4uSO3g/sPmuONYDPhp8B0Q6xUx4aTb8hLaFeWyvo7tsp++9nrMoSw==")
-})
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -84,7 +73,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH.value
+    promise = target.NSIS_PATH.value
       .then(it => {
         const outFile = path.join(appOutDir, "resources", "elevate.exe")
         const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
