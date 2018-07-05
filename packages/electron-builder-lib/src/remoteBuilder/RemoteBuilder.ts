@@ -116,7 +116,7 @@ async function findBuildAgent(): Promise<string> {
     return result.startsWith("http") ? result : `https://${result}`
   }
 
-  const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "206.189.255.57"
+  const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "service.electron.build"
   // add random query param to prevent caching
   const routerUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`
   log.debug({routerUrl}, "")
