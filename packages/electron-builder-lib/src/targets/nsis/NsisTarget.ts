@@ -2,7 +2,7 @@ import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
 import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
-import { getBinFromGithub, getBinFromCustomLoc } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull, walk } from "builder-util/out/fs"
 import { hashFile } from "builder-util/out/hash"
 import _debug from "debug"
@@ -20,7 +20,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir, NsisTargetOptions } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -34,8 +34,6 @@ const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
 export class NsisTarget extends Target {
   readonly options: NsisOptions
-
-  readonly NSIS_PATH: Lazy<string>
 
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
@@ -59,26 +57,7 @@ export class NsisTarget extends Target {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
 
-    this.NSIS_PATH = new Lazy(() => {
-      const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
-      if (custom != null && custom.length > 0) {
-        return Promise.resolve(custom.trim())
-      }
-
-      if (this.options.customNsisBinary) {
-        const checksum = this.options.customNsisBinary.checksum as string
-        const nsisBinariesUrl = this.options.customNsisBinary.url as string
-        let version = this.options.customNsisBinary.version as string
-        if (version === undefined) {
-          version = checksum.substr(0, 8);
-        }
-        if (checksum !== undefined && nsisBinariesUrl !== undefined) {
-          return getBinFromCustomLoc("nsis", version, nsisBinariesUrl, checksum)
-        }
-      }
-      // noinspection SpellCheckingInspection
-      return getBinFromGithub("nsis", "3.0.3.1", "rYRTO0OqNStw1uFP1RJ4aCGyK+GCz4AIy4uSO3g/sPmuONYDPhp8B0Q6xUx4aTb8hLaFeWyvo7tsp++9nrMoSw==")
-    })
+    NsisTargetOptions.resolve(this.options);
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -506,7 +485,7 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await this.NSIS_PATH.value
+    const nsisPath = await NSIS_PATH.value
     const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR

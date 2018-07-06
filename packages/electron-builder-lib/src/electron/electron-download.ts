@@ -12,7 +12,9 @@ let tmpFileCounter = 0
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
 export interface ElectronDownloadOptions {
-  version: string
+  // https://github.com/electron-userland/electron-builder/issues/3077
+  // must be optional
+  version?: string
 
   /**
    * The [cache location](https://github.com/electron-userland/electron-download#cache-location).

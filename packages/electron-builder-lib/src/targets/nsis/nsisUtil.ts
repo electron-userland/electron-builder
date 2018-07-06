@@ -1,13 +1,47 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
+import { getBinFromGithub, getBinFromCustomLoc } from 'builder-util/out/binDownload'
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
+
+export const NsisTargetOptions = (function () {
+  let _resolve: (options: any) => void;
+  const promise = new Promise<string>((resolve) => _resolve = resolve)
+  return {
+    then: (callback:any): Promise<string> => promise.then(callback),
+    resolve:(options: any): void => _resolve(options)
+  }
+})()
+
+export const NSIS_PATH = new Lazy((): Promise<string> => {
+  const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
+  if (custom != null && custom.length > 0) {
+    return Promise.resolve(custom.trim())
+  }
+  return NsisTargetOptions.then((options:any) => {
+    if (options.customNsisBinary) {
+      const checksum = options.customNsisBinary.checksum as string
+      const nsisBinariesUrl = options.customNsisBinary.url as string
+      let version = options.customNsisBinary.version as string
+      if (version === undefined) {
+        version = checksum.substr(0, 8);
+      }
+      if (checksum !== undefined && nsisBinariesUrl !== undefined) {
+        return getBinFromCustomLoc("nsis", version, nsisBinariesUrl, checksum)
+      }
+    }
+    // noinspection SpellCheckingInspection
+    return getBinFromGithub("nsis", "3.0.3.1", "rYRTO0OqNStw1uFP1RJ4aCGyK+GCz4AIy4uSO3g/sPmuONYDPhp8B0Q6xUx4aTb8hLaFeWyvo7tsp++9nrMoSw==")
+  })
+})
+
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -73,7 +107,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = target.NSIS_PATH.value
+    promise = NSIS_PATH.value
       .then(it => {
         const outFile = path.join(appOutDir, "resources", "elevate.exe")
         const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
