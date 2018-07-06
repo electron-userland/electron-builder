@@ -1,7 +1,7 @@
 import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../../options/CommonWindowsInstallerConfiguration"
 
-interface customNsisBinary {
+interface CustomNsisBinary {
   /**
   * @private
   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
@@ -51,7 +51,7 @@ export interface CommonNsisOptions {
    * @private
    */
 
-  readonly customNsisBinary?: customNsisBinary | null
+  readonly customNsisBinary?: CustomNsisBinary | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {

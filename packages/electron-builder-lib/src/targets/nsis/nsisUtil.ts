@@ -1,22 +1,23 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromGithub, getBinFromCustomLoc } from 'builder-util/out/binDownload'
+import { getBinFromGithub, getBinFromCustomLoc } from "builder-util/out/binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
+import { NsisOptions } from "./nsisOptions"
 import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
 export const NsisTargetOptions = (function () {
-  let _resolve: (options: any) => void;
-  const promise = new Promise<string>((resolve) => _resolve = resolve)
+  let _resolve: (options: NsisOptions) => any;
+  const promise = new Promise<NsisOptions>((resolve) => _resolve = resolve)
   return {
-    then: (callback:any): Promise<string> => promise.then(callback),
-    resolve:(options: any): void => _resolve(options)
+    then: (callback: (options: NsisOptions) => any): Promise<string> => promise.then(callback),
+    resolve: (options: NsisOptions): any => _resolve(options)
   }
 })()
 
@@ -25,16 +26,12 @@ export const NSIS_PATH = new Lazy((): Promise<string> => {
   if (custom != null && custom.length > 0) {
     return Promise.resolve(custom.trim())
   }
-  return NsisTargetOptions.then((options:any) => {
+  return NsisTargetOptions.then((options: NsisOptions) => {
     if (options.customNsisBinary) {
-      const checksum = options.customNsisBinary.checksum as string
-      const nsisBinariesUrl = options.customNsisBinary.url as string
-      let version = options.customNsisBinary.version as string
-      if (version === undefined) {
-        version = checksum.substr(0, 8);
-      }
-      if (checksum !== undefined && nsisBinariesUrl !== undefined) {
-        return getBinFromCustomLoc("nsis", version, nsisBinariesUrl, checksum)
+      const { checksum, url, version } = options.customNsisBinary
+      if (checksum && url) {
+        const binaryVersion = version || checksum.substr(0, 8)
+        return getBinFromCustomLoc("nsis", binaryVersion, url, checksum)
       }
     }
     // noinspection SpellCheckingInspection
