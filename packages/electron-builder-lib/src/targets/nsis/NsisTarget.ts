@@ -57,7 +57,7 @@ export class NsisTarget extends Target {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
 
-    NsisTargetOptions.resolve(this.options);
+    NsisTargetOptions.resolve(this.options)
   }
 
   async build(appOutDir: string, arch: Arch) {

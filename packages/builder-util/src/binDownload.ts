@@ -11,8 +11,8 @@ export function download(url: string, output: string, checksum?: string | null):
 }
 
 export function getBinFromCustomLoc(name: string, version: string, binariesLocUrl: string, checksum: string): Promise<string> {
-  const dirName = `${name}-${version}`;
-  return getBin(dirName, binariesLocUrl, checksum);
+  const dirName = `${name}-${version}`
+  return getBin(dirName, binariesLocUrl, checksum)
 }
 
 export function getBinFromGithub(name: string, version: string, checksum: string): Promise<string> {

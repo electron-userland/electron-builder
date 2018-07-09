@@ -12,9 +12,9 @@ import { NsisTarget } from "./NsisTarget"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
-export const NsisTargetOptions = (function () {
-  let _resolve: (options: NsisOptions) => any;
-  const promise = new Promise<NsisOptions>((resolve) => _resolve = resolve)
+export const NsisTargetOptions = (() => {
+  let _resolve: (options: NsisOptions) => any
+  const promise = new Promise<NsisOptions>(resolve => _resolve = resolve)
   return {
     then: (callback: (options: NsisOptions) => any): Promise<string> => promise.then(callback),
     resolve: (options: NsisOptions): any => _resolve(options)
@@ -38,7 +38,6 @@ export const NSIS_PATH = new Lazy((): Promise<string> => {
     return getBinFromGithub("nsis", "3.0.3.1", "rYRTO0OqNStw1uFP1RJ4aCGyK+GCz4AIy4uSO3g/sPmuONYDPhp8B0Q6xUx4aTb8hLaFeWyvo7tsp++9nrMoSw==")
   })
 })
-
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
