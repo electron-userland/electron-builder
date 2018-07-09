@@ -85,7 +85,10 @@ ${endIf}
 !ifdef ONE_CLICK
   !ifdef RUN_AFTER_FINISH
     ${ifNot} ${Silent}
-    ${orIf} ${isForceRun}
+      !insertmacro doStartApp
+    ${endIf}
+  !else
+    ${if} ${isForceRun}
       !insertmacro doStartApp
     ${endIf}
   !endif
