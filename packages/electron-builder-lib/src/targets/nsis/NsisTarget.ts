@@ -1,6 +1,7 @@
+import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
-import { PackageFileInfo, UUID } from "builder-util-runtime"
+import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
+import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { statOrNull, walk } from "builder-util/out/fs"
 import { hashFile } from "builder-util/out/hash"
@@ -172,6 +173,7 @@ export class NsisTarget extends Target {
     }
 
     const packageFiles: { [arch: string]: PackageFileInfo } = {}
+    let estimatedSize = 0
     if (this.isPortable && options.useZip) {
       for (const [arch, dir] of this.archs.entries()) {
         defines[arch === Arch.x64 ? "APP_DIR_64" : "APP_DIR_32"] = dir
@@ -194,6 +196,16 @@ export class NsisTarget extends Target {
           packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
+
+        const archiveInfo = (await exec(path7za, ["l", file])).trim()
+        // after adding blockmap data will be "Warnings: 1" in the end of output
+        const match = archiveInfo.match(/(\d+)\s+\d+\s+\d+\s+files/)
+        if (match == null) {
+          log.warn({output: archiveInfo}, "cannot compute size of app package")
+        }
+        else {
+          estimatedSize += parseInt(match[1], 10)
+        }
       })
     }
 
@@ -203,6 +215,11 @@ export class NsisTarget extends Target {
     }
     else {
       await this.configureDefines(oneClick, defines)
+    }
+
+    if (estimatedSize !== 0) {
+      // in kb
+      defines.ESTIMATED_SIZE = Math.round(estimatedSize / 1024)
     }
 
     if (packager.compression === "store") {
@@ -418,11 +435,16 @@ export class NsisTarget extends Target {
     if (defines.APP_FILENAME !== appInfo.productFilename) {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
-    defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\installer.exe`
 
-    const options = this.options
+    if (this.isWebInstaller) {
+      defines.APP_PACKAGE_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_PACKAGE_FILE_NAME}`
+    }
+    else {
+      defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_INSTALLER_FILE_NAME}`
+    }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
+      const options = this.options
       if (options.useZip) {
         defines.ZIP_COMPRESSION = null
       }

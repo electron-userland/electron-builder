@@ -4,8 +4,7 @@ import { CONCURRENCY } from "builder-util/out/fs"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
-import { getDestinationPath } from "../util/appFileCopier"
-import { ResolvedFileSet } from "../util/AppFileCopierHelper"
+import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 
@@ -18,6 +17,10 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   else {
     list.push(value)
   }
+}
+
+export function isLibOrExe(file: string): boolean {
+  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so")
 }
 
 /** @internal */
@@ -78,7 +81,7 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
 
     // https://github.com/electron-userland/electron-builder/issues/2679
     let shouldUnpack = false
-    if (file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib")) {
+    if (isLibOrExe(file)) {
       shouldUnpack = true
     }
     else if (!file.includes(".", nextSlashIndex) && path.extname(file) === "") {

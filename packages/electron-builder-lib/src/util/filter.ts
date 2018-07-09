@@ -2,7 +2,6 @@ import { Filter } from "builder-util/out/fs"
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { ensureEndSlash } from "./AppFileCopierHelper"
 
 /** @internal */
 export function hasMagic(pattern: Minimatch) {
@@ -18,6 +17,11 @@ export function hasMagic(pattern: Minimatch) {
   }
 
   return false
+}
+
+// sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
+function ensureEndSlash(s: string) {
+  return s.length === 0 || s.endsWith(path.sep) ? s : (s + path.sep)
 }
 
 /** @internal */

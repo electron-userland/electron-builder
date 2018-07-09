@@ -153,7 +153,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
   ],
 }

@@ -48,7 +48,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
         hostname: "github.com",
         path: "/electron/electron/releases/latest",
         headers: {
-          Accept: "application/json",
+          accept: "application/json",
         },
       }))!!)
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name

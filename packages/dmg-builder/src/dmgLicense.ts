@@ -43,9 +43,7 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
     rtfs.push(data)
 
     defaultButtons.push(await getLicenseButtons(licenseButtonFiles, item.langWithRegion, counter, item.langName))
-
     addedRegionCodes.push(getRegionCode(item.langWithRegion))
-
     counter++
   }
 

@@ -73,6 +73,8 @@
   !else
     !ifdef APP_PACKAGE_URL
       Var /GLOBAL packageFile
+      Var /GLOBAL isPackageFileExplicitlySpecified
+
       ${StdUtils.GetParameter} $packageFile "package-file" ""
       ${if} $packageFile == ""
         !ifdef APP_64_NAME
@@ -94,10 +96,18 @@
         !endif
         StrCpy $4 "$packageFile"
         StrCpy $packageFile "$EXEDIR/$packageFile"
+        StrCpy $isPackageFileExplicitlySpecified "false"
+      ${else}
+        StrCpy $isPackageFileExplicitlySpecified "true"
+      ${endIf}
 
-        ${if} ${FileExists} "$packageFile"
-          # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
-          # 1. auto-updater uses --package-file and validates checksum 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
+      # 1. auto-updater uses --package-file and validates checksum
+      # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+      ${if} ${FileExists} "$packageFile"
+        ${if} $isPackageFileExplicitlySpecified == "true"
+          Goto fun_extract
+        ${else}
           ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
           ${if} $3 == $1
             Goto fun_extract
@@ -105,23 +115,40 @@
             MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
           ${endIf}
         ${endIf}
-        !insertmacro downloadApplicationFiles
       ${endIf}
+
+      !insertmacro downloadApplicationFiles
 
       fun_extract:
         !insertmacro extractUsing7za "$packageFile"
 
+        # electron always uses per user app data
+        ${if} $installMode == "all"
+          SetShellVarContext current
+        ${endif}
+
         ClearErrors
-        Rename "$packageFile" "$INSTDIR\package.7z"
+        Rename "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
         ${if} ${errors}
           # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
           ClearErrors
-          CopyFiles /SILENT "$packageFile" "$INSTDIR\package.7z"
+          CopyFiles /SILENT "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
           Delete "$packageFile"
+        ${endif}
+
+        ${if} $installMode == "all"
+          SetShellVarContext all
         ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
+      # electron always uses per user app data
+      ${if} $installMode == "all"
+        SetShellVarContext current
+      ${endif}
       CopyFiles /SILENT "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
+      ${if} $installMode == "all"
+        SetShellVarContext all
+      ${endif}
     !endif
   !endif
 
@@ -162,8 +189,13 @@
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
 
-	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
-	IntFmt $0 "0x%08X" $0
+  # allow user to define ESTIMATED_SIZE to avoid GetSize call
+  !ifdef ESTIMATED_SIZE
+    IntFmt $0 "0x%08X" ${ESTIMATED_SIZE}
+  !else
+    ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+    IntFmt $0 "0x%08X" $0
+  !endif
 	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 

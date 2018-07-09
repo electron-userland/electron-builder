@@ -153,14 +153,17 @@ export function newBaseUrl(url: string) {
   return result
 }
 
+// addRandomQueryToAvoidCaching is false by default because in most cases URL already contains version number,
+// so, it makes sense only for Generic Provider for channel files
 /** @internal */
-export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching = false): URL {
+export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching: boolean = false): URL {
   const result = new URL(pathname, baseUrl)
+  const hasSearch = result.search != null && result.search.length !== 0
   // search is not propagated (search is an empty string if not specified)
-  if (!result.search && baseUrl.search) {
+  if (!hasSearch && baseUrl.search) {
     result.search = baseUrl.search
   }
-  if (addRandomQueryToAvoidCaching && !result.search) {
+  if (addRandomQueryToAvoidCaching && !hasSearch) {
     result.search = `noCache=${Date.now().toString(32)}`
   }
   return result

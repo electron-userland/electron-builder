@@ -1,8 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { close, fstat, open, read } from "fs-extra-p"
 
-export const BLOCK_MAP_FILE_NAME = "_blockMap.blockmap"
-
 export interface FileChunks {
   checksums: Array<string>
   sizes: Array<number>

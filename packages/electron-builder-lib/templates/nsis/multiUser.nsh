@@ -4,8 +4,9 @@
 !define FOLDERID_UserProgramFiles {5CD7AEE2-2219-4A67-B85D-6C9CE15660CB}
 !define KF_FLAG_CREATE 0x00008000
 
-!define INSTALL_REGISTRY_KEY "Software\${APP_GUID}"
-!define UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_GUID}"
+# allow user to define own custom
+!define /ifndef INSTALL_REGISTRY_KEY "Software\${APP_GUID}"
+!define /ifndef UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_GUID}"
 
 # current Install Mode ("all" or "CurrentUser")
 Var installMode
@@ -38,7 +39,7 @@ Var installMode
       System::Store L
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
-        
+
     # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
     ${StdUtils.GetParameter} $R0 "D" ""
     ${If} $R0 != ""
@@ -81,12 +82,12 @@ Var installMode
 
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
-  
+
     # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
     ${StdUtils.GetParameter} $R0 "D" ""
     ${If} $R0 != ""
       StrCpy $INSTDIR $R0
     ${endif}
-      
+
   !macroend
 !endif

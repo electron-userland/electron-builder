@@ -5,6 +5,10 @@ import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
+export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
+  return !url.includes("s3.amazonaws.com")
+}
+
 export function createClient(data: PublishConfiguration | AllPublishOptions, updater: AppUpdater) {
   // noinspection SuspiciousTypeOfGuard
   if (typeof data === "string") {
@@ -21,7 +25,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         return new GitHubProvider(githubOptions, updater, httpExecutor)
       }
       else {
-        return new PrivateGitHubProvider(githubOptions, token, httpExecutor)
+        return new PrivateGitHubProvider(githubOptions, updater, token, httpExecutor)
       }
 
     case "s3":
@@ -34,7 +38,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
     case "generic":
       const options = data as GenericServerOptions
-      return new GenericProvider(options, updater, options.useMultipleRangeRequest !== false && !options.url.includes("s3.amazonaws.com"))
+      return new GenericProvider(options, updater, options.useMultipleRangeRequest !== false && isUrlProbablySupportMultiRangeRequests(options.url))
 
     case "bintray":
       return new BintrayProvider(data as BintrayOptions, httpExecutor)

@@ -2,8 +2,8 @@ FROM buildpack-deps:xenial-curl
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn && \
-  apt-get -qq update && apt-get -qq dist-upgrade && \
+RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln -s /yarn/bin/yarn /usr/bin/yarn
+RUN apt-get -qq update && apt-get -qq dist-upgrade && \
   # add repo for git-lfs
   curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
   # git ssh for using as docker image on CircleCI
@@ -11,7 +11,6 @@ RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv yarn-* /yarn && ln
   # rpm is required for FPM to build rpm package
   # libsecret-1-0 and libgnome-keyring-dev are required even for prebuild keytar
   # sudo for snapcraft (install build packages)
-  apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
   apt-get -qq install --no-install-recommends git qtbase5-dev bsdtar build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl3 git git-lfs ssh unzip \
   libsecret-1-dev libgnome-keyring-dev \
   libopenjp2-tools \

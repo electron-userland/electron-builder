@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, log } from "builder-util"
-import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs"
-import { mkdirs } from "fs-extra-p"
+import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer } from "builder-util/out/fs"
+import { ensureDir } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
@@ -20,6 +20,22 @@ export const excludedNames = ".git,.hg,.svn,CVS,RCS,SCCS," +
 
 export const excludedExts = "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts"
 
+function ensureNoEndSlash(file: string): string {
+  if (path.sep !== "/") {
+    file = file.replace(/\//g, path.sep)
+  }
+  if (path.sep !== "\\") {
+    file = file.replace(/\\/g, path.sep)
+  }
+
+  if (file.endsWith(path.sep)) {
+    return file.substring(0, file.length - 1)
+  }
+  else {
+    return file
+  }
+}
+
 /** @internal */
 export class FileMatcher {
   readonly from: string
@@ -32,8 +48,8 @@ export class FileMatcher {
   readonly isSpecifiedAsEmptyArray: boolean
 
   constructor(from: string, to: string, readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | null | undefined) {
-    this.from = macroExpander(from)
-    this.to = macroExpander(to)
+    this.from = ensureNoEndSlash(macroExpander(from))
+    this.to = ensureNoEndSlash(macroExpander(to))
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
     this.isSpecifiedAsEmptyArray = Array.isArray(patterns) && patterns.length === 0
   }
@@ -271,7 +287,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
 }
 
 /** @internal */
-export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
+export function copyFiles(matchers: Array<FileMatcher> | null, transformer: FileTransformer | null): Promise<any> {
   if (matchers == null || matchers.length === 0) {
     return Promise.resolve()
   }
@@ -290,7 +306,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
         return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat)
       }
 
-      await mkdirs(path.dirname(matcher.to))
+      await ensureDir(path.dirname(matcher.to))
       return await copyOrLinkFile(matcher.from, matcher.to, fromStat)
     }
 
@@ -298,6 +314,6 @@ export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
       matcher.prependPattern("**/*")
     }
     log.debug({matcher}, "copying files using pattern")
-    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter()})
+    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter(), transformer})
   })
 }

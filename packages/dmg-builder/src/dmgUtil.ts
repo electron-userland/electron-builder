@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { exec } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
@@ -43,7 +42,7 @@ export async function detach(name: string) {
     await exec("hdiutil", ["detach", "-quiet", name])
   }
   catch (e) {
-    await new BluebirdPromise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       setTimeout(() => {
         exec("hdiutil", ["detach", "-force", name])
           .then(resolve)
@@ -72,9 +71,7 @@ export async function computeBackground(packager: PackageBuilder): Promise<strin
 
 export async function applyProperties(entries: any, env: any, asyncTaskManager: AsyncTaskManager, packager: PackageBuilder) {
   const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
-
   asyncTaskManager.addTask(outputFile(dmgPropertiesFile, (await readFile(path.join(getDmgTemplatePath(), "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
-
   await asyncTaskManager.awaitTasks()
 
   await exec("/usr/bin/perl", [dmgPropertiesFile], {

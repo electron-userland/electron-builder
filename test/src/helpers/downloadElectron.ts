@@ -4,7 +4,7 @@ import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./testConfig"
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
+const downloadElectron: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/electron-builder-lib/out/electron/electron-download")).downloadElectron
 
 export function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually

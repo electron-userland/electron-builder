@@ -10,7 +10,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.tar.gz",
-      "safeArtifactName": "TestApp-1.1.0.tar.gz",
     },
   ],
 }
@@ -22,7 +21,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.7z",
-      "safeArtifactName": "TestApp-1.1.0.7z",
     },
     Object {
       "arch": "x64",
@@ -39,7 +37,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.zip",
-      "safeArtifactName": "TestApp-1.1.0.zip",
     },
   ],
 }

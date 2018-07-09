@@ -6,17 +6,14 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.tar.bz2",
-      "safeArtifactName": "TestApp-1.1.0.tar.bz2",
     },
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.tar.lz",
-      "safeArtifactName": "TestApp-1.1.0.tar.lz",
     },
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.tar.xz",
-      "safeArtifactName": "TestApp-1.1.0.tar.xz",
     },
   ],
 }

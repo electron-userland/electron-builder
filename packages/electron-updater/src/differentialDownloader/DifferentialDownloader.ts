@@ -40,7 +40,7 @@ export abstract class DifferentialDownloader {
       method,
       headers: {
         ...this.options.requestHeaders,
-        Accept: "*/*",
+        accept: "*/*",
       } as any,
     }
   }
@@ -83,7 +83,7 @@ export abstract class DifferentialDownloader {
     const oldFileFd = await open(this.options.oldFile, "r")
     const newFileFd = await open(this.options.newFile, "w")
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
-    await new BluebirdPromise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const streams: Array<any> = []
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
       // to simply debug, do manual validation to allow file to be fully written
@@ -149,7 +149,7 @@ export abstract class DifferentialDownloader {
 
             const debug = this.logger.debug
             if (debug != null) {
-              debug(`effective url: ${actualUrl == null ? "" : removeQuery(actualUrl)}, range: ${range}`)
+              debug(`effective url: ${actualUrl == null ? "original" : removeQuery(actualUrl)}, range: ${range}`)
             }
 
             const request = this.httpExecutor.doRequest(requestOptions, response => {
@@ -205,7 +205,7 @@ export abstract class DifferentialDownloader {
   }
 
   private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void) {
-    return new BluebirdPromise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const request = this.httpExecutor.doRequest(requestOptions, response => {
         if (!checkIsRangesSupported(response, reject)) {
           return

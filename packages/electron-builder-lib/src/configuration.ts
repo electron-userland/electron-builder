@@ -1,5 +1,6 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
+import { ElectronDownloadOptions } from "./electron/electron-download"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
@@ -238,29 +239,4 @@ export interface MetadataDirectories {
    * The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
    */
   readonly app?: string | null
-}
-
-export interface ElectronDownloadOptions {
-  /**
-   * The [cache location](https://github.com/electron-userland/electron-download#cache-location).
-   */
-  cache?: string | null
-
-  /**
-   * The mirror.
-   */
-  mirror?: string | null
-
-  /** @private */
-  customDir?: string | null
-  /** @private */
-  customFilename?: string | null
-
-  quiet?: boolean
-
-  strictSSL?: boolean
-  verifyChecksum?: boolean
-
-  /** @private */
-  force?: boolean
 }

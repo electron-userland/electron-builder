@@ -1,9 +1,10 @@
 # one-click installer messages, see assistedMessages.yml for assisted installer messages
+# en must be first (https://github.com/electron-userland/electron-builder/issues/2517)
 win7Required:
+  en: Windows 7 and above is required
   de: Windows 7 oder höher wird vorausgesetzt
   it: È necessario disporre del sistema operativo Windows 7 e successivi
   fr: Windows 7 (ou une version ultérieure) est requis
-  en: Windows 7 and above is required
   ja: Windows 7 以降が必要です
   ko: Windows 7 이상이 필요합니다
   ru: Требуется Windows 7 и выше
@@ -14,10 +15,10 @@ win7Required:
   zh_CN: 需要 Windows 7 或以上系统
   tr_TR: Windows 7 ve üstü gereklidir
 x64WinRequired:
+  en: 64-bit Windows is required
   de: 64-Bit-Windows wird vorausgesetzt
   it: È necessario disporre di un sistema operativo Windows a 64 bit
   fr: Windows 64 bits est requis
-  en: 64-bit Windows is required
   ja: 64 ビット バージョンの Windows が必要です
   ko: 64 비트 버전의 Windows가 필요합니다
   ru: Требуется Windows 64-bit
@@ -28,10 +29,10 @@ x64WinRequired:
   zh_CN: 需要 64 位 Windows 系统
   tr_TR: 64 bit Windows gerekli
 appRunning:
+  en: "${PRODUCT_NAME} is running.\nClick OK to close it."
   de: "${PRODUCT_NAME} ist geöffnet. \nKlicken Sie zum Schliessen auf «OK»."
   it: "${PRODUCT_NAME} è in esecuzione. \nPremi OK per chiudere."
   fr: "${PRODUCT_NAME} est en cours d’utilisation. \nCliquez sur «OK» pour fermer ce programme."
-  en: "${PRODUCT_NAME} is running.\nClick OK to close it."
   ja: "${PRODUCT_NAME} が実行中です。\nOK をクリックすると終了します。"
   ko: "${PRODUCT_NAME}이(가) 실행 중입니다. \nOK을 클릭하면 종료됩니다."
   ru: "Приложение ${PRODUCT_NAME} уже запущено.\nНажмите OK для закрытия."
@@ -42,10 +43,10 @@ appRunning:
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
 installing:
+  en: Installing, please wait...
   de: Installation läuft, bitte warten...
   it: Attendere prego. Installazione in corso...
-  fr: En cours d’installation... Veuillez patienter svp
-  en: Installing, please wait...
+  fr: En cours d’installation... Veuillez patienter s'il vous plaît.
   ja: インストールしています。しばらくお待ちください...
   ko: 설치하고 있습니다. 잠시 기다려주십시오...
   ru: Установка, пожалуйста, подождите...
@@ -56,10 +57,10 @@ installing:
   zh_CN: 正在安装, 请稍后...
   tr_TR: Yükleniyor, lütfen bekleyin...
 areYouSureToUninstall:
+  en: Are you sure you want to uninstall ${PRODUCT_NAME}?
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
   it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
   fr: Etes-vous sûr(e) de vouloir désinstaller ${PRODUCT_NAME}?
-  en: Are you sure you want to uninstall ${PRODUCT_NAME}?
   ja: ${PRODUCT_NAME} をアンインストールしてもよろしいですか？
   ko: ${PRODUCT_NAME}을(를) 제거 하시겠습니까?
   ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
