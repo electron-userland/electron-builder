@@ -1,30 +1,22 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { debug7zArgs, exec, isEnvTrue, log, spawn, asArray } from "builder-util"
+import { debug7zArgs, exec, isEnvTrue, log, spawn, asArray, executeAppBuilder } from "builder-util"
 import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, CONCURRENCY, unlinkIfExists } from "builder-util/out/fs"
 import { chmod, emptyDir, readdir, remove, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { executeAppBuilder } from "builder-util/out/util"
 import * as semver from "semver"
 import { AsarIntegrity } from "../asar/integrity"
-import { Configuration, ElectronDownloadOptions } from "../configuration"
-import { Platform } from "../core"
+import { Configuration } from "../configuration"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
+import { ElectronPlatformName, Platform, PlatformPackager, Packager } from "../index"
+import { downloadElectron, ElectronDownloadOptions } from "./electron-download"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 
-interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
-  version: string
-  platform: string
-  arch: string
-}
-
-function createDownloadOpts(opts: Configuration, platform: string, arch: string, electronVersion: string): InternalElectronDownloadOptions {
+function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName, arch: string, electronVersion: string): ElectronDownloadOptions {
   return {
     platform,
     arch,
@@ -91,7 +83,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
         return unpack(options, {
           mirror: "https://github.com/brave/muon/releases/download/v",
           customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
-          verifyChecksum: false,
+          isVerifyChecksum: false,
           ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
         }, distMacOsAppName)
       },
@@ -133,7 +125,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
   }
 }
 
-async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: InternalElectronDownloadOptions, distMacOsAppName: string) {
+async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {
   const packager = prepareOptions.packager
   const out = prepareOptions.appOutDir
 
@@ -149,7 +141,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
 
   if (dist == null) {
     const zipPath = (await Promise.all<any>([
-      packager.info.electronDownloader(options),
+      downloadElectron(options),
       emptyDir(out)
     ]))[0]
 

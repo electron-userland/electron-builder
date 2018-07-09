@@ -87,13 +87,17 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     isLevelSet = true
   }
 
-  if (format === "zip" && options.compression === "maximum") {
-    // http://superuser.com/a/742034
-    args.push("-mfb=258", "-mpass=15")
-  }
+  const isZip = format === "zip"
+  if (!storeOnly) {
+    if (isZip && options.compression === "maximum") {
+      // http://superuser.com/a/742034
+      args.push("-mfb=258", "-mpass=15")
+    }
 
-  if (!isLevelSet && !storeOnly) {
-    args.push("-mx=9")
+    if (!isLevelSet) {
+      // https://github.com/electron-userland/electron-builder/pull/3032
+      args.push("-mx=" + ((!isZip || options.compression === "maximum") ? "9" : "7"))
+    }
   }
 
   if (options.dictSize != null) {
@@ -127,11 +131,11 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push(`-mm=${options.method}`)
     }
   }
-  else if (format === "zip" || storeOnly) {
+  else if (isZip || storeOnly) {
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
-  if (format === "zip") {
+  if (isZip) {
     // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
     // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
     // but archive should be the same regardless where produced

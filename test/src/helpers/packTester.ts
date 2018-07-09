@@ -17,6 +17,7 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
 import { TmpDir } from "temp-file"
+import { readAsar } from "electron-builder-lib/out/asar/asar"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -104,7 +105,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     filter: it => {
       const basename = path.basename(it)
       // if custom project dir specified, copy node_modules (i.e. do not ignore it)
-      return (basename !== "dist" || it.includes("node_modules")) && (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
+      return (packagerOptions.projectDir != null || basename !== "node_modules") && (!basename.startsWith(".") || basename === ".babelrc")
     },
     isUseHardLink: USE_HARD_LINKS,
   })
@@ -483,4 +484,10 @@ export function removeUnstableProperties(data: any) {
     }
     return value
   }))
+}
+
+export async function verifyAsarFileTree(resourceDir: string) {
+  const fs = await readAsar(path.join(resourceDir, "app.asar"))
+  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
+  expect(fs.header).toMatchSnapshot()
 }

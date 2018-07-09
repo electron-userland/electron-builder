@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
-import { createClient } from "./providerFactory"
+import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -168,7 +168,7 @@ export abstract class AppUpdater extends EventEmitter {
       })
     }
 
-    this.downloadedUpdateHelper = new DownloadedUpdateHelper(this.app.getPath("userData"))
+    this.downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.getPath("userData"), "__update__"))
 
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
@@ -197,7 +197,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this)
+      provider = new GenericProvider({provider: "generic", url: options}, this, isUrlProbablySupportMultiRangeRequests(options))
     }
     else {
       provider = createClient(options, this)
@@ -229,21 +229,25 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const checkForUpdatesPromise = this.checkForUpdates()
-    checkForUpdatesPromise.then(it => {
-      const downloadPromise = it.downloadPromise
-      if (downloadPromise == null) {
-        this._logger.warn("checkForUpdatesAndNotify called, but downloadPromise is null")
-        return
-      }
+    checkForUpdatesPromise
+      .then(it => {
+        const downloadPromise = it.downloadPromise
+        if (downloadPromise == null) {
+          const debug = this._logger.debug
+          if (debug != null) {
+            debug("checkForUpdatesAndNotify called, downloadPromise is null")
+          }
+          return
+        }
 
-      downloadPromise
-        .then(() => {
-          new Notification({
-            title: "A new update is ready to install",
-            body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
-          }).show()
-        })
-    })
+        downloadPromise
+          .then(() => {
+            new Notification({
+              title: "A new update is ready to install",
+              body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
+            }).show()
+          })
+      })
 
     return checkForUpdatesPromise
   }
@@ -300,7 +304,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({"x-user-staging-id": stagingUserId}))
     return await client.getLatestVersion()
   }
 
@@ -358,7 +362,11 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(`Downloading update from ${asArray(updateInfo.files).map(it => it.url).join(", ")}`)
 
     try {
-      return await this.doDownloadUpdate(updateInfo, cancellationToken)
+      return await this.doDownloadUpdate({
+        updateInfo,
+        requestHeaders: await this.computeRequestHeaders(),
+        cancellationToken,
+      })
     }
     catch (e) {
       this.dispatchError(e)
@@ -370,7 +378,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(updateInfo: UpdateInfo, cancellationToken: CancellationToken): Promise<Array<string>>
+  protected async abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -391,8 +399,7 @@ export abstract class AppUpdater extends EventEmitter {
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
 
-  /*** @private */
-  protected async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
+  private async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
     const fileExtraDownloadHeaders = (await this.provider).fileExtraDownloadHeaders
     if (fileExtraDownloadHeaders != null) {
       const requestHeaders = this.requestHeaders
@@ -401,7 +408,7 @@ export abstract class AppUpdater extends EventEmitter {
         ...requestHeaders,
       }
     }
-    return this.computeFinalHeaders({Accept: "*/*"})
+    return this.computeFinalHeaders({accept: "*/*"})
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
@@ -431,6 +438,18 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return id
   }
+
+  get isAddNoCacheQuery(): boolean {
+    const headers = this.requestHeaders
+    // https://github.com/electron-userland/electron-builder/issues/3021
+    return headers == null || (headers.Authorization == null && headers.authorization == null)
+  }
+}
+
+export interface DownloadUpdateOptions {
+  readonly updateInfo: UpdateInfo
+  readonly requestHeaders: OutgoingHttpHeaders
+  readonly cancellationToken: CancellationToken
 }
 
 function hasPrereleaseComponents(version: string) {

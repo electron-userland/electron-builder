@@ -1,5 +1,4 @@
 import { path7za } from "7zip-bin"
-import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "electron-builder-lib/out/targets/archive"
@@ -142,7 +141,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   // SW now doesn't support 0-level nupkg compressed files. It means that we are forced to use level 1 if store level requested.
   const archive = archiver("zip", {zlib: {level: Math.max(1, (options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel))}})
   const archiveOut = createWriteStream(outFile)
-  const archivePromise = new BluebirdPromise((resolve, reject) => {
+  const archivePromise = new Promise((resolve, reject) => {
     archive.on("error", reject)
     archiveOut.on("error", reject)
     archiveOut.on("close", resolve)

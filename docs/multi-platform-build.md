@@ -115,7 +115,7 @@ If you don't need to build Windows, use image `electronuserland/builder` (wine i
 ### Provided Docker Images
 
 * `builder:base` — Required system dependencies. Not supposed to be used directly.
-* `builder:9` or `builder` — NodeJS 9 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
-* `builder:wine` — Wine, NodeJS 9 and required system dependencies. Based on `builder:9`. Use this image if you need to build Windows targets.
+* `builder:10` or `builder` — NodeJS 10 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
+* `builder:wine` — Wine, NodeJS 10 and required system dependencies. Based on `builder:10`. Use this image if you need to build Windows targets.
 * `builder:wine-mono` — Mono for Squirrel.Windows. Based on `builder:wine`. Use this image if you need to build Squirrel.Windows target.
 * `builder:wine-chrome` — `google-chrome-stable` and `xvfb` are available — you can use this image for headless testing of Electron application. Based on `builder:wine`.

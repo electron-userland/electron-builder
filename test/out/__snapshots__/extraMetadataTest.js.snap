@@ -8,10 +8,7 @@ Object {
     },
   },
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
 }
 `;
 
@@ -25,10 +22,7 @@ Object {
     },
   },
   "draft": undefined,
-  "prepackaged": undefined,
   "prerelease": undefined,
-  "projectDir": undefined,
-  "publish": undefined,
 }
 `;
 

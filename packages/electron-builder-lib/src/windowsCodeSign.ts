@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { asArray, isMacOsSierra, log } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
@@ -14,7 +13,7 @@ import { WinPackager } from "./winPackager"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("winCodeSign", "2.0.0", "QT51iAVlWZlKeip3FPc8FHG/HKhCdWR/Wg+cevhrKHQ1d/oHl49EqXgeztO//DrdyN1X+GCvglaHifXnWR5VXQ==")
+  return getBinFromGithub("winCodeSign", "2.1.0", "Qdhc0SMBty/JH10p5Fcy4pJXLguFwRPGT7nJc5WZKj36TSUZTTqwtXoLeeg4s3bimGLGVlzZByyQV32t1fWEBg==")
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>
@@ -150,7 +149,7 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   }
   catch (e) {
     if (e.message.includes("The file is being used by another process")) {
-      await new BluebirdPromise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         setTimeout(() => {
           vm.exec(tool, args, {timeout, env})
             .then(resolve)
@@ -181,7 +180,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
     const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.verisign.com/scripts/timstamp.dll"
     if (isWin) {
-      args.push(options.isNest || options.hash === "sha256" ? "/tr" : "/t", options.isNest || options.hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
+      args.push(options.isNest || options.hash === "sha256" ? "/tr" : "/t", options.isNest || options.hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://sha256timestamp.ws.symantec.com/sha256/timestamp") : timestampingServiceUrl)
     }
     else {
       args.push("-t", timestampingServiceUrl)

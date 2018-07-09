@@ -6,10 +6,11 @@ import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { FileTransformer, CopyFileTransformer } from "builder-util/out/fs"
+import { orIfFileNotExist } from "builder-util/out/promise"
 import { downloadCertificate } from "./codeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
-import { isElectronBased } from "./Framework"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
@@ -201,7 +202,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
-  async sign(file: string, logMessagePrefix?: string) {
+  async sign(file: string, logMessagePrefix?: string): Promise<void> {
     const signOptions: WindowsSignOptions = {
       path: file,
       name: this.appInfo.productName,
@@ -339,7 +340,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext): Promise<any> {
+  protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
+    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+      return null
+    }
+
+    return file => {
+      if (file.endsWith(".exe") || file.endsWith(".dll")) {
+        const parentDir = path.dirname(file)
+        if (parentDir !== packContext.appOutDir) {
+          return new CopyFileTransformer(file => this.sign(file))
+        }
+      }
+      return null
+    }
+  }
+
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
       return
@@ -349,19 +366,19 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (file === exeFileName) {
         return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
       }
-      else if (file.endsWith(".exe")) {
+      else if (file.endsWith(".exe") || file.endsWith(".dll")) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
     })
 
-    if (!isElectronBased(this.info.framework)) {
+    if (!isAsar) {
       return
     }
 
-    const outResourcesDir = path.join(packContext.appOutDir, "resources")
-    await BluebirdPromise.map(readdir(outResourcesDir), (file: string): any => {
-      if (file.endsWith(".exe")) {
+    const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
+    await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
+      if (file.endsWith(".exe") || file.endsWith(".dll")) {
         return this.sign(path.join(outResourcesDir, file))
       }
       else {

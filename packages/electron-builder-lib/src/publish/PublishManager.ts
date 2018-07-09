@@ -11,6 +11,8 @@ import isCi from "is-ci"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
+import S3Publisher from "electron-publish/out/s3/s3Publisher"
+import SpacesPublisher from "electron-publish/out/s3/spacesPublisher"
 import { ArtifactCreated, Platform, PlatformSpecificBuildOptions, Target } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
@@ -269,8 +271,11 @@ function requireProviderClass(provider: string): any | null {
     case "generic":
       return null
 
+    case "s3":
+      return S3Publisher
+
     case "spaces":
-      return require(`electron-publisher-s3/out/${provider}Publisher`).default
+      return SpacesPublisher
 
     default:
       return require(`electron-publisher-${provider}`).default

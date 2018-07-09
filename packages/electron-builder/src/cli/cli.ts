@@ -45,8 +45,11 @@ function wrap(task: (args: any) => Promise<any>) {
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {
-        console.error(chalk.red(error instanceof InvalidConfigurationError ? error.message : (error.stack || error).toString()))
         process.exitCode = 1
+        // https://github.com/electron-userland/electron-builder/issues/2940
+        process.on("exit", () => process.exitCode = 1)
+
+        console.error(chalk.red(error instanceof InvalidConfigurationError ? error.message : (error.stack || error).toString()))
       })
   }
 }

@@ -19,9 +19,10 @@ test("cli", async () => {
 
   function expected(opt: any): object {
     return {
-      publish: undefined,
       draft: undefined,
-      prerelease: undefined, ...opt}
+      prerelease: undefined,
+      ...opt
+    }
   }
 
   expect(parse("--platform mac")).toMatchSnapshot()
@@ -167,26 +168,30 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 test.ifDevOrLinuxCi("win smart unpack", () => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
+  let p = ""
   return app({
     targets: Platform.WINDOWS.createTarget(DIR_TARGET),
     config: {
       npmRebuild: true,
       onNodeModuleFile: file => {
-        const name = path.basename(file)
+        const name = path.relative(p, file)
         if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
           nodeModuleFiles.push(name)
         }
       },
     },
   }, {
-    projectDirCreated: packageJson(it => {
-      it.dependencies = {
-        debug: "3.1.0",
-        "edge-cs": "1.2.1",
-        "@electron-builder/test-smart-unpack": "1.0.0",
-        "@electron-builder/test-smart-unpack-empty": "1.0.0",
-      }
-    }),
+    projectDirCreated: projectDir => {
+      p = projectDir
+      return packageJson(it => {
+        it.dependencies = {
+          debug: "3.1.0",
+          "edge-cs": "1.2.1",
+          "@electron-builder/test-smart-unpack": "1.0.0",
+          "@electron-builder/test-smart-unpack-empty": "1.0.0",
+        }
+      })(projectDir)
+    },
     packed: async context => {
       await verifySmartUnpack(context.getResources(Platform.WINDOWS))
       expect(nodeModuleFiles).toMatchSnapshot()
@@ -237,7 +242,8 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     it.dependencies = {
       debug: "3.1.0",
       "edge-cs": "1.2.1",
-      "lzma-native": "3.0.8",
+      // no prebuilt for electron 2
+      // "lzma-native": "3.0.8",
       keytar: "4.2.1",
     }
   }),

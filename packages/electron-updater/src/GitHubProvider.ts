@@ -36,7 +36,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const cancellationToken = new CancellationToken()
 
     const feedXml: string = (await this.httpRequest(newUrlFromBase(`${this.basePath}.atom`, this.baseUrl), {
-      Accept: "application/xml, application/atom+xml, text/xml, */*",
+      accept: "application/xml, application/atom+xml, text/xml, */*",
     }, cancellationToken))!
 
     const feed = parseXml(feedXml)

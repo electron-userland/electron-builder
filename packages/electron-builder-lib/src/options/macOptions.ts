@@ -171,6 +171,44 @@ export interface PkgOptions extends TargetSpecificOptions {
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
    */
   readonly license?: string | null
+
+  /**
+   * Install bundle over previous version if moved by user?
+   * @default true
+   */
+  readonly isRelocatable?: boolean | null
+
+  /**
+   * Don't install bundle if newer version on disk?
+   * @default true
+   */
+  readonly isVersionChecked?: boolean | null
+
+  /**
+   * Require identical bundle identifiers at install path?
+   * @default true
+   */
+  readonly hasStrictIdentifier?: boolean | null
+
+  /**
+   * Specifies how an existing version of the bundle on disk should be handled when the version in
+   * the package is installed.
+   *
+   * If you specify upgrade, the bundle in the package atomi-cally replaces any version on disk;
+   * this has the effect of deleting old paths that no longer exist in the new version of
+   * the bundle.
+   *
+   * If you specify update, the bundle in the package overwrites the version on disk, and any files
+   * not contained in the package will be left intact; this is appropriate when you are delivering
+   * an update-only package.
+   *
+   * Another effect of update is that the package bundle will not be installed at all if there is
+   * not already a version on disk; this allows a package to deliver an update for an app that
+   * the user might have deleted.
+   *
+   * @default upgrade
+   */
+  readonly overwriteAction?: "upgrade" | "update" | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

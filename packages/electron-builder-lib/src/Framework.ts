@@ -1,7 +1,6 @@
 import { FileTransformer } from "builder-util/out/fs"
 import { AsarIntegrity } from "./asar/integrity"
-import { Platform } from "./core"
-import { PlatformPackager } from "./platformPackager"
+import { Platform, PlatformPackager, ElectronPlatformName } from "./index"
 
 export interface Framework {
   readonly name: string
@@ -28,7 +27,7 @@ export interface PrepareApplicationStageDirectoryOptions {
    * Platform doesn't process application output directory in any way. Unpack implementation must create or empty dir if need.
    */
   readonly appOutDir: string
-  readonly platformName: string
+  readonly platformName: ElectronPlatformName
   readonly arch: string
   readonly version: string
 }

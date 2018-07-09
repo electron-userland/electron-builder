@@ -94,6 +94,7 @@ test.ifAll.ifNotWindows("os macro", app({
   }
 }))
 
+// error should be ignored because publish: never
 // https://github.com/electron-userland/electron-builder/issues/2670
 test.ifAll.ifNotWindows("dotted s3 bucket", app({
   targets: createTargets([Platform.LINUX], "zip"),

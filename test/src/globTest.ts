@@ -1,9 +1,9 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "electron-builder-lib/out/asar/asar"
-import { mkdirs, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
+import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext } from "./helpers/packTester"
+import { app, assertPack, modifyPackageJson, PackedContext, verifyAsarFileTree } from "./helpers/packTester"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -16,6 +16,8 @@ async function createFiles(appDir: string) {
   const dir = path.join(appDir, "do-not-unpack-dir", "dir-2", "dir-3", "dir-3")
   await mkdirs(dir)
   await writeFile(path.join(dir, "file-in-asar"), "{}")
+
+  await symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }
 
 test.ifDevOrLinuxCi("unpackDir one", app({
@@ -38,8 +40,9 @@ async function assertDirs(context: PackedContext) {
     assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
   ])
 
-  expect((await readFile(path.join(resourceDir, "app.asar"))).toString("base64")).toMatchSnapshot()
+  await verifyAsarFileTree(resourceDir)
 }
+
 test.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack("test-app", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),

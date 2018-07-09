@@ -3,6 +3,7 @@ import { Arch, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { walk } from "builder-util/out/fs"
+import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -188,8 +189,8 @@ export default class MsiTarget extends Target {
         // For example, "ProgramFilesFolder:\My Company\My Product\bin" would create a reference to a Directory element with Id="ProgramFilesFolder" then create directories named "My Company" then "My Product" then "bin" nested beneath each other.
         // This syntax is a shortcut to defining each directory in an individual Directory element.
         dirName = packagePath.substring(0, lastSlash)
-        // add U (user) suffix just to be sure that will be not overwrite system WIX directory ids.
-        directoryId = "d" + Buffer.from(dirName).toString("base64").replace(/\//g, "_").replace(/\+/g, ".").replace(/\=+$/, "")
+        // https://github.com/electron-userland/electron-builder/issues/3027
+        directoryId = "d" + createHash("md5").update(dirName).digest("base64").replace(/\//g, "_").replace(/\+/g, ".").replace(/=+$/, "")
         if (!dirNames.has(dirName)) {
           dirNames.add(dirName)
           dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)

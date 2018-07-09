@@ -10,9 +10,7 @@ import * as path from "path"
 import { exists } from "builder-util/out/fs"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
-import { AfterPackContext, Configuration } from "./configuration"
-import { Platform, SourceRepositoryInfo, Target } from "./core"
-import { Framework } from "./Framework"
+import { Framework, AfterPackContext, Configuration, Platform, SourceRepositoryInfo, Target } from "./index"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
@@ -55,6 +53,12 @@ export class Packager {
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
     return this._metadata!!
+  }
+
+  private _nodeModulesHandledExternally: boolean = false
+
+  get areNodeModulesHandledExternally(): boolean {
+    return this._nodeModulesHandledExternally
   }
 
   private _isPrepackedAppAsar: boolean = false
@@ -115,15 +119,6 @@ export class Packager {
       this._productionDeps = result
     }
     return result
-  }
-
-  private _electronDownloader: any = null
-
-  electronDownloader: (options: any) => Promise<any> = options => {
-    if (this._electronDownloader == null) {
-      this._electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
-    }
-    return this._electronDownloader(options)
   }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
@@ -255,6 +250,7 @@ export class Packager {
     }
     else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
       configPath = configFromOptions.extends
+      delete configFromOptions.extends
     }
 
     const projectDir = this.projectDir
@@ -439,6 +435,9 @@ export class Packager {
         platform,
         arch: Arch[arch]
       })
+
+      // If beforeBuild resolves to false, it means that handling node_modules is done outside of electron-builder.
+      this._nodeModulesHandledExternally = !performDependenciesInstallOrRebuild
       if (!performDependenciesInstallOrRebuild) {
         return
       }

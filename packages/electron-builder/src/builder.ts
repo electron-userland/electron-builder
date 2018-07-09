@@ -1,8 +1,7 @@
-import { addValue, Arch, archFromString, InvalidConfigurationError, log, deepAssign, getArchCliNames } from "builder-util"
+import { addValue, Arch, archFromString, deepAssign, getArchCliNames, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
-import { Packager, build as _build, Configuration, DIR_TARGET, PackagerOptions, Platform } from "electron-builder-lib"
+import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "electron-builder-lib"
 import { PublishOptions } from "electron-publish"
-import BluebirdPromise from "bluebird-lst"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -145,10 +144,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
   let config = result.config
 
-  // config is array when combining dot-notation values with a config file value (#2016)
+  // config is array when combining dot-notation values with a config file value
+  // https://github.com/electron-userland/electron-builder/issues/2016
   if (Array.isArray(config)) {
     const newConfig: Configuration = {}
-
     for (const configItem of config) {
       if (typeof configItem === "object") {
         deepAssign(newConfig, configItem)
@@ -222,16 +221,7 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
 
 export function build(rawOptions?: CliOptions): Promise<Array<string>> {
   const buildOptions = normalizeOptions(rawOptions || {})
-  const packager = new Packager(buildOptions)
-
-  let electronDownloader: any = null
-  packager.electronDownloader = options => {
-    if (electronDownloader == null) {
-      electronDownloader = BluebirdPromise.promisify(require("electron-download-tf"))
-    }
-    return electronDownloader(options)
-  }
-  return _build(buildOptions, packager)
+  return _build(buildOptions, new Packager(buildOptions))
 }
 
 /**

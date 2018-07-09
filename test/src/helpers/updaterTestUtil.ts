@@ -24,7 +24,7 @@ export function createTestApp(version: string, appPath = "") {
 
     // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
     getPath(type: string) {
-      return path.join(tmpdir(), "electron-updater-test", type)
+      return path.join(process.env.ELECTRON_BUILDER_TMP_DIR || tmpdir(), "electron-updater-test", type)
     }
 
     on() {

@@ -30,9 +30,9 @@ function getElectronGypCacheDir() {
   return path.join(homedir(), ".electron-gyp")
 }
 
-export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
+export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.Platform, arch: string, buildFromSource: boolean) {
   const npmConfigArch = arch === "armv7l" ? "arm" : arch
-  const common = {
+  const common: any = {
     ...process.env,
     npm_config_arch: npmConfigArch,
     npm_config_target_arch: npmConfigArch,
@@ -42,6 +42,10 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
     npm_config_target_platform: platform,
     npm_config_update_binary: true,
     npm_config_fallback_to_build: true,
+  }
+
+  if (platform === "win32") {
+    common.npm_config_target_libc = "unknown"
   }
 
   if (!frameworkInfo.useCustomDist) {
@@ -108,7 +112,7 @@ export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
   productionDeps?: Lazy<Array<Dependency>>
 
-  platform?: string
+  platform?: NodeJS.Platform
   arch?: string
 
   buildFromSource?: boolean
