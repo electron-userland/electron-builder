@@ -51,7 +51,7 @@
     "electron-osx-sign": "0.4.10",
     "electron-publish": "0.0.0-semantic-release",
     "fs-extra-p": "^4.6.1",
-    "hosted-git-info": "^2.6.1",
+    "hosted-git-info": "^2.7.1",
     "is-ci": "^1.1.0",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.12.0",
