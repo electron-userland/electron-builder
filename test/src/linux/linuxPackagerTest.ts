@@ -2,7 +2,7 @@ import { Arch, build, Platform } from "electron-builder"
 import { copyFile, move, remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
+import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
@@ -55,6 +55,13 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
         mimeType: "application/x-example",
       }
     ],
+  }
+}, {
+  projectDirCreated: projectDir => {
+    return Promise.all([
+      // copy full text to test presentation
+      copyTestAsset("license_en.txt", path.join(projectDir, "build", "license.txt")),
+    ])
   }
 }))
 

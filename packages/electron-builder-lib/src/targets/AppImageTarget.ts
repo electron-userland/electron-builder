@@ -10,6 +10,7 @@ import { AppImageOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { getNotLocalizedLicenseFile } from "../util/license"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
@@ -35,10 +36,11 @@ export default class AppImageTarget extends Target {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
+    const options = this.options
     // https://github.com/electron-userland/electron-builder/issues/775
     // https://github.com/electron-userland/electron-builder/issues/1726
     // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactNamePattern(this.options, "AppImage", arch, "${name}-${version}-${arch}.${ext}", false)
+    const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch, "${name}-${version}-${arch}.${ext}", false)
     const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("AppImage", artifactPath, arch)
 
@@ -47,13 +49,20 @@ export default class AppImageTarget extends Target {
     let additionalInstall = await this.copyIcons(stageDir.dir, resourceName)
     additionalInstall += await this.copyMimeTypes(stageDir.dir)
 
+    const license = await getNotLocalizedLicenseFile(options.license, this.packager)
+    if (license != null) {
+      await copyOrLinkFile(license, stageDir.getTempFile("eula.txt"))
+    }
+
     const finalDesktopFilename = `${this.packager.executableName}.desktop`
     await Promise.all([
       unlinkIfExists(artifactPath),
       writeFile(stageDir.getTempFile("/AppRun"), (await appRunTemplate.value)({
-        systemIntegration: this.options.systemIntegration || "ask",
+        systemIntegration: options.systemIntegration || "ask",
+        isShowEula: license != null,
         desktopFileName: finalDesktopFilename,
         executableName: this.packager.executableName,
+        productName: this.packager.appInfo.productName,
         resourceName,
         additionalInstall,
       }), {

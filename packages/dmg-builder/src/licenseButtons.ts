@@ -1,6 +1,6 @@
 import { log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
-import { getLicenseAssets } from "builder-util/out/license"
+import { getLicenseAssets } from "electron-builder-lib/out/util/license"
 import { readFile } from "fs-extra-p"
 import * as iconv from "iconv-lite"
 import { safeLoad } from "js-yaml"

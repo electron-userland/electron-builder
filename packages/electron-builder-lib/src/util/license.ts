@@ -1,6 +1,6 @@
 import * as path from "path"
-import { PackageBuilder } from "./api"
-import { langIdToName, toLangWithRegion } from "./langs"
+import { PackageBuilder } from "builder-util/out/api"
+import { langIdToName, toLangWithRegion } from "builder-util/out/langs"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PackageBuilder) {
   return fileNames.sort((a, b) => {
@@ -23,7 +23,7 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PackageBuil
     })
 }
 
-export async function getNotLocalizedLicenseFiles(custom: string | null | undefined, packager: PackageBuilder): Promise<string | null> {
+export async function getNotLocalizedLicenseFile(custom: string | null | undefined, packager: PackageBuilder): Promise<string | null> {
   const possibleFiles: Array<string> = []
   for (const name of ["license", "eula"]) {
     for (const ext of ["rtf", "txt", "html"]) {

@@ -1,6 +1,6 @@
 import { Arch, debug, exec, use } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
-import { getNotLocalizedLicenseFiles } from "builder-util/out/license"
+import { getNotLocalizedLicenseFile } from "../util/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
@@ -78,7 +78,7 @@ export class PkgTarget extends Target {
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
 
-    const license = await getNotLocalizedLicenseFiles(options.license, this.packager)
+    const license = await getNotLocalizedLicenseFile(options.license, this.packager)
     if (license != null) {
       distInfo = distInfo.substring(0, insertIndex) + `    <license file="${license}"/>\n` + distInfo.substring(insertIndex)
     }

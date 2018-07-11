@@ -1,6 +1,6 @@
 import { exec, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
-import { getLicenseFiles } from "builder-util/out/license"
+import { getLicenseFiles } from "electron-builder-lib/out/util/license"
 import { outputFile, readFile } from "fs-extra-p"
 import { serializeString } from "./dmgUtil"
 import { getLicenseButtons, getLicenseButtonsFile } from "./licenseButtons"

@@ -1,5 +1,5 @@
 import { lcid } from "builder-util/out/langs"
-import { getLicenseFiles, getNotLocalizedLicenseFiles } from "builder-util/out/license"
+import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license"
 import * as path from "path"
 import { WinPackager } from "../../winPackager"
 import { NsisOptions } from "./nsisOptions"
@@ -7,7 +7,7 @@ import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { nsisTemplatesDir } from "./nsisUtil"
 
 export async function computeLicensePage(packager: WinPackager, options: NsisOptions, scriptGenerator: NsisScriptGenerator, languages: Array<string>): Promise<void> {
-  const license = await getNotLocalizedLicenseFiles(options.license, packager)
+  const license = await getNotLocalizedLicenseFile(options.license, packager)
   if (license != null) {
     let licensePage: Array<string>
     if (license.endsWith(".html")) {
