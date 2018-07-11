@@ -95,6 +95,13 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly signAndEditExecutable?: boolean
 
   /**
+   * Whether to sign DLL files. Advanced option.
+   * @see https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
+   * @default false
+   */
+  readonly signDlls?: boolean
+
+  /**
    * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
    *
    * 1.0.0 sha2

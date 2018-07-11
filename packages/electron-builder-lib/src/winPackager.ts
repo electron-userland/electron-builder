@@ -340,13 +340,17 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
+  private isSignDlls(): boolean {
+    return this.platformSpecificBuildOptions.signDlls === true
+  }
+
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
       return null
     }
 
     return file => {
-      if (file.endsWith(".exe") || file.endsWith(".dll")) {
+      if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
           return new CopyFileTransformer(file => this.sign(file))
@@ -366,7 +370,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (file === exeFileName) {
         return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
       }
-      else if (file.endsWith(".exe") || file.endsWith(".dll")) {
+      else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
