@@ -41,6 +41,7 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 * [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
 * [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
+* [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
 
 ## Quick Setup Guide
 
