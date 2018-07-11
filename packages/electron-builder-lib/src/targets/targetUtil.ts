@@ -1,6 +1,6 @@
 import { emptyDir, remove } from "fs-extra-p"
 import * as path from "path"
-import { Target } from "../core"
+import { Target, AppInfo } from "../"
 import { Arch, debug } from "builder-util"
 import { PlatformPackager } from "../platformPackager"
 
@@ -32,4 +32,10 @@ export async function createStageDirPath(target: Target, packager: PlatformPacka
   const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
   await emptyDir(tempDir)
   return tempDir
+}
+
+// https://github.com/electron-userland/electron-builder/issues/3100
+// https://github.com/electron-userland/electron-builder/commit/2539cfba20dc639128e75c5b786651b652bb4b78
+export function getWindowsInstallationDirName(appInfo: AppInfo, isTryToUseProductName: boolean): string {
+  return isTryToUseProductName && /^[-_+0-9a-zA-Z .]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName
 }

@@ -16,6 +16,7 @@ import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
+import { getWindowsInstallationDirName } from "../targetUtil"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -145,7 +146,7 @@ export class NsisTarget extends Target {
       APP_GUID: guid,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
-      APP_FILENAME: (!oneClick || options.perMachine === true) && /^[-_+0-9a-zA-Z .]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName,
+      APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || options.perMachine === true),
       APP_DESCRIPTION: appInfo.description,
       VERSION: appInfo.version,
 

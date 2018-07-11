@@ -15,7 +15,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
 import { WinPackager } from "../winPackager"
-import { createStageDir } from "./targetUtil"
+import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
@@ -163,7 +163,7 @@ export default class MsiTarget extends Target {
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
       programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
       // wix in the name because special wix format can be used in the name
-      installationDirectoryWixName: /^[-_+0-9a-zA-Z ]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName,
+      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isPerMachine === true),
       dirs,
       files,
     })

@@ -1,4 +1,4 @@
-import { readJson, writeFile, writeJson } from "fs-extra-p"
+import { readJson, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { UploadTask, Arch, Packager, PackagerOptions, PublishOptions } from ".."
 
@@ -79,7 +79,8 @@ async function doBuild(data: BuildTask): Promise<void> {
     },
   }, info.metadata, info.devMetadata, info.repositoryInfo)
 
-  await writeJson(path.join(process.env.ELECTRON_BUILDER_TMP_DIR!!, "__build-result.json"), artifacts)
+  // writeJson must be not used because it adds unwanted \n as last file symbol
+  await writeFile(path.join(process.env.ELECTRON_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
 }
 
 doBuild(JSON.parse(process.argv[2]))
