@@ -1,12 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, isEnvTrue, log } from "builder-util"
-import { connect, constants } from "http2"
+import { Arch, isEnvTrue, log, executeAppBuilderAsJson, InvalidConfigurationError } from "builder-util"
 import * as path from "path"
-import { promisify } from "util"
-import { Target } from "../core"
+import { UploadTask } from "electron-publish/out/publisher"
+import { Target, TargetSpecificOptions } from "../core"
+import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { ProjectInfoManager } from "./ProjectInfoManager"
-import { ArtifactInfo, checkStatus, getConnectOptions, RemoteBuildManager } from "./RemoteBuildManager"
 
 interface TargetInfo {
   name: string
@@ -14,8 +13,6 @@ interface TargetInfo {
   unpackedDirectory: string
   outDir: string
 }
-
-const errorCodes = new Set(["ECONNREFUSED", "ECONNRESET"])
 
 export class RemoteBuilder {
   private readonly toBuild = new Map<Arch, Array<TargetInfo>>()
@@ -56,110 +53,78 @@ export class RemoteBuilder {
   }
 
   // noinspection JSMethodCanBeStatic
-  private async _build(targets: Array<TargetInfo>, packager: PlatformPackager<any>): Promise<any> {
+  private async _build(targets: Array<TargetInfo>, packager: PlatformPackager<any>): Promise<void> {
     if (log.isDebugEnabled) {
       log.debug({remoteTargets: JSON.stringify(targets, null, 2)}, "remote building")
     }
 
     const projectInfoManager = new ProjectInfoManager(packager.info)
 
-    let result: RemoteBuilderResponse | null = null
-    for (let attempt = 0; true; attempt++) {
-      const endpoint = await findBuildAgent()
-      // for now assume that all targets has the same outDir (correct for Linux)
-      const buildManager = new RemoteBuildManager(endpoint, projectInfoManager, targets[0].unpackedDirectory, targets[0].outDir, packager)
-      const setTimeoutPromise = promisify(setTimeout)
-      try {
-        result = await buildManager.build({
-          "x-build-request": JSON.stringify({
-            targets: targets.map(it => {
-              return {
-                name: it.name,
-                arch: it.arch,
-                unpackedDirName: path.basename(it.unpackedDirectory),
-              }
-            }),
-            platform: packager.platform.buildConfigurationKey,
-          })
-        })
-        break
-      }
-      catch (e) {
-        const errorCode: string = e.code
-        if (!errorCodes.has(errorCode) || attempt > 3) {
-          if (errorCode === "ECONNREFUSED") {
-            const error = new Error(`Cannot connect to electron build service ${endpoint}: ${e.message}`)
-            e.code = errorCode
-            throw error
-          }
-          else {
-            throw e
-          }
+    // let result: RemoteBuilderResponse | null = null
+    const req = Buffer.from(JSON.stringify({
+      targets: targets.map(it => {
+        return {
+          name: it.name,
+          arch: it.arch,
+          unpackedDirName: path.basename(it.unpackedDirectory),
         }
+      }),
+      platform: packager.platform.buildConfigurationKey,
+    })).toString("base64")
+    const outDir = targets[0].outDir
+    const args = ["remote-build", "--request", req, "--output", outDir]
 
-        const waitTime = 4000 * (attempt + 1)
-        console.warn(`Attempt ${attempt + 1}: ${e.message}\nWaiting ${waitTime / 1000}s...`)
-        await setTimeoutPromise(waitTime, "wait")
-      }
+    args.push("--file", targets[0].unpackedDirectory)
+    args.push("--file", await projectInfoManager.infoFile.value)
+
+    const buildResourcesDir = packager.buildResourcesDir
+    if (buildResourcesDir === packager.projectDir) {
+      throw new InvalidConfigurationError(`Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`)
     }
 
-    if (result != null && result.error != null) {
-      throw new Error(`Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`)
+    args.push("--file", buildResourcesDir)
+
+    const result: any = await executeAppBuilderAsJson(args)
+    if (result.error != null) {
+      throw new InvalidConfigurationError(`Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`, "REMOTE_BUILDER_ERROR")
+    }
+    else if (result.files != null) {
+      for (const artifact of result.files) {
+        const localFile = path.join(outDir, artifact.file)
+        const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile, outDir)
+        // PublishManager uses outDir and options, real (the same as for local build) values must be used
+        this.packager.info.dispatchArtifactCreated(artifactCreatedEvent)
+      }
+    }
+  }
+
+  private artifactInfoToArtifactCreatedEvent(artifact: ArtifactInfo, localFile: string, outDir: string): ArtifactCreated {
+    const target = artifact.target
+    // noinspection SpellCheckingInspection
+    return {
+      ...artifact,
+      file: localFile,
+      target: target == null ? null : new FakeTarget(target, outDir, (this.packager.config as any)[target]),
+      packager: this.packager,
     }
   }
 }
 
-async function findBuildAgent(): Promise<string> {
-  const result = process.env.ELECTRON_BUILD_SERVICE_ENDPOINT
-  if (result != null) {
-    log.debug({endpoint: result}, `endpoint is set explicitly`)
-    return result.startsWith("http") ? result : `https://${result}`
+class FakeTarget extends Target {
+  constructor(name: string, readonly outDir: string, readonly options: TargetSpecificOptions | null | undefined) {
+    super(name)
   }
 
-  const rawUrl = process.env.ELECTRON_BUILD_SERVICE_ROUTER_HOST || "service.electron.build"
-  // add random query param to prevent caching
-  const routerUrl = rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`
-  log.debug({routerUrl}, "")
-  const client = connect(routerUrl, getConnectOptions())
-  return await new BluebirdPromise<string>((resolve, reject) => {
-    client.on("socketError", reject)
-    client.on("error", reject)
-    client.setTimeout(10 * 1000, () => {
-      reject(new Error("Timeout"))
-    })
+  async build(appOutDir: string, arch: Arch) {
+    // no build
+  }
+}
 
-    const stream = client.request({
-      [constants.HTTP2_HEADER_PATH]: `/find-build-agent?c=${Date.now().toString(32)}`,
-      [constants.HTTP2_HEADER_METHOD]: constants.HTTP2_METHOD_GET,
-    })
-    stream.on("error", reject)
+interface ArtifactInfo extends UploadTask {
+  target: string | null
 
-    stream.on("response", headers => {
-      if (!checkStatus(headers[constants.HTTP2_HEADER_STATUS] as any, reject)) {
-        return
-      }
-
-      stream.setEncoding("utf8")
-      let data = ""
-      stream.on("end", () => {
-        try {
-          if (log.isDebugEnabled) {
-            log.debug({data}, "remote build response")
-          }
-          resolve(JSON.parse(data).endpoint)
-        }
-        catch (e) {
-          throw new Error(`Cannot parse response: ${data}`)
-        }
-      })
-      stream.on("data", (chunk: string) => {
-        data += chunk
-      })
-    })
-  })
-    .finally(() => {
-      client.destroy()
-    })
+  readonly isWriteUpdateInfo?: boolean
+  readonly updateInfo?: any
 }
 
 export interface RemoteBuilderResponse {

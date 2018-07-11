@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilder, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilderAsJson, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -571,15 +571,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       args.push("--input", source)
     }
 
-    const rawResult = await executeAppBuilder(args)
-    let result: IconConvertResult
-    try {
-      result = JSON.parse(rawResult)
-    }
-    catch (e) {
-      throw new Error(`Cannot parse result: ${e.message}: ${rawResult}`)
-    }
-
+    const result: IconConvertResult = await executeAppBuilderAsJson(args)
     const errorMessage = result.error
     if (errorMessage != null) {
       throw new InvalidConfigurationError(errorMessage, result.errorCode)

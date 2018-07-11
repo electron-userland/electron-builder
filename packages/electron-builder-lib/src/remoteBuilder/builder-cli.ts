@@ -1,6 +1,7 @@
 import { readJson, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { UploadTask, Arch, Packager, PackagerOptions, PublishOptions } from ".."
+import SnapTarget from "../targets/snap"
 
 if (process.env.BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG == null) {
   process.env.BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG = "true"
@@ -65,7 +66,7 @@ async function doBuild(data: BuildTask): Promise<void> {
 
   packager.stageDirPathCustomizer = (target, packager, arch) => {
     // snap creates a lot of files and so, we cannot use tmpfs to avoid out of memory error
-    const parentDir = target.name === "snap" ? projectOutDir : projectDir
+    const parentDir = target.name === "snap" && !(target as SnapTarget).isUseTemplateApp ? projectOutDir : projectDir
     return parentDir + path.sep + `__${target.name}-${Arch[arch]}`
   }
 

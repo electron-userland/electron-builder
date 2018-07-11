@@ -797,7 +797,7 @@ Object {
         "mimic-response": Object {
           "files": Object {
             "index.js": Object {
-              "size": 810,
+              "size": 758,
             },
             "license": Object {
               "size": 1109,

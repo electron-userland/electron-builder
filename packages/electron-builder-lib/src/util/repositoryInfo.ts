@@ -78,6 +78,8 @@ function parseRepositoryUrl(url: string): Info {
     delete info.committish
     delete info.default
     delete info.opts
+    delete info.browsefiletemplate
+    delete info.auth
   }
   return info
 }

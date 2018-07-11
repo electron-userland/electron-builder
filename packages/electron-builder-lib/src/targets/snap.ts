@@ -17,7 +17,7 @@ const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "bro
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
 
-  private isUseTemplateApp = false
+  public isUseTemplateApp = false
 
   constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name)

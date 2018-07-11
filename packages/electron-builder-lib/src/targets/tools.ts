@@ -21,12 +21,3 @@ export function prefetchBuildTools(): Promise<any> {
   // yes, we starting to use native Promise
   return fpmPath.value
 }
-
-export function getZstd() {
-  return getTool("zstd")
-}
-
-function getTool(name: string): Promise<string> {
-  return getBin(name, name, null)
-    .then(it => path.join(it, `${name}${process.platform === "win32" ? ".exe" : ""}`))
-}
