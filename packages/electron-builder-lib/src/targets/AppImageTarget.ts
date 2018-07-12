@@ -49,7 +49,7 @@ export default class AppImageTarget extends Target {
     let additionalInstall = await this.copyIcons(stageDir.dir, resourceName)
     additionalInstall += await this.copyMimeTypes(stageDir.dir)
 
-    const license = await getNotLocalizedLicenseFile(options.license, this.packager)
+    const license = await getNotLocalizedLicenseFile(options.license, this.packager, ["txt"])
     if (license != null) {
       await copyOrLinkFile(license, stageDir.getTempFile("eula.txt"))
     }

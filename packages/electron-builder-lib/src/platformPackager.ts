@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilderAsJson, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { PackageBuilder } from "builder-util/out/api"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir } from "fs-extra-p"
@@ -18,7 +17,7 @@ import { PackagerOptions, Packager, AfterPackContext, AsarOptions, Configuration
 import { copyAppFiles, transformFiles, computeFileSets, computeNodeModuleFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
-export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
+export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   get packagerOptions(): PackagerOptions {
     return this.info.options
   }

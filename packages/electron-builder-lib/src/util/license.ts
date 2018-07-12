@@ -1,8 +1,8 @@
 import * as path from "path"
-import { PackageBuilder } from "builder-util/out/api"
 import { langIdToName, toLangWithRegion } from "builder-util/out/langs"
+import { PlatformPackager } from "../platformPackager"
 
-export function getLicenseAssets(fileNames: Array<string>, packager: PackageBuilder) {
+export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {
   return fileNames.sort((a, b) => {
     const aW = a.includes("_en") ? 0 : 100
     const bW = b.includes("_en") ? 0 : 100
@@ -23,10 +23,10 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PackageBuil
     })
 }
 
-export async function getNotLocalizedLicenseFile(custom: string | null | undefined, packager: PackageBuilder): Promise<string | null> {
+export async function getNotLocalizedLicenseFile(custom: string | null | undefined, packager: PlatformPackager<any>, supportedExtension: Array<string> = ["rtf", "txt", "html"]): Promise<string | null> {
   const possibleFiles: Array<string> = []
   for (const name of ["license", "eula"]) {
-    for (const ext of ["rtf", "txt", "html"]) {
+    for (const ext of supportedExtension) {
       possibleFiles.push(`${name}.${ext}`)
       possibleFiles.push(`${name.toUpperCase()}.${ext}`)
       possibleFiles.push(`${name}.${ext.toUpperCase()}`)
@@ -37,7 +37,7 @@ export async function getNotLocalizedLicenseFile(custom: string | null | undefin
   return await packager.getResource(custom, ...possibleFiles)
 }
 
-export async function getLicenseFiles(packager: PackageBuilder): Promise<Array<LicenseFile>> {
+export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<Array<LicenseFile>> {
   return getLicenseAssets((await packager.resourceList)
     .filter(it => {
       const name = it.toLowerCase()

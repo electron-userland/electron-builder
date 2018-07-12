@@ -130,7 +130,7 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
   readonly systemIntegration?: "ask" | "doNotAsk",
 
   /**
-   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants).
+   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
    */
   readonly license?: string | null
 }

@@ -1,5 +1,5 @@
 import { exec } from "builder-util"
-import { PackageBuilder } from "builder-util/out/api"
+import { PlatformPackager } from "electron-builder-lib"
 import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
 import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
@@ -56,7 +56,7 @@ export function computeBackgroundColor(rawValue: string) {
   return require("parse-color")(rawValue).hex
 }
 
-export async function computeBackground(packager: PackageBuilder): Promise<string> {
+export async function computeBackground(packager: PlatformPackager<any>): Promise<string> {
   const resourceList = await packager.resourceList
   if (resourceList.includes("background.tiff")) {
     return path.join(packager.buildResourcesDir, "background.tiff")
@@ -69,7 +69,7 @@ export async function computeBackground(packager: PackageBuilder): Promise<strin
   }
 }
 
-export async function applyProperties(entries: any, env: any, asyncTaskManager: AsyncTaskManager, packager: PackageBuilder) {
+export async function applyProperties(entries: any, env: any, asyncTaskManager: AsyncTaskManager, packager: PlatformPackager<any>) {
   const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
   asyncTaskManager.addTask(outputFile(dmgPropertiesFile, (await readFile(path.join(getDmgTemplatePath(), "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
   await asyncTaskManager.awaitTasks()

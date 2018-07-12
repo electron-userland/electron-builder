@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import { PackageBuilder } from "builder-util/out/api"
+import { PlatformPackager } from "electron-builder-lib"
 import { getLicenseAssets } from "electron-builder-lib/out/util/license"
 import { readFile } from "fs-extra-p"
 import * as iconv from "iconv-lite"
@@ -7,7 +7,7 @@ import { safeLoad } from "js-yaml"
 import { serializeString } from "./dmgUtil"
 import { getDefaultButtons } from "./licenseDefaultButtons"
 
-export async function getLicenseButtonsFile(packager: PackageBuilder): Promise<Array<LicenseButtonsFile>> {
+export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Promise<Array<LicenseButtonsFile>> {
   return getLicenseAssets((await packager.resourceList)
     .filter(it => {
       const name = it.toLowerCase()
