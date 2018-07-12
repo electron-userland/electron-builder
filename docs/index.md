@@ -2,30 +2,32 @@
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
-  * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
-  * Development dependencies are never included. You don't need to ignore them explicitly.
+    * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
+    * Development dependencies are never included. You don't need to ignore them explicitly.
+    * [Two package.json structure](tutorials/two-package-structure.md) is supported, but you are not forced to use it even if you have native production dependencies.
 * [Code Signing](code-signing.md) on a CI server or development machine.
 * [Auto Update](auto-update.md) ready application packaging.
 * Numerous target formats:
-  * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-  * [macOS](configuration/mac.md#MacConfiguration-target): `dmg`, `pkg`, `mas`, `mas-dev`.
-  * [Linux](configuration/linux.md#LinuxConfiguration-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-  * [Windows](configuration/win.md#WindowsConfiguration-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
-* [Two package.json structure](tutorials/two-package-structure.md) is supported, but you are not forced to use it even if you have native production dependencies.  
+    * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
+    * [macOS](configuration/mac.md#MacConfiguration-target): `dmg`, `pkg`, `mas`, `mas-dev`.
+    * [Linux](configuration/linux.md#LinuxConfiguration-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+    * [Windows](configuration/win.md#WindowsConfiguration-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
 * [Build version management](configuration/configuration.md#build-version-management).
 * [Publishing artifacts](/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
-* Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
-* Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
-* Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
+* Advanced building:
+    * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
+    * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
+    * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
+* [Proton Native](https://proton-native.js.org/) and [Muon](https://github.com/brave/muon) support.
 
 | Question | Answer |
 |--------|-------|
 | “I want to configure electron-builder” | [See options](/configuration/configuration.md) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://slackin.electron.build) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to donate” | [Donate](/donate.md) |
+| “I want to support development” | [Donate](/donate.md) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
@@ -74,8 +76,6 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
    
-6. Install the [required system packages](/multi-platform-build.md) if you are not on macOS 10.12+.
-
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](/code-signing.md#where-to-buy-code-signing-certificate).
@@ -93,7 +93,7 @@ const Platform = builder.Platform
 builder.build({
   targets: Platform.MAC.createTarget(),
   config: {
-   "//": "build options, see https://goo.gl/ZhRfla"
+   "//": "build options, see https://goo.gl/QQXmcV"
   }
 })
   .then(() => {
@@ -114,6 +114,25 @@ and other distributable formats.
 ```
 
 `--projectDir` (the path to project directory) option also can be useful.
+
+## Debug
+
+Set the `DEBUG` environment variable to debug what electron-builder is doing:
+```bash
+DEBUG=electron-builder
+```
+
+!!! tip "cmd"
+    On [Windows](https://github.com/visionmedia/debug#windows-command-prompt-notes) the environment variable is set using the set command.
+    ```bash
+    set DEBUG=electron-builder
+    ```
+    
+!!! tip "PowerShell"
+    PowerShell uses different syntax to set environment variables.
+    ```bash
+    $env:DEBUG=electron-builder
+    ```
 
 ## Community
 

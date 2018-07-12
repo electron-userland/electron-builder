@@ -145,5 +145,10 @@ Some standard fields should be defined in the `package.json`.
 
 {!generated/Metadata.md!}
 
+## Proton Native
+
+To package [Proton Native](https://proton-native.js.org/) app, set `protonNodeVersion` option to `current` or specific NodeJS version that you are packaging for.
+Currently, only macOS and Linux supported.
+
 ## Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).

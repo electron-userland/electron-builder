@@ -16,9 +16,8 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 }
 ```
 
-## Macros
-
-In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
+!!! tip "Macros"
+    In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
 
 ## How to Publish
 
@@ -56,7 +55,8 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 1. [Draft a new release](https://help.github.com/articles/creating-releases/). Set the "Tag version" to the value of `version` in your application `package.json`, and prefix it with `v`. "Release title" can be anything you want.
  
-  For example, if your application `package.json` version is `1.0`, your draft's "Tag version" would be `v1.0`.
+    For example, if your application `package.json` version is `1.0`, your draft's "Tag version" would be `v1.0`.
+  
 2. Push some commits. Every CI build will update the artifacts attached to this draft.
 3. Once you are done, publish the release. GitHub will tag the latest commit for you.
 
@@ -74,11 +74,12 @@ This example workflow is modelled on how releases are handled in maven (it is an
 ## GitHub Repository and Bintray Package
 
 Detected automatically using:
+
 * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
 * if not set, env 
-  * `TRAVIS_REPO_SLUG` 
-  * or `APPVEYOR_REPO_NAME` 
-  * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
+    * `TRAVIS_REPO_SLUG` 
+    * or `APPVEYOR_REPO_NAME` 
+    * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
  
 <!-- do not edit. start of generated block -->

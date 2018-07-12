@@ -1,16 +1,18 @@
-Execute `node_modules/.bin/electron-builder --help` (`node_modules/.bin/electron-builder build --help` for `build` subcommand) to get the actual CLI usage guide.
+Execute `./node_modules/.bin/electron-builder --help` (`node_modules/.bin/electron-builder build --help` for `build` subcommand) to get the actual CLI usage guide.
 
-Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
+!!! tip 
+
+    Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
 
 ```
 Commands:
-  build                    Build                                [default]
-  install-app-deps         Install app deps
-  node-gyp-rebuild         Rebuild own native code
-  create-self-signed-cert  Create self-signed code signing cert for
-                                  Windows apps
-  start                    Run application in a development mode using
-                                  electron-webpack
+  electron-builder build                    Build                      [default]
+  electron-builder install-app-deps         Install app deps
+  electron-builder node-gyp-rebuild         Rebuild own native code
+  electron-builder create-self-signed-cert  Create self-signed code signing cert
+                                            for Windows apps
+  electron-builder start                    Run application in a development
+                                            mode using electron-webpack
 
 Building:
   --mac, -m, -o, --macos   Build for macOS, accepts target list (see
@@ -52,14 +54,12 @@ Other:
   --version  Show version number                                       [boolean]
 
 Examples:
-  electron-builder -mwl                     build for macOS, Windows and Linux
-  electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
-  electron-builder --win --ia32             build for Windows ia32
-  electron-builder -c.extraMetadata.foo=bar set package.json property `foo` to
-                                           `bar`
-  electron-builder                          configure unicode options for NSIS
-  --config.nsis.unicode=false
-
+  electron-builder -mwl                        build for macOS, Windows and Linux
+  electron-builder --linux deb tar.xz          build deb and tar.xz for Linux
+   electron-builder                          set package.json property `foo` to
+    -c.extraMetadata.foo=bar                  `bar`
+    electron-builder                          configure unicode options for NSIS
+    --config.nsis.unicode=false
 ```
 
-For other commands please see help using `--help` arg, e.g. `node_modules/.bin/electron-builder install-app-deps --help`
+For other commands please see help using `--help` arg, e.g. `./node_modules/.bin/electron-builder install-app-deps --help`
