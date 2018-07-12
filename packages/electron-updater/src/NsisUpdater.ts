@@ -147,8 +147,8 @@ export class NsisUpdater extends BaseUpdater {
 
   private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     try {
-      const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(downloadUpdateOptions.updateInfo.version, this.currentVersion)}.blockmap`, fileInfo.url)
+      const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.href}.blockmap`, fileInfo.url)
+      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.href.replace(downloadUpdateOptions.updateInfo.version, this.currentVersion)}.blockmap`, fileInfo.url)
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
