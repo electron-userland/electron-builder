@@ -22,7 +22,7 @@ In all publish options [File Macros](/file-patterns.md#file-macros) are supporte
 
 ## How to Publish
 
-Excerpt from [CLI Usage](https://github.com/electron-userland/electron-builder#cli-usage) of `electron-builder` command:
+Excerpt from [CLI Usage](/cli.md) of `electron-builder` command:
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
@@ -96,9 +96,11 @@ Define `BT_TOKEN` environment variable.
 * <code id="BintrayOptions-token">token</code> String
 
 Inherited from `PublishConfiguration`:
+
 * <code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
-  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
 
 ## GenericServerOptions
 Generic (any HTTP(S) server) options.
@@ -110,9 +112,11 @@ In all publish options [File Macros](/file-patterns.md#file-macros) are supporte
 * <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
 
 Inherited from `PublishConfiguration`:
+
 * <code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
-  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
 
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
@@ -129,13 +133,16 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update.md#appupdatersetfeedurloptions).
 * <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
-  
-  Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
+    
+    Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
+
 
 Inherited from `PublishConfiguration`:
+
 * <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
-  Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
 
 <!-- end of generated block -->
 
@@ -154,6 +161,6 @@ Example configuration:
 }
 ```
 
-{% include "/generated/s3-options.md" %}
+{!generated/s3-options.md!}
 
-{% include "/generated/spaces-options.md" %}
+{!generated/spaces-options.md!}

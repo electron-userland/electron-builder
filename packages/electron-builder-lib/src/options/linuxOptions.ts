@@ -100,7 +100,9 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly afterRemove?: string | null
 
   /**
-   * **Advanced only** The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options. Example: `["--before-install=build/deb-preinstall.sh", "--after-upgrade=build/deb-postinstall.sh"]`
+   * *Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.
+   *
+   * Example: `["--before-install=build/deb-preinstall.sh", "--after-upgrade=build/deb-postinstall.sh"]`
    */
   readonly fpm?: Array<string> | null
 }

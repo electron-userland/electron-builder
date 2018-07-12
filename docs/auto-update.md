@@ -29,10 +29,9 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 
 4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
-**NOTICE**:
-
-1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
-2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
+!!! note
+    1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
+    2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
 ### Examples
 
@@ -79,11 +78,14 @@ Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 wo
 You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
 
-Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
 
-**Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
+!!! warning
+    Private GitHub provider only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
 
-### Events
+!!! note
+    The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
+
+## Events
 
 The `autoUpdater` object emits the following events:
 
@@ -125,40 +127,27 @@ Emitted on progress.
 <!-- do not edit. start of generated block -->
 ## API
 
-* [electron-updater](#module_electron-updater)
-    * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
-        * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-        * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
-        * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
-        * [`.channel()`](#module_electron-updater.AppUpdater+channel)
-        * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
-    * [`.Logger`](#Logger)
-        * [`.debug(message)`](#module_electron-updater.Logger+debug)
-        * [`.error(message)`](#module_electron-updater.Logger+error)
-        * [`.info(message)`](#module_electron-updater.Logger+info)
-        * [`.warn(message)`](#module_electron-updater.Logger+warn)
-    * [`.UpdateInfo`](#UpdateInfo)
-    * [`.UpdateCheckResult`](#UpdateCheckResult)
-    * [.UpdaterSignal](#UpdaterSignal)
-        * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
-        * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
-        * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
-        * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
+* [AppUpdater](#AppUpdater) ⇐ [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+* [Logger](#Logger)
+* [UpdateInfo](#UpdateInfo)
+* [UpdateCheckResult](#UpdateCheckResult)
+* [UpdaterSignal](#UpdaterSignal)
 
 <a name="AppUpdater"></a>
-### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
+#### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Extends**: <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>  
 **Properties**
+
 * <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
 * <code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true` Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
   
-  Applicable only on Windows and Linux.
+    Applicable only on Windows and Linux.
+  
 * <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
   
-  If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
+    If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
+  
 * <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
 * <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
 * <code id="AppUpdater-currentVersion">currentVersion</code> String - The current application version.
@@ -166,10 +155,9 @@ Emitted on progress.
 * <code id="AppUpdater-requestHeaders">requestHeaders</code> [key: string]: string - The request headers.
 * <code id="AppUpdater-logger">logger</code> [Logger](#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
 * <code id="AppUpdater-signals">signals</code> = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal) - For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
-* <code id="AppUpdater-configOnDisk">configOnDisk</code> = `new Lazy<any>(() => this.loadUpdateConfig())` Lazy&lt;any&gt;
-* <code id="AppUpdater-httpExecutor">httpExecutor</code> module:electron-updater/out/electronHttpExecutor.ElectronHttpExecutor
 
 **Methods**
+
 * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
@@ -179,13 +167,18 @@ Emitted on progress.
     * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
 
 <a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
-#### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+**`appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>**
+
 Asks the server whether there is an update.
 
 <a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a>
-#### `appUpdater.checkForUpdatesAndNotify()` ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+**`appUpdater.checkForUpdatesAndNotify()` ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>**
+
+Asks the server whether there is an update, download and notify if update available.
+
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
-#### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
+**`appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>**
+
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
 **Returns**: <code>Promise&lt;any&gt;</code> - Path to downloaded file.  
@@ -193,64 +186,62 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 - cancellationToken <code>CancellationToken</code>
 
 <a name="module_electron-updater.AppUpdater+getFeedURL"></a>
-#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
+**`appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>**
 <a name="module_electron-updater.AppUpdater+setFeedURL"></a>
-#### `appUpdater.setFeedURL(options)`
-Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
+**`appUpdater.setFeedURL(options)`**
 
+Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
 - options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+channel"></a>
-#### `appUpdater.channel` (getter and setter)
+**`appUpdater.channel` (getter and setter)**
+
 Define the channel which the Auto-Updater will follow (see [the auto-update with channels tutorial](tutorials/release-using-channels.md#release_using_channels)) using `appUpdater.channel = 'beta'` or get the current channel with `currentChannel = appUpdater.channel`.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
-#### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`
+**`appUpdater.quitAndInstall(isSilent, isForceRunAfter)`**
+
 Restarts the app and installs the update after it has been downloaded.
 It should only be called after `update-downloaded` has been emitted.
 
 **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
 This is different from the normal quit event sequence.
 
+* isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode. Defaults to `false`.
+* isForceRunAfter <code>Boolean</code> - Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
 
-- isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode. Defaults to `false`.
-- isForceRunAfter <code>Boolean</code> - Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
+---
 
-<a name="Logger"></a>
-### `Logger`
+#### `Logger`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 
-* [`.Logger`](#Logger)
-    * [`.debug(message)`](#module_electron-updater.Logger+debug)
-    * [`.error(message)`](#module_electron-updater.Logger+error)
-    * [`.info(message)`](#module_electron-updater.Logger+info)
-    * [`.warn(message)`](#module_electron-updater.Logger+warn)
-
 <a name="module_electron-updater.Logger+debug"></a>
-#### `logger.debug(message)`
+**`logger.debug(message)`**
 
 - message <code>String</code>
 
 <a name="module_electron-updater.Logger+error"></a>
-#### `logger.error(message)`
+**`logger.error(message)`**
 
 - message <code>any</code>
 
 <a name="module_electron-updater.Logger+info"></a>
-#### `logger.info(message)`
+**`logger.info(message)`**
 
 - message <code>any</code>
 
 <a name="module_electron-updater.Logger+warn"></a>
-#### `logger.warn(message)`
+**`logger.warn(message)`**
 
 - message <code>any</code>
 
-<a name="UpdateInfo"></a>
-### `UpdateInfo`
+---
+
+#### `UpdateInfo`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
+
 * **<code id="UpdateInfo-version">version</code>** String - The version.
 * **<code id="UpdateInfo-files">files</code>** Array&lt;module:builder-util-runtime.UpdateFileInfo&gt;
 * **<code id="UpdateInfo-path">path</code>** String - Deprecated: {tag.description}
@@ -260,46 +251,38 @@ This is different from the normal quit event sequence.
 * **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
 * <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
 
-<a name="UpdateCheckResult"></a>
-### `UpdateCheckResult`
+---
+
+#### `UpdateCheckResult`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
+
 * **<code id="UpdateCheckResult-updateInfo">updateInfo</code>** module:builder-util-runtime.UpdateInfo
 * <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt;
 * <code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken
 * **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
 
-<a name="UpdaterSignal"></a>
-### UpdaterSignal
-**Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
+---
 
-* [.UpdaterSignal](#UpdaterSignal)
-    * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
-    * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
-    * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
-    * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
+#### `UpdaterSignal`
 
-<a name="module_electron-updater.UpdaterSignal+login"></a>
-#### `updaterSignal.login(handler)`
+<code id="UpdaterSignal+login">**`updaterSignal.login(handler)`**</code>
+
 Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
 
+* handler - callback
 
-- handler <code>module:electron-updater.__type</code>
+<code id="UpdaterSignal+progress">**updaterSignal.progress(handler)**</code>
 
-<a name="module_electron-updater.UpdaterSignal+progress"></a>
-#### `updaterSignal.progress(handler)`
+* handler - callback
 
-- handler <code>callback</code>
+<code id="UpdaterSignal+updateCancelled">**`updaterSignal.updateCancelled(handler)`**</code>
 
-<a name="module_electron-updater.UpdaterSignal+updateCancelled"></a>
-#### `updaterSignal.updateCancelled(handler)`
+* handler - callback
 
-- handler <code>callback</code>
+<code id="UpdaterSignal+updateDownloaded">**`updaterSignal.updateDownloaded(handler)`**</code>
 
-<a name="module_electron-updater.UpdaterSignal+updateDownloaded"></a>
-#### `updaterSignal.updateDownloaded(handler)`
-
-- handler <code>callback</code>
+* `handler` - callback
 
 
 <!-- end of generated block -->

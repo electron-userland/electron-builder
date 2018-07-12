@@ -2,13 +2,13 @@ The top-level [nsis](/configuration/configuration.md#Configuration-nsis) key con
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
-{% include "/generated/NsisOptions.md" %}
+{!generated/NsisOptions.md!}
 
 ---
 
 Inherited from `TargetSpecificOptions`:
 
-{% include "/generated/TargetSpecificOptions.md" %}
+{!generated/TargetSpecificOptions.md!}
 
 ---
 

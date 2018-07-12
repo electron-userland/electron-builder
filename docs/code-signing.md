@@ -10,7 +10,8 @@ On a macOS development machine, a valid and appropriate identity from your keych
 | `CSC_IDENTITY_AUTO_DISCOVERY`| `true` or `false`. Defaults to `true` — on a macOS development machine valid and appropriate identity from your keychain will be automatically used.
 | `CSC_KEYCHAIN`| The keychain name. Used if `CSC_LINK` is not specified. Defaults to system default keychain.
 
-If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
+!!! tip
+    If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
 
 ## Windows
 
@@ -37,11 +38,11 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
 
    Keep in mind that Windows is not able to handle enviroment variable values longer than 8192 characters, thus if the base64 representation of your certificate exceeds that limit, try re-exporting the certificate without including all the certificates in the certification path (they are not necessary, but the Certificate Manager export wizard ticks the option by default), otherwise the encoded value will be truncated.
 
-# Where to Buy Code Signing Certificate
+## Where to Buy Code Signing Certificate
 See [Get a code signing certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) for Windows (platform: "Microsoft Authenticode").
 Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).
 
-# How to Export Certificate on macOS
+## How to Export Certificate on macOS
 
 1. Open Keychain.
 2. Select `login` keychain, and `My Certificates` category.
@@ -55,7 +56,7 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
    All selected certificates will be imported into temporary keychain on CI server.
 4. Open context menu and `Export`.
 
-# How to Disable Code Signing During the Build Process on macOS
+## How to Disable Code Signing During the Build Process on macOS
 
 To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`. 
 

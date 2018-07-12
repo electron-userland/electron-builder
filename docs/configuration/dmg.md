@@ -7,23 +7,25 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 * <code id="DmgOptions-iconSize">iconSize</code> = `80` Number - The size of all the icons inside the DMG.
 * <code id="DmgOptions-iconTextSize">iconTextSize</code> = `12` Number - The size of all the icon texts inside the DMG.
 * <code id="DmgOptions-title">title</code> = `${productName} ${version}` String - The title of the produced DMG, which will be shown when mounted (volume name).
-  
-  Macro `${productName}`, `${version}` and `${name}` are supported.
+    
+    Macro `${productName}`, `${version}` and `${name}` are supported.
+
 * <code id="DmgOptions-contents">contents</code> Array&lt;DmgContent&gt;<a name="DmgContent"></a> - The content — to customize icon locations.
-  * **<code id="DmgContent-x">x</code>** Number
-  * **<code id="DmgContent-y">y</code>** Number
-  * <code id="DmgContent-type">type</code> "link" | "file" | "dir"
-  * <code id="DmgContent-name">name</code> String - The name of the file within the DMG. Defaults to basename of `path`.
-  * <code id="DmgContent-path">path</code> String - The path of the file within the DMG.
+    * **<code id="DmgContent-x">x</code>** Number
+    * **<code id="DmgContent-y">y</code>** Number
+    * <code id="DmgContent-type">type</code> "link" | "file" | "dir"
+    * <code id="DmgContent-name">name</code> String - The name of the file within the DMG. Defaults to basename of `path`.
+    * <code id="DmgContent-path">path</code> String - The path of the file within the DMG.
 * <code id="DmgOptions-format">format</code> = `UDZO` "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" - The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
 * <code id="DmgOptions-window">window</code><a name="DmgWindow"></a> - The DMG windows position and size.
-  * <code id="DmgWindow-x">x</code> = `400` Number - The X position relative to left of the screen.
-  * <code id="DmgWindow-y">y</code> = `100` Number - The Y position relative to top of the screen.
-  * <code id="DmgWindow-width">width</code> Number - The width. Defaults to background image width or 540.
-  * <code id="DmgWindow-height">height</code> Number - The height. Defaults to background image height or 380.
+    * <code id="DmgWindow-x">x</code> = `400` Number - The X position relative to left of the screen.
+    * <code id="DmgWindow-y">y</code> = `100` Number - The Y position relative to top of the screen.
+    * <code id="DmgWindow-width">width</code> Number - The width. Defaults to background image width or 540.
+    * <code id="DmgWindow-height">height</code> Number - The height. Defaults to background image height or 380.
 * <code id="DmgOptions-internetEnabled">internetEnabled</code> = `false` Boolean - Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).
 
 Inherited from `TargetSpecificOptions`:
+
 * <code id="DmgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="DmgOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->

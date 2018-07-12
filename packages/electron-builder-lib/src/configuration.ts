@@ -24,7 +24,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly appId?: string | null
 
   /**
-   * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
+   * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).
    */
   readonly productName?: string | null
 

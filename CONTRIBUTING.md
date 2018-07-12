@@ -20,6 +20,8 @@ Documentation files located in the `/docs`.
 
 `/docs` is deployed to Netlify when `next` release is marked as `latest` and available for all users.
 
+`pip3 install mkdocs-material mkdocs pymdown-extensions pygments --upgrade`
+
 ## Debug Tests
 
 Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), [WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug.

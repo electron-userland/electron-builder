@@ -22,7 +22,7 @@ You may also specify custom source and destination directories by using `FileSet
 ]
 ```
 
-You can use [file macros](/file-patterns.md/#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+You can use [file macros](/file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
 
 ### `FileSet.from`
 

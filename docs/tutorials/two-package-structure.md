@@ -1,12 +1,13 @@
-Since version 8 electron-builder rebuilds only production dependencies, so, you are not forced to use two package.json structure.
+!!! info
+    Since version 8 electron-builder rebuilds only production dependencies, so, you are not forced to use two package.json structure.
 
 1. For development (`./package.json`)
-
-   The `package.json` resides in the root of your project. Here you declare the dependencies for your development environment and build scripts (`devDependencies`).
+    
+    The `package.json` resides in the root of your project. Here you declare the dependencies for your development environment and build scripts (`devDependencies`).
 
 2. For your application (`./app/package.json`)
 
-   The `package.json` resides in the `app` directory. Declare your application dependencies (`dependencies`) here. *Only this directory is distributed with the final, packaged application.*
+    The `package.json` resides in the `app` directory. Declare your application dependencies (`dependencies`) here. *Only this directory is distributed with the final, packaged application.*
 
 Why?
 

@@ -3,8 +3,9 @@
 <!-- do not edit. start of generated block -->
 * <code id="NsisOptions-oneClick">oneClick</code> = `true` Boolean - Whether to create one-click installer or assisted.
 * <code id="NsisOptions-perMachine">perMachine</code> = `false` Boolean - If `oneClick` is `true` (default): Whether to install per all users (per-machine).
-  
-  If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
+    
+    If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
+
 * <code id="NsisOptions-allowElevation">allowElevation</code> = `true` Boolean - *assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
 * <code id="NsisOptions-allowToChangeInstallationDirectory">allowToChangeInstallationDirectory</code> = `false` Boolean - *assisted installer only.* Whether to allow user to change installation directory.
 
@@ -23,10 +24,11 @@
 * <code id="NsisOptions-include">include</code> String - The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
 * <code id="NsisOptions-script">script</code> String - The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).
 * <code id="NsisOptions-license">license</code> String - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
-  
-  Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
-  
-  Appropriate license file will be selected by user OS language.
+    
+    Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+    
+    Appropriate license file will be selected by user OS language.
+
 * <code id="NsisOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
 * <code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
 * <code id="NsisOptions-differentialPackage">differentialPackage</code> Boolean - Defaults to `true` for web installer (`nsis-web`)

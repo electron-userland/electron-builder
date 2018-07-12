@@ -1,5 +1,8 @@
 import { isPrimitiveType, Item, Renderer, renderMemberName, TypeNamePlace } from "./main"
 
+// mkdocs requires 4 spaces (not 2 as gitbook) for items of nested list
+const nestedSpace = "    "
+
 export function renderProperties(renderer: Renderer, object: Item, level = 0) {
   let result = ""
 
@@ -17,7 +20,7 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
 
   let indent = ""
   for (let d = 0; d < level; d++) {
-    indent += "  "
+    indent += nestedSpace
   }
 
   // for level 0 "Extends" is printed
@@ -29,6 +32,7 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
     const first = properties[0]
     for (const member of properties) {
       if (member !== first) {
+        // mkdocs requires second new line for items of nested list
         result += "\n"
       }
 
@@ -62,7 +66,7 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
       }
 
       if (description) {
-        result += " - " + renderMemberListDescription(description, indent + "  ")
+        result += " - " + renderMemberListDescription(description, indent + nestedSpace)
       }
 
       if (child != null) {
@@ -97,7 +101,7 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
           result += "\n"
 
           if (renderedName.length > 0) {
-            result += `\nInherited from ${renderedName}:\n`
+            result += `\nInherited from ${renderedName}:\n\n`
           }
         }
 
@@ -158,8 +162,14 @@ function getInlinedChild(types: Array<string>, renderer: Renderer) {
 const dmdHelper = require("dmd/helpers/helpers")
 
 function renderMemberListDescription(text: string, indent: string) {
-  return dmdHelper.inlineLinks(text)
+  let data: string = dmdHelper.inlineLinks(text)
     .replace(/<br>/g, "\n")
     .replace(/\n/g, "\n" + indent)
     .replace(new RegExp("\\*{2}\\\\/", "g"), "**/")
+    .trim()
+  if (data.includes("\n")) {
+    // mkdocs requires newline for multi line list item text (otherwise next item on the same line and rendered as list item)
+    data += "\n"
+  }
+  return data
 }

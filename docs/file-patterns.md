@@ -20,6 +20,10 @@ Hidden files are not ignored by default, but all files that should be ignored, a
 
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
+!!! tip "Excluding directories"
+    Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
+    Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+
 ## Multiple Glob Patterns
  ```js
  [
@@ -34,14 +38,10 @@ If directory matched, all contents are copied. So, you can just specify `foo` to
  ]
  ```
 
-## Excluding Directories
-
-Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
-Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
-
 ## File Macros
 
 You can use macros in the file patterns, artifact file name patterns and publish configuration url:
+
 * `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
 * `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
 * `${platform}` — expanded to `darwin`, `linux` or `win32` according to Node.js `process.platform` property.
@@ -54,7 +54,8 @@ You can use macros in the file patterns, artifact file name patterns and publish
 
 ## Default File Pattern
 
-[files](configuration/configuration.md#Configuration-files) defaults to:
+[files](configuration/configuration.md#PlatformSpecificBuildOptions-files) defaults to:
+
 * `**/*`
 * `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
 * `!**/node_modules/.bin`

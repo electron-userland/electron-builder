@@ -2,10 +2,11 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 
 <!-- do not edit. start of generated block -->
 * <code id="WindowsConfiguration-target">target</code> = `nsis` String | [TargetConfiguration](/configuration/target.md#targetconfiguration) - The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
-  
-  To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
-  
-  For `portable` app, `PORTABLE_EXECUTABLE_DIR` env is set (dir where portable executable located).
+    
+    To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+    
+    For `portable` app, `PORTABLE_EXECUTABLE_DIR` env is set (dir where portable executable located).
+
 * <code id="WindowsConfiguration-icon">icon</code> = `build/icon.ico` String - The path to application icon.
 * <code id="WindowsConfiguration-legalTrademarks">legalTrademarks</code> String - The trademarks and registered trademarks.
 
@@ -27,9 +28,11 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 * <code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](#publisherName) will be used for the signature verification.
 * <code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = `asInvoker` "asInvoker" | "highestAvailable" | "requireAdministrator" - The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed. Cannot be specified per target, allowed only in the `win`.
 * <code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = `true` Boolean - Whether to sign and add metadata to executable. Advanced option.
+* <code id="WindowsConfiguration-signDlls">signDlls</code> = `false` Boolean - Whether to sign DLL files. Advanced option. See: https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
 * <code id="WindowsConfiguration-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
-  
-  1.0.0 sha2 2.15.0 path 2.16.0 files
+    
+    1.0.0 sha2 2.15.0 path 2.16.0 files
+
 <!-- end of generated block -->
 
 ---

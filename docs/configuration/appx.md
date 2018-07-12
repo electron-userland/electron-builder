@@ -12,6 +12,7 @@ All options are optional. All required for AppX configuration is inferred and co
 * <code id="AppXOptions-languages">languages</code> Array&lt;String&gt; | String - The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store. The first entry (index 0) will be the default language. Defaults to en-US if omitted.
 
 Inherited from `TargetSpecificOptions`:
+
 * <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->

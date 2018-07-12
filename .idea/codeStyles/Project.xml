@@ -24,6 +24,9 @@
     <editorconfig>
       <option name="ENABLED" value="false" />
     </editorconfig>
+    <yaml>
+      <option name="INDENT_SEQUENCE_VALUE" value="true" />
+    </yaml>
     <codeStyleSettings language="CSS">
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />

@@ -131,6 +131,7 @@ export abstract class AppUpdater extends EventEmitter {
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
   // public, allow to read old config for anyone
+  /** @internal */
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private readonly untilAppReady: Promise<any>
@@ -439,6 +440,7 @@ export abstract class AppUpdater extends EventEmitter {
     return id
   }
 
+  /** @internal */
   get isAddNoCacheQuery(): boolean {
     const headers = this.requestHeaders
     // https://github.com/electron-userland/electron-builder/issues/3021

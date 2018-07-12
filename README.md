@@ -86,31 +86,8 @@ For an app that will be shipped to production, you should sign your application.
 See [Command Line Interface](https://www.electron.build/cli).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided.
 
-To build for current platform and current arch:
-```js
-"use strict"
-
-const builder = require("electron-builder")
-
-// Promise is returned
-builder.build({
-  config: {
-   "//": "build options, see https://goo.gl/ZhRfla"
-  }
-})
-  .then(() => {
-    // handle result
-  })
-  .catch((error) => {
-    // handle error
-  })
-```
-
-Add `win: []` to build for Windows default target. Add `win: ["nsis-web"]` to build specified target (web installer) for Windows. The same for `mac: []` and `linux: []`
-
-Add `ia32: true` to build `ia32` (or `x64: true`, or `armv7l: true`). Several can be specified and built at once.
+See [Programmatic Usage](https://www.electron.build/#programmatic-usage).
 
 ## Pack Only in a Distributable Format
 
