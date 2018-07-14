@@ -611,6 +611,7 @@ export function resolveFunction<T>(executor: T | string): T {
   if (p.startsWith(".")) {
     p = path.resolve(p)
   }
+
   try {
     p = require.resolve(p)
   }

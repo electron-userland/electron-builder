@@ -19,7 +19,7 @@
     "schema": "typescript-json-schema packages/electron-builder-lib/tsconfig.json Configuration --out packages/electron-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/electron-updater packages/builder-util packages/electron-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
-    "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md && gitbook",
+    "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
     "deploy-docs": "mkdocs build && ./scripts/publish.sh",
     "////": "docs: pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include --upgrade"
   },

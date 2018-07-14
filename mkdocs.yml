@@ -33,6 +33,11 @@ google_analytics:
 
 pages:
   - Introduction: index.md
+  - Command Line Interface (CLI): cli.md
+  - Programmatic API: api/electron-builder.md
+  - Hooks: hooks.md
+  - Donate: donate.md
+
   - Configuration:
     - Common Configuration: configuration/configuration.md
 
@@ -70,7 +75,3 @@ pages:
     - Auto Update: auto-update.md
     - Code Signing: code-signing.md
     - Multi Platform Build: multi-platform-build.md
-
-  - Command Line Interface (CLI): cli.md
-  - Programmatic API: api/electron-builder.md
-  - Donate: donate.md

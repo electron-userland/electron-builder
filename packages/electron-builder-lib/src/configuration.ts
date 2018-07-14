@@ -170,12 +170,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly protonNodeVersion?: string | null
 
   /**
-   * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
+   * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign). See [example](/hooks.md#afterpack).
    */
   readonly afterPack?: ((context: AfterPackContext) => Promise<any>) | string | null
 
   /**
-   * The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format).
+   * The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format). See [example](/hooks.md#aftersign).
    */
   readonly afterSign?: ((context: AfterPackContext) => Promise<any>) | string | null
 
