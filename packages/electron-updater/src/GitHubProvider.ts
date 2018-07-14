@@ -139,7 +139,7 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: string, isFullChangelog: boolean, feed: XElement, latestRelease: any) {
+export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: any) {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }

@@ -150,6 +150,9 @@ Emitted on progress.
   
 * <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
 * <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
+
+    Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
+    
 * <code id="AppUpdater-currentVersion">currentVersion</code> String - The current application version.
 * <code id="AppUpdater-channel">channel</code> String - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
 * <code id="AppUpdater-requestHeaders">requestHeaders</code> [key: string]: string - The request headers.

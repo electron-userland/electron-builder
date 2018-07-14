@@ -8,13 +8,13 @@ import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
+import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import "source-map-support/register"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -44,6 +44,9 @@ export abstract class AppUpdater extends EventEmitter {
 
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
+   *
+   * Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
+   *
    * @default false
    */
   allowDowngrade: boolean = false
@@ -51,7 +54,7 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * The current application version.
    */
-  readonly currentVersion: string
+  readonly currentVersion: SemVer
 
   private _channel: string | null = null
 
@@ -71,6 +74,7 @@ export abstract class AppUpdater extends EventEmitter {
    */
   set channel(value: string | null) {
     if (this._channel != null) {
+      // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
       }
@@ -102,6 +106,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger = value == null ? new NoOpLogger() : value
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
    */
@@ -119,8 +124,6 @@ export abstract class AppUpdater extends EventEmitter {
     this._appUpdateConfigPath = value
     this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
-
-  protected updateAvailable = false
 
   private clientPromise: Promise<Provider<any>> | null = null
 
@@ -178,7 +181,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
     this.currentVersion = currentVersion
 
-    this.allowPrerelease = hasPrereleaseComponents(this.currentVersion)
+    this.allowPrerelease = hasPrereleaseComponents(currentVersion)
 
     if (options != null) {
       this.setFeedURL(options)
@@ -296,6 +299,39 @@ export abstract class AppUpdater extends EventEmitter {
     return headers
   }
 
+  private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
+    const latestVersion = parseVersion(updateInfo.version)
+    if (latestVersion == null) {
+      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${latestVersion}"`, "ERR_UPDATER_INVALID_VERSION")
+    }
+
+    const currentVersion = this.currentVersion
+    if (isVersionsEqual(latestVersion, currentVersion)) {
+      return false
+    }
+
+    const isStagingMatch = await this.isStagingMatch(updateInfo)
+    if (!isStagingMatch) {
+      return false
+    }
+
+    // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405033227
+    // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405030797
+    const isLatestVersionNewer = isVersionGreaterThan(latestVersion, currentVersion)
+    if (!this.allowDowngrade) {
+      return isLatestVersionNewer
+    }
+
+    const currentVersionPrereleaseComponent = getVersionPreleaseComponents(currentVersion)
+    const latestVersionPrereleaseComponent = getVersionPreleaseComponents(latestVersion)
+    if (currentVersionPrereleaseComponent === latestVersionPrereleaseComponent) {
+      // allowDowngrade taken in account only if channel differs
+      return isLatestVersionNewer
+    }
+
+    return true
+  }
+
   protected async getUpdateInfo(): Promise<UpdateInfo> {
     await this.untilAppReady
 
@@ -311,15 +347,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     const updateInfo = await this.getUpdateInfo()
-
-    const latestVersion = parseVersion(updateInfo.version)
-    if (latestVersion == null) {
-      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${latestVersion}"`, "ERR_UPDATER_INVALID_VERSION")
-    }
-
-    const isStagingMatch = await this.isStagingMatch(updateInfo)
-    if (!isStagingMatch || ((this.allowDowngrade && !hasPrereleaseComponents(latestVersion)) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
-      this.updateAvailable = false
+    if (!await this.isUpdateAvailable(updateInfo)) {
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
       this.emit("update-not-available", updateInfo)
       return {
@@ -328,7 +356,6 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
 
-    this.updateAvailable = true
     this.updateInfo = updateInfo
 
     this.onUpdateAvailable(updateInfo)
@@ -454,7 +481,7 @@ export interface DownloadUpdateOptions {
   readonly cancellationToken: CancellationToken
 }
 
-function hasPrereleaseComponents(version: string) {
+function hasPrereleaseComponents(version: SemVer) {
   const versionPrereleaseComponent = getVersionPreleaseComponents(version)
   return versionPrereleaseComponent != null && versionPrereleaseComponent.length > 0
 }
