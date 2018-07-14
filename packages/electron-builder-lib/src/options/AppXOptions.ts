@@ -42,6 +42,11 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly languages?: Array<string> | string | null
 
   /**
+   * Whether to add auto launch extension. Defaults to `true` if [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) in the dependencies.
+   */
+  readonly addAutoLaunchExtension?: boolean
+
+  /**
    * @private
    * @default false
    */

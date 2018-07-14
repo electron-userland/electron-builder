@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--suppress XmlUnusedNamespaceDeclaration -->
 <Package
    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
   <Identity Name="${identityName}"
@@ -35,6 +37,7 @@
         ${defaultTile}
         ${splashScreen}
       </uap:VisualElements>
+      ${extensions}
     </Application>
   </Applications>
 </Package>

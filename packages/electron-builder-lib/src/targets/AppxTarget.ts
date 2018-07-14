@@ -68,7 +68,7 @@ export default class AppXTarget extends Target {
     const userAssets = assetInfo.userAssets
 
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
-    await this.writeManifest(getTemplatePath("appx"), manifestFile, arch, await this.computePublisherName(), userAssets)
+    await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
 
@@ -161,11 +161,13 @@ export default class AppXTarget extends Target {
     return publisher
   }
 
-  private async writeManifest(templatePath: string, outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
+  private async writeManifest(outFile: string, arch: Arch, publisher: string, userAssets: Array<string>) {
     const appInfo = this.packager.appInfo
     const options = this.options
-    const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
-      .replace(/\$\{([a-zA-Z0-9]+)\}/g, (match, p1): string => {
+    const executable = `app\\${appInfo.productFilename}.exe`
+    const displayName = options.displayName || appInfo.productName
+    const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8"))
+      .replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
         switch (p1) {
           case "publisher":
             return publisher
@@ -195,10 +197,10 @@ export default class AppXTarget extends Target {
             return options.identityName  || appInfo.name
 
           case "executable":
-            return `app\\${appInfo.productFilename}.exe`
+            return executable
 
           case "displayName":
-            return options.displayName || appInfo.productName
+            return displayName
 
           case "description":
             return appInfo.description || appInfo.productName
@@ -230,11 +232,32 @@ export default class AppXTarget extends Target {
           case "resourceLanguages":
             return resourceLanguageTag(asArray(options.languages))
 
+          case "extensions":
+            return this.getExtensions(executable, displayName)
+
           default:
             throw new Error(`Macro ${p1} is not defined`)
         }
       })
     await writeFile(outFile, manifest)
+  }
+
+  private getExtensions(executable: string, displayName: string): string {
+    let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
+    if (isAddAutoLaunchExtension === undefined) {
+      const deps = this.packager.info.metadata.dependencies
+      isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
+    }
+
+    if (!isAddAutoLaunchExtension) {
+      return ""
+    }
+
+    return `<Extensions>
+    <desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
+      <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
+    </desktop:Extension>
+  </Extensions>`
   }
 }
 

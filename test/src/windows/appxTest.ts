@@ -21,6 +21,16 @@ it.ifDevOrWinCi("AppX", app({
   signedWin: true,
 }))
 
+it.ifDevOrWinCi("auto launch", app({
+  targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+  config: {
+    appx: {
+      addAutoLaunchExtension: true,
+    },
+  },
+}, {
+}))
+
 const it2 = isEnvTrue(process.env.DO_APPX_CERT_STORE_AWARE_TEST) ? test : test.skip
 it2.ifNotCi("certificateSubjectName", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
