@@ -1,7 +1,7 @@
 import { assertPack, linuxDirTarget, verifyAsarFileTree } from "./helpers/packTester"
 import { Platform } from "electron-builder"
 
-test.skip("yarn workspace", () => assertPack("test-app-yarn-workspace", {
+test.ifAll("yarn workspace", () => assertPack("test-app-yarn-workspace", {
   targets: linuxDirTarget,
   projectDir: "packages/test-app"
 }, {
