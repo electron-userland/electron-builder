@@ -92,7 +92,6 @@ export class Packager {
   private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
-  private readonly afterSignHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
   readonly options: PackagerOptions
 
@@ -225,10 +224,6 @@ export class Packager {
 
   addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
     this.afterPackHandlers.push(handler)
-  }
-
-  addAfterSignHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
-    this.afterSignHandlers.push(handler)
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -462,16 +457,6 @@ export class Packager {
     if (afterPack != null) {
       // user handler should be last
       handlers.push(afterPack)
-    }
-    return BluebirdPromise.each(handlers, it => it(context))
-  }
-
-  afterSign(context: AfterPackContext): Promise<any> {
-    const afterSign = resolveFunction(this.config.afterSign)
-    const handlers = this.afterSignHandlers.slice()
-    if (afterSign != null) {
-      // user handler should be last
-      handlers.push(afterSign)
     }
     return BluebirdPromise.each(handlers, it => it(context))
   }

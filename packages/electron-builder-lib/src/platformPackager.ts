@@ -230,7 +230,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar)
     await this.signApp(packContext, isAsar)
-    await this.info.afterSign(packContext)
+
+    const afterSign = resolveFunction(this.config.afterSign)
+    if (afterSign != null) {
+      await Promise.resolve(afterSign(packContext))
+    }
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
