@@ -28,6 +28,8 @@ export default class SpacesPublisher extends BaseS3Publisher {
   }
 
   protected configureS3Options(args: Array<string>): void {
+    super.configureS3Options(args)
+
     args.push("--endpoint", `${this.info.region}.digitaloceanspaces.com`)
     args.push("--region", this.info.region)
 
