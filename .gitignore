@@ -36,3 +36,5 @@ electron-builder-*.d.ts
 /scripts/renderer/out/
 
 __publish.sh
+
+.vscode

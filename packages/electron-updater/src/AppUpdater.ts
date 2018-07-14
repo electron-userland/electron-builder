@@ -49,6 +49,13 @@ export abstract class AppUpdater extends EventEmitter {
   allowDowngrade: boolean = false
 
   /**
+   * Whether to always allow downgrading or upgrading for a channel (0.2.0 >
+   * 0.3.0-alpha.234 > 0.2.1-beta.22 > 0.2.0)
+   * @default false
+   */
+  alwaysDownloadLatestForChannel: boolean = false
+
+  /**
    * The current application version.
    */
   readonly currentVersion: string
@@ -318,7 +325,17 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
-    if (!isStagingMatch || ((this.allowDowngrade && !hasPrereleaseComponents(latestVersion)) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
+    const isSameVersion = isVersionsEqual(latestVersion, this.currentVersion)
+    const isLatestVersionNewer = isVersionGreaterThan(latestVersion, this.currentVersion)
+
+    const disallowDowngrade =
+      this.allowDowngrade && !hasPrereleaseComponents(latestVersion)
+        ? isSameVersion
+        : !isLatestVersionNewer
+
+    const forceUpdate = !isSameVersion && this.alwaysDownloadLatestForChannel
+
+    if (!isStagingMatch || (!forceUpdate && disallowDowngrade)) {
       this.updateAvailable = false
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
       this.emit("update-not-available", updateInfo)
