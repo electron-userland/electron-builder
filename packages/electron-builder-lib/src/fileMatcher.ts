@@ -181,7 +181,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   patterns.push("!.editorconfig")
 
   const debugLogger = packager.debugLogger
-  if (debugLogger.enabled) {
+  if (debugLogger.isEnabled) {
     //tslint:disable-next-line:no-invalid-template-strings
     debugLogger.add(`${macroExpander("${arch}")}.firstOrDefaultFilePatterns`, patterns)
   }
@@ -222,7 +222,7 @@ export function getNodeModuleFileMatcher(appDir: string, destination: string, ma
   }
 
   const debugLogger = packager.debugLogger
-  if (debugLogger.enabled) {
+  if (debugLogger.isEnabled) {
     //tslint:disable-next-line:no-invalid-template-strings
     debugLogger.add(`${macroExpander("${arch}")}.nodeModuleFilePatterns`, matcher.patterns)
   }

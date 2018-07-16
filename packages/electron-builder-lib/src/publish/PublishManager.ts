@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
-import { getCiTag, PublishContext, Publisher, PublishOptions } from "electron-publish"
+import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
@@ -13,9 +13,10 @@ import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import S3Publisher from "electron-publish/out/s3/s3Publisher"
 import SpacesPublisher from "electron-publish/out/s3/spacesPublisher"
-import { ArtifactCreated, Platform, PlatformSpecificBuildOptions, Target } from "../index"
+import { ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
+import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 
@@ -29,7 +30,7 @@ export class PublishManager implements PublishContext {
 
   private readonly taskManager: AsyncTaskManager
 
-  private readonly isPublish: boolean = false
+  readonly isPublish: boolean = false
 
   readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
@@ -95,7 +96,7 @@ export class PublishManager implements PublishContext {
     packager.artifactCreated(event => {
       const publishConfiguration = event.publishConfig
       if (publishConfiguration == null) {
-        this.taskManager.addTask(this.artifactCreated(event))
+        this.taskManager.addTask(this.artifactCreatedWithoutExplicitPublishConfig(event))
       }
       else if (this.isPublish) {
         if (debug.enabled) {
@@ -106,12 +107,18 @@ export class PublishManager implements PublishContext {
     })
   }
 
-  private scheduleUpload(publishConfig: PublishConfiguration, event: ArtifactCreated): void {
+  async getGlobalPublishConfigurations(): Promise<Array<PublishConfiguration> | null> {
+    const publishers = this.packager.config.publish
+    return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
+  }
+
+  /** @internal */
+  scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask): void {
     if (publishConfig.provider === "generic") {
       return
     }
 
-    const publisher = this.getOrCreatePublisher(publishConfig, event.packager)
+    const publisher = this.getOrCreatePublisher(publishConfig)
     if (publisher == null) {
       log.debug({
         file: event.file,
@@ -130,10 +137,10 @@ export class PublishManager implements PublishContext {
     this.taskManager.addTask(publisher.upload(event))
   }
 
-  private async artifactCreated(event: ArtifactCreated) {
-    const packager = event.packager
+  private async artifactCreatedWithoutExplicitPublishConfig(event: ArtifactCreated) {
+    const platformPackager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch, this.isPublish) : [event.publishConfig]
+    const publishConfigs = await getPublishConfigs(platformPackager, target == null ? null : target.options, event.arch, this.isPublish)
 
     if (debug.enabled) {
       debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfigs: ${safeStringifyJson(publishConfigs)}`)
@@ -160,17 +167,17 @@ export class PublishManager implements PublishContext {
 
     if (event.isWriteUpdateInfo && target != null && eventFile != null &&
       !this.cancellationToken.cancelled &&
-      (packager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
+      (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
       this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
     }
   }
 
-  private getOrCreatePublisher(publishConfig: PublishConfiguration, platformPackager: PlatformPackager<any>): Publisher | null {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration): Publisher | null {
     // to not include token into cache key
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = createPublisher(this, platformPackager.info.metadata.version!, publishConfig, this.publishOptions)
+      publisher = createPublisher(this, this.packager.appInfo.version, publishConfig, this.publishOptions)
       this.nameToPublisher.set(providerCacheKey, publisher)
       log.info({publisher: publisher!!.toString()}, "publishing")
     }
@@ -228,7 +235,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
     const repositoryInfo = await packager.info.repositoryInfo
     debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      const resolvedPublishConfig = await getResolvedPublishConfig(packager, {provider: repositoryInfo.type}, arch, false)
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager, packager.info, {provider: repositoryInfo.type}, arch, false)
       if (resolvedPublishConfig != null) {
         debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyJson(resolvedPublishConfig)}`)
         return [resolvedPublishConfig]
@@ -308,7 +315,7 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
   return `${baseUrl}/${encodeURI(fileName)}`
 }
 
-export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigs(platformPackager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)
@@ -322,19 +329,22 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
   // check build.win (platform)
   if (publishers == null) {
-    publishers = packager.platformSpecificBuildOptions.publish
+    publishers = platformPackager.platformSpecificBuildOptions.publish
     if (publishers === null) {
       return null
     }
   }
 
   if (publishers == null) {
-    publishers = packager.config.publish
+    publishers = platformPackager.config.publish
     if (publishers === null) {
       return null
     }
   }
+  return await resolvePublishConfigurations(publishers, platformPackager, platformPackager.info, arch, errorIfCannot)
+}
 
+async function resolvePublishConfigurations(publishers: any, platformPackager: PlatformPackager<any> | null, packager: Packager, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
@@ -346,7 +356,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
     if (serviceName != null) {
       log.debug(null, `Detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(packager, {provider: serviceName}, arch, errorIfCannot))!]
+      return [(await getResolvedPublishConfig(platformPackager, packager, {provider: serviceName}, arch, errorIfCannot))!]
     }
   }
 
@@ -355,7 +365,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch, errorIfCannot)) as Promise<Array<PublishConfiguration>>)
+  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? {provider: it} : it, arch, errorIfCannot)) as Promise<Array<PublishConfiguration>>)
 }
 
 function isSuitableWindowsTarget(target: Target) {
@@ -365,11 +375,12 @@ function isSuitableWindowsTarget(target: Target) {
   return target.name === "nsis" || target.name.startsWith("nsis-")
 }
 
-function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch: Arch | null): void {
+function expandPublishConfig(options: any, platformPackager: PlatformPackager<any> | null, packager: Packager, arch: Arch | null): void {
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
-      const expanded = packager.expandMacro(value, arch == null ? null : Arch[arch])
+      const archValue = arch == null ? null : Arch[arch]
+      const expanded = platformPackager == null ? expandMacro(value, archValue, packager.appInfo) : platformPackager.expandMacro(value, archValue)
       if (expanded !== value) {
         options[name] = expanded
       }
@@ -377,17 +388,17 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
   }
 }
 
-function isDetectUpdateChannel(packager: PlatformPackager<any>) {
-  const value = packager.platformSpecificBuildOptions.detectUpdateChannel
-  return value == null ? packager.config.detectUpdateChannel !== false : value
+function isDetectUpdateChannel(platformSpecificConfiguration: PlatformSpecificBuildOptions | null, configuration: Configuration) {
+  const value = platformSpecificConfiguration == null ? null : platformSpecificConfiguration.detectUpdateChannel
+  return value == null ? configuration.detectUpdateChannel !== false : value
 }
 
-async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
+async function getResolvedPublishConfig(platformPackager: PlatformPackager<any> | null, packager: Packager, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
   options = {...options}
-  expandPublishConfig(options, packager, arch)
+  expandPublishConfig(options, platformPackager, packager, arch)
 
   let channelFromAppVersion: string | null = null
-  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(packager)) {
+  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)) {
     channelFromAppVersion = packager.appInfo.channel
   }
 
@@ -428,7 +439,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   }
 
   async function getInfo() {
-    const info = await packager.info.repositoryInfo
+    const info = await packager.repositoryInfo
     if (info != null) {
       return info
     }

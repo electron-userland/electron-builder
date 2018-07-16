@@ -1,8 +1,10 @@
 import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish/out/publisher"
 import { log } from "builder-util"
+import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
+import { resolveFunction } from "./platformPackager"
 import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
@@ -32,15 +34,7 @@ export { PlatformPackager } from "./platformPackager"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
 
-export async function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
-  // because artifact event maybe dispatched several times for different publish providers
-  const artifactPaths = new Set<string>()
-  packager.artifactCreated(event => {
-    if (event.file != null) {
-      artifactPaths.add(event.file)
-    }
-  })
-
+export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
     log.warn("cancelled by SIGINT")
@@ -49,9 +43,36 @@ export async function build(options: PackagerOptions & PublishOptions, packager:
   }
   process.once("SIGINT", sigIntHandler)
 
-  return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
+  const promise = packager.build()
+    .then(async buildResult => {
+      const afterAllArtifactBuild = resolveFunction(buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+      if (afterAllArtifactBuild != null) {
+        const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
+        if (newArtifacts.length === 0 || !publishManager.isPublish) {
+          return buildResult.artifactPaths
+        }
+
+        const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+        if (publishConfigurations == null || publishConfigurations.length === 0) {
+          return buildResult.artifactPaths
+        }
+
+        for (const newArtifact of newArtifacts) {
+          buildResult.artifactPaths.push(newArtifact)
+          for (const publishConfiguration of publishConfigurations) {
+            publishManager.scheduleUpload(publishConfiguration, {
+              file: newArtifact,
+              arch: null
+            })
+          }
+        }
+      }
+      return buildResult.artifactPaths
+    })
+
+  return executeFinally(promise, isErrorOccurred => {
     let promise: Promise<any>
-    if (errorOccurred) {
+    if (isErrorOccurred) {
       publishManager.cancelTasks()
       promise = Promise.resolve(null)
     }

@@ -52,4 +52,5 @@
 * <code id="NsisOptions-createStartMenuShortcut">createStartMenuShortcut</code> = `true` Boolean - Whether to create start menu shortcut.
 * <code id="NsisOptions-menuCategory">menuCategory</code> = `false` Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
 * <code id="NsisOptions-shortcutName">shortcutName</code> String - The name that will be used for all shortcuts. Defaults to the application name.
+
 <!-- end of generated block -->

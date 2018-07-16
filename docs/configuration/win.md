@@ -33,6 +33,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
     
     1.0.0 sha2 2.15.0 path 2.16.0 files
 
+
 <!-- end of generated block -->
 
 ---

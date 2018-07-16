@@ -231,7 +231,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, isAsar)
     await this.signApp(packContext, isAsar)
 
-    const afterSign = resolveFunction(this.config.afterSign)
+    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
     if (afterSign != null) {
       await Promise.resolve(afterSign(packContext))
     }
@@ -606,7 +606,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function resolveFunction<T>(executor: T | string): T {
+export function resolveFunction<T>(executor: T | string, name: string): T {
   if (executor == null || typeof executor !== "string") {
     return executor
   }
@@ -625,7 +625,13 @@ export function resolveFunction<T>(executor: T | string): T {
   }
 
   const m = require(p)
-  return m.default || m
+  const namedExport = m[name]
+  if (namedExport == null) {
+    return m.default || m
+  }
+  else {
+    return namedExport
+  }
 }
 
 export function chooseNotNull(v1: string | null | undefined, v2: string | null | undefined): string | null | undefined {

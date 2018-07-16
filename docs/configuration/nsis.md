@@ -26,6 +26,7 @@ To build web installer, set [target](/configuration/win.md#WindowsConfiguration-
 To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 
 If for some reasons web installer cannot download (antivirus, offline):
+
 * Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
 * Specify any local package file using `--package-file=path_to_file`.
 
@@ -80,19 +81,20 @@ It is also important to set the Application User Model ID (AUMID) to the [appId]
 ---
 
 ## Common Questions
-#### How do change the default installation directory to custom?
 
-It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
+??? question "How do change the default installation directory to custom?"
 
-```nsis
-!macro preInit
-	SetRegView 64
-	WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-	WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-	SetRegView 32
-	WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-	WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
-!macroend
-```
+    It is very specific requirement. Do not do if you are not sure. Add [custom macro](#custom-nsis-script):
+    
+    ```nsis
+    !macro preInit
+      SetRegView 64
+      WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+      WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+      SetRegView 32
+      WriteRegExpandStr HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+      WriteRegExpandStr HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation "C:\MyApp"
+    !macroend
+    ```
 
 

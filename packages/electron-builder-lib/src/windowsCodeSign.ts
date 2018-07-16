@@ -60,7 +60,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
     return doSign(configuration, packager)
   }
 
-  const executor = resolveFunction(options.options.sign) || defaultExecutor
+  const executor = resolveFunction(options.options.sign, "sign") || defaultExecutor
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = {...options, hash, isNest}

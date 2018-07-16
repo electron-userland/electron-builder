@@ -13,4 +13,5 @@
 * <code id="S3Options-endpoint">endpoint</code> String - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
 * <code id="S3Options-channel">channel</code> = `latest` String - The update channel.
 * <code id="S3Options-path">path</code> = `/` String - The directory path.
+
 <!-- end of generated block -->

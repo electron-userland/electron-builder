@@ -480,7 +480,7 @@ export class NsisTarget extends Target {
 
     args.push("-")
 
-    if (this.packager.debugLogger.enabled) {
+    if (this.packager.debugLogger.isEnabled) {
       this.packager.debugLogger.add("nsis.script", script)
     }
 

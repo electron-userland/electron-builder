@@ -65,7 +65,7 @@ async function render2(files, jsdoc2MdOptions) {
   const renderer = new Renderer(dataMap)
 
   const blockedPropertyName = new Set([
-    "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack", "afterSign",
+    "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack", "remoteBuild",
     "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector", "signingHashAlgorithms", "publisherName",
     "forceCodeSigning",
   ])
@@ -124,11 +124,8 @@ async function render2(files, jsdoc2MdOptions) {
         return "String | (configuration: CustomWindowsSignTaskConfiguration) => Promise"
       }
       if (context.object.name === "Configuration") {
-        if (context.property.name === "afterPack") {
-          return "(context: AfterPackContext) => Promise | null"
-        }
-        if (context.property.name === "afterSign") {
-          return "(context: AfterPackContext) => Promise | null"
+        if (context.property.name === "afterPack" || context.property.name === "afterSign" || context.property.name === "afterAllArtifactBuild" || context.property.name === "onNodeModuleFile") {
+          return ""
         }
         if (context.property.name === "beforeBuild") {
           return "(context: BeforeBuildContext) => Promise | null"
@@ -270,7 +267,7 @@ async function render2(files, jsdoc2MdOptions) {
       }
     }
 
-    await writeDocFile(path.join(__dirname, "..", "docs", page.file), content)
+    await writeDocFile(path.join(__dirname, "..", "docs", page.file), content + "\n" /* mkdocs requires extra newline otherwise trailing link is not rendered */)
   }
 }
 

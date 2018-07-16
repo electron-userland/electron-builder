@@ -1,19 +1,19 @@
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
+import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, deepAssign, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
+import { exists } from "builder-util/out/fs"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { exists } from "builder-util/out/fs"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
-import { Framework, AfterPackContext, Configuration, Platform, SourceRepositoryInfo, Target } from "./index"
+import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
+import { AfterPackContext, Configuration, Framework, Platform, SourceRepositoryInfo, Target } from "./index"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
-import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { createProtonFrameworkSupport } from "./ProtonFramework"
@@ -298,19 +298,31 @@ export class Packager {
     const outDir = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo))
 
     if (!isCI && (process.stdout as any).isTTY) {
-      const effectiveConfigFile = path.join(outDir, "electron-builder-effective-config.yaml")
+      const effectiveConfigFile = path.join(outDir, "builder-effective-config.yaml")
       log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
     }
 
+    // because artifact event maybe dispatched several times for different publish providers
+    const artifactPaths = new Set<string>()
+    this.artifactCreated(event => {
+      if (event.file != null) {
+        artifactPaths.add(event.file)
+      }
+    })
+
+    const platformToTargets = await executeFinally(this.doBuild(outDir), async () => {
+      if (this.debugLogger.isEnabled) {
+        await this.debugLogger.save(path.join(outDir, "builder-debug.yml"))
+      }
+      await this.tempDirManager.cleanup()
+    })
+
     return {
       outDir,
-      platformToTargets: await executeFinally(this.doBuild(outDir), async () => {
-        if (this.debugLogger.enabled) {
-          await this.debugLogger.save(path.join(outDir, "electron-builder-debug.yml"))
-        }
-        await this.tempDirManager.cleanup()
-      }),
+      artifactPaths: Array.from(artifactPaths),
+      platformToTargets,
+      configuration,
     }
   }
 
@@ -422,7 +434,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = resolveFunction(config.beforeBuild)
+    const beforeBuild = resolveFunction(config.beforeBuild, "beforeBuild")
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -452,7 +464,7 @@ export class Packager {
   }
 
   afterPack(context: AfterPackContext): Promise<any> {
-    const afterPack = resolveFunction(this.config.afterPack)
+    const afterPack = resolveFunction(this.config.afterPack, "afterPack")
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last
@@ -487,7 +499,9 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
 
 export interface BuildResult {
   readonly outDir: string
+  readonly artifactPaths: Array<string>
   readonly platformToTargets: Map<Platform, Map<string, Target>>
+  readonly configuration: Configuration
 }
 
 function getSafeEffectiveConfig(configuration: Configuration): string {

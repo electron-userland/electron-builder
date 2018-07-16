@@ -16,6 +16,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 * <code id="LinuxConfiguration-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 * <code id="LinuxConfiguration-mimeTypes">mimeTypes</code> Array&lt;String&gt; - The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing.
 * <code id="LinuxConfiguration-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+
 <!-- end of generated block -->
 
 ## Debian Package Options

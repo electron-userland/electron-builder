@@ -74,6 +74,11 @@ async function doBuild(data: BuildTask): Promise<void> {
   await packager._build({
     ...info.configuration,
     publish: null,
+    beforeBuild: null,
+    afterPack: null,
+    afterSign: null,
+    afterAllArtifactBuild: null,
+    onNodeModuleFile: null,
     directories: {
       output: projectOutDir,
       buildResources: projectDir + path.sep + info.buildResourceDirName

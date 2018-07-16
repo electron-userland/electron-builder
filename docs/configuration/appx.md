@@ -16,6 +16,7 @@ Inherited from `TargetSpecificOptions`:
 
 * <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+
 <!-- end of generated block -->
 
 ## AppX Package Code Signing

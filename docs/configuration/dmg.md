@@ -28,6 +28,7 @@ Inherited from `TargetSpecificOptions`:
 
 * <code id="DmgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="DmgOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+
 <!-- end of generated block -->
 
 ## DMG License

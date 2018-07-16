@@ -33,4 +33,5 @@ Inherited from `TargetSpecificOptions`:
 
 * <code id="PkgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="PkgOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+
 <!-- end of generated block -->

@@ -29,4 +29,5 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
     1.0.0 latest-mac.json 2.15.0 path 2.16.0 files
 
 * <code id="MacConfiguration-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales. By default Electron locales used as is.
+
 <!-- end of generated block -->

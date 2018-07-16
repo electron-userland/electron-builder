@@ -115,7 +115,7 @@ export async function validateConfig(config: Configuration, debugLogger: DebugLo
   }
 
   await _validateConfig(config, schemeDataPromise, (message, errors) => {
-    if (debugLogger.enabled) {
+    if (debugLogger.isEnabled) {
       debugLogger.add("invalidConfig", JSON.stringify(errors, null, 2))
     }
 

@@ -14,7 +14,7 @@ export class AppInfo {
   readonly productFilename: string
 
   constructor(private readonly info: Packager, buildVersion?: string | null) {
-    this.version = info.metadata.version!
+    this.version = info.metadata.version!!
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion

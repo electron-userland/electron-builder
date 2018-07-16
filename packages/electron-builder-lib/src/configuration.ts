@@ -9,6 +9,7 @@ import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOpt
 import { SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { WindowsConfiguration } from "./options/winOptions"
+import { BuildResult } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
@@ -170,20 +171,21 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly protonNodeVersion?: string | null
 
   /**
-   * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign). See [example](/hooks.md#afterpack).
+   * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
    */
-  readonly afterPack?: ((context: AfterPackContext) => Promise<any>) | string | null
-
+  readonly afterPack?: ((context: AfterPackContext) => Promise<any> | any) | string | null
   /**
-   * The function (or path to file or module id) to be run after pack and sign (but before pack into distributable format). See [example](/hooks.md#aftersign).
+   * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
    */
-  readonly afterSign?: ((context: AfterPackContext) => Promise<any>) | string | null
-
+  readonly afterSign?: ((context: AfterPackContext) => Promise<any> | any) | string | null
   /**
-   * The function (or path to file or module id) to be run on each node module file.
+   * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
+   */
+  readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
+  /**
+   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
    */
   readonly onNodeModuleFile?: ((file: string) => void) | string | null
-
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    *

@@ -12,4 +12,5 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 * <code id="SpacesOptions-path">path</code> = `/` String - The directory path.
 * <code id="SpacesOptions-acl">acl</code> = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
 
+
 <!-- end of generated block -->

@@ -35,7 +35,6 @@ pages:
   - Introduction: index.md
   - Command Line Interface (CLI): cli.md
   - Programmatic API: api/electron-builder.md
-  - Hooks: hooks.md
   - Donate: donate.md
 
   - Configuration:
