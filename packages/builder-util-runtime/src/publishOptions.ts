@@ -219,29 +219,34 @@ function s3Url(options: S3Options) {
   if (options.endpoint != null) {
     url = `${options.endpoint}/${options.bucket}`
   }
-  else {
-    if (!options.bucket.includes(".")) {
-      if (options.region === "cn-north-1") {
-        url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
-      }
-      else {
-        url = `https://${options.bucket}.s3.amazonaws.com`
-      }
+  else if (options.bucket.includes(".")) {
+    if (options.region == null) {
+      throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
+    }
+
+    // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
+    if (options.region === "us-east-1") {
+      url = `https://s3.amazonaws.com/${options.bucket}`
     }
     else {
-      if (options.region == null) {
-        throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
-      }
-
-      // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
-      url = options.region === "us-east-1"
-        ? `https://s3.amazonaws.com/${options.bucket}`
-        : `https://s3-${options.region}.amazonaws.com/${options.bucket}`
+      url = `https://s3-${options.region}.amazonaws.com/${options.bucket}`
     }
   }
+  else if (options.region === "cn-north-1") {
+    url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
+  }
+  else {
+    url = `https://${options.bucket}.s3.amazonaws.com`
+  }
+  return appendPath(url, options.path)
+}
 
-  if (options.path != null) {
-    url += `/${options.path}`
+function appendPath(url: string, p: string | null | undefined): string {
+  if (p != null && p.length > 0) {
+    if (!p.startsWith("/")) {
+      url += "/"
+    }
+    url += p
   }
   return url
 }
@@ -253,12 +258,7 @@ function spacesUrl(options: SpacesOptions) {
   if (options.region == null) {
     throw new Error(`region is missing`)
   }
-
-  let url = `https://${options.name}.${options.region}.digitaloceanspaces.com`
-  if (options.path != null) {
-    url += `/${options.path}`
-  }
-  return url
+  return appendPath(`https://${options.name}.${options.region}.digitaloceanspaces.com`, options.path)
 }
 
 /**

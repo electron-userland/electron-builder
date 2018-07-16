@@ -1,8 +1,8 @@
 import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
-import { AppUpdater } from "./AppUpdater"
-import { getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
+import { AppUpdater } from "../AppUpdater"
+import { getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 const hrefRegExp = /\/tag\/v?([^\/]+)$/

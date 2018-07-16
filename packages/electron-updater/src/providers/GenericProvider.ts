@@ -1,6 +1,6 @@
 import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
-import { AppUpdater } from "./AppUpdater"
-import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "./main"
+import { AppUpdater } from "../AppUpdater"
+import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {

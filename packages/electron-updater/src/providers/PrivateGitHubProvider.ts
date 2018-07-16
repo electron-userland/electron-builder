@@ -2,10 +2,10 @@ import { CancellationToken, GithubOptions, HttpError, HttpExecutor, newError, Up
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
-import { AppUpdater } from "./AppUpdater"
+import { AppUpdater } from "../AppUpdater"
 import { URL } from "url"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
+import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
 import { getFileList } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {

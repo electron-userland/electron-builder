@@ -1,9 +1,9 @@
 import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration } from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
-import { BintrayProvider } from "./BintrayProvider"
-import { GenericProvider } from "./GenericProvider"
-import { GitHubProvider } from "./GitHubProvider"
-import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
+import { BintrayProvider } from "./providers/BintrayProvider"
+import { GenericProvider } from "./providers/GenericProvider"
+import { GitHubProvider } from "./providers/GitHubProvider"
+import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
 
 export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
   return !url.includes("s3.amazonaws.com")

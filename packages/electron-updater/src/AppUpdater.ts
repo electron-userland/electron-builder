@@ -12,7 +12,7 @@ import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersio
 import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
-import { GenericProvider } from "./GenericProvider"
+import { GenericProvider } from "./providers/GenericProvider"
 import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 

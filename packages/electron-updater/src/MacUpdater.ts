@@ -3,7 +3,7 @@ import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } fr
 import { AddressInfo } from "net"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
-import { findFile } from "./Provider"
+import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {

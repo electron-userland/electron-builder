@@ -2,7 +2,7 @@ import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFil
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { URL } from "url"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
+import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null

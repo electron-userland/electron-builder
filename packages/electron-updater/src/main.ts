@@ -7,7 +7,7 @@ import { LoginCallback } from "./electronHttpExecutor"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo }
 export { CancellationToken } from "builder-util-runtime"
-export { Provider } from "./Provider"
+export { Provider } from "./providers/Provider"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
@@ -155,7 +155,6 @@ export function newBaseUrl(url: string) {
 
 // addRandomQueryToAvoidCaching is false by default because in most cases URL already contains version number,
 // so, it makes sense only for Generic Provider for channel files
-/** @internal */
 export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching: boolean = false): URL {
   const result = new URL(pathname, baseUrl)
   const hasSearch = result.search != null && result.search.length !== 0
