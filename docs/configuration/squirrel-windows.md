@@ -24,3 +24,6 @@ Inherited from `TargetSpecificOptions`:
 * <code id="SquirrelWindowsOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 <!-- end of generated block -->
+
+
+

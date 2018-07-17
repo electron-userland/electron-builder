@@ -97,4 +97,19 @@ It is also important to set the Application User Model ID (AUMID) to the [appId]
     !macroend
     ```
 
-
+??? question "Is it possible to made single installer that will allow configuring user/machine installation?"
+    
+    Yes, you need to switch to assisted installer (not default one-click).
+    
+    ```json tab="package.json"
+    "build": {
+      "nsis": {
+        "oneClick": false
+      }
+    }
+    ```
+    
+    ```yaml tab="electron-builder.yml"
+    nsis:
+      oneClick: false
+    ```

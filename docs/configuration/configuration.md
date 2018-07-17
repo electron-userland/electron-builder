@@ -156,3 +156,6 @@ Currently, only macOS and Linux supported.
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
 
 {!includes/hooks.md!}
+
+
+

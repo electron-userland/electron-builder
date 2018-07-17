@@ -2,9 +2,13 @@
 
 <!-- do not edit. start of generated block -->
 * <code id="NsisOptions-oneClick">oneClick</code> = `true` Boolean - Whether to create one-click installer or assisted.
-* <code id="NsisOptions-perMachine">perMachine</code> = `false` Boolean - If `oneClick` is `true` (default): Whether to install per all users (per-machine).
+* <code id="NsisOptions-perMachine">perMachine</code> = `false` Boolean - Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).
     
-    If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
+    If `oneClick` is `true` (default): Whether to install per all users (per-machine).
+    
+    If `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.
+    
+    If `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.
 
 * <code id="NsisOptions-allowElevation">allowElevation</code> = `true` Boolean - *assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
 * <code id="NsisOptions-allowToChangeInstallationDirectory">allowToChangeInstallationDirectory</code> = `false` Boolean - *assisted installer only.* Whether to allow user to change installation directory.
@@ -54,3 +58,7 @@
 * <code id="NsisOptions-shortcutName">shortcutName</code> String - The name that will be used for all shortcuts. Defaults to the application name.
 
 <!-- end of generated block -->
+
+
+
+

@@ -1,5 +1,5 @@
 import { TargetSpecificOptions } from "../../core"
-import { CommonWindowsInstallerConfiguration } from "../../options/CommonWindowsInstallerConfiguration"
+import { CommonWindowsInstallerConfiguration } from "../.."
 
 export interface CommonNsisOptions {
   /**
@@ -33,10 +33,14 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
    */
   readonly oneClick?: boolean
 
-  /***
+  /**
+   * Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).
+   *
    * If `oneClick` is `true` (default): Whether to install per all users (per-machine).
    *
-   * If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
+   * If `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.
+   *
+   * If `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.
    * @default false
    */
   readonly perMachine?: boolean

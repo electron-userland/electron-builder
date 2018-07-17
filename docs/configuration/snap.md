@@ -38,3 +38,7 @@ Inherited from `TargetSpecificOptions`:
 * <code id="SnapOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 <!-- end of generated block -->
+
+
+
+

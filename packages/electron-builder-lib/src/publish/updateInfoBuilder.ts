@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, hashFile, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -91,12 +91,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
   const electronUpdaterCompatibility = (packager.platformSpecificBuildOptions as any).electronUpdaterCompatibility
-  for (let publishConfiguration of publishConfigs) {
-    if (publishConfiguration.provider === "github" && "releaseType" in publishConfiguration) {
-      publishConfiguration = {...publishConfiguration!!}
-      delete (publishConfiguration as GithubOptions).releaseType
-    }
-
+  for (const publishConfiguration of publishConfigs) {
     const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir
     // Bintray uses different variant of channel file info, better to generate it to a separate dir by always
@@ -178,7 +173,8 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
 
   const updateChannelFileToInfo = new Map<string, UpdateInfoFileTask>()
   for (const task of updateInfoFileTasks) {
-    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration)}`
+    // https://github.com/electron-userland/electron-builder/pull/2994
+    const key = `${task.file}@${safeStringifyJson(task.publishConfiguration, new Set(["releaseType"]))}`
     const existingTask = updateChannelFileToInfo.get(key)
     if (existingTask == null) {
       updateChannelFileToInfo.set(key, task)

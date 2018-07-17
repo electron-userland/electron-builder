@@ -22,13 +22,13 @@ async function main() {
       ]
     },
 
-    {
-      page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
-      files: [
-        path.join(source, "updater/electron-updater.js"),
-        path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-      ]
-    },
+    // {
+    //   page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
+    //   files: [
+    //     path.join(source, "updater/electron-updater.js"),
+    //     path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+    //   ]
+    // },
   ]
 
   const jsdoc2MdOptions = {
@@ -382,7 +382,7 @@ async function render(pages, jsdoc2MdOptions) {
   }
 
   sortOptions(pages)
-  sortAutoUpdate(pages)
+  // sortAutoUpdate(pages)
 
   for (const page of pages) {
     const finalOptions = Object.assign({
@@ -426,7 +426,7 @@ async function writeDocFile(docOutFile, content) {
     const start = existingContent.indexOf(startMarker)
     const end = existingContent.indexOf(endMarker)
     if (start != -1 && end != -1) {
-      return fs.outputFile(docOutFile, existingContent.substring(0, start + startMarker.length) + "\n" + content + "\n" + existingContent.substring(end))
+      return fs.outputFile(docOutFile, existingContent.substring(0, start + startMarker.length) + "\n" + content + "\n" + existingContent.substring(end) + "\n")
     }
     else {
       return fs.outputFile(docOutFile, content)
