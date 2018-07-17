@@ -69,8 +69,8 @@ For other commands please see help using `--help` arg, e.g. `./node_modules/.bin
 Without target configuration, electron-builder builds Electron app for current platform and current arch using default target.
 
 * macOS - DMG and ZIP for Squirrel.Mac.
-* Windows - [NSIS](nsis.md).
-* Linux - AppImage.
+* Windows - [NSIS](/configuration/nsis.md).
+* Linux - [AppImage](/configuration/appimage.md).
 
 Platforms and archs can be configured or using [CLI args](https://github.com/electron-userland/electron-builder#cli-usage), or in the configuration. 
 

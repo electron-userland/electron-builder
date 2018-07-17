@@ -20,7 +20,7 @@
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/electron-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
-    "deploy-docs": "mkdocs build --clean && ./scripts/publish.sh",
+    "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",
     "////": "docs: pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
@@ -30,7 +30,7 @@
   "dependencies": {
     "7zip-bin": "~4.0.2",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "1.11.3",
+    "app-builder-bin": "1.11.4",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.5",
