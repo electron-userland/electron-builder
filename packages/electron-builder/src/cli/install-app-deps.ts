@@ -26,7 +26,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs 
     })
     .option("arch", {
       choices: getArchCliNames().concat("all"),
-      default: process.arch,
+      default: process.arch === "arm" ? "armv7l" : process.arch,
       description: "The target arch",
     })
 }
