@@ -1,7 +1,7 @@
 The top-level [win](configuration.md#Configuration-win) key contains set of options instructing electron-builder on how it should build Windows targets. These options applicable for any Windows target.
 
 <!-- do not edit. start of generated block -->
-* <code id="WindowsConfiguration-target">target</code> = `nsis` String | [TargetConfiguration](/configuration/target.md#targetconfiguration) - The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
+* <code id="WindowsConfiguration-target">target</code> = `nsis` String | [TargetConfiguration](/cli#targetconfiguration) - The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
     
     To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
     

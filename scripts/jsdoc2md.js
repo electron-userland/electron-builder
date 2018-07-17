@@ -134,7 +134,7 @@ async function render2(files, jsdoc2MdOptions) {
     }
 
     if (types.some(it => it.endsWith("TargetConfiguration"))) {
-      return "String | [TargetConfiguration](/configuration/target.md#targetconfiguration)"
+      return "String | [TargetConfiguration](/cli#targetconfiguration)"
     }
     if (types.some(it => it.endsWith(".Configuration") || it === "Configuration")) {
       // description contains link to.
@@ -224,8 +224,6 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/Metadata.md", "Metadata"),
     new Page("generated/NsisOptions.md", "NsisOptions"),
     new Page("generated/TargetSpecificOptions.md", "TargetSpecificOptions"),
-
-    new Page("configuration/target.md", "TargetConfiguration"),
   ]
 
   renderer.dataMap = dataMap

@@ -43,4 +43,4 @@
     * <code id="ReleaseInfo-releaseNotes">releaseNotes</code> String - The release notes.
     * <code id="ReleaseInfo-releaseNotesFile">releaseNotesFile</code> String - The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
     * <code id="ReleaseInfo-releaseDate">releaseDate</code> String - The release date.
-* <code id="PlatformSpecificBuildOptions-target">target</code> String | [TargetConfiguration](/configuration/target.md#targetconfiguration)
+* <code id="PlatformSpecificBuildOptions-target">target</code> String | [TargetConfiguration](/cli#targetconfiguration)

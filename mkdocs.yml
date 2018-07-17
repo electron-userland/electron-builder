@@ -60,7 +60,6 @@ pages:
       - AppImage: configuration/appimage.md
       - Snap: configuration/snap.md
 
-    - Target: configuration/target.md
     - Publish: configuration/publish.md
 
   - Tutorials:
