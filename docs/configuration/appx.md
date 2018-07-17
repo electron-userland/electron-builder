@@ -66,7 +66,3 @@ The only solution for now — using [Parallels Desktop for Mac](http://www.paral
 #### How do install AppX without trusted certificate?
 
 If you use self-signed certificate, you need to add it to "Trusted People". See [Install the certificate](https://stackoverflow.com/a/24372483/1910191).
-
-
-
-

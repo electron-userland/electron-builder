@@ -15,6 +15,3 @@
 * <code id="S3Options-path">path</code> = `/` String - The directory path.
 
 <!-- end of generated block -->
-
-
-

@@ -7,6 +7,3 @@ Inherits [macOS options](mac.md).
 * <code id="MasConfiguration-binaries">binaries</code> Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
 
 <!-- end of generated block -->
-
-
-

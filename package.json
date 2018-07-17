@@ -21,7 +21,7 @@
     "jsdoc2md": "node scripts/jsdoc2md.js",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
     "deploy-docs": "mkdocs build --clean && ./scripts/publish.sh",
-    "////": "docs: pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include --upgrade"
+    "////": "docs: pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "https://github.com/electron-userland/electron-builder",

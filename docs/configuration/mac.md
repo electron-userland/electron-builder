@@ -31,7 +31,3 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 * <code id="MacConfiguration-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales. By default Electron locales used as is.
 
 <!-- end of generated block -->
-
-
-
-

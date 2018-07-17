@@ -58,7 +58,3 @@
 * <code id="NsisOptions-shortcutName">shortcutName</code> String - The name that will be used for all shortcuts. Defaults to the application name.
 
 <!-- end of generated block -->
-
-
-
-

@@ -35,6 +35,3 @@ Inherited from `TargetSpecificOptions`:
 * <code id="PkgOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 <!-- end of generated block -->
-
-
-

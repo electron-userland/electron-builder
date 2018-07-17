@@ -426,7 +426,7 @@ async function writeDocFile(docOutFile, content) {
     const start = existingContent.indexOf(startMarker)
     const end = existingContent.indexOf(endMarker)
     if (start != -1 && end != -1) {
-      return fs.outputFile(docOutFile, existingContent.substring(0, start + startMarker.length) + "\n" + content + "\n" + existingContent.substring(end) + "\n")
+      return fs.outputFile(docOutFile, existingContent.substring(0, start + startMarker.length) + "\n" + content + "\n" + existingContent.substring(end).trim() + "\n")
     }
     else {
       return fs.outputFile(docOutFile, content)

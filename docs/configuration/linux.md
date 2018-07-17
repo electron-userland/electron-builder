@@ -33,6 +33,3 @@ All [LinuxTargetSpecificOptions](linux.md#linuxtargetspecificoptions-apk-freebsd
 The top-level `apk`, `freebsd`, `pacman`, `p5p` and `rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.
 
 {!generated/LinuxTargetSpecificOptions.md!}
-
-
-

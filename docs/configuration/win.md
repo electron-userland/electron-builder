@@ -81,6 +81,3 @@ If you are not on macOS or don't want to buy [Parallels Desktop](https://www.par
 The password to your VM is `Passw0rd!`.
 
 VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).
-
-
-

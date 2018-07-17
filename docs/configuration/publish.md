@@ -166,7 +166,3 @@ Example configuration:
 {!generated/s3-options.md!}
 
 {!generated/spaces-options.md!}
-
-
-
-
