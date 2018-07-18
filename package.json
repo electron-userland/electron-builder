@@ -20,8 +20,8 @@
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/electron-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
-    "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",
-    "////": "docs: pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
+    "deploy-docs": "mkdocs build --clean && netlifyctl deploy --config scripts/netlify.toml --publish-directory site",
+    "////": "pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "https://github.com/electron-userland/electron-builder",
