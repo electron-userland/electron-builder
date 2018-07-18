@@ -62,14 +62,14 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<ReleaseInfo> {
-    let baseUrl = this.basePath
+    let basePath = this.basePath
     const allowPrerelease = this.updater.allowPrerelease
 
     if (!allowPrerelease) {
-      baseUrl = `${baseUrl}/latest`
+      basePath = `${basePath}/latest`
     }
 
-    const url = newUrlFromBase(`${baseUrl}`, this.baseUrl)
+    const url = newUrlFromBase(basePath, this.baseUrl)
     try {
       let version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
       if (allowPrerelease) {
