@@ -30,8 +30,6 @@ If for some reasons web installer cannot download (antivirus, offline):
 * Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
 * Specify any local package file using `--package-file=path_to_file`.
 
-
-
 ## Custom NSIS script
 
 Two options are available — [include](#NsisOptions-include) and [script](#NsisOptions-script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
@@ -64,6 +62,15 @@ Keep in mind — if you customize NSIS script, you should always state about it 
 * `build/x86-unicode` and `build/x86-ansi` are added as `addplugindir`.
 * File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
 * All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
+
+??? question "Is there a way to call just when the app is installed (or uninstalled) manually and not on update?"
+    Use `${isUpdated}`.
+    
+    ```nsis
+    ${ifNot} ${isUpdated}
+      # your code
+    ${endIf}
+    ```
 
 ## GUID vs Application Name
 
