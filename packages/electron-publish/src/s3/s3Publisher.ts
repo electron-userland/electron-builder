@@ -34,6 +34,10 @@ export default class S3Publisher extends BaseS3Publisher {
     if (options.channel == null && channelFromAppVersion != null) {
       options.channel = channelFromAppVersion
     }
+
+    if (options.endpoint != null && options.endpoint.endsWith("/")) {
+      (options as any).endpoint = options.endpoint.slice(0, -1)
+    }
   }
 
   protected getBucketName(): string {

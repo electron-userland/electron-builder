@@ -1,3 +1,16 @@
+## 3.0.2
+
+### Bug Fixes
+
+* **electron-updater:** addRandomQueryToAvoidCaching does not respect query parameters
+
+## 3.0.1
+
+### Bug Fixes
+
+* **electron-updater:** Replace all occurrences of version in old blockmap file url ([#3120](https://github.com/electron-userland/electron-builder/issues/3120)) ([ca18b74](https://github.com/electron-userland/electron-builder/commit/ca18b74))
+* **electron-updater:** vertical upgrading for channels ([b1f2272](https://github.com/electron-userland/electron-builder/commit/b1f2272)), closes [#3111](https://github.com/electron-userland/electron-builder/issues/3111)
+
 ## 2.23.3
 
 * **electron-updater:** fix case of blockmap file extension, detect s3 urls on setFeedURL ([369e9c0](https://github.com/electron-userland/electron-builder/commit/369e9c0))
