@@ -62,14 +62,14 @@ pages:
 
     - Publish: configuration/publish.md
 
-  - Tutorials:
-    - Loading App Dependencies Manually: tutorials/loading-app-dependencies-manually.md
-    - Two package.json Structure: tutorials/two-package-structure.md
-    - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md
-    - Release Using Channels: tutorials/release-using-channels.md
-
   - Guides:
     - Icons: icons.md
     - Auto Update: auto-update.md
     - Code Signing: code-signing.md
     - Multi Platform Build: multi-platform-build.md
+
+  - Tutorials:
+    - Loading App Dependencies Manually: tutorials/loading-app-dependencies-manually.md
+    - Two package.json Structure: tutorials/two-package-structure.md
+    - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md
+    - Release Using Channels: tutorials/release-using-channels.md

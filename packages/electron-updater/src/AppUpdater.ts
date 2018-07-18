@@ -471,7 +471,17 @@ export abstract class AppUpdater extends EventEmitter {
   get isAddNoCacheQuery(): boolean {
     const headers = this.requestHeaders
     // https://github.com/electron-userland/electron-builder/issues/3021
-    return headers == null || (headers.Authorization == null && headers.authorization == null)
+    if (headers == null) {
+      return true
+    }
+
+    for (const headerName of Object.keys(headers)) {
+      const s = headerName.toLowerCase()
+      if (s === "authorization" || s === "private-token") {
+        return false
+      }
+    }
+    return true
   }
 }
 
