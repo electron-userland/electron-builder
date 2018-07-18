@@ -27,5 +27,6 @@
 electron-builder-*.d.ts
 
 /site/
+/docs/
 
 __publish.sh
