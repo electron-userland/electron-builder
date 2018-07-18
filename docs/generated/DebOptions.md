@@ -1,3 +1,0 @@
-* <code id="DebOptions-depends">depends</code> Array&lt;String&gt; - Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
-* <code id="DebOptions-packageCategory">packageCategory</code> String - The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
-* <code id="DebOptions-priority">priority</code> String - The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
