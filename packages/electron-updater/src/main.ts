@@ -157,11 +157,9 @@ export function newBaseUrl(url: string) {
 // so, it makes sense only for Generic Provider for channel files
 export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching: boolean = false): URL {
   const result = new URL(pathname, baseUrl)
-  let hasSearch = result.search != null && result.search.length !== 0
-  // search is not propagated (search is an empty string if not specified)
-  if (!hasSearch && baseUrl.search) {
-    result.search = baseUrl.search
-    hasSearch = true
+  const hasSearch = baseUrl.search != null && baseUrl.search.length !== 0; // search is not propagated (search is an empty string if not specified)
+  if (hasSearch) {
+    result.search = baseUrl.search;
   }
   if (addRandomQueryToAvoidCaching && !hasSearch) {
     result.search = `noCache=${Date.now().toString(32)}`
