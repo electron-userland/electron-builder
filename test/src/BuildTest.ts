@@ -1,7 +1,7 @@
 import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { readAsar } from "electron-builder-lib/out/asar/asar"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { move, outputJson, readFileSync } from "fs-extra-p"
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"

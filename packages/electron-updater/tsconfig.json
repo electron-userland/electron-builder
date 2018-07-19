@@ -1,7 +1,8 @@
 {
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "outDir": "out"
+    "outDir": "out",
+    "rootDir": "src"
   },
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/updater",

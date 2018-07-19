@@ -1,5 +1,5 @@
 {
-  "name": "electron-builder-lib",
+  "name": "app-builder-lib",
   "description": "electron-builder lib",
   "version": "0.0.0-semantic-release",
   "main": "out/index.js",

@@ -40,7 +40,7 @@ async function main() {
   }
   await render2([
     path.join(source, "builder", "electron-builder.js"),
-    path.join(source, "builder-lib", "electron-builder-lib.js"),
+    path.join(source, "builder-lib", "app-builder-lib.js"),
     path.join(source, "builder-util-runtime", "builder-util-runtime.js")
   ], jsdoc2MdOptions)
 

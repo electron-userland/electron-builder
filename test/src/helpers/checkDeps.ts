@@ -61,7 +61,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   for (const name of Object.keys(result.missing)) {
     if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
-      (packageName === "electron-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name)))) {
+      (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name)))) {
       delete (result.missing as any)[name]
     }
   }

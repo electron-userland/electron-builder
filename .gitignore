@@ -19,7 +19,7 @@
 /test/test-report.xml
 
 /packages/electron-builder/README.md
-/packages/electron-builder-lib/scheme.json
+/packages/app-builder-lib/scheme.json
 
 /scripts/jsdoc/out/
 /scripts/renderer/out/

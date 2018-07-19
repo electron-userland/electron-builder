@@ -21,7 +21,7 @@
     "7zip-bin": "~3.1.0"
   },
   "peerDependencies": {
-    "electron-builder-lib": "~0.0.0-semantic-release"
+    "app-builder-lib": "~0.0.0-semantic-release"
   },
   "types": "./out/SquirrelWindowsTarget.d.ts"
 }

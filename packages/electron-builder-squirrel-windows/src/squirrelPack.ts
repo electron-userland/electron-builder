@@ -1,8 +1,8 @@
 import { path7za } from "7zip-bin"
 import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
-import { compute7zCompressArgs } from "electron-builder-lib/out/targets/archive"
-import { WinPackager } from "electron-builder-lib/out/winPackager"
+import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
+import { WinPackager } from "app-builder-lib/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 

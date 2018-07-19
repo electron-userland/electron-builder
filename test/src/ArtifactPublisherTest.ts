@@ -1,6 +1,6 @@
 import { Arch, copyFile, TmpDir } from "builder-util"
 import { CancellationToken, HttpError, S3Options, SpacesOptions } from "builder-util-runtime"
-import { createPublisher } from "electron-builder-lib/out/publish/PublishManager"
+import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"

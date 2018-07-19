@@ -8,6 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/docs/generated" />
       <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/app-builder-lib/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/app-package-builder/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/asar-integrity/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/builder-util-runtime/out" />

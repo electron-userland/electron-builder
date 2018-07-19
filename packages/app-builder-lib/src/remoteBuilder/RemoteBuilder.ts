@@ -82,7 +82,7 @@ export class RemoteBuilder {
       throw new InvalidConfigurationError(`Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`)
     }
 
-    args.push("--file", buildResourcesDir)
+    args.push("--build-resource-dir", buildResourcesDir)
 
     const result: any = await executeAppBuilderAsJson(args)
     if (result.error != null) {

@@ -12,6 +12,6 @@ export {
   WindowsSignOptions, CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo,
   Metadata, AuthorMetadata, RepositoryInfo, AppInfo,
   UploadTask, PublishManager, PublishOptions, ProgressInfo
-} from "electron-builder-lib"
-export { buildForge, ForgeOptions } from "electron-builder-lib"
+} from "app-builder-lib"
+export { buildForge, ForgeOptions } from "app-builder-lib"
 export { CancellationToken } from "builder-util-runtime"

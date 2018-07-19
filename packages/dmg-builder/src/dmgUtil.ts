@@ -1,5 +1,5 @@
 import { exec } from "builder-util"
-import { PlatformPackager } from "electron-builder-lib"
+import { PlatformPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
 import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"

@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { readAsar } from "electron-builder-lib/out/asar/asar"
+import { readAsar } from "app-builder-lib/out/asar/asar"
 import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"

@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 })
 
-const buildForge = require("electron-builder-lib").buildForge
+const buildForge = require("app-builder-lib").buildForge
 
 exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
 

@@ -1,6 +1,6 @@
 import { DebugLogger } from "builder-util/out/DebugLogger"
 import { Platform } from "electron-builder"
-import { validateConfig } from "electron-builder-lib/out/util/config"
+import { validateConfig } from "app-builder-lib/out/util/config"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifAll.ifDevOrLinuxCi("validation", appThrows({

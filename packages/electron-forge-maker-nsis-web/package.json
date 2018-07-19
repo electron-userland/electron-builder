@@ -11,6 +11,6 @@
     "*.js"
   ],
   "dependencies": {
-    "electron-builder-lib": "^19.30.3"
+    "app-builder-lib": "^19.30.3"
   }
 }
