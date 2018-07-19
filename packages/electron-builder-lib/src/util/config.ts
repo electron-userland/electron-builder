@@ -15,6 +15,15 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
     delete (configFromOptions as any).publish
   }
 
+  // need to make sure, configFromOptions does not override
+  // extends specified in config: <config> is already the configuration
+  // pointed to by <configFromOptions.extends>
+  //
+  // https://github.com/electron-userland/electron-builder/issues/3130
+  if ("extends" in config) {
+    delete (configFromOptions as any).extends
+  }
+
   deepAssign(config, configFromOptions)
 
   if (publish == null) {
