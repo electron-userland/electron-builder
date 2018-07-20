@@ -136,6 +136,8 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete r.version
   delete r.help
   delete r.c
+  delete r.p
+  delete r.pd
 
   delete result.ia32
   delete result.x64
