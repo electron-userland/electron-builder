@@ -206,10 +206,12 @@ Object {
   "publish": "always",
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {},
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [],
+    },
   },
 }
 `;
@@ -221,10 +223,12 @@ Object {
   "prerelease": undefined,
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {},
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [],
+    },
   },
 }
 `;

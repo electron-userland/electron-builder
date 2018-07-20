@@ -47,8 +47,8 @@ test("cli", async () => {
   expect(parse("-l tar.gz:x64")).toMatchSnapshot()
   expect(parse("-l tar.gz")).toMatchSnapshot()
   expect(parse("-w tar.gz:x64")).toMatchSnapshot()
-  expect(parse("-p always")).toMatchSnapshot()
-  expect(parse("--prepackaged someDir")).toMatchSnapshot()
+  expect(parse("-p always -w --x64")).toMatchSnapshot()
+  expect(parse("--prepackaged someDir -w --x64")).toMatchSnapshot()
 
   expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
     config: {
