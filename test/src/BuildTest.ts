@@ -1,6 +1,7 @@
 import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { move, outputJson, readFileSync } from "fs-extra-p"
 import * as path from "path"
@@ -14,7 +15,9 @@ test("cli", async () => {
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    return normalizeOptions(yargs.parse(input.split(" ")))
+    const options = normalizeOptions(yargs.parse(input.split(" ")))
+    checkBuildRequestOptions(options)
+    return options
   }
 
   function expected(opt: any): object {
@@ -44,6 +47,7 @@ test("cli", async () => {
   expect(parse("-l tar.gz:x64")).toMatchSnapshot()
   expect(parse("-l tar.gz")).toMatchSnapshot()
   expect(parse("-w tar.gz:x64")).toMatchSnapshot()
+  expect(parse("-p always")).toMatchSnapshot()
 
   expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
     config: {

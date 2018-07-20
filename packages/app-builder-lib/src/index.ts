@@ -36,12 +36,16 @@ export { buildForge, ForgeOptions } from "./forge-maker"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
-export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
+export function checkBuildRequestOptions(options: PackagerOptions & PublishOptions) {
   for (const optionName of Object.keys(options)) {
     if (!expectedOptions.has(optionName) && (options as any)[optionName] !== undefined) {
       throw new InvalidConfigurationError(`Unknown option "${optionName}"`)
     }
   }
+}
+
+export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
+  checkBuildRequestOptions(options)
 
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {

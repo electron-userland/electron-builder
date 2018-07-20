@@ -199,6 +199,21 @@ Object {
 }
 `;
 
+exports[`cli 11`] = `
+Object {
+  "draft": undefined,
+  "prerelease": undefined,
+  "publish": "always",
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {},
+  },
+}
+`;
+
 exports[`electron version from build 1`] = `
 Object {
   "linux": Array [],
