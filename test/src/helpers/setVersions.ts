@@ -47,6 +47,10 @@ function getLatestVersions(packageData: Array<any>) {
           throw new Error(`Cannot parse ${it}: ${e.stack || e}`)
         }
       })
+      .catch((e: any) => {
+        console.log(e)
+        return "0.0.1"
+      })
   })
 }
 

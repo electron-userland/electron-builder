@@ -38,7 +38,7 @@ const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "p
 
 export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
   for (const optionName of Object.keys(options)) {
-    if (!expectedOptions.has(optionName)) {
+    if (!expectedOptions.has(optionName) && (options as any)[optionName] !== undefined) {
       throw new InvalidConfigurationError(`Unknown option "${optionName}"`)
     }
   }
