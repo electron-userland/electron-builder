@@ -25,6 +25,14 @@ const publishForPrWarning = "There are serious security concerns with PUBLISH_FO
 
 const debug = _debug("electron-builder:publish")
 
+function checkOptions(publishPolicy: any) {
+  if (publishPolicy != null && publishPolicy !== "onTag" && publishPolicy !== "onTagOrDraft" && publishPolicy !== "always" && publishPolicy !== "never") {
+    if (typeof publishPolicy === "string") {
+      throw new InvalidConfigurationError(`Expected one of "onTag", "onTagOrDraft", "always", "never", but got ${JSON.stringify(publishPolicy)}.\nPlease note that publish configuration should be specified under "config"`)
+    }
+  }
+}
+
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
 
@@ -37,6 +45,8 @@ export class PublishManager implements PublishContext {
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
   constructor(private readonly packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken = packager.cancellationToken) {
+    checkOptions(publishOptions.publish)
+
     this.taskManager = new AsyncTaskManager(cancellationToken)
 
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"

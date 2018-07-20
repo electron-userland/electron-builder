@@ -1,6 +1,6 @@
 import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish/out/publisher"
-import { log } from "builder-util"
+import { log, InvalidConfigurationError } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
@@ -34,7 +34,15 @@ export { PlatformPackager } from "./platformPackager"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
 
+const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
+
 export function build(options: PackagerOptions & PublishOptions, packager: Packager = new Packager(options)): Promise<Array<string>> {
+  for (const optionName of Object.keys(options)) {
+    if (!expectedOptions.has(optionName)) {
+      throw new InvalidConfigurationError(`Unknown option "${optionName}"`)
+    }
+  }
+
   const publishManager = new PublishManager(packager, options)
   const sigIntHandler = () => {
     log.warn("cancelled by SIGINT")

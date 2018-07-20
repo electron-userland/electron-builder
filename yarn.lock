@@ -5615,7 +5615,7 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^6.0.0:
+ts-babel@6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-6.0.0.tgz#d6947ff79c2926f35e455cfecf768f5efbbf6996"
   dependencies:

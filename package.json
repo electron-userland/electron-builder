@@ -4,7 +4,7 @@
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "cross-env BABEL_WORKAROUND=true ts-babel \"packages/*\" test && yarn schema",
-    "//compile": "tsc --build \"packages/*\" packages/electron-builder packages/electron-updater packages/electron-builder-squirrel-windows && yarn schema",
+    "//compile2": "tsc --build packages/electron-builder packages/electron-updater packages/electron-builder-squirrel-windows && yarn schema",
     "lint": "node test/out/helpers/lint.js",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
     "pretest": "yarn compile && node test/out/helpers/lint.js && node ./test/out/helpers/checkDeps.js",
@@ -101,7 +101,7 @@
     "jsdoc-to-markdown": "^4.0.1",
     "path-sort": "^0.1.0",
     "sumchecker": "^2.0.2",
-    "ts-babel": "^6.0.0",
+    "ts-babel": "6.0.0",
     "ts-jsdoc": "^3.0.1",
     "tslint": "^5.11.0",
     "typescript": "^3.0.0-rc",

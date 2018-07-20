@@ -280,7 +280,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("publish", {
       group: publishGroup,
       alias: "p",
-      description: `Publish artifacts (to GitHub Releases), see ${chalk.underline("https://goo.gl/tSFycD")}`,
+      description: `Publish artifacts, see ${chalk.underline("https://goo.gl/tSFycD")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("draft", {
