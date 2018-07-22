@@ -2,6 +2,9 @@ version: 2
 
 jobs:
     build:
+      branches:
+        ignore:
+          - docs
       docker:
         - image: circleci/node:10.6.0
       steps:
@@ -28,6 +31,9 @@ jobs:
               - ~/.cache/electron
 
     test:
+      branches:
+        ignore:
+          - docs
       parallelism: 4
       docker:
         - image: electronuserland/builder:wine-mono

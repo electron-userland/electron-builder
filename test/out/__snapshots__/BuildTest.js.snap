@@ -21,7 +21,7 @@ Object {
 }
 `;
 
-exports[`build in the app package.json 1`] = `"'build' in the application package.json (<path>/package.json) is not supported since 3.0 anymore. Please move 'build' into the development package.json (<path>/package.json)"`;
+exports[`build in the app package.json 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`cli 1`] = `
 Object {

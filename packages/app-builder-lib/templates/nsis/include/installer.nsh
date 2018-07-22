@@ -168,7 +168,7 @@
 		StrCpy $1 ""
 	${else}
 		StrCpy $0 "/currentuser"
-		StrCpy $1 " (only current user)"
+		StrCpy $1 ""
 	${endIf}
 
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
