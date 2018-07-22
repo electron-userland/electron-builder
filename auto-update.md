@@ -66,7 +66,7 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
-Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [YAML](https://www.json2yaml.com) format).
+Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format). But is not recommended. Better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
 
 ## Staged Rollouts
 
