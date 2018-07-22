@@ -132,6 +132,6 @@ const macToLinuxCategory: any = {
   "public.app-category.games": "Game",
   "public.app-category.video": "Video;AudioVideo",
   "public.app-category.utilities": "Utility",
-  "public.app-category.social-networking": "Chat",
-  "public.app-category.finance": "Finance",
+  "public.app-category.social-networking": "Network;Chat",
+  "public.app-category.finance": "Office;Finance",
 }
