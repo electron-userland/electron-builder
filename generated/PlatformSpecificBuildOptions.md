@@ -1,3 +1,4 @@
+* <code id="PlatformSpecificBuildOptions-appId">appId</code> = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
 * <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
 * <code id="PlatformSpecificBuildOptions-compression">compression</code> = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
 * <code id="PlatformSpecificBuildOptions-files">files</code> The [files](/configuration/contents.md#files) configuration.
@@ -31,7 +32,8 @@
 
 ---
 
-* <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
+* <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean - Whether to fail if app will be not code signed.
+* <code id="PlatformSpecificBuildOptions-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The [electron-updater compatibility](/auto-update.md#compatibility) semver range.
 * <code id="PlatformSpecificBuildOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 * <code id="PlatformSpecificBuildOptions-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
 * <code id="PlatformSpecificBuildOptions-generateUpdatesFilesForAllChannels">generateUpdatesFilesForAllChannels</code> = `false` Boolean - Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).

@@ -138,7 +138,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 
 ---
 
-Following options can be set also per platform (top-level keys [mac](mac.md), [linux](linux.md) and [win](win.md)).
+### Overridable per Platform Options
+
+Following options can be set also per platform (top-level keys [mac](mac.md), [linux](linux.md) and [win](win.md)) if need.
 
 {!generated/PlatformSpecificBuildOptions.md!}
 

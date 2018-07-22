@@ -12,7 +12,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
     If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
 
 * <code id="SnapOptions-hooks">hooks</code> = `build/snap-hooks` String - The [hooks](https://docs.snapcraft.io/build-snaps/hooks) directory, relative to `build` (build resources directory).
-* <code id="SnapOptions-plugs">plugs</code> Array&lt;String | module:electron-builder-lib/out/options/SnapOptions.PlugDescriptor&gt; | module:electron-builder-lib/out/options/SnapOptions.PlugDescriptor - The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
+* <code id="SnapOptions-plugs">plugs</code> Array&lt;String | SnapOptions.PlugDescriptor&gt; - The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
     
     If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
     

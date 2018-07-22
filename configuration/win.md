@@ -29,14 +29,12 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 * <code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = `asInvoker` "asInvoker" | "highestAvailable" | "requireAdministrator" - The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed. Cannot be specified per target, allowed only in the `win`.
 * <code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = `true` Boolean - Whether to sign and add metadata to executable. Advanced option.
 * <code id="WindowsConfiguration-signDlls">signDlls</code> = `false` Boolean - Whether to sign DLL files. Advanced option. See: https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
-* <code id="WindowsConfiguration-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
-    
-    1.0.0 sha2 2.15.0 path 2.16.0 files
-
 
 <!-- end of generated block -->
 
 ---
+
+{!includes/platform-specific-configuration-note.md!}
 
 ## Common Questions
 #### How do delegate code signing?

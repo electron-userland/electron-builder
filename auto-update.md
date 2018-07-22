@@ -6,12 +6,10 @@ See [publish configuration](/configuration/publish.md) for information on how to
 
 ## Differences between electron-updater and built-in autoUpdater
 
-* It doesn't require a dedicated release server.
+* Dedicated release server is not required.
 * Code signature validation not only on macOS, but also on Windows.
-* electron-builder produces and publishes all required metadata files and artifacts.
-* Download progress supported on all platforms.
-* [Staged rollouts](#staged-rollouts) supported on all platforms.
-* Actually, built-in autoUpdater is used inside on macOS.
+* All required metadata files and artifacts are produced and published automatically.
+* Download progress and [staged rollouts](#staged-rollouts) supported on all platforms.
 * Different providers supported out of the box ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Bintray](https://bintray.com) and generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
 
@@ -37,7 +35,7 @@ See [publish configuration](/configuration/publish.md) for information on how to
     1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
     2. `zip` target for macOS is **required** for Squirrel.Mac, otherwise `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS is `dmg`+`zip`, so there is no need to explicitly specify target.
 
-### Examples
+## Examples
 
 !!! example "Example in TypeScript using system notifications"
     ```typescript
@@ -66,7 +64,19 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
-Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format). But is not recommended. Better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+Note that in order to develop/test UI/UX of updating without packaging the application you need to have a file named `dev-app-update.yml` in the root of your project, which matches your `publish` setting from electron-builder config (but in [yaml](https://www.json2yaml.com) format). But it is not recommended, better to test auto-update for installed application (especially on Windows). [Minio](https://github.com/electron-userland/electron-builder/issues/3053#issuecomment-401001573) is recommended as a local server for testing updates.
+
+## Compatibility
+
+Generated metadata files format changes from time to time, but compatibility preserved up to version 1. If you start a new project, recommended to set `electronUpdaterCompatibility` to current latest format version (`>= 2.16`).
+
+Option `electronUpdaterCompatibility` set the electron-updater compatibility semver range. Can be specified per platform.
+
+e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=2.15`
+
+* `1.0.0` latest-mac.json
+* `2.15.0` path
+* `2.16.0` files
 
 ## Staged Rollouts
 

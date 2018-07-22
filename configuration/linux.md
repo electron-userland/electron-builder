@@ -19,6 +19,10 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 
 <!-- end of generated block -->
 
+---
+
+{!includes/platform-specific-configuration-note.md!}
+
 ## Debian Package Options
 
 The top-level [deb](configuration.md#Configuration-deb) key contains set of options instructing electron-builder on how it should build Debian package.
