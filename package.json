@@ -31,7 +31,7 @@
   "dependencies": {
     "7zip-bin": "~4.0.2",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "1.11.5",
+    "app-builder-bin": "1.11.6",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.5",
@@ -69,7 +69,6 @@
     "yargs": "^12.0.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0-beta.54",
     "@babel/core": "^7.0.0-beta.54",
     "@babel/preset-env": "^7.0.0-beta.54",
     "@babel/preset-react": "^7.0.0-beta.54",

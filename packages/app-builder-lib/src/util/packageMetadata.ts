@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log } from "builder-util"
+import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
@@ -77,7 +77,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
 
   if (errors.length > 0) {
-    throw new Error(errors.join("\n"))
+    throw new InvalidConfigurationError(errors.join("\n"))
   }
 }
 
