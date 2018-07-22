@@ -1,6 +1,8 @@
 See [publish configuration](/configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
 
-Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
+!!! info "Squirrel.Windows not supported"
+    Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
+    You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
 
 ## Differences between electron-updater and built-in autoUpdater
 
@@ -21,11 +23,13 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 
 3. Use `autoUpdater` from `electron-updater` instead of `electron`:
 
-    ```js
+    ```js tab="JavaScript"
+    const { autoUpdater } = require("electron-updater")
+    ```
+    
+    ```js tab="ES2015"
     import { autoUpdater } from "electron-updater"
     ```
-
-    Or if you don't use ES6: `const { autoUpdater } = require("electron-updater")`
 
 4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
@@ -35,9 +39,22 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 
 ### Examples
 
-* [Example in Typescript](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts) using system notifications.
+!!! example "Example in TypeScript using system notifications"
+    ```typescript
+    import { autoUpdater } from "electron-updater"
+    
+    export default class AppUpdater {
+      constructor() {
+        const log = require("electron-log")
+        log.transports.file.level = "debug"
+        autoUpdater.logger = log
+        autoUpdater.checkForUpdatesAndNotify()
+      }
+    }
+    ```
+
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
-* An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/master/docs/encapsulated%20manual%20update%20via%20menu.js).
+* An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/docs/encapsulated%20manual%20update%20via%20menu.js).
 
 ## Debugging
 
