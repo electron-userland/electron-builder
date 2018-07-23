@@ -1,6 +1,7 @@
 import { isEmptyOrSpaces, log, smarten } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
+import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 
 export class AppInfo {
@@ -13,7 +14,7 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
-  constructor(private readonly info: Packager, buildVersion?: string | null) {
+  constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
     this.version = info.metadata.version!!
 
     if (buildVersion == null) {
@@ -61,9 +62,11 @@ export class AppInfo {
   }
 
   get id(): string {
-    let appId
-    if (this.info.config.appId != null) {
-      appId = this.info.config.appId
+    let appId: string | null | undefined = null
+    for (const options of [this.platformSpecificOptions, this.info.config]) {
+      if (options != null && appId == null) {
+        appId = options.appId
+      }
     }
 
     const generateDefaultAppId = () => {

@@ -292,7 +292,7 @@ export class Packager {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }
 
-    this._appInfo = new AppInfo(this)
+    this._appInfo = new AppInfo(this, null)
     this._framework = await createFrameworkInfo(this.config, this)
 
     const outDir = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo))

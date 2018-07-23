@@ -30,6 +30,13 @@ export interface AsarOptions extends AsarIntegrityOptions {
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   /**
+   * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
+   * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
+   * @default com.electron.${name}
+   */
+  readonly appId?: string | null
+
+  /**
    * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null

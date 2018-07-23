@@ -6,14 +6,14 @@ import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from 
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
+import S3Publisher from "electron-publish/out/s3/s3Publisher"
+import SpacesPublisher from "electron-publish/out/s3/spacesPublisher"
 import { writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import S3Publisher from "electron-publish/out/s3/s3Publisher"
-import SpacesPublisher from "electron-publish/out/s3/spacesPublisher"
-import { ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
+import { AppInfo, ArtifactCreated, Configuration, Platform, PlatformSpecificBuildOptions, Target } from "../index"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
@@ -112,9 +112,13 @@ export class PublishManager implements PublishContext {
         if (debug.enabled) {
           debug(`artifactCreated (isPublish: ${this.isPublish}): ${safeStringifyJson(event, new Set(["packager"]))},\n  publishConfig: ${safeStringifyJson(publishConfiguration)}`)
         }
-        this.scheduleUpload(publishConfiguration, event)
+        this.scheduleUpload(publishConfiguration, event, this.getAppInfo(event.packager))
       }
     })
+  }
+
+  private getAppInfo(platformPackager: PlatformPackager<any> | null) {
+    return platformPackager == null ? this.packager.appInfo : platformPackager.appInfo
   }
 
   async getGlobalPublishConfigurations(): Promise<Array<PublishConfiguration> | null> {
@@ -123,12 +127,12 @@ export class PublishManager implements PublishContext {
   }
 
   /** @internal */
-  scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask): void {
+  scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): void {
     if (publishConfig.provider === "generic") {
       return
     }
 
-    const publisher = this.getOrCreatePublisher(publishConfig)
+    const publisher = this.getOrCreatePublisher(publishConfig, appInfo)
     if (publisher == null) {
       log.debug({
         file: event.file,
@@ -171,7 +175,7 @@ export class PublishManager implements PublishContext {
           break
         }
 
-        this.scheduleUpload(publishConfig, event)
+        this.scheduleUpload(publishConfig, event, this.getAppInfo(platformPackager))
       }
     }
 
@@ -182,12 +186,12 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private getOrCreatePublisher(publishConfig: PublishConfiguration): Publisher | null {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, appInfo: AppInfo): Publisher | null {
     // to not include token into cache key
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = createPublisher(this, this.packager.appInfo.version, publishConfig, this.publishOptions)
+      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions)
       this.nameToPublisher.set(providerCacheKey, publisher)
       log.info({publisher: publisher!!.toString()}, "publishing")
     }

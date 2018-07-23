@@ -30,12 +30,15 @@ test.ifMac.ifAll("two-package", () => assertPack("test-app", {
 test.ifMac("one-package", app({
   targets: Platform.MAC.createTarget(),
   config: {
+    appId: "bar",
     publish: {
       provider: "generic",
       //tslint:disable-next-line:no-invalid-template-strings
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
     mac: {
+      // test appId per platform
+      appId: "foo",
       electronUpdaterCompatibility: ">=1.0.0",
       extendInfo: {
         LSUIElement: true,
@@ -64,7 +67,7 @@ test.ifMac("one-package", app({
     }
   }
 }, {
-  signed: true,
+  signed: false,
   projectDirCreated: projectDir => Promise.all([
     copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
     copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),

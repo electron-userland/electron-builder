@@ -1072,6 +1072,14 @@
         "LinuxConfiguration": {
             "additionalProperties": false,
             "properties": {
+                "appId": {
+                    "default": "com.electron.${name}",
+                    "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
                 "artifactName": {
                     "description": "The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
                     "type": [
@@ -1612,6 +1620,14 @@
         "MacConfiguration": {
             "additionalProperties": false,
             "properties": {
+                "appId": {
+                    "default": "com.electron.${name}",
+                    "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
                 "artifactName": {
                     "description": "The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
                     "type": [
@@ -2060,6 +2076,14 @@
         "MasConfiguration": {
             "additionalProperties": false,
             "properties": {
+                "appId": {
+                    "default": "com.electron.${name}",
+                    "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
                 "artifactName": {
                     "description": "The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
                     "type": [
@@ -4173,6 +4197,14 @@
             "properties": {
                 "additionalCertificateFile": {
                     "description": "The path to an additional certificate file you want to add to the signature block.",
+                    "type": [
+                        "null",
+                        "string"
+                    ]
+                },
+                "appId": {
+                    "default": "com.electron.${name}",
+                    "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
                     "type": [
                         "null",
                         "string"

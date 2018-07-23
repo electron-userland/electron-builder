@@ -75,7 +75,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
             publishManager.scheduleUpload(publishConfiguration, {
               file: newArtifact,
               arch: null
-            })
+            }, packager.appInfo)
           }
         }
       }

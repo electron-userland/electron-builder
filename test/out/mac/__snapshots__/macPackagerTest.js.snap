@@ -87,7 +87,7 @@ Object {
   ],
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
-  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleIdentifier": "foo",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",

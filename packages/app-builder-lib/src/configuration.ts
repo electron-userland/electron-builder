@@ -18,13 +18,6 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsi
  */
 export interface Configuration extends PlatformSpecificBuildOptions {
   /**
-   * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
-   * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
-   * @default com.electron.${name}
-   */
-  readonly appId?: string | null
-
-  /**
    * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).
    */
   readonly productName?: string | null

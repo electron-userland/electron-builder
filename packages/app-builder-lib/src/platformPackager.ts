@@ -65,7 +65,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract get defaultTarget(): Array<string>
 
   protected prepareAppInfo(appInfo: AppInfo) {
-    return appInfo
+    return new AppInfo(this.info, null, this.platformSpecificBuildOptions)
   }
 
   private static normalizePlatformSpecificBuildOptions(options: any | null | undefined): any {
