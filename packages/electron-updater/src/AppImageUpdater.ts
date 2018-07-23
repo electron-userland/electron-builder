@@ -42,6 +42,7 @@ export class AppImageUpdater extends BaseUpdater {
       skipDirCreation: true,
       headers: downloadUpdateOptions.requestHeaders,
       cancellationToken: downloadUpdateOptions.cancellationToken,
+      sha2: (fileInfo.info as any).sha2,
       sha512: fileInfo.info.sha512,
     }
 

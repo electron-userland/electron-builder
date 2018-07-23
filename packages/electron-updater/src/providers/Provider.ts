@@ -97,8 +97,9 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
     return [
       {
         url: updateInfo.path,
+        sha2: (updateInfo as any).sha2,
         sha512: updateInfo.sha512,
-      },
+      } as any,
     ]
   }
   else {
