@@ -141,9 +141,12 @@ export class NsisTarget extends Target {
     log.info(logFields, "building")
 
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
+    const uninstallAppKey = guid.replace(/\\/g, " - ")
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
+      // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
+      UNINSTALL_APP_KEY: uninstallAppKey,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
       APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || options.perMachine === true),
@@ -152,6 +155,9 @@ export class NsisTarget extends Target {
 
       PROJECT_DIR: packager.projectDir,
       BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
+    }
+    if (uninstallAppKey !== guid) {
+      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
     const commands: any = {

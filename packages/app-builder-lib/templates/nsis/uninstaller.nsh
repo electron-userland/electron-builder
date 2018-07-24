@@ -90,8 +90,11 @@ Section "un.install"
     ${endif}
   ${endif}
 
-  DeleteRegKey SHCTX "${UNINSTALL_REGISTRY_KEY}"
-  DeleteRegKey SHCTX "${INSTALL_REGISTRY_KEY}"
+  DeleteRegKey SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}"
+  !ifdef UNINSTALL_REGISTRY_KEY_2
+    DeleteRegKey SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY_2}"
+  !endif
+  DeleteRegKey SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}"
 
   !ifmacrodef customUnInstall
     !insertmacro customUnInstall

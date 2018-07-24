@@ -1,67 +1,6 @@
-# Functions (nsis macro) for installer
+# functions (nsis macro) for installer
 
 !include "extractAppPackage.nsh"
-
-# http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
-!macro uninstallOldVersion ROOT_KEY
-  ReadRegStr $R0 ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}" UninstallString
-  ${if} $R0 != ""
-    Push $R0
-    Call GetInQuotes
-    Pop $R1
-    ${if} $R1 != ""
-      StrCpy $R0 "$R1"
-    ${endif}
-
-    ReadRegStr $R1 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $R1 == ""
-    ${andIf} $R0 != ""
-      # https://github.com/electron-userland/electron-builder/issues/735#issuecomment-246918567
-      Push $R0
-      Call GetFileParent
-      Pop $R1
-    ${endif}
-
-    ${if} $R1 != ""
-    ${andIf} $R0 != ""
-      ClearErrors
-      Rename "$R0" "$PLUGINSDIR\old-uninstaller.exe"
-      ${if} ${errors}
-        # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
-        ClearErrors
-        CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
-        Delete "$R0"
-      ${endif}
-
-      ${if} $installMode == "CurrentUser"
-      ${orIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
-        StrCpy $0 "/currentuser"
-      ${else}
-        StrCpy $0 "/allusers"
-      ${endif}
-
-      !insertMacro setIsTryToKeepShortcuts
-
-      ${if} $isTryToKeepShortcuts == "true"
-        ReadRegStr $R5 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
-        # if true, it means that old uninstaller supports --keep-shortcuts flag
-        ${if} $R5 == "true"
-        ${andIf} ${FileExists} "$appExe"
-          StrCpy $0 "$0 --keep-shortcuts"
-        ${endIf}
-      ${endIf}
-
-      ${if} ${isDeleteAppData}
-        StrCpy $0 "$0 --delete-app-data"
-      ${else}
-        # always pass --updated flag - to ensure that if DELETE_APP_DATA_ON_UNINSTALL is defined, user data will be not removed
-        StrCpy $0 "$0 --updated"
-      ${endif}
-
-      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
-    ${endif}
-  ${endif}
-!macroend
 
 !ifdef APP_PACKAGE_URL
   !include webPackage.nsh
@@ -175,6 +114,7 @@
   # https://github.com/electron-userland/electron-builder/issues/750
   StrCpy $2 "$INSTDIR\${UNINSTALL_FILENAME}"
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
+  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" QuietUninstallString '"$2" $0 /S'
 
 	WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
 	!ifdef UNINSTALLER_ICON
@@ -274,17 +214,6 @@
       !endif
       ${endIf}
       System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
-    ${endIf}
-  !endif
-!macroend
-
-Var /GLOBAL isTryToKeepShortcuts
-
-!macro setIsTryToKeepShortcuts
-  StrCpy $isTryToKeepShortcuts "true"
-  !ifdef allowToChangeInstallationDirectory
-    ${ifNot} ${isUpdated}
-      StrCpy $isTryToKeepShortcuts "false"
     ${endIf}
   !endif
 !macroend

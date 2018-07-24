@@ -29,6 +29,18 @@ test("one-click", app({
   }
 }))
 
+test.ifAll("custom guid", app({
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  config: {
+    appId: "boo",
+    productName: "boo Hub",
+    publish: null,
+    nsis: {
+      guid: "Foo Technologies\\Bar"
+    },
+  }
+}))
+
 test.ifAll.ifNotCiMac("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
   config: {

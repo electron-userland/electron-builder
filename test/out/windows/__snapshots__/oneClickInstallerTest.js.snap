@@ -36,6 +36,30 @@ Object {
 }
 `;
 
+exports[`custom guid 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "ia32",
+      "file": "boo Hub Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "boo Hub Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`custom include 1`] = `
 Object {
   "win": Array [
