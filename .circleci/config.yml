@@ -1,72 +1,74 @@
 version: 2
 
 jobs:
-    build:
-      branches:
-        ignore:
-          - docs
-      docker:
-        - image: circleci/node:10.6.0
-      steps:
-        - checkout
-        - restore_cache:
-            keys:
-              - deps-{{ checksum "yarn.lock" }}
-        - restore_cache:
-            keys:
-              - v-2.0.0-electron
-        - run:
-            command: yarn --frozen-lockfile
-        - run:
-            command: yarn pretest
-        - save_cache:
-            key: deps-{{ checksum "yarn.lock" }}
-            paths:
-              - node_modules
-        - run:
-            command: node ./test/out/helpers/downloadElectron.js
-        - save_cache:
-            key: v-2.0.0-electron
-            paths:
-              - ~/.cache/electron
+  build:
+    docker:
+      - image: circleci/node:10.6.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - deps-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          keys:
+            - v-2.0.0-electron
+      - run:
+          command: yarn --frozen-lockfile
+      - run:
+          command: yarn pretest
+      - save_cache:
+          key: deps-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - run:
+          command: node ./test/out/helpers/downloadElectron.js
+      - save_cache:
+          key: v-2.0.0-electron
+          paths:
+            - ~/.cache/electron
 
-    test:
-      branches:
-        ignore:
-          - docs
-      parallelism: 4
-      docker:
-        - image: electronuserland/builder:wine-mono
-          environment:
-            JEST_JUNIT_OUTPUT: ./test-reports/test.xml
-            TZ: Europe/Berlin
-      steps:
-        - checkout
-        - restore_cache:
-            keys:
-              - deps-{{ checksum "yarn.lock" }}
-        - restore_cache:
-            keys:
-              - v-2.0.0-electron
-        # because in the build job we use circleci docker image and circleci restores cache to original user home
-        - run:
-            command: |
-              mv /home/circleci/project/node_modules node_modules
-              mkdir -p ~/.cache
-              mv /home/circleci/.cache/electron ~/.cache/electron
-        - run:
-            # do not use yarn test because lint is done in the build job
-            command: |
-              yarn compile
-              node ./test/out/helpers/runTests.js
-        - store_test_results:
-            path: test-reports
+  test:
+    parallelism: 4
+    docker:
+      - image: electronuserland/builder:wine-mono
+        environment:
+          JEST_JUNIT_OUTPUT: ./test-reports/test.xml
+          TZ: Europe/Berlin
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - deps-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          keys:
+            - v-2.0.0-electron
+      # because in the build job we use circleci docker image and circleci restores cache to original user home
+      - run:
+          command: |
+            mv /home/circleci/project/node_modules node_modules
+            mkdir -p ~/.cache
+            mv /home/circleci/.cache/electron ~/.cache/electron
+      - run:
+          # do not use yarn test because lint is done in the build job
+          command: |
+            yarn compile
+            node ./test/out/helpers/runTests.js
+      - store_test_results:
+          path: test-reports
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore:
+                - docs
       - test:
+          filters:
+            branches:
+              ignore:
+                - docs
           requires:
             - build
