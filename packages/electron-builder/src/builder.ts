@@ -175,8 +175,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
   if ("project" in r && !("projectDir" in result)) {
     result.projectDir = r.project
-    delete r.project
   }
+  delete r.project
+
   return result as BuildOptions
 }
 
