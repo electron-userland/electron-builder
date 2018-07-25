@@ -94,7 +94,7 @@ export class MacUpdater extends AppUpdater {
   }
 
   private doProxyUpdateFile(nativeResponse: ServerResponse, url: string, headers: OutgoingHttpHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptionsFromUrl(url, {headers}), downloadResponse => {
+    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptionsFromUrl(url, {headers, redirect: "manual"}), downloadResponse => {
       const statusCode = downloadResponse.statusCode
       if (statusCode >= 400) {
         this._logger.warn(`Request to ${url} failed, status code: ${statusCode}`)
@@ -148,8 +148,7 @@ export class MacUpdater extends AppUpdater {
 
     downloadRequest.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
       if (headers.authorization != null && (headers!!.authorization as string).startsWith("token")) {
-        const parsedNewUrl = new URL(redirectUrl)
-        if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
+        if (redirectUrl.indexOf(".amazonaws.com") !== -1) {
           delete headers.authorization
         }
       }
