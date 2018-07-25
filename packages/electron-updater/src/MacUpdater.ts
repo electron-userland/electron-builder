@@ -94,7 +94,8 @@ export class MacUpdater extends AppUpdater {
   }
 
   private doProxyUpdateFile(nativeResponse: ServerResponse, url: string, headers: OutgoingHttpHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptionsFromUrl(url, {headers, redirect: "manual"}), downloadResponse => {
+    const config = {...configureRequestOptionsFromUrl(url, {headers}), redirect: "manual"}
+    const downloadRequest = this.httpExecutor.doRequest(config, downloadResponse => {
       const statusCode = downloadResponse.statusCode
       if (statusCode >= 400) {
         this._logger.warn(`Request to ${url} failed, status code: ${statusCode}`)
