@@ -233,6 +233,23 @@ Object {
 }
 `;
 
+exports[`cli 13`] = `
+Object {
+  "draft": undefined,
+  "prerelease": undefined,
+  "projectDir": "someDir",
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [],
+    },
+  },
+}
+`;
+
 exports[`electron version from build 1`] = `
 Object {
   "linux": Array [],

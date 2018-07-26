@@ -8,6 +8,7 @@ Exec=AppRun
 Terminal=true
 Type=Application
 Icon=Foo
+StartupWMClass=Test App ßW
 X-Foo=bar
 Categories=Development;
 "
@@ -139,6 +140,22 @@ Object {
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`html license 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
       },
     },
   ],

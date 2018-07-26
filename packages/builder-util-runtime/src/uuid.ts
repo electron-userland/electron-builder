@@ -1,23 +1,11 @@
 import { createHash, randomBytes } from "crypto"
 import { newError } from "./index"
 
-const invalidName =
-  "options.name must be either a string or a Buffer"
-
-const moreThan10000 =
-  "can not generate more than 10000 UUIDs per second"
+const invalidName = "options.name must be either a string or a Buffer"
 
 // Node ID according to rfc4122#section-4.5
 const randomHost = randomBytes(16)
 randomHost[0] = randomHost[0] | 0x01
-
-// randomize clockSeq initially, as per rfc4122#section-4.1.5
-const seed = randomBytes(2)
-let clockSeq = (seed[0] | (seed[1] << 8)) & 0x3fff
-
-// clock values
-let lastMTime = 0
-let lastNTime = 0
 
 // lookup table hex to byte
 const hex2byte: any = {}
@@ -54,10 +42,6 @@ export class UUID {
     else {
       this.binary = uuid as Buffer
     }
-  }
-
-  static v1() {
-    return uuidTimeBased(randomHost)
   }
 
   static v5(name: string | Buffer, namespace: Buffer) {
@@ -149,82 +133,6 @@ function getVariant(bits: number) {
 
 enum UuidEncoding {
   ASCII, BINARY, OBJECT
-}
-
-// v1
-function uuidTimeBased(nodeId: Buffer, encoding: UuidEncoding = UuidEncoding.ASCII) {
-  let mTime = Date.now()
-  let nTime = lastNTime + 1
-  const delta = (mTime - lastMTime) + (nTime - lastNTime) / 10000
-
-  if (delta < 0) {
-    clockSeq = (clockSeq + 1) & 0x3fff
-    nTime = 0
-  }
-  else if (mTime > lastMTime) {
-    nTime = 0
-  }
-  else if (nTime >= 10000) {
-    return moreThan10000
-  }
-
-  lastMTime = mTime
-  lastNTime = nTime
-
-  // unix timestamp to gregorian epoch as per rfc4122#section-4.5
-  mTime += 12219292800000
-
-  const buffer = Buffer.allocUnsafe(16)
-  const myClockSeq = clockSeq
-  const timeLow = ((mTime & 0xfffffff) * 10000 + nTime) % 0x100000000
-  const timeHigh = (mTime / 0x100000000 * 10000) & 0xfffffff
-
-  buffer[0] = timeLow >>> 24 & 0xff
-  buffer[1] = timeLow >>> 16 & 0xff
-  buffer[2] = timeLow >>> 8 & 0xff
-  buffer[3] = timeLow & 0xff
-
-  buffer[4] = timeHigh >>> 8 & 0xff
-  buffer[5] = timeHigh & 0xff
-
-  buffer[6] = (timeHigh >>> 24 & 0x0f) | 0x10
-  buffer[7] = (timeHigh >>> 16 & 0x3f) | 0x80
-
-  buffer[8] = myClockSeq >>> 8
-  buffer[9] = myClockSeq & 0xff
-
-  let result: any
-  switch (encoding) {
-    case UuidEncoding.BINARY:
-      buffer[10] = nodeId[0]
-      buffer[11] = nodeId[1]
-      buffer[12] = nodeId[2]
-      buffer[13] = nodeId[3]
-      buffer[14] = nodeId[4]
-      buffer[15] = nodeId[5]
-      result = buffer
-      break
-    case UuidEncoding.OBJECT:
-      buffer[10] = nodeId[0]
-      buffer[11] = nodeId[1]
-      buffer[12] = nodeId[2]
-      buffer[13] = nodeId[3]
-      buffer[14] = nodeId[4]
-      buffer[15] = nodeId[5]
-      result = new UUID(buffer)
-      break
-    default:
-      result = byte2hex[buffer[0]] + byte2hex[buffer[1]] +
-        byte2hex[buffer[2]] + byte2hex[buffer[3]] + "-" +
-        byte2hex[buffer[4]] + byte2hex[buffer[5]] + "-" +
-        byte2hex[buffer[6]] + byte2hex[buffer[7]] + "-" +
-        byte2hex[buffer[8]] + byte2hex[buffer[9]] + "-" +
-        byte2hex[nodeId[0]] + byte2hex[nodeId[1]] +
-        byte2hex[nodeId[2]] + byte2hex[nodeId[3]] +
-        byte2hex[nodeId[4]] + byte2hex[nodeId[5]]
-      break
-  }
-  return result
 }
 
 // v3 + v5

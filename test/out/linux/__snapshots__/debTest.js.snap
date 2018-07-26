@@ -177,6 +177,7 @@ Exec=\\"/opt/Test App ßW/Boo\\" %U
 Terminal=false
 Type=Application
 Icon=Boo
+StartupWMClass=Test App ßW
 Categories=Development;
 "
 `;

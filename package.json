@@ -31,7 +31,7 @@
   "dependencies": {
     "7zip-bin": "~4.0.2",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "1.11.6",
+    "app-builder-bin": "2.0.0",
     "archiver": "^2.1.1",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.5",
@@ -79,7 +79,7 @@
     "@types/ini": "^1.3.29",
     "@types/jest": "^23.3.0",
     "@types/js-yaml": "^3.11.2",
-    "@types/lodash.isequal": "^4.5.2",
+    "@types/lodash.isequal": "^4.5.3",
     "@types/node-emoji": "^1.8.0",
     "@types/sanitize-filename": "^1.1.28",
     "@types/sax": "^1.0.1",
@@ -104,7 +104,6 @@
     "ts-jsdoc": "^3.0.1",
     "tslint": "^5.11.0",
     "typescript": "^3.0.0-rc",
-    "v8-compile-cache": "^2.0.0",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"
   },

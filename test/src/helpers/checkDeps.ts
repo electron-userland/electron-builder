@@ -4,8 +4,6 @@ import depCheck, { DepCheckResult } from "depcheck"
 import { readdir, readJson } from "fs-extra-p"
 import * as path from "path"
 
-require("v8-compile-cache")
-
 const printErrorAndExit = require("../../../packages/builder-util/out/promise").printErrorAndExit
 
 const knownUnusedDevDependencies = new Set<string>([

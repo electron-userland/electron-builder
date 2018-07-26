@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { copyFile, move, remove, rename } from "fs-extra-p"
+import { copyFile, move, outputFile, remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -61,6 +61,22 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
     return Promise.all([
       // copy full text to test presentation
       copyTestAsset("license_en.txt", path.join(projectDir, "build", "license.txt")),
+    ])
+  }
+}))
+
+test.ifNotWindows.ifNotCiMac.ifAll("html license", app({
+  targets: appImageTarget,
+}, {
+  projectDirCreated: projectDir => {
+    return Promise.all([
+      outputFile(path.join(projectDir, "build", "license.html"), `
+<html>
+<body>
+  <a href="http://example.com">Test link</a>
+</body>      
+</html>
+      `)
     ])
   }
 }))

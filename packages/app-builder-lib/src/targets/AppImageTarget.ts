@@ -1,9 +1,5 @@
-import BluebirdPromise from "bluebird-lst"
-import { Arch, executeAppBuilder, serializeToYaml } from "builder-util"
-import { UUID } from "builder-util-runtime"
-import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
-import * as ejs from "ejs"
-import { ensureDir, outputFile, readFile, symlink, writeFile } from "fs-extra-p"
+import { Arch, executeAppBuilderAsJson, serializeToYaml } from "builder-util"
+import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppImageOptions } from ".."
@@ -14,10 +10,6 @@ import { getNotLocalizedLicenseFile } from "../util/license"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
-
-const appRunTemplate = new Lazy<(data: any) => string>(async () => {
-  return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
-})
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
@@ -30,7 +22,6 @@ export default class AppImageTarget extends Target {
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed
     this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-      "X-AppImage-BuildId": UUID.v1(),
     }))
   }
 
@@ -44,50 +35,46 @@ export default class AppImageTarget extends Target {
     const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("AppImage", artifactPath, arch)
 
-    const stageDir = await createStageDir(this, packager, arch)
-    const resourceName = `appimagekit-${this.packager.executableName}`
-    let additionalInstall = await this.copyIcons(stageDir.dir, resourceName)
-    additionalInstall += await this.copyMimeTypes(stageDir.dir)
-
-    const license = await getNotLocalizedLicenseFile(options.license, this.packager, ["txt"])
-    if (license != null) {
-      await copyOrLinkFile(license, stageDir.getTempFile("eula.txt"))
-    }
-
-    const finalDesktopFilename = `${this.packager.executableName}.desktop`
-    await Promise.all([
-      unlinkIfExists(artifactPath),
-      writeFile(stageDir.getTempFile("/AppRun"), (await appRunTemplate.value)({
-        systemIntegration: options.systemIntegration || "ask",
-        isShowEula: license != null,
-        desktopFileName: finalDesktopFilename,
-        executableName: this.packager.executableName,
-        productName: this.packager.appInfo.productName,
-        resourceName,
-        additionalInstall,
-      }), {
-        mode: "0755",
-      }),
-      writeFile(stageDir.getTempFile(finalDesktopFilename), await this.desktopEntry.value),
+    const c = await Promise.all([
+      this.desktopEntry.value,
+      this.helper.icons,
+      getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */),
+      getNotLocalizedLicenseFile(options.license, this.packager, ["txt", "html"]),
+      createStageDir(this, packager, arch),
     ])
+    const license = c[3]
+    const stageDir = c[4]
 
-    // must be after this.helper.icons call
-    if (this.helper.maxIconPath == null) {
-      throw new Error("Icon is not provided")
+    const publishConfig = c[2]
+    if (publishConfig != null) {
+      await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
       return
     }
 
-    const publishConfig = await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
-    if (publishConfig != null) {
-      await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
-    }
-
-    const args = ["appimage", "--stage", stageDir.dir, "--arch", Arch[arch], "--output", artifactPath, "--app", appOutDir]
+    const args = [
+      "appimage",
+      "--stage", stageDir.dir,
+      "--arch", Arch[arch],
+      "--output", artifactPath,
+      "--app", appOutDir,
+      "--template", path.join(getTemplatePath("linux"), "AppRun.sh"),
+      "--configuration", (JSON.stringify({
+        productName: this.packager.appInfo.productName,
+        desktopEntry: c[0],
+        executableName: this.packager.executableName,
+        systemIntegration: options.systemIntegration || "ask",
+        icons: c[1],
+        fileAssociations: this.packager.fileAssociations,
+      })),
+    ]
     if (packager.compression === "maximum") {
       args.push("--compression", "xz")
+    }
+    if (license != null) {
+      args.push("--license", license)
     }
 
     packager.info.dispatchArtifactCreated({
@@ -97,68 +84,7 @@ export default class AppImageTarget extends Target {
       arch,
       packager,
       isWriteUpdateInfo: true,
-      updateInfo: JSON.parse(await executeAppBuilder(args)),
+      updateInfo: await executeAppBuilderAsJson(args),
     })
-  }
-
-  private async copyIcons(stageDir: string, resourceName: string): Promise<string> {
-    const iconDirRelativePath = "usr/share/icons/hicolor"
-    const iconDir = path.join(stageDir, iconDirRelativePath)
-    await ensureDir(iconDir)
-
-    // https://github.com/AppImage/AppImageKit/issues/438#issuecomment-319094239
-    // expects icons in the /usr/share/icons/hicolor
-    const iconNames = await BluebirdPromise.map(this.helper.icons, async icon => {
-      const filename = `${this.packager.executableName}.png`
-      const iconSizeDir = `${icon.size}x${icon.size}/apps`
-      const dir = path.join(iconDir, iconSizeDir)
-      await ensureDir(dir)
-      const finalIconFile = path.join(dir, filename)
-      await copyOrLinkFile(icon.file, finalIconFile, null, true)
-
-      if (icon.file === this.helper.maxIconPath) {
-        await symlink(path.relative(stageDir, finalIconFile), path.join(stageDir, filename))
-      }
-      return {filename, iconSizeDir, size: icon.size}
-    })
-
-    let installIcons = ""
-    for (const icon of iconNames) {
-      installIcons += `xdg-icon-resource install --noupdate --context apps --size ${icon.size} "$APPDIR/${iconDirRelativePath}/${icon.iconSizeDir}/${icon.filename}" "${resourceName}"\n`
-    }
-    return installIcons
-  }
-
-  private async copyMimeTypes(stageDir: string): Promise<string> {
-    let mimeTypes = ""
-    for (const fileAssociation of this.packager.fileAssociations) {
-      if (fileAssociation.mimeType != null) {
-        mimeTypes +=
-        `<mime-type type="${fileAssociation.mimeType}">\n
-          <comment>${this.packager.appInfo.productFilename} document</comment>\n
-          <glob pattern="*.${fileAssociation.ext}"/>\n
-          <generic-icon name="x-office-document"/>\n
-        </mime-type>\n`
-      }
-    }
-
-    // if no mime-types specified, return
-    if (mimeTypes === "") {
-      return ""
-    }
-
-    const relativePath = "usr/share/mime"
-    const mimeTypeDir = path.join(stageDir, relativePath)
-    const fileName = `${this.packager.executableName}.xml`
-    const mimeTypeFile = path.join(mimeTypeDir, fileName)
-    await ensureDir(mimeTypeDir)
-
-    await writeFile(mimeTypeFile, `<?xml version="1.0"?>
-<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
-  ${mimeTypes}
-</mime-info>`)
-
-    // noinspection SpellCheckingInspection
-    return `xdg-mime install $SYSTEM_WIDE --novendor "$APPDIR/${relativePath}/${fileName}"\n`
   }
 }

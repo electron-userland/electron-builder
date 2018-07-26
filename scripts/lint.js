@@ -1,7 +1,5 @@
 "use strict"
 
-require("v8-compile-cache")
-
 const path = require("path")
 const run = require("tslint/lib/runner").run
 

@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# be verbose if $DEBUG=1 is set
 if [ ! -z "$DEBUG" ] ; then
   env
   set -x
@@ -34,8 +33,8 @@ export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${APPDIR}"/usr/share/:"${XDG_DATA_DIRS}":/usr/share/gnome/:/usr/local/share/:/usr/share/
 export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
 
-DESKTOP_FILE="$APPDIR/<%= desktopFileName %>"
-BIN="$APPDIR/<%= executableName %>"
+DESKTOP_FILE="$APPDIR/{{.DesktopFileName}}"
+BIN="$APPDIR/{{.ExecutableName}}"
 
 if [ -z "$APPIMAGE_EXIT_AFTER_INSTALL" ] ; then
   trap atexit EXIT
@@ -92,16 +91,16 @@ check_prevent()
   fi
 }
 
-# Exit immediately of one of these files is present
+# exit immediately of one of these files is present
 # (e.g., because the desktop environment wants to handle desktop integration itself)
 check_prevent "$HOME/.local/share/$VENDORPREFIX/no_desktopintegration"
 check_prevent "/usr/share/$VENDORPREFIX/no_desktopintegration"
 check_prevent "/etc/$VENDORPREFIX/no_desktopintegration"
 
-# Exit immediately if appimaged is running
+# exit immediately if appimaged is running
 pidof appimaged 2>/dev/null && exit 0
 
-# Exit immediately if $DESKTOPINTEGRATION is not empty
+# exit immediately if $DESKTOPINTEGRATION is not empty
 if [ ! -z "$DESKTOPINTEGRATION" ] ; then
   exit 0
 fi
@@ -115,13 +114,6 @@ check_dep()
   fi
 }
 
-# Check whether dependencies are present in base system (we do not bundle these)
-# http://cgit.freedesktop.org/xdg/desktop-file-utils/
-check_dep desktop-file-install
-check_dep xdg-icon-resource
-check_dep xdg-mime
-check_dep xdg-desktop-menu
-
 if [ ! -f "$DESKTOP_FILE" ] ; then
   echo "Desktop file is missing. Please run ${THIS} from within an AppImage."
   exit 0
@@ -129,10 +121,10 @@ fi
 
 if [ -z "$APPIMAGE" ] ; then
   APPIMAGE="$APPDIR/AppRun"
-  # Not running from within an AppImage; hence using the AppRun for Exec=
+  # not running from within an AppImage; hence using the AppRun for Exec=
 fi
 
-# Determine where the desktop file should be installed
+# determine where the desktop file should be installed
 if [[ $EUID -ne 0 ]]; then
    DESTINATION_DIR_DESKTOP="$HOME/.local/share/applications"
    SYSTEM_WIDE=""
@@ -142,11 +134,11 @@ else
    SYSTEM_WIDE="--mode system"
 fi
 
-desktopFilePath="$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-<%= desktopFileName %>"
+desktopFilePath="$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-{{.DesktopFileName}}"
 
 # check if the desktop file is already there and if so, whether it points to the same AppImage
 if [ -e "$desktopFilePath" ] ; then
-  INSTALLED_APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-<%= desktopFileName %>" | head -n 1 | cut -d " " -f 1)
+  INSTALLED_APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-{{.DesktopFileName}}" | head -n 1 | cut -d " " -f 1)
   APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESKTOP_FILE" | head -n 1 | cut -d " " -f 1)
   #echo "installed: $INSTALLED_APP_VERSION image: $APP_VERSION"
   if [ "$INSTALLED_APP_VERSION" == "$APP_VERSION" ] ; then
@@ -154,19 +146,19 @@ if [ -e "$desktopFilePath" ] ; then
   fi
 fi
 
+{{if .EulaFile}}
 if [ -z "$APPIMAGE_SILENT_INSTALL" ] ; then
-  <% if (isShowEula) { %>
   # show EULA only if desktop file doesn't exist
   if [ ! -e "$desktopFilePath" ] ; then
     if [ -x /usr/bin/zenity ] ; then
       # on cancel simply exits and our trap handler launches app, so, $isEulaAccepted is set here to 0 and then to 1 if EULA accepted
       isEulaAccepted=0
-      LD_LIBRARY_PATH="" zenity --text-info --title="<%= productName %>" --filename="$APPDIR/eula.txt" --ok-label=Agree --cancel-label=Disagree
+      LD_LIBRARY_PATH="" zenity --text-info --title="{{.ProductName}}" --filename="$APPDIR/{{.EulaFile}}" --ok-label=Agree --cancel-label=Disagree {{if .IsHtmlEula}}--html{{end}}
       echo "r: $?"
     elif [ -x /usr/bin/kdialog ] ; then
       # cannot find any option to force Agree/Disagree buttons for kdialog. And official example exactly with OK button https://techbase.kde.org/Development/Tutorials/Shell_Scripting_with_KDE_Dialogs#Example_21._--textbox_dialog_box
       # in any case we pass labels text
-      LD_LIBRARY_PATH="" kdialog --textbox "$APPDIR/eula.txt" --yes-label Agree --cancel-label "Disagree"
+      LD_LIBRARY_PATH="" kdialog --textbox "$APPDIR/{{.EulaFile}}" --yes-label Agree --cancel-label "Disagree"
     fi
 
     case $? in
@@ -184,36 +176,51 @@ if [ -z "$APPIMAGE_SILENT_INSTALL" ] ; then
       ;;
     esac
   fi
-  <% } %>
-
-  <% if (systemIntegration === "ask") { %>
-  # we ask the user only if we have found no reason to skip until here
-  yesno "Install" "Would you like to integrate $APPIMAGE with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
-  <% } %>
 fi
+{{end}}
+
+{{if eq .SystemIntegration "ask"}}
+if [ -z "$APPIMAGE_SILENT_INSTALL" ] ; then
+    # we ask the user only if we have found no reason to skip until here
+    yesno "Install" "Would you like to integrate $APPIMAGE with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
+fi
+{{end}}
+
+# check whether dependencies are present in base system (we do not bundle these)
+# http://cgit.freedesktop.org/xdg/desktop-file-utils/
+check_dep desktop-file-install
+check_dep xdg-icon-resource
+check_dep xdg-mime
+check_dep xdg-desktop-menu
 
 desktop-file-install --rebuild-mime-info-cache \
   --vendor=$VENDORPREFIX --set-key=Exec --set-value="\"${APPIMAGE}\" %U" \
   --set-key=X-AppImage-Comment --set-value="Generated by ${THIS}" \
-  --set-icon="<%= resourceName %>" --set-key=TryExec --set-value=${APPIMAGE// /\\s} "$DESKTOP_FILE" \
+  --set-icon="{{.ResourceName}}" --set-key=TryExec --set-value=${APPIMAGE// /\\s} "$DESKTOP_FILE" \
   --dir "$DESTINATION_DIR_DESKTOP" \
   --mode=755
 
 # uninstall previous icons
-xdg-icon-resource uninstall --noupdate --size 16 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 24 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 32 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 48 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 64 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 72 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 96 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 128 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 256 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 512 "<%= resourceName %>"
-xdg-icon-resource uninstall --noupdate --size 1024 "<%= resourceName %>"
+xdg-icon-resource uninstall --noupdate --size 16 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 24 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 32 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 48 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 64 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 72 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 96 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 128 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 256 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 512 "{{.ResourceName}}"
+xdg-icon-resource uninstall --noupdate --size 1024 "{{.ResourceName}}"
 
-# Install the icon files for the application
-<%- additionalInstall %>
+# install the icon files
+{{range $index, $icon := .Icons}}
+xdg-icon-resource install --noupdate --context apps --size {{$icon.Size}} "$APPDIR/{{$icon.File}}" "{{$.ResourceName}}"
+{{end}}
+
+{{if .MimeTypeFile}}
+xdg-mime install $SYSTEM_WIDE --novendor "$APPDIR/{{.MimeTypeFile}}"
+{{end}}
 
 xdg-icon-resource forceupdate
 

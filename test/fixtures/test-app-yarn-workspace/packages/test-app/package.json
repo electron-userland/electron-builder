@@ -7,7 +7,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "build": {
-    "electronVersion": "2.0.0",
+    "electronVersion": "2.0.5",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,
@@ -23,6 +23,6 @@
     "@sentry/core": "0.5.4"
   },
   "optionalDependencies": {
-    "unresolved": "^2.0.0"
+    "unresolved": "^2.0.5"
   }
 }

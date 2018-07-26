@@ -385,7 +385,7 @@ export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
         return JSON.parse(rawResult) as T
       }
       catch (e) {
-        throw new Error(`Cannot parse result: ${e.message}: ${rawResult}`)
+        throw new Error(`Cannot parse result: ${e.message}: "${rawResult}"`)
       }
     })
 }

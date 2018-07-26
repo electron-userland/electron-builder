@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log, executeAppBuilder } from "builder-util"
+import { AsyncTaskManager, log, executeAppBuilderAsJson } from "builder-util"
 import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
 import { ensureDir, readlink, Stats, symlink } from "fs-extra-p"
 import * as path from "path"
@@ -182,16 +182,7 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
   // const productionDeps = await platformPackager.info.productionDeps.value
 
-  const rawJson = await executeAppBuilder(["node-dep-tree", "--dir", platformPackager.info.appDir])
-  let data: any
-  try {
-    data = JSON.parse(rawJson)
-  }
-  catch (e) {
-    throw new Error(`cannot parse: ${rawJson}\n error: ${e.stack}`)
-  }
-
-  const deps = data as Array<any>
+  const deps = await executeAppBuilderAsJson<Array<any>>(["node-dep-tree", "--dir", platformPackager.info.appDir])
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
   return await BluebirdPromise.mapSeries(deps, async info => {

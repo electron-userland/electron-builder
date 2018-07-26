@@ -73,6 +73,12 @@ export class LinuxTargetHelper {
       Terminal: "false",
       Type: "Application",
       Icon: packager.executableName,
+      // https://askubuntu.com/questions/367396/what-represent-the-startupwmclass-field-of-a-desktop-file
+      // must be set to package.json name (because it is Electron set WM_CLASS)
+      // to get WM_CLASS of running window: xprop WM_CLASS
+      // StartupWMClass doesn't work for unicode
+      // https://github.com/electron/electron/blob/2-0-x/atom/browser/native_window_views.cc#L226
+      StartupWMClass: appInfo.productName,
       ...extra,
       ...targetSpecificOptions.desktop,
     }
@@ -117,8 +123,7 @@ export class LinuxTargetHelper {
 
     let data = `[Desktop Entry]`
     for (const name of Object.keys(desktopMeta)) {
-      const value = desktopMeta[name]
-      data += `\n${name}=${value}`
+      data += `\n${name}=${desktopMeta[name]}`
     }
     data += "\n"
     return data
