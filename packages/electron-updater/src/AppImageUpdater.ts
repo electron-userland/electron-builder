@@ -1,4 +1,4 @@
-import { AllPublishOptions, DownloadOptions, newError } from "builder-util-runtime"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
 import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
@@ -37,21 +37,11 @@ export class AppImageUpdater extends BaseUpdater {
   protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = await this.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfo), "AppImage")!!
-
-    const downloadOptions: DownloadOptions = {
-      skipDirCreation: true,
-      headers: downloadUpdateOptions.requestHeaders,
-      cancellationToken: downloadUpdateOptions.cancellationToken,
-      sha2: (fileInfo.info as any).sha2,
-      sha512: fileInfo.info.sha512,
-    }
-
     return await this.executeDownload({
       fileExtension: "AppImage",
-      downloadOptions,
       fileInfo,
-      updateInfo: downloadUpdateOptions.updateInfo,
-      task: async updateFile => {
+      downloadUpdateOptions,
+      task: async (updateFile, downloadOptions) => {
         const oldFile = process.env.APPIMAGE!!
         if (oldFile == null) {
           throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")

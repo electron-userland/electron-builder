@@ -1,9 +1,9 @@
-import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID } from "builder-util-runtime"
+import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
 import { EventEmitter } from "events"
-import { outputFile, readFile } from "fs-extra-p"
+import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
+import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -483,6 +483,107 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return true
   }
+
+  protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
+    const fileInfo = taskOptions.fileInfo
+    const downloadOptions: DownloadOptions = {
+      skipDirCreation: true,
+      headers: taskOptions.downloadUpdateOptions.requestHeaders,
+      cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
+      sha2: (fileInfo.info as any).sha2,
+      sha512: fileInfo.info.sha512,
+    }
+
+    if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+    }
+
+    const updateInfo = taskOptions.downloadUpdateOptions.updateInfo
+    const version = updateInfo.version
+    const packageInfo = fileInfo.packageInfo
+
+    function getCacheUpdateFileName(): string {
+      // bloody NodeJS URL doesn't decode automatically
+      const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
+      if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
+        return path.posix.basename(urlPath)
+      }
+      else {
+        // url like /latest, generate name
+        return `update.${taskOptions.fileExtension}`
+      }
+    }
+
+    const cacheDir = this.downloadedUpdateHelper.cacheDir
+    await ensureDir(cacheDir)
+    const updateFileName = getCacheUpdateFileName()
+    let updateFile = path.join(cacheDir, updateFileName)
+    const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
+
+    const done = async (isSaveCache: boolean) => {
+      this.downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
+      if (isSaveCache) {
+        await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
+      }
+
+      await taskOptions.done!!(updateFile)
+
+      this.emit(UPDATE_DOWNLOADED, updateInfo)
+      return packageFile == null ? [updateFile] : [updateFile, packageFile]
+    }
+
+    const log = this._logger
+    const cachedUpdateFile = await this.downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    if (cachedUpdateFile != null) {
+      updateFile = cachedUpdateFile
+      return await done(false)
+    }
+
+    const removeFileIfAny = async () => {
+      await this.downloadedUpdateHelper.clear()
+        .catch(() => {
+          // ignore
+        })
+      return await unlink(updateFile)
+        .catch(() => {
+          // ignore
+        })
+    }
+
+    // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
+    let nameCounter = 0
+    let tempUpdateFile = path.join(cacheDir, `temp-${updateFileName}`)
+    for (let i = 0; i < 3; i++) {
+      try {
+        await unlink(tempUpdateFile)
+      }
+      catch (e) {
+        if (e.code === "ENOENT") {
+          break
+        }
+
+        log.warn(`Error on remove temp update file: ${e}`)
+        tempUpdateFile = path.join(cacheDir, `temp-${nameCounter++}-${updateFileName}`)
+      }
+    }
+
+    try {
+      await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
+      await rename(tempUpdateFile, updateFile)
+    }
+    catch (e) {
+      await removeFileIfAny()
+
+      if (e instanceof CancellationError) {
+        log.info("Cancelled")
+        this.emit("update-cancelled", updateInfo)
+      }
+      throw e
+    }
+
+    log.info(`New version ${version} has been downloaded to ${updateFile}`)
+    return await done(true)
+  }
 }
 
 export interface DownloadUpdateOptions {
@@ -509,4 +610,13 @@ export class NoOpLogger implements Logger {
   error(message?: any) {
     // ignore
   }
+}
+
+export interface DownloadExecutorTask {
+  readonly fileExtension: string
+  readonly fileInfo: ResolvedUpdateFileInfo
+  readonly downloadUpdateOptions: DownloadUpdateOptions
+  readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
+
+  readonly done?: (destinationFile: string) => Promise<any>
 }

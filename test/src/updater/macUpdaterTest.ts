@@ -2,6 +2,7 @@ import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runt
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
+import { assertThat } from "../helpers/fileAssert"
 import { createTestApp, trackEvents, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 class TestNativeUpdater extends EventEmitter {
@@ -57,6 +58,8 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   const updateCheckResult = await updater.checkForUpdates()
   // todo when will be updated to use files
   // expect(removeUnstableProperties(updateCheckResult.updateInfo.files)).toMatchSnapshot()
-  expect(await updateCheckResult.downloadPromise).toEqual([])
+  const files = await updateCheckResult.downloadPromise
+  expect(files!!.length).toEqual(1)
+  await assertThat(files!![0]).isFile()
   expect(actualEvents).toMatchSnapshot()
 })

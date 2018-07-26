@@ -1,4 +1,4 @@
-import { AllPublishOptions, DownloadOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { spawn } from "child_process"
 import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
@@ -22,20 +22,11 @@ export class NsisUpdater extends BaseUpdater {
   protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = await this.provider
     const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfo), "exe")!!
-    const downloadOptions: DownloadOptions = {
-      skipDirCreation: true,
-      headers: downloadUpdateOptions.requestHeaders,
-      cancellationToken: downloadUpdateOptions.cancellationToken,
-      sha2: (fileInfo.info as any).sha2,
-      sha512: fileInfo.info.sha512,
-    }
-
     return await this.executeDownload({
       fileExtension: "exe",
-      downloadOptions,
+      downloadUpdateOptions,
       fileInfo,
-      updateInfo: downloadUpdateOptions.updateInfo,
-      task: async (destinationFile, packageFile, removeTempDirIfAny) => {
+      task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
         if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, downloadUpdateOptions.requestHeaders, provider)) {
