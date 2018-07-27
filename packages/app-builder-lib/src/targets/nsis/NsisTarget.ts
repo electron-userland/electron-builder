@@ -162,7 +162,7 @@ export class NsisTarget extends Target {
 
     const commands: any = {
       OutFile: `"${installerPath}"`,
-      VIProductVersion: appInfo.versionInWeirdWindowsForm,
+      VIProductVersion: appInfo.getVersionInWeirdWindowsForm(),
       VIAddVersionKey: this.computeVersionKey(),
       Unicode: this.isUnicodeEnabled,
     }

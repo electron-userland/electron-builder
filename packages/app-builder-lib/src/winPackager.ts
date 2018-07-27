@@ -280,7 +280,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "LegalCopyright", appInfo.copyright,
       "--set-file-version", appInfo.buildVersion,
-      "--set-product-version", appInfo.versionInWeirdWindowsForm,
+      "--set-product-version", appInfo.getVersionInWeirdWindowsForm(),
     ]
 
     if (internalName != null) {

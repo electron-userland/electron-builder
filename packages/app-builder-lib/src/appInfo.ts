@@ -42,10 +42,10 @@ export class AppInfo {
     return null
   }
 
-  get versionInWeirdWindowsForm(): string {
+  getVersionInWeirdWindowsForm(isSetBuildNumber = true): string {
     const parsedVersion = new SemVer(this.version)
     // https://github.com/electron-userland/electron-builder/issues/2635#issuecomment-371792272
-    let buildNumber = this.buildNumber
+    let buildNumber = isSetBuildNumber ? this.buildNumber : null
     if (buildNumber == null || !/^\d+$/.test(buildNumber)) {
       buildNumber = "0"
     }

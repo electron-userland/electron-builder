@@ -155,7 +155,7 @@ export default class MsiTarget extends Target {
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
       compressionLevel: compression === "store" ? "none" : "high",
-      version: appInfo.versionInWeirdWindowsForm,
+      version: appInfo.getVersionInWeirdWindowsForm(),
       productName: appInfo.productName,
       upgradeCode: (options.upgradeCode || UUID.v5(appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase(),
       manufacturer: companyName || appInfo.productName,

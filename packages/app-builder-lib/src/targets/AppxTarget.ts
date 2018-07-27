@@ -180,7 +180,7 @@ export default class AppXTarget extends Target {
             return name
 
           case "version":
-            return appInfo.versionInWeirdWindowsForm
+            return appInfo.getVersionInWeirdWindowsForm(false)
 
           case "applicationId":
             const result = options.applicationId || options.identityName || appInfo.name
