@@ -2,7 +2,7 @@ import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, D
 import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { DOWNLOAD_PROGRESS, UPDATE_DOWNLOADED } from "./main"
+import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
 import { createReadStream, stat } from "fs-extra-p"
 import AutoUpdater = Electron.AutoUpdater
@@ -16,10 +16,6 @@ export class MacUpdater extends AppUpdater {
     this.nativeUpdater.on("error", it => {
       this._logger.warn(it)
       this.emit("error", it)
-    })
-    this.nativeUpdater.on("update-downloaded", () => {
-      this._logger.info(`New version ${this.updateInfo!.version} has been downloaded`)
-      this.emit(UPDATE_DOWNLOADED, this.updateInfo)
     })
   }
 

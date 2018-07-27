@@ -526,9 +526,8 @@ export abstract class AppUpdater extends EventEmitter {
         await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
       }
 
-      await taskOptions.done!!(updateFile)
-
       this.emit(UPDATE_DOWNLOADED, updateInfo)
+      await taskOptions.done!!(updateFile)
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }
 

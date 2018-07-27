@@ -61,7 +61,6 @@ Object {
         ],
         "path": "beta-TestApp.exe",
         "releaseDate": "@releaseDate",
-        "sha2": "@sha2",
         "sha512": "@sha512",
         "version": "1.0.0-beta.1",
       },

@@ -269,7 +269,6 @@ Object {
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
         "releaseDate": "@releaseDate",
-        "sha2": "@sha2",
         "sha512": "@sha512",
         "version": "1.0.0",
       },
@@ -320,7 +319,6 @@ Object {
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",
         "releaseDate": "@releaseDate",
-        "sha2": "@sha2",
         "sha512": "@sha512",
         "version": "1.0.1",
       },
@@ -365,7 +363,6 @@ Object {
   },
   "path": "Test App ßW Web Setup 1.0.1.exe",
   "releaseDate": "@releaseDate",
-  "sha2": "@sha2",
   "sha512": "@sha512",
   "version": "1.0.1",
 }
