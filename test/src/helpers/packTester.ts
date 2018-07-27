@@ -306,6 +306,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
+  delete info.AsarIntegrity
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright

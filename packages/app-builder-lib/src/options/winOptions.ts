@@ -100,15 +100,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * @default false
    */
   readonly signDlls?: boolean
-
-  /**
-   * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
-   *
-   * 1.0.0 sha2
-   * 2.15.0 path
-   * 2.16.0 files
-   */
-  readonly electronUpdaterCompatibility?: string | null
 }
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"

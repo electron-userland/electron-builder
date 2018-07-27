@@ -14,7 +14,6 @@ Object {
 
 exports[`empty installLocation 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -50,7 +49,6 @@ Object {
 
 exports[`only zip 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"jdsit4e4hjZ9aecrwjMGAzDfeiVsgi87181wRZFHzgCNdhOFZLQBiEEkRvLm5GqqdG7Ar4DWS28Td17EnL9prg==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -84,7 +82,6 @@ Object {
 
 exports[`pkg 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"jdsit4e4hjZ9aecrwjMGAzDfeiVsgi87181wRZFHzgCNdhOFZLQBiEEkRvLm5GqqdG7Ar4DWS28Td17EnL9prg==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -118,7 +115,6 @@ Object {
 
 exports[`pkg extended configuration 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -152,7 +148,6 @@ Object {
 
 exports[`pkg scripts 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -695,7 +690,6 @@ Object {
 
 exports[`tar.gz 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"jdsit4e4hjZ9aecrwjMGAzDfeiVsgi87181wRZFHzgCNdhOFZLQBiEEkRvLm5GqqdG7Ar4DWS28Td17EnL9prg==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",

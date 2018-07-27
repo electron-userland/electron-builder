@@ -91,15 +91,6 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly requirements?: string | null
 
   /**
-   * The electron-updater compatibility semver range. e.g. `>= 2.16`, `>=1.0.0`. Defaults to `>=1.0.0`
-   *
-   * 1.0.0 latest-mac.json
-   * 2.15.0 path
-   * 2.16.0 files
-   */
-  readonly electronUpdaterCompatibility?: string | null
-
-  /**
    * The electron locales. By default Electron locales used as is.
    */
   readonly electronLanguages?: Array<string> | string

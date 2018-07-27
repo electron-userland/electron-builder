@@ -130,7 +130,6 @@ Object {
 
 exports[`generic, github and spaces 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -212,7 +211,6 @@ Object {
 
 exports[`mac artifactName  2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -242,9 +240,6 @@ Object {
   ],
   "mac": Array [
     Object {
-      "file": "latest-mac.json",
-    },
-    Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "files": Array [
@@ -270,7 +265,6 @@ Object {
 
 exports[`os macro 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",
@@ -293,7 +287,6 @@ Object {
 exports[`os macro 3`] = `
 Array [
   "latest/mac/Test App ßW-1.1.0-mac.zip",
-  "latest/mac/latest-mac.json",
   "latest/mac/latest-mac.yml",
   "latest/linux/TestApp-1.1.0.zip",
 ]

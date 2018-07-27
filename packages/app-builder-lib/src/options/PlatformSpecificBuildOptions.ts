@@ -76,7 +76,15 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    */
   readonly protocols?: Array<Protocol> | Protocol
 
+  /**
+   * Whether to fail if app will be not code signed.
+   */
   readonly forceCodeSigning?: boolean
+
+  /**
+   * The [electron-updater compatibility](/auto-update.md#compatibility) semver range.
+   */
+  readonly electronUpdaterCompatibility?: string | null
 
   publish?: Publish
 

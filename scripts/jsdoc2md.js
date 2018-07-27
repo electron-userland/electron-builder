@@ -123,7 +123,10 @@ async function render2(files, jsdoc2MdOptions) {
       if (context.property.name === "sign" && context.object.name === "WindowsConfiguration") {
         return "String | (configuration: CustomWindowsSignTaskConfiguration) => Promise"
       }
-      if (context.object.name === "Configuration") {
+      else if (context.property.name === "plugs" && context.object.name === "SnapOptions") {
+        return "Array&lt;String | SnapOptions.PlugDescriptor&gt;"
+      }
+      else if (context.object.name === "Configuration") {
         if (context.property.name === "afterPack" || context.property.name === "afterSign" || context.property.name === "afterAllArtifactBuild" || context.property.name === "onNodeModuleFile") {
           return ""
         }

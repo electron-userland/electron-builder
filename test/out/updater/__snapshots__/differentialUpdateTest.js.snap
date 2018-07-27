@@ -227,7 +227,6 @@ Object {
 
 exports[`dmg 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"MKXEudw5/RqaksZhsP69oCb5bLDQVJVCT2Hf+BJPyqb9vHkeyP79XOZC2+TNpOKYtbnvbNhVmRAXnahbYkFzCw==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",

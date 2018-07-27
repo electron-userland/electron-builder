@@ -90,7 +90,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
-  const electronUpdaterCompatibility = (packager.platformSpecificBuildOptions as any).electronUpdaterCompatibility
+  const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
     const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir

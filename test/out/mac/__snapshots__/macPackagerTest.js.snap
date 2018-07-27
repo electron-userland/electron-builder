@@ -23,9 +23,6 @@ Object {
       },
     },
     Object {
-      "file": "latest-mac.json",
-    },
-    Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "files": Array [
@@ -56,7 +53,6 @@ Object {
 
 exports[`one-package 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"YYJnZcKYR79+/Un7xZ0fFqTRc7j3NvRfNDY1B1sLXGzBBvOPpir176RAxfQjNYXVwWGHSuXWpSrh5e1lEsamuA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleDocumentTypes": Array [
     Object {
@@ -160,7 +156,6 @@ Object {
 
 exports[`two-package 2`] = `
 Object {
-  "AsarIntegrity": "{\\"checksums\\":{\\"app.asar\\":\\"TZly3OaSZ47FFzvF1MU6u9txCWeO7bEZIfELA+Ws8BGFw/R00ba7cWVVa2pOejh9zJ39NuNfcOybv2qq5QTCjA==\\",\\"electron.asar\\":\\"ksFqQ3X5rccdlVaj4tOiH6w3EuU2r0+74T+bQ+jo2tynH+7xSMMPv5tfF5ATKsBaDNOQPZtxMsFwjBuUI8XgSw==\\"}}",
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
   "CFBundleIconFile": "TestApp.icns",
