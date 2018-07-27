@@ -56,6 +56,10 @@ exports.default = async function(configuration) {
 
 #### How do create Parallels Windows 10 Virtual Machine?
 
+
+!!! warning "Disable "Share Mac user folders with Windows""
+    If you use Parallels, you [must not use](https://github.com/electron-userland/electron-builder/issues/865#issuecomment-258105498) "Share Mac user folders with Windows" feature and must not run installers from such folders.
+
 You don't need to have Windows 10 license. Free is provided (expire after 90 days, but it is not a problem because no additional setup is required).
 
 1. Open Parallels Desktop.
