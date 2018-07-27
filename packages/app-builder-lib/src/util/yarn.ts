@@ -71,7 +71,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
 
-  if (!isYarnPath(execPath)) {
+  if (!isRunningYarn(execPath)) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
@@ -104,8 +104,11 @@ function getPackageToolPath() {
   }
 }
 
-function isYarnPath(execPath: string | null | undefined) {
-  return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn"))
+function isRunningYarn(execPath: string | null | undefined) {
+  const userAgent = process.env.npm_config_user_agent
+  return process.env.FORCE_YARN === "true" ||
+    (execPath != null && path.basename(execPath).startsWith("yarn")) ||
+    (userAgent != null && /\byarn\b/.test(userAgent))
 }
 
 export interface RebuildOptions {
@@ -135,7 +138,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
   log.info({platform, arch}, "rebuilding native production dependencies")
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const isYarn = isYarnPath(execPath)
+  const isYarn = isRunningYarn(execPath)
   const execArgs: Array<string> = []
   if (execPath == null) {
     execPath = getPackageToolPath()
