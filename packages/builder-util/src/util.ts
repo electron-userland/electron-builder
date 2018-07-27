@@ -28,8 +28,12 @@ export { deepAssign } from "./deepAssign"
 
 export const debug7z = _debug("electron-builder:7z")
 
-export function serializeToYaml(object: object, skipInvalid = false) {
-  return safeDump(object, {lineWidth: 8000, skipInvalid})
+export function serializeToYaml(object: object, skipInvalid = false, noRefs = false) {
+  return safeDump(object, {
+    lineWidth: 8000,
+    skipInvalid,
+    noRefs,
+  })
 }
 
 export function removePassword(input: string) {

@@ -1,9 +1,9 @@
 import { copyOrLinkFile } from "builder-util/out/fs"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { readdir, readJson } from "fs-extra-p"
+import { readdir } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
 test.ifMac.ifAll("two-package", () => assertPack("test-app", {
   targets: createTargets([Platform.MAC], null, "all"),
@@ -39,7 +39,6 @@ test.ifMac("one-package", app({
     mac: {
       // test appId per platform
       appId: "foo",
-      electronUpdaterCompatibility: ">=1.0.0",
       extendInfo: {
         LSUIElement: true,
       },
@@ -75,9 +74,6 @@ test.ifMac("one-package", app({
   checkMacApp: async (appDir, info) => {
     await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
     await assertThat(path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
-  },
-  packed: async context => {
-    expect(convertUpdateInfo(await readJson(path.join(context.outDir, "latest-mac.json")))).toMatchSnapshot()
   },
 }))
 

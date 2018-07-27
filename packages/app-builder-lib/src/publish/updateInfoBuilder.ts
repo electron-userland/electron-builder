@@ -199,7 +199,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
       task.info.releaseDate = releaseDate
     }
 
-    const fileContent = Buffer.from(serializeToYaml(task.info))
+    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
     await outputFile(task.file, fileContent)
     packager.dispatchArtifactCreated({
       file: task.file,
