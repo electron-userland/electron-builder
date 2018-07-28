@@ -122,7 +122,7 @@ export default class FpmTarget extends Target {
       "-s", "dir",
       "-t", target,
       "--architecture", (target === "pacman" && arch === Arch.ia32) ? "i686" : toLinuxArchString(arch),
-      "--name", appInfo.name,
+      "--name", appInfo.linuxPackageName,
       "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],

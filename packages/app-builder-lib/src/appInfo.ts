@@ -30,7 +30,7 @@ export class AppInfo {
     }
     this.buildVersion = buildVersion
 
-    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
+    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
     this.productFilename = sanitizeFileName(this.productName)
   }
 
@@ -88,7 +88,13 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.info.metadata.name!
+    return this.info.metadata.name!!
+  }
+
+  get linuxPackageName(): string {
+    const name = this.name
+    // https://github.com/electron-userland/electron-builder/issues/2963
+    return name.startsWith("@") ? this.productFilename : name
   }
 
   get sanitizedName(): string {
