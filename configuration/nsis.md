@@ -85,7 +85,14 @@ You can explicitly set guid using option [nsis.guid](#NsisOptions-guid), but it 
 
 It is also important to set the Application User Model ID (AUMID) to the [appId](configuration.md#Configuration-appId) of the application, in order for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUMID should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed: `app.setAppUserModelId(appId)`
 
----
+## Portable
+
+To build portable app, set target to `portable` (or pass `--win portable`).
+
+For portable app, following environment variables are available:
+
+* `PORTABLE_EXECUTABLE_DIR` - dir where portable executable located.
+* `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
 
 ## Common Questions
 
