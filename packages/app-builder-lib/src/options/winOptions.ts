@@ -3,12 +3,10 @@ import { CustomWindowsSign } from "../windowsCodeSign"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis.md#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX package can be built only on Windows 10.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
-   *
-   * For `portable` app, `PORTABLE_EXECUTABLE_DIR` env is set (dir where portable executable located).
    *
    * @default nsis
   */
