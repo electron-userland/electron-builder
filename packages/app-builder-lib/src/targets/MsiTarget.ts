@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "../binDownload"
 import { walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import * as ejs from "ejs"

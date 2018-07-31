@@ -1,5 +1,6 @@
 import { SpawnOptions, ExecFileOptions } from "child_process"
-import { ExtraSpawnOptions, execWine } from "builder-util"
+import { ExtraSpawnOptions } from "builder-util"
+import { execWine } from "../wine"
 import { VmManager } from "./vm"
 import * as path from "path"
 

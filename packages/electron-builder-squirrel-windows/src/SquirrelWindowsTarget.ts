@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, log } from "builder-util"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"

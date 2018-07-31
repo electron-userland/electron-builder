@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"

@@ -1,20 +1,47 @@
-import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { debug7zArgs, exec, isEnvTrue, log, spawn, asArray, executeAppBuilder } from "builder-util"
-import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, CONCURRENCY, unlinkIfExists } from "builder-util/out/fs"
-import { chmod, emptyDir, readdir, remove, rename } from "fs-extra-p"
+import { asArray, executeAppBuilder, log } from "builder-util"
+import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { emptyDir, readdir, remove, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
 import { AsarIntegrity } from "../asar/integrity"
 import { Configuration } from "../configuration"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { ElectronPlatformName, Packager, Platform, PlatformPackager } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
-import { ElectronPlatformName, Platform, PlatformPackager, Packager } from "../index"
-import { downloadElectron, ElectronDownloadOptions } from "./electron-download"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
+
+export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
+
+export interface ElectronDownloadOptions {
+  // https://github.com/electron-userland/electron-builder/issues/3077
+  // must be optional
+  version?: string
+
+  /**
+   * The [cache location](https://github.com/electron-userland/electron-download#cache-location).
+   */
+  cache?: string | null
+
+  /**
+   * The mirror.
+   */
+  mirror?: string | null
+
+  /** @private */
+  customDir?: string | null
+  /** @private */
+  customFilename?: string | null
+
+  strictSSL?: boolean
+  isVerifyChecksum?: boolean
+
+  platform?: ElectronPlatformName
+  arch?: string
+}
 
 function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName, arch: string, electronVersion: string): ElectronDownloadOptions {
   return {
@@ -139,29 +166,12 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     }
   }
 
+  let isFullCleanup = false
   if (dist == null) {
-    const zipPath = (await Promise.all<any>([
-      downloadElectron(options),
-      emptyDir(out)
-    ]))[0]
-
-    if (process.platform === "darwin" || isEnvTrue(process.env.USE_UNZIP)) {
-      // on mac unzip faster than 7za (1.1 sec vs 1.6 see)
-      await exec("unzip", ["-oqq", "-d", out, zipPath])
-    }
-    else {
-      await spawn(path7za, debug7zArgs("x").concat(zipPath, "-aoa", `-o${out}`))
-      if (prepareOptions.platformName === "linux") {
-        // https://github.com/electron-userland/electron-builder/issues/786
-        // fix dir permissions — opposite to extract-zip, 7za creates dir with no-access for other users, but dir must be readable for non-root users
-        await Promise.all([
-          chmod(path.join(out, "locales"), "0755"),
-          chmod(path.join(out, "resources"), "0755")
-        ])
-      }
-    }
+    await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", out, "--distMacOsAppName", distMacOsAppName])
   }
   else {
+    isFullCleanup = true
     const source = packager.getElectronSrcDir(dist)
     const destination = packager.getElectronDestinationDir(out)
     log.info({source, destination}, "copying Electron")
@@ -171,16 +181,17 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     })
   }
 
-  await cleanupAfterUnpack(prepareOptions, distMacOsAppName)
+  await cleanupAfterUnpack(prepareOptions, distMacOsAppName, isFullCleanup)
 }
 
-function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string) {
+function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOptions, distMacOsAppName: string, isFullCleanup: boolean) {
   const out = prepareOptions.appOutDir
   const isMac = prepareOptions.packager.platform === Platform.MAC
   const resourcesPath = isMac ? path.join(out, distMacOsAppName, "Contents", "Resources") : path.join(out, "resources")
+
   return Promise.all([
-    unlinkIfExists(path.join(resourcesPath, "default_app.asar")),
-    unlinkIfExists(path.join(out, "version")),
+    isFullCleanup ? unlinkIfExists(path.join(resourcesPath, "default_app.asar")) : Promise.resolve(),
+    isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
     isMac ? Promise.resolve() : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {/* ignore */}),
   ])
 }

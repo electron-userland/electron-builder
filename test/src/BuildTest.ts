@@ -1,5 +1,5 @@
 import { walk } from "builder-util/out/fs"
-import { checkWineVersion } from "builder-util/out/wine"
+import { checkWineVersion } from "app-builder-lib/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"

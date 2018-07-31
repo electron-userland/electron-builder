@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:10.6.0
+      - image: circleci/node:10.7.0
     steps:
       - checkout
       - restore_cache:
@@ -21,7 +21,7 @@ jobs:
           paths:
             - node_modules
       - run:
-          command: NODE_PATH=./packages node ./test/out/helpers/downloadElectron.js
+          command: node ./test/out/helpers/downloadElectron.js
       - save_cache:
           key: v-2.0.5-electron
           paths:

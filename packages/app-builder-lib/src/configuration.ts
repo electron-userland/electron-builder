@@ -1,6 +1,6 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronDownloadOptions } from "./electron/electron-download"
+import { ElectronDownloadOptions } from "./electron/ElectronFramework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"

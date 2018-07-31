@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "app-builder-lib/out/binDownload"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
@@ -11,7 +11,7 @@ import { rename } from "fs-extra-p"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createTestApp, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 // rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater && cp -R ~/Documents/electron-builder/packages/electron-updater ~/Documents/onshape-desktop-shell/node_modules/electron-updater && rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater/src
 // rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && cp -R ~/Documents/electron-builder/packages/builder-util-runtime ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime/src
@@ -314,7 +314,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any) {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass()
-    tuneNsisUpdater(updater)
+    tuneTestUpdater(updater)
     updater.logger = console
     const doTest = async () => {
       updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions | S3Options>({

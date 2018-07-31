@@ -1,4 +1,4 @@
-import { Arch, asArray, exec, execWine, InvalidConfigurationError, log, use } from "builder-util"
+import { Arch, asArray, exec, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import _debug from "debug"
@@ -25,6 +25,7 @@ import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
 import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
 import BluebirdPromise from "bluebird-lst"
+import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {

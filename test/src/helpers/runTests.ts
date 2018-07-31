@@ -7,7 +7,6 @@ import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from ".
 
 const rootDir = path.join(__dirname, "../../..")
 
-// we set NODE_PATH in this file, so, we cannot use 'out/util' path here
 const util = require(`${rootDir}/packages/builder-util/out/util`)
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 

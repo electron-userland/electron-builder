@@ -1,5 +1,5 @@
 import { chmod, emptyDir, ensureDir, writeFile } from "fs-extra-p"
-import { getBin } from "builder-util/out/binDownload"
+import { getBin } from "./binDownload"
 import { FileTransformer, copyFile } from "builder-util/out/fs"
 import { log } from "builder-util"
 import { safeStringifyJson } from "builder-util-runtime"

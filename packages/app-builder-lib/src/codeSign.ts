@@ -8,7 +8,7 @@ import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { download } from "builder-util/out/binDownload"
+import { download } from "./binDownload"
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]

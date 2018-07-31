@@ -33,7 +33,7 @@ install:
   - yarn
 
 script:
-  - NODE_PATH=./packages yarn test
+  - yarn test
 
 branches:
   except:

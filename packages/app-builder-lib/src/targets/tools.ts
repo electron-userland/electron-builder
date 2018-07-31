@@ -1,4 +1,4 @@
-import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
+import { getBin, getBinFromGithub } from "../binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 

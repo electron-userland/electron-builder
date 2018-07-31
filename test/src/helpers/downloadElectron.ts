@@ -4,7 +4,7 @@ import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./testConfig"
 
-const downloadElectron: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/app-builder-lib/out/electron/electron-download")).downloadElectron
+const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
 
 export function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually
@@ -47,7 +47,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
       })
     }
   }
-  return BluebirdPromise.map(versions, it => downloadElectron(it), {concurrency: 3})
+  return executeAppBuilder(["download-electron", "--configuration", JSON.stringify(versions)])
 }
 
 if (process.mainModule === module) {

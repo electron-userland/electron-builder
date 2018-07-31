@@ -1,12 +1,12 @@
-import { serializeToYaml, TmpDir } from "builder-util"
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { serializeToYaml, TmpDir, executeAppBuilder } from "builder-util"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions, DownloadOptions } from "builder-util-runtime"
 import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
+import { NodeHttpExecutor } from "builder-util/out/nodeHttpExecutor"
 
 const tmpDir = new TmpDir("updater-test-util")
 
@@ -50,7 +50,7 @@ export async function writeUpdateConfig<T extends GenericServerOptions | GithubO
 }
 
 export async function validateDownload(updater: AppUpdater, expectDownloadPromise = true) {
-  tuneNsisUpdater(updater)
+  tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
@@ -80,7 +80,20 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   return updateCheckResult
 }
 
-export function tuneNsisUpdater(updater: AppUpdater) {
+export class TestNodeHttpExecutor extends NodeHttpExecutor {
+  download(url: string, destination: string, options: DownloadOptions): Promise<string> {
+    const args = ["download", "--url", url, "--output", destination]
+    if (options != null && options.sha512) {
+      args.push("--sha512", options.sha512)
+    }
+    return executeAppBuilder(args)
+      .then(() => destination)
+  }
+}
+
+export const httpExecutor: TestNodeHttpExecutor = new TestNodeHttpExecutor()
+
+export function tuneTestUpdater(updater: AppUpdater) {
   (updater as any).httpExecutor = httpExecutor
   updater.logger = new NoOpLogger()
 }

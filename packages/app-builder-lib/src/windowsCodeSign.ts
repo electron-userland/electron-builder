@@ -1,5 +1,5 @@
 import { asArray, isMacOsSierra, log } from "builder-util"
-import { getBinFromGithub } from "builder-util/out/binDownload"
+import { getBinFromGithub } from "./binDownload"
 import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"

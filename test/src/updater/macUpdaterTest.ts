@@ -1,9 +1,8 @@
 import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runtime"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
-import { createTestApp, trackEvents, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createTestApp, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -52,7 +51,7 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
     // console.log(JSON.stringify(data))
   })
 
-  tuneNsisUpdater(updater)
+  tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()

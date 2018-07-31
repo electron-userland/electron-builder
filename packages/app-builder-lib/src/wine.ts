@@ -5,9 +5,9 @@ import * as os from "os"
 import * as path from "path"
 import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
-import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
-import { getMacOsVersion } from "./macosVersion"
-import { debug7zArgs, exec, isEnvTrue, log } from "./util"
+import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "builder-util/out/bundledTool"
+import { getMacOsVersion } from "builder-util/out/macosVersion"
+import { debug7zArgs, exec, isEnvTrue, log } from "builder-util/out/util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
