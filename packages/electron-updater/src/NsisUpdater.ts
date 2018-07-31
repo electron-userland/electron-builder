@@ -9,7 +9,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { configureRequestOptionsFromUrl, findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra-p"
+import { unlink, readJsonSync } from "fs-extra-p"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 
@@ -139,37 +139,42 @@ export class NsisUpdater extends BaseUpdater {
 
   private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     try {
-      const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfo.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
-      this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
+      const packageJson = readJsonSync("package.json")
+      if (packageJson.build.nsis.differentialPackage === false) {
+        return true
+      } else {
+        const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
+        const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfo.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
+        this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
-      const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const requestOptions = configureRequestOptionsFromUrl(url, {headers: downloadUpdateOptions.requestHeaders});
-        (requestOptions as any).gzip = true
-        const data = await this.httpExecutor.request(requestOptions, downloadUpdateOptions.cancellationToken)
-        if (data == null) {
-          throw new Error(`Blockmap "${url.href}" is empty`)
+        const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+          const requestOptions = configureRequestOptionsFromUrl(url, {headers: downloadUpdateOptions.requestHeaders});
+          (requestOptions as any).gzip = true
+          const data = await this.httpExecutor.request(requestOptions, downloadUpdateOptions.cancellationToken)
+          if (data == null) {
+            throw new Error(`Blockmap "${url.href}" is empty`)
+          }
+
+          try {
+            return JSON.parse(data)
+          }
+          catch (e) {
+            throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
+          }
         }
 
-        try {
-          return JSON.parse(data)
-        }
-        catch (e) {
-          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
-        }
+        const blockMapData = await downloadBlockMap(newBlockMapUrl)
+        const oldBlockMapData = await downloadBlockMap(oldBlockMapUrl)
+        await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+          newUrl: fileInfo.url.href,
+          oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
+          logger: this._logger,
+          newFile: installerPath,
+          useMultipleRangeRequest: provider.useMultipleRangeRequest,
+          requestHeaders,
+        })
+          .download(oldBlockMapData, blockMapData)
       }
-
-      const blockMapData = await downloadBlockMap(newBlockMapUrl)
-      const oldBlockMapData = await downloadBlockMap(oldBlockMapUrl)
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
-        newUrl: fileInfo.url.href,
-        oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
-        logger: this._logger,
-        newFile: installerPath,
-        useMultipleRangeRequest: provider.useMultipleRangeRequest,
-        requestHeaders,
-      })
-        .download(oldBlockMapData, blockMapData)
     }
     catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
