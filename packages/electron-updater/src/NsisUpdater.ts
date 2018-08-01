@@ -9,7 +9,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { configureRequestOptionsFromUrl, findFile, Provider } from "./providers/Provider"
-import { unlink, readJsonSync } from "fs-extra-p"
+import { unlink, readJson } from "fs-extra-p"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 
@@ -139,7 +139,8 @@ export class NsisUpdater extends BaseUpdater {
 
   private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     try {
-      const packageJson = readJsonSync("package.json")
+      const projectDir = process.cwd()
+      const packageJson = await readJson(path.join(projectDir, "package.json"))
       if (packageJson.build.nsis.differentialPackage === false) {
         return true
       } else {
