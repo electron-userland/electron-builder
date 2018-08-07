@@ -8,10 +8,11 @@
   !ifndef HIDE_RUN_AFTER_FINISH
     Function StartApp
       ${if} ${isUpdated}
-        ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "--updated"
+        StrCpy $1 "--updated"
       ${else}
-        ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" ""
+        StrCpy $1 ""
       ${endif}
+      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$1"
     FunctionEnd
 
     !define MUI_FINISHPAGE_RUN
@@ -38,10 +39,10 @@
     !insertmacro MUI_PAGE_DIRECTORY
 
     # pageDirectory leave doesn't work (it seems because $INSTDIR is set after custom leave function)
-    # so, we yse instfiles pre
+    # so, we use instfiles pre
     !define MUI_PAGE_CUSTOMFUNCTION_PRE instFilesPre
 
-    # Sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
+    # sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
     Function instFilesPre
       ${If} ${FileExists} "$INSTDIR\*"
         ${StrContains} $0 "${APP_FILENAME}" $INSTDIR
