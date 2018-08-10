@@ -143,7 +143,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, options)
+    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
   get electronDistExecutableName() {
@@ -154,12 +154,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.config.muonVersion == null ? "Electron" : "Brave"
   }
 
+  createGetFileMatchersOptions(outDir: string, arch: Arch, customBuildOptions: PlatformSpecificBuildOptions): GetFileMatchersOptions {
+    return {
+      macroExpander: it => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"}),
+      customBuildOptions,
+      globalOutDir: outDir,
+      defaultSrc: this.projectDir,
+    }
+  }
+
   protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
     if (this.packagerOptions.prepackaged != null) {
       return
     }
-
-    const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
 
     const framework = this.info.framework
     log.info({
@@ -187,11 +194,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const getFileMatchersOptions: GetFileMatchersOptions = {
-      macroExpander,
-      customBuildOptions: platformSpecificBuildOptions,
-      outDir,
-    }
+    const getFileMatchersOptions = this.createGetFileMatchersOptions(outDir, arch, platformSpecificBuildOptions)
+    const macroExpander = getFileMatchersOptions.macroExpander
     const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, getFileMatchersOptions)
     computeParsedPatterns(extraResourceMatchers)
     const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, getFileMatchersOptions)
@@ -292,10 +296,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, combinedTransformer)))
     }
     else {
-      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, {
+      const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
         macroExpander,
         customBuildOptions: platformSpecificBuildOptions,
-        outDir: packContext.outDir,
+        globalOutDir: packContext.outDir,
+        defaultSrc: appDir,
       })
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       taskManager.addTask(_computeFileSets(mainMatchers)

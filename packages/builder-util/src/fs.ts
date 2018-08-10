@@ -150,7 +150,11 @@ export function copyFile(src: string, dest: string, isEnsureDir = true) {
  *
  * ensureDir is not called, dest parent dir must exists
  */
-export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink, exDevErrorHandler?: (() => boolean) | null): Promise<any> {
+export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, isUseHardLink?: boolean, exDevErrorHandler?: (() => boolean) | null): Promise<any> {
+  if (isUseHardLink === undefined) {
+    isUseHardLink = _isUseHardLink
+  }
+
   if (stats != null) {
     const originalModeNumber = stats.mode
     const mode = new Mode(stats)
@@ -223,7 +227,7 @@ function doCopyFile(src: string, dest: string, stats: Stats | null | undefined):
 export class FileCopier {
   isUseHardLink: boolean
 
-  constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer | null) {
+  constructor(private readonly isUseHardLinkFunction?: ((file: string) => boolean) | null, private readonly transformer?: FileTransformer | null) {
     if (isUseHardLinkFunction === USE_HARD_LINKS) {
       this.isUseHardLink = true
     }
@@ -274,7 +278,7 @@ export class FileCopier {
 export interface CopyDirOptions {
   filter?: Filter | null
   transformer?: FileTransformer | null
-  isUseHardLink?: (file: string) => boolean
+  isUseHardLink?: ((file: string) => boolean) | null
 }
 
 /**

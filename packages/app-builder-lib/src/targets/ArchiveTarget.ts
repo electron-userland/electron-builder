@@ -1,6 +1,7 @@
 import { Arch } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
+import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 
@@ -34,10 +35,22 @@ export class ArchiveTarget extends Target {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }
     else {
-      await archive(format, artifactPath, appOutDir, {
+      let withoutDir = !isMac
+      let dirToArchive = appOutDir
+      if (isMac) {
+        dirToArchive = path.dirname(appOutDir)
+        const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions))
+        if (fileMatchers != null) {
+          await copyFiles(fileMatchers, null, true)
+          withoutDir = true
+        }
+      }
+
+      const archiveOptions = {
         compression: packager.compression,
-        withoutDir: !isMac,
-      })
+        withoutDir,
+      }
+      await archive(format, artifactPath, dirToArchive, archiveOptions)
     }
 
     packager.info.dispatchArtifactCreated({

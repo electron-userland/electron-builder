@@ -60,7 +60,7 @@
     "sanitize-filename": "^1.6.1",
     "sax": "^1.2.4",
     "semver": "^5.5.0",
-    "source-map-support": "^0.5.6",
+    "source-map-support": "^0.5.8",
     "stat-mode": "^0.2.2",
     "sumchecker": "^2.0.2",
     "temp-file": "^3.1.3",
@@ -69,10 +69,10 @@
     "yargs": "^12.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.56",
-    "@babel/preset-env": "^7.0.0-beta.56",
-    "@babel/preset-react": "^7.0.0-beta.56",
-    "@babel/preset-stage-0": "^7.0.0-beta.56",
+    "@babel/core": "^7.0.0-rc.1",
+    "@babel/preset-env": "^7.0.0-rc.1",
+    "@babel/preset-react": "^7.0.0-rc.1",
+    "@babel/preset-stage-0": "^7.0.0-rc.1",
     "@types/debug": "^0.0.30",
     "@types/ejs": "^2.6.0",
     "@types/electron-is-dev": "^0.3.0",

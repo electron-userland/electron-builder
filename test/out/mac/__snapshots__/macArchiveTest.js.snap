@@ -33,6 +33,39 @@ Object {
 }
 `;
 
+exports[`extraDistFiles 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
+`;
+
+exports[`extraDistFiles 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "DTSDKBuild": "14D125",
+  "DTSDKName": "macosx10.1010.10",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSMinimumSystemVersion": "10.9.0",
+  "NSHighResolutionCapable": true,
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`invalid target 1`] = `"ERR_CONFIG_INVALID"`;
 
 exports[`only zip 1`] = `

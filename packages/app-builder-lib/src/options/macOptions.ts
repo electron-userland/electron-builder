@@ -99,6 +99,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly cscInstallerLink?: string | null
   /** @private */
   readonly cscInstallerKeyPassword?: string | null
+
+  /**
+   * Extra files to put in archive. Not applicable for `tar.*`.
+   */
+  readonly extraDistFiles?: Array<string> | string | null
 }
 
 /**

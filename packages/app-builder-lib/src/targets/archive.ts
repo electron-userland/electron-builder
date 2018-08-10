@@ -65,8 +65,6 @@ export interface ArchiveOptions {
    */
   isArchiveHeaderCompressed?: boolean
 
-  listFile?: string
-
   dictSize?: number
   excluded?: Array<string> | null
 
@@ -151,7 +149,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   // remove file before - 7z doesn't overwrite file, but update
   await unlinkIfExists(outFile)
 
-  args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)
+  args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
   if (options.excluded != null) {
     for (const mask of options.excluded) {
       args.push(`-xr!${mask}`)

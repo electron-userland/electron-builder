@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, log } from "builder-util"
-import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer } from "builder-util/out/fs"
+import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util/out/fs"
 import { ensureDir } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -119,10 +119,11 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   const packager = platformPackager.info
   const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
 
-  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", appDir, destination, {
+  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", destination, {
     macroExpander,
     customBuildOptions: platformSpecificBuildOptions,
-    outDir,
+    globalOutDir: outDir,
+    defaultSrc: appDir,
   })
   if (matchers == null) {
     matchers = [new FileMatcher(appDir, destination, macroExpander)]
@@ -233,12 +234,14 @@ export function getNodeModuleFileMatcher(appDir: string, destination: string, ma
 export interface GetFileMatchersOptions {
   readonly macroExpander: (pattern: string) => string
   readonly customBuildOptions: PlatformSpecificBuildOptions
-  readonly outDir: string
+  readonly globalOutDir: string
+
+  readonly defaultSrc: string
 }
 
 /** @internal */
-export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-  const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, options.macroExpander)
+export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles", defaultDestination: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
+  const defaultMatcher = new FileMatcher(options.defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
   function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
@@ -262,14 +265,16 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
         throw new Error(`Advanced file copying not supported for "${name}"`)
       }
       else {
-        const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
+        const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
         fileMatchers.push(new FileMatcher(from, to, options.macroExpander, pattern.filter))
       }
     }
   }
 
-  addPatterns((config as any)[name])
+  if (name !== "extraDistFiles") {
+    addPatterns((config as any)[name])
+  }
   addPatterns((options.customBuildOptions as any)[name])
 
   if (!defaultMatcher.isEmpty()) {
@@ -278,7 +283,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
   }
 
   // we cannot exclude the whole out dir, because sometimes users want to use some file in the out dir in the patterns
-  const relativeOutDir = defaultMatcher.normalizePattern(path.relative(defaultSrc, options.outDir))
+  const relativeOutDir = defaultMatcher.normalizePattern(path.relative(options.defaultSrc, options.globalOutDir))
   if (!relativeOutDir.startsWith(".")) {
     defaultMatcher.addPattern(`!${relativeOutDir}/*-unpacked{,/**/*}`)
   }
@@ -287,7 +292,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
 }
 
 /** @internal */
-export function copyFiles(matchers: Array<FileMatcher> | null, transformer: FileTransformer | null): Promise<any> {
+export function copyFiles(matchers: Array<FileMatcher> | null, transformer: FileTransformer | null, isUseHardLink?: boolean): Promise<any> {
   if (matchers == null || matchers.length === 0) {
     return Promise.resolve()
   }
@@ -303,7 +308,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
       const toStat = await statOrNull(matcher.to)
       // https://github.com/electron-userland/electron-builder/issues/1245
       if (toStat != null && toStat.isDirectory()) {
-        return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat)
+        return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat, isUseHardLink)
       }
 
       await ensureDir(path.dirname(matcher.to))
@@ -314,6 +319,6 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
       matcher.prependPattern("**/*")
     }
     log.debug({matcher}, "copying files using pattern")
-    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter(), transformer})
+    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null})
   })
 }

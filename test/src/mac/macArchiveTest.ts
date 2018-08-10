@@ -1,7 +1,7 @@
 import { exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
-import { readFile, symlink } from "fs-extra-p"
+import { outputFile, readFile, symlink } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { assertThat } from "../helpers/fileAssert"
@@ -29,6 +29,22 @@ test.ifAll.ifMac("empty installLocation", app({
   projectDirCreated: projectDir => {
     return Promise.all([
       copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
+    ])
+  },
+}))
+
+test.ifAll.ifMac("extraDistFiles", app({
+  targets: Platform.MAC.createTarget("zip"),
+  config: {
+    mac: {
+      extraDistFiles: "extra.txt"
+    }
+  }
+}, {
+  signed: false,
+  projectDirCreated: projectDir => {
+    return Promise.all([
+      outputFile(path.join(projectDir, "extra.txt"), "test"),
     ])
   },
 }))
