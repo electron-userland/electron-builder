@@ -2,6 +2,7 @@ import { Filter } from "builder-util/out/fs"
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { NODE_MODULES_PATTERN } from "../fileTransformer"
 
 /** @internal */
 export function hasMagic(pattern: Minimatch) {
@@ -24,28 +25,37 @@ function ensureEndSlash(s: string) {
   return s.length === 0 || s.endsWith(path.sep) ? s : (s + path.sep)
 }
 
+function getRelativePath(file: string, srcWithEndSlash: string) {
+  if (!file.startsWith(srcWithEndSlash)) {
+    const index = file.indexOf(NODE_MODULES_PATTERN)
+    if (index < 0) {
+      throw new Error(`${file} must be under ${srcWithEndSlash}`)
+    }
+    else {
+      return file.substring(index + 1 /* leading slash */)
+    }
+  }
+
+  let relative = file.substring(srcWithEndSlash.length)
+  if (path.sep === "\\") {
+    if (relative.startsWith("\\")) {
+      // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
+      relative = relative.substring(1)
+    }
+    relative = relative.replace(/\\/g, "/")
+  }
+  return relative
+}
+
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
-  const pathSeparator = path.sep
   const srcWithEndSlash = ensureEndSlash(src)
-  return (it, stat) => {
-    if (src === it) {
+  return (file, stat) => {
+    if (src === file) {
       return true
     }
 
-    if (!it.startsWith(srcWithEndSlash)) {
-      throw new Error(`${it} must be under ${srcWithEndSlash}`)
-    }
-
-    let relative = it.substring(srcWithEndSlash.length)
-    if (pathSeparator === "\\") {
-      if (relative.startsWith("\\")) {
-        // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
-        relative = relative.substring(1)
-      }
-      relative = relative.replace(/\\/g, "/")
-    }
-
+    const relative = getRelativePath(file, srcWithEndSlash)
     // https://github.com/electron-userland/electron-builder/issues/867
     return minimatchAll(relative, patterns, stat) && (excludePatterns == null || stat.isDirectory() || !minimatchAll(relative, excludePatterns, stat))
   }
