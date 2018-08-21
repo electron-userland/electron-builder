@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { BlockMapDataHolder, configureRequestOptionsFromUrl, createHttpError, DigestTransform, HttpExecutor } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, closeSync, createWriteStream, open } from "fs-extra-p"
+import { close, createWriteStream, open } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { Logger } from "../main"
 import { copyData } from "./DataSplitter"
@@ -45,7 +45,7 @@ export abstract class DifferentialDownloader {
     }
   }
 
-  protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+  protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap): Promise<any> {
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
     if (oldBlockMap.version !== newBlockMap.version) {
       throw new Error(`version is different (${oldBlockMap.version} - ${newBlockMap.version}), full download is required`)
@@ -79,9 +79,47 @@ export abstract class DifferentialDownloader {
     return this.downloadFile(operations)
   }
 
-  private async downloadFile(tasks: Array<Operation>): Promise<any> {
+  private downloadFile(tasks: Array<Operation>): Promise<any> {
+    const fdList: Array<OpenedFile> = []
+    const closeFiles = () => {
+      return BluebirdPromise.map(fdList, openedFile => {
+        return close(openedFile.descriptor)
+          .catch(e => {
+            this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
+          })
+      })
+    }
+    return this.doDownloadFile(tasks, fdList)
+      .then(closeFiles)
+      .catch(e => {
+        // then must be after catch here (since then always throws error)
+        return closeFiles()
+          .catch(closeFilesError => {
+            // closeFiles never throw error, but just to be sure
+            try {
+              this.logger.error(`cannot close files: ${closeFilesError}`)
+            }
+            catch (errorOnLog) {
+              try {
+                console.error(errorOnLog)
+              }
+              catch (ignored) {
+                // ok, give up and ignore error
+              }
+            }
+            throw e
+          })
+          .then(() => {
+            throw e
+          })
+      })
+  }
+
+  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
+    fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
     const newFileFd = await open(this.options.newFile, "w")
+    fdList.push({descriptor: newFileFd, path: this.options.newFile})
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
     await new Promise((resolve, reject) => {
       const streams: Array<any> = []
@@ -184,12 +222,6 @@ export abstract class DifferentialDownloader {
 
       w(0)
     })
-      .then(() => close(oldFileFd))
-      .catch(error => {
-        closeSync(oldFileFd)
-        closeSync(newFileFd)
-        throw error
-      })
   }
 
   protected async readRemoteBytes(start: number, endInclusive: number) {
@@ -232,4 +264,9 @@ function formatBytes(value: number, symbol = " KB") {
 function removeQuery(url: string) {
   const index = url.indexOf("?")
   return index < 0 ? url : url.substring(0, index)
+}
+
+interface OpenedFile {
+  readonly descriptor: number
+  readonly path: string
 }
