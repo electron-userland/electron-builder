@@ -35,20 +35,18 @@ export class ArchiveTarget extends Target {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }
     else {
-      let withoutDir = !isMac
       let dirToArchive = appOutDir
       if (isMac) {
         dirToArchive = path.dirname(appOutDir)
         const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions))
         if (fileMatchers != null) {
           await copyFiles(fileMatchers, null, true)
-          withoutDir = true
         }
       }
 
       const archiveOptions = {
         compression: packager.compression,
-        withoutDir,
+        withoutDir: true
       }
       await archive(format, artifactPath, dirToArchive, archiveOptions)
     }
