@@ -45,9 +45,9 @@ export function removePassword(input: string) {
   })
 }
 
-function getProcessEnv(env: { [key: string]: string | undefined } | undefined | null) {
+function getProcessEnv(env: { [key: string]: string | undefined } | undefined | null): NodeJS.ProcessEnv | undefined {
   if (process.platform === "win32") {
-    return env
+    return env == null ? undefined : env
   }
 
   const finalEnv = {
@@ -169,7 +169,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   if (options.stdio == null) {
     const isDebugEnabled = debug.enabled
     // do not ignore stdout/stderr if not debug, because in this case we will read into buffer and print on error
-    options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"]
+    options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"] as any
   }
 
   logSpawn(command, args, options)

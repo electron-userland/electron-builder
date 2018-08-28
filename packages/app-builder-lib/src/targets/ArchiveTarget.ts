@@ -40,7 +40,10 @@ export class ArchiveTarget extends Target {
       if (isMac) {
         dirToArchive = path.dirname(appOutDir)
         const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions))
-        if (fileMatchers != null) {
+        if (fileMatchers == null) {
+          dirToArchive = appOutDir
+        }
+        else {
           await copyFiles(fileMatchers, null, true)
           withoutDir = true
         }

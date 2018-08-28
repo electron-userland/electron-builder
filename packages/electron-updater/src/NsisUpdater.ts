@@ -103,7 +103,7 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`--package-file="${packagePath}"`)
     }
 
-    const spawnOptions = {
+    const spawnOptions: any = {
       detached: true,
       stdio: "ignore",
     }
