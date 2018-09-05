@@ -87,7 +87,7 @@
     "@types/source-map-support": "^0.4.1",
     "@types/stat-mode": "^0.2.0",
     "babel-preset-ts-node6-bluebird": "^2.0.11",
-    "convert-source-map": "^1.5.1",
+    "convert-source-map": "^1.6.0",
     "cross-env": "^5.2.0",
     "decompress-zip": "^0.3.1",
     "depcheck": "^0.6.11",
@@ -103,7 +103,7 @@
     "ts-babel": "6.0.2",
     "ts-jsdoc": "^3.0.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.1",
+    "typescript": "^3.0.3",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"
   },

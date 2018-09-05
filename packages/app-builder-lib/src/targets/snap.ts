@@ -50,19 +50,6 @@ export default class SnapTarget extends Target {
 
     const appDescriptor: any = {
       command: `command.sh`,
-      environment: {
-        TMPDIR: "$XDG_RUNTIME_DIR",
-        PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
-        LD_LIBRARY_PATH: [
-          "$SNAP_LIBRARY_PATH",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
-          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
-        ].join(":"),
-        ...options.environment,
-      },
       plugs: plugNames,
     }
     const snap: any = {
@@ -83,6 +70,22 @@ export default class SnapTarget extends Target {
           after: this.replaceDefault(options.after, [desktopPart]),
         }
       },
+    }
+
+    if (options.confinement !== "classic") {
+      appDescriptor.environment = {
+        TMPDIR: "$XDG_RUNTIME_DIR",
+        PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        LD_LIBRARY_PATH: [
+          "$SNAP_LIBRARY_PATH",
+          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
+          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
+          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
+          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
+          "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
+        ].join(":"),
+        ...options.environment,
+      }
     }
 
     if (!this.isUseTemplateApp) {

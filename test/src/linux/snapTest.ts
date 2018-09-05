@@ -59,6 +59,19 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
+test.ifAll.ifDevOrLinuxCi("classic confinement", app({
+  targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "cl-co-app",
+    },
+    productName: "Snap Electron App (classic confinement)",
+    snap: {
+      confinement: "classic",
+    },
+  },
+}))
+
 test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
   await assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget("snap"),

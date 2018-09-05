@@ -88,6 +88,17 @@ Object {
 }
 `;
 
+exports[`classic confinement 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "cl-co-app_1.1.0_amd64.snap",
+    },
+  ],
+}
+`;
+
 exports[`custom after, no desktop 1`] = `
 Object {
   "apps": Object {
