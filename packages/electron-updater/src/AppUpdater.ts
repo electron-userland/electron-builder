@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdaterSignal } from "./main"
+import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -526,7 +526,6 @@ export abstract class AppUpdater extends EventEmitter {
         await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
       }
 
-      this.emit(UPDATE_DOWNLOADED, updateInfo)
       await taskOptions.done!!(updateFile)
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }

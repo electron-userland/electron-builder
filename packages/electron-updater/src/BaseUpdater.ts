@@ -1,5 +1,6 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
+import { UPDATE_DOWNLOADED } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -28,6 +29,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return super.executeDownload({
       ...taskOptions,
       done: async () => {
+        this.emit(UPDATE_DOWNLOADED, taskOptions.downloadUpdateOptions.updateInfo)
         this.addQuitHandler()
       }
     })

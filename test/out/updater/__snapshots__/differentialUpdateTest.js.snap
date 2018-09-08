@@ -201,7 +201,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "Test App ßW-1.0.0-mac.zip",
           },
           Object {
@@ -220,6 +222,11 @@ Object {
       "arch": "x64",
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }

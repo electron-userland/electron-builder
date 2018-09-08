@@ -1,14 +1,16 @@
-import { AllPublishOptions, CancellationToken, configureRequestOptionsFromUrl, DigestTransform, newError, RequestHeaders, safeStringifyJson } from "builder-util-runtime"
-import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
+import { AllPublishOptions, newError, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
+import { createReadStream, stat } from "fs-extra-p"
+import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { DOWNLOAD_PROGRESS } from "./main"
+import { UPDATE_DOWNLOADED } from "./main"
 import { findFile } from "./providers/Provider"
-import { createReadStream, stat } from "fs-extra-p"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
+
+  private updateInfoForPendingUpdateDownloadedEvent: UpdateInfo | null = null
 
   constructor(options?: AllPublishOptions) {
     super(options)
@@ -17,9 +19,16 @@ export class MacUpdater extends AppUpdater {
       this._logger.warn(it)
       this.emit("error", it)
     })
+    this.nativeUpdater.on("update-downloaded", () => {
+      const updateInfo = this.updateInfoForPendingUpdateDownloadedEvent
+      this.updateInfoForPendingUpdateDownloadedEvent = null
+      this.emit(UPDATE_DOWNLOADED, updateInfo)
+    })
   }
 
   protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+    this.updateInfoForPendingUpdateDownloadedEvent = null
+
     const files = (await this.provider).resolveFiles(downloadUpdateOptions.updateInfo)
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
@@ -44,6 +53,7 @@ export class MacUpdater extends AppUpdater {
         return this.httpExecutor.download(zipFileInfo.url.href, destinationFile, downloadOptions)
       },
       done: async updateFile => {
+        this.updateInfoForPendingUpdateDownloadedEvent = downloadUpdateOptions.updateInfo
         let updateFileSize = zipFileInfo.info.size
         if (updateFileSize == null) {
           updateFileSize = (await stat(updateFile)).size
@@ -107,42 +117,6 @@ export class MacUpdater extends AppUpdater {
         })
       }
     })
-  }
-
-  private doProxyUpdateFile(nativeResponse: ServerResponse, url: string, headers: OutgoingHttpHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptionsFromUrl(url, {headers}), downloadResponse => {
-      const nativeHeaders: RequestHeaders = {"Content-Type": "application/zip"}
-      const streams: Array<any> = []
-      const downloadListenerCount = this.listenerCount(DOWNLOAD_PROGRESS)
-      this._logger.info(`${DOWNLOAD_PROGRESS} listener count: ${downloadListenerCount}`)
-      nativeResponse.writeHead(200, nativeHeaders)
-
-      // for mac only sha512 is produced (sha256 is published for windows only to preserve backward compatibility)
-      if (sha512 != null) {
-        // "hex" to easy migrate to new base64 encoded hash (we already produces latest-mac.yml with hex encoded hash)
-        streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))
-      }
-
-      streams.push(nativeResponse)
-
-      let lastStream = downloadResponse
-      for (const stream of streams) {
-        stream.on("error", errorHandler)
-        lastStream = lastStream.pipe(stream)
-      }
-    })
-
-    downloadRequest.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-      if (headers.authorization != null && (headers!!.authorization as string).startsWith("token")) {
-        const parsedNewUrl = new URL(redirectUrl)
-        if (parsedNewUrl.hostname.endsWith(".amazonaws.com")) {
-          delete headers.authorization
-        }
-      }
-      this.doProxyUpdateFile(nativeResponse, redirectUrl, headers, sha512, cancellationToken, errorHandler)
-    })
-    downloadRequest.on("error", errorHandler)
-    downloadRequest.end()
   }
 
   quitAndInstall(): void {

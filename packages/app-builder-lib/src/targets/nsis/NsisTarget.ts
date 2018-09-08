@@ -96,7 +96,6 @@ export class NsisTarget extends Target {
       const data = await appendBlockmap(archiveFile)
       return {
         ...data,
-        size: data.size!!,
         path: archiveFile,
       }
     }
