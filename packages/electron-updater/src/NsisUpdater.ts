@@ -87,7 +87,7 @@ export class NsisUpdater extends BaseUpdater {
     return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
+  protected async doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): Promise<boolean> {
     const args = ["--updated"]
     if (isSilent) {
       args.push("/S")
@@ -109,8 +109,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     try {
-      spawn(installerPath, args, spawnOptions)
-        .unref()
+      await this._spawn(installerPath, args, spawnOptions)
     }
     catch (e) {
       // yes, such errors dispatched not as error event
@@ -118,8 +117,7 @@ export class NsisUpdater extends BaseUpdater {
       if ((e as any).code === "UNKNOWN" || (e as any).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         try {
-          spawn(path.join(process.resourcesPath!, "elevate.exe"), [installerPath].concat(args), spawnOptions)
-            .unref()
+          await this._spawn(path.join(process.resourcesPath!, "elevate.exe"), [installerPath].concat(args), spawnOptions)
         }
         catch (e) {
           this.dispatchError(e)
@@ -133,6 +131,26 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
+  private async _spawn(exe: string, args: string[], options: any) {
+    return new Promise((resolve, reject) => {
+
+      try {
+        const process = spawn(exe, args, options)
+        process.on("error", (error) => {
+          reject(error);
+        });
+        process.unref();
+
+        if (process.pid !== undefined) {
+          resolve(true);
+        }
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+  }
+
   // private downloadBlockMap(provider: Provider<any>) {
   //   await provider.getBytes(newBlockMapUrl, cancellationToken)
   // }
@@ -144,7 +162,7 @@ export class NsisUpdater extends BaseUpdater {
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const requestOptions = configureRequestOptionsFromUrl(url, {headers: downloadUpdateOptions.requestHeaders});
+        const requestOptions = configureRequestOptionsFromUrl(url, { headers: downloadUpdateOptions.requestHeaders });
         (requestOptions as any).gzip = true
         const data = await this.httpExecutor.request(requestOptions, downloadUpdateOptions.cancellationToken)
         if (data == null) {

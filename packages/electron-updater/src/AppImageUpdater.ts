@@ -74,7 +74,7 @@ export class AppImageUpdater extends BaseUpdater {
     })
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean {
+  protected async doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): Promise<boolean> {
     const appImageFile = process.env.APPIMAGE!!
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")

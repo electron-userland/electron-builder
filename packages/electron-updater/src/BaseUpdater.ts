@@ -33,7 +33,7 @@ export abstract class BaseUpdater extends AppUpdater {
     })
   }
 
-  protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
+  protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): Promise<boolean>
 
   protected async install(isSilent: boolean, isRunAfter: boolean): Promise<boolean> {
     if (this.quitAndInstallCalled) {
@@ -54,7 +54,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
     try {
       this._logger.info(`Install: isSilent: ${isSilent}, isRunAfter: ${isRunAfter}`)
-      return this.doInstall(installerPath, isSilent, isRunAfter)
+      return await this.doInstall(installerPath, isSilent, isRunAfter)
     }
     catch (e) {
       this.dispatchError(e)
