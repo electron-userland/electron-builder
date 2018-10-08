@@ -136,23 +136,23 @@ export class NsisUpdater extends BaseUpdater {
    *   - node 8: Throws the error
    *   - node 10: Emit the error(Need to listen with on)
    */
-  private async _spawn(exe: string, args: string[], options: any) {
+  private async _spawn(exe: string, args: Array<string>, options: any) {
     return new Promise((resolve, reject) => {
 
       try {
         const process = spawn(exe, args, options)
-        process.on("error", (error) => {
-          reject(error);
-        });
-        process.unref();
+        process.on("error", error => {
+          reject(error)
+        })
+        process.unref()
 
         if (process.pid !== undefined) {
-          resolve(true);
+          resolve(true)
         }
       } catch (error) {
-        reject(error);
+        reject(error)
       }
-    });
+    })
 
   }
 
