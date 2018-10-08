@@ -131,6 +131,11 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
+  /**
+   * This handles both node 8 and node 10 way of emitting error when spawing a process
+   *   - node 8: Throws the error
+   *   - node 10: Emit the error(Need to listen with on)
+   */
   private async _spawn(exe: string, args: string[], options: any) {
     return new Promise((resolve, reject) => {
 
@@ -162,7 +167,7 @@ export class NsisUpdater extends BaseUpdater {
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const requestOptions = configureRequestOptionsFromUrl(url, { headers: downloadUpdateOptions.requestHeaders });
+        const requestOptions = configureRequestOptionsFromUrl(url, {headers: downloadUpdateOptions.requestHeaders});
         (requestOptions as any).gzip = true
         const data = await this.httpExecutor.request(requestOptions, downloadUpdateOptions.cancellationToken)
         if (data == null) {
