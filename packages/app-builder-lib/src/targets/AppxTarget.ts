@@ -243,21 +243,41 @@ export default class AppXTarget extends Target {
   }
 
   private getExtensions(executable: string, displayName: string): string {
-    let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
-    if (isAddAutoLaunchExtension === undefined) {
+    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols));
+    let hasAddAutoLaunchExtension = this.options.addAutoLaunchExtension
+    let extensions = ""
+
+    if (hasAddAutoLaunchExtension === undefined) {
       const deps = this.packager.info.metadata.dependencies
-      isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
+      hasAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
-    if (!isAddAutoLaunchExtension) {
-      return ""
+    if (hasAddAutoLaunchExtension && !!uriSchemes) {
+      return extensions
+    }
+    extensions = "<Extensions>"
+
+    if (hasAddAutoLaunchExtension) {
+      extensions += `<desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
+                     <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
+                     </desktop:Extension>`
     }
 
-    return `<Extensions>
-    <desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
-      <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
-    </desktop:Extension>
-  </Extensions>`
+    if (uriSchemes) {
+      for (const protocol of uriSchemes) {
+        for (const scheme of asArray(protocol.schemes)) {
+          extensions += `<uap:Extension Category="windows.protocol">
+                         <uap:Protocol Name="${scheme}">
+                           <uap:DisplayName>${protocol.name}</uap:DisplayName>
+                         </uap:Protocol>
+                       </uap:Extension>`
+        }
+      }
+    }
+
+    extensions += "</Extensions>"
+
+    return extensions
   }
 }
 
