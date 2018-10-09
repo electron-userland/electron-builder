@@ -243,7 +243,7 @@ export default class AppXTarget extends Target {
   }
 
   private getExtensions(executable: string, displayName: string): string {
-    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols));
+    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
     let hasAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     let extensions = ""
 
