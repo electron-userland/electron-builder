@@ -14,12 +14,27 @@ function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
-function moveHelpers(frameworksPath: string, appName: string, prefix: string): Promise<any> {
-  return BluebirdPromise.map([" Helper", " Helper EH", " Helper NP"], suffix => {
+function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appName: string, prefix: string): Promise<any> {
+  return BluebirdPromise.map(helperSuffixes, suffix => {
     const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
     return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)
       .then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
   })
+}
+
+function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperLoginPlist: string | null) {
+  const availableHelperSuffixes = [" Helper"]
+
+  if (helperEHPlist != null) {
+    availableHelperSuffixes.push(" Helper EH")
+  }
+  if (helperNPPlist != null) {
+    availableHelperSuffixes.push(" Helper NP")
+  }
+  if (helperLoginPlist != null) {
+    availableHelperSuffixes.push(" Login Helper")
+  }
+  return availableHelperSuffixes
 }
 
 /** @internal */
@@ -48,8 +63,8 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   ], it => it == null ? it : orIfFileNotExist(readFile(it, "utf8"), null))
   const appPlist = parsePlist(fileContents[0]!!)
   const helperPlist = parsePlist(fileContents[1]!!)
-  const helperEHPlist = parsePlist(fileContents[2]!!)
-  const helperNPPlist = parsePlist(fileContents[3]!!)
+  const helperEHPlist = fileContents[2] == null ? null : parsePlist(fileContents[2]!!)
+  const helperNPPlist = fileContents[3] == null ? null : parsePlist(fileContents[3]!!)
   const helperLoginPlist = fileContents[4] == null ? null : parsePlist(fileContents[4]!!)
 
   // if an extend-info file was supplied, copy its contents in first
@@ -66,31 +81,27 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   await packager.applyCommonInfo(appPlist, contentsPath)
 
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
-  helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
-  helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
+  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
+  helperPlist.CFBundleIdentifier = helperBundleIdentifier
+  helperPlist.CFBundleVersion = appPlist.CFBundleVersion
+
+  if (helperEHPlist != null) {
+    helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
+    helperEHPlist.CFBundleDisplayName = `${appInfo.productName} Helper EH`
+    helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
+    helperEHPlist.CFBundleVersion = appPlist.CFBundleVersion
+  }
+  if (helperNPPlist != null) {
+    helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
+    helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
+    helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
+    helperNPPlist.CFBundleVersion = appPlist.CFBundleVersion
+  }
   if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`
-  }
-
-  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
-  helperEHPlist.CFBundleDisplayName = `${appInfo.productName} Helper EH`
-  helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
-  if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleDisplayName = `${appInfo.productName} Login Helper`
-  }
-
-  helperPlist.CFBundleIdentifier = helperBundleIdentifier
-  helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
-  helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
-  if (helperLoginPlist != null) {
     // noinspection SpellCheckingInspection
     helperLoginPlist.CFBundleIdentifier = `${appInfo.macBundleIdentifier}.loginhelper`
-  }
-
-  helperPlist.CFBundleVersion = appPlist.CFBundleVersion
-  helperEHPlist.CFBundleVersion = appPlist.CFBundleVersion
-  helperNPPlist.CFBundleVersion = appPlist.CFBundleVersion
-  if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleVersion = appPlist.CFBundleVersion
   }
 
@@ -143,23 +154,18 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   await Promise.all([
     writeFile(appPlistFilename, buildPlist(appPlist)),
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
-    writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
-    writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
+    helperEHPlist == null ? Promise.resolve() : writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
+    helperNPPlist == null ? Promise.resolve() : writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
     helperLoginPlist == null ? Promise.resolve() : writeFile(helperLoginPlistFilename, buildPlist(helperLoginPlist)),
     doRename(path.join(contentsPath, "MacOS"), packager.electronDistMacOsExecutableName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
+  const availableHelperSuffixes = getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperLoginPlist)
 
-  if (helperLoginPlist != null) {
-    const prefix = packager.electronDistMacOsExecutableName
-    const suffix = " Login Helper"
-    const executableBasePath = path.join(loginItemPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
-    await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix)
-      .then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
-  }
+  await moveHelpers(availableHelperSuffixes, frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
+
   const appPath = path.join(appOutDir, `${appFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840
