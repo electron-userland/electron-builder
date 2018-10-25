@@ -402,10 +402,10 @@ Object {
               "size": 765,
             },
             "chownr.js": Object {
-              "size": 1395,
+              "size": 2488,
             },
             "package.json": Object {
-              "size": 401,
+              "size": 402,
             },
           },
         },
@@ -1079,10 +1079,10 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 4476,
+              "size": 4564,
             },
             "package.json": Object {
-              "size": 514,
+              "size": 524,
             },
           },
         },
@@ -1390,7 +1390,7 @@ Object {
               "files": Object {
                 "semver": Object {
                   "executable": true,
-                  "size": 4427,
+                  "size": 4784,
                 },
               },
             },
@@ -1401,7 +1401,7 @@ Object {
               "size": 619,
             },
             "semver.js": Object {
-              "size": 36504,
+              "size": 37959,
             },
           },
         },

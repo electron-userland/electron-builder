@@ -88,19 +88,19 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   protected async doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): Promise<boolean> {
-    const args = ["--updated"]
+    const args = ["/updated"]
     if (isSilent) {
       args.push("/S")
     }
 
     if (isForceRunAfter) {
-      args.push("--force-run")
+      args.push("/force-run")
     }
 
     const packagePath = this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
-      args.push(`--package-file="${packagePath}"`)
+      args.push(`"/package-file=${packagePath}"`)
     }
 
     const spawnOptions: any = {
@@ -132,7 +132,7 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /**
-   * This handles both node 8 and node 10 way of emitting error when spawing a process
+   * This handles both node 8 and node 10 way of emitting error when spawning a process
    *   - node 8: Throws the error
    *   - node 10: Emit the error(Need to listen with on)
    */
