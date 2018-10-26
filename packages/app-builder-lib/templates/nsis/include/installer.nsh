@@ -84,6 +84,7 @@
       ${if} $installMode == "all"
         SetShellVarContext current
       ${endif}
+      CreateDirectory "$APPDATA\${PRODUCT_FILENAME}"
       CopyFiles /SILENT "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
       ${if} $installMode == "all"
         SetShellVarContext all
