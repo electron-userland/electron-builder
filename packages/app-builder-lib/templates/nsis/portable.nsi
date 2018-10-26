@@ -37,7 +37,8 @@ Section
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_FILE", "$EXEPATH").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_APP_FILENAME", "${APP_FILENAME}").r0'
   ${StdUtils.GetAllParameters} $R0 0
-	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0"
+	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0" $0
+  SetErrorlevel $0
 
   SetOutPath $PLUGINSDIR
 	RMDir /r $INSTDIR
