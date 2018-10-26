@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
+import { orIfFileNotExist } from "builder-util/out/promise"
 import { readFile, rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
-import { orIfFileNotExist } from "builder-util/out/promise"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import MacPackager from "../macPackager"
@@ -14,12 +14,23 @@ function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
-function moveHelpers(frameworksPath: string, appName: string, prefix: string): Promise<any> {
-  return BluebirdPromise.map([" Helper", " Helper EH", " Helper NP"], suffix => {
+function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appName: string, prefix: string): Promise<any> {
+  return BluebirdPromise.map(helperSuffixes, suffix => {
     const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
     return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)
       .then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
   })
+}
+
+function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null) {
+  const result = [" Helper"]
+  if (helperEHPlist != null) {
+    result.push(" Helper EH")
+  }
+  if (helperNPPlist != null) {
+    result.push(" Helper NP")
+  }
+  return result
 }
 
 /** @internal */
@@ -48,8 +59,8 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   ], it => it == null ? it : orIfFileNotExist(readFile(it, "utf8"), null))
   const appPlist = parsePlist(fileContents[0]!!)
   const helperPlist = parsePlist(fileContents[1]!!)
-  const helperEHPlist = parsePlist(fileContents[2]!!)
-  const helperNPPlist = parsePlist(fileContents[3]!!)
+  const helperEHPlist = fileContents[2] == null ? null : parsePlist(fileContents[2]!!)
+  const helperNPPlist = fileContents[3] == null ? null : parsePlist(fileContents[3]!!)
   const helperLoginPlist = fileContents[4] == null ? null : parsePlist(fileContents[4]!!)
 
   // if an extend-info file was supplied, copy its contents in first
@@ -66,31 +77,28 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   await packager.applyCommonInfo(appPlist, contentsPath)
 
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
-  helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
-  helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
+  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
+  helperPlist.CFBundleIdentifier = helperBundleIdentifier
+  helperPlist.CFBundleVersion = appPlist.CFBundleVersion
+
+  function configureHelper(helper: any, postfix: string) {
+    helper.CFBundleExecutable = `${appFilename} Helper ${postfix}`
+    helper.CFBundleDisplayName = `${appInfo.productName} Helper ${postfix}`
+    helper.CFBundleIdentifier = `${helperBundleIdentifier}.${postfix}`
+    helper.CFBundleVersion = appPlist.CFBundleVersion
+  }
+
+  if (helperEHPlist != null) {
+    configureHelper(helperEHPlist, "EH")
+  }
+  if (helperNPPlist != null) {
+    configureHelper(helperNPPlist, "NP")
+  }
   if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`
-  }
-
-  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
-  helperEHPlist.CFBundleDisplayName = `${appInfo.productName} Helper EH`
-  helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
-  if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleDisplayName = `${appInfo.productName} Login Helper`
-  }
-
-  helperPlist.CFBundleIdentifier = helperBundleIdentifier
-  helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
-  helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
-  if (helperLoginPlist != null) {
     // noinspection SpellCheckingInspection
     helperLoginPlist.CFBundleIdentifier = `${appInfo.macBundleIdentifier}.loginhelper`
-  }
-
-  helperPlist.CFBundleVersion = appPlist.CFBundleVersion
-  helperEHPlist.CFBundleVersion = appPlist.CFBundleVersion
-  helperNPPlist.CFBundleVersion = appPlist.CFBundleVersion
-  if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleVersion = appPlist.CFBundleVersion
   }
 
@@ -109,8 +117,6 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     })
   }
 
-  const resourcesPath = path.join(contentsPath, "Resources")
-
   const fileAssociations = packager.fileAssociations
   if (fileAssociations.length > 0) {
     appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
@@ -119,7 +125,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
       let iconFile = appPlist.CFBundleIconFile
       if (customIcon != null) {
         iconFile = path.basename(customIcon)
-        await copyOrLinkFile(customIcon, path.join(resourcesPath, iconFile))
+        await copyOrLinkFile(customIcon, path.join(path.join(contentsPath, "Resources"), iconFile))
       }
 
       const result = {
@@ -143,15 +149,15 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   await Promise.all([
     writeFile(appPlistFilename, buildPlist(appPlist)),
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
-    writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
-    writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
+    helperEHPlist == null ? Promise.resolve() : writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
+    helperNPPlist == null ? Promise.resolve() : writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
     helperLoginPlist == null ? Promise.resolve() : writeFile(helperLoginPlistFilename, buildPlist(helperLoginPlist)),
     doRename(path.join(contentsPath, "MacOS"), packager.electronDistMacOsExecutableName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
+  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist), frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
 
   if (helperLoginPlist != null) {
     const prefix = packager.electronDistMacOsExecutableName
@@ -160,6 +166,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix)
       .then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
   }
+
   const appPath = path.join(appOutDir, `${appFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840

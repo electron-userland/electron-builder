@@ -4,6 +4,5 @@ exports[`mac updates 1`] = `
 Array [
   "checking-for-update",
   "update-available",
-  "update-downloaded",
 ]
 `;

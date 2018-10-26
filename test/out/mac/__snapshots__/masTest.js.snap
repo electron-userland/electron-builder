@@ -50,8 +50,6 @@ Object {
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
-  "DTSDKBuild": "14D125",
-  "DTSDKName": "macosx10.1010.10",
   "ElectronTeamID": "X8C9Z9L4HW",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
