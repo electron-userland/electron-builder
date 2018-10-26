@@ -88,19 +88,19 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   protected async doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): Promise<boolean> {
-    const args = ["/updated"]
+    const args = ["--updated"]
     if (isSilent) {
       args.push("/S")
     }
 
     if (isForceRunAfter) {
-      args.push("/force-run")
+      args.push("--force-run")
     }
 
     const packagePath = this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
-      args.push(`"/package-file=${packagePath}"`)
+      args.push(`--package-file=${packagePath}`)
     }
 
     const spawnOptions: any = {
