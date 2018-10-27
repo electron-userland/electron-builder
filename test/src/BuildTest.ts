@@ -241,6 +241,9 @@ async function verifySmartUnpack(resourceDir: string) {
 test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   targets: linuxDirTarget,
   config: {
+    // https://github.com/electron-userland/electron-builder/issues/3273
+    // tslint:disable-next-line:no-invalid-template-strings
+    copyright: "Copyright © 2018 ${author}",
     npmRebuild: true,
   }
 }, {
@@ -253,7 +256,10 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
       keytar: "4.2.1",
     }
   }),
-  packed: context => verifySmartUnpack(context.getResources(Platform.LINUX))}))
+  packed: context => {
+    expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
+    return verifySmartUnpack(context.getResources(Platform.LINUX))
+  }}))
 
 test("wine version", async () => {
   await checkWineVersion(Promise.resolve("1.9.23 (Staging)"))
