@@ -8,13 +8,13 @@ Files
 * *Optional* `background.png` (macOS DMG background).
 * *Optional* `background@2x.png` (macOS DMG Retina background).
 
-need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. All files are optional — but it is important to provide `icon.icns` (or `icon.png`), otherwise default Electron icon will be used.
+need to be placed in the [build](configuration/configuration.md#MetadataDirectories-buildResources) directory. All files are optional — but it is important to provide `icon.icns` (or `icon.png`), otherwise default Electron icon will be used.
 
 ## Windows (NSIS)
 
 * *Optional* `icon.ico` (Windows app icon) or `icon.png`. Icon size should be at least 256x256.
 
-need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. It is important to provide `icon.ico` (or `icon.png`), otherwise default Electron icon will be used.
+need to be placed in the [build](configuration/configuration.md#MetadataDirectories-buildResources) directory. It is important to provide `icon.ico` (or `icon.png`), otherwise default Electron icon will be used.
 
 ## Linux
 
@@ -25,4 +25,4 @@ The filename must contain the size (e.g. `32x32.png`) of the icon). Recommended 
 
 ## AppX
 
-See [AppX Assets](/configuration/appx#appx-assets).
+See [AppX Assets](configuration/appx.md#appx-assets).

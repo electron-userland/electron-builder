@@ -14,19 +14,19 @@ All options are optional. All required for AppX configuration is inferred and co
 
 Inherited from `TargetSpecificOptions`:
 
-* <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->
 
 ## AppX Package Code Signing
 
-* If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](/code-signing.md).
+* If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](../code-signing.md).
 * If the AppX package is meant for Windows Store distribution, no need to sign the package with any certificate. The Windows Store will take care of signing it with a Microsoft certificate during the submission process.
 
 ## AppX Assets
 
-AppX assets need to be placed in the `appx` folder in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
+AppX assets need to be placed in the `appx` folder in the [build](configuration.md#MetadataDirectories-buildResources) directory.
 
 The assets should follow these naming conventions:
 

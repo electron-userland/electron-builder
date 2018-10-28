@@ -1,16 +1,16 @@
 * <code id="PlatformSpecificBuildOptions-appId">appId</code> = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
-* <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
+* <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
 * <code id="PlatformSpecificBuildOptions-compression">compression</code> = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
-* <code id="PlatformSpecificBuildOptions-files">files</code> The [files](/configuration/contents.md#files) configuration.
-* <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> The [extra resources](/configuration/contents.md#extraresources) configuration.
-* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> The [extra files](/configuration/contents.md#extrafiles) configuration.
+* <code id="PlatformSpecificBuildOptions-files">files</code> The [files](/configuration/contents#files) configuration.
+* <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> The [extra resources](/configuration/contents#extraresources) configuration.
+* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> The [extra files](/configuration/contents#extrafiles) configuration.
 * <code id="PlatformSpecificBuildOptions-asar">asar</code> = `true` AsarOptions | Boolean<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
     
     Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
 
     * <code id="AsarOptions-smartUnpack">smartUnpack</code> = `true` Boolean - Whether to automatically unpack executables files.
     * <code id="AsarOptions-ordering">ordering</code> String
-* <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+* <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
 
 ---
 
@@ -33,8 +33,8 @@
 ---
 
 * <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean - Whether to fail if app will be not code signed.
-* <code id="PlatformSpecificBuildOptions-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The [electron-updater compatibility](/auto-update.md#compatibility) semver range.
-* <code id="PlatformSpecificBuildOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="PlatformSpecificBuildOptions-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String - The [electron-updater compatibility](/auto-update#compatibility) semver range.
+* <code id="PlatformSpecificBuildOptions-publish">publish</code> The [publish](/configuration/publish) options.
 * <code id="PlatformSpecificBuildOptions-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
 * <code id="PlatformSpecificBuildOptions-generateUpdatesFilesForAllChannels">generateUpdatesFilesForAllChannels</code> = `false` Boolean - Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
 * <code id="PlatformSpecificBuildOptions-releaseInfo">releaseInfo</code><a name="ReleaseInfo"></a> - The release info. Intended for command line usage:

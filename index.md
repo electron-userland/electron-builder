@@ -12,21 +12,21 @@ A complete solution to package and build a ready for distribution Electron app f
     * [macOS](configuration/mac.md#MacConfiguration-target): `dmg`, `pkg`, `mas`, `mas-dev`.
     * [Linux](configuration/linux.md#LinuxConfiguration-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
     * [Windows](configuration/win.md#WindowsConfiguration-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
-* [Publishing artifacts](/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+* [Publishing artifacts](configuration/publish.md) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Advanced building:
     * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
     * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
-* [Docker](/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
+* [Docker](multi-platform-build.md#docker) images to build Electron app for Linux or Windows on any platform.
 * [Proton Native](https://proton-native.js.org/) and [Muon](https://github.com/brave/muon) support.
 
 | Question | Answer |
 |--------|-------|
-| “I want to configure electron-builder” | [See options](/configuration/configuration.md) |
+| “I want to configure electron-builder” | [See options](configuration/configuration.md) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://slackin.electron.build) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to support development” | [Donate](/donate.md) |
+| “I want to support development” | [Donate](donate.md) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
@@ -47,9 +47,9 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application.
 
-1. Specify the standard fields in the application `package.json` — [name](/configuration/configuration.md#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
+1. Specify the standard fields in the application `package.json` — [name](configuration/configuration.md#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](/configuration/configuration.md#configuration) configuration in the `package.json` as follows:
+2. Specify the [build](configuration/configuration.md#configuration) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
@@ -58,9 +58,9 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
       }
     }
     ```
-   See [all options](/configuration/configuration.md#configuration).
+   See [all options](configuration/configuration.md#configuration).
 
-3. Add [icons](/icons.md).
+3. Add [icons](icons.md).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
@@ -77,7 +77,7 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
    
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 
-For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](/code-signing.md#where-to-buy-code-signing-certificate).
+For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](code-signing.md#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
 See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.

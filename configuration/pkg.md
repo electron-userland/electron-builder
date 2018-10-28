@@ -15,7 +15,7 @@ The top-level [pkg](configuration.md#Configuration-pkg) key contains set of opti
     
     Corresponds to [enable_localSystem](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
 
-* <code id="PkgOptions-identity">identity</code> String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
+* <code id="PkgOptions-identity">identity</code> String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.
 * <code id="PkgOptions-license">license</code> String - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
 * <code id="PkgOptions-isRelocatable">isRelocatable</code> = `true` Boolean - Install bundle over previous version if moved by user?
 * <code id="PkgOptions-isVersionChecked">isVersionChecked</code> = `true` Boolean - Don't install bundle if newer version on disk?
@@ -31,7 +31,7 @@ The top-level [pkg](configuration.md#Configuration-pkg) key contains set of opti
 
 Inherited from `TargetSpecificOptions`:
 
-* <code id="PkgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="PkgOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="PkgOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="PkgOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->

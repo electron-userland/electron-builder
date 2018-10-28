@@ -1,4 +1,4 @@
-The top-level [nsis](/configuration/configuration.md#Configuration-nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
+The top-level [nsis](configuration.md#Configuration-nsis) key contains set of options instructing electron-builder on how it should build NSIS target (default target for Windows).
 
 These options also applicable for [Web installer](#web-installer), use top-level `nsisWeb` key.
 
@@ -17,11 +17,11 @@ Unicode enabled by default. Large strings are supported (maximum string length o
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you in any case get one installer. Appropriate arch will be installed automatically.
-The same applied to web installer (`nsis-web` [target](/configuration/win.md#WindowsConfiguration-target)).
+The same applied to web installer (`nsis-web` [target](win.md#WindowsConfiguration-target)).
 
 ## Web Installer
 
-To build web installer, set [target](/configuration/win.md#WindowsConfiguration-target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
+To build web installer, set [target](win.md#WindowsConfiguration-target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
 
 To customize web installer, use the top-level `nsisWeb` key (not `nsis`).
 

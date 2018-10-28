@@ -1,6 +1,6 @@
-The [publish](/configuration/configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](/auto-update.md).
+The [publish](configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](../auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions), [S3Options](#s3options) or [SpacesOptions](#spacesoptions). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](/configuration/configuration#configuration) or any platform- ([mac](/configuration/mac.md), [linux](/configuration/linux.md), [win](/configuration/win.md)) or target- (e.g. [nsis](/configuration/nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions), [S3Options](#s3options) or [SpacesOptions](#spacesoptions). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
 If `GH_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
@@ -17,11 +17,11 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 ```
 
 !!! tip "Macros"
-    In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
+    In all publish options [File Macros](../file-patterns.md#file-macros) are supported.
 
 ## How to Publish
 
-Excerpt from [CLI Usage](/cli.md) of `electron-builder` command:
+Excerpt from [CLI Usage](../cli.md) of `electron-builder` command:
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
@@ -105,7 +105,7 @@ Inherited from `PublishConfiguration`:
 
 ## GenericServerOptions
 Generic (any HTTP(S) server) options.
-In all publish options [File Macros](/file-patterns.md#file-macros) are supported.
+In all publish options [File Macros](/file-patterns#file-macros) are supported.
 
 * **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
 * **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
@@ -131,8 +131,8 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = `true` Boolean - Whether to use `v`-prefixed tag name.
 * <code id="GithubOptions-host">host</code> = `github.com` String - The host (including the port if need).
 * <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
-* <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update.md#appupdatersetfeedurloptions).
-* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
+* <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
+* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
     
     Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.

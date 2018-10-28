@@ -1,4 +1,4 @@
-Developer API only. See [Configuration](/configuration/configuration.md) for user documentation.
+Developer API only. See [Configuration](../configuration/configuration.md) for user documentation.
   
 <!-- do not edit. start of generated block -->
 <a name="module_electron-builder"></a>

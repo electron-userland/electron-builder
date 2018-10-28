@@ -18,7 +18,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 ## Artifact File Name Template
 
-`${ext}` macro is supported in addition to [file macros](/file-patterns.md#file-macros).
+`${ext}` macro is supported in addition to [file macros](../file-patterns.md#file-macros).
 
 ## Environment Variables from File
 
@@ -43,45 +43,45 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
         
         Please note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
 
-    * <code id="MetadataDirectories-output">output</code> = `dist` String - The output directory. [File macros](/file-patterns.md#file-macros) are supported.
+    * <code id="MetadataDirectories-output">output</code> = `dist` String - The output directory. [File macros](/file-patterns#file-macros) are supported.
     * <code id="MetadataDirectories-app">app</code> String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 ---
 
-* <code id="Configuration-mac">mac</code> [MacConfiguration](mac.md) - Options related to how build macOS targets.
-* <code id="Configuration-mas">mas</code> [MasConfiguration](mas.md) - MAS (Mac Application Store) options.
-* <code id="Configuration-dmg">dmg</code> [DmgOptions](dmg.md) - macOS DMG options.
-* <code id="Configuration-pkg">pkg</code> [PkgOptions](pkg.md) - macOS PKG options.
+* <code id="Configuration-mac">mac</code> [MacConfiguration](mac) - Options related to how build macOS targets.
+* <code id="Configuration-mas">mas</code> [MasConfiguration](mas) - MAS (Mac Application Store) options.
+* <code id="Configuration-dmg">dmg</code> [DmgOptions](dmg) - macOS DMG options.
+* <code id="Configuration-pkg">pkg</code> [PkgOptions](pkg) - macOS PKG options.
 
 ---
 
-* <code id="Configuration-win">win</code> [WindowsConfiguration](win.md) - Options related to how build Windows targets.
-* <code id="Configuration-nsis">nsis</code> [NsisOptions](nsis.md)
+* <code id="Configuration-win">win</code> [WindowsConfiguration](win) - Options related to how build Windows targets.
+* <code id="Configuration-nsis">nsis</code> [NsisOptions](nsis)
 * <code id="Configuration-nsisWeb">nsisWeb</code><a name="NsisWebOptions"></a> - Web Installer options.
-    Inherits [NsisOptions](nsis.md) options.
+    Inherits [NsisOptions](nsis) options.
     * <code id="NsisWebOptions-appPackageUrl">appPackageUrl</code> String - The application package download URL. Optional — by default computed using publish configuration.
         
         URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package). Please note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).
         
         Custom `X-Arch` http header is set to `32` or `64`.
 
-    * <code id="NsisWebOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
+    * <code id="NsisWebOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
 * <code id="Configuration-portable">portable</code><a name="PortableOptions"></a> - Portable options.
     * <code id="PortableOptions-requestExecutionLevel">requestExecutionLevel</code> = `user` "user" | "highest" | "admin" - The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.
-* <code id="Configuration-appx">appx</code> [AppXOptions](appx.md)
+* <code id="Configuration-appx">appx</code> [AppXOptions](appx)
 * <code id="Configuration-squirrelWindows">squirrelWindows</code> [SquirrelWindowsOptions](squirrel-windows.md)
 
 ---
 
-* <code id="Configuration-linux">linux</code> [LinuxConfiguration](linux.md) - Options related to how build Linux targets.
-* <code id="Configuration-deb">deb</code> [DebOptions](/configuration/linux.md#de) - Debian package options.
-* <code id="Configuration-snap">snap</code> [SnapOptions](snap.md) - Snap options.
-* <code id="Configuration-appImage">appImage</code> [AppImageOptions](/configuration/linux.md#appimageoptions) - AppImage options.
-* <code id="Configuration-pacman">pacman</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
-* <code id="Configuration-rpm">rpm</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
-* <code id="Configuration-freebsd">freebsd</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
-* <code id="Configuration-p5p">p5p</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
-* <code id="Configuration-apk">apk</code> [LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)
+* <code id="Configuration-linux">linux</code> [LinuxConfiguration](linux) - Options related to how build Linux targets.
+* <code id="Configuration-deb">deb</code> [DebOptions](/configuration/linux#de) - Debian package options.
+* <code id="Configuration-snap">snap</code> [SnapOptions](snap) - Snap options.
+* <code id="Configuration-appImage">appImage</code> [AppImageOptions](/configuration/linux#appimageoptions) - AppImage options.
+* <code id="Configuration-pacman">pacman</code> [LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)
+* <code id="Configuration-rpm">rpm</code> [LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)
+* <code id="Configuration-freebsd">freebsd</code> [LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)
+* <code id="Configuration-p5p">p5p</code> [LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)
+* <code id="Configuration-apk">apk</code> [LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)
 
 ---
 
@@ -102,7 +102,6 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
     * <code id="ElectronDownloadOptions-version">version</code> String
     * <code id="ElectronDownloadOptions-cache">cache</code> String - The [cache location](https://github.com/electron-userland/electron-download#cache-location).
     * <code id="ElectronDownloadOptions-mirror">mirror</code> String - The mirror.
-    * <code id="ElectronDownloadOptions-quiet">quiet</code> Boolean
     * <code id="ElectronDownloadOptions-strictSSL">strictSSL</code> Boolean
     * <code id="ElectronDownloadOptions-isVerifyChecksum">isVerifyChecksum</code> Boolean
     * <code id="ElectronDownloadOptions-platform">platform</code> "darwin" | "linux" | "win32" | "mas"

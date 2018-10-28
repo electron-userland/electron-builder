@@ -2,13 +2,13 @@
 
 `Array<String | FileSet> | String | FileSet`
 
-A [glob patterns](/file-patterns.md) relative to the [app directory](/configuration/configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+A [glob patterns](../file-patterns.md) relative to the [app directory](configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
-Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All [default ignores](/file-patterns.md#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
+Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All [default ignores](../file-patterns.md#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the [mac](/configuration/mac.md)).
+May be specified in the platform options (e.g. in the [mac](mac.md)).
 
 You may also specify custom source and destination directories by using `FileSet` objects instead of simple glob patterns.
 
@@ -22,7 +22,7 @@ You may also specify custom source and destination directories by using `FileSet
 ]
 ```
 
-You can use [file macros](/file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+You can use [file macros](../file-patterns.md#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
 
 ### `FileSet.from`
 
@@ -30,7 +30,7 @@ You can use [file macros](/file-patterns.md#file-macros) in the `from` and `to` 
 
 The source path relative to and defaults to:
 
-* the [app directory](/configuration/configuration.md#MetadataDirectories-app) for `files`,
+* the [app directory](configuration.md#MetadataDirectories-app) for `files`,
 * the project directory for `extraResources` and `extraFiles`.
 
 If you don't use two-package.json structure and don't set custom app directory, app directory equals to project directory.
@@ -48,13 +48,13 @@ The destination path relative to and defaults to:
 
 `Array<String> | String`
 
-The [glob patterns](/file-patterns.md). Defaults to `*/**`.
+The [glob patterns](../file-patterns.md). Defaults to `*/**`.
 
 ## `extraResources`
 
 `Array<String | FileSet> | String | FileSet`
 
-A [glob patterns](/file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).
+A [glob patterns](../file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux and Windows).
 
 File patterns (and support for `from` and `to` fields) the same as for [files](#files).
 

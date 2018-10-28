@@ -15,12 +15,12 @@
 
 ---
 
-* <code id="NsisOptions-installerIcon">installerIcon</code> String - The path to installer icon, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.
-* <code id="NsisOptions-uninstallerIcon">uninstallerIcon</code> String - The path to uninstaller icon, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.
-* <code id="NsisOptions-installerHeader">installerHeader</code> = `build/installerHeader.bmp` String - *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
-* <code id="NsisOptions-installerHeaderIcon">installerHeaderIcon</code> String - *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
-* <code id="NsisOptions-installerSidebar">installerSidebar</code> String - *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.
-* <code id="NsisOptions-uninstallerSidebar">uninstallerSidebar</code> String - *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+* <code id="NsisOptions-installerIcon">installerIcon</code> String - The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.
+* <code id="NsisOptions-uninstallerIcon">uninstallerIcon</code> String - The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.
+* <code id="NsisOptions-installerHeader">installerHeader</code> = `build/installerHeader.bmp` String - *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
+* <code id="NsisOptions-installerHeaderIcon">installerHeaderIcon</code> String - *one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
+* <code id="NsisOptions-installerSidebar">installerSidebar</code> String - *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.
+* <code id="NsisOptions-uninstallerSidebar">uninstallerSidebar</code> String - *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
 * <code id="NsisOptions-uninstallDisplayName">uninstallDisplayName</code> = `${productName} ${version}` String - The uninstaller display name in the control panel.
 
 ---
@@ -33,7 +33,7 @@
     
     Appropriate license file will be selected by user OS language.
 
-* <code id="NsisOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
+* <code id="NsisOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
 * <code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
 * <code id="NsisOptions-differentialPackage">differentialPackage</code> Boolean - Defaults to `true` for web installer (`nsis-web`)
 
@@ -46,7 +46,7 @@
 * <code id="NsisOptions-packElevateHelper">packElevateHelper</code> = `true` Boolean - Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
 * <code id="NsisOptions-preCompressedFileExtensions">preCompressedFileExtensions</code> = `[".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"]` Array&lt;String&gt; | String - The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files.
 * <code id="NsisOptions-unicode">unicode</code> = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
-* <code id="NsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
+* <code id="NsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).
 * <code id="NsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 * <code id="NsisOptions-runAfterFinish">runAfterFinish</code> = `true` Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.
 

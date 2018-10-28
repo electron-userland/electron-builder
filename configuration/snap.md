@@ -27,14 +27,14 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 Inherited from `CommonLinuxOptions`:
 
 * <code id="SnapOptions-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-* <code id="SnapOptions-description">description</code> String - As [description](/configuration/configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
+* <code id="SnapOptions-description">description</code> String - As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.
 * <code id="SnapOptions-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 * <code id="SnapOptions-mimeTypes">mimeTypes</code> Array&lt;String&gt; - The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing.
 * <code id="SnapOptions-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 
 Inherited from `TargetSpecificOptions`:
 
-* <code id="SnapOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="SnapOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="SnapOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="SnapOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->

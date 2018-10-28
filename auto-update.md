@@ -1,4 +1,4 @@
-See [publish configuration](/configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
+See [publish configuration](configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
 
 !!! info "Squirrel.Windows not supported"
     Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
@@ -17,7 +17,7 @@ See [publish configuration](/configuration/publish.md) for information on how to
 
 1. Install [electron-updater](https://yarn.pm/electron-updater) as an app dependency.
 
-2. [Configure publish](/configuration/publish.md).
+2. [Configure publish](configuration/publish.md).
 
 3. Use `autoUpdater` from `electron-updater` instead of `electron`:
 
@@ -220,9 +220,9 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 <a name="module_electron-updater.AppUpdater+setFeedURL"></a>
 **`appUpdater.setFeedURL(options)`**
 
-Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
+Configure update provider. If value is `string`, [GenericServerOptions](configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
-- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
+- options <code>[PublishConfiguration](configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](configuration/publish.md#githuboptions)</code> | <code>[S3Options](configuration/publish.md#s3options)</code> | <code>[SpacesOptions](configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+channel"></a>
 **`appUpdater.channel` (getter and setter)**

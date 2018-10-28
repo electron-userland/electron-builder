@@ -20,7 +20,7 @@ To build for Squirrel.Windows on macOS, please install `mono` (`brew install mon
 
 Inherited from `TargetSpecificOptions`:
 
-* <code id="SquirrelWindowsOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="SquirrelWindowsOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
+* <code id="SquirrelWindowsOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="SquirrelWindowsOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->

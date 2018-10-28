@@ -8,9 +8,9 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
     Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
 
 * <code id="MacConfiguration-target">target</code> String | [TargetConfiguration](/cli#targetconfiguration) - The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
-* <code id="MacConfiguration-identity">identity</code> String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing.md) instead of specifying this option. MAS installer identity is specified in the [mas](mas.md).
+* <code id="MacConfiguration-identity">identity</code> String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option. MAS installer identity is specified in the [mas](/configuration/mas).
 * <code id="MacConfiguration-icon">icon</code> = `build/icon.icns` String - The path to application icon.
-* <code id="MacConfiguration-entitlements">entitlements</code> String - The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](mas.md).
+* <code id="MacConfiguration-entitlements">entitlements</code> String - The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](/configuration/mas).
 * <code id="MacConfiguration-entitlementsInherit">entitlementsInherit</code> String - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
     
     This option only applies when signing with `entitlements` provided.
@@ -25,6 +25,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 * <code id="MacConfiguration-minimumSystemVersion">minimumSystemVersion</code> String - The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.
 * <code id="MacConfiguration-requirements">requirements</code> String - Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
 * <code id="MacConfiguration-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales. By default Electron locales used as is.
+* <code id="MacConfiguration-extraDistFiles">extraDistFiles</code> Array&lt;String&gt; | String - Extra files to put in archive. Not applicable for `tar.*`.
 
 <!-- end of generated block -->
 
