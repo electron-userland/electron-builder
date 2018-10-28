@@ -243,21 +243,41 @@ export default class AppXTarget extends Target {
   }
 
   private getExtensions(executable: string, displayName: string): string {
+    const uriSchemes = asArray(this.packager.config.protocols)
+      .concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
+
     let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     if (isAddAutoLaunchExtension === undefined) {
       const deps = this.packager.info.metadata.dependencies
       isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
-    if (!isAddAutoLaunchExtension) {
+    if (!isAddAutoLaunchExtension && uriSchemes.length === 0) {
       return ""
     }
 
-    return `<Extensions>
-    <desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
-      <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
-    </desktop:Extension>
-  </Extensions>`
+    let extensions = "<Extensions>"
+
+    if (isAddAutoLaunchExtension) {
+      extensions += `
+        <desktop:Extension Category="windows.startupTask" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="SlackStartup" Enabled="true" DisplayName="${displayName}" />
+        </desktop:Extension>`
+    }
+
+    for (const protocol of uriSchemes) {
+      for (const scheme of asArray(protocol.schemes)) {
+        extensions += `
+          <uap:Extension Category="windows.protocol">
+            <uap:Protocol Name="${scheme}">
+               <uap:DisplayName>${protocol.name}</uap:DisplayName>
+             </uap:Protocol>
+          </uap:Extension>`
+      }
+    }
+
+    extensions += "</Extensions>"
+    return extensions
   }
 }
 
