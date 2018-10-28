@@ -1039,10 +1039,10 @@
   resolved "https://registry.yarnpkg.com/@types/is-ci/-/is-ci-1.1.0.tgz#583c5fbfcc461be9971106b9558930d67df49227"
   integrity sha512-NbyqP5D4hwl5UWnnW4Cz0gIRjhecgx/9OApcCIpp4+tjqjROGf/NBcKKDfbI3YFBTTkD3JBshiNSv5V7VoVJJg==
 
-"@types/jest@^23.3.7":
-  version "23.3.7"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.7.tgz#77f9a4332ccf8db680a31818ade3ee454c831a79"
-  integrity sha512-N0p6mHrS0RHC3A9hHN4QH1RM2fGSb2E8rt6ONEK5xKSnyKtn/JAhr1VritkCn6cdyDBephVB80THqJGWzK8FAw==
+"@types/jest@^23.3.8":
+  version "23.3.8"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.8.tgz#56b07c0c3d7c8a6c47abb4f785cab648c6eafd01"
+  integrity sha512-OKDxB/7woaQfUKkj+7+Zo3PmAxAYAy+SNwOwFhnYAc8JTaPhGOv8SC6QQg5D9+Giprhx/DzoKbJIpV9799VV0g==
 
 "@types/js-yaml@^3.11.2":
   version "3.11.2"
@@ -1210,10 +1210,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@2.1.4:
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.1.4.tgz#87e679615fb26c204c4d81fa67d962e796ea99d3"
-  integrity sha512-i5ZfZtnAQqVZXpFYpvkQK/V0p9RwJjCW7X3CRcyDrnR3p1mQRoRTMSfPrtGTo1ens7kTfzk2S2i0QXq+gEplLg==
+app-builder-bin@2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.2.0.tgz#c7a757674bd3302d3e927457dbfa652a20bc4bc9"
+  integrity sha512-ckiG/zWjmCN6dtzOtx4g0Bno9qFlQFViwGoWKNNLUMRM33Fsq2fsSOMbK2JpqPJfAcPJOXPzoB2kcuUuIbIwwA==
 
 append-transform@^1.0.0:
   version "1.0.0"
