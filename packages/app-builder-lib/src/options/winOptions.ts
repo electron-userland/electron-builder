@@ -3,7 +3,7 @@ import { CustomWindowsSign } from "../windowsCodeSign"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis.md#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX package can be built only on Windows 10.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
@@ -34,12 +34,12 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly sign?: CustomWindowsSign| string | null
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
-   * Please see [Code Signing](../code-signing.md).
+   * Please see [Code Signing](/code-signing).
    */
   readonly certificateFile?: string | null
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
-   * Please see [Code Signing](../code-signing.md).
+   * Please see [Code Signing](/code-signing).
    */
   readonly certificatePassword?: string | null
   /**

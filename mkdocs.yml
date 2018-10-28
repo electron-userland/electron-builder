@@ -4,7 +4,6 @@ theme:
   feature:
     tabs: true
   name: material
-  favicon: favicon.ico
   logo:
     icon: 'build'
   palette:
@@ -15,6 +14,7 @@ repo_name: electron-userland/electron-builder
 repo_url: 'https://github.com/electron-userland/electron-builder'
 edit_uri: ""
 dev_addr: 0.0.0.0:8000
+strict: true
 
 markdown_extensions:
   - admonition

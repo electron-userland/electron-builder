@@ -15,7 +15,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   // { [key: string]: string } Our scheme generator cannot validate this type
 
   /**
-   * The 78 character long summary. Defaults to [productName](configuration.md#Configuration-productName).
+   * The 78 character long summary. Defaults to [productName](/configuration/configuration#Configuration-productName).
    */
   readonly summary?: string | null
 

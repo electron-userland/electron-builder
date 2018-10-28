@@ -104,7 +104,7 @@ async function render2(files, jsdoc2MdOptions) {
     }
 
     if (context.property != null && context.property.name === "publish") {
-      return "The [publish](/configuration/publish.md) options."
+      return "The [publish](/configuration/publish) options."
     }
 
     if (context.place === TypeNamePlace.PROPERTY) {
@@ -117,7 +117,7 @@ async function render2(files, jsdoc2MdOptions) {
         if (propertyName === "extraFiles") {
           label = "extra files"
         }
-        return `The [${label}](/configuration/contents.md#${propertyName.toLowerCase()}) configuration.`
+        return `The [${label}](/configuration/contents#${propertyName.toLowerCase()}) configuration.`
       }
 
       if (context.property.name === "sign" && context.object.name === "WindowsConfiguration") {
@@ -149,45 +149,45 @@ async function render2(files, jsdoc2MdOptions) {
     }
 
     if (types.some(it => it.endsWith("WindowsConfiguration"))) {
-      return "[WindowsConfiguration](win.md)"
+      return "[WindowsConfiguration](win)"
     }
     if (types.some(it => it.endsWith(".NsisOptions") || it === "NsisOptions")) {
-      return "[NsisOptions](nsis.md)"
+      return "[NsisOptions](nsis)"
     }
     if (types.some(it => it.endsWith("AppXOptions"))) {
-      return "[AppXOptions](appx.md)"
+      return "[AppXOptions](appx)"
     }
     if (types.some(it => it.endsWith("SquirrelWindowsOptions"))) {
       return "[SquirrelWindowsOptions](squirrel-windows.md)"
     }
 
     if (types.some(it => it.endsWith("MacConfiguration"))) {
-      return "[MacConfiguration](mac.md)"
+      return "[MacConfiguration](mac)"
     }
     if (types.some(it => it.endsWith("DmgOptions"))) {
-      return "[DmgOptions](dmg.md)"
+      return "[DmgOptions](dmg)"
     }
     if (types.some(it => it.endsWith("MasConfiguration"))) {
-      return "[MasConfiguration](mas.md)"
+      return "[MasConfiguration](mas)"
     }
     if (types.some(it => it.endsWith("PkgOptions"))) {
-      return "[PkgOptions](pkg.md)"
+      return "[PkgOptions](pkg)"
     }
 
     if (types.some(it => it.endsWith("LinuxConfiguration"))) {
-      return "[LinuxConfiguration](linux.md)"
+      return "[LinuxConfiguration](linux)"
     }
     if (types.some(it => it.endsWith("SnapOptions"))) {
-      return "[SnapOptions](snap.md)"
+      return "[SnapOptions](snap)"
     }
     if (types.some(it => it.endsWith("AppImageOptions"))) {
-      return "[AppImageOptions](/configuration/linux.md#appimageoptions)"
+      return "[AppImageOptions](/configuration/linux#appimageoptions)"
     }
     if (types.some(it => it.endsWith("DebOptions"))) {
-      return "[DebOptions](/configuration/linux.md#de)"
+      return "[DebOptions](/configuration/linux#de)"
     }
     if (types.some(it => it.endsWith("LinuxTargetSpecificOptions"))) {
-      return "[LinuxTargetSpecificOptions](/configuration/linux.md#LinuxTargetSpecificOptions)"
+      return "[LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)"
     }
 
     return originalRenderTypeName.call(this, context)
