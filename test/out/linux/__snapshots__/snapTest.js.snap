@@ -55,6 +55,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
     "desktop-gtk3": Object {
@@ -149,6 +150,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
   },
@@ -251,6 +253,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
     "desktop-gtk3": Object {
@@ -330,6 +333,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
         "custom",
       ],
     },
@@ -411,6 +415,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
     "desktop-gtk3": Object {
@@ -492,6 +497,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
         "foo2",
       ],
     },
@@ -602,6 +608,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
     "desktop-gtk3": Object {
@@ -680,6 +687,7 @@ Object {
         "libxss1",
         "libxtst6",
         "libappindicator1",
+        "libsecret-1-0",
       ],
     },
     "desktop-gtk3": Object {
