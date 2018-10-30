@@ -3,6 +3,9 @@ See [publish configuration](configuration/publish.md) for information on how to 
 !!! info "Squirrel.Windows not supported"
     Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
     You can [easily migrate to NSIS](https://github.com/electron-userland/electron-builder/issues/837#issuecomment-355698368).
+    
+!!! info "Code signing is required on macOS"
+    macOS application must be [signed](code-signing.md) in order for auto updating to work.
 
 ## Differences between electron-updater and built-in autoUpdater
 
