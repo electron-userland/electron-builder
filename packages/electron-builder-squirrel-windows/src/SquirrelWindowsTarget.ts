@@ -82,7 +82,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      vendorPath: await getBinFromGithub("Squirrel.Windows", "1.7.8", "p4Z7//ol4qih1xIl2l9lOeFf1RmX4y1eAJkol+3q7iZ0iEMotBhs3HXFLxU435xLRhKghYOjSYu7WiUktsP5Bg=="),
+      vendorPath: await getBinFromGithub("Squirrel.Windows", "1.9.0", "zJHk4CMATM7jHJ2ojRH1n3LkOnaIezDk5FAzJmlSEQSiEdRuB4GGLCegLDtsRCakfHIVfKh3ysJHLjynPkXwhQ=="),
       ...this.options as any,
     }
 

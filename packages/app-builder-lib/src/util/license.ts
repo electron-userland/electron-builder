@@ -1,5 +1,5 @@
 import * as path from "path"
-import { langIdToName, toLangWithRegion } from "builder-util/out/langs"
+import { langIdToName, toLangWithRegion } from "./langs"
 import { PlatformPackager } from "../platformPackager"
 
 export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPackager<any>) {

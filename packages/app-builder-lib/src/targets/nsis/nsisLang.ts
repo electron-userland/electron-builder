@@ -1,5 +1,5 @@
 import { asArray } from "builder-util"
-import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "builder-util/out/langs"
+import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
 import _debug from "debug"
 import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"

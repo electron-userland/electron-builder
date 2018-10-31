@@ -46,11 +46,11 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "bluebird-lst": "^1.0.5",
+    "bluebird-lst": "^1.0.6",
     "chalk": "^2.4.1",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
-    "fs-extra-p": "^4.6.1",
+    "fs-extra-p": "^7.0.0",
     "is-ci": "^1.2.1",
     "read-config-file": "3.1.2",
     "sanitize-filename": "^1.6.1",

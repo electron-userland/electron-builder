@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
-import { computeEnv } from "builder-util/out/bundledTool"
+import { computeEnv } from "../util/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"

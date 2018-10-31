@@ -1,6 +1,6 @@
 import { asArray, isMacOsSierra, log } from "builder-util"
 import { getBinFromGithub } from "./binDownload"
-import { computeToolEnv, ToolInfo } from "builder-util/out/bundledTool"
+import { computeToolEnv, ToolInfo } from "./util/bundledTool"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"
 import * as os from "os"
