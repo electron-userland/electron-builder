@@ -43,10 +43,11 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 
 1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration/configuration#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](https://electron.build/configuration/configuration#build) configuration in the `package.json` as follows:
+2. Specify the [build](https://electron.build/configuration/configuration#build) configuration in the `package.json` as follows: (You should add the `files` field to indicate which files should be packed in the final application, including the entry file.)
     ```json
     "build": {
       "appId": "your.id",
+      "files": ["./path/to/your/dist/files/**/*"],
       "mac": {
         "category": "your.app.category.type"
       }
