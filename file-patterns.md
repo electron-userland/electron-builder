@@ -16,8 +16,6 @@
   zero or more directories and subdirectories searching for matches.
   It does not crawl symlinked directories.
 
-Hidden files are not ignored by default, but all files that should be ignored, are [ignored by default](#default-file-pattern).
-
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 !!! tip "Excluding directories"
@@ -51,15 +49,3 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `${channel}` — detected prerelease component from version (e.g. `beta`).
 * `${env.ENV_NAME}` — any environment variable.
 * Any property of [AppInfo](api/electron-builder.md#AppInfo) (e.g. `buildVersion`, `buildNumber`).
-
-## Default File Pattern
-
-[files](configuration/configuration.md#PlatformSpecificBuildOptions-files) defaults to:
-
-* `**/*`
-* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
-* `!**/node_modules/.bin`
-* `!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`
-* `!**/._*`
-* `!.editorconfig`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.flowconfig,.yarn-metadata.json,.idea,.vs,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`

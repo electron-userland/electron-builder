@@ -1,12 +1,31 @@
-## `files`
+## files
 
 `Array<String | FileSet> | String | FileSet`
 
 A [glob patterns](../file-patterns.md) relative to the [app directory](configuration.md#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
 
-Development dependencies are never copied in any case. You don't need to ignore it explicitly.
+Defaults to:
+```json
+[
+  "**/*",
+  "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+  "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+  "!**/node_modules/*.d.ts",
+  "!**/node_modules/.bin",
+  "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+  "!.editorconfig",
+  "!**/._*",
+  "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+  "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+  "!**/{appveyor.yml,.travis.yml,circle.yml}",
+  "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+]
+```
 
-Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All [default ignores](../file-patterns.md#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
+Development dependencies are never copied in any case. You don't need to ignore it explicitly. Hidden files are not ignored by default, but all files that should be ignored, are ignored by default.
+
+
+Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
 May be specified in the platform options (e.g. in the [mac](mac.md)).
 
@@ -50,7 +69,7 @@ The destination path relative to and defaults to:
 
 The [glob patterns](../file-patterns.md). Defaults to `*/**`.
 
-## `extraResources`
+## extraResources
 
 `Array<String | FileSet> | String | FileSet`
 
@@ -58,7 +77,7 @@ A [glob patterns](../file-patterns.md) relative to the project directory, when s
 
 File patterns (and support for `from` and `to` fields) the same as for [files](#files).
 
-## `extraFiles`
+## extraFiles
 
 `Array<String | FileSet> | String | FileSet`
 

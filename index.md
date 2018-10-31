@@ -58,7 +58,7 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
       }
     }
     ```
-   See [all options](configuration/configuration.md#configuration).
+   See [all options](configuration/configuration.md#configuration). Option [files](configuration/contents.md#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
 
 3. Add [icons](icons.md).
 
