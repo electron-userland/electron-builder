@@ -16,8 +16,10 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 }
 ```
 
+[Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.
+
 !!! tip "Macros"
-    In all publish options [File Macros](../file-patterns.md#file-macros) are supported.
+    In all publish options [File Macros](../file-patterns.md#file-macros) are supported. 
 
 ## How to Publish
 
