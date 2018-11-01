@@ -108,10 +108,12 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     },
   },
 }, {
-  packed: async context => {
-    await assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist()
-    await assertThat(path.join(context.projectDir, "dist", "latest.yml")).doesNotExist()
-    await expectUpdateMetadata(context, Arch.ia32)
+  packed: context => {
+    return Promise.all([
+      assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist(),
+      assertThat(path.join(context.projectDir, "dist", "latest.yml")).doesNotExist(),
+      expectUpdateMetadata(context, Arch.ia32),
+    ])
   },
 }))
 

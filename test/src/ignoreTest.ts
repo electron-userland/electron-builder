@@ -61,9 +61,6 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   config: {
     asar: false,
-    // ignore: (file: string) => {
-    //   return file === "/ignoreMe"
-    // }
   },
 }, {
   projectDirCreated: projectDir => {
@@ -73,7 +70,6 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
           "electron-osx-sign": "*", ...data.devDependencies}
       }),
       outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
-      // outputFile(path.join(projectDir, "ignoreMe"), ""),
     ])
   },
   packed: context => {

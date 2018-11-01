@@ -547,6 +547,13 @@ Object {
         },
         "detect-libc": Object {
           "files": Object {
+            ".bin": Object {
+              "files": Object {
+                "detect-libc": Object {
+                  "link": "node_modules/detect-libc/bin/detect-libc.js",
+                },
+              },
+            },
             "LICENSE": Object {
               "size": 11357,
             },
@@ -841,7 +848,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 764,
+              "size": 790,
             },
           },
         },
@@ -873,6 +880,13 @@ Object {
         },
         "mkdirp": Object {
           "files": Object {
+            ".bin": Object {
+              "files": Object {
+                "mkdirp": Object {
+                  "link": "node_modules/mkdirp/bin/cmd.js",
+                },
+              },
+            },
             "LICENSE": Object {
               "size": 1141,
             },
@@ -1067,6 +1081,25 @@ Object {
             },
           },
         },
+        "napi-build-utils": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 1069,
+            },
+            "index.js": Object {
+              "size": 7199,
+            },
+            "index.md": Object {
+              "size": 3767,
+            },
+            "napi-build-utils-1.0.0.tgz": Object {
+              "size": 26382,
+            },
+            "package.json": Object {
+              "size": 706,
+            },
+          },
+        },
         "node-abi": Object {
           "files": Object {
             "CODE_OF_CONDUCT.md": Object {
@@ -1176,24 +1209,34 @@ Object {
         },
         "prebuild-install": Object {
           "files": Object {
+            ".bin": Object {
+              "files": Object {
+                "prebuild-install": Object {
+                  "link": "node_modules/prebuild-install/bin.js",
+                },
+              },
+            },
             "CONTRIBUTING.md": Object {
               "size": 220,
             },
             "LICENSE": Object {
               "size": 1079,
             },
+            "asset.js": Object {
+              "size": 1199,
+            },
             "bin.js": Object {
               "executable": true,
-              "size": 1743,
+              "size": 2255,
             },
             "download.js": Object {
-              "size": 4820,
+              "size": 3611,
             },
             "error.js": Object {
               "size": 330,
             },
             "help.txt": Object {
-              "size": 734,
+              "size": 867,
             },
             "index.js": Object {
               "size": 41,
@@ -1202,13 +1245,16 @@ Object {
               "size": 232,
             },
             "package.json": Object {
-              "size": 1059,
+              "size": 1158,
+            },
+            "proxy.js": Object {
+              "size": 1079,
             },
             "rc.js": Object {
-              "size": 2083,
+              "size": 2339,
             },
             "util.js": Object {
-              "size": 2632,
+              "size": 3007,
             },
           },
         },
@@ -1246,6 +1292,13 @@ Object {
         },
         "rc": Object {
           "files": Object {
+            ".bin": Object {
+              "files": Object {
+                "rc": Object {
+                  "link": "node_modules/rc/cli.js",
+                },
+              },
+            },
             "LICENSE.APACHE2": Object {
               "size": 586,
             },
@@ -1383,6 +1436,13 @@ Object {
         },
         "semver": Object {
           "files": Object {
+            ".bin": Object {
+              "files": Object {
+                "semver": Object {
+                  "link": "node_modules/semver/bin/semver",
+                },
+              },
+            },
             "LICENSE": Object {
               "size": 765,
             },
