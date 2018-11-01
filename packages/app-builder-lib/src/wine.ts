@@ -5,7 +5,7 @@ import * as os from "os"
 import * as path from "path"
 import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
-import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "builder-util/out/bundledTool"
+import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./util/bundledTool"
 import { getMacOsVersion } from "builder-util/out/macosVersion"
 import { debug7zArgs, exec, isEnvTrue, log } from "builder-util/out/util"
 

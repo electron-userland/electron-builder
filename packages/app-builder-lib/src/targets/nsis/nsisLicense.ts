@@ -1,4 +1,4 @@
-import { lcid } from "builder-util/out/langs"
+import { lcid } from "../../util/langs"
 import { getLicenseFiles, getNotLocalizedLicenseFile } from "../../util/license"
 import * as path from "path"
 import { WinPackager } from "../../winPackager"

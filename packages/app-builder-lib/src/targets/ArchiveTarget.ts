@@ -4,6 +4,7 @@ import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
+import { appendBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
@@ -31,6 +32,7 @@ export class ArchiveTarget extends Target {
     const artifactPath = path.join(this.outDir, artifactName)
 
     this.logBuilding(`${isMac ? "macOS " : ""}${format}`, artifactPath, arch)
+    let updateInfo: any = null
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
     }
@@ -54,9 +56,14 @@ export class ArchiveTarget extends Target {
         withoutDir,
       }
       await archive(format, artifactPath, dirToArchive, archiveOptions)
+
+      if (this.isWriteUpdateInfo && format === "zip") {
+        updateInfo = await appendBlockmap(artifactPath)
+      }
     }
 
     packager.info.dispatchArtifactCreated({
+      updateInfo,
       file: artifactPath,
       // tslint:disable-next-line:no-invalid-template-strings
       safeArtifactName: packager.computeSafeArtifactName(artifactName, format, arch, false, defaultPattern.replace("${productName}", "${name}")),

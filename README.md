@@ -52,7 +52,7 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
       }
     }
     ```
-   See [all options](https://www.electron.build/configuration/configuration).
+   See [all options](https://www.electron.build/configuration/configuration). Option [files](https://www.electron.build/configuration/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
 
 3. Add [icons](https://www.electron.build/icons).
 

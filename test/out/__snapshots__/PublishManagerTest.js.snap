@@ -19,7 +19,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -34,7 +36,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -49,7 +53,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -64,7 +70,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -79,7 +87,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -94,7 +104,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -109,7 +121,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
           },
         ],
@@ -123,6 +137,11 @@ Object {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -138,8 +157,6 @@ Object {
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
-  "DTSDKBuild": "14D125",
-  "DTSDKName": "macosx10.1010.10",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSHighResolutionCapable": true,
@@ -190,7 +207,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "Test App ßW_1.1.0_mac.zip",
           },
         ],
@@ -204,6 +223,11 @@ Object {
       "arch": "x64",
       "file": "Test App ßW_1.1.0_mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -219,8 +243,6 @@ Object {
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
-  "DTSDKBuild": "14D125",
-  "DTSDKName": "macosx10.1010.10",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSHighResolutionCapable": true,
@@ -244,7 +266,9 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
+            "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
@@ -258,6 +282,11 @@ Object {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
     },
   ],
 }
@@ -273,8 +302,6 @@ Object {
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
-  "DTSDKBuild": "14D125",
-  "DTSDKName": "macosx10.1010.10",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSHighResolutionCapable": true,

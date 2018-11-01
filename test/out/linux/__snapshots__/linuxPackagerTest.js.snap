@@ -146,6 +146,8 @@ Object {
 }
 `;
 
+exports[`forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
+
 exports[`html license 1`] = `
 Object {
   "linux": Array [

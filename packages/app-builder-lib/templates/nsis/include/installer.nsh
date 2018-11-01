@@ -71,7 +71,7 @@
         ${if} ${errors}
           # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
           ClearErrors
-          CopyFiles /SILENT "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
+          !insertmacro copyFile "$packageFile" "$APPDATA\${APP_PACKAGE_STORE_FILE}"
           Delete "$packageFile"
         ${endif}
 
@@ -84,7 +84,7 @@
       ${if} $installMode == "all"
         SetShellVarContext current
       ${endif}
-      CopyFiles /SILENT "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
+      !insertmacro copyFile "$EXEPATH" "$APPDATA\${APP_INSTALLER_STORE_FILE}"
       ${if} $installMode == "all"
         SetShellVarContext all
       ${endif}

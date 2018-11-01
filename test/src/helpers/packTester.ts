@@ -312,6 +312,8 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.NSHumanReadableCopyright
   delete info.DTXcode
   delete info.DTXcodeBuild
+  delete info.DTSDKBuild
+  delete info.DTSDKName
 
   expect(info).toMatchSnapshot()
 

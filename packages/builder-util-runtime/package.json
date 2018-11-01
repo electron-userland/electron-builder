@@ -14,9 +14,9 @@
     "node": ">=6.0.0"
   },
   "dependencies": {
-    "debug": "^3.1.0",
-    "fs-extra-p": "^4.6.1",
-    "bluebird-lst": "^1.0.5",
+    "debug": "^4.1.0",
+    "fs-extra-p": "^7.0.0",
+    "bluebird-lst": "^1.0.6",
     "sax": "^1.2.4"
   },
   "types": "./out/index.d.ts"

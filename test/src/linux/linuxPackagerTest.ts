@@ -209,3 +209,14 @@ test.ifNotWindows("no-author-email", appThrows({targets: Platform.LINUX.createTa
     data.author = "Foo"
   })
 }))
+
+test.ifNotWindows("forbid desktop.Exec", appThrows({
+  targets: Platform.LINUX.createTarget("AppImage"),
+  config: {
+    linux: {
+      desktop: {
+        Exec: "foo"
+      }
+    }
+  }
+}))

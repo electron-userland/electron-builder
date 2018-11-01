@@ -106,7 +106,7 @@ export class SquirrelBuilder {
       "--releasify", nupkgPath,
       "--releaseDir", this.outputDirectory
     ]
-    const out = (await exec(process.platform === "win32" ? path.join(this.options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(this.options.vendorPath, "Update-Mono.exe")))).trim()
+    const out = (await execSw(this.options, args)).trim()
     if (debug.enabled) {
       debug(`Squirrel output: ${out}`)
     }
@@ -210,12 +210,21 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   await archivePromise
 }
 
+function execSw(options: SquirrelOptions, args: Array<string>) {
+  return exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")), {
+    env: {
+      ...process.env,
+      SZA_PATH: path7za,
+    }
+  })
+}
+
 async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {
   const args = [
     "--createMsi", nupkgPath,
     "--bootstrapperExe", setupPath
   ]
-  await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")))
+  await execSw(options, args)
   //noinspection SpellCheckingInspection
   await exec(path.join(options.vendorPath, "candle.exe"), ["-nologo", "-ext", "WixNetFxExtension", "-out", "Setup.wixobj", "Setup.wxs"], {
     cwd: outputDirectory,

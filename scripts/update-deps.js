@@ -18,7 +18,7 @@ async function main() {
 
     let changed = false
     for (const name of Object.keys(deps)) {
-      if (name.startsWith("electron-builder-") || name === "electron-publish" || name.endsWith("-builder") || name.startsWith("builder-") || name === "app-builder-lib") {
+      if (name.startsWith("electron-builder-") || name === "electron-publish" || name.endsWith("-builder") || name.startsWith("builder-") || name === "app-builder-lib" || name === "electron-is-dev") {
         continue
       }
 

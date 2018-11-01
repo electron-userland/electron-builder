@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdaterSignal } from "./main"
+import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -194,7 +194,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
@@ -248,7 +248,7 @@ export abstract class AppUpdater extends EventEmitter {
           .then(() => {
             new Notification({
               title: "A new update is ready to install",
-              body: `${this.app.getName()} version ${it.updateInfo.version} is downloaded and will be automatically installed on exit`
+              body: `${this.app.getName()} version ${it.updateInfo.version} has been downloaded and will be automatically installed on exit`
             }).show()
           })
       })
@@ -526,7 +526,6 @@ export abstract class AppUpdater extends EventEmitter {
         await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
       }
 
-      this.emit(UPDATE_DOWNLOADED, updateInfo)
       await taskOptions.done!!(updateFile)
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }

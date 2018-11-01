@@ -3,6 +3,7 @@ import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
+import { expandMacro } from "./util/macroExpander"
 
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
@@ -104,7 +105,7 @@ export class AppInfo {
   get copyright(): string {
     const copyright = this.info.config.copyright
     if (copyright != null) {
-      return copyright
+      return expandMacro(copyright, null, this)
     }
     return `Copyright © ${new Date().getFullYear()} ${this.companyName || this.productName}`
   }

@@ -8,14 +8,14 @@
     </option>
     <option name="LINE_SEPARATOR" value="&#10;" />
     <option name="RIGHT_MARGIN" value="400" />
-    <JSCodeStyleSettings>
+    <JSCodeStyleSettings version="0">
       <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
       <option name="SPACES_WITHIN_IMPORTS" value="true" />
     </JSCodeStyleSettings>
     <JSON>
       <option name="ARRAY_WRAPPING" value="0" />
     </JSON>
-    <TypeScriptCodeStyleSettings>
+    <TypeScriptCodeStyleSettings version="0">
       <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
       <option name="IMPORTS_WRAP" value="0" />
       <option name="SPACES_WITHIN_IMPORTS" value="true" />
@@ -24,9 +24,6 @@
     <editorconfig>
       <option name="ENABLED" value="false" />
     </editorconfig>
-    <yaml>
-      <option name="INDENT_SEQUENCE_VALUE" value="true" />
-    </yaml>
     <codeStyleSettings language="CSS">
       <indentOptions>
         <option name="INDENT_SIZE" value="2" />

@@ -18,8 +18,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing.md) instead of specifying this option.
-   * MAS installer identity is specified in the [mas](mas.md).
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.
+   * MAS installer identity is specified in the [mas](/configuration/mas).
    */
   readonly identity?: string | null
 
@@ -31,7 +31,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   * MAS entitlements is specified in the [mas](mas.md).
+   * MAS entitlements is specified in the [mas](/configuration/mas).
    */
   readonly entitlements?: string | null
 
@@ -159,7 +159,7 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly allowRootDirectory?: boolean | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.
    */
   readonly identity?: string | null
 
@@ -221,7 +221,7 @@ export interface DmgOptions extends TargetSpecificOptions {
   backgroundColor?: string | null
 
   /**
-   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
+   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
   readonly icon?: string | null

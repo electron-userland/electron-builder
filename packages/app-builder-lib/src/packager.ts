@@ -34,7 +34,6 @@ declare const PACKAGE_VERSION: string
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   if (configuration.protonNodeVersion != null) {
-    // require("proton-builder/out/ProtonFramework")
     return createProtonFrameworkSupport(configuration.protonNodeVersion!!, packager.appInfo)
   }
   else {
