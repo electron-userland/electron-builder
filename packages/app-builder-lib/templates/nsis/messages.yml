@@ -14,6 +14,12 @@ win7Required:
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
   tr_TR: Windows 7 ve üstü gereklidir
+  sv_SE: Windows 7 eller högre krävs
+  no: Windows 7 og over er nødvendig
+  nl_NL: Windows 7 en hoger is vereist
+  fi: Windows 7 tai uudempi vaaditaan
+  es: Se necesita Windows 7 o una versión superior.
+  da: Windows 7 og højere er nødvendig
 x64WinRequired:
   en: 64-bit Windows is required
   de: 64-Bit-Windows wird vorausgesetzt
@@ -28,6 +34,12 @@ x64WinRequired:
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
   tr_TR: 64 bit Windows gerekli
+  sv_SE: 64-bitars Windows krävs
+  no: 64-biters Windows er nødvendig
+  nl_NL: 64-bit Windows is vereist
+  fi: 64-bittinen Windows on pakollinen
+  es: Windows de 64 bits es requerido
+  da: 64-bit Windows er påkrævet
 appRunning:
   en: "${PRODUCT_NAME} is running.\nClick OK to close it."
   de: "${PRODUCT_NAME} ist geöffnet. \nKlicken Sie zum Schliessen auf «OK»."
@@ -42,6 +54,12 @@ appRunning:
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
+  sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
+  no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
+  nl_NL: "${PRODUCT_NAME} draait. \nKlik op 'OK' om het te sluiten."
+  fi: "${PRODUCT_NAME} on käynnissä. Napsauta OK sulkeaksesi sen."
+  es: "${PRODUCT_NAME} se está ejecutando. Haz clic en Aceptar para cerrarlo."
+  da: "${PRODUCT_NAME} er i gang. Klik OK for at lukke."
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
@@ -56,6 +74,12 @@ installing:
   pt_BR: Instalando, por favor aguarde...
   zh_CN: 正在安装, 请稍后...
   tr_TR: Yükleniyor, lütfen bekleyin...
+  sv_SE: Installerar, vänligen vänta...
+  no: Installerer, vennligst vent...
+  nl_NL: Installeren, even geduld...
+  fi: Asennetaan, odota...
+  es: Instalando, espera un momento...
+  da: Installerer, vent venligst...
 areYouSureToUninstall:
   en: Are you sure you want to uninstall ${PRODUCT_NAME}?
   de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
@@ -70,3 +94,9 @@ areYouSureToUninstall:
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
   tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
+  sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
+  no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?
+  nl_NL: Weet je zeker dat je ${PRODUCT_NAME} wilt verwijderen?
+  fi: Oletko varma, että haluat poistaa ${PRODUCT_NAME} asennuksen?
+  es: ¿Seguro que quieres desinstalar ${PRODUCT_NAME}?
+  da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
