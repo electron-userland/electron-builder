@@ -547,13 +547,6 @@ Object {
         },
         "detect-libc": Object {
           "files": Object {
-            ".bin": Object {
-              "files": Object {
-                "detect-libc": Object {
-                  "link": "node_modules/detect-libc/bin/detect-libc.js",
-                },
-              },
-            },
             "LICENSE": Object {
               "size": 11357,
             },
@@ -880,13 +873,6 @@ Object {
         },
         "mkdirp": Object {
           "files": Object {
-            ".bin": Object {
-              "files": Object {
-                "mkdirp": Object {
-                  "link": "node_modules/mkdirp/bin/cmd.js",
-                },
-              },
-            },
             "LICENSE": Object {
               "size": 1141,
             },
@@ -1206,13 +1192,6 @@ Object {
         },
         "prebuild-install": Object {
           "files": Object {
-            ".bin": Object {
-              "files": Object {
-                "prebuild-install": Object {
-                  "link": "node_modules/prebuild-install/bin.js",
-                },
-              },
-            },
             "CONTRIBUTING.md": Object {
               "size": 220,
             },
@@ -1289,13 +1268,6 @@ Object {
         },
         "rc": Object {
           "files": Object {
-            ".bin": Object {
-              "files": Object {
-                "rc": Object {
-                  "link": "node_modules/rc/cli.js",
-                },
-              },
-            },
             "LICENSE.APACHE2": Object {
               "size": 586,
             },
@@ -1433,13 +1405,6 @@ Object {
         },
         "semver": Object {
           "files": Object {
-            ".bin": Object {
-              "files": Object {
-                "semver": Object {
-                  "link": "node_modules/semver/bin/semver",
-                },
-              },
-            },
             "LICENSE": Object {
               "size": 765,
             },

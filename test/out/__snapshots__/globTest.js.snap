@@ -1,5 +1,38 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`asarUnpack and files ignore 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`asarUnpack and files ignore 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "0",
+      "size": 378,
+    },
+    "index.js": Object {
+      "offset": "378",
+      "size": 619,
+    },
+    "package.json": Object {
+      "offset": "997",
+      "size": 224,
+    },
+    "path": Object {
+      "files": Object {
+        "app.asar": Object {
+          "offset": "1221",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
 exports[`failed peer dep 1`] = `
 Object {
   "linux": Array [],

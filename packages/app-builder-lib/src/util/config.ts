@@ -75,7 +75,8 @@ export async function getConfig(projectDir: string, configPath: string | null, c
 
   // electron-webpack and electrify client config - want to exclude some files
   // we add client files configuration to main parent file matcher
-  if (parentConfig.files != null && config.files != null && (Array.isArray(config.files) || typeof config.files === "string") && Array.isArray(parentConfig.files) && parentConfig.files.length > 0) {
+  const files = config.files == null ? [] : (Array.isArray(config.files) ? config.files : (typeof config.files === "string" ? [config.files] : []))
+  if (parentConfig.files != null && files.length !== 0 && Array.isArray(parentConfig.files) && parentConfig.files.length > 0) {
     const mainFileSet = parentConfig.files[0]
     if (typeof mainFileSet === "object" && (mainFileSet.from == null || mainFileSet.from === ".")) {
       mainFileSet.filter = asArray(mainFileSet.filter)

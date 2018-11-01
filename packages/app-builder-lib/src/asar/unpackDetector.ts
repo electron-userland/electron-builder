@@ -81,7 +81,9 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
 
     // https://github.com/electron-userland/electron-builder/issues/2679
     let shouldUnpack = false
-    if (isLibOrExe(file)) {
+    // ffprobe-static and ffmpeg-static are known packages to always unpack
+    const moduleName = path.basename(packageDir)
+    if (moduleName ===  "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
     }
     else if (!file.includes(".", nextSlashIndex) && path.extname(file) === "") {

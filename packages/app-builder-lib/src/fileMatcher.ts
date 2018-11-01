@@ -209,8 +209,18 @@ export function getNodeModuleFileMatcher(appDir: string, destination: string, ma
     }
 
     for (const pattern of patterns) {
-      if (typeof pattern === "string" && pattern.startsWith("!")) {
-        matcher.addPattern(pattern)
+      if (typeof pattern === "string") {
+        if (pattern.startsWith("!")) {
+          matcher.addPattern(pattern)
+        }
+      }
+      else {
+        const fileSet = (pattern as FileSet)
+        if (fileSet.from == null || fileSet.from === ".") {
+          for (const p of asArray(fileSet.filter)) {
+            matcher.addPattern(p)
+          }
+        }
       }
     }
   }

@@ -8,7 +8,7 @@ import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
 
 const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
-const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples"])
+const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples", ".bin"])
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
@@ -30,14 +30,6 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       // The path should be corrected in Windows that when the moduleName is Scoped packages named.
       const depPath = path.normalize(tmpPath)
       queue[0] = depPath
-
-      // if (dep.link != null) {
-      //   this.metadata.set(dep.path, dep.stat!)
-      //   const r = this.handleSymlink(dep.stat!, dep.path, dep.link!)
-      //   if (r != null) {
-      //     await r
-      //   }
-      // }
 
       while (queue.length > 0) {
         const dirPath = queue.pop()!

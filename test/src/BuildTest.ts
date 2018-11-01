@@ -246,7 +246,10 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     copyright: "Copyright © 2018 ${author}",
     npmRebuild: true,
     files: [
-      "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz"
+      // test ignore pattern for node_modules defined as file set filter
+      {
+        filter: "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz",
+      }
     ]
   }
 }, {

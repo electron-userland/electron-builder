@@ -23,7 +23,11 @@ async function createFiles(appDir: string) {
 test.ifDevOrLinuxCi("unpackDir one", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   config: {
-    asarUnpack: ["assets", "b2", "do-not-unpack-dir/file.json"],
+    asarUnpack: [
+      "assets",
+      "b2",
+      "do-not-unpack-dir/file.json",
+    ],
   }
 }, {
   projectDirCreated: createFiles,
@@ -52,6 +56,27 @@ test.ifDevOrLinuxCi("unpackDir", () => {
   }, {
     projectDirCreated: projectDir => createFiles(path.join(projectDir, "app")),
     packed: assertDirs,
+  })
+})
+
+test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
+  return assertPack("test-app", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    config: {
+      asarUnpack: [
+        "!**/ffprobe-static/bin/darwin/x64/ffprobe"
+      ],
+    }
+  }, {
+    projectDirCreated: projectDir => outputFile(path.join(projectDir, "node_modules/ffprobe-static/bin/darwin/x64/ffprobe"), "data"),
+    packed: async context => {
+      const resourceDir = context.getResources(Platform.LINUX)
+      await Promise.all([
+        assertThat(path.join(resourceDir, "app.asar.unpacked", "node_modules/ffprobe-static/bin/darwin/x64/ffprobe")).doesNotExist(),
+      ])
+
+      await verifyAsarFileTree(context.getResources(Platform.LINUX))
+    },
   })
 })
 
