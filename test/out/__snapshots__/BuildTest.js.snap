@@ -1092,9 +1092,6 @@ Object {
             "index.md": Object {
               "size": 3767,
             },
-            "napi-build-utils-1.0.0.tgz": Object {
-              "size": 26382,
-            },
             "package.json": Object {
               "size": 706,
             },

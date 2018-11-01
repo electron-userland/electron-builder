@@ -245,6 +245,9 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     // tslint:disable-next-line:no-invalid-template-strings
     copyright: "Copyright © 2018 ${author}",
     npmRebuild: true,
+    files: [
+      "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz"
+    ]
   }
 }, {
   projectDirCreated: packageJson(it => {
