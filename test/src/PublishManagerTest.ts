@@ -1,4 +1,5 @@
 import { createTargets, Platform } from "electron-builder"
+import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
@@ -106,4 +107,23 @@ test.ifAll.ifNotWindows("dotted s3 bucket", app({
   },
 }, {
   publish: "never"
+}))
+
+// https://github.com/electron-userland/electron-builder/issues/3261
+test.ifAll.ifNotWindows("custom provider", app({
+  targets: createTargets([Platform.LINUX], "zip"),
+  config: {
+    publish: {
+      provider: "custom",
+      boo: "foo",
+    },
+  },
+}, {
+  publish: "never",
+  projectDirCreated: projectDir => outputFile(path.join(projectDir, "build/electron-publisher-custom.js"), `class Publisher {
+    async upload(task) {
+    }
+  }
+  
+  module.exports = Publisher`)
 }))

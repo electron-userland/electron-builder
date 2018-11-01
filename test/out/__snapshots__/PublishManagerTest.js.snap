@@ -1,5 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`custom provider 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+  ],
+}
+`;
+
 exports[`dotted s3 bucket 1`] = `
 Object {
   "linux": Array [

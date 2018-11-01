@@ -1,7 +1,7 @@
-export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic"
+export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
-export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions
+export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions
 // https://github.com/YousefED/typescript-json-schema/issues/80
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
 
@@ -25,6 +25,11 @@ export interface PublishConfiguration {
    * @default true
    */
   readonly publishAutoUpdate?: boolean
+}
+
+// https://github.com/electron-userland/electron-builder/issues/3261
+export interface CustomPublishOptions extends PublishConfiguration {
+  [index: string]: any
 }
 
 /**

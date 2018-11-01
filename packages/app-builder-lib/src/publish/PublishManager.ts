@@ -191,7 +191,7 @@ export class PublishManager implements PublishContext {
     const providerCacheKey = safeStringifyJson(publishConfig)
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
-      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions)
+      publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
       this.nameToPublisher.set(providerCacheKey, publisher)
       log.info({publisher: publisher!!.toString()}, "publishing")
     }
@@ -259,7 +259,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
   return publishConfigs
 }
 
-export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
+export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions, packager: Packager): Publisher | null {
   if (debug.enabled) {
     debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
   }
@@ -276,12 +276,12 @@ export function createPublisher(context: PublishContext, version: string, publis
       return null
 
     default:
-      const clazz = requireProviderClass(provider)
+      const clazz = requireProviderClass(provider, packager)
       return clazz == null ? null : new clazz(context, publishConfig)
   }
 }
 
-function requireProviderClass(provider: string): any | null {
+function requireProviderClass(provider: string, packager: Packager): any | null {
   switch (provider) {
     case "github":
       return GitHubPublisher
@@ -299,7 +299,19 @@ function requireProviderClass(provider: string): any | null {
       return SpacesPublisher
 
     default:
-      return require(`electron-publisher-${provider}`).default
+      const name = `electron-publisher-${provider}`
+      let module: any = null
+      try {
+        module = require(path.join(packager.buildResourcesDir, name + ".js"))
+      }
+      catch (ignored) {
+        console.log(ignored)
+      }
+
+      if (module == null) {
+        module = require(name)
+      }
+      return module.default || module
   }
 }
 
@@ -429,7 +441,7 @@ async function getResolvedPublishConfig(platformPackager: PlatformPackager<any> 
     return options
   }
 
-  const providerClass = requireProviderClass(options.provider)
+  const providerClass = requireProviderClass(options.provider, packager)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options
