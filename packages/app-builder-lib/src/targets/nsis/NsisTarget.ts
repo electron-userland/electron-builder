@@ -4,7 +4,7 @@ import { Arch, asArray, AsyncTaskManager, getPlatformIconFileName, InvalidConfig
 import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromGithub } from "../../binDownload"
 import { statOrNull, walk } from "builder-util/out/fs"
-import { hashFile } from "builder-util/out/hash"
+import { hashFile } from "../../util/hash"
 import _debug from "debug"
 import { readFile, stat, unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"

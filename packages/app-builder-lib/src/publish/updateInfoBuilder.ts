@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, hashFile, log, safeStringifyJson, serializeToYaml } from "builder-util"
+import { Arch, log, safeStringifyJson, serializeToYaml } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -10,6 +10,7 @@ import { Platform } from "../core"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
+import { hashFile } from "../util/hash"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {

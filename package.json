@@ -31,7 +31,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.2.0",
+    "app-builder-bin": "2.3.0",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.6",
@@ -56,7 +56,7 @@
     "normalize-package-data": "^2.4.0",
     "parse-color": "^1.0.0",
     "plist": "^3.0.1",
-    "read-config-file": "3.1.2",
+    "read-config-file": "3.1.3",
     "sanitize-filename": "^1.6.1",
     "sax": "^1.2.4",
     "semver": "^5.6.0",
@@ -118,7 +118,7 @@
     "ts-babel": "6.1.0",
     "ts-jsdoc": "^3.0.1",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.5",
+    "typescript": "^3.1.6",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"
   },

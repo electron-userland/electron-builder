@@ -19,7 +19,6 @@ export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, arch
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 
-export { hashFile } from "./hash"
 export { copyFile } from "./fs"
 export { asArray } from "builder-util-runtime"
 
