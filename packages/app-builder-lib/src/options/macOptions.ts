@@ -106,6 +106,32 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly extraDistFiles?: Array<string> | string | null
 }
 
+type BackgroundAlignment = "center" | "left" | "right" | "top" | "bottom" | "topleft" | "topright" | "bottomleft" | "bottomright"
+type BackgroundScaling = "tofit" | "none" | "proportional"
+/**
+ * Options for the background image in a PKG installer
+ */
+export interface PkgBackgroundOptions {
+  /**
+   * Path to the image to use as an installer background.
+   */
+  file?: string
+
+  /**
+   * Alignment of the background image.
+   * Options are: center, left, right, top, bottom, topleft, topright, bottomleft, bottomright
+   * @default center
+   */
+  alignment?: BackgroundAlignment | null
+
+  /**
+   * Scaling of the background image.
+   * Options are: tofit, none, proportional
+   * @default tofit
+   */
+  scaling?: BackgroundScaling | null
+}
+
 /**
  * macOS product archive options.
  */
@@ -167,6 +193,21 @@ export interface PkgOptions extends TargetSpecificOptions {
    * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
    */
   readonly license?: string | null
+
+  /**
+   * Options for the background image for the installer.
+   */
+  readonly background?: PkgBackgroundOptions | null
+
+  /**
+   * The path to the welcome file. This may be used to customize the text on the Introduction page of the installer.
+   */
+  readonly welcome?: string | null
+
+  /**
+   * The path to the conclusion file. This may be used to customize the text on the final "Summary" page of the installer.
+   */
+  readonly conclusion?: string | null
 
   /**
    * Install bundle over previous version if moved by user?

@@ -78,9 +78,29 @@ export class PkgTarget extends Target {
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
 
+    if (options.background != null) {
+      const background = await this.packager.getResource(options.background.file)
+      if (background != null) {
+        const alignment = options.background.alignment || "center"
+        const scaling = options.background.scaling || "tofit"
+
+        distInfo = distInfo.substring(0, insertIndex) + `    <background file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
+      }
+    }
+
+    const welcome = await this.packager.getResource(options.welcome)
+    if (welcome != null) {
+      distInfo = distInfo.substring(0, insertIndex) + `    <welcome file="${welcome}"/>\n` + distInfo.substring(insertIndex)
+    }
+
     const license = await getNotLocalizedLicenseFile(options.license, this.packager)
     if (license != null) {
       distInfo = distInfo.substring(0, insertIndex) + `    <license file="${license}"/>\n` + distInfo.substring(insertIndex)
+    }
+
+    const conclusion = await this.packager.getResource(options.conclusion)
+    if (conclusion != null) {
+      distInfo = distInfo.substring(0, insertIndex) + `    <conclusion file="${conclusion}"/>\n` + distInfo.substring(insertIndex)
     }
 
     debug(distInfo)
