@@ -31,7 +31,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.3.0",
+    "app-builder-bin": "2.3.1",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.6",
@@ -115,7 +115,7 @@
     "jsdoc-to-markdown": "^4.0.1",
     "path-sort": "^0.1.0",
     "sumchecker": "^2.0.2",
-    "ts-babel": "6.1.0",
+    "ts-babel": "6.1.1",
     "ts-jsdoc": "^3.0.1",
     "tslint": "^5.11.0",
     "typescript": "^3.1.6",

@@ -1075,10 +1075,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.3.0.tgz#01be654554167267c26a990b8cfc39ab9646007c"
-  integrity sha512-jxquarsPVHkUMatxFZzuEmovy2pxaGCIsVqZiAIdQV7wm1Cbq3Jl+gsq26aMXFFIgsN19jCq2HCoXhVv+Mx7HA==
+app-builder-bin@2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.3.1.tgz#4690f5bb049b9f0f84e6a21c09a90c2a8b9c3e00"
+  integrity sha512-hmqM9qc3jqmmUzkMhUZt81q8l7cdC3i5yZFBZyVpwCWJdG9zTeLwLitVGR7IJd0uK9Vf9sBejKBv6Yi8xise6A==
 
 append-transform@^0.4.0:
   version "0.4.0"
@@ -6160,10 +6160,10 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-6.1.0.tgz#e9c57ddcea08e22e55a4feceadf6f32bf39d698e"
-  integrity sha512-OBJAYn0Hhfdk6xcPhsxRK7ySqMikrHP1G81jRcQGx06wlau8VgzoDt/X0ZDr8SmshfEYsLlWIfh1YHEXtc0b7A==
+ts-babel@6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-6.1.1.tgz#c6cc6d4dfce26c42d721c5e58e99c01cb301bdee"
+  integrity sha512-46s2Q2s61TZL6s4fysFQXnpVgtTNRwI8t02ifCG5v34WV/Qc570TZMiu6f/9dpU5RK8WLzQhtTcYyRUYkhI6Wg==
   dependencies:
     "@babel/core" "^7.1.2"
     bluebird-lst "^1.0.6"
