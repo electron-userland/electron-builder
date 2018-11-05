@@ -53,7 +53,7 @@ export async function getConfig(projectDir: string, configPath: string | null, c
       config.extends = extendsSpec
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      const electronWebpack = require("electron-webpack/packages/electron-webpack")
+      const electronWebpack = require("electron-webpack")
       deepAssign(config, await electronWebpack.electronBuilderConfig())
     }
   }
