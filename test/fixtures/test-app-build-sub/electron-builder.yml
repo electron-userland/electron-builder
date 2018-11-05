@@ -1,4 +1,4 @@
-electronVersion: 3.0.6
+electronVersion: 3.0.7
 appId: org.electron-builder.testApp
 compression: store
 npmRebuild: false

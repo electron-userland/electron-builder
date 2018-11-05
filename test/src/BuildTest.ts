@@ -5,6 +5,7 @@ import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { move, outputJson, readFileSync } from "fs-extra-p"
 import * as path from "path"
+import { doMergeConfigs } from "app-builder-lib/out/util/config"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -57,6 +58,69 @@ test("cli", async () => {
       compress: "store",
       extends: "./config.json"
     }
+  })
+})
+
+test("merge configurations", () => {
+  const result = doMergeConfigs({
+    files: [
+      "**/*",
+      "!webpack",
+      "!.*",
+      "!config/jsdoc.json",
+      "!package.*",
+      "!docs",
+      "!private"
+    ],
+  }, {
+    files: [
+      {
+        from: ".",
+        filter: [
+          "package.json"
+        ]
+      },
+      {
+        from: "dist/main"
+      },
+      {
+        from: "dist/renderer"
+      },
+      {
+        from: "dist/renderer-dll"
+      }
+    ],
+  })
+
+  console.log("BOO: " + JSON.stringify(result, null, 2))
+  expect(result).toMatchObject({
+    directories: {
+      output: "dist",
+      buildResources: "build"
+    },
+    files: [
+      {
+        filter: [
+          "package.json",
+          "**/*",
+          "!webpack",
+          "!.*",
+          "!config/jsdoc.json",
+          "!package.*",
+          "!docs",
+          "!private"
+        ]
+      },
+      {
+        from: "dist/main"
+      },
+      {
+        from: "dist/renderer"
+      },
+      {
+        from: "dist/renderer-dll"
+      }
+    ]
   })
 })
 

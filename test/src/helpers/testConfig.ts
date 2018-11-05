@@ -1,8 +1,16 @@
-// reuse to avoid stale data (maybe not removed correctly on test stop)
-// use __dirname to allow run in parallel from different project clones
-// on macOs use /tmp otherwise docker test fails
-/*
-docker: Error response from daemon: Mounts denied: o Docker.
-      You can configure shared paths from Docker -> Preferences... -> File Sharing.
- */
-export const ELECTRON_VERSION = "3.0.6"
+import * as os from "os"
+import * as path from "path"
+
+export const ELECTRON_VERSION = "3.0.7"
+
+export function getElectronCacheDir() {
+  if (process.platform === "win32") {
+    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Cache", "electron")
+  }
+  else if (process.platform === "darwin") {
+    return path.join(os.homedir(), "Library", "Caches", "electron")
+  }
+  else {
+    return path.join(os.homedir(), ".cache", "electron")
+  }
+}

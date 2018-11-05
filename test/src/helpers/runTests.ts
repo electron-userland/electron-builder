@@ -53,6 +53,7 @@ async function runTests() {
       testPatterns.push("extraMetadataTest")
       testPatterns.push("HoistedNodeModuleTest")
       testPatterns.push("configurationValidationTest")
+      testPatterns.push("webInstallerTest")
     }
     else if (circleNodeIndex === 1) {
       testPatterns.push("oneClickInstallerTest")
@@ -61,21 +62,20 @@ async function runTests() {
       testPatterns.push("snapTest")
       testPatterns.push("macPackagerTest")
       testPatterns.push("linuxPackagerTest")
-    }
-    else {
-      testPatterns.push("PublishManagerTest")
-      testPatterns.push("portableTest")
-      testPatterns.push("BuildTest")
-      testPatterns.push("assistedInstallerTest")
-      testPatterns.push("linuxArchiveTest")
-      testPatterns.push("filesTest")
-      testPatterns.push("globTest")
-      testPatterns.push("webInstallerTest")
       testPatterns.push("msiTest")
       testPatterns.push("ignoreTest")
       testPatterns.push("mainEntryTest")
       testPatterns.push("ArtifactPublisherTest")
       testPatterns.push("RepoSlugTest")
+      testPatterns.push("portableTest")
+    }
+    else {
+      testPatterns.push("PublishManagerTest")
+      testPatterns.push("BuildTest")
+      testPatterns.push("assistedInstallerTest")
+      testPatterns.push("linuxArchiveTest")
+      testPatterns.push("filesTest")
+      testPatterns.push("globTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }

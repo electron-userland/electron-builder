@@ -3,6 +3,7 @@ import { move } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { getElectronCacheDir } from "./helpers/testConfig"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
 function createBuildResourcesTest(packagerOptions: PackagerOptions) {
@@ -120,10 +121,10 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
 // test on all CI to check path separators
 test.ifAll("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", {targets: linuxDirTarget}))
 
-test.ifAll("electronDist as path to local folder with electron builds zipped ", app({
+test.ifNotWindows("electronDist as path to local folder with electron builds zipped ", app({
   targets: linuxDirTarget,
   config: {
-    electronDist: require("env-paths")("electron", {suffix: ""}).cache,
+    electronDist: getElectronCacheDir(),
   },
 }))
 

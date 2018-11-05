@@ -47,9 +47,9 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    */
   readonly compression?: CompressionLevel | null
 
-  readonly files?: Array<FileSet | string> | FileSet | string | null
-  readonly extraResources?: Array<FileSet | string> | FileSet | string | null
-  readonly extraFiles?: Array<FileSet | string> | FileSet | string | null
+  files?: Array<FileSet | string> | FileSet | string | null
+  extraResources?: Array<FileSet | string> | FileSet | string | null
+  extraFiles?: Array<FileSet | string> | FileSet | string | null
 
   /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).

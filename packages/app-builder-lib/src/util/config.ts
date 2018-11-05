@@ -1,9 +1,10 @@
-import { asArray, DebugLogger, InvalidConfigurationError, log, deepAssign } from "builder-util"
+import { DebugLogger, deepAssign, InvalidConfigurationError, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"
+import { FileSet } from ".."
 import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
 
@@ -58,34 +59,130 @@ export async function getConfig(projectDir: string, configPath: string | null, c
     }
   }
 
-  if (extendsSpec == null) {
-    return deepAssign(getDefaultConfig(), config)
-  }
-
   let parentConfig: Configuration | null
   if (extendsSpec === "react-cra") {
     parentConfig = await reactCra(projectDir)
     log.info({preset: extendsSpec}, "loaded parent configuration")
   }
-  else {
+  else if (extendsSpec != null) {
     const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, extendsSpec)
     log.info({file: parentConfigAndEffectiveFile.configFile}, "loaded parent configuration")
     parentConfig = parentConfigAndEffectiveFile.result
   }
+  else {
+    parentConfig = null
+  }
 
-  // electron-webpack and electrify client config - want to exclude some files
-  // we add client files configuration to main parent file matcher
-  const files = config.files == null ? [] : (Array.isArray(config.files) ? config.files : (typeof config.files === "string" ? [config.files] : []))
-  if (parentConfig.files != null && files.length !== 0 && Array.isArray(parentConfig.files) && parentConfig.files.length > 0) {
-    const mainFileSet = parentConfig.files[0]
-    if (typeof mainFileSet === "object" && (mainFileSet.from == null || mainFileSet.from === ".")) {
-      mainFileSet.filter = asArray(mainFileSet.filter)
-      mainFileSet.filter.push(...asArray(config.files as any))
-      delete (config as any).files
+  return doMergeConfigs(config, parentConfig)
+}
+
+// normalize for easy merge
+function normalizeFiles(configuration: Configuration, name: "files" | "extraFiles" | "extraResources") {
+  let value = configuration[name]
+  if (value == null) {
+    return
+  }
+
+  if (!Array.isArray(value)) {
+    value = [value]
+  }
+
+  itemLoop: for (let i = 0; i < value.length; i++) {
+    let item = value[i]
+    if (typeof item === "string") {
+      // merge with previous if possible
+      if (i !== 0) {
+        let prevItemIndex = i - 1
+        let prevItem: FileSet
+        do {
+          prevItem = value[prevItemIndex--] as FileSet
+        } while (prevItem == null)
+
+        if (prevItem.from == null && prevItem.to == null) {
+          if (prevItem.filter == null) {
+            prevItem.filter = [item]
+          }
+          else {
+            (prevItem.filter as Array<string>).push(item)
+          }
+          value[i] = null as any
+          continue itemLoop
+        }
+      }
+
+      item = {
+        filter: [item],
+      }
+      value[i] = item
+    }
+    else if (Array.isArray(item)) {
+      throw new Error(`${name} configuration is invalid, nested array not expected for index ${i}: ` + item)
+    }
+
+    // make sure that merge logic is not complex - unify different presentations
+    if (item.from === ".") {
+      item.from = undefined
+    }
+
+    if (item.to === ".") {
+      item.to = undefined
+    }
+
+    if (item.filter != null && typeof item.filter === "string") {
+      item.filter = [item.filter]
     }
   }
 
-  return deepAssign(getDefaultConfig(), parentConfig, config)
+  configuration[name] = value.filter(it => it != null)
+}
+
+function mergeFiles(configuration: Configuration, parentConfiguration: Configuration, mergedConfiguration: Configuration, name: "files" | "extraFiles" | "extraResources") {
+  const list = configuration[name] as Array<FileSet> | null
+  const parentList = parentConfiguration[name] as Array<FileSet> | null
+  if (list == null || parentList == null) {
+    return
+  }
+
+  const result = list.slice()
+  mergedConfiguration[name] = result
+
+  itemLoop: for (const item of parentConfiguration.files as Array<FileSet>) {
+    for (const existingItem of list) {
+      if (existingItem.from === item.from && existingItem.to === item.to) {
+        if (item.filter != null) {
+          if (existingItem.filter == null) {
+            existingItem.filter = item.filter.slice()
+          }
+          else {
+            existingItem.filter = (item.filter as Array<string>).concat(existingItem.filter)
+          }
+        }
+
+        continue itemLoop
+      }
+    }
+
+    // existing item not found, simply add
+    result.push(item)
+  }
+}
+
+export function doMergeConfigs(configuration: Configuration, parentConfiguration: Configuration | null) {
+  normalizeFiles(configuration, "files")
+  normalizeFiles(configuration, "extraFiles")
+  normalizeFiles(configuration, "extraResources")
+
+  if (parentConfiguration == null) {
+    return deepAssign(getDefaultConfig(), configuration)
+  }
+
+  normalizeFiles(parentConfiguration, "files")
+  normalizeFiles(parentConfiguration, "extraFiles")
+  normalizeFiles(parentConfiguration, "extraResources")
+
+  const result = deepAssign(getDefaultConfig(), parentConfiguration, configuration)
+  mergeFiles(configuration, parentConfiguration, result, "files")
+  return result
 }
 
 function getDefaultConfig(): Configuration {
