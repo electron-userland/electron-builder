@@ -6,13 +6,15 @@ electron-builder [configuration](#configuration) can be defined
      "appId": "com.example.app"
    }
    ```
-* or through the `--config <path/to/yml-or-json5-or-toml>` option (defaults to `electron-builder.yml` (or `json`, or [json5](http://json5.org), or [toml](https://github.com/toml-lang/toml))).
+* or through the `--config <path/to/yml-or-json5-or-toml-or-js>` option. Defaults to `electron-builder.yml`. 
    ```yaml
    appId: "com.example.app"
    ```
+   
+    `json`, [json5](http://json5.org), [toml](https://github.com/toml-lang/toml) or `js` (exported configuration or function that produces configuration) formats also supported.
 
-!!! tip
-    If you want to use [toml](https://en.wikipedia.org/wiki/TOML), please install `yarn add toml --dev`.
+    !!! tip
+        If you want to use [toml](https://en.wikipedia.org/wiki/TOML), please install `yarn add toml --dev`.
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
