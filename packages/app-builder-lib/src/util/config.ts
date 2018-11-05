@@ -53,8 +53,8 @@ export async function getConfig(projectDir: string, configPath: string | null, c
       config.extends = extendsSpec
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      extendsSpec = "electron-webpack/electron-builder.yml"
-      config.extends = extendsSpec
+      const electronWebpack = require('electron-webpack/packages/electron-webpack')
+      deepAssign(config, await electronWebpack.electronBuilderConfig())
     }
   }
 
