@@ -54,7 +54,7 @@ export async function getConfig(projectDir: string, configPath: string | null, c
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
       const electronBuilderJs = "electron-webpack/out/electron-builder.js"
-      const extendsSpec = await pathExists(electronBuilderJs) ? electronBuilderJs : "electron-webpack/electron-builder.yml"
+      extendsSpec = await pathExists(electronBuilderJs) ? electronBuilderJs : "electron-webpack/electron-builder.yml"
       config.extends = extendsSpec
     }
   }
