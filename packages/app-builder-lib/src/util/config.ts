@@ -1,6 +1,6 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
-import { readJson } from "fs-extra-p"
+import { readJson, pathExists } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"
@@ -54,7 +54,8 @@ export async function getConfig(projectDir: string, configPath: string | null, c
       config.extends = extendsSpec
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      extendsSpec = "electron-webpack/electron-builder.yml"
+      const electronBuilderJs = "electron-webpack/out/electron-builder.js"
+      extendsSpec = await pathExists(electronBuilderJs) ? electronBuilderJs : "electron-webpack/electron-builder.yml"
       config.extends = extendsSpec
     }
   }
