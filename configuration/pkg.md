@@ -17,6 +17,9 @@ The top-level [pkg](configuration.md#Configuration-pkg) key contains set of opti
 
 * <code id="PkgOptions-identity">identity</code> String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.
 * <code id="PkgOptions-license">license</code> String - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
+* <code id="PkgOptions-background">background</code> PkgBackgroundOptions - Options for the background image for the installer.
+* <code id="PkgOptions-welcome">welcome</code> String - The path to the welcome file. This may be used to customize the text on the Introduction page of the installer.
+* <code id="PkgOptions-conclusion">conclusion</code> String - The path to the conclusion file. This may be used to customize the text on the final "Summary" page of the installer.
 * <code id="PkgOptions-isRelocatable">isRelocatable</code> = `true` Boolean - Install bundle over previous version if moved by user?
 * <code id="PkgOptions-isVersionChecked">isVersionChecked</code> = `true` Boolean - Don't install bundle if newer version on disk?
 * <code id="PkgOptions-hasStrictIdentifier">hasStrictIdentifier</code> = `true` Boolean - Require identical bundle identifiers at install path?
