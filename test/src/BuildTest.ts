@@ -92,7 +92,7 @@ test("merge configurations", () => {
     ],
   })
 
-  console.log("BOO: " + JSON.stringify(result, null, 2))
+  // console.log("data: " + JSON.stringify(result, null, 2))
   expect(result).toMatchObject({
     directories: {
       output: "dist",

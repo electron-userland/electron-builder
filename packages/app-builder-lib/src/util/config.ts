@@ -32,7 +32,10 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
   }
 }
 
-export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Configuration | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
+export async function getConfig(projectDir: string,
+                                configPath: string | null,
+                                configFromOptions: Configuration | null | undefined,
+                                packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
   const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata}
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
   const config = configAndEffectiveFile == null ? {} : configAndEffectiveFile.result
@@ -54,8 +57,8 @@ export async function getConfig(projectDir: string, configPath: string | null, c
       config.extends = extendsSpec
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
-      const electronBuilderJs = "electron-webpack/out/electron-builder.js"
-      extendsSpec = await pathExists(electronBuilderJs) ? electronBuilderJs : "electron-webpack/electron-builder.yml"
+      const jsConfigFile = "out/electron-builder.js"
+      extendsSpec = "electron-webpack/" + (await pathExists(jsConfigFile) ? jsConfigFile : "electron-builder.yml")
       config.extends = extendsSpec
     }
   }

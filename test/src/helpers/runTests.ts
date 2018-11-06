@@ -152,7 +152,7 @@ async function runTests() {
       .map(it => it.endsWith(".js") || it.endsWith("*") ? it : `${it}\\.js$`)
   }
   if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {
-    jestOptions.testResultsProcessor = "jest-junit"
+    jestOptions.reporters = ["default", "jest-junit"]
   }
 
   // console.log(JSON.stringify(jestOptions, null, 2))

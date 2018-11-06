@@ -82,8 +82,8 @@ export class PkgTarget extends Target {
       const background = await this.packager.getResource(options.background.file)
       if (background != null) {
         const alignment = options.background.alignment || "center"
+        // noinspection SpellCheckingInspection
         const scaling = options.background.scaling || "tofit"
-
         distInfo = distInfo.substring(0, insertIndex) + `    <background file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
       }
     }
