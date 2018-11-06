@@ -47,14 +47,12 @@ export async function getConfig(projectDir: string,
     log.info({file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile}, "loaded configuration")
   }
 
-  let extendsSpec = config.extends
-  if (extendsSpec == null && extendsSpec !== null) {
+  if (config.extends == null && config.extends !== null) {
     const metadata = await packageMetadata.value || {}
     const devDependencies = metadata.devDependencies
     const dependencies = metadata.dependencies
     if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
-      extendsSpec = "react-cra"
-      config.extends = extendsSpec
+      config.extends = "react-cra"
     }
     else if (devDependencies != null && "electron-webpack" in devDependencies) {
       let file = "electron-webpack/out/electron-builder.js"
@@ -69,12 +67,12 @@ export async function getConfig(projectDir: string,
   }
 
   let parentConfig: Configuration | null
-  if (extendsSpec === "react-cra") {
+  if (config.extends === "react-cra") {
     parentConfig = await reactCra(projectDir)
-    log.info({preset: extendsSpec}, "loaded parent configuration")
+    log.info({preset: config.extends}, "loaded parent configuration")
   }
-  else if (extendsSpec != null) {
-    const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, extendsSpec)
+  else if (config.extends != null) {
+    const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, config.extends)
     log.info({file: parentConfigAndEffectiveFile.configFile}, "loaded parent configuration")
     parentConfig = parentConfigAndEffectiveFile.result
   }
