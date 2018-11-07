@@ -187,6 +187,8 @@ function configureLocalhostAts(appPlist: any) {
     appPlist.NSAppTransportSecurity = ats
   }
 
+  ats.NSAllowsLocalNetworking = true
+
   let exceptionDomains = ats.NSExceptionDomains
   if (exceptionDomains == null) {
     exceptionDomains = {}
@@ -194,12 +196,14 @@ function configureLocalhostAts(appPlist: any) {
   }
 
   if (exceptionDomains.localhost == null) {
-    exceptionDomains.localhost = {
+    const allowHttp = {
       NSTemporaryExceptionAllowsInsecureHTTPSLoads: false,
       NSIncludesSubdomains: false,
       NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
       NSTemporaryExceptionMinimumTLSVersion: "1.0",
       NSTemporaryExceptionRequiresForwardSecrecy: false
     }
+    exceptionDomains.localhost = allowHttp
+    exceptionDomains["127.0.0.1"] = allowHttp
   }
 }

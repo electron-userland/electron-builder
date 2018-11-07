@@ -42,7 +42,7 @@ export class MacUpdater extends AppUpdater {
 
     function getServerUrl() {
       const address = server.address() as AddressInfo
-      return `http://localhost:${address.port}`
+      return `http://127.0.0.1:${address.port}`
     }
 
     return await this.executeDownload({
@@ -113,8 +113,7 @@ export class MacUpdater extends AppUpdater {
             })
             readStream.pipe(response)
           })
-          // must be localhost, added to NSExceptionDomains
-          server.listen(0, "localhost", () => {
+          server.listen(0, "127.0.0.1", () => {
             this.nativeUpdater.setFeedURL({
               url: getServerUrl(),
               headers: {"Cache-Control": "no-cache"},

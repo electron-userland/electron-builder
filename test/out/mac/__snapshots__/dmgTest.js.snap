@@ -35,7 +35,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -82,7 +90,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -129,7 +145,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2245,7 +2269,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2299,7 +2331,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2353,7 +2393,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2407,7 +2455,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2461,7 +2517,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2537,7 +2601,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2589,7 +2661,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2656,7 +2736,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2703,7 +2791,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
@@ -2757,7 +2853,15 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
       "localhost": Object {
         "NSIncludesSubdomains": false,
         "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,

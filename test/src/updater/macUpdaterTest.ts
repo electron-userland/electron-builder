@@ -22,9 +22,9 @@ class TestNativeUpdater extends EventEmitter {
   }
 
   // noinspection JSMethodCanBeStatic
-  setFeedURL(updateUrl: string) {
+  setFeedURL(updateUrl: any) {
     // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
-    this.updateUrl = updateUrl
+    this.updateUrl = updateUrl.url
   }
 }
 
