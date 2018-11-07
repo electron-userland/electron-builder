@@ -71,14 +71,12 @@ export class BintrayPublisher extends HttpPublisher {
       }
     }
 
-    if (this.client.distribution) {
-      options.headers = options.headers || {}
-      options.headers["X-Bintray-Debian-Distribution"] = this.client.distribution
+    if (this.client.distribution != null) {
+      options.headers!!["X-Bintray-Debian-Distribution"] = this.client.distribution
     }
 
-    if (this.client.component) {
-      options.headers = options.headers || {}
-      options.headers["X-Bintray-Debian-Component"] = this.client.component
+    if (this.client.component != null) {
+      options.headers!!["X-Bintray-Debian-Component"] = this.client.component
     }
 
     for (let attemptNumber = 0; ; attemptNumber++) {
@@ -96,8 +94,8 @@ export class BintrayPublisher extends HttpPublisher {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  async deleteRelease(): Promise<void> {
-    if (!this._versionPromise.hasValue) {
+  async deleteRelease(isForce = false): Promise<void> {
+    if (!isForce && !this._versionPromise.hasValue) {
       return
     }
 

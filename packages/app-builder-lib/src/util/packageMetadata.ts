@@ -92,13 +92,13 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
   }
 
   const updaterVersion = dependencies["electron-updater"]
-  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), ">=3.0.3")) {
-    errors.push(`At least electron-updater 3.0.3 is recommended by current electron-builder version. Please set electron-updater version to "^3.0.3"`)
+  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), ">=3.2.0")) {
+    errors.push(`At least electron-updater 3.2.0 is recommended by current electron-builder version. Please set electron-updater version to "^3.2.0"`)
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]
-  if (swVersion != null && !semver.satisfies(versionFromDependencyRange(swVersion), ">=20.23.0")) {
-    errors.push(`At least electron-builder-squirrel-windows 20.23.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.23.0"`)
+  if (swVersion != null && !semver.satisfies(versionFromDependencyRange(swVersion), ">=20.32.0")) {
+    errors.push(`At least electron-builder-squirrel-windows 20.32.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.32.0"`)
   }
 
   const deps = ["electron", "electron-prebuilt", "electron-rebuild"]

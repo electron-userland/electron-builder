@@ -1,14 +1,13 @@
-import { Arch, asArray, exec, InvalidConfigurationError, log, use } from "builder-util"
+import { Arch, asArray, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
-import _debug from "debug"
 import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { FileTransformer, CopyFileTransformer } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
-import { downloadCertificate } from "./codeSign"
+import { downloadCertificate } from "./codeSign/macCodeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -23,7 +22,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
-import { CertificateFromStoreInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
+import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import BluebirdPromise from "bluebird-lst"
 import { execWine } from "./wine"
 
@@ -72,59 +71,38 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
 
-  readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
-    const cscInfo = await this.cscInfo.value
-    if (cscInfo == null) {
-      return null
-    }
-
-    if ("subject" in cscInfo) {
-      return (cscInfo as CertificateFromStoreInfo).subject
-    }
-
-    const vm = await this.vm.value
-    const info = cscInfo as FileCodeSigningInfo
-    const certFile = vm.toVmFile(info.file)
-    // https://github.com/electron-userland/electron-builder/issues/1735
-    const args = info.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${info.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
-    return await vm.exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command"].concat(args), {timeout: 30 * 1000}).then(it => it.trim())
-  })
-
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    let publisherName = (this.platformSpecificBuildOptions as WindowsConfiguration).publisherName
+    const publisherName = (this.platformSpecificBuildOptions as WindowsConfiguration).publisherName
     if (publisherName === null) {
       return null
     }
+    else if (publisherName != null) {
+      return asArray(publisherName)
+    }
 
+    const certInfo = await this.lazyCertInfo.value
+    return certInfo == null ? null : [certInfo.commonName]
+  })
+
+  readonly lazyCertInfo = new Lazy<CertificateInfo | null>(async () => {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       return null
     }
 
     if ("subject" in cscInfo) {
-      return asArray(parseDn((cscInfo as CertificateFromStoreInfo).subject).get("CN"))
+      const bloodyMicrosoftSubjectDn = (cscInfo as CertificateFromStoreInfo).subject
+      return {
+        commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!!,
+        bloodyMicrosoftSubjectDn,
+      }
     }
 
     const cscFile = (cscInfo as FileCodeSigningInfo).file
-    if (publisherName == null && cscFile != null) {
-      try {
-        if (process.platform === "win32") {
-          const subject = await this.computedPublisherSubjectOnWindowsOnly.value
-          const commonName = subject == null ? null : parseDn(subject).get("CN")
-          if (commonName) {
-            return asArray(commonName)
-          }
-        }
-        else {
-          publisherName = await extractCommonNameUsingOpenssl((cscInfo as FileCodeSigningInfo).password || "", cscFile)
-        }
-      }
-      catch (e) {
-        throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
-      }
+    if (cscFile == null) {
+      return null
     }
-
-    return publisherName == null ? null : asArray(publisherName)
+    return await getCertInfo(cscFile, (cscInfo as FileCodeSigningInfo).password || "")
   })
 
   get isForceCodeSigningVerification(): boolean {
@@ -390,17 +368,5 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         return null
       }
     })
-  }
-}
-
-const debugOpenssl = _debug("electron-builder:openssl")
-async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
-  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000}, debugOpenssl.enabled)
-  const match = result.match(/^subject.*\/CN=([^\/\n]+)/m)
-  if (match == null || match[1] == null) {
-    throw new Error(`Cannot extract common name from p12: ${result}`)
-  }
-  else {
-    return match[1]
   }
 }

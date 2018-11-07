@@ -16,9 +16,19 @@ export interface Framework {
 
   prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions): Promise<any>
 
-  beforeCopyExtraFiles?(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null): Promise<any>
+  beforeCopyExtraFiles?(options: BeforeCopyExtraFilesOptions): Promise<any>
 
   createTransformer?(): FileTransformer | null
+}
+
+export interface BeforeCopyExtraFilesOptions {
+  packager: PlatformPackager<any>
+  appOutDir: string
+
+  asarIntegrity: AsarIntegrity | null
+
+  // ElectronPlatformName
+  platformName: string
 }
 
 export interface PrepareApplicationStageDirectoryOptions {

@@ -1,5 +1,5 @@
-import { readEmbeddedBlockMapData } from "builder-util-runtime/out/blockMapApi"
-import { DifferentialDownloader, readBlockMap } from "./DifferentialDownloader"
+import { BlockMap, readEmbeddedBlockMapData } from "builder-util-runtime/out/blockMapApi"
+import { DifferentialDownloader } from "./DifferentialDownloader"
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
   async download() {
@@ -10,4 +10,13 @@ export class FileWithEmbeddedBlockMapDifferentialDownloader extends Differential
     const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
     await this.doDownload(JSON.parse(await readEmbeddedBlockMapData(this.options.oldFile)), newBlockMap)
   }
+}
+
+let pako: any = null
+
+async function readBlockMap(data: Buffer): Promise<BlockMap> {
+  if (pako == null) {
+    pako = require("pako")
+  }
+  return JSON.parse(pako.inflateRaw(data, {to: "string"}))
 }

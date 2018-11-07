@@ -57,7 +57,7 @@ export function _executeTasks(differentialDownloader: DifferentialDownloader, op
       else {
         const requestOptions = differentialDownloader.createRequestOptions("get")
         requestOptions.headers!!.Range = `bytes=${task.start}-${task.end - 1}`
-        const request = differentialDownloader.httpExecutor.doRequest(requestOptions, response => {
+        const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
           if (!checkIsRangesSupported(response, reject)) {
             return
           }
@@ -78,7 +78,7 @@ export function _executeTasks(differentialDownloader: DifferentialDownloader, op
 
   const requestOptions = differentialDownloader.createRequestOptions("get")
   requestOptions.headers!!.Range = ranges.substring(0, ranges.length - 2)
-  const request = differentialDownloader.httpExecutor.doRequest(requestOptions, response => {
+  const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     if (!checkIsRangesSupported(response, reject)) {
       return
     }

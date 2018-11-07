@@ -8,10 +8,12 @@ import { BaseUpdater } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
-import { configureRequestOptionsFromUrl, findFile, Provider } from "./providers/Provider"
+import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra-p"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
+
+let pako: any = null
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -44,7 +46,6 @@ export class NsisUpdater extends BaseUpdater {
           if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider)) {
             try {
               await this.httpExecutor.download(packageInfo!!.path, packageFile!!, {
-                skipDirCreation: true,
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo!!.sha512,
@@ -162,23 +163,24 @@ export class NsisUpdater extends BaseUpdater {
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const requestOptions = configureRequestOptionsFromUrl(url, {headers: downloadUpdateOptions.requestHeaders});
-        (requestOptions as any).gzip = true
-        const data = await this.httpExecutor.request(requestOptions, downloadUpdateOptions.cancellationToken)
-        if (data == null) {
+        const data = await this.httpExecutor.downloadToBuffer(url.href, downloadUpdateOptions)
+        if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
 
+        if (pako == null) {
+          pako = require("pako")
+        }
+
         try {
-          return JSON.parse(data)
+          return JSON.parse(pako.inflate(data, {to: "string"}))
         }
         catch (e) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
         }
       }
 
-      const blockMapData = await downloadBlockMap(newBlockMapUrl)
-      const oldBlockMapData = await downloadBlockMap(oldBlockMapUrl)
+      const blockMapDataList = await Promise.all([downloadBlockMap(newBlockMapUrl), downloadBlockMap(oldBlockMapUrl)])
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
         newUrl: fileInfo.url.href,
         oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
@@ -187,7 +189,7 @@ export class NsisUpdater extends BaseUpdater {
         useMultipleRangeRequest: provider.useMultipleRangeRequest,
         requestHeaders,
       })
-        .download(oldBlockMapData, blockMapData)
+        .download(blockMapDataList[0], blockMapDataList[1])
     }
     catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

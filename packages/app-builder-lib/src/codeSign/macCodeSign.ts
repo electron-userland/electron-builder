@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util/out/util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes } from "crypto"
@@ -8,8 +8,8 @@ import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
-import { download } from "./binDownload"
-import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
+import { download } from "../binDownload"
+import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -142,7 +142,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
+    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath)
       .then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]

@@ -2,7 +2,7 @@ import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 
 export class GenericDifferentialDownloader extends DifferentialDownloader {
-  async download(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
-    await this.doDownload(oldBlockMap, newBlockMap)
+  download(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+    return this.doDownload(oldBlockMap, newBlockMap)
   }
 }

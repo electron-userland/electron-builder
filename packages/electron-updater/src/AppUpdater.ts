@@ -11,10 +11,11 @@ import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
-import { ElectronHttpExecutor } from "./electronHttpExecutor"
+import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UpdateCheckResult, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
+import Session = Electron.Session
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -93,6 +94,10 @@ export abstract class AppUpdater extends EventEmitter {
   requestHeaders: OutgoingHttpHeaders | null = null
 
   protected _logger: Logger = console
+
+  get netSession(): Session {
+    return getNetSession()
+  }
 
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
@@ -487,7 +492,6 @@ export abstract class AppUpdater extends EventEmitter {
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     const fileInfo = taskOptions.fileInfo
     const downloadOptions: DownloadOptions = {
-      skipDirCreation: true,
       headers: taskOptions.downloadUpdateOptions.requestHeaders,
       cancellationToken: taskOptions.downloadUpdateOptions.cancellationToken,
       sha2: (fileInfo.info as any).sha2,

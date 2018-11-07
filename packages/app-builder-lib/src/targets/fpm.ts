@@ -1,6 +1,7 @@
 import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
-import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use } from "builder-util"
+import { Arch, debug, exec, isMacOsSierra, log, TmpDir, toLinuxArchString, use } from "builder-util"
+import { smarten } from "../appInfo"
 import { computeEnv } from "../util/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
@@ -145,7 +146,7 @@ export default class FpmTarget extends Target {
     }
 
     const packageCategory = options.packageCategory
-    if (packageCategory != null && packageCategory !== null) {
+    if (packageCategory != null) {
       args.push("--category", packageCategory)
     }
 

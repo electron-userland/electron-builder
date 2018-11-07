@@ -148,7 +148,7 @@ function logSpawn(command: string, args: Array<string>, options: SpawnOptions) {
     return
   }
 
-  const argsString = args.join(" ")
+  const argsString = removePassword(args.join(" "))
   const logFields: any = {
     command: command + " " + (command === "docker" ? argsString : removePassword(argsString)),
   }
@@ -273,20 +273,6 @@ export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | 
 
 export function isTokenCharValid(token: string) {
   return /^[\w\/=+-]+$/.test(token)
-}
-
-// fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
-// http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
-export function smarten(s: string): string {
-  // opening singles
-  s = s.replace(/(^|[-\u2014\s(\["])'/g, "$1\u2018")
-  // closing singles & apostrophes
-  s = s.replace(/'/g, "\u2019")
-  // opening doubles
-  s = s.replace(/(^|[-\u2014/\[(\u2018\s])"/g, "$1\u201c")
-  // closing doubles
-  s = s.replace(/"/g, "\u201d")
-  return s
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

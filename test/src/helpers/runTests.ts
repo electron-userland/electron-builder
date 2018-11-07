@@ -68,14 +68,14 @@ async function runTests() {
       testPatterns.push("ArtifactPublisherTest")
       testPatterns.push("RepoSlugTest")
       testPatterns.push("portableTest")
+      testPatterns.push("globTest")
+      testPatterns.push("BuildTest")
+      testPatterns.push("linuxArchiveTest")
     }
     else {
       testPatterns.push("PublishManagerTest")
-      testPatterns.push("BuildTest")
       testPatterns.push("assistedInstallerTest")
-      testPatterns.push("linuxArchiveTest")
       testPatterns.push("filesTest")
-      testPatterns.push("globTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }

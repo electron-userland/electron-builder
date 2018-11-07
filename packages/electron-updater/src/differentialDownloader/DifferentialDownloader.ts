@@ -8,8 +8,6 @@ import { copyData } from "./DataSplitter"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 import { checkIsRangesSupported, executeTasks } from "./multipleRangeDownloader"
 
-const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
-
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string
   readonly newUrl: string
@@ -34,7 +32,7 @@ export abstract class DifferentialDownloader {
     this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
   }
 
-  createRequestOptions(method: "head" | "get" = "get", newUrl?: string | null): RequestOptions {
+  createRequestOptions(method: "get" | "head" = "get", newUrl?: string | null): RequestOptions {
     return {
       ...(newUrl == null ? this.baseRequestOptions : configureRequestOptionsFromUrl(newUrl, {})),
       method,
@@ -163,7 +161,7 @@ export abstract class DifferentialDownloader {
         w = executeTasks(this, tasks, firstStream, oldFileFd, reject)
       }
       else {
-        let attemptCount = 0
+        let downloadOperationCount = 0
         let actualUrl: string | null = null
         this.logger.info(`Differential download: ${this.options.newUrl}`)
         w = (index: number) => {
@@ -178,45 +176,45 @@ export abstract class DifferentialDownloader {
           const operation = tasks[index++]
           if (operation.kind === OperationKind.COPY) {
             copyData(operation, firstStream, oldFileFd, reject, () => w(index))
+            return
           }
-          else {
-            const requestOptions = this.createRequestOptions("get", actualUrl)
-            const range = `bytes=${operation.start}-${operation.end - 1}`
-            requestOptions.headers!!.Range = range;
-            (requestOptions as any).redirect = "manual"
 
-            const debug = this.logger.debug
-            if (debug != null) {
-              debug(`effective url: ${actualUrl == null ? "original" : removeQuery(actualUrl)}, range: ${range}`)
+          const requestOptions = this.createRequestOptions("get", actualUrl)
+          const range = `bytes=${operation.start}-${operation.end - 1}`
+          requestOptions.headers!!.Range = range;
+          (requestOptions as any).redirect = "manual"
+
+          const debug = this.logger.debug
+          if (debug != null) {
+            debug(`download range: ${range}`)
+          }
+
+          const request = this.httpExecutor.createRequest(requestOptions, response => {
+            // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+            if (response.statusCode >= 400) {
+              reject(createHttpError(response))
             }
 
-            const request = this.httpExecutor.doRequest(requestOptions, response => {
-              // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-              if (response.statusCode >= 400) {
-                reject(createHttpError(response))
+            response.pipe(firstStream, {
+              end: false
+            })
+            response.once("end", () => {
+              if (++downloadOperationCount === 100) {
+                downloadOperationCount = 0
+                setTimeout(() => w(index), 1000)
               }
-
-              response.pipe(firstStream, {
-                end: false
-              })
-              response.once("end", () => {
-                if (++attemptCount === 100) {
-                  attemptCount = 0
-                  setTimeout(() => w(index), 1000)
-                }
-                else {
-                  w(index)
-                }
-              })
+              else {
+                w(index)
+              }
             })
-            request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-              this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
-              actualUrl = redirectUrl
-              request.followRedirect()
-            })
-            this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-            request.end()
-          }
+          })
+          request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+            this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
+            actualUrl = redirectUrl
+            request.followRedirect()
+          })
+          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+          request.end()
         }
       }
 
@@ -233,12 +231,16 @@ export abstract class DifferentialDownloader {
       chunk.copy(buffer, position)
       position += chunk.length
     })
+
+    if (position !== buffer.length) {
+      throw new Error(`Received data length ${position} is not equal to expected ${buffer.length}`)
+    }
     return buffer
   }
 
   private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void) {
     return new Promise((resolve, reject) => {
-      const request = this.httpExecutor.doRequest(requestOptions, response => {
+      const request = this.httpExecutor.createRequest(requestOptions, response => {
         if (!checkIsRangesSupported(response, reject)) {
           return
         }
@@ -250,10 +252,6 @@ export abstract class DifferentialDownloader {
       request.end()
     })
   }
-}
-
-export async function readBlockMap(data: Buffer): Promise<BlockMap> {
-  return JSON.parse((await inflateRaw(data)).toString())
 }
 
 function formatBytes(value: number, symbol = " KB") {

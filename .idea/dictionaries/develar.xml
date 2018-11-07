@@ -243,6 +243,7 @@
       <w>micromatch</w>
       <w>minami</w>
       <w>minimatch</w>
+      <w>minio</w>
       <w>mkdirp</w>
       <w>mkdocs</w>
       <w>mkdtemp</w>
@@ -272,6 +273,7 @@
       <w>osslsigncode</w>
       <w>packagejson</w>
       <w>pacman</w>
+      <w>pako</w>
       <w>passin</w>
       <w>paulcbetts</w>
       <w>perllib</w>

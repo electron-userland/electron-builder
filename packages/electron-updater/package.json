@@ -20,7 +20,8 @@
     "source-map-support": "^0.5.9",
     "builder-util-runtime": "~0.0.0-semantic-release",
     "electron-is-dev": "^0.3.0",
-    "lodash.isequal": "^4.5.0"
+    "lodash.isequal": "^4.5.0",
+    "pako": "^1.0.6"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {

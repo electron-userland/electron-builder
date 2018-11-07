@@ -20,9 +20,9 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     let version: string | null = null
     let checksum: string | null = null
     if (semver.gte(osVersion, "10.13.0")) {
-      version = "2.0.3-mac-10.13"
+      version = "3.0.3-mac-10.13"
       // noinspection SpellCheckingInspection
-      checksum = "dlEVCf0YKP5IEiOKPNE48Q8NKXbXVdhuaI9hG2oyDEay2c+93PE5qls7XUbIYq4Xi1gRK8fkWeCtzN2oLpVQtg=="
+      checksum = "qvnvKz8CZtUtlJ9cR1zIMTYfhQ3f1atDp1ngMcfHFP5O2/Xjnngb2uR6a/xzm6glKmuIMXG3ni2D6xu0gYFrnQ=="
     }
     else if (semver.gte(osVersion, "10.12.0") || process.env.TRAVIS_OS_NAME === "osx") {
       version = "2.0.1-mac-10.12"

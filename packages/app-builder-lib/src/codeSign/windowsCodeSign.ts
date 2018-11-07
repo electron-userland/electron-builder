@@ -1,15 +1,15 @@
-import { asArray, isMacOsSierra, log } from "builder-util"
-import { getBinFromGithub } from "./binDownload"
-import { computeToolEnv, ToolInfo } from "./util/bundledTool"
+import { executeAppBuilderAsJson, InvalidConfigurationError, asArray, isMacOsSierra, log } from "builder-util/out/util"
+import { getBinFromGithub } from "../binDownload"
+import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"
 import * as os from "os"
 import * as path from "path"
-import { WindowsConfiguration } from "./options/winOptions"
-import { resolveFunction } from "./platformPackager"
-import { isUseSystemSigncode } from "./util/flags"
-import { VmManager } from "./vm/vm"
-import { WinPackager } from "./winPackager"
+import { WindowsConfiguration } from ".."
+import { resolveFunction } from "../platformPackager"
+import { isUseSystemSigncode } from "../util/flags"
+import { VmManager } from "../vm/vm"
+import { WinPackager } from "../winPackager"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
@@ -78,6 +78,27 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
 export interface FileCodeSigningInfo {
   readonly file: string
   readonly password: string | null
+}
+
+export async function getCertInfo(file: string, password: string): Promise<CertificateInfo> {
+  let result: any = null
+  try {
+    result = await executeAppBuilderAsJson<any>(["certificate-info", "--input", file, "--password", password])
+  }
+  catch (e) {
+    throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
+  }
+
+  if (result.error != null) {
+    // noinspection ExceptionCaughtLocallyJS
+    throw new InvalidConfigurationError(`Cannot extract publisher name from code signing certificate: ${result.error}`)
+  }
+  return result
+}
+
+export interface CertificateInfo {
+  readonly commonName: string
+  readonly bloodyMicrosoftSubjectDn: string
 }
 
 export interface CertificateFromStoreInfo {

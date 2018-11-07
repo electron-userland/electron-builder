@@ -75,21 +75,22 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 }
 
 test("Bintray upload", async () => {
-  const version = versionNumber()
-
+  const version = "42.0.0"
   const tmpDir = new TmpDir("artifact-publisher-test")
-  const artifactPath = await tmpDir.getTempFile({suffix: " test space.icns"})
+  const artifactPath = await tmpDir.getTempFile({suffix: " test-space.icns"})
   await copyFile(iconPath, artifactPath)
 
   //noinspection SpellCheckingInspection
   const publisher = new BintrayPublisher(publishContext, {provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
   try {
+    // force delete old version to ensure that test doesn't depend on previous runs
+    await publisher.deleteRelease(true)
     await publisher.upload({file: artifactPath, arch: Arch.x64})
     await publisher.upload({file: artifactPath, arch: Arch.x64})
   }
   finally {
     try {
-      await publisher.deleteRelease()
+      await publisher.deleteRelease(false)
     }
     finally {
       await tmpDir.cleanup()

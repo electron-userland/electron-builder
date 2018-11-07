@@ -1,13 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, deepAssign } from "builder-util"
+import { Arch, asArray, deepAssign, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, walk } from "builder-util/out/fs"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AppXOptions } from "../"
+import { getSignVendorPath, isOldWin6 } from "../codeSign/windowsCodeSign"
 import { Target } from "../core"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
-import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { createStageDir } from "./targetUtil"
 
@@ -154,8 +154,9 @@ export default class AppXTarget extends Target {
       return this.options.publisher || "CN=ms"
     }
 
-    const publisher = await this.packager.computedPublisherSubjectOnWindowsOnly.value
-    if (!publisher) {
+    const certInfo = await this.packager.lazyCertInfo.value
+    const publisher = certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn
+    if (publisher == null) {
       throw new Error("Internal error: cannot compute subject using certificate info")
     }
     return publisher

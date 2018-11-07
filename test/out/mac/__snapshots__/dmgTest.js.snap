@@ -34,6 +34,17 @@ Object {
   "CFBundleShortVersionString": "2017.1-alpha5",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -70,6 +81,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -106,6 +128,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2211,6 +2244,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2254,6 +2298,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2297,6 +2352,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2340,6 +2406,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2383,6 +2460,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2448,6 +2536,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2489,6 +2588,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2545,6 +2655,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2581,6 +2702,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
@@ -2624,6 +2756,17 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "NSAppTransportSecurity": Object {
+    "NSExceptionDomains": Object {
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",

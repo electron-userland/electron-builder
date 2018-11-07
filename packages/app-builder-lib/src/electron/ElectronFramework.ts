@@ -5,10 +5,9 @@ import { emptyDir, readdir, remove, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { AsarIntegrity } from "../asar/integrity"
 import { Configuration } from "../configuration"
-import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { ElectronPlatformName, Packager, Platform, PlatformPackager } from "../index"
+import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { ElectronPlatformName, Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
 import { createMacApp } from "./electronMac"
@@ -52,7 +51,9 @@ function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName,
   }
 }
 
-async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null, isClearExecStack: boolean) {
+async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions, isClearExecStack: boolean) {
+  const packager = options.packager
+  const appOutDir = options.appOutDir
   if (packager.platform === Platform.LINUX) {
     const linuxPackager = (packager as LinuxPackager)
     const executable = path.join(appOutDir, linuxPackager.executableName)
@@ -72,7 +73,7 @@ async function beforeCopyExtraFiles(packager: PlatformPackager<any>, appOutDir: 
     await rename(path.join(appOutDir, `${packager.electronDistExecutableName}.exe`), executable)
   }
   else {
-    await createMacApp(packager as MacPackager, appOutDir, asarIntegrity)
+    await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
 
     const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
     if (wantedLanguages.length === 0) {
@@ -115,8 +116,8 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
         }, distMacOsAppName)
       },
       isNpmRebuildRequired: true,
-      beforeCopyExtraFiles: (packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) => {
-        return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, false)
+      beforeCopyExtraFiles: options => {
+        return beforeCopyExtraFiles(options, false)
       },
     }
   }
@@ -146,8 +147,8 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     distMacOsAppName,
     isNpmRebuildRequired: true,
     prepareApplicationStageDirectory: options => unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!), distMacOsAppName),
-    beforeCopyExtraFiles: (packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) => {
-      return beforeCopyExtraFiles(packager, appOutDir, asarIntegrity, semver.lte(version || "1.8.3", "1.8.3"))
+    beforeCopyExtraFiles: options => {
+      return beforeCopyExtraFiles(options, semver.lte(version || "1.8.3", "1.8.3"))
     },
   }
 }

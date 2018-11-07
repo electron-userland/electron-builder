@@ -6,7 +6,7 @@ import { applyProperties, attachAndExecute, computeBackground, computeBackground
 import { stat } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign"
+import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
 import { Target, DmgOptions } from "app-builder-lib"
 import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"

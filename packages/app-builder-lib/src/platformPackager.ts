@@ -219,7 +219,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const beforeCopyExtraFiles = this.info.framework.beforeCopyExtraFiles
     if (beforeCopyExtraFiles != null) {
-      await beforeCopyExtraFiles(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
+      await beforeCopyExtraFiles({
+        packager: this,
+        appOutDir,
+        asarIntegrity: asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null),
+        platformName,
+      })
     }
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)

@@ -6,7 +6,7 @@ import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
 import { PkgOptions } from ".."
 import { filterCFBundleIdentifier } from "../appInfo"
-import { findIdentity, Identity } from "../codeSign"
+import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
 

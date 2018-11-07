@@ -7,7 +7,7 @@ import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { EventEmitter } from "events"
-import { rename } from "fs-extra-p"
+import { move } from "fs-extra-p"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
@@ -16,6 +16,9 @@ import { createTestApp, tuneTestUpdater, writeUpdateConfig } from "../helpers/up
 // rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater && cp -R ~/Documents/electron-builder/packages/electron-updater ~/Documents/onshape-desktop-shell/node_modules/electron-updater && rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater/src
 // rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && cp -R ~/Documents/electron-builder/packages/builder-util-runtime ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime && rm -rf ~/Documents/onshape-desktop-shell/node_modules/builder-util-runtime/src
 // %USERPROFILE%\AppData\Roaming\Onshape
+
+// mkdir -p ~/minio-data/onshape
+// minio server ~/minio-data
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   process.env.TEST_UPDATER_PLATFORM = "win32"
@@ -38,7 +41,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
         },
       },
     }, {
-      signed: true,
+      signedWin: true,
       packed: async context => {
         outDirs.push(context.outDir)
       }
@@ -52,7 +55,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     try {
       // move dist temporarily out of project dir
       const oldDir = await tmpDir.getTempDir()
-      await rename(outDirs[0], oldDir)
+      await move(outDirs[0], oldDir)
       outDirs[0] = oldDir
 
       await buildApp("1.0.1")
@@ -64,10 +67,10 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
 
     // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
     const oldDir = path.join(outDirs[1], "..", "oldDist")
-    await rename(outDirs[0], oldDir)
+    await move(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await rename(path.join(oldDir, "nsis-web", "TestApp-1.0.0-x64.nsis.7z"), path.join(oldDir, "win-unpacked", "package.7z"))
+    await move(path.join(oldDir, "nsis-web", "TestApp-1.0.0-x64.nsis.7z"), path.join(oldDir, "win-unpacked", "package.7z"))
   }
   else {
     // to  avoid snapshot mismatch (since in this node app is not packed)
@@ -222,7 +225,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
   try {
     // move dist temporarily out of project dir
     const oldDir = await tmpDir.getTempDir()
-    await rename(outDirs[0], oldDir)
+    await move(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
     await buildApp("1.0.1", outDirs, targets, extraConfig)
@@ -234,7 +237,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
 
   // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
   const oldDir = path.join(outDirs[1], "..", "oldDist")
-  await rename(outDirs[0], oldDir)
+  await move(outDirs[0], oldDir)
   outDirs[0] = oldDir
 }
 
@@ -259,6 +262,7 @@ test.ifAll.ifMac.ifNotCi("dmg", async () => {
 async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult.downloadPromise
+  // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()
   const files = await downloadPromise
   const fileInfo: any = updateCheckResult.updateInfo.files[0]

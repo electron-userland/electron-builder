@@ -8,7 +8,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "build": {
-    "electronVersion": "3.0.7",
+    "electronVersion": "3.0.8",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,

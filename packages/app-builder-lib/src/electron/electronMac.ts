@@ -34,7 +34,7 @@ function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist:
 }
 
 /** @internal */
-export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
+export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, isMas: boolean) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
@@ -75,6 +75,11 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
 
   await packager.applyCommonInfo(appPlist, contentsPath)
+
+  // required for electron-updater proxy
+  if (!isMas) {
+    configureLocalhostAts(appPlist)
+  }
 
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
   helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
@@ -172,4 +177,29 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000
   await utimes(appPath, now, now)
+}
+
+function configureLocalhostAts(appPlist: any) {
+  // https://bencoding.com/2015/07/20/app-transport-security-and-localhost/
+  let ats = appPlist.NSAppTransportSecurity
+  if (ats == null) {
+    ats = {}
+    appPlist.NSAppTransportSecurity = ats
+  }
+
+  let exceptionDomains = ats.NSExceptionDomains
+  if (exceptionDomains == null) {
+    exceptionDomains = {}
+    ats.NSExceptionDomains = exceptionDomains
+  }
+
+  if (exceptionDomains.localhost == null) {
+    exceptionDomains.localhost = {
+      NSTemporaryExceptionAllowsInsecureHTTPSLoads: false,
+      NSIncludesSubdomains: false,
+      NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
+      NSTemporaryExceptionMinimumTLSVersion: "1.0",
+      NSTemporaryExceptionRequiresForwardSecrecy: false
+    }
+  }
 }

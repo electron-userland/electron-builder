@@ -5,9 +5,9 @@ import * as https from "https"
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   // noinspection JSMethodCanBeStatic
   // noinspection JSUnusedGlobalSymbols
-  doRequest(options: any, callback: (response: any) => void): any {
+  createRequest(options: any, callback: (response: any) => void): any {
     return (options.protocol === "http:" ? httpRequest : https.request)(options, callback)
   }
 }
 
-export const httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
+export const httpExecutor = new NodeHttpExecutor()

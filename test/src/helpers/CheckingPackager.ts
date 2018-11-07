@@ -1,7 +1,7 @@
 import { AsyncTaskManager } from "builder-util"
 import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
-import { Identity } from "app-builder-lib/out/codeSign"
+import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
 import MacPackager from "app-builder-lib/out/macPackager"
 import { DmgTarget } from "dmg-builder"
 import { WinPackager } from "app-builder-lib/out/winPackager"

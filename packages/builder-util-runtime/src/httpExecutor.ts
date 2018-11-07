@@ -8,7 +8,6 @@ import { parse as parseUrl, URL } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { newError } from "./index"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
-import { createGunzip } from "zlib"
 
 const debug = _debug("electron-builder")
 
@@ -18,7 +17,6 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
 
 export interface DownloadOptions {
   readonly headers?: OutgoingHttpHeaders | null
-  readonly skipDirCreation?: boolean
   readonly sha2?: string | null
   readonly sha512?: string | null
 
@@ -82,7 +80,7 @@ export abstract class HttpExecutor<REQUEST> {
     }
 
     return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
-      const request = this.doRequest(options, (response: any) => {
+      const request = this.createRequest(options, (response: any) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
@@ -119,7 +117,8 @@ export abstract class HttpExecutor<REQUEST> {
                          cancellationToken: CancellationToken,
                          resolve: (data?: any) => void,
                          reject: (error: Error) => void,
-                         redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+                         redirectCount: number,
+                         requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
     }
@@ -141,8 +140,8 @@ Please double check that your authentication token is correct. Due to security r
 
     const redirectUrl = safeGetHeader(response, "location")
     if (redirectUrl != null) {
-      if (redirectCount > 10) {
-        reject(new Error("Too many redirects (> 10)"))
+      if (redirectCount > this.maxRedirects) {
+        reject(this.createMaxRedirectError())
         return
       }
 
@@ -152,18 +151,11 @@ Please double check that your authentication token is correct. Due to security r
       return
     }
 
-    let stream: NodeJS.ReadableStream = response
-    if ((options as any).gzip) {
-      const gUnzip = createGunzip()
-      gUnzip.on("error", reject)
-      response.pipe(gUnzip)
-      stream = gUnzip
-    }
-    stream.setEncoding("utf8")
+    response.setEncoding("utf8")
 
     let data = ""
-    stream.on("data", (chunk: string) => data += chunk)
-    stream.on("end", () => {
+    response.on("data", (chunk: string) => data += chunk)
+    response.on("end", () => {
       try {
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
@@ -181,41 +173,50 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   // noinspection JSUnusedLocalSymbols
-  abstract doRequest(options: any, callback: (response: any) => void): any
+  abstract createRequest(options: any, callback: (response: any) => void): any
 
-  protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
-    const request = this.doRequest(requestOptions, (response: IncomingMessage) => {
+  protected doDownload(requestOptions: any, options: DownloadCallOptions, redirectCount: number) {
+    const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
-        callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
+        options.callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
         return
       }
 
+      // this code not relevant for Electron (redirect event instead handled)
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), destination, redirectCount++, options, callback, onCancel)
+          this.doDownload(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, requestOptions), options, redirectCount++)
         }
         else {
-          callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
+          options.callback(this.createMaxRedirectError())
         }
         return
       }
 
-      configurePipes(options, response, destination, callback, options.cancellationToken)
+      if (options.responseHandler == null) {
+        configurePipes(options, response)
+      }
+      else {
+        options.responseHandler(response, options.callback)
+      }
     })
-    this.addErrorAndTimeoutHandlers(request, callback)
-    this.addRedirectHandlers(request, requestOptions, callback, redirectCount, requestOptions => {
-      this.doDownload(requestOptions, destination, redirectCount++, options, callback, onCancel)
+    this.addErrorAndTimeoutHandlers(request, options.callback)
+    this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
+      this.doDownload(requestOptions, options, redirectCount++)
     })
-    onCancel(() => request.abort())
     request.end()
   }
 
-  protected addTimeOutHandler(request: any, callback: (error: Error) => void) {
+  protected createMaxRedirectError() {
+    return new Error(`Too many redirects (> ${this.maxRedirects})`)
+  }
+
+  private addTimeOutHandler(request: any, callback: (error: Error) => void) {
     request.on("socket", (socket: Socket) => {
       socket.setTimeout(60 * 1000, () => {
-        callback(new Error("Request timed out"))
         request.abort()
+        callback(new Error("Request timed out"))
       })
     })
   }
@@ -231,6 +232,16 @@ Please double check that your authentication token is correct. Due to security r
     }
     return newOptions
   }
+}
+
+export interface DownloadCallOptions {
+  responseHandler: ((response: IncomingMessage, callback: (error: Error | null) => void) => void) | null
+  onCancel: (callback: () => void) => void
+  callback: (error: Error | null) => void
+
+  options: DownloadOptions
+
+  destination: string | null
 }
 
 export function configureRequestOptionsFromUrl(url: string, options: RequestOptions) {
@@ -304,16 +315,9 @@ export class DigestTransform extends Transform {
 }
 
 function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
-  if (sha2Header != null && sha2 != null) {
-    // todo why bintray doesn't send this header always
-    if (sha2Header == null) {
-      callback(new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header"))
-      return false
-    }
-    else if (sha2Header !== sha2) {
-      callback(new Error(`checksum mismatch: expected ${sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`))
-      return false
-    }
+  if (sha2Header != null && sha2 != null && sha2Header !== sha2) {
+    callback(new Error(`checksum mismatch: expected ${sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`))
+    return false
   }
   return true
 }
@@ -332,42 +336,42 @@ export function safeGetHeader(response: any, headerKey: string) {
   }
 }
 
-function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void, cancellationToken: CancellationToken) {
-  if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
+function configurePipes(options: DownloadCallOptions, response: IncomingMessage) {
+  if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.options.sha2, options.callback)) {
     return
   }
 
   const streams: Array<any> = []
-  if (options.onProgress != null) {
+  if (options.options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {
-      streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), options.cancellationToken, options.onProgress))
+      streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), options.options.cancellationToken, options.options.onProgress))
     }
   }
 
-  const sha512 = options.sha512
+  const sha512 = options.options.sha512
   if (sha512 != null) {
     streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))
   }
-  else if (options.sha2 != null) {
-    streams.push(new DigestTransform(options.sha2, "sha256", "hex"))
+  else if (options.options.sha2 != null) {
+    streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }
 
-  const fileOut = createWriteStream(destination)
+  const fileOut = createWriteStream(options.destination!!)
   streams.push(fileOut)
 
   let lastStream = response
   for (const stream of streams) {
     stream.on("error", (error: Error) => {
-      if (!cancellationToken.cancelled) {
-        callback(error)
+      if (!options.options.cancellationToken.cancelled) {
+        options.callback(error)
       }
     })
     lastStream = lastStream.pipe(stream)
   }
 
   fileOut.on("finish", () => {
-    (fileOut.close as any)(callback)
+    (fileOut.close as any)(options.callback)
   })
 }
 
