@@ -27,6 +27,11 @@ Var RadioButtonLabel1
 
 !macro FUNCTION_INSTALL_MODE_PAGE_FUNCTION PRE LEAVE UNINSTALLER_FUNCPREFIX
 	Function "${UNINSTALLER_FUNCPREFIX}${PRE}"
+		Var /GLOBAL forceMachineInstall
+		Var /GLOBAL forceCurrentInstall
+		StrCpy $forceMachineInstall "0"
+		StrCpy $forceCurrentInstall "0"
+
 		${if} ${UAC_IsInnerInstance}
 		${andIf} ${UAC_IsAdmin}
 		  # inner Process (and Admin) - skip selection, inner process is always used for elevation (machine-wide)
@@ -34,9 +39,16 @@ Var RadioButtonLabel1
 			Abort
 		${endIf}
 
+		!ifmacrodef customInstallmode
+		  # Add this macro to your installer.nsh and set $forceMachineInstall or
+		  # $forceCurrentInstall to enforce one or the other modes.
+		  !insertmacro customInstallMode
+		!endif
+
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
     ${ifNot} ${Errors}
+    ${OrIf} $forceMachineInstall == "1"
       StrCpy $hasPerMachineInstallation "1"
       StrCpy $hasPerUserInstallation "0"
       ${ifNot} ${UAC_IsAdmin}
@@ -51,6 +63,7 @@ Var RadioButtonLabel1
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${ifNot} ${Errors}
+    ${OrIf} $forceCurrentInstall == "1"
       StrCpy $hasPerMachineInstallation "0"
       StrCpy $hasPerUserInstallation "1"
       !insertmacro setInstallModePerUser
