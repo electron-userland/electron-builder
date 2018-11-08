@@ -13,7 +13,7 @@ import "source-map-support/register"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UpdateCheckResult, UpdaterSignal } from "./main"
+import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import Session = Electron.Session
 
@@ -426,6 +426,10 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
+  protected dispatchUpdateDownloaded(event: UpdateDownloadedEvent) {
+    this.emit(UPDATE_DOWNLOADED, event)
+  }
+
   protected async abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
 
   /**
@@ -545,7 +549,10 @@ export abstract class AppUpdater extends EventEmitter {
         await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
       }
 
-      await taskOptions.done!!(updateFile)
+      await taskOptions.done!!({
+        ...updateInfo,
+        downloadedFile: updateFile,
+      })
       return packageFile == null ? [updateFile] : [updateFile, packageFile]
     }
 
@@ -640,5 +647,5 @@ export interface DownloadExecutorTask {
   readonly downloadUpdateOptions: DownloadUpdateOptions
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
-  readonly done?: (destinationFile: string) => Promise<any>
+  readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }

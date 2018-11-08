@@ -1,6 +1,5 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
-import { UPDATE_DOWNLOADED } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -28,8 +27,8 @@ export abstract class BaseUpdater extends AppUpdater {
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     return super.executeDownload({
       ...taskOptions,
-      done: async () => {
-        this.emit(UPDATE_DOWNLOADED, taskOptions.downloadUpdateOptions.updateInfoAndProvider.info)
+      done: async event => {
+        this.dispatchUpdateDownloaded(event)
         this.addQuitHandler()
       }
     })
@@ -44,8 +43,6 @@ export abstract class BaseUpdater extends AppUpdater {
     }
 
     const installerPath = this.downloadedUpdateHelper.file
-    // todo check (for now it is ok to no check as before, cached (from previous launch) update file checked in any case)
-    // const isValid = await this.isUpdateValid(installerPath)
     if (installerPath == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false

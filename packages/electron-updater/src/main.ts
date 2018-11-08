@@ -105,13 +105,17 @@ export class UpdaterSignal {
     addHandler(this.emitter, DOWNLOAD_PROGRESS, handler)
   }
 
-  updateDownloaded(handler: (info: UpdateInfo) => void) {
+  updateDownloaded(handler: (info: UpdateDownloadedEvent) => void) {
     addHandler(this.emitter, UPDATE_DOWNLOADED, handler)
   }
 
   updateCancelled(handler: (info: UpdateInfo) => void) {
     addHandler(this.emitter, "update-cancelled", handler)
   }
+}
+
+export interface UpdateDownloadedEvent extends UpdateInfo {
+  downloadedFile: string
 }
 
 const isLogEvent = false

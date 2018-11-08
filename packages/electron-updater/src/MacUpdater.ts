@@ -1,16 +1,16 @@
-import { AllPublishOptions, newError, safeStringifyJson, UpdateInfo } from "builder-util-runtime"
+import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
 import { createReadStream, stat } from "fs-extra-p"
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { UPDATE_DOWNLOADED } from "./main"
+import { UpdateDownloadedEvent } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
-  private updateInfoForPendingUpdateDownloadedEvent: UpdateInfo | null = null
+  private updateInfoForPendingUpdateDownloadedEvent: UpdateDownloadedEvent | null = null
 
   constructor(options?: AllPublishOptions) {
     super(options)
@@ -22,7 +22,7 @@ export class MacUpdater extends AppUpdater {
     this.nativeUpdater.on("update-downloaded", () => {
       const updateInfo = this.updateInfoForPendingUpdateDownloadedEvent
       this.updateInfoForPendingUpdateDownloadedEvent = null
-      this.emit(UPDATE_DOWNLOADED, updateInfo)
+      this.dispatchUpdateDownloaded(updateInfo!!)
     })
   }
 
@@ -52,11 +52,12 @@ export class MacUpdater extends AppUpdater {
       task: (destinationFile, downloadOptions) => {
         return this.httpExecutor.download(zipFileInfo.url.href, destinationFile, downloadOptions)
       },
-      done: async updateFile => {
-        this.updateInfoForPendingUpdateDownloadedEvent = downloadUpdateOptions.updateInfoAndProvider.info
+      done: async event => {
+        const downloadedFile = event.downloadedFile
+        this.updateInfoForPendingUpdateDownloadedEvent = event
         let updateFileSize = zipFileInfo.info.size
         if (updateFileSize == null) {
-          updateFileSize = (await stat(updateFile)).size
+          updateFileSize = (await stat(downloadedFile)).size
         }
 
         return await new Promise<Array<string>>((resolve, reject) => {
@@ -79,7 +80,7 @@ export class MacUpdater extends AppUpdater {
               return
             }
 
-            this._logger.info(`${fileUrl} requested by Squirrel.Mac, pipe ${updateFile}`)
+            this._logger.info(`${fileUrl} requested by Squirrel.Mac, pipe ${downloadedFile}`)
 
             let errorOccurred = false
             response.on("finish", () => {
@@ -94,7 +95,7 @@ export class MacUpdater extends AppUpdater {
               }
             })
 
-            const readStream = createReadStream(updateFile)
+            const readStream = createReadStream(downloadedFile)
             readStream.on("error", error => {
               try {
                 response.end()
@@ -104,7 +105,7 @@ export class MacUpdater extends AppUpdater {
               }
               errorOccurred = true
               this.nativeUpdater.removeListener("error", reject)
-              reject(new Error(`Cannot pipe "${updateFile}": ${error}`))
+              reject(new Error(`Cannot pipe "${downloadedFile}": ${error}`))
             })
 
             response.writeHead(200, {
