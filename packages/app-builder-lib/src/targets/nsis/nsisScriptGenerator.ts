@@ -32,7 +32,7 @@ export class NsisScriptGenerator {
   // without -- !!!
   flags(flags: Array<string>) {
     for (const flagName of flags) {
-      const variableName = "is" + flagName[0].toUpperCase() + flagName.substring(1)
+      const variableName = getVarNameForFlag(flagName)
         .replace(/[\-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
       this.lines.push(`!macro _${variableName} _a _b _t _f
   $\{StdUtils.TestParameter} $R9 "${flagName}"
@@ -46,4 +46,14 @@ export class NsisScriptGenerator {
   build() {
     return this.lines.join("\n") + "\n"
   }
+}
+
+function getVarNameForFlag(flagName: string): string {
+  if (flagName === "allusers") {
+    return "isForAllUsers"
+  }
+  if (flagName === "currentuser") {
+    return "isForCurrentUser"
+  }
+  return "is" + flagName[0].toUpperCase() + flagName.substring(1)
 }

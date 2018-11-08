@@ -2,6 +2,8 @@
 
 Var HasTwoAvailableOptions
 Var RadioButtonLabel1
+Var isForceMachineInstall
+Var isForceCurrentInstall
 
 !macro PAGE_INSTALL_MODE
   !insertmacro MUI_PAGE_INIT
@@ -34,9 +36,14 @@ Var RadioButtonLabel1
 			Abort
 		${endIf}
 
-    ${GetParameters} $R0
-    ${GetOptions} $R0 "/allusers" $R1
-    ${ifNot} ${Errors}
+		StrCpy $isForceMachineInstall "0"
+		StrCpy $isForceCurrentInstall "0"
+		!ifmacrodef customInstallmode
+		  !insertmacro customInstallMode
+		!endif
+
+    ${if} $isForceMachineInstall == "1"
+    ${OrIf} ${isForAllUsers}
       StrCpy $hasPerMachineInstallation "1"
       StrCpy $hasPerUserInstallation "0"
       ${ifNot} ${UAC_IsAdmin}
@@ -49,8 +56,8 @@ Var RadioButtonLabel1
       Abort
     ${endIf}
 
-    ${GetOptions} $R0 "/currentuser" $R1
-    ${ifNot} ${Errors}
+    ${if} $isForceCurrentInstall == "1"
+    ${OrIf} ${isForCurrentUser}
       StrCpy $hasPerMachineInstallation "0"
       StrCpy $hasPerUserInstallation "1"
       !insertmacro setInstallModePerUser
