@@ -1,5 +1,8 @@
-import { BlockMap, readEmbeddedBlockMapData } from "builder-util-runtime/out/blockMapApi"
+import { BlockMap } from "builder-util-runtime/out/blockMapApi"
+import { close, fstat, open, read } from "fs-extra-p"
 import { DifferentialDownloader } from "./DifferentialDownloader"
+
+const pako = require("pako")
 
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
   async download() {
@@ -7,16 +10,30 @@ export class FileWithEmbeddedBlockMapDifferentialDownloader extends Differential
     const fileSize = packageInfo.size!!
     const offset = fileSize - (packageInfo.blockMapSize!! + 4)
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, fileSize - 1)
-    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
-    await this.doDownload(JSON.parse(await readEmbeddedBlockMapData(this.options.oldFile)), newBlockMap)
+    const newBlockMap = readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
+    await this.doDownload(await readEmbeddedBlockMapData(this.options.oldFile), newBlockMap)
   }
 }
 
-let pako: any = null
-
-async function readBlockMap(data: Buffer): Promise<BlockMap> {
-  if (pako == null) {
-    pako = require("pako")
-  }
+function readBlockMap(data: Buffer): BlockMap {
   return JSON.parse(pako.inflateRaw(data, {to: "string"}))
+}
+
+async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
+  const fd = await open(file, "r")
+  try {
+    const fileSize = (await fstat(fd)).size
+    const sizeBuffer = Buffer.allocUnsafe(4)
+    await read(fd, sizeBuffer, 0, sizeBuffer.length, fileSize - sizeBuffer.length)
+
+    const dataBuffer = Buffer.allocUnsafe(sizeBuffer.readUInt32BE(0))
+    await read(fd, dataBuffer, 0, dataBuffer.length, fileSize - sizeBuffer.length - dataBuffer.length)
+    await close(fd)
+
+    return readBlockMap(dataBuffer)
+  }
+  catch (e) {
+    await close(fd)
+    throw e
+  }
 }

@@ -95,6 +95,8 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected _logger: Logger = console
 
+  // noinspection JSUnusedGlobalSymbols
+  // noinspection JSMethodCanBeStatic
   get netSession(): Session {
     return getNetSession()
   }
@@ -132,10 +134,6 @@ export abstract class AppUpdater extends EventEmitter {
 
   private clientPromise: Promise<Provider<any>> | null = null
 
-  protected get provider(): Promise<Provider<any>> {
-    return this.clientPromise!!
-  }
-
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
   // public, allow to read old config for anyone
@@ -147,7 +145,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected readonly app: Electron.App
 
-  protected updateInfo: UpdateInfo | null = null
+  protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
@@ -185,7 +183,6 @@ export abstract class AppUpdater extends EventEmitter {
       throw newError(`App version is not a valid semver version: "${currentVersionString}"`, "ERR_UPDATER_INVALID_VERSION")
     }
     this.currentVersion = currentVersion
-
     this.allowPrerelease = hasPrereleaseComponents(currentVersion)
 
     if (options != null) {
@@ -337,7 +334,7 @@ export abstract class AppUpdater extends EventEmitter {
     return true
   }
 
-  protected async getUpdateInfo(): Promise<UpdateInfo> {
+  protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
     await this.untilAppReady
 
     if (this.clientPromise == null) {
@@ -347,11 +344,15 @@ export abstract class AppUpdater extends EventEmitter {
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(this.computeFinalHeaders({"x-user-staging-id": stagingUserId}))
-    return await client.getLatestVersion()
+    return {
+      info: await client.getLatestVersion(),
+      provider: client,
+    }
   }
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
-    const updateInfo = await this.getUpdateInfo()
+    const result = await this.getUpdateInfoAndProvider()
+    const updateInfo = result.info
     if (!await this.isUpdateAvailable(updateInfo)) {
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
       this.emit("update-not-available", updateInfo)
@@ -361,8 +362,7 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
 
-    this.updateInfo = updateInfo
-
+    this.updateInfoAndProvider = result
     this.onUpdateAvailable(updateInfo)
 
     const cancellationToken = new CancellationToken()
@@ -384,26 +384,41 @@ export abstract class AppUpdater extends EventEmitter {
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
    * @returns {Promise<string>} Path to downloaded file.
    */
-  async downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
-    const updateInfo = this.updateInfo
-    if (updateInfo == null) {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
+    const updateInfoAndProvider = this.updateInfoAndProvider
+    if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
       this.dispatchError(error)
-      throw error
+      return Promise.reject(error)
     }
 
-    this._logger.info(`Downloading update from ${asArray(updateInfo.files).map(it => it.url).join(", ")}`)
+    this._logger.info(`Downloading update from ${asArray(updateInfoAndProvider.info.files).map(it => it.url).join(", ")}`)
+    const errorHandler = (e: Error) => {
+      // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159
+      if (!(e instanceof CancellationError)) {
+        try {
+          this.dispatchError(e)
+        }
+        catch (nestedError) {
+          this._logger.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
+        }
+      }
+
+      return e
+    }
 
     try {
-      return await this.doDownloadUpdate({
-        updateInfo,
-        requestHeaders: await this.computeRequestHeaders(),
+      return this.doDownloadUpdate({
+        updateInfoAndProvider,
+        requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
       })
+        .catch(e => {
+          throw errorHandler(e)
+        })
     }
     catch (e) {
-      this.dispatchError(e)
-      throw e
+      return Promise.reject(errorHandler(e))
     }
   }
 
@@ -432,8 +447,8 @@ export abstract class AppUpdater extends EventEmitter {
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
 
-  private async computeRequestHeaders(): Promise<OutgoingHttpHeaders> {
-    const fileExtraDownloadHeaders = (await this.provider).fileExtraDownloadHeaders
+  private computeRequestHeaders(provider: Provider<any>): OutgoingHttpHeaders {
+    const fileExtraDownloadHeaders = provider.fileExtraDownloadHeaders
     if (fileExtraDownloadHeaders != null) {
       const requestHeaders = this.requestHeaders
       return requestHeaders == null ? fileExtraDownloadHeaders : {
@@ -502,7 +517,7 @@ export abstract class AppUpdater extends EventEmitter {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
 
-    const updateInfo = taskOptions.downloadUpdateOptions.updateInfo
+    const updateInfo = taskOptions.downloadUpdateOptions.updateInfoAndProvider.info
     const version = updateInfo.version
     const packageInfo = fileInfo.packageInfo
 
@@ -589,7 +604,7 @@ export abstract class AppUpdater extends EventEmitter {
 }
 
 export interface DownloadUpdateOptions {
-  readonly updateInfo: UpdateInfo
+  readonly updateInfoAndProvider: UpdateInfoAndProvider
   readonly requestHeaders: OutgoingHttpHeaders
   readonly cancellationToken: CancellationToken
 }
@@ -612,6 +627,11 @@ export class NoOpLogger implements Logger {
   error(message?: any) {
     // ignore
   }
+}
+
+export interface UpdateInfoAndProvider {
+  info: UpdateInfo
+  provider: Provider<any>
 }
 
 export interface DownloadExecutorTask {

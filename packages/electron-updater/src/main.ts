@@ -68,11 +68,6 @@ export function getCurrentPlatform() {
   return process.env.TEST_UPDATER_PLATFORM || process.platform
 }
 
-export function isUseOldMacProvider() {
-  // getCurrentPlatform() === "darwin"
-  return false
-}
-
 export function getChannelFilename(channel: string) {
   return `${channel}.yml`
 }

@@ -21,10 +21,10 @@ export class NsisUpdater extends BaseUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
-    const provider = await this.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfo), "exe")!!
-    return await this.executeDownload({
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!!
+    return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
       fileInfo,
@@ -39,7 +39,7 @@ export class NsisUpdater extends BaseUpdater {
         if (signatureVerificationStatus != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
-          throw newError(`New version ${downloadUpdateOptions.updateInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
+          throw newError(`New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
         }
 
         if (isWebInstaller) {
@@ -159,7 +159,7 @@ export class NsisUpdater extends BaseUpdater {
   private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     try {
       const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfo.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
+      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {

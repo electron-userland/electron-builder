@@ -26,10 +26,10 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     this.updateInfoForPendingUpdateDownloadedEvent = null
 
-    const files = (await this.provider).resolveFiles(downloadUpdateOptions.updateInfo)
+    const files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
@@ -45,7 +45,7 @@ export class MacUpdater extends AppUpdater {
       return `http://127.0.0.1:${address.port}`
     }
 
-    return await this.executeDownload({
+    return this.executeDownload({
       fileExtension: "zip",
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
@@ -53,7 +53,7 @@ export class MacUpdater extends AppUpdater {
         return this.httpExecutor.download(zipFileInfo.url.href, destinationFile, downloadOptions)
       },
       done: async updateFile => {
-        this.updateInfoForPendingUpdateDownloadedEvent = downloadUpdateOptions.updateInfo
+        this.updateInfoForPendingUpdateDownloadedEvent = downloadUpdateOptions.updateInfoAndProvider.info
         let updateFileSize = zipFileInfo.info.size
         if (updateFileSize == null) {
           updateFileSize = (await stat(updateFile)).size

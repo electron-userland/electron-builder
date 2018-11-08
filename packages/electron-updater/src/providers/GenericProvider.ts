@@ -1,6 +1,6 @@
 import { GenericServerOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { AppUpdater } from "../AppUpdater"
-import { getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, getCustomChannelName, getDefaultChannelName, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
@@ -16,13 +16,11 @@ export class GenericProvider extends Provider<UpdateInfo> {
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
-    let result: UpdateInfo
     const channelFile = getChannelFilename(this.channel)
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
-        result = parseUpdateInfo(await this.httpRequest(channelUrl), channelFile, channelUrl)
-        break
+        return parseUpdateInfo(await this.httpRequest(channelUrl), channelFile, channelUrl)
       }
       catch (e) {
         if (e instanceof HttpError && e.statusCode === 404) {
@@ -44,11 +42,6 @@ export class GenericProvider extends Provider<UpdateInfo> {
         throw e
       }
     }
-
-    if (isUseOldMacProvider()) {
-      (result as any).releaseJsonUrl = channelUrl.href
-    }
-    return result
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {

@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
@@ -103,6 +102,7 @@ test("downgrade (disallowed, beta)", async () => {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
+  // noinspection JSIgnoredPromiseFromCall
   expect(updateCheckResult.downloadPromise).toBeUndefined()
 
   expect(actualEvents).toEqual(expectedEvents)
@@ -228,7 +228,7 @@ test("file url github pre-release and fullChangelog", async () => {
     expect(info).toMatchSnapshot()
   })
   const updateCheckResult = await validateDownload(updater)
-  expect(updateCheckResult.versionInfo).toMatchSnapshot()
+  expect(updateCheckResult.updateInfo).toMatchSnapshot()
 })
 
 test.skip("file url github private", async () => {
@@ -355,9 +355,8 @@ test.skip("cancel download with progress", async () => {
     expect(lastEvent.transferred).not.toBe(lastEvent.total)
   }
 
-  const downloadPromise = checkResult.downloadPromise as BluebirdPromise<any>
+  const downloadPromise = checkResult.downloadPromise!!
   await assertThat(downloadPromise).throws()
-  expect(downloadPromise.isRejected()).toBe(true)
   expect(cancelled).toBe(true)
 })
 

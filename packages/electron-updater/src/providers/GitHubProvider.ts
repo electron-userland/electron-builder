@@ -2,7 +2,7 @@ import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, n
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
-import { getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, getDefaultChannelName, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
 import { parseUpdateInfo, resolveFiles } from "./Provider"
 
 const hrefRegExp = /\/tag\/v?([^\/]+)$/
@@ -81,10 +81,6 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
 
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
-    if (isUseOldMacProvider()) {
-      (result as any).releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
-    }
-
     if (result.releaseName == null) {
       result.releaseName = latestRelease.elementValueOrEmpty("title")
     }

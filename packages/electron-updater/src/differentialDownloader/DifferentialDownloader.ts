@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { BlockMapDataHolder, configureRequestOptionsFromUrl, createHttpError, DigestTransform, HttpExecutor } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, createWriteStream, open } from "fs-extra-p"
@@ -80,12 +79,13 @@ export abstract class DifferentialDownloader {
   private downloadFile(tasks: Array<Operation>): Promise<any> {
     const fdList: Array<OpenedFile> = []
     const closeFiles = () => {
-      return BluebirdPromise.map(fdList, openedFile => {
+      return Promise.all(fdList.map(openedFile => {
+        console.log(`close ${openedFile.descriptor} ${openedFile.path}`)
         return close(openedFile.descriptor)
           .catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
-      })
+      }))
     }
     return this.doDownloadFile(tasks, fdList)
       .then(closeFiles)
@@ -129,6 +129,8 @@ export abstract class DifferentialDownloader {
       // noinspection JSArrowFunctionCanBeReplacedWithShorthand
       fileOut.on("finish", () => {
         (fileOut.close as any)(() => {
+          // remove from fd list because closed successfully
+          fdList.splice(1, 1)
           try {
             digestTransform.validate()
           }

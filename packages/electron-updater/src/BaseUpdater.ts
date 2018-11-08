@@ -29,7 +29,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return super.executeDownload({
       ...taskOptions,
       done: async () => {
-        this.emit(UPDATE_DOWNLOADED, taskOptions.downloadUpdateOptions.updateInfo)
+        this.emit(UPDATE_DOWNLOADED, taskOptions.downloadUpdateOptions.updateInfoAndProvider.info)
         this.addQuitHandler()
       }
     })
