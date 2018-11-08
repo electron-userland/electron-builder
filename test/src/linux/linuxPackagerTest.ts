@@ -17,9 +17,14 @@ test.ifNotWindows("AppImage", app({
   },
 }))
 
+// also test os macro in output dir
 test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({
   targets: Platform.LINUX.createTarget("Appimage", Arch.ia32),
   config: {
+    directories: {
+      // tslint:disable:no-invalid-template-strings
+      output: "dist/${os}",
+    },
     publish: {
       provider: "generic",
       url: "https://example.com/downloads"

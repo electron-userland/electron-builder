@@ -294,10 +294,12 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     this._framework = await createFrameworkInfo(this.config, this)
 
-    const outDir = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo))
+    const commonOutDirWithoutPossibleOsMacro = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
+      os: "",
+    }))
 
     if (!isCI && (process.stdout as any).isTTY) {
-      const effectiveConfigFile = path.join(outDir, "builder-effective-config.yaml")
+      const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
     }
@@ -310,15 +312,15 @@ export class Packager {
       }
     })
 
-    const platformToTargets = await executeFinally(this.doBuild(outDir), async () => {
+    const platformToTargets = await executeFinally(this.doBuild(), async () => {
       if (this.debugLogger.isEnabled) {
-        await this.debugLogger.save(path.join(outDir, "builder-debug.yml"))
+        await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
       }
       await this.tempDirManager.cleanup()
     })
 
     return {
-      outDir,
+      outDir: commonOutDirWithoutPossibleOsMacro,
       artifactPaths: Array.from(artifactPaths),
       platformToTargets,
       configuration,
@@ -340,7 +342,7 @@ export class Packager {
     throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
   }
 
-  private async doBuild(outDir: string): Promise<Map<Platform, Map<string, Target>>> {
+  private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
 
     const platformToTarget = new Map<Platform, Map<string, Target>>()
@@ -370,6 +372,8 @@ export class Packager {
           break
         }
 
+        // support os and arch macro in output value
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!!.directories!!.output!!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         await packager.pack(outDir, arch, targetList, taskManager)
