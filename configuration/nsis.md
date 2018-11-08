@@ -37,25 +37,32 @@ Two options are available — [include](#NsisOptions-include) and [script](#Nsis
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
-2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`. Example:
-   ```nsis
-    !macro customHeader
-      !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
-    !macroend
-
-    !macro preInit
-      ; This macro is inserted at the beginning of the NSIS .OnInit callback
-      !system "echo '' > ${BUILD_RESOURCES_DIR}/preInit"
-    !macroend
-  
-    !macro customInit
-      !system "echo '' > ${BUILD_RESOURCES_DIR}/customInit"
-    !macroend
-  
-    !macro customInstall
-      !system "echo '' > ${BUILD_RESOURCES_DIR}/customInstall"
-    !macroend
-   ```
+2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`.
+    
+    !!! example
+        ```nsis
+        !macro customHeader
+          !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"
+        !macroend
+        
+        !macro preInit
+          ; This macro is inserted at the beginning of the NSIS .OnInit callback
+          !system "echo '' > ${BUILD_RESOURCES_DIR}/preInit"
+        !macroend
+        
+        !macro customInit
+          !system "echo '' > ${BUILD_RESOURCES_DIR}/customInit"
+        !macroend
+        
+        !macro customInstall
+          !system "echo '' > ${BUILD_RESOURCES_DIR}/customInstall"
+        !macroend
+        
+        !macro customInstallMode
+          # set $isForceMachineInstall or $isForceCurrentInstall 
+          # to enforce one or the other modes.
+        !macroend
+        ```
 
 * `BUILD_RESOURCES_DIR` and `PROJECT_DIR` are defined.
 * `build` is added as `addincludedir` (i.e. you don't need to use `BUILD_RESOURCES_DIR` to include files).
