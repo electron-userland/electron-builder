@@ -314,6 +314,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.DTXcodeBuild
   delete info.DTSDKBuild
   delete info.DTSDKName
+  delete info.DTCompiler
 
   expect(info).toMatchSnapshot()
 
@@ -441,7 +442,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   return packagerOptions
 }
 
-export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration) {
+export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
   return app({
     targets: Platform.MAC.createTarget(),
     config: {
@@ -455,7 +456,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
       ...config
     },
   }, {
-    signed: true,
+    signed: isSigned,
     packed: async context => {
       if (!target.includes("tar.gz")) {
         return
