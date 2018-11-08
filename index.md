@@ -17,9 +17,10 @@ A complete solution to package and build a ready for distribution Electron app f
     * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
     * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
-* [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
+    * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](multi-platform-build.md#docker) images to build Electron app for Linux or Windows on any platform.
 * [Proton Native](https://proton-native.js.org/) and [Muon](https://github.com/brave/muon) support.
+* Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
 
 | Question | Answer |
 |--------|-------|

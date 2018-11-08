@@ -116,7 +116,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * <code id="Configuration-extraMetadata">extraMetadata</code> any - Inject properties to `package.json`.
 * <code id="Configuration-readonly">readonly</code> = `false` Boolean - Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
 * <code id="Configuration-muonVersion">muonVersion</code> String - The version of muon you are packaging for.
-* <code id="Configuration-protonNodeVersion">protonNodeVersion</code> String - *Proton Native only* The version of NodeJS you are packaging for. You can set it to `current` to set the Node.js version that you use to run electron-builder.
+* <code id="Configuration-nodeVersion">nodeVersion</code> String - *libui-based frameworks only* The version of NodeJS you are packaging for. You can set it to `current` to set the Node.js version that you use to run.
+* <code id="Configuration-launchUiVersion">launchUiVersion</code> Boolean | String - *libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.
+* <code id="Configuration-framework">framework</code> String - The framework name. One of `electron`, `proton-native`, `libui`. Defaults to `electron`.
 
 ---
 
