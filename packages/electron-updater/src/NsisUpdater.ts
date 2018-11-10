@@ -180,7 +180,7 @@ export class NsisUpdater extends BaseUpdater {
         }
       }
 
-      const blockMapDataList = await Promise.all([downloadBlockMap(newBlockMapUrl), downloadBlockMap(oldBlockMapUrl)])
+      const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
         newUrl: fileInfo.url.href,
         oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
