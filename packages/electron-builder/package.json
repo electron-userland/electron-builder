@@ -13,7 +13,7 @@
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
-    "node": ">=6.11.4"
+    "node": ">=8.12.0"
   },
   "keywords": [
     "electron",

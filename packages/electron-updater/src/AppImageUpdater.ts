@@ -50,11 +50,11 @@ export class AppImageUpdater extends BaseUpdater {
         let isDownloadFull = false
         try {
           await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
-            newUrl: fileInfo.url.href,
+            newUrl: fileInfo.url,
             oldFile,
             logger: this._logger,
             newFile: updateFile,
-            useMultipleRangeRequest: provider.useMultipleRangeRequest,
+            isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             requestHeaders: downloadUpdateOptions.requestHeaders,
           })
             .download()
@@ -66,7 +66,7 @@ export class AppImageUpdater extends BaseUpdater {
         }
 
         if (isDownloadFull) {
-          await this.httpExecutor.download(fileInfo.url.href, updateFile, downloadOptions)
+          await this.httpExecutor.download(fileInfo.url, updateFile, downloadOptions)
         }
 
         await chmod(updateFile, 0o755)

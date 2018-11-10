@@ -4,7 +4,7 @@ import { createWriteStream } from "fs-extra-p"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
-import { parse as parseUrl, URL } from "url"
+import { URL } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { newError } from "./index"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
@@ -175,6 +175,72 @@ Please double check that your authentication token is correct. Due to security r
   // noinspection JSUnusedLocalSymbols
   abstract createRequest(options: any, callback: (response: any) => void): any
 
+  async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
+    return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
+      let result: Buffer | null = null
+      const requestOptions = {
+        headers: options.headers || undefined,
+        // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
+        redirect: "manual",
+      }
+      configureRequestUrl(url, requestOptions)
+      configureRequestOptions(requestOptions)
+      this.doDownload(requestOptions, {
+        destination: null,
+        options,
+        onCancel,
+        callback: error => {
+          if (error == null) {
+            resolve(result!!)
+          }
+          else {
+            reject(error)
+          }
+        },
+        responseHandler: (response, callback) => {
+          const contentLength = safeGetHeader(response, "content-length")
+          let position = -1
+          if (contentLength != null) {
+            const size = parseInt(contentLength, 10)
+            if (size > 0) {
+              if (size > 5242880) {
+                callback(new Error("Maximum allowed size is 5 MB"))
+                return
+              }
+
+              result = Buffer.alloc(size)
+              position = 0
+            }
+          }
+          response.on("data", (chunk: Buffer) => {
+            if (position !== -1) {
+              chunk.copy(result!!, position)
+              position += chunk.length
+            }
+            else if (result == null) {
+              result = chunk
+            }
+            else {
+              if (result.length > 5242880) {
+                callback(new Error("Maximum allowed size is 5 MB"))
+                return
+              }
+              result = Buffer.concat([result, chunk])
+            }
+          })
+          response.on("end", () => {
+            if (result != null && position !== -1 && position !== result.length) {
+              callback(new Error(`Received data length ${position} is not equal to expected ${result.length}`))
+            }
+            else {
+              callback(null)
+            }
+          })
+        },
+      }, 0)
+    })
+  }
+
   protected doDownload(requestOptions: any, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
@@ -245,19 +311,21 @@ export interface DownloadCallOptions {
 }
 
 export function configureRequestOptionsFromUrl(url: string, options: RequestOptions) {
-  const parsedUrl = parseUrl(url)
-  options.protocol = parsedUrl.protocol
-  options.hostname = parsedUrl.hostname
-  if (parsedUrl.port == null) {
-    if (options.port != null) {
-      delete options.port
-    }
+  const result = configureRequestOptions(options)
+  configureRequestUrl(new URL(url), result)
+  return result
+}
+
+export function configureRequestUrl(url: URL, options: RequestOptions): void {
+  options.protocol = url.protocol
+  options.hostname = url.hostname
+  if (url.port) {
+    options.port = url.port
   }
-  else {
-    options.port = parsedUrl.port
+  else if (options.port) {
+    delete options.port
   }
-  options.path = parsedUrl.path
-  return configureRequestOptions(options)
+  options.path = url.pathname + url.search
 }
 
 export class DigestTransform extends Transform {

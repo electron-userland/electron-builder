@@ -1,3 +1,14 @@
+!macro moveFile FROM TO
+  ClearErrors
+  Rename `${FROM}` `${TO}`
+  ${if} ${errors}
+    # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
+    ClearErrors
+    !insertmacro copyFile `${FROM}` `${TO}`
+    Delete `${FROM}`
+  ${endif}
+!macroend
+
 !macro copyFile FROM TO
   ${StdUtils.GetParentPath} $R5 `${TO}`
   CreateDirectory `$R5`
@@ -131,15 +142,7 @@ Function uninstallOldVersion
     Goto Done
   ${endif}
 
-  ClearErrors
-  Rename "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
-  ${if} ${errors}
-    # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
-    ClearErrors
-    !insertmacro copyFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
-    Delete "$uninstallerFileName"
-  ${endif}
-
+  !insertmacro moveFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
   StrCpy $uninstallerFileName "$PLUGINSDIR\old-uninstaller.exe"
 
   ${if} $installMode == "CurrentUser"

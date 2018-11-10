@@ -50,7 +50,7 @@ export class MacUpdater extends AppUpdater {
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: (destinationFile, downloadOptions) => {
-        return this.httpExecutor.download(zipFileInfo.url.href, destinationFile, downloadOptions)
+        return this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
       },
       done: async event => {
         const downloadedFile = event.downloadedFile

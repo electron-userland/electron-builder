@@ -14,14 +14,12 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
-process.env.TEST_UPDATER_PLATFORM = "win32"
-
 const g = (global as any)
 g.__test_app = createTestApp("0.0.1")
 
 test("check updates - no versions at all", async () => {
   const updater = new NsisUpdater()
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   // tslint:disable-next-line:no-object-literal-type-assertion
   updater.setFeedURL({
     provider: "bintray",
@@ -40,7 +38,7 @@ async function testUpdateFromBintray(app: any) {
     owner: "actperepo",
     package: "TestApp",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -65,7 +63,7 @@ test("downgrade (disallowed, bintray)", async () => {
     owner: "actperepo",
     package: "TestApp",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -90,7 +88,7 @@ test("downgrade (disallowed, beta)", async () => {
     owner: "develar",
     repo: "__test_nsis_release",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -137,7 +135,7 @@ test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -154,7 +152,7 @@ test("file url generic - manual download", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -175,7 +173,7 @@ test("checkForUpdates several times", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -210,6 +208,8 @@ test("file url github", async () => {
   }
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
+    expect(info.downloadedFile).not.toBeNull()
+    delete info.downloadedFile
     expect(info).toMatchSnapshot()
   })
   await validateDownload(updater)
@@ -225,6 +225,8 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.fullChangelog = true
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
+    expect(info.downloadedFile).not.toBeNull()
+    delete info.downloadedFile
     expect(info).toMatchSnapshot()
   })
   const updateCheckResult = await validateDownload(updater)
@@ -233,7 +235,7 @@ test("file url github pre-release and fullChangelog", async () => {
 
 test.skip("file url github private", async () => {
   const updater = new NsisUpdater(null, createTestApp("0.0.1"))
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "develar",
@@ -245,7 +247,7 @@ test.skip("file url github private", async () => {
 
 test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdater()
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   await assertThat(updater.checkForUpdates()).throws()
@@ -258,7 +260,7 @@ test.skip("test download progress", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test"
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -296,7 +298,7 @@ test.ifAll.ifWindows("invalid signature", async () => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar"],
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then((it): any => it.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
@@ -337,7 +339,7 @@ test.skip("cancel download with progress", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/full-test",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const progressEvents: Array<any> = []
   updater.signals.progress(it => progressEvents.push(it))
@@ -366,7 +368,7 @@ test.ifAll("test download and install", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   await validateDownload(updater)
 
@@ -381,7 +383,7 @@ test.ifAll("test downloaded installer", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 

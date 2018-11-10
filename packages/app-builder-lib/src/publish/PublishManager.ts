@@ -94,6 +94,7 @@ export class PublishManager implements PublishContext {
         }
       }
       else {
+        // AppImage writes data to AppImage stage dir, not to linux-unpacked
         return
       }
 
@@ -223,15 +224,16 @@ export async function getAppUpdatePublishConfiguration(packager: PlatformPackage
     return null
   }
 
-  let publishConfig = publishConfigs[0]
+  const publishConfig = {
+    ...publishConfigs[0],
+    updaterCacheDirName: packager.appInfo.updaterCacheDirName,
+  }
 
   if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
     const winPackager = packager as WinPackager
-    if (winPackager.isForceCodeSigningVerification) {
-      const publisherName = await winPackager.computedPublisherName.value
-      if (publisherName != null) {
-        publishConfig = {...publishConfig, publisherName}
-      }
+    const publisherName = winPackager.isForceCodeSigningVerification ? await winPackager.computedPublisherName.value : undefined
+    if (publisherName != null) {
+      publishConfig.publisherName = publisherName
     }
   }
   return publishConfig

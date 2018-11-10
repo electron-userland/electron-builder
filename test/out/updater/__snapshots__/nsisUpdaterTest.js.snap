@@ -204,7 +204,6 @@ Object {
 
 exports[`file url github 2`] = `
 Object {
-  "downloadedFile": "/Volumes/test/electron-updater-test/userData/__update__/TestApp-Setup-1.1.0.exe",
   "files": Array [
     Object {
       "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
@@ -250,7 +249,6 @@ Object {
 
 exports[`file url github pre-release and fullChangelog 2`] = `
 Object {
-  "downloadedFile": "/Volumes/test/electron-updater-test/userData/__update__/TestApp-Setup-1.5.2-beta.3.exe",
   "files": Array [
     Object {
       "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",

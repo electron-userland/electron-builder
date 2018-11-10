@@ -13,8 +13,15 @@ export interface PublishConfiguration {
 
   /**
    * @private
+   * win-only
    */
-  readonly publisherName?: Array<string> | null
+  publisherName?: Array<string> | null
+
+  /**
+   * @private
+   * win-only
+   */
+  readonly updaterCacheDirName?: string | null
 
   /**
    * Whether to publish auto update info files.

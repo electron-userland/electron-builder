@@ -32,7 +32,7 @@ export class NsisUpdater extends BaseUpdater {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
         if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, downloadUpdateOptions.requestHeaders, provider)) {
-          await this.httpExecutor.download(fileInfo.url.href, destinationFile, downloadOptions)
+          await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
         const signatureVerificationStatus = await this.verifySignature(destinationFile)
@@ -45,7 +45,7 @@ export class NsisUpdater extends BaseUpdater {
         if (isWebInstaller) {
           if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider)) {
             try {
-              await this.httpExecutor.download(packageInfo!!.path, packageFile!!, {
+              await this.httpExecutor.download(new URL(packageInfo!!.path), packageFile!!, {
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo!!.sha512,
@@ -98,7 +98,7 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
-    const packagePath = this.downloadedUpdateHelper.packageFile
+    const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
       args.push(`--package-file=${packagePath}`)
@@ -118,7 +118,7 @@ export class NsisUpdater extends BaseUpdater {
       if ((e as any).code === "UNKNOWN" || (e as any).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         try {
-          await this._spawn(path.join(process.resourcesPath!, "elevate.exe"), [installerPath].concat(args), spawnOptions)
+          await this._spawn(path.join(process.resourcesPath!!, "elevate.exe"), [installerPath].concat(args), spawnOptions)
         }
         catch (e) {
           this.dispatchError(e)
@@ -158,12 +158,16 @@ export class NsisUpdater extends BaseUpdater {
 
   private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
     try {
+      if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
+        return true
+      }
+
       const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
       const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const data = await this.httpExecutor.downloadToBuffer(url.href, downloadUpdateOptions)
+        const data = await this.httpExecutor.downloadToBuffer(url, downloadUpdateOptions)
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
@@ -182,21 +186,24 @@ export class NsisUpdater extends BaseUpdater {
 
       const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
-        newUrl: fileInfo.url.href,
-        oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_INSTALLER_FILE_NAME),
+        newUrl: fileInfo.url,
+        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
         logger: this._logger,
         newFile: installerPath,
-        useMultipleRangeRequest: provider.useMultipleRangeRequest,
+        isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders,
       })
         .download(blockMapDataList[0], blockMapDataList[1])
+      return false
     }
     catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      if (this._testOnlyOptions != null) {
+        // test mode
+        throw e
+      }
       return true
     }
-
-    return false
   }
 
   private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
@@ -206,12 +213,12 @@ export class NsisUpdater extends BaseUpdater {
 
     try {
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, {
-        newUrl: packageInfo.path,
-        oldFile: path.join(this.app.getPath("userData"), CURRENT_APP_PACKAGE_FILE_NAME),
+        newUrl: new URL(packageInfo.path),
+        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
         requestHeaders: this.requestHeaders,
-        useMultipleRangeRequest: provider.useMultipleRangeRequest,
+        isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
       })
         .download()
     }

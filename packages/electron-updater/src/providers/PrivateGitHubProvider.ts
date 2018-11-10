@@ -1,20 +1,20 @@
-import { CancellationToken, GithubOptions, HttpError, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater"
 import { URL } from "url"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { getChannelFilename, getDefaultChannelName, newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
-import { getFileList } from "./Provider"
+import { getChannelFilename, newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { getFileList, ProviderRuntimeOptions } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  constructor(options: GithubOptions, private readonly updater: AppUpdater, private readonly token: string, executor: HttpExecutor<any>) {
-    super(options, "api.github.com", executor)
+  constructor(options: GithubOptions, private readonly updater: AppUpdater, private readonly token: string, runtimeOptions: ProviderRuntimeOptions) {
+    super(options, "api.github.com", runtimeOptions)
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
@@ -25,7 +25,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
   async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
     const cancellationToken = new CancellationToken()
-    const channelFile = getChannelFilename(getDefaultChannelName())
+    const channelFile = getChannelFilename(this.getDefaultChannelName())
 
     const releaseInfo = await this.getLatestVersionInfo(cancellationToken)
     const asset = releaseInfo.assets.find(it => it.name === channelFile)

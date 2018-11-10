@@ -76,6 +76,20 @@ export interface UpdateInfoFileTask {
   readonly packager: PlatformPackager<any>
 }
 
+function computeIsisElectronUpdater1xCompatibility(updaterCompatibility: string | null, publishConfiguration: PublishConfiguration, packager: Packager) {
+  if (updaterCompatibility != null) {
+    return semver.satisfies("1.0.0", updaterCompatibility)
+  }
+
+  // spaces is a new publish provider, no need to keep backward compatibility
+  if (publishConfiguration.provider === "spaces") {
+    return false
+  }
+
+  const updaterVersion = packager.metadata.dependencies == null ? null : packager.metadata.dependencies["electron-updater"]
+  return updaterVersion == null || semver.lt(updaterVersion, "4.0.0")
+}
+
 /** @internal */
 export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>): Promise<Array<UpdateInfoFileTask>> {
   const packager = event.packager
@@ -100,8 +114,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
-    // spaces is a new publish provider, no need to keep backward compatibility
-    let isElectronUpdater1xCompatibility = publishConfiguration.provider !== "spaces" && (electronUpdaterCompatibility == null || semver.satisfies("1.0.0", electronUpdaterCompatibility))
+    let isElectronUpdater1xCompatibility = computeIsisElectronUpdater1xCompatibility(electronUpdaterCompatibility, publishConfiguration, packager.info)
 
     let info = sharedInfo
     // noinspection JSDeprecatedSymbols
@@ -109,6 +122,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
       info = {
         ...info,
       };
+      // noinspection JSDeprecatedSymbols
       (info as WindowsUpdateInfo).sha2 = await sha2.value
     }
 

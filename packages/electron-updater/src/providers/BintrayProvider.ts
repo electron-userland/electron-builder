@@ -1,17 +1,17 @@
-import { BintrayOptions, CancellationToken, HttpExecutor, newError, UpdateInfo } from "builder-util-runtime"
+import { BintrayOptions, CancellationToken, newError, UpdateInfo } from "builder-util-runtime"
 import { BintrayClient } from "builder-util-runtime/out/bintray"
 import { URL } from "url"
-import { getChannelFilename, getDefaultChannelName, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "../main"
-import { parseUpdateInfo, resolveFiles } from "./Provider"
+import { getChannelFilename, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "../main"
+import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 export class BintrayProvider extends Provider<UpdateInfo> {
   private client: BintrayClient
   private readonly baseUrl: URL
 
-  constructor(configuration: BintrayOptions, httpExecutor: HttpExecutor<any>) {
-    super(httpExecutor)
+  constructor(configuration: BintrayOptions, runtimeOptions: ProviderRuntimeOptions) {
+    super(runtimeOptions)
 
-    this.client = new BintrayClient(configuration, httpExecutor, new CancellationToken())
+    this.client = new BintrayClient(configuration, runtimeOptions.executor, new CancellationToken())
     this.baseUrl = newBaseUrl(`https://dl.bintray.com/${this.client.owner}/${this.client.repo}`)
   }
 
@@ -23,7 +23,7 @@ export class BintrayProvider extends Provider<UpdateInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     try {
       const data = await this.client.getVersion("_latest")
-      const channelFilename = getChannelFilename(getDefaultChannelName())
+      const channelFilename = getChannelFilename(this.getDefaultChannelName())
       const files = await this.client.getVersionFiles(data.name)
       const channelFile = files.find(it => it.name.endsWith(`_${channelFilename}`) || it.name.endsWith(`-${channelFilename}`))
       if (channelFile == null) {

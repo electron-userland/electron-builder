@@ -17,7 +17,7 @@ class TestNativeUpdater extends EventEmitter {
   }
 
   private async download() {
-    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!, {})))!!)
+    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!!, {})))!!)
     await httpExecutor.request(configureRequestOptionsFromUrl(data.url, {}))
   }
 
@@ -29,7 +29,6 @@ class TestNativeUpdater extends EventEmitter {
 }
 
 test.ifAll.ifNotCi.ifMac("mac updates", async () => {
-  process.env.TEST_UPDATER_PLATFORM = process.platform
   const mockNativeUpdater = new TestNativeUpdater()
   const mockApp = createTestApp("0.0.1")
   jest.mock("electron", () => {
@@ -51,7 +50,8 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
     // console.log(JSON.stringify(data))
   })
 
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater);
+  (updater as any)._testOnlyOptions.platform = process.platform
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()

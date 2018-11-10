@@ -1,26 +1,25 @@
-import { BlockMapDataHolder, configureRequestOptionsFromUrl, createHttpError, DigestTransform, HttpExecutor } from "builder-util-runtime"
+import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, createWriteStream, open } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { Logger } from "../main"
 import { copyData } from "./DataSplitter"
+import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
-import { checkIsRangesSupported, executeTasks } from "./multipleRangeDownloader"
+import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string
-  readonly newUrl: string
+  readonly newUrl: URL
   readonly logger: Logger
   readonly newFile: string
 
   readonly requestHeaders: OutgoingHttpHeaders | null
 
-  readonly useMultipleRangeRequest?: boolean
+  readonly isUseMultipleRangeRequest?: boolean
 }
 
 export abstract class DifferentialDownloader {
-  private readonly baseRequestOptions: RequestOptions
-
   fileMetadataBuffer: Buffer | null = null
 
   private readonly logger: Logger
@@ -28,18 +27,19 @@ export abstract class DifferentialDownloader {
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
   constructor(protected readonly blockAwareFileInfo: BlockMapDataHolder, readonly httpExecutor: HttpExecutor<any>, readonly options: DifferentialDownloaderOptions) {
     this.logger = options.logger
-    this.baseRequestOptions = configureRequestOptionsFromUrl(options.newUrl, {})
   }
 
-  createRequestOptions(method: "get" | "head" = "get", newUrl?: string | null): RequestOptions {
-    return {
-      ...(newUrl == null ? this.baseRequestOptions : configureRequestOptionsFromUrl(newUrl, {})),
-      method,
+  createRequestOptions(): RequestOptions {
+    const result = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
-      } as any,
+      },
     }
+    configureRequestUrl(this.options.newUrl, result)
+    // user-agent, cache-control and other common options
+    configureRequestOptions(result)
+    return result
   }
 
   protected doDownload(oldBlockMap: BlockMap, newBlockMap: BlockMap): Promise<any> {
@@ -66,12 +66,12 @@ export abstract class DifferentialDownloader {
       }
     }
 
-    const newPackageSize = this.blockAwareFileInfo.size
-    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length)) !== newPackageSize) {
-      throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
+    const newSize = this.blockAwareFileInfo.size
+    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length)) !== newSize) {
+      throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }
 
-    logger.info(`Full: ${formatBytes(newPackageSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newPackageSize / 100))}%)`)
+    logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
     return this.downloadFile(operations)
   }
@@ -80,7 +80,6 @@ export abstract class DifferentialDownloader {
     const fdList: Array<OpenedFile> = []
     const closeFiles = () => {
       return Promise.all(fdList.map(openedFile => {
-        console.log(`close ${openedFile.descriptor} ${openedFile.path}`)
         return close(openedFile.descriptor)
           .catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
@@ -159,65 +158,69 @@ export abstract class DifferentialDownloader {
       const firstStream = streams[0]
 
       let w: any
-      if (this.options.useMultipleRangeRequest) {
-        w = executeTasks(this, tasks, firstStream, oldFileFd, reject)
+      if (this.options.isUseMultipleRangeRequest) {
+        w = executeTasksUsingMultipleRangeRequests(this, tasks, firstStream, oldFileFd, reject)
+        w(0)
+        return
       }
-      else {
-        let downloadOperationCount = 0
-        let actualUrl: string | null = null
-        this.logger.info(`Differential download: ${this.options.newUrl}`)
-        w = (index: number) => {
-          if (index >= tasks.length) {
-            if (this.fileMetadataBuffer != null) {
-              firstStream.write(this.fileMetadataBuffer)
-            }
-            firstStream.end()
-            return
+
+      let downloadOperationCount = 0
+      let actualUrl: string | null = null
+      this.logger.info(`Differential download: ${this.options.newUrl}`)
+
+      const requestOptions = this.createRequestOptions();
+      (requestOptions as any).redirect = "manual"
+
+      w = (index: number) => {
+        if (index >= tasks.length) {
+          if (this.fileMetadataBuffer != null) {
+            firstStream.write(this.fileMetadataBuffer)
           }
-
-          const operation = tasks[index++]
-          if (operation.kind === OperationKind.COPY) {
-            copyData(operation, firstStream, oldFileFd, reject, () => w(index))
-            return
-          }
-
-          const requestOptions = this.createRequestOptions("get", actualUrl)
-          const range = `bytes=${operation.start}-${operation.end - 1}`
-          requestOptions.headers!!.Range = range;
-          (requestOptions as any).redirect = "manual"
-
-          const debug = this.logger.debug
-          if (debug != null) {
-            debug(`download range: ${range}`)
-          }
-
-          const request = this.httpExecutor.createRequest(requestOptions, response => {
-            // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-            if (response.statusCode >= 400) {
-              reject(createHttpError(response))
-            }
-
-            response.pipe(firstStream, {
-              end: false
-            })
-            response.once("end", () => {
-              if (++downloadOperationCount === 100) {
-                downloadOperationCount = 0
-                setTimeout(() => w(index), 1000)
-              }
-              else {
-                w(index)
-              }
-            })
-          })
-          request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
-            this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
-            actualUrl = redirectUrl
-            request.followRedirect()
-          })
-          this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
-          request.end()
+          firstStream.end()
+          return
         }
+
+        const operation = tasks[index++]
+        if (operation.kind === OperationKind.COPY) {
+          copyData(operation, firstStream, oldFileFd, reject, () => w(index))
+          return
+        }
+
+        const range = `bytes=${operation.start}-${operation.end - 1}`
+        requestOptions.headers!!.range = range
+
+        const debug = this.logger.debug
+        if (debug != null) {
+          debug(`download range: ${range}`)
+        }
+
+        const request = this.httpExecutor.createRequest(requestOptions, response => {
+          // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
+          if (response.statusCode >= 400) {
+            reject(createHttpError(response))
+          }
+
+          response.pipe(firstStream, {
+            end: false
+          })
+          response.once("end", () => {
+            if (++downloadOperationCount === 100) {
+              downloadOperationCount = 0
+              setTimeout(() => w(index), 1000)
+            }
+            else {
+              w(index)
+            }
+          })
+        })
+        request.on("redirect", (statusCode: number, method: string, redirectUrl: string) => {
+          this.logger.info(`Redirect to ${removeQuery(redirectUrl)}`)
+          actualUrl = redirectUrl
+          configureRequestUrl(new URL(actualUrl), requestOptions)
+          request.followRedirect()
+        })
+        this.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
+        request.end()
       }
 
       w(0)
@@ -227,7 +230,7 @@ export abstract class DifferentialDownloader {
   protected async readRemoteBytes(start: number, endInclusive: number) {
     const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
     const requestOptions = this.createRequestOptions()
-    requestOptions.headers!!.Range = `bytes=${start}-${endInclusive}`
+    requestOptions.headers!!.range = `bytes=${start}-${endInclusive}`
     let position = 0
     await this.request(requestOptions, chunk => {
       chunk.copy(buffer, position)

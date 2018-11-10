@@ -31,7 +31,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.4.1",
+    "app-builder-bin": "2.4.3",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.6",
@@ -123,7 +123,7 @@
   },
   "/////": "proton-native is required only for proton tests",
   "optionalDependencies": {
-    "proton-native": "1.1.9"
+    "proton-native": "1.1.10"
   },
   "jest": {
     "testEnvironment": "node",

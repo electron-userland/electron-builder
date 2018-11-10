@@ -1,4 +1,4 @@
-import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor, safeGetHeader } from "builder-util-runtime"
+import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
 import { net, session } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
@@ -20,14 +20,15 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     super()
   }
 
-  async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
+  async download(url: URL, destination: string, options: DownloadOptions): Promise<string> {
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
-      this.doDownload({
-        ...configureRequestOptionsFromUrl(url, {
-          headers: options.headers || undefined,
-        }),
+      const requestOptions = {
+        headers: options.headers || undefined,
         redirect: "manual",
-      }, {
+      }
+      configureRequestUrl(url, requestOptions)
+      configureRequestOptions(requestOptions)
+      this.doDownload(requestOptions, {
         destination,
         options,
         onCancel,
@@ -40,71 +41,6 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
           }
         },
         responseHandler: null,
-      }, 0)
-    })
-  }
-
-  async downloadToBuffer(url: string, options: DownloadOptions): Promise<Buffer> {
-    return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
-      let result: Buffer | null = null
-      this.doDownload({
-        ...configureRequestOptionsFromUrl(url, {
-          headers: options.headers || undefined,
-        }),
-        // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
-        redirect: "manual",
-      }, {
-        destination: null,
-        options,
-        onCancel,
-        callback: error => {
-          if (error == null) {
-            resolve(result!!)
-          }
-          else {
-            reject(error)
-          }
-        },
-        responseHandler: (response, callback) => {
-          const contentLength = safeGetHeader(response, "content-length")
-          let position = -1
-          if (contentLength != null) {
-            const size = parseInt(contentLength, 10)
-            if (size > 0) {
-              if (size > 5242880) {
-                callback(new Error("Maximum allowed size is 5 MB"))
-                return
-              }
-
-              result = Buffer.alloc(size)
-              position = 0
-            }
-          }
-          response.on("data", (chunk: Buffer) => {
-            if (position !== -1) {
-              chunk.copy(result!!, position)
-              position += chunk.length
-            }
-            else if (result == null) {
-              result = chunk
-            }
-            else {
-              if (result.length > 5242880) {
-                callback(new Error("Maximum allowed size is 5 MB"))
-                return
-              }
-              result = Buffer.concat([result, chunk])
-            }
-          })
-          response.on("end", () => {
-            if (result != null && position !== -1 && position !== result.length) {
-              callback(new Error(`Received data length ${position} is not equal to expected ${result.length}`))
-            }
-            else {
-              callback(null)
-            }
-          })
-        },
       }, 0)
     })
   }

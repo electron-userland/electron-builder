@@ -1,13 +1,48 @@
-import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { URL } from "url"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
 
+export type ProviderPlatform = "darwin" | "linux" | "win32"
+
+export interface ProviderRuntimeOptions {
+  isUseMultipleRangeRequest: boolean
+  platform: ProviderPlatform
+
+  executor: HttpExecutor<any>
+}
+
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
+  protected readonly executor: HttpExecutor<any>
 
-  protected constructor(protected readonly executor: HttpExecutor<any>, readonly useMultipleRangeRequest = true) {
+  protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
+    this.executor = runtimeOptions.executor
+  }
+
+  get isUseMultipleRangeRequest(): boolean {
+    return this.runtimeOptions.isUseMultipleRangeRequest !== false
+  }
+
+  private getChannelFilePrefix() {
+    if (this.runtimeOptions.platform === "linux") {
+      const arch = process.env.TEST_UPDATER_ARCH || process.arch
+      const archSuffix = arch === "x64" ? "" : `-${arch}`
+      return "-linux" + archSuffix
+    }
+    else {
+      return this.runtimeOptions.platform === "darwin" ? "-mac" : ""
+    }
+  }
+
+  // due to historical reasons for windows we use channel name without platform specifier
+  protected getDefaultChannelName() {
+    return this.getCustomChannelName("latest")
+  }
+
+  protected getCustomChannelName(channel: string) {
+    return `${channel}${this.getChannelFilePrefix()}`
   }
 
   get fileExtraDownloadHeaders(): OutgoingHttpHeaders | null {
@@ -40,19 +75,9 @@ export abstract class Provider<T extends UpdateInfo> {
       result.headers = headers == null ? this.requestHeaders : {...this.requestHeaders, ...headers}
     }
 
-    configureRequestOptionsFromUrl(url, result)
+    configureRequestUrl(url, result)
     return result
   }
-}
-
-export function configureRequestOptionsFromUrl(url: URL, result: RequestOptions): RequestOptions {
-  result.protocol = url.protocol
-  result.hostname = url.hostname
-  if (url.port) {
-    result.port = url.port
-  }
-  result.path = url.pathname + url.search
-  return result
 }
 
 export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
@@ -93,7 +118,9 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
     return files
   }
 
+  // noinspection JSDeprecatedSymbols
   if (updateInfo.path != null) {
+    // noinspection JSDeprecatedSymbols
     return [
       {
         url: updateInfo.path,

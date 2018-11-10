@@ -10,11 +10,12 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import "source-map-support/register"
-import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
+import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
+import { ProviderPlatform } from "./providers/Provider"
 import Session = Electron.Session
 
 export abstract class AppUpdater extends EventEmitter {
@@ -59,7 +60,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private _channel: string | null = null
 
-  protected readonly downloadedUpdateHelper: DownloadedUpdateHelper
+  protected downloadedUpdateHelper: DownloadedUpdateHelper | null = null
 
   /**
    * Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
@@ -175,8 +176,6 @@ export abstract class AppUpdater extends EventEmitter {
       })
     }
 
-    this.downloadedUpdateHelper = new DownloadedUpdateHelper(path.join(this.app.getPath("userData"), "__update__"))
-
     const currentVersionString = this.app.getVersion()
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
@@ -200,13 +199,17 @@ export abstract class AppUpdater extends EventEmitter {
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
+    const runtimeOptions = this.createProviderRuntimeOptions()
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this, isUrlProbablySupportMultiRangeRequests(options))
+      provider = new GenericProvider({provider: "generic", url: options}, this, {
+        ...runtimeOptions,
+        isUseMultipleRangeRequest: isUrlProbablySupportMultiRangeRequests(options),
+      })
     }
     else {
-      provider = createClient(options, this)
+      provider = createClient(options, this, runtimeOptions)
     }
     this.clientPromise = Promise.resolve(provider)
   }
@@ -338,7 +341,7 @@ export abstract class AppUpdater extends EventEmitter {
     await this.untilAppReady
 
     if (this.clientPromise == null) {
-      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this))
+      this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this, this.createProviderRuntimeOptions()))
     }
 
     const client = await this.clientPromise
@@ -347,6 +350,14 @@ export abstract class AppUpdater extends EventEmitter {
     return {
       info: await client.getLatestVersion(),
       provider: client,
+    }
+  }
+
+  private createProviderRuntimeOptions() {
+    return {
+      isUseMultipleRangeRequest: true,
+      platform: this._testOnlyOptions == null ? process.platform as ProviderPlatform : this._testOnlyOptions.platform,
+      executor: this.httpExecutor,
     }
   }
 
@@ -446,7 +457,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {
-      this._appUpdateConfigPath = isDev ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!, "app-update.yml")
+      this._appUpdateConfigPath = isDev ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!!, "app-update.yml")
     }
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
@@ -464,7 +475,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
-    const file = path.join(this.app.getPath("userData"), ".updaterId")
+    const file = path.join(this._testOnlyOptions == null ? this.app.getPath("userData") : this._testOnlyOptions.cacheDir, ".updaterId")
     try {
       const id = await readFile(file, "utf-8")
       if (UUID.check(id)) {
@@ -508,6 +519,31 @@ export abstract class AppUpdater extends EventEmitter {
     return true
   }
 
+  /**
+   * @private
+   * @internal
+   */
+  _testOnlyOptions: TestOnlyUpdaterOptions | null = null
+
+  private async getOrCreateDownloadHelper(): Promise<DownloadedUpdateHelper> {
+    let result = this.downloadedUpdateHelper
+    if (result == null) {
+      const dirName = (await this.configOnDisk.value).updaterCacheDirName
+      const logger = this._logger
+      if (dirName == null) {
+        logger.error("updaterCacheDirName is not specified in app-update.yml Was app build using at least electron-builder 20.34.0?")
+      }
+      const cacheDir = this._testOnlyOptions == null ? getCacheDir(this.app, dirName || this.app.getName()) : this._testOnlyOptions.cacheDir
+      if (logger.debug != null) {
+        logger.debug(`updater cache dir: ${cacheDir}`)
+      }
+
+      result = new DownloadedUpdateHelper(cacheDir)
+      this.downloadedUpdateHelper = result
+    }
+    return result
+  }
+
   protected async executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     const fileInfo = taskOptions.fileInfo
     const downloadOptions: DownloadOptions = {
@@ -526,7 +562,7 @@ export abstract class AppUpdater extends EventEmitter {
     const packageInfo = fileInfo.packageInfo
 
     function getCacheUpdateFileName(): string {
-      // bloody NodeJS URL doesn't decode automatically
+      // NodeJS URL doesn't decode automatically
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
       if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
         return path.posix.basename(urlPath)
@@ -537,16 +573,17 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
 
-    const cacheDir = this.downloadedUpdateHelper.cacheDir
+    const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
+    const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
     await ensureDir(cacheDir)
     const updateFileName = getCacheUpdateFileName()
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
     const done = async (isSaveCache: boolean) => {
-      this.downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
+      downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
       if (isSaveCache) {
-        await this.downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
+        await downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
       }
 
       await taskOptions.done!!({
@@ -557,14 +594,14 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const log = this._logger
-    const cachedUpdateFile = await this.downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
+    const cachedUpdateFile = await downloadedUpdateHelper.validateDownloadedPath(updateFile, updateInfo, fileInfo, log)
     if (cachedUpdateFile != null) {
       updateFile = cachedUpdateFile
       return await done(false)
     }
 
     const removeFileIfAny = async () => {
-      await this.downloadedUpdateHelper.clear()
+      await downloadedUpdateHelper.clear()
         .catch(() => {
           // ignore
         })
@@ -574,23 +611,7 @@ export abstract class AppUpdater extends EventEmitter {
         })
     }
 
-    // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
-    let nameCounter = 0
-    let tempUpdateFile = path.join(cacheDir, `temp-${updateFileName}`)
-    for (let i = 0; i < 3; i++) {
-      try {
-        await unlink(tempUpdateFile)
-      }
-      catch (e) {
-        if (e.code === "ENOENT") {
-          break
-        }
-
-        log.warn(`Error on remove temp update file: ${e}`)
-        tempUpdateFile = path.join(cacheDir, `temp-${nameCounter++}-${updateFileName}`)
-      }
-    }
-
+    const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)
@@ -648,4 +669,28 @@ export interface DownloadExecutorTask {
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
+}
+
+function getCacheDir(app: Electron.App, dirName: string) {
+  const homedir = require("os").homedir()
+  // https://github.com/electron/electron/issues/1404#issuecomment-194391247
+  let baseDir: string
+  if (process.platform === "win32") {
+    baseDir = process.env.LOCALAPPDATA || app.getPath("userData")
+  }
+  else if (process.platform === "darwin") {
+    baseDir = path.join(homedir, "Library", "Application Support", "Caches")
+  }
+  else {
+    baseDir = process.env.XDG_CACHE_HOME || path.join(homedir, ".cache")
+  }
+  return path.join(baseDir, dirName)
+}
+
+/** @private */
+export interface TestOnlyUpdaterOptions {
+  platform: ProviderPlatform
+  cacheDir: string
+
+  isUseDifferentialDownload?: boolean
 }

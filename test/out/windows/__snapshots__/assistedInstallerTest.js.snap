@@ -60,6 +60,7 @@ Object {
   "owner": "foo",
   "provider": "github",
   "repo": "bar",
+  "updaterCacheDirName": "test-custom-inst-dir-updater",
 }
 `;
 

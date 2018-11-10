@@ -92,8 +92,9 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
   }
 
   const updaterVersion = dependencies["electron-updater"]
-  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), ">=3.2.0")) {
-    errors.push(`At least electron-updater 3.2.0 is recommended by current electron-builder version. Please set electron-updater version to "^3.2.0"`)
+  const requiredElectronUpdaterVersion = "4.0.0"
+  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), `>=${requiredElectronUpdaterVersion}`)) {
+    errors.push(`At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}"`)
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]

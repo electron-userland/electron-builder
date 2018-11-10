@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import isEqual from "lodash.isequal"
 import { Logger, ResolvedUpdateFileInfo } from "./main"
-import { pathExists, readJson, emptyDir, outputJson } from "fs-extra-p"
+import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra-p"
 import * as path from "path"
 
 /** @private **/
@@ -23,6 +23,10 @@ export class DownloadedUpdateHelper {
 
   get packageFile() {
     return this._packageFile
+  }
+
+  get cacheDirForPendingUpdate(): string {
+    return path.join(this.cacheDir, "pending")
   }
 
   async validateDownloadedPath(updateFile: string, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
@@ -58,7 +62,7 @@ export class DownloadedUpdateHelper {
       fileName: updateFileName,
       sha512: this.fileInfo!!.info.sha512,
     }
-    await outputJson(path.join(this.cacheDir, "update-info.json"), data)
+    await outputJson(this.getUpdateInfoFile(), data)
   }
 
   async clear() {
@@ -66,13 +70,13 @@ export class DownloadedUpdateHelper {
     this._packageFile = null
     this.versionInfo = null
     this.fileInfo = null
-    await this.cleanCacheDir()
+    await this.cleanCacheDirForPendingUpdate()
   }
 
-  private async cleanCacheDir(): Promise<void> {
+  private async cleanCacheDirForPendingUpdate(): Promise<void> {
     try {
       // remove stale data
-      await emptyDir(this.cacheDir)
+      await emptyDir(this.cacheDirForPendingUpdate)
     }
     catch (ignore) {
       // ignore
@@ -81,14 +85,14 @@ export class DownloadedUpdateHelper {
 
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
     let cachedInfo: CachedUpdateInfo
-    const updateInfoFile = path.join(this.cacheDir, "update-info.json")
+    const updateInfoFile = this.getUpdateInfoFile()
     try {
       cachedInfo = await readJson(updateInfoFile)
     }
     catch (e) {
       let message = `No cached update info available`
       if (e.code !== "ENOENT") {
-        await this.cleanCacheDir()
+        await this.cleanCacheDirForPendingUpdate()
         message += ` (error on read: ${e.message})`
       }
       logger.info(message)
@@ -97,30 +101,34 @@ export class DownloadedUpdateHelper {
 
     if (cachedInfo.fileName == null) {
       logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
-      await this.cleanCacheDir()
+      await this.cleanCacheDirForPendingUpdate()
       return null
     }
 
     if (fileInfo.info.sha512 !== cachedInfo.sha512) {
       logger.info(`Cached update sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${cachedInfo.sha512}, expected: ${fileInfo.info.sha512}. Directory for cached update will be cleaned`)
-      await this.cleanCacheDir()
+      await this.cleanCacheDirForPendingUpdate()
       return null
     }
 
-    const updateFile = path.join(this.cacheDir, cachedInfo.fileName)
+    const updateFile = path.join(this.cacheDirForPendingUpdate, cachedInfo.fileName)
     if (!(await pathExists(updateFile))) {
       logger.info("Cached update file doesn't exist, directory for cached update will be cleaned")
-      await this.cleanCacheDir()
+      await this.cleanCacheDirForPendingUpdate()
       return null
     }
 
     const sha512 = await hashFile(updateFile)
     if (fileInfo.info.sha512 !== sha512) {
       logger.warn(`Sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${sha512}, expected: ${fileInfo.info.sha512}`)
-      await this.cleanCacheDir()
+      await this.cleanCacheDirForPendingUpdate()
       return null
     }
     return updateFile
+  }
+
+  private getUpdateInfoFile() {
+    return path.join(this.cacheDirForPendingUpdate, "update-info.json")
   }
 }
 
@@ -144,4 +152,25 @@ function hashFile(file: string, algorithm: string = "sha512", encoding: "base64"
       })
       .pipe(hash, {end: false})
   })
+}
+
+export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger) {
+  // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
+  let nameCounter = 0
+  let result = path.join(cacheDir, name)
+  for (let i = 0; i < 3; i++) {
+    try {
+      await unlink(result)
+      return result
+    }
+    catch (e) {
+      if (e.code === "ENOENT") {
+        return result
+      }
+
+      log.warn(`Error on remove temp update file: ${e}`)
+      result = path.join(cacheDir, `${nameCounter++}-${name}`)
+    }
+  }
+  return result
 }

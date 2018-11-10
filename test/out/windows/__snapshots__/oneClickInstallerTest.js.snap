@@ -273,6 +273,7 @@ Object {
   "owner": "actperepo",
   "package": "TestApp",
   "provider": "bintray",
+  "updaterCacheDirName": "testapp-updater",
 }
 `;
 
@@ -319,6 +320,7 @@ Object {
 exports[`perMachine, no run after finish 2`] = `
 Object {
   "provider": "generic",
+  "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test/win/ia32",
 }
 `;

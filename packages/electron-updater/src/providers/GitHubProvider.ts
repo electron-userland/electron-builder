@@ -1,9 +1,9 @@
-import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parseXml, ReleaseNoteInfo, UpdateInfo, XElement } from "builder-util-runtime"
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
-import { getChannelFilename, getDefaultChannelName, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
-import { parseUpdateInfo, resolveFiles } from "./Provider"
+import { getChannelFilename, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
+import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 const hrefRegExp = /\/tag\/v?([^\/]+)$/
 
@@ -12,8 +12,12 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected readonly baseUrl: URL
   protected readonly baseApiUrl: URL
 
-  protected constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
-    super(executor, false /* because GitHib uses S3 */)
+  protected constructor(protected readonly options: GithubOptions, defaultHost: string, runtimeOptions: ProviderRuntimeOptions) {
+    super({
+      ...runtimeOptions,
+      /* because GitHib uses S3 */
+      isUseMultipleRangeRequest: false,
+    })
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
     const apiHost = defaultHost === "github.com" ? "api.github.com" : defaultHost
@@ -28,8 +32,8 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
 }
 
 export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
-  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, executor: HttpExecutor<any>) {
-    super(options, "github.com", executor)
+  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+    super(options, "github.com", runtimeOptions)
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
@@ -66,7 +70,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(getDefaultChannelName())
+    const channelFile = getChannelFilename(this.getDefaultChannelName())
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(version, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string

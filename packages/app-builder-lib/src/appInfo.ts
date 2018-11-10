@@ -102,6 +102,10 @@ export class AppInfo {
     return sanitizeFileName(this.name)
   }
 
+  get updaterCacheDirName(): string {
+    return this.sanitizedName.toLowerCase() + "-updater"
+  }
+
   get copyright(): string {
     const copyright = this.info.config.copyright
     if (copyright != null) {

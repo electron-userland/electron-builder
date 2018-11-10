@@ -42,7 +42,7 @@ export abstract class BaseUpdater extends AppUpdater {
       return false
     }
 
-    const installerPath = this.downloadedUpdateHelper.file
+    const installerPath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
     if (installerPath == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false

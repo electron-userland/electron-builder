@@ -133,9 +133,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
 function removeWineSpam(out: string) {
   return out.toString()
     .split("\n")
-    .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"") && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe"))
+    .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"")
+      && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe")
+      && !it.includes("Wine cannot find the FreeType font library.")
+      && !it.includes("use TrueType fonts please install a version of FreeType greater than")
+      && !it.includes("or equal to 2.0.5.")
+      && !it.includes("http://www.freetype.org")
+    )
     .join("\n")
-
 }
 
 export interface ExtraSpawnOptions {

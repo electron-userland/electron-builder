@@ -3,8 +3,8 @@ import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesO
 import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"
-import { tmpdir } from "os"
 import * as path from "path"
+import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { assertThat } from "./fileAssert"
 import { NodeHttpExecutor } from "builder-util/out/nodeHttpExecutor"
 
@@ -24,7 +24,7 @@ export function createTestApp(version: string, appPath = "") {
 
     // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
     getPath(type: string) {
-      return path.join(process.env.ELECTRON_BUILDER_TMP_DIR || tmpdir(), "electron-updater-test", type)
+      throw new Error("must be not called")
     }
 
     on() {
@@ -50,7 +50,7 @@ export async function writeUpdateConfig<T extends GenericServerOptions | GithubO
 }
 
 export async function validateDownload(updater: AppUpdater, expectDownloadPromise = true) {
-  tuneTestUpdater(updater)
+  await tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
@@ -93,8 +93,13 @@ export class TestNodeHttpExecutor extends NodeHttpExecutor {
 
 export const httpExecutor: TestNodeHttpExecutor = new TestNodeHttpExecutor()
 
-export function tuneTestUpdater(updater: AppUpdater) {
-  (updater as any).httpExecutor = httpExecutor
+export async function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOptions) {
+  (updater as any).httpExecutor = httpExecutor;
+  (updater as any)._testOnlyOptions = {
+    platform: "win32",
+    cacheDir: options == null ? await tmpDir.getTempDir() : options.cacheDir,
+    ...options,
+  }
   updater.logger = new NoOpLogger()
 }
 

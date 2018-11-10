@@ -444,10 +444,10 @@ export class NsisTarget extends Target {
     }
 
     if (this.isWebInstaller) {
-      defines.APP_PACKAGE_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_PACKAGE_FILE_NAME}`
+      defines.APP_PACKAGE_STORE_FILE = `${appInfo.updaterCacheDirName}\\${CURRENT_APP_PACKAGE_FILE_NAME}`
     }
     else {
-      defines.APP_INSTALLER_STORE_FILE = `${appInfo.productFilename}\\${CURRENT_APP_INSTALLER_FILE_NAME}`
+      defines.APP_INSTALLER_STORE_FILE = `${appInfo.updaterCacheDirName}\\${CURRENT_APP_INSTALLER_FILE_NAME}`
     }
 
     if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
