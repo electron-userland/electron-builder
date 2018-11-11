@@ -1,8 +1,22 @@
-## 3.3.0 unreleased
+## 4.0.0
+
+### BREAKING CHANGES
+
+Requires Electron 3 or later.
+
+### Bug Fixes
+
+* use cache dir for electron-updater cache data
+
+## 3.2.3
+
+### Bug Fixes
+
+* fix recent differential update regression ([d9341d6](https://github.com/electron-userland/electron-builder/commit/d9341d6))
 
 ### Features
 
-* expose downloaded file in update-downloaded event
+* expose downloaded file in update-downloaded event ([7cdece3](https://github.com/electron-userland/electron-builder/commit/7cdece3)), closes [#3070](https://github.com/electron-userland/electron-builder/issues/3070) [#3345](https://github.com/electron-userland/electron-builder/issues/3345)
 
 ## 3.2.1
 
