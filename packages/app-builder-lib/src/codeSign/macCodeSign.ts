@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, log, TmpDir } from "builder-util/out/util"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir } from "builder-util/out/util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes } from "crypto"
@@ -10,6 +10,7 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { download } from "../binDownload"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
+import { isMacOsSierra } from "../util/macosVersion"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 

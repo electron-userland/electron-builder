@@ -1,13 +1,15 @@
+import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
+import { CopyFileTransformer, FileTransformer } from "builder-util/out/fs"
+import { orIfFileNotExist } from "builder-util/out/promise"
 import { createHash } from "crypto"
 import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { FileTransformer, CopyFileTransformer } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
 import { downloadCertificate } from "./codeSign/macCodeSign"
+import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -22,9 +24,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
-import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
-import BluebirdPromise from "bluebird-lst"
-import { execWine } from "./wine"
+import { execWine64 } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -309,8 +309,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const timer = time("wine&sign")
-    // wine supports only ia32
-    await execWine(path.join(await getSignVendorPath(), `rcedit-${process.platform === "win32" ? process.arch : "ia32"}.exe`), args)
+    // for Linux continue to use 32 bit wine, as for now wine is not provided for Linux
+    await execWine64(path.join(await getSignVendorPath(), `rcedit-${process.platform === "win32" || process.platform === "darwin" ? process.arch : "ia32"}.exe`), args)
     await this.sign(file)
     timer.end()
 

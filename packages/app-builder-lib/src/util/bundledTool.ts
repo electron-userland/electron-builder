@@ -1,6 +1,3 @@
-// 2 minutes
-export const EXEC_TIMEOUT = {timeout: 120 * 1000}
-
 export interface ToolInfo {
   path: string
   env?: any

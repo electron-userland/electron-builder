@@ -13,7 +13,7 @@ import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
-import { execWine } from "../../wine"
+import { execWine64 } from "../../wine"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
@@ -306,7 +306,7 @@ export class NsisTarget extends Target {
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
-    await execWine(installerPath, [])
+    await execWine64(installerPath, [])
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER

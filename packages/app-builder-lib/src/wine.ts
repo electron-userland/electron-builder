@@ -1,13 +1,11 @@
-import { path7za } from "7zip-bin"
 import { ExecFileOptions } from "child_process"
 import { Lazy } from "lazy-val"
-import * as os from "os"
 import * as path from "path"
 import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
-import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./util/bundledTool"
-import { getMacOsVersion } from "builder-util/out/macosVersion"
-import { debug7zArgs, exec, isEnvTrue, log } from "builder-util/out/util"
+import { computeEnv, ToolInfo } from "./util/bundledTool"
+import { getMacOsVersion } from "./util/macosVersion"
+import { exec, isEnvTrue, log } from "builder-util/out/util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
@@ -45,33 +43,59 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     }
   }
 
-  if (process.env.COMPRESSED_WINE_HOME) {
-    await exec(path7za, debug7zArgs("x").concat(process.env.COMPRESSED_WINE_HOME!!, "-aoa", `-o${path.join(os.homedir(), ".wine")}`))
-  }
-  else {
-    await checkWineVersion(exec("wine", ["--version"]))
-  }
+  await checkWineVersion(exec("wine", ["--version"]))
   return {path: "wine"}
 })
 
+const wineExecutableMac64 = new Lazy<ToolInfo>(async () => {
+  const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
+  if (isUseSystemWine) {
+    log.debug(null, "using system wine is forced")
+  }
+  else if (process.platform === "darwin") {
+    // noinspection SpellCheckingInspection
+    const wineDir = await getBinFromGithub("wine", "3.0.3-mac64-10.13", "R1K6y2A4dMyveWSyRcNaWYNEBCRvk8AF8lEJ4MBrig/myLnHzKFJCQ73mIztisdam3CPreplXNP0/5iGf4134g==")
+    return {
+      path: path.join(wineDir, "bin/wine"),
+      env: {
+        ...process.env,
+        WINEDEBUG: "-all,err+all",
+        WINEDLLOVERRIDES: "winemenubuilder.exe=d",
+        WINEPREFIX: path.join(wineDir, "wine-home"),
+        DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")]),
+      },
+    }
+  }
+
+  await checkWineVersion(exec("wine", ["--version"]))
+  return {path: "wine"}
+})
+
+export function execWine64(file: string, args: Array<string>, options: ExecFileOptions = {}): Promise<string> {
+  return execWine(file, args, options, true)
+}
+
 /** @private */
-export function execWine(file: string, args: Array<string>, options: ExecFileOptions = EXEC_TIMEOUT): Promise<string> {
+export function execWine(file: string, args: Array<string>, options: ExecFileOptions = {}, isUseWine64 = false): Promise<string> {
+  if (options.timeout == null) {
+    // 2 minutes
+    options.timeout = 120 * 1000
+  }
   if (process.platform === "win32") {
     return exec(file, args, options)
   }
-  else {
-    return wineExecutable.value
-      .then(wine => {
-        const effectiveOptions = wine.env == null ? options : {...options}
-        if (wine.env != null) {
-          effectiveOptions.env = options.env == null ? wine.env : {
-            ...options.env,
-            ...wine.env,
-          }
+
+  return (isUseWine64 && process.platform === "darwin" ? wineExecutableMac64 : wineExecutable).value
+    .then(wine => {
+      const effectiveOptions = wine.env == null ? options : {...options}
+      if (wine.env != null) {
+        effectiveOptions.env = options.env == null ? wine.env : {
+          ...options.env,
+          ...wine.env,
         }
-        return exec(wine.path, [file].concat(args), effectiveOptions)
-      })
-  }
+      }
+      return exec(wine.path, [file].concat(args), effectiveOptions)
+    })
 }
 
 /** @private */

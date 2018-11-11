@@ -1,8 +1,7 @@
-import { executeAppBuilderAsJson, InvalidConfigurationError, asArray, isMacOsSierra, log } from "builder-util/out/util"
+import { executeAppBuilderAsJson, InvalidConfigurationError, asArray, log } from "builder-util/out/util"
 import { getBinFromGithub } from "../binDownload"
 import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra-p"
-import isCi from "is-ci"
 import * as os from "os"
 import * as path from "path"
 import { WindowsConfiguration } from ".."
@@ -314,24 +313,11 @@ async function getToolPath(): Promise<ToolInfo> {
     return {path: getWinSignTool(vendorPath)}
   }
   else if (process.platform === "darwin") {
-    let suffix: string | null = null
-    try {
-      if (await isMacOsSierra()) {
-        const toolDirPath = path.join(vendorPath, process.platform, "10.12")
-        return {
-          path: path.join(toolDirPath, "osslsigncode"),
-          env: computeToolEnv([path.join(toolDirPath, "lib")]),
-        }
-      }
-      else if (isCi) {
-        // not clear for what we do this instead of using version detection
-        suffix = "ci"
-      }
+    const toolDirPath = path.join(vendorPath, process.platform, "10.12")
+    return {
+      path: path.join(toolDirPath, "osslsigncode"),
+      env: computeToolEnv([path.join(toolDirPath, "lib")]),
     }
-    catch (e) {
-      log.warn(`${e.stack || e}`)
-    }
-    return {path: path.join(vendorPath, process.platform, `${suffix == null ? "" : `${suffix}/`}osslsigncode`)}
   }
   else {
     return {path: path.join(vendorPath, process.platform, "osslsigncode")}

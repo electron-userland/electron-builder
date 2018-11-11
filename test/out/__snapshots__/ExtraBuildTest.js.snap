@@ -90,6 +90,7 @@ exports[`override targets in the config - only arch 2`] = `
 Object {
   "channel": "beta",
   "provider": "generic",
+  "updaterCacheDirName": "testapp-updater",
   "url": "https://develar.s3.amazonaws.com/test",
 }
 `;

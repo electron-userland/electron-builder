@@ -22,8 +22,6 @@
     "builder-util-runtime": "^0.0.0-semantic-release",
     "source-map-support": "^0.5.9",
     "7zip-bin": "~4.1.0",
-    "semver": "^5.6.0",
-    "lazy-val": "^1.0.3",
     "js-yaml": "^3.12.0"
   },
   "typings": "./out/util.d.ts"

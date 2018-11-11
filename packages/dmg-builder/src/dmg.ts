@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isCanSignDmg, isEmptyOrSpaces, log, spawn, deepAssign, executeAppBuilder } from "builder-util"
+import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, deepAssign, executeAppBuilder } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "./dmgLicense"
@@ -78,10 +78,6 @@ export class DmgTarget extends Target {
   private async signDmg(artifactPath: string) {
     if (!isSignAllowed(false)) {
       return
-    }
-
-    if (!(await isCanSignDmg())) {
-      log.warn({solution: "please update OS"}, "at least macOS 10.11.5 is required to sign DMG")
     }
 
     const packager = this.packager
