@@ -2,6 +2,7 @@ import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-run
 import { createReadStream, stat } from "fs-extra-p"
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
+import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { UpdateDownloadedEvent } from "./main"
 import { findFile } from "./providers/Provider"
@@ -12,8 +13,8 @@ export class MacUpdater extends AppUpdater {
 
   private updateInfoForPendingUpdateDownloadedEvent: UpdateDownloadedEvent | null = null
 
-  constructor(options?: AllPublishOptions) {
-    super(options)
+  constructor(options?: AllPublishOptions, app?: AppAdapter) {
+    super(options, app)
 
     this.nativeUpdater.on("error", it => {
       this._logger.warn(it)

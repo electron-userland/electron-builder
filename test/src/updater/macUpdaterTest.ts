@@ -2,7 +2,7 @@ import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runt
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { assertThat } from "../helpers/fileAssert"
-import { createTestApp, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createTestAppAdapter, httpExecutor, trackEvents, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -30,15 +30,13 @@ class TestNativeUpdater extends EventEmitter {
 
 test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
-  const mockApp = createTestApp("0.0.1")
   jest.mock("electron", () => {
     return {
       autoUpdater: mockNativeUpdater,
-      app: mockApp
     }
   }, {virtual: true})
 
-  const updater = new MacUpdater()
+  const updater = new MacUpdater(undefined, await createTestAppAdapter())
   const options: GithubOptions = {
     provider: "github",
     owner: "develar",

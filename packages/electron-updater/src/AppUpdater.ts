@@ -1,7 +1,6 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
-import isDev from "electron-is-dev"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
@@ -10,7 +9,9 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import "source-map-support/register"
+import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
+import { ElectronAppAdapter } from "./ElectronAppAdapter"
 import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
@@ -96,8 +97,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected _logger: Logger = console
 
-  // noinspection JSUnusedGlobalSymbols
-  // noinspection JSMethodCanBeStatic
+  // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   get netSession(): Session {
     return getNetSession()
   }
@@ -144,39 +144,31 @@ export abstract class AppUpdater extends EventEmitter {
   private readonly untilAppReady: Promise<any>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
 
-  protected readonly app: Electron.App
+  protected readonly app: AppAdapter
 
   protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   /** @internal */
   readonly httpExecutor: ElectronHttpExecutor
 
-  protected constructor(options: AllPublishOptions | null | undefined, app?: Electron.App) {
+  protected constructor(options: AllPublishOptions | null | undefined, app?: AppAdapter) {
     super()
 
     this.on("error", (error: Error) => {
       this._logger.error(`Error: ${error.stack || error.message}`)
     })
 
-    if (app != null || (global as any).__test_app != null) {
-      this.app = app || (global as any).__test_app
-      this.untilAppReady = Promise.resolve()
-      this.httpExecutor = null as any
+    if (app == null) {
+      this.app = new ElectronAppAdapter()
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
     }
     else {
-      this.app = require("electron").app
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
-      this.untilAppReady = new Promise(resolve => {
-        if (this.app.isReady()) {
-          resolve()
-        }
-        else {
-          this.app.on("ready", resolve)
-        }
-      })
+      this.app = app
+      this.httpExecutor = null as any
     }
+    this.untilAppReady = Promise.resolve()
 
-    const currentVersionString = this.app.getVersion()
+    const currentVersionString = this.app.version
     const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
       throw newError(`App version is not a valid semver version: "${currentVersionString}"`, "ERR_UPDATER_INVALID_VERSION")
@@ -233,7 +225,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
-    if (isDev) {
+    if (this.app.isPackaged) {
       return Promise.resolve(null)
     }
 
@@ -253,7 +245,7 @@ export abstract class AppUpdater extends EventEmitter {
           .then(() => {
             new Notification({
               title: "A new update is ready to install",
-              body: `${this.app.getName()} version ${it.updateInfo.version} has been downloaded and will be automatically installed on exit`
+              body: `${this.app.name} version ${it.updateInfo.version} has been downloaded and will be automatically installed on exit`
             }).show()
           })
       })
@@ -457,7 +449,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {
-      this._appUpdateConfigPath = isDev ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!!, "app-update.yml")
+      this._appUpdateConfigPath = this.app.appUpdateConfigPath
     }
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
@@ -475,7 +467,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
-    const file = path.join(this._testOnlyOptions == null ? this.app.getPath("userData") : this._testOnlyOptions.cacheDir, ".updaterId")
+    const file = path.join(this.app.userDataPath, ".updaterId")
     try {
       const id = await readFile(file, "utf-8")
       if (UUID.check(id)) {
@@ -533,7 +525,7 @@ export abstract class AppUpdater extends EventEmitter {
       if (dirName == null) {
         logger.error("updaterCacheDirName is not specified in app-update.yml Was app build using at least electron-builder 20.34.0?")
       }
-      const cacheDir = this._testOnlyOptions == null ? getCacheDir(this.app, dirName || this.app.getName()) : this._testOnlyOptions.cacheDir
+      const cacheDir = path.join(this.app.baseCachePath, dirName || this.app.name)
       if (logger.debug != null) {
         logger.debug(`updater cache dir: ${cacheDir}`)
       }
@@ -671,26 +663,9 @@ export interface DownloadExecutorTask {
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
 }
 
-function getCacheDir(app: Electron.App, dirName: string) {
-  const homedir = require("os").homedir()
-  // https://github.com/electron/electron/issues/1404#issuecomment-194391247
-  let baseDir: string
-  if (process.platform === "win32") {
-    baseDir = process.env.LOCALAPPDATA || app.getPath("userData")
-  }
-  else if (process.platform === "darwin") {
-    baseDir = path.join(homedir, "Library", "Application Support", "Caches")
-  }
-  else {
-    baseDir = process.env.XDG_CACHE_HOME || path.join(homedir, ".cache")
-  }
-  return path.join(baseDir, dirName)
-}
-
 /** @private */
 export interface TestOnlyUpdaterOptions {
   platform: ProviderPlatform
-  cacheDir: string
 
   isUseDifferentialDownload?: boolean
 }

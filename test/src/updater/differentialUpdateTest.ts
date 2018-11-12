@@ -11,8 +11,9 @@ import { move } from "fs-extra-p"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { createTestApp, tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "./differentialUpdateTestSnapshotData"
+import { TestAppAdapter } from "./TestAppAdapter"
 
 /*
 
@@ -25,6 +26,8 @@ rm -rf ~/Documents/onshape-desktop-shell/node_modules/electron-updater && cp -R 
 // minio server ~/minio-data
 
 const OLD_VERSION_NUMBER = "1.0.0"
+
+const testAppCacheDirName = "testapp-updater"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   let outDirs: Array<string> = []
@@ -74,7 +77,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     await move(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), "package.7z"))
+    await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
   }
   else {
     nsisWebDifferentialUpdateTestFakeSnapshot()
@@ -135,7 +138,7 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
     await move(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), "installer.exe"))
+    await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
     await move(path.join(oldDir, "Test App ßW Setup 1.0.0.exe.blockmap"), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
   }
   else {
@@ -279,10 +282,8 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     "-listdir=true",
   ])
   const mockNativeUpdater = new TestNativeUpdater()
-  const mockApp = createTestApp(OLD_VERSION_NUMBER)
   jest.mock("electron", () => {
     return {
-      app: mockApp,
       autoUpdater: mockNativeUpdater,
     }
   }, {virtual: true})
@@ -290,12 +291,11 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
   return await new BluebirdPromise((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
-    const updater = new updaterClass()
+    const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
     updater._appUpdateConfigPath = path.join(oldDir, (updaterClass === MacUpdater ? `${appUpdateConfigPath}/Contents/Resources` : (`${appUpdateConfigPath}/resources`)), "app-update.yml")
     const doTest = async () => {
       await tuneTestUpdater(updater, {
         platform: platform.nodeName as any,
-        cacheDir: getTestUpdaterCacheDir(oldDir),
         isUseDifferentialDownload: true,
       })
       updater.logger = console

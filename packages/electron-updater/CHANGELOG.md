@@ -2,11 +2,16 @@
 
 ### BREAKING CHANGES
 
-Requires Electron 3 or later.
+* Requires Electron 3 or later.
+* Cache directory changed, so, full download will be performed on update instead of differential.
 
 ### Bug Fixes
 
 * use cache dir for electron-updater cache data
+
+### Features
+
+* decouple Electron API to support Proton and other frameworks
 
 ## 3.2.3
 

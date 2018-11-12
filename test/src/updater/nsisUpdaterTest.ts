@@ -1,12 +1,11 @@
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
-import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { removeUnstableProperties } from "../helpers/packTester"
-import { createTestApp, trackEvents, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createNsisUpdater, trackEvents, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
@@ -14,12 +13,8 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
-const g = (global as any)
-g.__test_app = createTestApp("0.0.1")
-
 test("check updates - no versions at all", async () => {
-  const updater = new NsisUpdater()
-  await tuneTestUpdater(updater)
+  const updater = await createNsisUpdater()
   // tslint:disable-next-line:no-object-literal-type-assertion
   updater.setFeedURL({
     provider: "bintray",
@@ -30,15 +25,14 @@ test("check updates - no versions at all", async () => {
   await assertThat(updater.checkForUpdates()).throws()
 })
 
-async function testUpdateFromBintray(app: any) {
-  const updater = new NsisUpdater(null, app)
+async function testUpdateFromBintray(version?: string) {
+  const updater = await createNsisUpdater(version)
   updater.allowDowngrade = true
   updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -54,16 +48,15 @@ async function testUpdateFromBintray(app: any) {
 
   expect(actualEvents).toEqual(expectedEvents)
 }
-test("file url (bintray)", () => testUpdateFromBintray(null))
+test("file url (bintray)", () => testUpdateFromBintray(undefined))
 
 test("downgrade (disallowed, bintray)", async () => {
-  const updater = new NsisUpdater(null, createTestApp("2.0.0"))
+  const updater = await createNsisUpdater("2.0.0")
   updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -82,13 +75,12 @@ test("downgrade (disallowed, bintray)", async () => {
 })
 
 test("downgrade (disallowed, beta)", async () => {
-  const updater = new NsisUpdater(null, createTestApp("1.5.2-beta.4"))
+  const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -106,10 +98,10 @@ test("downgrade (disallowed, beta)", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("downgrade (allowed)", () => testUpdateFromBintray(createTestApp("2.0.0-beta.1")))
+test("downgrade (allowed)", () => testUpdateFromBintray("2.0.0-beta.1"))
 
 test("file url generic", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
@@ -118,7 +110,7 @@ test("file url generic", async () => {
 })
 
 test("DigitalOcean Spaces", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<SpacesOptions>({
     provider: "spaces",
     name: "electron-builder-test",
@@ -129,13 +121,12 @@ test("DigitalOcean Spaces", async () => {
 })
 
 test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -147,12 +138,11 @@ test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
 })
 
 test("file url generic - manual download", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  await tuneTestUpdater(updater)
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -168,12 +158,11 @@ test("file url generic - manual download", async () => {
 
 // https://github.com/electron-userland/electron-builder/issues/1045
 test("checkForUpdates several times", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -200,7 +189,7 @@ async function checkDownloadPromise(updateCheckResult: UpdateCheckResult) {
 }
 
 test("file url github", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   const options: GithubOptions = {
     provider: "github",
     owner: "develar",
@@ -216,7 +205,7 @@ test("file url github", async () => {
 })
 
 test("file url github pre-release and fullChangelog", async () => {
-  const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
+  const updater = await createNsisUpdater("1.5.0-beta.1")
   const options: GithubOptions = {
     provider: "github",
     owner: "develar",
@@ -234,8 +223,7 @@ test("file url github pre-release and fullChangelog", async () => {
 })
 
 test.skip("file url github private", async () => {
-  const updater = new NsisUpdater(null, createTestApp("0.0.1"))
-  await tuneTestUpdater(updater)
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "develar",
@@ -246,8 +234,7 @@ test.skip("file url github private", async () => {
 })
 
 test("test error", async () => {
-  const updater: NsisUpdater = new NsisUpdater()
-  await tuneTestUpdater(updater)
+  const updater = await createNsisUpdater("0.0.1")
   const actualEvents = trackEvents(updater)
 
   await assertThat(updater.checkForUpdates()).throws()
@@ -255,12 +242,11 @@ test("test error", async () => {
 })
 
 test.skip("test download progress", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test"
   })
-  await tuneTestUpdater(updater)
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -280,7 +266,7 @@ test.skip("test download progress", async () => {
 })
 
 test.ifAll.ifWindows("valid signature", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
@@ -291,14 +277,13 @@ test.ifAll.ifWindows("valid signature", async () => {
 })
 
 test.ifAll.ifWindows("invalid signature", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar"],
   })
-  await tuneTestUpdater(updater)
   const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then((it): any => it.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
@@ -309,7 +294,7 @@ test.skip("90 staging percentage", async () => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<S3Options>({
     provider: "s3",
     channel: "staging-percentage",
@@ -323,7 +308,7 @@ test("1 staging percentage", async () => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
 
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "s3",
     channel: "staging-percentage-small",
@@ -334,12 +319,11 @@ test("1 staging percentage", async () => {
 })
 
 test.skip("cancel download with progress", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/full-test",
   })
-  await tuneTestUpdater(updater)
 
   const progressEvents: Array<any> = []
   updater.signals.progress(it => progressEvents.push(it))
@@ -363,12 +347,11 @@ test.skip("cancel download with progress", async () => {
 })
 
 test.ifAll("test download and install", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  await tuneTestUpdater(updater)
 
   await validateDownload(updater)
 
@@ -378,12 +361,11 @@ test.ifAll("test download and install", async () => {
 })
 
 test.ifAll("test downloaded installer", async () => {
-  const updater = new NsisUpdater()
+  const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  await tuneTestUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
