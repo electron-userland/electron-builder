@@ -18,9 +18,9 @@ export async function expectUpdateMetadata(context: PackedContext, arch: Arch = 
   expect(data).toMatchSnapshot()
 }
 
-export async function checkHelpers(resourceDir: string, packElevateHelper: boolean) {
+export async function checkHelpers(resourceDir: string, isPackElevateHelper: boolean) {
   const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
-  if (packElevateHelper) {
+  if (isPackElevateHelper) {
     await assertThat(elevateHelperExecutable).isFile()
   }
   else {

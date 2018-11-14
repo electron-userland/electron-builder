@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { debug7z, debug7zArgs, exec } from "builder-util"
+import { debug7z, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
 import { move } from "fs-extra-p"
 import * as path from "path"
@@ -171,4 +171,12 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   return outFile
+}
+
+function debug7zArgs(command: "a" | "x"): Array<string> {
+  const args = [command, "-bd"]
+  if (debug7z.enabled) {
+    args.push("-bb")
+  }
+  return args
 }

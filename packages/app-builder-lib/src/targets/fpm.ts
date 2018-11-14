@@ -204,7 +204,9 @@ export default class FpmTarget extends Target {
 
     args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
     for (const icon of (await this.helper.icons)) {
-      args.push(`${icon.file}=/usr/share/icons/hicolor/${icon.size}x${icon.size}/apps/${packager.executableName}.png`)
+      const extWithDot = path.extname(icon.file)
+      const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`
+      args.push(`${icon.file}=/usr/share/icons/hicolor/${sizeName}/apps/${packager.executableName}${extWithDot}`)
     }
 
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)

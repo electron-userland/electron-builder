@@ -1,8 +1,9 @@
-import { log, executeAppBuilderAsJson } from "builder-util"
+import { log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
 import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { ArchiveOptions } from "./archive"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"

@@ -170,7 +170,19 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * *Proton Native only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run electron-builder.
    */
+  readonly nodeVersion?: string | null
+
+  readonly launchUiVersion?: boolean | string | null
+
+  /**
+   * @deprecated Set framework and nodeVersion if need.
+   */
   readonly protonNodeVersion?: string | null
+
+  /**
+   * The framework name. One of `electron`, `proton-native`, `libui`. Defaults to `electron`.
+   */
+  readonly framework?: string | null
 
   /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).

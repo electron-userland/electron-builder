@@ -4,9 +4,8 @@
   "description": "a notepad app built using proton-native",
   "main": "index.js",
   "dependencies": {
-    "proton-native": "^1.0.15"
+    "proton-native": "~1.1.10"
   },
-  "devDependencies": {},
   "scripts": {
     "start": "node_modules/.bin/babel-node index.js"
   },

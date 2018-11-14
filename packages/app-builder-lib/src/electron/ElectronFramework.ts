@@ -10,6 +10,7 @@ import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirector
 import { ElectronPlatformName, Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
+import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 
@@ -97,29 +98,56 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions, isClea
   }
 }
 
+class ElectronFramework implements Framework {
+  // noinspection JSUnusedGlobalSymbols
+  readonly macOsDefaultTargets = ["zip", "dmg"]
+  // noinspection JSUnusedGlobalSymbols
+  readonly defaultAppIdPrefix = "com.electron."
+  // noinspection JSUnusedGlobalSymbols
+  readonly isCopyElevateHelper = true
+  // noinspection JSUnusedGlobalSymbols
+  readonly isNpmRebuildRequired = true
+
+  constructor(readonly name: string, readonly version: string, readonly distMacOsAppName: string) {
+  }
+
+  getDefaultIcon(platform: Platform) {
+    if (platform === Platform.LINUX) {
+      return path.join(getTemplatePath("icons"), "electron-linux")
+    }
+    else {
+      // default icon is embedded into app skeleton
+      return null
+    }
+  }
+
+  prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
+    return unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
+  }
+
+  beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
+    return beforeCopyExtraFiles(options, this.name === "electron" && semver.lte(this.version || "1.8.3", "1.8.3"))
+  }
+}
+
+class MuonFramework extends ElectronFramework {
+  constructor(version: string) {
+    super("muon", version, "Brave.app")
+  }
+
+  prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
+    return unpack(options, {
+      mirror: "https://github.com/brave/muon/releases/download/v",
+      customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
+      isVerifyChecksum: false,
+      ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
+    }, this.distMacOsAppName)
+  }
+}
+
 export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
   if (configuration.muonVersion != null) {
-    const distMacOsAppName = "Brave.app"
-    return {
-      name: "muon",
-      isDefaultAppIconProvided: true,
-      macOsDefaultTargets: ["zip", "dmg"],
-      defaultAppIdPrefix: "com.electron.",
-      version: configuration.muonVersion!!,
-      distMacOsAppName,
-      prepareApplicationStageDirectory: options => {
-        return unpack(options, {
-          mirror: "https://github.com/brave/muon/releases/download/v",
-          customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
-          isVerifyChecksum: false,
-          ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
-        }, distMacOsAppName)
-      },
-      isNpmRebuildRequired: true,
-      beforeCopyExtraFiles: options => {
-        return beforeCopyExtraFiles(options, false)
-      },
-    }
+    return new MuonFramework(configuration.muonVersion!!)
   }
 
   let version = configuration.electronVersion
@@ -137,20 +165,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     configuration.electronVersion = version
   }
 
-  const distMacOsAppName = "Electron.app"
-  return {
-    isDefaultAppIconProvided: true,
-    macOsDefaultTargets: ["zip", "dmg"],
-    defaultAppIdPrefix: "com.electron.",
-    name: "electron",
-    version,
-    distMacOsAppName,
-    isNpmRebuildRequired: true,
-    prepareApplicationStageDirectory: options => unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, version!!), distMacOsAppName),
-    beforeCopyExtraFiles: options => {
-      return beforeCopyExtraFiles(options, semver.lte(version || "1.8.3", "1.8.3"))
-    },
-  }
+  return new ElectronFramework("electron", version, "Electron.app")
 }
 
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {

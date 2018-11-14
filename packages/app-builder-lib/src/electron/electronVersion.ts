@@ -61,7 +61,10 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   }
 
   const version = semver.coerce(electronPrebuiltDep)
-  return version == null ? Promise.reject() : version.toString()
+  if (version == null) {
+    throw new Error("cannot compute electron version")
+  }
+  return version.toString()
 }
 
 function findFromElectronPrebuilt(packageData: any): any {

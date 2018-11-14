@@ -49,3 +49,51 @@ Object {
   "NSHighResolutionCapable": true,
 }
 `;
+
+exports[`win 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "notepad Setup 1.0.0.exe",
+      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "notepad Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`win ia32 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "ia32",
+      "file": "notepad Setup 1.0.0.exe",
+      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "notepad Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;

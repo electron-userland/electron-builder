@@ -27,7 +27,7 @@ if (process.env.TRAVIS !== "true") {
 
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
-interface AssertPackOptions {
+export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
@@ -38,7 +38,7 @@ interface AssertPackOptions {
   readonly signed?: boolean
   readonly signedWin?: boolean
 
-  readonly installDepsBefore?: boolean
+  readonly isInstallDepsBefore?: boolean
 
   readonly publish?: PublishPolicy
 }
@@ -114,12 +114,13 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   await executeFinally((async () => {
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir, tmpDir)
-      if (checkOptions.installDepsBefore) {
-        // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production", "--no-lockfile"], {
-          cwd: projectDir,
-        })
-      }
+    }
+
+    if (checkOptions.isInstallDepsBefore) {
+      // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
+      await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production", "--no-lockfile"], {
+        cwd: projectDir,
+      })
     }
 
     if (packagerOptions.projectDir != null) {

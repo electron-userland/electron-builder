@@ -1,10 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, isEnvTrue, log, executeAppBuilderAsJson, InvalidConfigurationError } from "builder-util"
+import { Arch, isEnvTrue, log, InvalidConfigurationError } from "builder-util"
 import * as path from "path"
 import { UploadTask } from "electron-publish/out/publisher"
 import { Target, TargetSpecificOptions } from "../core"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { ProjectInfoManager } from "./ProjectInfoManager"
 
 interface TargetInfo {

@@ -24,7 +24,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
-import { execWine64 } from "./wine"
+import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -309,8 +309,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const timer = time("wine&sign")
-    // for Linux continue to use 32 bit wine, as for now wine is not provided for Linux
-    await execWine64(path.join(await getSignVendorPath(), `rcedit-${process.platform === "win32" || process.platform === "darwin" ? process.arch : "ia32"}.exe`), args)
+    // rcedit crashed of executed using wine, resourcehacker works
+    if (process.platform === "win32" || this.info.framework.name === "electron") {
+      const vendorPath = await getSignVendorPath()
+      await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
+    }
+
     await this.sign(file)
     timer.end()
 

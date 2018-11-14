@@ -1,11 +1,9 @@
 import { asArray, isEmptyOrSpaces, log } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
-import * as path from "path"
 import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
 import { IconInfo } from "../platformPackager"
-import { getTemplatePath } from "../util/pathManager"
 
 export const installPrefix = "/opt"
 
@@ -25,7 +23,7 @@ export class LinuxTargetHelper {
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
     const iconDir = packager.platformSpecificBuildOptions.icon
-    const sources = [iconDir == null ? "icons" : iconDir]
+    const sources = iconDir == null ? [] : [iconDir]
 
     const commonConfiguration = packager.config
     let icnsPath = (commonConfiguration.mac || {}).icon || commonConfiguration.icon
@@ -36,11 +34,8 @@ export class LinuxTargetHelper {
       sources.push(icnsPath)
     }
 
-    sources.push("icon.icns")
-
-    sources.push(path.join(getTemplatePath("linux"), "electron-icons"))
-
-    const result = await packager.resolveIcon(sources, "set")
+    // need to put here and not as default because need to resolve image size
+    const result = await packager.resolveIcon(sources, asArray(packager.getDefaultFrameworkIcon()), "set")
     this.maxIconPath = result[result.length - 1].file
     return result
   }

@@ -12,7 +12,7 @@ export const fpmPath = new Lazy(() => {
     return Promise.resolve("fpm")
   }
 
-  return getBin("fpm", "fpm", null)
+  return getBin("fpm")
     .then(it => path.join(it, "fpm"))
 })
 

@@ -8,7 +8,7 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
   expect(file).toBeDefined()
 
-  const result = await platformPackager.resolveIcon([file!!], "set")
+  const result = await platformPackager.resolveIcon([file!!], [], "set")
   result.forEach(it => {
     it.file = path.basename(it.file)
   })

@@ -101,7 +101,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
             logFields.stdout = stdout
           }
           if (stderr.length > 0) {
-            logFields.stderr = file.endsWith("wine") ? removeWineSpam(stderr.toString()) : stderr
+            logFields.stderr = stderr
           }
 
           log.debug(logFields, "executed")
@@ -112,13 +112,13 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
         let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
         if (stdout.length !== 0) {
           if (file.endsWith("wine")) {
-            stdout = removeWineSpam(stdout.toString())
+            stdout = stdout.toString()
           }
           message += `\n${chalk.yellow(stdout.toString())}`
         }
         if (stderr.length !== 0) {
           if (file.endsWith("wine")) {
-            stderr = removeWineSpam(stderr.toString())
+            stderr = stderr.toString()
           }
           message += `\n${chalk.red(stderr.toString())}`
         }
@@ -127,19 +127,6 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
       }
     })
   })
-}
-
-function removeWineSpam(out: string) {
-  return out.toString()
-    .split("\n")
-    .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"")
-      && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe")
-      && !it.includes("Wine cannot find the FreeType font library.")
-      && !it.includes("use TrueType fonts please install a version of FreeType greater than")
-      && !it.includes("or equal to 2.0.5.")
-      && !it.includes("http://www.freetype.org")
-    )
-    .join("\n")
 }
 
 export interface ExtraSpawnOptions {
@@ -263,14 +250,6 @@ export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
   return value == null ? null : task(value)
 }
 
-export function debug7zArgs(command: "a" | "x"): Array<string> {
-  const args = [command, "-bd"]
-  if (debug7z.enabled) {
-    args.push("-bb")
-  }
-  return args
-}
-
 export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | undefined {
   return s == null || s.trim().length === 0
 }
@@ -346,7 +325,7 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void): Promise<string> {
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: ExecFileOptions = {}): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const command = appBuilderPath
     const env: any = {
@@ -359,7 +338,13 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
     if (cacheEnv != null && cacheEnv.length > 0) {
       env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
     }
+
+    if (extraOptions.env != null) {
+      Object.assign(env, extraOptions.env)
+    }
+
     const childProcess = doSpawn(command, args, {
+      ...extraOptions,
       env,
       stdio: ["ignore", "pipe", process.stdout]
     })
@@ -368,16 +353,4 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
     }
     handleProcess("close", childProcess, command, resolve, reject)
   })
-}
-
-export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
-  return executeAppBuilder(args)
-    .then(rawResult => {
-      try {
-        return JSON.parse(rawResult) as T
-      }
-      catch (e) {
-        throw new Error(`Cannot parse result: ${e.message}: "${rawResult}"`)
-      }
-    })
 }

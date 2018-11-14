@@ -81,11 +81,6 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
 }
 
-export function versionFromDependencyRange(version: string) {
-  const firstChar = version[0]
-  return firstChar === "^" || firstChar === "~" ? version.substring(1) : version
-}
-
 function versionSatisfies(version: string | semver.SemVer | null, range: string | semver.Range, loose?: boolean): boolean {
   if (version == null) {
     return false

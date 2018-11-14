@@ -1,6 +1,6 @@
 import { FileTransformer } from "builder-util/out/fs"
 import { AsarIntegrity } from "./asar/integrity"
-import { Platform, PlatformPackager, ElectronPlatformName } from "./index"
+import { Platform, PlatformPackager, ElectronPlatformName, AfterPackContext } from "./index"
 
 export interface Framework {
   readonly name: string
@@ -11,12 +11,19 @@ export interface Framework {
 
   readonly isNpmRebuildRequired: boolean
 
-  readonly isDefaultAppIconProvided: boolean
-  getDefaultIcon?(platform: Platform): string
+  readonly isCopyElevateHelper: boolean
+
+  getDefaultIcon?(platform: Platform): string | null
+
+  getMainFile?(platform: Platform): string | null
+
+  getExcludedDependencies?(platform: Platform): Array<string> | null
 
   prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions): Promise<any>
 
   beforeCopyExtraFiles?(options: BeforeCopyExtraFilesOptions): Promise<any>
+
+  afterPack?(context: AfterPackContext): Promise<any>
 
   createTransformer?(): FileTransformer | null
 }

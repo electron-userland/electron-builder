@@ -13,7 +13,7 @@ import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { isSafeGithubName, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
-import { execWine64 } from "../../wine"
+import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
@@ -306,7 +306,7 @@ export class NsisTarget extends Target {
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
-    await execWine64(installerPath, [])
+    await execWine(installerPath)
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
@@ -568,16 +568,9 @@ export class NsisTarget extends Target {
     }
 
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
-    if (preCompressedFileExtensions != null) {
+    if (preCompressedFileExtensions != null && preCompressedFileExtensions.length !== 0) {
       for (const [arch, dir] of this.archs.entries()) {
-        const preCompressedAssets = await walk(path.join(dir, "resources"), (file, stat) => stat.isDirectory() || preCompressedFileExtensions.some(it => file.endsWith(it)))
-        if (preCompressedAssets.length !== 0) {
-          const macro = new NsisScriptGenerator()
-          for (const file of preCompressedAssets) {
-            macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
-          }
-          scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
-        }
+        await generateForPreCompressed(preCompressedFileExtensions, dir, arch, scriptGenerator)
       }
     }
 
@@ -617,6 +610,32 @@ export class NsisTarget extends Target {
     }
 
     return scriptGenerator.build() + originalScript
+  }
+}
+
+async function generateForPreCompressed(preCompressedFileExtensions: Array<string>, dir: string, arch: Arch, scriptGenerator: NsisScriptGenerator) {
+  const resourcesDir = path.join(dir, "resources")
+  const dirInfo = await statOrNull(resourcesDir)
+  if (dirInfo == null || !dirInfo.isDirectory()) {
+    return
+  }
+
+  const nodeModules = `${path.sep}node_modules`
+  const preCompressedAssets = await walk(resourcesDir, (file, stat) => {
+    if (stat.isDirectory()) {
+      return !file.endsWith(nodeModules)
+    }
+    else {
+      return preCompressedFileExtensions.some(it => file.endsWith(it))
+    }
+  })
+
+  if (preCompressedAssets.length !== 0) {
+    const macro = new NsisScriptGenerator()
+    for (const file of preCompressedAssets) {
+      macro.file(`$INSTDIR\\${path.relative(dir, file).replace(/\//g, "\\")}`, file)
+    }
+    scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
 }
 

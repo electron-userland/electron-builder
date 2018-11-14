@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log, executeAppBuilderAsJson } from "builder-util"
+import { AsyncTaskManager, log } from "builder-util"
 import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
 import { ensureDir, readlink, Stats, symlink } from "fs-extra-p"
 import * as path from "path"
@@ -9,6 +9,7 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
+import { executeAppBuilderAsJson } from "./appBuilder"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 
@@ -180,9 +181,17 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  // const productionDeps = await platformPackager.info.productionDeps.value
+  const args = ["node-dep-tree", "--dir", platformPackager.info.appDir]
+  if (platformPackager.info.framework.getExcludedDependencies != null) {
+    const excludedDependencies = platformPackager.info.framework.getExcludedDependencies(platformPackager.platform)
+    if (excludedDependencies != null) {
+      for (const name of excludedDependencies) {
+        args.push("--exclude-dep", name)
+      }
+    }
+  }
 
-  const deps = await executeAppBuilderAsJson<Array<any>>(["node-dep-tree", "--dir", platformPackager.info.appDir])
+  const deps = await executeAppBuilderAsJson<Array<any>>(args)
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
   return await BluebirdPromise.mapSeries(deps, async info => {

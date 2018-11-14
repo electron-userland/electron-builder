@@ -1,5 +1,6 @@
-import { executeAppBuilderAsJson, InvalidConfigurationError, asArray, log } from "builder-util/out/util"
-import { getBinFromGithub } from "../binDownload"
+import { InvalidConfigurationError, asArray, log } from "builder-util/out/util"
+import { getBin } from "../binDownload"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra-p"
 import * as os from "os"
@@ -11,8 +12,7 @@ import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
 
 export function getSignVendorPath() {
-  //noinspection SpellCheckingInspection
-  return getBinFromGithub("winCodeSign", "2.3.2", "brAICKFcwBa+5eFkq+V5JJTt1XxiQNgHwW+ahUupAl2ciAAVikgpUmN7tsdQXjifCRwK2eS3zbE6lcP5y/KRIw==")
+  return getBin("winCodeSign")
 }
 
 export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>

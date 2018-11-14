@@ -12,8 +12,8 @@ import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "./differentialUpdateTestSnapshotData"
-import { TestAppAdapter } from "./TestAppAdapter"
+import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "../helpers/differentialUpdateTestSnapshotData"
+import { TestAppAdapter } from "../helpers/TestAppAdapter"
 
 /*
 

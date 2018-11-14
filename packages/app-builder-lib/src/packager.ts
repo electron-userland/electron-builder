@@ -11,12 +11,13 @@ import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
+import { LibUiFramework } from "./frameworks/LibUiFramework"
 import { AfterPackContext, Configuration, Framework, Platform, SourceRepositoryInfo, Target } from "./index"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
-import { createProtonFrameworkSupport } from "./ProtonFramework"
+import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { expandMacro } from "./util/macroExpander"
@@ -33,11 +34,37 @@ function addHandler(emitter: EventEmitter, event: string, handler: (...args: Arr
 declare const PACKAGE_VERSION: string
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
-  if (configuration.protonNodeVersion != null) {
-    return createProtonFrameworkSupport(configuration.protonNodeVersion!!, packager.appInfo)
+  let framework = configuration.framework
+  if (framework != null) {
+    framework = framework.toLowerCase()
+  }
+
+  let nodeVersion = configuration.nodeVersion
+  // noinspection JSDeprecatedSymbols
+  if (framework == null && configuration.protonNodeVersion != null) {
+    framework = "proton"
+    // noinspection JSDeprecatedSymbols
+    nodeVersion = configuration.protonNodeVersion
+  }
+
+  if (framework === "electron" || framework == null) {
+    return await createElectronFrameworkSupport(configuration, packager)
+  }
+
+  if (nodeVersion == null || nodeVersion === "current") {
+    nodeVersion = process.versions.node
+  }
+
+  const distMacOsName = `${packager.appInfo.productFilename}.app`
+  const isUseLaunchUi = configuration.launchUiVersion !== false
+  if (framework === "proton") {
+    return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
+  }
+  else if (framework === "libui") {
+    return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
   }
   else {
-    return await createElectronFrameworkSupport(configuration, packager)
+    throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
 }
 

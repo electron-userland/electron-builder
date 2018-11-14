@@ -182,7 +182,7 @@ fi
 {{if eq .SystemIntegration "ask"}}
 if [ -z "$APPIMAGE_SILENT_INSTALL" ] ; then
     # we ask the user only if we have found no reason to skip until here
-    yesno "Install" "Would you like to integrate $APPIMAGE with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
+    yesno "Install" "Would you like to integrate $(basename $APPIMAGE) with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
 fi
 {{end}}
 

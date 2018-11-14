@@ -6,7 +6,7 @@ import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
-import { TestAppAdapter } from "../updater/TestAppAdapter"
+import { TestAppAdapter } from "./TestAppAdapter"
 import { assertThat } from "./fileAssert"
 import { NodeHttpExecutor } from "builder-util/out/nodeHttpExecutor"
 

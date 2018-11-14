@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, executeAppBuilderAsJson, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir } from "fs-extra-p"
@@ -12,9 +12,10 @@ import { AsarPackager } from "./asar/asarUtil"
 import { computeData } from "./asar/integrity"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { isElectronBased } from "./Framework"
-import { PackagerOptions, Packager, AfterPackContext, AsarOptions, Configuration, ElectronPlatformName, FileAssociation, PlatformSpecificBuildOptions, CompressionLevel, Platform, Target, TargetSpecificOptions } from "./index"
-import { copyAppFiles, transformFiles, computeFileSets, computeNodeModuleFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/appFileCopier"
+import { Framework, isElectronBased } from "./Framework"
+import { AfterPackContext, AsarOptions, CompressionLevel, Configuration, ElectronPlatformName, FileAssociation, Packager, PackagerOptions, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "./index"
+import { executeAppBuilderAsJson } from "./util/appBuilder"
+import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -217,14 +218,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    const beforeCopyExtraFiles = this.info.framework.beforeCopyExtraFiles
-    if (beforeCopyExtraFiles != null) {
-      await beforeCopyExtraFiles({
+    if (framework.beforeCopyExtraFiles != null) {
+      await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
         asarIntegrity: asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null),
         platformName,
       })
+    }
+
+    if (this.info.cancellationToken.cancelled) {
+      return
     }
 
     const transformerForExtraFiles = this.createTransformerForExtraFiles(packContext)
@@ -236,8 +240,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     await this.info.afterPack(packContext)
+
+    if (framework.afterPack != null) {
+      await framework.afterPack(packContext)
+    }
+
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar)
+    await this.sanityCheckPackage(appOutDir, isAsar, framework)
     await this.signApp(packContext, isAsar)
 
     const afterSign = resolveFunction(this.config.afterSign, "afterSign")
@@ -420,20 +429,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     }
     else {
-      const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
+      const fullPath = path.join(resourcesDir, "app", relativeFile)
+      const outStat = await statOrNull(fullPath)
       if (outStat == null) {
-        throw new Error(`${messagePrefix} "${relativeFile}" does not exist. Seems like a wrong configuration.`)
+        throw new Error(`${messagePrefix} "${fullPath}" does not exist. Seems like a wrong configuration.`)
       }
       else {
         //noinspection ES6MissingAwait
         if (!outStat.isFile()) {
-          throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+          throw new Error(`${messagePrefix} "${fullPath}" is not a file. Seems like a wrong configuration.`)
         }
       }
     }
   }
 
-  private async sanityCheckPackage(appOutDir: string, isAsar: boolean): Promise<any> {
+  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework): Promise<any> {
     const outStat = await statOrNull(appOutDir)
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
@@ -446,7 +456,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const resourcesDir = this.getResourcesDir(appOutDir)
-    await this.checkFileInPackage(resourcesDir, this.info.metadata.main || "index.js", "Application entry file", isAsar)
+    const mainFile = (framework.getMainFile == null ? null : framework.getMainFile(this.platform)) || this.info.metadata.main || "index.js"
+    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar)
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
@@ -545,34 +556,30 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async getOrConvertIcon(format: IconFormat): Promise<string | null> {
-    const sourceNames = [`icon.${format === "set" ? "png" : format}`, "icon.png", "icons"]
-
-    const iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
-    if (iconPath != null) {
-      sourceNames.unshift(iconPath)
-    }
-
-    if (format === "ico") {
-      sourceNames.push("icon.icns")
-    }
-
-    const result = await this.resolveIcon(sourceNames, format)
+    const result = await this.resolveIcon(asArray(this.platformSpecificBuildOptions.icon || this.config.icon), [], format)
     if (result.length === 0) {
       const framework = this.info.framework
       if (framework.getDefaultIcon != null) {
         return framework.getDefaultIcon(this.platform)
       }
 
-      log.warn({reason: "application icon is not set"}, framework.isDefaultAppIconProvided ? `default ${capitalizeFirstLetter(framework.name)} icon is used` : `application doesn't have an icon`)
-      return null
+      log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
+      return this.getDefaultFrameworkIcon()
     }
     else {
       return result[0].file
     }
   }
 
+  getDefaultFrameworkIcon(): string | null {
+    const framework = this.info.framework
+    const result = framework.getDefaultIcon == null ? null : framework.getDefaultIcon(this.platform)
+    log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
+    return result
+  }
+
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
-  async resolveIcon(sources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
+  async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
     const args = [
       "icon",
       "--format", outputFormat,
@@ -582,6 +589,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     ]
     for (const source of sources) {
       args.push("--input", source)
+    }
+    for (const source of fallbackSources) {
+      args.push("--fallback-input", source)
     }
 
     const result: IconConvertResult = await executeAppBuilderAsJson(args)

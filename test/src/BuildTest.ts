@@ -1,5 +1,4 @@
 import { walk } from "builder-util/out/fs"
-import { checkWineVersion } from "app-builder-lib/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
@@ -330,8 +329,3 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
     return verifySmartUnpack(context.getResources(Platform.LINUX))
   }}))
-
-test("wine version", async () => {
-  await checkWineVersion(Promise.resolve("1.9.23 (Staging)"))
-  await checkWineVersion(Promise.resolve("2.0-rc2"))
-})

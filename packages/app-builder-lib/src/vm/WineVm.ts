@@ -10,7 +10,7 @@ export class WineVmManager extends VmManager {
   }
 
   exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return execWine(file, args, options)
+    return execWine(file, null, args, options)
   }
 
   spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {

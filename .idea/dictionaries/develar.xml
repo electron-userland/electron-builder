@@ -186,6 +186,7 @@
       <w>kext</w>
       <w>keyserver</w>
       <w>langs</w>
+      <w>launchui</w>
       <w>lcid</w>
       <w>lerna</w>
       <w>levelup</w>
@@ -204,6 +205,7 @@
       <w>libnss</w>
       <w>libpcre</w>
       <w>libpulse</w>
+      <w>libui</w>
       <w>libunity</w>
       <w>libvpx</w>
       <w>libxslt</w>
@@ -309,6 +311,7 @@
       <w>rels</w>
       <w>repos</w>
       <w>resample</w>
+      <w>resourcehacker</w>
       <w>retrycancel</w>
       <w>revalidate</w>
       <w>rimraf</w>
@@ -377,6 +380,7 @@
       <w>webm</w>
       <w>welcomefinishpage</w>
       <w>whoami</w>
+      <w>winearch</w>
       <w>winedlloverrides</w>
       <w>winemenubuilder</w>
       <w>winstaller</w>
