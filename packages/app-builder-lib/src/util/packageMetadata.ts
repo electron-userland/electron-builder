@@ -86,6 +86,19 @@ export function versionFromDependencyRange(version: string) {
   return firstChar === "^" || firstChar === "~" ? version.substring(1) : version
 }
 
+function versionSatisfies(version: string | semver.SemVer | null, range: string | semver.Range, loose?: boolean): boolean {
+  if (version == null) {
+    return false
+  }
+
+  const coerced = semver.coerce(version)
+  if (coerced == null) {
+    return false
+  }
+
+  return semver.satisfies(coerced, range, loose)
+}
+
 function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
   if (dependencies == null) {
     return
@@ -93,12 +106,12 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
 
   const updaterVersion = dependencies["electron-updater"]
   const requiredElectronUpdaterVersion = "4.0.0"
-  if (updaterVersion != null && !semver.satisfies(versionFromDependencyRange(updaterVersion), `>=${requiredElectronUpdaterVersion}`)) {
+  if (updaterVersion != null && !versionSatisfies(updaterVersion, `>=${requiredElectronUpdaterVersion}`)) {
     errors.push(`At least electron-updater ${requiredElectronUpdaterVersion} is recommended by current electron-builder version. Please set electron-updater version to "^${requiredElectronUpdaterVersion}"`)
   }
 
   const swVersion = dependencies["electron-builder-squirrel-windows"]
-  if (swVersion != null && !semver.satisfies(versionFromDependencyRange(swVersion), ">=20.32.0")) {
+  if (swVersion != null && !versionSatisfies(swVersion, ">=20.32.0")) {
     errors.push(`At least electron-builder-squirrel-windows 20.32.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.32.0"`)
   }
 

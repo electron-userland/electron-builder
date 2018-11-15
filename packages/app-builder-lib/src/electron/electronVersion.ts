@@ -3,10 +3,10 @@ import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as semver from "semver"
 import { orNullIfFileNotExist } from "read-config-file"
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config"
-import { versionFromDependencyRange } from "../util/packageMetadata"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
@@ -60,7 +60,8 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     throw new Error(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
 
-  return versionFromDependencyRange(electronPrebuiltDep)
+  const version = semver.coerce(electronPrebuiltDep)
+  return version == null ? Promise.reject() : version.toString()
 }
 
 function findFromElectronPrebuilt(packageData: any): any {
