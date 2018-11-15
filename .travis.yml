@@ -16,7 +16,7 @@ matrix:
       node_js: "10"
 
     - os: osx
-      env: TEST_FILES=masTest,dmgTest
+      env: TEST_FILES=masTest,dmgTest,protonTest
       node_js: "10"
 
 cache:
