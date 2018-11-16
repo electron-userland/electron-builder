@@ -17,6 +17,11 @@ export class DownloadedUpdateHelper {
   constructor(readonly cacheDir: string) {
   }
 
+  private _downloadedFileInfo: CachedUpdateInfo | null = null
+  get downloadedFileInfo() {
+    return this._downloadedFileInfo
+  }
+
   get file() {
     return this._file
   }
@@ -29,11 +34,11 @@ export class DownloadedUpdateHelper {
     return path.join(this.cacheDir, "pending")
   }
 
-  async validateDownloadedPath(updateFile: string, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
+  async validateDownloadedPath(updateFile: string, updateInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
     if (this.versionInfo != null && this.file === updateFile && this.fileInfo != null) {
       // update has already been downloaded from this running instance
       // check here only existence, not checksum
-      if (isEqual(this.versionInfo, versionInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
+      if (isEqual(this.versionInfo, updateInfo) && isEqual(this.fileInfo.info, fileInfo.info) && (await pathExists(updateFile))) {
         return updateFile
       }
       else {
@@ -47,22 +52,24 @@ export class DownloadedUpdateHelper {
       return null
     }
     logger.info(`Update has already been downloaded to ${updateFile}).`)
+    this._file = cachedUpdateFile
     return cachedUpdateFile
   }
 
-  setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo) {
+  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean) {
     this._file = downloadedFile
     this._packageFile = packageFile
     this.versionInfo = versionInfo
     this.fileInfo = fileInfo
-  }
-
-  async cacheUpdateInfo(updateFileName: string) {
-    const data: CachedUpdateInfo = {
+    this._downloadedFileInfo = {
       fileName: updateFileName,
-      sha512: this.fileInfo!!.info.sha512,
+      sha512: fileInfo.info.sha512,
+      isAdminRightsRequired: fileInfo.info.isAdminRightsRequired === true,
     }
-    await outputJson(this.getUpdateInfoFile(), data)
+
+    if (isSaveCache) {
+      await outputJson(this.getUpdateInfoFile(), this._downloadedFileInfo)
+    }
   }
 
   async clear() {
@@ -124,6 +131,7 @@ export class DownloadedUpdateHelper {
       await this.cleanCacheDirForPendingUpdate()
       return null
     }
+    this._downloadedFileInfo = cachedInfo
     return updateFile
   }
 
@@ -135,6 +143,7 @@ export class DownloadedUpdateHelper {
 interface CachedUpdateInfo {
   fileName: string
   sha512: string
+  readonly isAdminRightsRequired: boolean
 }
 
 function hashFile(file: string, algorithm: string = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {

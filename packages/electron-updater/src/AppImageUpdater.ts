@@ -5,7 +5,7 @@ import { chmod, unlinkSync } from "fs-extra-p"
 import * as path from "path"
 import "source-map-support/register"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater } from "./BaseUpdater"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { UpdateCheckResult } from "./main"
 import { findFile } from "./providers/Provider"
@@ -74,7 +74,7 @@ export class AppImageUpdater extends BaseUpdater {
     })
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean {
+  protected doInstall(options: InstallOptions): boolean {
     const appImageFile = process.env.APPIMAGE!!
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
@@ -87,22 +87,22 @@ export class AppImageUpdater extends BaseUpdater {
     const existingBaseName = path.basename(appImageFile)
     // https://github.com/electron-userland/electron-builder/issues/2964
     // if no version in existing file name, it means that user wants to preserve current custom name
-    if (path.basename(installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
+    if (path.basename(options.installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
       // no version in the file name, overwrite existing
       destination = appImageFile
     }
     else {
-      destination = path.join(path.dirname(appImageFile), path.basename(installerPath))
+      destination = path.join(path.dirname(appImageFile), path.basename(options.installerPath))
     }
 
-    execFileSync("mv", ["-f", installerPath, destination])
+    execFileSync("mv", ["-f", options.installerPath, destination])
 
     const env: any = {
       ...process.env,
       APPIMAGE_SILENT_INSTALL: "true",
     }
 
-    if (isRunAfter) {
+    if (options.isForceRunAfter) {
       spawn(destination, [], {
         detached: true,
         stdio: "ignore",

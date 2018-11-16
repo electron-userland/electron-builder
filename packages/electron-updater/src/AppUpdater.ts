@@ -141,7 +141,6 @@ export abstract class AppUpdater extends EventEmitter {
   /** @internal */
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
-  private readonly untilAppReady: Promise<any>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
 
   protected readonly app: AppAdapter
@@ -166,7 +165,6 @@ export abstract class AppUpdater extends EventEmitter {
       this.app = app
       this.httpExecutor = null as any
     }
-    this.untilAppReady = Promise.resolve()
 
     const currentVersionString = this.app.version
     const currentVersion = parseVersion(currentVersionString)
@@ -212,20 +210,31 @@ export abstract class AppUpdater extends EventEmitter {
   checkForUpdates(): Promise<UpdateCheckResult> {
     let checkForUpdatesPromise = this.checkForUpdatesPromise
     if (checkForUpdatesPromise != null) {
+      this._logger.info("Checking for update (already in progress)")
       return checkForUpdatesPromise
     }
 
-    checkForUpdatesPromise = this._checkForUpdates()
-    this.checkForUpdatesPromise = checkForUpdatesPromise
     const nullizePromise = () => this.checkForUpdatesPromise = null
-    checkForUpdatesPromise
-      .then(nullizePromise)
-      .catch(nullizePromise)
+
+    this._logger.info("Checking for update")
+    checkForUpdatesPromise = this.doCheckForUpdates()
+      .then(it => {
+        nullizePromise()
+        return it
+      })
+      .catch(e => {
+        nullizePromise()
+        this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
+        throw e
+      })
+
+    this.checkForUpdatesPromise = checkForUpdatesPromise
     return checkForUpdatesPromise
   }
 
   checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
-    if (this.app.isPackaged) {
+    if (!this.app.isPackaged) {
+      this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
       return Promise.resolve(null)
     }
 
@@ -276,19 +285,6 @@ export abstract class AppUpdater extends EventEmitter {
     return percentage < stagingPercentage
   }
 
-  private async _checkForUpdates(): Promise<UpdateCheckResult> {
-    try {
-      await this.untilAppReady
-      this._logger.info("Checking for update")
-      this.emit("checking-for-update")
-      return await this.doCheckForUpdates()
-    }
-    catch (e) {
-      this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
-      throw e
-    }
-  }
-
   private computeFinalHeaders(headers: OutgoingHttpHeaders) {
     if (this.requestHeaders != null) {
       Object.assign(headers, this.requestHeaders)
@@ -330,7 +326,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
-    await this.untilAppReady
+    await this.app.whenReady()
 
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => createClient(it, this, this.createProviderRuntimeOptions()))
@@ -354,6 +350,8 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+    this.emit("checking-for-update")
+
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
     if (!await this.isUpdateAvailable(updateInfo)) {
@@ -573,11 +571,7 @@ export abstract class AppUpdater extends EventEmitter {
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
     const done = async (isSaveCache: boolean) => {
-      downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo)
-      if (isSaveCache) {
-        await downloadedUpdateHelper.cacheUpdateInfo(updateFileName)
-      }
-
+      await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
       await taskOptions.done!!({
         ...updateInfo,
         downloadedFile: updateFile,

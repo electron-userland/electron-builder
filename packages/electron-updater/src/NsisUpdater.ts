@@ -5,7 +5,7 @@ import * as path from "path"
 import "source-map-support/register"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
-import { BaseUpdater } from "./BaseUpdater"
+import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
@@ -89,13 +89,13 @@ export class NsisUpdater extends BaseUpdater {
     return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
   }
 
-  protected doInstall(installerPath: string, isSilent: boolean, isForceRunAfter: boolean): boolean {
+  protected doInstall(options: InstallOptions): boolean {
     const args = ["--updated"]
-    if (isSilent) {
+    if (options.isSilent) {
       args.push("/S")
     }
 
-    if (isForceRunAfter) {
+    if (options.isForceRunAfter) {
       args.push("--force-run")
     }
 
@@ -105,15 +105,25 @@ export class NsisUpdater extends BaseUpdater {
       args.push(`--package-file=${packagePath}`)
     }
 
-    _spawn(installerPath, args)
+    const callUsingElevation = () => {
+      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args))
+        .catch(e => this.dispatchError(e))
+    }
+
+    if (options.isAdminRightsRequired) {
+      this._logger.info("isAdminRightsRequired is set to true, run installer using elevate.exe")
+      callUsingElevation()
+      return true
+    }
+
+    _spawn(options.installerPath, args)
       .catch(e => {
         // https://github.com/electron-userland/electron-builder/issues/1129
         // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         const errorCode = (e as any).code
+        this._logger.info(`Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES"`)
         if (errorCode === "UNKNOWN" || errorCode.code === "EACCES") {
-          this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
-          _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [installerPath].concat(args))
-            .catch(e => this.dispatchError(e))
+          callUsingElevation()
         }
         else {
           this.dispatchError(e)

@@ -34,17 +34,19 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   // must be sync
-  protected abstract doInstall(installerPath: string, isSilent: boolean, isRunAfter: boolean): boolean
+  protected abstract doInstall(options: InstallOptions): boolean
 
   // must be sync (because quit even handler is not async)
-  protected install(isSilent: boolean, isRunAfter: boolean): boolean {
+  protected install(isSilent: boolean, isForceRunAfter: boolean): boolean {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
 
-    const installerPath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.file
-    if (installerPath == null) {
+    const downloadedUpdateHelper = this.downloadedUpdateHelper
+    const installerPath = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.file
+    const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
+    if (installerPath == null || downloadedFileInfo == null) {
       this.dispatchError(new Error("No valid update available, can't quit and install"))
       return false
     }
@@ -53,8 +55,13 @@ export abstract class BaseUpdater extends AppUpdater {
     this.quitAndInstallCalled = true
 
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isRunAfter: ${isRunAfter}`)
-      return this.doInstall(installerPath, isSilent, isRunAfter)
+      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+      return this.doInstall({
+        installerPath,
+        isSilent,
+        isForceRunAfter,
+        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+      })
     }
     catch (e) {
       this.dispatchError(e)
@@ -84,4 +91,11 @@ export abstract class BaseUpdater extends AppUpdater {
       this.install(true, false)
     })
   }
+}
+
+export interface InstallOptions {
+  readonly installerPath: string
+  readonly isSilent: boolean
+  readonly isForceRunAfter: boolean
+  readonly isAdminRightsRequired: boolean
 }

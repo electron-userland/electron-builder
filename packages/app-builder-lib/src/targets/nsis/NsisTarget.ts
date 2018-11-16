@@ -264,6 +264,10 @@ export class NsisTarget extends Target {
       updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
     }
 
+    if (updateInfo != null && options.perMachine === true && oneClick) {
+      updateInfo.isAdminRightsRequired = true
+    }
+
     packager.info.dispatchArtifactCreated({
       file: installerPath,
       updateInfo,

@@ -28,6 +28,8 @@ export interface BlockMapDataHolder {
    * The file checksum.
    */
   readonly sha512: string
+
+  readonly isAdminRightsRequired?: boolean
 }
 
 export interface PackageFileInfo extends BlockMapDataHolder {
