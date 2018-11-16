@@ -124,6 +124,8 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 
 * <code id="Configuration-afterPack">afterPack</code> - The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
 * <code id="Configuration-afterSign">afterSign</code> - The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
+* <code id="Configuration-artifactBuildStarted">artifactBuildStarted</code> module:app-builder-lib/out/configuration.__type | String - The function (or path to file or module id) to be run on artifact build start.
+* <code id="Configuration-artifactBuildCompleted">artifactBuildCompleted</code> module:app-builder-lib/out/configuration.__type | String - The function (or path to file or module id) to be run on artifact build start.
 * <code id="Configuration-afterAllArtifactBuild">afterAllArtifactBuild</code> - The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
 * <code id="Configuration-onNodeModuleFile">onNodeModuleFile</code> - The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
 * <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
