@@ -1,13 +1,11 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
-import isDev from "electron-is-dev"
 import { chmod, unlinkSync } from "fs-extra-p"
 import * as path from "path"
 import "source-map-support/register"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
-import { UpdateCheckResult } from "./main"
 import { findFile } from "./providers/Provider"
 
 export class AppImageUpdater extends BaseUpdater {
@@ -15,11 +13,7 @@ export class AppImageUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
-    if (isDev) {
-      return Promise.resolve(null)
-    }
-
+  protected isUpdaterActive(): boolean {
     if (process.env.APPIMAGE == null) {
       if (process.env.SNAP == null) {
         this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
@@ -27,10 +21,9 @@ export class AppImageUpdater extends BaseUpdater {
       else {
         this._logger.info("SNAP env is defined, updater is disabled")
       }
-      return Promise.resolve(null)
+      return false
     }
-
-    return super.checkForUpdatesAndNotify()
+    return super.isUpdaterActive()
   }
 
   /*** @private */

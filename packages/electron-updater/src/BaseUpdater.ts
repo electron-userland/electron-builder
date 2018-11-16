@@ -10,9 +10,9 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  async quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): Promise<void> {
+  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
-    const isInstalled = await this.install(isSilent, isSilent ? isForceRunAfter : true)
+    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
     if (isInstalled) {
       setImmediate(() => {
         this.app.quit()

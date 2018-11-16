@@ -232,9 +232,17 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
-  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
+  protected isUpdaterActive(): boolean {
     if (!this.app.isPackaged) {
       this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
+      return false
+    }
+    return true
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
+    if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
     }
 

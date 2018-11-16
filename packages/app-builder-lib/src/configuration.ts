@@ -167,14 +167,18 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly muonVersion?: string | null
 
   /**
-   * *Proton Native only* The version of NodeJS you are packaging for.
-   * You can set it to `current` to set the Node.js version that you use to run electron-builder.
+   * *libui-based frameworks only* The version of NodeJS you are packaging for.
+   * You can set it to `current` to set the Node.js version that you use to run.
    */
   readonly nodeVersion?: string | null
 
+  /**
+   * *libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.
+   */
   readonly launchUiVersion?: boolean | string | null
 
   /**
+   * @private
    * @deprecated Set framework and nodeVersion if need.
    */
   readonly protonNodeVersion?: string | null
