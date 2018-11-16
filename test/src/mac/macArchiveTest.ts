@@ -102,6 +102,7 @@ test.ifAll.ifMac("pkg scripts", app({
   },
   packed: async context => {
     const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
+    console.log("CALL")
     const fileList = pathSorter(parseFileList(await exec("pkgutil", ["--payload-files", pkgPath]), false))
     expect(fileList).toMatchSnapshot()
 

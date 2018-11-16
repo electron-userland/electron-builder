@@ -5,7 +5,7 @@ Object {
   "win": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.appx",
+      "file": "Test App ßW 1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
   ],
@@ -17,7 +17,7 @@ Object {
   "win": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.appx",
+      "file": "Test App ßW 1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
   ],
@@ -41,12 +41,12 @@ Object {
   "win": Array [
     Object {
       "arch": "ia32",
-      "file": "Test App ßW-1.1.0-ia32.appx",
+      "file": "Test App ßW 1.1.0 ia32.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
     Object {
       "arch": "x64",
-      "file": "Test App ßW-1.1.0.appx",
+      "file": "Test App ßW 1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
   ],

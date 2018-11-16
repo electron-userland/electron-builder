@@ -1,5 +1,7 @@
 "use strict"
 
+const isCi = require("is-ci")
+
 let babel
 const crypto = require("crypto")
 const fs = require("fs")
@@ -31,7 +33,7 @@ function createTransformer(options) {
         .digest("hex")
     },
     process(src, filename, config, transformOptions) {
-      if (process.env.BABEL_JEST_SKIP === "true" || require("is-ci")) {
+      if (process.env.BABEL_JEST_SKIP === "true" || isCi) {
         // precompiled on CI
         return src
       }

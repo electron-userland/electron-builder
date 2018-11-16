@@ -1,5 +1,5 @@
 import { createHash } from "crypto"
-import { emptyDir, readJson, remove } from "fs-extra-p"
+import { emptyDir, readJson, realpathSync, remove } from "fs-extra-p"
 import isCi from "is-ci"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -10,8 +10,8 @@ const rootDir = path.join(__dirname, "../../..")
 const util = require(`${rootDir}/packages/builder-util/out/util`)
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
-const baseDir = process.env.ELECTRON_BUILDER_TMP_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
-const TEST_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
+const baseDir = process.env.APP_BUILDER_TMP_DIR || realpathSync(tmpdir())
+const APP_BUILDER_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
 
 runTests()
   .catch(error => {
@@ -23,13 +23,13 @@ async function runTests() {
   process.env.BABEL_JEST_SKIP = "true"
 
   if (process.env.CIRCLECI) {
-    await emptyDir(TEST_TMP_DIR)
+    await emptyDir(APP_BUILDER_TMP_DIR)
   }
   else {
     await Promise.all([
       deleteOldElectronVersion(),
       downloadAllRequiredElectronVersions(),
-      emptyDir(TEST_TMP_DIR),
+      emptyDir(APP_BUILDER_TMP_DIR),
     ])
   }
 
@@ -76,11 +76,12 @@ async function runTests() {
       testPatterns.push("PublishManagerTest")
       testPatterns.push("assistedInstallerTest")
       testPatterns.push("filesTest")
+      testPatterns.push("protonTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }
 
-  process.env.TEST_TMP_DIR = TEST_TMP_DIR
+  process.env.APP_BUILDER_TMP_DIR = APP_BUILDER_TMP_DIR
 
   const rootDir = path.join(__dirname, "..", "..", "..")
 
@@ -163,7 +164,7 @@ async function runTests() {
     process.exit(exitCode)
   }
 
-  await remove(TEST_TMP_DIR)
+  await remove(APP_BUILDER_TMP_DIR)
   process.exitCode = exitCode
   if (testResult.globalConfig.forceExit) {
     process.exit(exitCode)

@@ -36,7 +36,7 @@ export default class AppXTarget extends Target {
   // https://docs.microsoft.com/en-us/windows/uwp/packaging/create-app-package-with-makeappx-tool#mapping-files
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
-    const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
+    const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("AppX", artifactPath, arch)
 

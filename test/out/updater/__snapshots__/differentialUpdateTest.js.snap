@@ -5,7 +5,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "TestApp-1.0.0-x86_64.AppImage",
+      "file": "Test App ßW 1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -20,10 +21,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.0.0-x86_64.AppImage",
+            "url": "Test App ßW 1.0.0.AppImage",
           },
         ],
-        "path": "TestApp-1.0.0-x86_64.AppImage",
+        "path": "Test App ßW 1.0.0.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0",
@@ -38,7 +39,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "TestApp-1.0.1-x86_64.AppImage",
+      "file": "Test App ßW 1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -53,10 +55,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.0.1-x86_64.AppImage",
+            "url": "Test App ßW 1.0.1.AppImage",
           },
         ],
-        "path": "TestApp-1.0.1-x86_64.AppImage",
+        "path": "Test App ßW 1.0.1.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.1",
@@ -93,7 +95,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "ia32",
-      "file": "TestApp-1.0.0-i386.AppImage",
+      "file": "Test App ßW 1.0.0 i386.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-i386.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -108,10 +111,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.0.0-i386.AppImage",
+            "url": "Test App ßW 1.0.0 i386.AppImage",
           },
         ],
-        "path": "TestApp-1.0.0-i386.AppImage",
+        "path": "Test App ßW 1.0.0 i386.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.0",
@@ -126,7 +129,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "ia32",
-      "file": "TestApp-1.0.1-i386.AppImage",
+      "file": "Test App ßW 1.0.1 i386.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-i386.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -141,10 +145,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.0.1-i386.AppImage",
+            "url": "Test App ßW 1.0.1 i386.AppImage",
           },
         ],
-        "path": "TestApp-1.0.1-i386.AppImage",
+        "path": "Test App ßW 1.0.1 i386.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.0.1",

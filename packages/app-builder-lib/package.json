@@ -63,7 +63,7 @@
     "semver": "^5.6.0",
     "debug": "^4.1.0",
     "lazy-val": "^1.0.3",
-    "temp-file": "^3.2.0",
+    "temp-file": "^3.3.2",
     "ejs": "^2.6.1"
   },
   "typings": "./out/index.d.ts"

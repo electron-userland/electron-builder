@@ -8,8 +8,8 @@ if (process.env.BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG == null) {
 }
 
 async function doBuild(data: BuildTask): Promise<void> {
-  if (process.env.ELECTRON_BUILDER_TMP_DIR == null) {
-    throw new Error("Env ELECTRON_BUILDER_TMP_DIR must be set for builder process")
+  if (process.env.APP_BUILDER_TMP_DIR == null) {
+    throw new Error("Env APP_BUILDER_TMP_DIR must be set for builder process")
   }
 
   const projectDir = process.env.PROJECT_DIR
@@ -86,13 +86,13 @@ async function doBuild(data: BuildTask): Promise<void> {
   }, info.metadata, info.devMetadata, info.repositoryInfo)
 
   // writeJson must be not used because it adds unwanted \n as last file symbol
-  await writeFile(path.join(process.env.ELECTRON_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
+  await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
 }
 
 doBuild(JSON.parse(process.argv[2]))
   .catch(error => {
     process.exitCode = 0
-    return writeFile(path.join(process.env.ELECTRON_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
+    return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
   })
 
 interface TargetInfo {

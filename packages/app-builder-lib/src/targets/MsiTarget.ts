@@ -42,7 +42,7 @@ export default class MsiTarget extends Target {
 
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
-    const artifactName = packager.expandArtifactNamePattern(this.options, "msi", arch)
+    const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msi", arch)
     const artifactPath = path.join(this.outDir, artifactName)
     this.logBuilding("MSI", artifactPath, arch)
 

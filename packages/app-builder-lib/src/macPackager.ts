@@ -192,6 +192,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
 
+      // mas uploaded to AppStore, so, use "-" instead of space for name
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainName)

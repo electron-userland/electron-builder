@@ -1,19 +1,23 @@
 import { Arch, build, Platform } from "electron-builder"
 import { copyFile, move, outputFile, remove, rename } from "fs-extra-p"
 import * as path from "path"
+import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
 
+// test update info file name
+const testPublishConfig: GenericServerOptions = {
+  provider: "generic",
+  url: "https://example.com/download",
+}
+
 test.ifNotWindows("AppImage", app({
   targets: appImageTarget,
   config: {
-    publish: {
-      provider: "generic",
-      url: "https://example.com/downloads",
-    },
+    publish: testPublishConfig,
   },
 }))
 
@@ -25,21 +29,14 @@ test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({
       // tslint:disable:no-invalid-template-strings
       output: "dist/${os}",
     },
-    publish: {
-      provider: "generic",
-      url: "https://example.com/downloads"
-    },
+    publish: testPublishConfig,
   },
 }))
 
 test.ifAll.ifNotWindows.ifNotCiMac("AppImage arm, max compression", app({
   targets: Platform.LINUX.createTarget("Appimage", Arch.armv7l),
   config: {
-    // test update info file name
-    publish: {
-      provider: "generic",
-      url: "https://example.com/downloads"
-    },
+    publish: testPublishConfig,
     compression: "maximum",
   },
 }))

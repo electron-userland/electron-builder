@@ -480,6 +480,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
+  expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {
+    // tslint:disable-next-line:no-invalid-template-strings
+    return this.expandArtifactNamePattern(targetSpecificOptions, ext, arch, "${productName} ${version} ${arch}.${ext}", true)
+  }
+
   private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined) {
     let archName: string | null = arch == null ? null : Arch[arch]
     if (arch === Arch.x64) {

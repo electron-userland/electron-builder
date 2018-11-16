@@ -41,6 +41,8 @@ export interface AssertPackOptions {
   readonly isInstallDepsBefore?: boolean
 
   readonly publish?: PublishPolicy
+
+  readonly tmpDir?: TmpDir
 }
 
 export interface PackedContext {
@@ -93,7 +95,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
-  const tmpDir = new TmpDir("pack-tester")
+  const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
   const dir = customTmpDir == null ? await tmpDir.createTempDir({prefix: "test-project"}) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
@@ -146,7 +148,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         tmpDir,
       })
     }
-  })(), () => tmpDir.cleanup())
+  })(), (): any => tmpDir === checkOptions.tmpDir ? null : tmpDir.cleanup())
 }
 
 const fileCopier = new FileCopier()
@@ -468,13 +470,6 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
       await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
     }
   })
-}
-
-export function convertUpdateInfo(info: any) {
-  if (info.releaseDate != null) {
-    info.releaseDate = "1970-01-01T00:00:00.000Z"
-  }
-  return info
 }
 
 export async function checkDirContents(dir: string) {

@@ -32,7 +32,7 @@ const testAppCacheDirName = "testapp-updater"
 test.ifAll.ifDevOrWinCi("web installer", async () => {
   let outDirs: Array<string> = []
 
-  async function buildApp(version: string) {
+  async function buildApp(version: string, tmpDir: TmpDir) {
     await assertPack("test-app-one", {
       targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
       config: {
@@ -51,21 +51,21 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       signedWin: true,
       packed: async context => {
         outDirs.push(context.outDir)
-      }
+      },
+      tmpDir,
     })
   }
 
   if (process.env.__SKIP_BUILD == null) {
-    await buildApp(OLD_VERSION_NUMBER)
-
     const tmpDir = new TmpDir("differential-updater-test")
     try {
+      await buildApp(OLD_VERSION_NUMBER, tmpDir)
       // move dist temporarily out of project dir
       const oldDir = await tmpDir.getTempDir()
       await move(outDirs[0], oldDir)
       outDirs[0] = oldDir
 
-      await buildApp("1.0.1")
+      await buildApp("1.0.1", tmpDir)
     }
     catch (e) {
       await tmpDir.cleanup()
@@ -157,10 +157,16 @@ async function testLinux(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
 
   const outDirs: Array<string> = []
-  await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch))
+  const tmpDir = new TmpDir("differential-updater-test")
+  try {
+    await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir)
 
-  process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
-  await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater, `__appImage-${Arch[arch]}`, Platform.LINUX)
+    process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
+    await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater, `__appImage-${Arch[arch]}`, Platform.LINUX)
+  }
+  finally {
+    await tmpDir.cleanup()
+  }
 }
 
 test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
@@ -170,8 +176,9 @@ test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 // ifAll.ifMac.ifNotCi todo
 test.skip("dmg", async () => {
   const outDirs: Array<string> = []
+  const tmpDir = new TmpDir("differential-updater-test")
   if (process.env.__SKIP_BUILD == null) {
-    await doBuild(outDirs, Platform.MAC.createTarget(), {
+    await doBuild(outDirs, Platform.MAC.createTarget(), tmpDir, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
@@ -184,7 +191,7 @@ test.skip("dmg", async () => {
   await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
 })
 
-async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, extraConfig?: Configuration | null) {
+async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig: Configuration | null | undefined) {
   await assertPack("test-app-one", {
     targets,
     config: {
@@ -201,21 +208,21 @@ async function buildApp(version: string, outDirs: Array<string>, targets: Map<Pl
     },
   }, {
     packed: async context => {
-      outDirs.push(context.outDir)}
+      outDirs.push(context.outDir)
+    },
+    tmpDir,
   })
 }
 
-async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, extraConfig?: Configuration | null) {
-  await buildApp("1.0.0", outDirs, targets, extraConfig)
-
-  const tmpDir = new TmpDir("differential-updater-test")
+async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig?: Configuration | null) {
+  await buildApp("1.0.0", outDirs, targets, tmpDir, extraConfig)
   try {
     // move dist temporarily out of project dir
     const oldDir = await tmpDir.getTempDir()
     await move(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await buildApp("1.0.1", outDirs, targets, extraConfig)
+    await buildApp("1.0.1", outDirs, targets, tmpDir, extraConfig)
   }
   catch (e) {
     await tmpDir.cleanup()

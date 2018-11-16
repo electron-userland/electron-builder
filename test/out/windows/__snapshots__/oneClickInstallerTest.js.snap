@@ -285,6 +285,7 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
+            "isAdminRightsRequired": true,
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp Setup 1.1.0.exe",
@@ -301,6 +302,7 @@ Object {
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": Object {
+        "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -309,6 +311,7 @@ Object {
       "file": "TestApp Setup 1.1.0.exe.blockmap",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": Object {
+        "isAdminRightsRequired": true,
         "sha512": "@sha512",
         "size": "@size",
       },

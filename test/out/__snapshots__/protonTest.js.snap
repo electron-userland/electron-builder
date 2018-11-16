@@ -5,7 +5,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "notepad-1.0.0-x86_64.AppImage",
+      "file": "notepad 1.0.0.AppImage",
+      "safeArtifactName": "notepad-1.0.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",

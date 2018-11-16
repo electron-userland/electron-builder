@@ -885,11 +885,6 @@
   resolved "https://registry.yarnpkg.com/@types/ejs/-/ejs-2.6.0.tgz#56502bca6e2e1b4cf9351918ca76cdaa93fe3b6c"
   integrity sha512-1ISPltnwvcNU1VTxV0Zusv/nUViHO/S+TUIjiHlvXdmU6e9B/WpCWN6Ewz+fCB7sugdIe5lhsJbbZ6/6+dA1Gg==
 
-"@types/electron-is-dev@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@types/electron-is-dev/-/electron-is-dev-0.3.0.tgz#28dc6aa4c9493869a8c5da29ebd586648f5ffb70"
-  integrity sha512-Y7ur72wnUrPACXLnw8RyO+vPMOPTB1zGm0yJBPZ750+jTk2mEpC4EgoRSBpjrQW21v6p39ZPk7tPDMxIVyDMcg==
-
 "@types/ini@^1.3.29":
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
@@ -2252,11 +2247,6 @@ electron-builder-tslint-config@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/electron-builder-tslint-config/-/electron-builder-tslint-config-1.1.0.tgz#5ef62fa3210d2265a3c6d259d7a1a1741ce1804b"
   integrity sha512-m/oAwS+NYB/b182bGY8C7uj1cDy8XXnHTl5CwD98dng7wE/nZGV2mJD9NyqbFmhJ1kF61wbsYDVx2KLIN5s5tg==
-
-electron-is-dev@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/electron-is-dev/-/electron-is-dev-1.0.1.tgz#6e0a184736fe7aea77d18210b0b0f6a02402c4bc"
-  integrity sha512-iwM3EotA9HTXqMGpQRkR/kT8OZqBbdfHTnlwcxsjSLYqY8svvsq0MuujsWCn3/vtgRmDv/PC/gKUUpoZvi5C1w==
 
 electron-osx-sign@0.4.11:
   version "0.4.11"
@@ -5679,15 +5669,14 @@ tar@^4:
     safe-buffer "^5.1.2"
     yallist "^3.0.2"
 
-temp-file@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-3.2.0.tgz#0d0e486739929d0821be5af71063c2595c5451df"
-  integrity sha512-4aGgEyfmCtU08cio1P51pfL3Zk6v1UGefc52CdbpVUCFtdScwFUfE/TKJZVp3sYCfiF6erKmgcKmcvXSLbgs6Q==
+temp-file@^3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-3.3.2.tgz#69b6daf1bbe23231d0a5d03844e3d96f3f531aaa"
+  integrity sha512-FGKccAW0Mux9hC/2bdUIe4bJRv4OyVo4RpVcuplFird1V/YoplIFbnPZjfzbJSf/qNvRZIRB9/4n/RkI0GziuQ==
   dependencies:
     async-exit-hook "^2.0.1"
     bluebird-lst "^1.0.6"
     fs-extra-p "^7.0.0"
-    lazy-val "^1.0.3"
 
 temp-path@^1.0.0:
   version "1.0.0"
