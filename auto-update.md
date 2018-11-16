@@ -191,7 +191,7 @@ Emitted on progress.
 
     Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
     
-* <code id="AppUpdater-currentVersion">currentVersion</code> String - The current application version.
+* <code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.
 * <code id="AppUpdater-channel">channel</code> String - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
 * <code id="AppUpdater-requestHeaders">requestHeaders</code> [key: string]: string - The request headers.
 * <code id="AppUpdater-logger">logger</code> [Logger](#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
