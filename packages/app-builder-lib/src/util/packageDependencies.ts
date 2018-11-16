@@ -134,7 +134,7 @@ class Collector {
         const resolved = await BluebirdPromise.map(unresolved, it => {
           return this.readChildPackage(it, parentNodeModulesDir, rootDependency)
             .catch(e => {
-              if ((e as any).code === "ENOENT") {
+              if ((e as NodeJS.ErrnoException).code === "ENOENT") {
                 return null
               }
               else {

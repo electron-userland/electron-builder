@@ -27,6 +27,6 @@ export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
 
 export function newError(message: string, code: string) {
   const error = new Error(message);
-  (error as any).code = code
+  (error as NodeJS.ErrnoException).code = code
   return error
 }

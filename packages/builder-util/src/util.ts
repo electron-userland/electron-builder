@@ -321,7 +321,7 @@ export class InvalidConfigurationError extends Error {
   constructor(message: string, code: string = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
     super(message);
 
-    (this as any).code = code
+    (this as NodeJS.ErrnoException).code = code
   }
 }
 

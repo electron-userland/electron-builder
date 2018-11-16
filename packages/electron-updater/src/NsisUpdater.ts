@@ -117,12 +117,12 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     _spawn(options.installerPath, args)
-      .catch(e => {
+      .catch((e: Error) => {
         // https://github.com/electron-userland/electron-builder/issues/1129
         // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-        const errorCode = (e as any).code
+        const errorCode = (e as NodeJS.ErrnoException).code
         this._logger.info(`Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES"`)
-        if (errorCode === "UNKNOWN" || errorCode.code === "EACCES") {
+        if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
           callUsingElevation()
         }
         else {

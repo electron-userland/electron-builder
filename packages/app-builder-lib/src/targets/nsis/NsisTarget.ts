@@ -135,8 +135,10 @@ export class NsisTarget extends Target {
       file: log.filePath(installerPath),
       archs: Array.from(this.archs.keys()).map(it => Arch[it]).join(", "),
     }
+    const isPerMachine = options.perMachine === true
     if (!this.isPortable) {
       logFields.oneClick = oneClick
+      logFields.perMachine = isPerMachine
     }
     log.info(logFields, "building")
 
@@ -149,7 +151,7 @@ export class NsisTarget extends Target {
       UNINSTALL_APP_KEY: uninstallAppKey,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
-      APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || options.perMachine === true),
+      APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || isPerMachine),
       APP_DESCRIPTION: appInfo.description,
       VERSION: appInfo.version,
 
@@ -264,7 +266,7 @@ export class NsisTarget extends Target {
       updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
     }
 
-    if (updateInfo != null && options.perMachine === true && oneClick) {
+    if (updateInfo != null && isPerMachine && oneClick) {
       updateInfo.isAdminRightsRequired = true
     }
 
