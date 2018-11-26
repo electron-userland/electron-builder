@@ -22,8 +22,9 @@ it("pkg", createMacTargetTest(["pkg"]))
 test.ifAll.ifMac("empty installLocation", app({
   targets: Platform.MAC.createTarget("pkg"),
   config: {
+    electronVersion: "4.0.0-beta.7",
     pkg: {
-      installLocation: ""
+      installLocation: "",
     }
   }
 }, {

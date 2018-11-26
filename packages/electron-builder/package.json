@@ -55,7 +55,7 @@
     "read-config-file": "3.2.0",
     "sanitize-filename": "^1.6.1",
     "update-notifier": "^2.5.0",
-    "yargs": "^12.0.2",
+    "yargs": "^12.0.5",
     "lazy-val": "^1.0.3",
     "app-builder-lib": "0.0.0-semantic-release",
     "dmg-builder": "0.0.0-semantic-release"

@@ -59,6 +59,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly bundleShortVersion?: string | null
 
   /**
+   * Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.
+   * @default false
+   */
+  readonly darkModeSupport?: boolean
+
+  /**
    * The bundle identifier to use in the application helper's plist.
    * @default ${appBundleIdentifier}.helper
    */

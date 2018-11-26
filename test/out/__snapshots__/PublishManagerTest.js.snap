@@ -169,7 +169,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -275,7 +274,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -353,7 +351,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {

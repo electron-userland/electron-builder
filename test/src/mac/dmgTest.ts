@@ -172,6 +172,7 @@ test.ifMac("no background", app({
   }
 }))
 
+// test also darkModeSupport
 test.ifAll.ifMac("bundleShortVersion", app({
   targets: Platform.MAC.createTarget("dmg"),
   config: {
@@ -180,6 +181,7 @@ test.ifAll.ifMac("bundleShortVersion", app({
     productName: "BundleShortVersion",
     mac: {
       bundleShortVersion: "2017.1-alpha5",
+      darkModeSupport: true,
     },
   }
 }))

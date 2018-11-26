@@ -295,6 +295,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     use(this.platformSpecificBuildOptions.category || (this.config as any).category, it => appPlist.LSApplicationCategoryType = it)
     appPlist.NSHumanReadableCopyright = appInfo.copyright
 
+    if (this.platformSpecificBuildOptions.darkModeSupport) {
+      appPlist.NSRequiresAquaSystemAppearance = false
+    }
+
     const extendInfo = this.platformSpecificBuildOptions.extendInfo
     if (extendInfo != null) {
       Object.assign(appPlist, extendInfo)

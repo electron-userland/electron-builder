@@ -20,6 +20,7 @@
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
+    "/////": " git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
     "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",
     "////": "pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
@@ -31,7 +32,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.5.1",
+    "app-builder-bin": "2.5.4",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.6",
@@ -65,7 +66,7 @@
     "temp-file": "^3.3.2",
     "tunnel-agent": "^0.6.0",
     "update-notifier": "^2.5.0",
-    "yargs": "^12.0.2"
+    "yargs": "^12.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.1.6",

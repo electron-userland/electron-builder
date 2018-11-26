@@ -321,7 +321,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
       debug: "3.1.0",
       "edge-cs": "1.2.1",
       // no prebuilt for electron 3
-      // "lzma-native": "3.0.8",
+      // "lzma-native": "3.0.10",
       keytar: "4.3.0",
     }
   }),

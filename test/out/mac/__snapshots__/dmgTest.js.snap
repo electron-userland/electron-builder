@@ -33,7 +33,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "2017.1-alpha5",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -56,6 +55,7 @@ Object {
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
+  "NSRequiresAquaSystemAppearance": false,
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
@@ -88,7 +88,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -143,7 +142,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2267,7 +2265,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2329,7 +2326,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2391,7 +2387,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2453,7 +2448,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2515,7 +2509,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2599,7 +2592,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2659,7 +2651,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2734,7 +2725,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2789,7 +2779,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -2851,7 +2840,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSMinimumSystemVersion": "10.9.0",
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
