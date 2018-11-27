@@ -8,7 +8,7 @@ import { resolveFunction } from "./platformPackager"
 import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
-export { PackagerOptions, ArtifactCreated } from "./packagerApi"
+export { PackagerOptions, ArtifactCreated, ArtifactBuildStarted } from "./packagerApi"
 export { TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET, CompressionLevel } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { Configuration, AfterPackContext, MetadataDirectories } from "./configuration"

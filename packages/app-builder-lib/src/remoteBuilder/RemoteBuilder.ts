@@ -94,7 +94,7 @@ export class RemoteBuilder {
         const localFile = path.join(outDir, artifact.file)
         const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile, outDir)
         // PublishManager uses outDir and options, real (the same as for local build) values must be used
-        this.packager.info.dispatchArtifactCreated(artifactCreatedEvent)
+        await this.packager.info.callArtifactBuildCompleted(artifactCreatedEvent)
       }
     }
   }

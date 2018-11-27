@@ -44,7 +44,11 @@ export default class MsiTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msi", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    this.logBuilding("MSI", artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: "MSI",
+      file: artifactPath,
+      arch,
+    })
 
     const stageDir = await createStageDir(this, packager, arch)
     const vm = this.vm
@@ -88,7 +92,7 @@ export default class MsiTarget extends Target {
 
     await packager.sign(artifactPath)
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       packager,
       arch,

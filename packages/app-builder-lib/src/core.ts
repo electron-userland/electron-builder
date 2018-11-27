@@ -1,4 +1,4 @@
-import { Arch, archFromString, ArchType, log } from "builder-util"
+import { Arch, archFromString, ArchType } from "builder-util"
 import { Publish } from "builder-util-runtime"
 
 export type TargetConfigType = Array<string | TargetConfiguration> | string | TargetConfiguration | null
@@ -73,11 +73,6 @@ export abstract class Target {
   abstract readonly options: TargetSpecificOptions | null | undefined
 
   protected constructor(readonly name: string, readonly isAsyncSupported: boolean = true) {
-  }
-
-  // noinspection JSMethodCanBeStatic
-  protected logBuilding(targetPresentableName: string, artifactPath: string, arch: Arch): void {
-    log.info({target: targetPresentableName, arch: Arch[arch], file: log.filePath(artifactPath)}, "building")
   }
 
   async checkOptions(): Promise<any> {

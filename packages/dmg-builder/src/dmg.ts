@@ -23,7 +23,11 @@ export class DmgTarget extends Target {
     // tslint:disable-next-line:no-invalid-template-strings
     const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg", null, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + ".${ext}")
     const artifactPath = path.join(this.outDir, artifactName)
-    this.logBuilding("DMG", artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: "DMG",
+      file: artifactPath,
+      arch,
+    })
 
     const specification = await this.computeDmgOptions()
     const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
@@ -64,7 +68,7 @@ export class DmgTarget extends Target {
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = await createBlockmap(artifactPath, this, packager, safeArtifactName)
-    packager.info.dispatchArtifactCreated({
+    await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName,
       target: this,

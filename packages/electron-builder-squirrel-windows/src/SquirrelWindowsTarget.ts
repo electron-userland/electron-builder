@@ -24,10 +24,14 @@ export default class SquirrelWindowsTarget extends Target {
     const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
 
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
-
     const artifactPath = path.join(installerOutDir, setupFile)
 
-    this.logBuilding("Squirrel.Windows", artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: "Squirrel.Windows",
+      file: artifactPath,
+      arch,
+    })
+
     if (arch === Arch.ia32) {
       log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }
@@ -36,15 +40,36 @@ export default class SquirrelWindowsTarget extends Target {
     const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
     await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch)
 
-    packager.dispatchArtifactCreated(artifactPath, this, arch, `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`)
+    await packager.info.callArtifactBuildCompleted({
+      file: artifactPath,
+      target: this,
+      arch,
+      safeArtifactName: `${sanitizedName}-Setup-${version}${getArchSuffix(arch)}.exe`,
+      packager: this.packager,
+    })
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
-    packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
+    packager.info.dispatchArtifactCreated({
+      file: path.join(installerOutDir, `${packagePrefix}full.nupkg`),
+      target: this,
+      arch,
+      packager,
+    })
     if (distOptions.remoteReleases != null) {
-      packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`), this, arch)
+      packager.info.dispatchArtifactCreated({
+        file: path.join(installerOutDir, `${packagePrefix}delta.nupkg`),
+        target: this,
+        arch,
+        packager,
+      })
     }
 
-    packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"), this, arch)
+    packager.info.dispatchArtifactCreated({
+      file: path.join(installerOutDir, "RELEASES"),
+      target: this,
+      arch,
+      packager,
+    })
   }
 
   private get appName() {

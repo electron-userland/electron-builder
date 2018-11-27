@@ -36,3 +36,11 @@ export interface ArtifactCreated extends UploadTask {
 
   readonly isWriteUpdateInfo?: boolean
 }
+
+export interface ArtifactBuildStarted {
+  readonly targetPresentableName: string
+
+  readonly file: string
+  // null for NSIS
+  readonly arch: Arch | null
+}

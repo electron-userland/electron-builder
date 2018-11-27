@@ -71,7 +71,7 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({blockMapFile: log.filePath(blockMapFile)}, "building block map")
   const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--output", blockMapFile])
-  packager.info.dispatchArtifactCreated({
+  await packager.info.callArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
     target,

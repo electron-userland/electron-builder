@@ -11,6 +11,7 @@ import { SnapOptions } from "./options/SnapOptions"
 import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
 import { WindowsConfiguration } from "./options/winOptions"
 import { BuildResult } from "./packager"
+import { ArtifactBuildStarted, ArtifactCreated } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
@@ -196,10 +197,20 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
    */
   readonly afterSign?: ((context: AfterPackContext) => Promise<any> | any) | string | null
+
+  /**
+   * The function (or path to file or module id) to be run on artifact build start.
+   */
+  readonly artifactBuildStarted?: ((context: ArtifactBuildStarted) => Promise<any> | any) | string | null
+  /**
+   * The function (or path to file or module id) to be run on artifact build start.
+   */
+  readonly artifactBuildCompleted?: ((context: ArtifactCreated) => Promise<any> | any) | string | null
   /**
    * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
    */
   readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
+
   /**
    * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
    */

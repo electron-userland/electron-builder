@@ -15,7 +15,7 @@ import { LibUiFramework } from "./frameworks/LibUiFramework"
 import { AfterPackContext, Configuration, Framework, Platform, SourceRepositoryInfo, Target } from "./index"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
-import { ArtifactCreated, PackagerOptions } from "./packagerApi"
+import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
@@ -257,8 +257,32 @@ export class Packager {
     return this
   }
 
-  dispatchArtifactCreated(event: ArtifactCreated) {
+  async callArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
+    log.info(logFields || {
+      target: event.targetPresentableName,
+      arch: event.arch == null ? null : Arch[event.arch],
+      file: log.filePath(event.file),
+    }, "building")
+    const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
+    if (handler != null) {
+      await Promise.resolve(handler(event))
+    }
+  }
+
+  /**
+   * Only for sub artifacts (update info), for main artifacts use `callArtifactBuildCompleted`.
+   */
+  dispatchArtifactCreated(event: ArtifactCreated): void {
     this.eventEmitter.emit("artifactCreated", event)
+  }
+
+  async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
+    this.dispatchArtifactCreated(event)
+
+    const handler = resolveFunction(this.config.artifactBuildCompleted, "artifactBuildCompleted")
+    if (handler != null) {
+      await Promise.resolve(handler(event))
+    }
   }
 
   async build(): Promise<BuildResult> {

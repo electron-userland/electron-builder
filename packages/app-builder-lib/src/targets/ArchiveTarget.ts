@@ -31,7 +31,11 @@ export class ArchiveTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    this.logBuilding(`${isMac ? "macOS " : ""}${format}`, artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: `${isMac ? "macOS " : ""}${format}`,
+      file: artifactPath,
+      arch,
+    })
     let updateInfo: any = null
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
@@ -62,7 +66,7 @@ export class ArchiveTarget extends Target {
       }
     }
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.callArtifactBuildCompleted({
       updateInfo,
       file: artifactPath,
       // tslint:disable-next-line:no-invalid-template-strings

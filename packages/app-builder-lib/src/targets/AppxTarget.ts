@@ -38,7 +38,11 @@ export default class AppXTarget extends Target {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
-    this.logBuilding("AppX", artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: "AppX",
+      file: artifactPath,
+      arch,
+    })
 
     const vendorPath = await getSignVendorPath()
     const vm = await packager.vm.value
@@ -110,7 +114,7 @@ export default class AppXTarget extends Target {
 
     await stageDir.cleanup()
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       packager,
       arch,

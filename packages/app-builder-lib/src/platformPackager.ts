@@ -101,8 +101,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
-  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null) {
-    this.info.dispatchArtifactCreated({
+  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
+    return this.info.callArtifactBuildCompleted({
       file, safeArtifactName, target, arch,
       packager: this,
     })

@@ -140,7 +140,12 @@ export class NsisTarget extends Target {
       logFields.oneClick = oneClick
       logFields.perMachine = isPerMachine
     }
-    log.info(logFields, "building")
+
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: this.name,
+      file: installerPath,
+      arch: null,
+    }, logFields)
 
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
     const uninstallAppKey = guid.replace(/\\/g, " - ")
@@ -202,7 +207,7 @@ export class NsisTarget extends Target {
         defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
 
         if (this.isWebInstaller) {
-          packager.dispatchArtifactCreated(file, this, arch)
+          await packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
 
@@ -270,7 +275,7 @@ export class NsisTarget extends Target {
       updateInfo.isAdminRightsRequired = true
     }
 
-    packager.info.dispatchArtifactCreated({
+    await packager.info.callArtifactBuildCompleted({
       file: installerPath,
       updateInfo,
       target: this,

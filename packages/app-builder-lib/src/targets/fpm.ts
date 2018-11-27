@@ -107,17 +107,21 @@ export default class FpmTarget extends Target {
       isUseArchIfX64 = true
     }
 
-    const artifactPath = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
+    const packager = this.packager
+    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
 
-    this.logBuilding(target, artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: target,
+      file: artifactPath,
+      arch,
+    })
 
     await unlinkIfExists(artifactPath)
-    if (this.packager.packagerOptions.prepackaged != null) {
+    if (packager.packagerOptions.prepackaged != null) {
       await ensureDir(this.outDir)
     }
 
     const scripts = await this.scriptFiles
-    const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
     const synopsis = options.synopsis
@@ -162,7 +166,7 @@ export default class FpmTarget extends Target {
     }
 
     // noinspection JSDeprecatedSymbols
-    let depends = options.depends || this.packager.platformSpecificBuildOptions.depends
+    let depends = options.depends || packager.platformSpecificBuildOptions.depends
     if (depends == null) {
       if (target === "deb") {
         depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1"]
@@ -206,9 +210,9 @@ export default class FpmTarget extends Target {
     }
 
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
-    args.push(`${desktopFilePath}=/usr/share/applications/${this.packager.executableName}.desktop`)
+    args.push(`${desktopFilePath}=/usr/share/applications/${packager.executableName}.desktop`)
 
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath])) {
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath])) {
       return
     }
 
@@ -231,7 +235,7 @@ export default class FpmTarget extends Target {
     }
     await exec(await fpmPath.value, args, {env})
 
-    this.packager.dispatchArtifactCreated(artifactPath, this, arch)
+    await packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
 }
 

@@ -37,7 +37,11 @@ export class PkgTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(options, "pkg")
     const artifactPath = path.join(this.outDir, artifactName)
 
-    this.logBuilding("pkg", artifactPath, arch)
+    await packager.info.callArtifactBuildStarted({
+      targetPresentableName: "pkg",
+      file: artifactPath,
+      arch,
+    })
 
     const keychainName = (await packager.codeSigningInfo.value).keychainName
 
@@ -66,7 +70,7 @@ export class PkgTarget extends Target {
     })
     await Promise.all([unlink(innerPackageFile), unlink(distInfoFile)])
 
-    packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
+    await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
   }
 
   private async customizeDistributionConfiguration(distInfoFile: string, appPath: string) {
