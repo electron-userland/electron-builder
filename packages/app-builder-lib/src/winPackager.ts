@@ -8,7 +8,7 @@ import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { downloadCertificate } from "./codeSign/macCodeSign"
+import { downloadCertificate } from "./codeSign/codesign"
 import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -59,6 +59,15 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+      // before then
+      .catch(e => {
+        if (e instanceof InvalidConfigurationError) {
+          throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
+        }
+        else {
+          throw e
+        }
+      })
       .then(path => {
         return {
           file: path!!,
