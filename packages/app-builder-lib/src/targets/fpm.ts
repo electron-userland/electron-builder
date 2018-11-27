@@ -2,6 +2,7 @@ import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { Arch, debug, exec, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { smarten } from "../appInfo"
+import { objectToArgs } from "../util/appBuilder"
 import { computeEnv } from "../util/bundledTool"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
@@ -133,12 +134,7 @@ export default class FpmTarget extends Target {
       "--package", artifactPath,
     ]
 
-    for (const key of Object.keys(fpmMetaInfoOptions)) {
-      const value = (fpmMetaInfoOptions as any)[key]
-      if (value != null) {
-        args.push(`--${key}`, value)
-      }
-    }
+    objectToArgs(args, fpmMetaInfoOptions as any)
 
     if (debug.enabled) {
       args.push(

@@ -26,11 +26,8 @@ export class LinuxTargetHelper {
     const sources = iconDir == null ? [] : [iconDir]
 
     const commonConfiguration = packager.config
-    let icnsPath = (commonConfiguration.mac || {}).icon || commonConfiguration.icon
+    const icnsPath = (commonConfiguration.mac || {}).icon || commonConfiguration.icon
     if (icnsPath != null) {
-      if (!icnsPath.endsWith(".icns")) {
-        icnsPath += ".icns"
-      }
       sources.push(icnsPath)
     }
 

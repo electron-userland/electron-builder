@@ -6,9 +6,8 @@ import { AppImageOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
-import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDir } from "./targetUtil"
 
@@ -61,21 +60,20 @@ export default class AppImageTarget extends Target {
       "--arch", Arch[arch],
       "--output", artifactPath,
       "--app", appOutDir,
-      "--template", path.join(getTemplatePath("linux"), "AppRun.sh"),
       "--configuration", (JSON.stringify({
         productName: this.packager.appInfo.productName,
         desktopEntry: c[0],
         executableName: this.packager.executableName,
-        systemIntegration: options.systemIntegration || "ask",
         icons: c[1],
         fileAssociations: this.packager.fileAssociations,
+        ...options,
       })),
     ]
+    objectToArgs(args, {
+      license,
+    })
     if (packager.compression === "maximum") {
       args.push("--compression", "xz")
-    }
-    if (license != null) {
-      args.push("--license", license)
     }
 
     packager.info.dispatchArtifactCreated({
