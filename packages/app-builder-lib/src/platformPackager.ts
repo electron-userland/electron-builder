@@ -579,7 +579,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getDefaultFrameworkIcon(): string | null {
     const framework = this.info.framework
     const result = framework.getDefaultIcon == null ? null : framework.getDefaultIcon(this.platform)
-    log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
     return result
   }
 
@@ -604,6 +603,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (errorMessage != null) {
       throw new InvalidConfigurationError(errorMessage, result.errorCode)
     }
+
+    const isFallback = result.fallback
+    if (isFallback == true) {
+      log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
+    }
+
     return result.icons || []
   }
 }
@@ -618,6 +623,7 @@ interface IconConvertResult {
 
   error?: string
   errorCode?: string
+  fallback?: boolean
 }
 
 export type IconFormat = "icns" | "ico" | "set"
