@@ -191,8 +191,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "file": "app-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",

@@ -118,6 +118,10 @@ test.ifNotWindows("icons from ICNS (mac)", app({
     mac: {
       icon: "resources/time.icns",
     },
+    // test https://github.com/electron-userland/electron-builder/issues/3510
+    linux: {
+      artifactName: "app-${version}-${arch}.${ext}",
+    }
   },
 }, {
   projectDirCreated: async projectDir => {

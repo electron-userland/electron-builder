@@ -474,8 +474,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
+      pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName
+    }
+
+    if (pattern == null) {
       // tslint:disable-next-line:no-invalid-template-strings
-      pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}-${arch}.${ext}"
+      pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
+    }
+    else {
+      // https://github.com/electron-userland/electron-builder/issues/3510
+      // always respect arch in user custom artifact pattern
+      skipArchIfX64 = false
     }
     return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
