@@ -587,9 +587,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   getDefaultFrameworkIcon(): string | null {
     const framework = this.info.framework
-    const result = framework.getDefaultIcon == null ? null : framework.getDefaultIcon(this.platform)
-    log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
-    return result
+    return framework.getDefaultIcon == null ? null : framework.getDefaultIcon(this.platform)
   }
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
@@ -613,6 +611,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (errorMessage != null) {
       throw new InvalidConfigurationError(errorMessage, result.errorCode)
     }
+
+    if (result.isFallback) {
+      log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
+    }
+
     return result.icons || []
   }
 }
@@ -627,6 +630,7 @@ interface IconConvertResult {
 
   error?: string
   errorCode?: string
+  isFallback?: boolean
 }
 
 export type IconFormat = "icns" | "ico" | "set"
