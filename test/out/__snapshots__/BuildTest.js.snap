@@ -463,28 +463,29 @@ Object {
             "LICENSE": Object {
               "size": 1107,
             },
-            "Makefile": Object {
-              "size": 1234,
-            },
-            "node.js": Object {
-              "size": 40,
+            "dist": Object {
+              "files": Object {
+                "debug.js": Object {
+                  "size": 26324,
+                },
+              },
             },
             "package.json": Object {
-              "size": 830,
+              "size": 947,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "size": 5707,
+                  "size": 5831,
                 },
-                "debug.js": Object {
-                  "size": 4889,
+                "common.js": Object {
+                  "size": 5874,
                 },
                 "index.js": Object {
-                  "size": 263,
+                  "size": 314,
                 },
                 "node.js": Object {
-                  "size": 4339,
+                  "size": 4475,
                 },
               },
             },
@@ -653,11 +654,14 @@ Object {
         },
         "expand-template": Object {
           "files": Object {
+            "LICENSE": Object {
+              "size": 1082,
+            },
             "index.js": Object {
-              "size": 617,
+              "size": 672,
             },
             "package.json": Object {
-              "size": 475,
+              "size": 522,
             },
           },
         },
@@ -915,13 +919,13 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 2764,
+              "size": 3034,
             },
             "license.md": Object {
               "size": 1077,
             },
             "package.json": Object {
-              "size": 469,
+              "size": 470,
             },
           },
         },

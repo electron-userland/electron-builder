@@ -318,7 +318,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
 }, {
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      debug: "3.1.0",
+      debug: "4.1.0",
       "edge-cs": "1.2.1",
       // no prebuilt for electron 3
       // "lzma-native": "3.0.10",
