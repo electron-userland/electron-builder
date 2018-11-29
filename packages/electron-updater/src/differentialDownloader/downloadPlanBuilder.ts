@@ -91,8 +91,10 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   return operations
 }
 
+const isValidateOperationRange = process.env.DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES === "true"
+
 function validateAndAdd(operation: Operation, operations: Array<Operation>, checksum: string, index: number) {
-  if (operations.length !== 0) {
+  if (isValidateOperationRange && operations.length !== 0) {
     const lastOperation = operations[operations.length - 1]
     if (lastOperation.kind === operation.kind && operation.start < lastOperation.end && operation.start > lastOperation.start) {
       const min = [lastOperation.start, lastOperation.end, operation.start, operation.end].reduce((p, v) => p < v ? p : v)

@@ -203,7 +203,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly artifactBuildStarted?: ((context: ArtifactBuildStarted) => Promise<any> | any) | string | null
   /**
-   * The function (or path to file or module id) to be run on artifact build start.
+   * The function (or path to file or module id) to be run on artifact build completed.
    */
   readonly artifactBuildCompleted?: ((context: ArtifactCreated) => Promise<any> | any) | string | null
   /**

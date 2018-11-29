@@ -1,3 +1,9 @@
+## 4.0.5
+
+### Bug Fixes
+
+* disable differential download operation validation for now, closes [#3485](https://github.com/electron-userland/electron-builder/issues/3485)
+
 ## 4.0.0
 
 ### BREAKING CHANGES
