@@ -246,8 +246,7 @@ export abstract class AppUpdater extends EventEmitter {
       return Promise.resolve(null)
     }
 
-    const checkForUpdatesPromise = this.checkForUpdates()
-    checkForUpdatesPromise
+    return this.checkForUpdates()
       .then(it => {
         const downloadPromise = it.downloadPromise
         if (downloadPromise == null) {
@@ -255,7 +254,7 @@ export abstract class AppUpdater extends EventEmitter {
           if (debug != null) {
             debug("checkForUpdatesAndNotify called, downloadPromise is null")
           }
-          return
+          return it
         }
 
         downloadPromise
@@ -265,9 +264,9 @@ export abstract class AppUpdater extends EventEmitter {
               body: `${this.app.name} version ${it.updateInfo.version} has been downloaded and will be automatically installed on exit`
             }).show()
           })
-      })
 
-    return checkForUpdatesPromise
+        return it
+      })
   }
 
   private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
