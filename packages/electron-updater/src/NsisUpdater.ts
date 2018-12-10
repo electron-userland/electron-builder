@@ -32,7 +32,7 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, downloadUpdateOptions.requestHeaders, provider)) {
+        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider)) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -132,7 +132,7 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, requestHeaders: OutgoingHttpHeaders, provider: Provider<any>) {
+  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>) {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
@@ -143,7 +143,11 @@ export class NsisUpdater extends BaseUpdater {
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
-        const data = await this.httpExecutor.downloadToBuffer(url, downloadUpdateOptions)
+        const data = await this.httpExecutor.downloadToBuffer(url, {
+          headers: downloadUpdateOptions.requestHeaders,
+          cancellationToken: downloadUpdateOptions.cancellationToken,
+        })
+
         if (data == null || data.length === 0) {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
@@ -167,7 +171,7 @@ export class NsisUpdater extends BaseUpdater {
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-        requestHeaders,
+        requestHeaders: downloadUpdateOptions.requestHeaders,
       })
         .download(blockMapDataList[0], blockMapDataList[1])
       return false
