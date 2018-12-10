@@ -1,6 +1,5 @@
 import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { spawn } from "child_process"
-import { OutgoingHttpHeaders } from "http"
 import * as path from "path"
 import "source-map-support/register"
 import { AppAdapter } from "./AppAdapter"
