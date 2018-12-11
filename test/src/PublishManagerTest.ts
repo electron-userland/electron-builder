@@ -1,6 +1,7 @@
 import { createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
+import { GithubOptions, GenericServerOptions, SpacesOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
 
@@ -12,22 +13,35 @@ test.ifDevOrLinuxCi("generic, github and spaces", app({
       electronUpdaterCompatibility: ">=2.16",
     },
     publish: [
-      {
-        provider: "generic",
-        url: "https://example.com/downloads"
-      },
-      {
-        provider: "github",
-        repo: "foo/foo"
-      },
-      {
-        provider: "spaces",
-        name: "mySpaceName",
-        region: "nyc3"
-      },
+      genericPublisher("https://example.com/downloads"),
+      githubPublisher("foo/foo"),
+      spacesPublisher(),
     ]
   },
 }))
+
+function spacesPublisher(publishAutoUpdate: boolean = true): SpacesOptions {
+  return {
+    provider: "spaces",
+    name: "mySpaceName",
+    region: "nyc3",
+    publishAutoUpdate,
+  }
+}
+
+function githubPublisher(repo: string): GithubOptions {
+  return {
+    provider: "github",
+    repo,
+  }
+}
+
+function genericPublisher(url: string): GenericServerOptions {
+  return {
+    provider: "generic",
+    url,
+  }
+}
 
 test.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
   targets: Platform.LINUX.createTarget("AppImage"),
@@ -36,16 +50,8 @@ test.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
       electronUpdaterCompatibility: ">=2.16",
     },
     publish: [
-      {
-        provider: "github",
-        repo: "foo/foo"
-      },
-      {
-        provider: "spaces",
-        name: "mySpaceName",
-        region: "nyc3",
-        publishAutoUpdate: false
-      },
+      githubPublisher("foo/foo"),
+      spacesPublisher(false),
     ]
   },
 }))
@@ -59,11 +65,7 @@ test.ifAll("mac artifactName ", app({
       electronUpdaterCompatibility: ">=2.16",
     },
     publish: [
-      {
-        provider: "spaces",
-        name: "mySpaceName",
-        region: "nyc3"
-      },
+      spacesPublisher(),
     ]
   },
 }, {
