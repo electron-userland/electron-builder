@@ -188,6 +188,8 @@ function configureLocalhostAts(appPlist: any) {
   }
 
   ats.NSAllowsLocalNetworking = true
+  // https://github.com/electron-userland/electron-builder/issues/3377#issuecomment-446035814
+  ats.NSAllowsArbitraryLoads = true
 
   let exceptionDomains = ats.NSExceptionDomains
   if (exceptionDomains == null) {
