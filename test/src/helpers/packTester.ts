@@ -318,7 +318,9 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.DTSDKBuild
   delete info.DTSDKName
   delete info.DTCompiler
-  delete info.NSAllowsArbitraryLoads
+  if (info.NSAppTransportSecurity != null) {
+    delete info.NSAppTransportSecurity.NSAllowsArbitraryLoads
+  }
   // test value
   if (info.LSMinimumSystemVersion !== "10.12.0") {
     delete info.LSMinimumSystemVersion

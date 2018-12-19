@@ -32,7 +32,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.6.0",
+    "app-builder-bin": "2.6.1",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.6",
@@ -69,9 +69,9 @@
     "yargs": "^12.0.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.2.0",
+    "@babel/core": "^7.2.2",
     "@babel/plugin-proposal-class-properties": "^7.2.1",
-    "@babel/plugin-proposal-decorators": "^7.2.0",
+    "@babel/plugin-proposal-decorators": "^7.2.2",
     "@babel/plugin-proposal-do-expressions": "^7.2.0",
     "@babel/plugin-proposal-export-default-from": "^7.2.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
@@ -115,7 +115,7 @@
     "sumchecker": "^2.0.2",
     "ts-babel": "6.1.2",
     "ts-jsdoc": "^3.0.1",
-    "tslint": "^5.11.0",
+    "tslint": "^5.12.0",
     "typescript": "~3.2.2",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.6.0"
