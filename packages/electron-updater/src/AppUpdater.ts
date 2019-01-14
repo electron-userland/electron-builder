@@ -48,11 +48,18 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
    *
-   * Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
+   * Taken in account only if ˙allowDowngradeOnlyIfChannelDiffers˙ is true
    *
    * @default false
    */
   allowDowngrade: boolean = false
+
+  /**
+   * By default downgrade only allowed if channel differs (pre-release version component in terms of semantic versioning)
+   * Disable this flag if you really want to enable downgrade on the same channel.
+   * @default true
+   */
+  allowDowngradeOnlyIfChannelDiffers: boolean = true
 
   /**
    * The current application version.
@@ -324,7 +331,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const currentVersionPrereleaseComponent = getVersionPreleaseComponents(currentVersion)
     const latestVersionPrereleaseComponent = getVersionPreleaseComponents(latestVersion)
-    if (currentVersionPrereleaseComponent === latestVersionPrereleaseComponent) {
+    if (currentVersionPrereleaseComponent === latestVersionPrereleaseComponent && this.allowDowngradeOnlyIfChannelDiffers) {
       // allowDowngrade taken in account only if channel differs
       return isLatestVersionNewer
     }
