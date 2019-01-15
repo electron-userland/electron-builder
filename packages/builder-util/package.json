@@ -11,18 +11,18 @@
     "out"
   ],
   "dependencies": {
-    "app-builder-bin": "2.6.1",
+    "app-builder-bin": "2.6.3",
     "temp-file": "^3.3.2",
     "fs-extra-p": "^7.0.0",
     "is-ci": "^2.0.0",
     "stat-mode": "^0.2.2",
     "bluebird-lst": "^1.0.6",
-    "chalk": "^2.4.1",
-    "debug": "^4.1.0",
+    "chalk": "^2.4.2",
+    "debug": "^4.1.1",
     "builder-util-runtime": "^0.0.0-semantic-release",
-    "source-map-support": "^0.5.9",
+    "source-map-support": "^0.5.10",
     "7zip-bin": "~4.1.0",
-    "js-yaml": "^3.12.0"
+    "js-yaml": "^3.12.1"
   },
   "typings": "./out/util.d.ts"
 }

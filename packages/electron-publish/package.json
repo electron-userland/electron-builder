@@ -17,7 +17,7 @@
     "bluebird-lst": "^1.0.6",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "~0.0.0-semantic-release",
-    "chalk": "^2.4.1"
+    "chalk": "^2.4.2"
   },
   "typings": "./out/publisher.d.ts"
 }
