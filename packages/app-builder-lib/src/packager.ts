@@ -449,14 +449,12 @@ export class Packager {
     }
 
     switch (platform) {
-      case Platform.MAC:
-      {
+      case Platform.MAC: {
         const helperClass: typeof MacPackager = require("./macPackager").default
         return new helperClass(this)
       }
 
-      case Platform.WINDOWS:
-      {
+      case Platform.WINDOWS: {
         const helperClass: typeof WinPackager = require("./winPackager").WinPackager
         return new helperClass(this)
       }
