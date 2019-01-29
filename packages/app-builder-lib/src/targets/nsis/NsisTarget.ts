@@ -159,7 +159,7 @@ export class NsisTarget extends Target {
       APP_FILENAME: getWindowsInstallationDirName(appInfo, !oneClick || isPerMachine),
       APP_DESCRIPTION: appInfo.description,
       VERSION: appInfo.version,
-      
+
       PROJECT_DIR: packager.projectDir,
       BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
 
