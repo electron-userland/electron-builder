@@ -85,6 +85,10 @@ Section "un.install"
     !ifdef APP_PRODUCT_FILENAME
       RMDir /r "$APPDATA\${APP_PRODUCT_FILENAME}"
     !endif
+    # electron use package.json name for cache,indexdb etc.
+    !ifdef APP_PACKAGE_NAME
+      RMDir /r "$APPDATA\${APP_PACKAGE_NAME}"
+    !endif
     ${if} $installMode == "all"
       SetShellVarContext all
     ${endif}
