@@ -106,7 +106,7 @@
     "convert-source-map": "^1.6.0",
     "decompress-zip": "^0.3.1",
     "depcheck": "^0.7.1",
-    "develar-typescript-json-schema": "0.20.0",
+    "develar-typescript-json-schema": "0.21.0",
     "electron-builder-tslint-config": "^1.1.0",
     "globby": "^9.0.0",
     "jest-cli": "^24.1.0",
@@ -137,6 +137,8 @@
     "modulePaths": [
       "<rootDir>/packages"
     ],
-    "setupFilesAfterEnv": ["<rootDir>/test/jestSetup.js"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/jestSetup.js"
+    ]
   }
 }
