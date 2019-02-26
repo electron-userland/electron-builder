@@ -242,7 +242,7 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     const absolutePath = path.resolve(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)
     if (stat == null) {
-      throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exists`)
+      throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exist`)
     }
     else if (!stat.isDirectory()) {
       throw new InvalidConfigurationError(`Application directory ${userAppDir} is not a directory`)
