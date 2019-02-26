@@ -109,7 +109,7 @@ test("file url generic", async () => {
   await validateDownload(updater)
 })
 
-test("DigitalOcean Spaces", async () => {
+test.skip("DigitalOcean Spaces", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<SpacesOptions>({
     provider: "spaces",
