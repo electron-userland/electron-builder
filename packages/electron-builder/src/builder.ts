@@ -2,6 +2,7 @@ import { addValue, Arch, archFromString, deepAssign, getArchCliNames, InvalidCon
 import chalk from "chalk"
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { PublishOptions } from "electron-publish"
+import yargs from "yargs"
 
 /** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
@@ -231,10 +232,14 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
  * @private
  * @internal
  */
-export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
+export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const publishGroup = "Publishing:"
   const buildGroup = "Building:"
-  const deprecated = "Deprecated:"
+  const deprecated = "Deprecated:";
+
+  (yargs as any).parserConfiguration({
+    "camel-case-expansion": false,
+  })
 
   return yargs
     .option("mac", {

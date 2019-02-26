@@ -12,9 +12,9 @@
     "out"
   ],
   "dependencies": {
-    "lazy-val": "^1.0.3",
-    "bluebird-lst": "^1.0.6",
-    "fs-extra-p": "^7.0.0",
+    "lazy-val": "^1.0.4",
+    "bluebird-lst": "^1.0.7",
+    "fs-extra-p": "^7.0.1",
     "js-yaml": "^3.12.1",
     "semver": "^5.6.0",
     "source-map-support": "^0.5.10",

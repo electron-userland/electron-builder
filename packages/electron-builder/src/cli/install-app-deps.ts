@@ -15,7 +15,7 @@ import yargs from "yargs"
 declare const PACKAGE_VERSION: string
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs {
+export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs

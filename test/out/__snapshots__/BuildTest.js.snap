@@ -1099,7 +1099,7 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 4691,
+              "size": 4770,
             },
             "package.json": Object {
               "size": 524,
@@ -1207,13 +1207,13 @@ Object {
             },
             "bin.js": Object {
               "executable": true,
-              "size": 2255,
+              "size": 2570,
             },
             "download.js": Object {
               "size": 3611,
             },
             "error.js": Object {
-              "size": 330,
+              "size": 355,
             },
             "help.txt": Object {
               "size": 867,
@@ -1225,7 +1225,7 @@ Object {
               "size": 232,
             },
             "package.json": Object {
-              "size": 1158,
+              "size": 1137,
             },
             "proxy.js": Object {
               "size": 1079,
