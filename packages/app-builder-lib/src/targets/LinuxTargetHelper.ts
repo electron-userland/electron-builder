@@ -110,7 +110,7 @@ export class LinuxTargetHelper {
         }
         log.warn({
           reason: "linux.category is not set and cannot map from macOS",
-          docs: "https://electron.build/configuration/configuration#LinuxBuildOptions-category",
+          docs: "https://www.electron.build/configuration/linux",
         }, "application Linux category is set to default \"Utility\"")
         category = "Utility"
       }
