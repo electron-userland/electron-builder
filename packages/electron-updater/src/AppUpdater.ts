@@ -193,7 +193,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this, {
+      provider = new GenericProvider({ provider: "generic", url: options }, this, {
         ...runtimeOptions,
         isUseMultipleRangeRequest: isUrlProbablySupportMultiRangeRequests(options),
       })
@@ -266,12 +266,9 @@ export abstract class AppUpdater extends EventEmitter {
           })
         return it
       })
-      checkAndNotifyPromise.catch(e=>{
-        const debug = this._logger.debug
-        if (debug != null) {
-          debug("checkForUpdatesAndNotify() Catched an Error")
-        }
-      })
+    checkAndNotifyPromise.catch(e => {
+      this._logger.error("suppress checking update error")
+    })
     return checkAndNotifyPromise
   }
 
@@ -347,7 +344,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({"x-user-staging-id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     return {
       info: await client.getLatestVersion(),
       provider: client,
@@ -474,7 +471,7 @@ export abstract class AppUpdater extends EventEmitter {
         ...requestHeaders,
       }
     }
-    return this.computeFinalHeaders({accept: "*/*"})
+    return this.computeFinalHeaders({ accept: "*/*" })
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
