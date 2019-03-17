@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromGithub } from "../../binDownload"
+import { getBinFromUrl } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -17,7 +17,7 @@ export const NSIS_PATH = new Lazy(() => {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
-  return getBinFromGithub("nsis", "3.0.3.2", "tUrlDPQtbjcooNbTrjUzLupttWlATLDNWqK57TVr+gAt3wkaxFxBS3k80AzEFJbmSeOWrUooO72FFOVGXcoxhA==")
+  return getBinFromUrl("nsis", "3.0.3.2", "tUrlDPQtbjcooNbTrjUzLupttWlATLDNWqK57TVr+gAt3wkaxFxBS3k80AzEFJbmSeOWrUooO72FFOVGXcoxhA==")
 })
 
 export class AppPackageHelper {
