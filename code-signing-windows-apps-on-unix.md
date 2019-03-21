@@ -1,5 +1,7 @@
 Signing Windows apps on Unix is supported. There are multiple methods to achieve this. Basically you need an application
-that is able to sign code using [PKCS 11](https://en.wikipedia.org/wiki/PKCS_11).
+that is able to sign code using [PKCS 11](https://en.wikipedia.org/wiki/PKCS_11). There is one method that works on Linux
+and Mac, using Java. You can also use `osslsigncode` on both systems, for Linux and Mac a how-to is included. This
+documents finishes with some remarks and how to integrate the signing process with Electron Builder.  
 
 ## Signing Windows app on Mac/Linux using JSign
 
@@ -91,4 +93,36 @@ Please consider the following when things are not working.
 - If you compiled OpenSSL yourself, make sure you use the an engine that is also compiled for OpenSSL. Otherwise you 
   will run into *compatibility* issues.
 - Use the `osslsigncode` which is mentioned in the list of URLs. There are many more forks/version to be found. The one
-  included here is the actually maintained library, requires OpenSSL 1.1. 
+  included here is the actually maintained library, requires OpenSSL 1.1.
+  
+## Integrate signing with Electron Builder
+
+Depending on the method you have chosen, you can automate the signing process by creating a `sign.js` file. Then point
+to this file in your `package.json`.
+
+package.json
+```
+...
+    "win": {
+      "target": "nsis",
+      "sign": "./sign.js"
+    },
+...
+```
+
+sign.js
+```js
+exports.default = async function(configuration) {
+  // do not include passwords or other sensitive data in the file
+  // rather create environment variables with sensitive data
+  const CERTIFICATE_NAME = process.env.WINDOWS_SIGN_CERTIFICATE_NAME;
+  const TOKEN_PASSWORD = process.env.WINDOWS_SIGN_TOKEN_PASSWORD;
+
+  require("child_process").execSync(
+    `your command here ${CERTIFICATE_NAME} ${TOKEN_PASSWORD}`,
+    {
+      stdio: "inherit"
+    }
+  );
+};
+```
