@@ -63,13 +63,13 @@ Full command for signing, pkcs11module parameter might be different per token.
 osslsigncode sign -verbose -pkcs11engine /usr/local/mac-dev/lib/engines-1.1/libpkcs11.dylib -pkcs11module /usr/local/lib/libeTPkcs11.dylib -h sha256 -n app-name -t https://timestamp.verisign.com/scripts/timestamp.dll -certs /link/to/cert.pem -key 'key-id-here' -pass 'password' -in /link/to/app.exe -out /link/to/app.signed.exe
 ```
 
-## Signing Windows app on Ubuntu 18.04
+## Signing Windows app on Ubuntu 18.04 using osslsigncode
 
-These steps apply to different Linux operating systems, but the names of the packages might be different.
+These steps apply to other Linux operating systems too, but the names of the packages might be different.
 
 1. Update packages using APT. `sudo apt-get update`.
 2. Install packages using APT `sudo apt-get install -y openssl libcurl4-openssl-dev libssl-dev libengine-pkcs11-openssl curl libcurl4 git automake libtool pkg-config wget libccid libpcsclite1 pcscd usbutils opensc`.
-3. Download osslsigncode .tar.gz, extract and compile: `./autogen.sh && ./configure && make && make install` (afterwards symlink the binary to `/usr/local/bin`)
+3. Download osslsigncode .tar.gz, extract and compile: `./autogen.sh && ./configure && make && make install`
 4. Install token driver for Linux, export the certificate (convert it to pem when it is .cer)
 5. Figure out the key ID by running `pkcs11-tool --module /lib/libeToken.so -l -O`. Check the path to make sure you have
 the correct PKCS module. This path might be different per token.
@@ -90,7 +90,7 @@ Please consider the following when things are not working.
 - Make sure you use the correct PKCS 11 engine and module. If you get `no slot with a token was found` or some errors 
   like `sc connect card error` and `Card is invalid or cannot be handled` you are not using the correct module, make 
   sure you use correct one.
-- If you compiled OpenSSL yourself, make sure you use the an engine that is also compiled for OpenSSL. Otherwise you 
+- If you compiled OpenSSL yourself, make sure you use an engine that is also compiled for OpenSSL. Otherwise you 
   will run into *compatibility* issues.
 - Use the `osslsigncode` which is mentioned in the list of URLs. There are many more forks/version to be found. The one
   included here is the actually maintained library, requires OpenSSL 1.1.
