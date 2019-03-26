@@ -142,7 +142,7 @@ Function uninstallOldVersion
     Goto Done
   ${endif}
 
-  !insertmacro moveFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
+  !insertmacro copyFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
   StrCpy $uninstallerFileName "$PLUGINSDIR\old-uninstaller.exe"
 
   ${if} $installMode == "CurrentUser"
