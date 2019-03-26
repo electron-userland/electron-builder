@@ -170,8 +170,12 @@ Function uninstallOldVersion
     StrCpy $0 "$0 --updated"
   ${endif}
 
-  ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir'
-
+  ExecWait '"$uninstallerFileName" /KEEP_APP_DATA $0 _?=$installationDir' $R0
+  ${if} $R0 != 0
+    DetailPrint `Aborting, uninstall was not successful. Uninstaller errorcode: $R0.`
+    SetErrorLevel 5
+    Abort "Can not uninstall"
+  ${endif}
   Done:
 FunctionEnd
 
