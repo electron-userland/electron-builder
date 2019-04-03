@@ -49,7 +49,7 @@ Configuration in the same way as `afterPack` (see above).
 
 ### afterAllArtifactBuild
 
-The function (or path to file or module id) to be run after all artifacts are build.
+The function (or path to file or module id) to be run after all artifacts are built.
 
 ```typescript
 (buildResult: BuildResult): Promise<Array<string>> | Array<string>
