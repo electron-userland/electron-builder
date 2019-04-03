@@ -1234,7 +1234,7 @@ Object {
               "size": 2339,
             },
             "util.js": Object {
-              "size": 3007,
+              "size": 3034,
             },
           },
         },
@@ -1416,18 +1416,18 @@ Object {
               "files": Object {
                 "semver": Object {
                   "executable": true,
-                  "size": 4784,
+                  "size": 4418,
                 },
               },
             },
             "package.json": Object {
-              "size": 358,
+              "size": 407,
             },
             "range.bnf": Object {
               "size": 619,
             },
             "semver.js": Object {
-              "size": 37959,
+              "size": 38803,
             },
           },
         },
