@@ -32,7 +32,7 @@
   "dependencies": {
     "7zip-bin": "~4.1.0",
     "@types/is-ci": "^1.1.0",
-    "app-builder-bin": "2.6.5",
+    "app-builder-bin": "2.6.6",
     "archiver": "^3.0.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.7",

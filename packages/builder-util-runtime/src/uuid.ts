@@ -119,16 +119,19 @@ export class UUID {
 
 // according to rfc4122#section-4.1.1
 function getVariant(bits: number) {
-    switch (bits) {
-        case 0: case 1: case 3:
-            return "ncs"
-        case 4: case 5:
-            return "rfc4122"
-        case 6:
-            return "microsoft"
-        default:
-            return "future"
-    }
+  switch (bits) {
+    case 0:
+    case 1:
+    case 3:
+      return "ncs"
+    case 4:
+    case 5:
+      return "rfc4122"
+    case 6:
+      return "microsoft"
+    default:
+      return "future"
+  }
 }
 
 enum UuidEncoding {

@@ -114,6 +114,8 @@
       <w>epipe</w>
       <w>evolvehq</w>
       <w>exdev</w>
+      <w>exedir</w>
+      <w>exepath</w>
       <w>exitdialogoptionalcheckbox</w>
       <w>exitdialogoptionalcheckboxtext</w>
       <w>extname</w>
@@ -187,6 +189,7 @@
       <w>kext</w>
       <w>keyserver</w>
       <w>keytar</w>
+      <w>ksuid</w>
       <w>langs</w>
       <w>launchui</w>
       <w>lcid</w>

@@ -1,6 +1,6 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
+import { executeAppBuilder, Arch, asArray, AsyncTaskManager, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
 import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromGithub } from "../../binDownload"
 import { statOrNull, walk } from "builder-util/out/fs"
@@ -228,6 +228,7 @@ export class NsisTarget extends Target {
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
       defines.REQUEST_EXECUTION_LEVEL = (options as PortableOptions).requestExecutionLevel || "user"
+      defines.UNPACK_DIR_NAME = await executeAppBuilder(["ksuid"])
     }
     else {
       await this.configureDefines(oneClick, defines)

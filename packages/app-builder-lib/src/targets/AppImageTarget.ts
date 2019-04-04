@@ -19,7 +19,6 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    // we add X-AppImage-BuildId to ensure that new desktop file will be installed
     this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
     }))
