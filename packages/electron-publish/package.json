@@ -13,7 +13,7 @@
   "dependencies": {
     "lazy-val": "^1.0.4",
     "fs-extra-p": "^7.0.1",
-    "mime": "^2.4.0",
+    "mime": "^2.4.1",
     "bluebird-lst": "^1.0.7",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "~0.0.0-semantic-release",

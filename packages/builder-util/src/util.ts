@@ -191,7 +191,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
       }
     })
 
-    childProcess.stdin.end(data)
+    childProcess.stdin!!.end(data)
   })
 }
 
