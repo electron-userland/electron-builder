@@ -226,7 +226,7 @@ export default class AppXTarget extends Target {
             return lockScreenTag(userAssets)
 
           case "defaultTile":
-            return defaultTileTag(userAssets)
+            return defaultTileTag(userAssets, options.showNameOnTiles || false)
 
           case "splashScreen":
             return splashScreenTag(userAssets)
@@ -303,7 +303,7 @@ function lockScreenTag(userAssets: Array<string>): string {
   }
 }
 
-function defaultTileTag(userAssets: Array<string>): string {
+function defaultTileTag(userAssets: Array<string>, showNameOnTiles: boolean): string {
   const defaultTiles: Array<string> = ["<uap:DefaultTile", 'Wide310x150Logo="assets\\Wide310x150Logo.png"']
 
   if (isDefaultAssetIncluded(userAssets, "LargeTile.png")) {
@@ -313,7 +313,16 @@ function defaultTileTag(userAssets: Array<string>): string {
     defaultTiles.push('Square71x71Logo="assets\\SmallTile.png"')
   }
 
-  defaultTiles.push("/>")
+  if (showNameOnTiles) {
+    defaultTiles.push(">")
+    defaultTiles.push("<uap:ShowNameOnTiles>")
+    defaultTiles.push("<uap:ShowOn", 'Tile="wide310x150Logo"', "/>")
+    defaultTiles.push("<uap:ShowOn", 'Tile="square150x150Logo"', "/>")
+    defaultTiles.push("</uap:ShowNameOnTiles>")
+    defaultTiles.push("</uap:DefaultTile>")
+  } else {
+    defaultTiles.push("/>")
+  }
   return defaultTiles.join(" ")
 }
 

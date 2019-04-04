@@ -47,6 +47,12 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly addAutoLaunchExtension?: boolean
 
   /**
+   * Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.
+   * @default false
+   */
+  readonly showNameOnTiles?: boolean
+
+  /**
    * @private
    * @default false
    */
