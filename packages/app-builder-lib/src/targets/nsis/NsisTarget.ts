@@ -227,8 +227,9 @@ export class NsisTarget extends Target {
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
-      defines.REQUEST_EXECUTION_LEVEL = (options as PortableOptions).requestExecutionLevel || "user"
-      defines.UNPACK_DIR_NAME = await executeAppBuilder(["ksuid"])
+      const portableOptions = options as PortableOptions
+      defines.REQUEST_EXECUTION_LEVEL = portableOptions.requestExecutionLevel || "user"
+      defines.UNPACK_DIR_NAME = portableOptions.unpackDirName || (await executeAppBuilder(["ksuid"]))
     }
     else {
       await this.configureDefines(oneClick, defines)

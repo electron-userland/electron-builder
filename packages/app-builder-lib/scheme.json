@@ -3797,6 +3797,10 @@
                     "default": true,
                     "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
                     "type": "boolean"
+                },
+                "unpackDirName": {
+                    "description": "The unpack directory name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.\n\nDefaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).",
+                    "type": "string"
                 }
             },
             "title": "PortableOptions",

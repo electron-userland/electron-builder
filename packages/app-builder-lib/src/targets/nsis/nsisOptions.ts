@@ -167,6 +167,13 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    * @default user
    */
   readonly requestExecutionLevel?: "user" | "highest" | "admin"
+
+  /**
+   * The unpack directory name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.
+   *
+   * Defaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).
+   */
+  readonly unpackDirName?: string
 }
 
 /**

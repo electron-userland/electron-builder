@@ -19,6 +19,7 @@ test.ifAll.ifDevOrWinCi("portable zip", app({
     publish: null,
     portable: {
       useZip: true,
+      unpackDirName: "0ujssxh0cECutqzMgbtXSGnjorm",
     },
     compression: "normal",
   }
