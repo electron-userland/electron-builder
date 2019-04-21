@@ -431,6 +431,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
   let lastStream = response
   for (const stream of streams) {
     stream.on("error", (error: Error) => {
+      fileOut.close()
       if (!options.options.cancellationToken.cancelled) {
         options.callback(error)
       }
@@ -439,7 +440,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
   }
 
   fileOut.on("finish", () => {
-    (fileOut.close as any)(options.callback)
+    fileOut.close()
   })
 }
 
