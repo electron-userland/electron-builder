@@ -235,7 +235,7 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
 export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const publishGroup = "Publishing:"
   const buildGroup = "Building:"
-  const deprecated = "Deprecated:";
+  const deprecated = "Deprecated:"
 
   return yargs
     .option("mac", {
