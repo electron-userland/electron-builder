@@ -237,10 +237,6 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const buildGroup = "Building:"
   const deprecated = "Deprecated:";
 
-  (yargs as any).parserConfiguration({
-    "camel-case-expansion": false,
-  })
-
   return yargs
     .option("mac", {
       group: buildGroup,

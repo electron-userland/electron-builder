@@ -100,7 +100,7 @@
     "@types/semver": "^6.0.0",
     "@types/source-map-support": "^0.5.0",
     "@types/stat-mode": "^0.2.0",
-    "@types/yargs": "^12.0.11",
+    "@types/yargs": "^13.0.0",
     "babel-core": "^7.0.0-bridge.0",
     "babel-preset-ts-node6-bluebird": "^3.0.2",
     "convert-source-map": "^1.6.0",

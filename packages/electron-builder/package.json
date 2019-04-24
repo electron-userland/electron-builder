@@ -63,8 +63,5 @@
   "typings": "./out/index.d.ts",
   "publishConfig": {
     "tag": "next"
-  },
-  "yargs": {
-    "camel-case-expansion": false
   }
 }
