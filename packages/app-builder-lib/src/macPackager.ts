@@ -172,7 +172,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       keychain: keychainName || undefined,
       binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
-      "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null
+      "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null,
+      "hardened-runtime": macOptions.hardenedRuntime
     }
 
     await this.adjustSignOptions(signOptions, masOptions)
