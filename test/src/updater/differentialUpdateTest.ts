@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { getBinFromGithub } from "app-builder-lib/out/binDownload"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, Configuration, Platform } from "electron-builder"
 import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
@@ -282,7 +282,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
   const port = 8000 + updaterClass.name.charCodeAt(0) + Math.floor(Math.random() * 10000)
 
   // noinspection SpellCheckingInspection
-  const httpServerProcess = doSpawn(path.join(await getBinFromGithub("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [
+  const httpServerProcess = doSpawn(path.join(await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [
     `-root=${newDir}`,
     `-port=${port}`,
     "-gzip=false",

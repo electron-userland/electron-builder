@@ -1,10 +1,10 @@
-import { getBin, getBinFromGithub } from "../binDownload"
+import { getBin, getBinFromUrl } from "../binDownload"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 
 export function getLinuxToolsPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
+  return getBinFromUrl("linux-tools", "mac-10.12.3", "SQ8fqIRVXuQVWnVgaMTDWyf2TLAJjJYw3tRSqQJECmgF6qdM7Kogfa6KD49RbGzzMYIFca9Uw3MdsxzOPRWcYw==")
 }
 
 export const fpmPath = new Lazy(() => {
