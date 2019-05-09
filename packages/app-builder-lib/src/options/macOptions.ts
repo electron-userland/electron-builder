@@ -110,6 +110,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Extra files to put in archive. Not applicable for `tar.*`.
    */
   readonly extraDistFiles?: Array<string> | string | null
+
+  /**
+   * Whether your app has to be signed with hardened runtime.
+   * @default false
+   */
+  readonly hardenedRuntime?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

@@ -1847,6 +1847,11 @@
                     "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
                     "type": "boolean"
                 },
+                "hardenedRuntime": {
+                    "default": false,
+                    "description": "Whether your app has to be signed with hardened runtime.",
+                    "type": "boolean"
+                },
                 "detectUpdateChannel": {
                     "default": true,
                     "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
@@ -2330,6 +2335,11 @@
                 "darkModeSupport": {
                     "default": false,
                     "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
+                    "type": "boolean"
+                },
+                "hardenedRuntime": {
+                    "default": false,
+                    "description": "Whether your app has to be signed with hardened runtime.",
                     "type": "boolean"
                 },
                 "detectUpdateChannel": {
