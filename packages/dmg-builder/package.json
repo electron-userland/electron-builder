@@ -18,7 +18,7 @@
     "parse-color": "^1.0.0",
     "builder-util": "~0.0.0-semantic-release",
     "iconv-lite": "^0.4.24",
-    "js-yaml": "^3.13.0",
+    "js-yaml": "^3.13.1",
     "app-builder-lib": "~0.0.0-semantic-release",
     "sanitize-filename": "^1.6.1"
   },

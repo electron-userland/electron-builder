@@ -15,9 +15,9 @@
     "lazy-val": "^1.0.4",
     "bluebird-lst": "^1.0.7",
     "fs-extra-p": "^7.0.1",
-    "js-yaml": "^3.13.0",
+    "js-yaml": "^3.13.1",
     "semver": "^6.0.0",
-    "source-map-support": "^0.5.11",
+    "source-map-support": "^0.5.12",
     "builder-util-runtime": "~0.0.0-semantic-release",
     "lodash.isequal": "^4.5.0",
     "pako": "^1.0.10"

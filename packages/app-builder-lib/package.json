@@ -54,7 +54,7 @@
     "hosted-git-info": "^2.7.1",
     "is-ci": "^2.0.0",
     "isbinaryfile": "^4.0.0",
-    "js-yaml": "^3.13.0",
+    "js-yaml": "^3.13.1",
     "read-config-file": "3.2.2",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.5.0",
