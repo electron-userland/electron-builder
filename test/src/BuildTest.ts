@@ -12,6 +12,7 @@ test("cli", async () => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
   const yargs = require("yargs")
+  yargs.parserConfiguration({"camel-case-expansion": false})
   configureBuildCommand(yargs)
 
   function parse(input: string): any {

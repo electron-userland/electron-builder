@@ -17,6 +17,9 @@ import { start } from "./start"
 
 // tslint:disable:no-unused-expression
 yargs
+  .parserConfiguration({
+    "camel-case-expansion": false,
+  })
   .command(["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
   .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))
