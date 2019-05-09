@@ -58,6 +58,12 @@ export interface AppXOptions extends TargetSpecificOptions {
    */
   readonly electronUpdaterAware?: boolean
 
+  /**
+   * Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875
+   * @default false
+   */
+  readonly setBuildNumber?: boolean
+
   /** @private */
   readonly makeappxArgs?: Array<string> | null
 }

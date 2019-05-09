@@ -185,7 +185,7 @@ export default class AppXTarget extends Target {
             return name
 
           case "version":
-            return appInfo.getVersionInWeirdWindowsForm(false)
+            return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
 
           case "applicationId":
             const result = options.applicationId || options.identityName || appInfo.name
