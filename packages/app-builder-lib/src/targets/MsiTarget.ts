@@ -237,7 +237,7 @@ export default class MsiTarget extends Target {
         result += `${fileSpace}</File>`
 
         if (hasMenuCategory) {
-          result += `<RemoveFolder Id="${startMenuShortcutDirectoryId}" On="uninstall"/>\n`
+          result += `<RemoveFolder Id="${startMenuShortcutDirectoryId}" Directory="${startMenuShortcutDirectoryId}" On="uninstall"/>\n`
         }
       }
       else {
