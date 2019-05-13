@@ -11,6 +11,7 @@
     "out"
   ],
   "dependencies": {
+    "@types/debug": "^4.1.1",
     "app-builder-bin": "2.6.6",
     "temp-file": "^3.3.2",
     "fs-extra-p": "^7.0.1",
