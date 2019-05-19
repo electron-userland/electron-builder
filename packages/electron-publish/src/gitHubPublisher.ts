@@ -57,7 +57,7 @@ export class GitHubPublisher extends HttpPublisher {
     this.token = token!
 
     if (version.startsWith("v")) {
-      throw new InvalidConfigurationError(`Version must not starts with "v": ${version}`)
+      throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
