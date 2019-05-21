@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir, readdir } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
@@ -9,7 +9,7 @@ import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
-import { ElectronPlatformName } from "./index"
+import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
@@ -306,16 +306,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       Object.assign(appPlist, extendInfo)
     }
   }
-  
+
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const appFileName = `${this.appInfo.productFilename}.app`
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      return
-    }
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
       if (file === appFileName) {
-        return this.sign(path.join(packContext.appOutDir, file))
+        return this.sign(path.join(packContext.appOutDir, file), null, null)
       }
       return null
     })
@@ -327,7 +324,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
     await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
       if (file.endsWith(".app")) {
-        return this.sign(path.join(outResourcesDir, file))
+        return this.sign(path.join(outResourcesDir, file), null, null)
       }
       else {
         return null
