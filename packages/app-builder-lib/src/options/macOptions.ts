@@ -116,6 +116,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default false
    */
   readonly hardenedRuntime?: boolean
+
+  /**
+   * Whether to let electron-osx-sign validate the signing or not
+   * @default true
+   */
+  readonly gatekeeperAssess?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
