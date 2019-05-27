@@ -185,11 +185,11 @@ export interface DmgOptions extends TargetSpecificOptions {
    */
   readonly internetEnabled?: boolean
 
-    /**
-     * Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.
-     * @default false
-     */
-    readonly sign?: boolean
+  /**
+   * Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.
+   * @default false
+   */
+  readonly sign?: boolean
 }
 
 export interface DmgWindow {
