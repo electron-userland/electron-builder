@@ -64,9 +64,7 @@ export class DmgTarget extends Target {
       await packager.packagerOptions.effectiveOptionComputed({licenseData})
     }
 
-    if (this.options.sign) {
-      await this.signDmg(artifactPath)
-    }
+    await this.signDmg(artifactPath)
 
     const safeArtifactName = packager.computeSafeArtifactName(artifactName, "dmg")
     const updateInfo = await createBlockmap(artifactPath, this, packager, safeArtifactName)
