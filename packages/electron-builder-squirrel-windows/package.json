@@ -12,8 +12,8 @@
   ],
   "dependencies": {
     "builder-util": "~0.0.0-semantic-release",
-    "bluebird-lst": "^1.0.7",
-    "fs-extra-p": "^7.0.1",
+    "bluebird-lst": "^1.0.8",
+    "fs-extra-p": "^8.0.0",
     "archiver": "^3.0.0",
     "sanitize-filename": "^1.6.1"
   },
