@@ -7,7 +7,7 @@ import * as path from "path"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
-import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign/macCodeSign"
+import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
@@ -173,7 +173,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       keychain: keychainName || undefined,
       binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
-      "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null,
+      // https://github.com/electron-userland/electron-osx-sign/issues/196
+      // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
+      "gatekeeper-assess": macOptions.gatekeeperAssess,
       "hardened-runtime": macOptions.hardenedRuntime,
     }
 

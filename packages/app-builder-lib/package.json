@@ -60,7 +60,7 @@
     "normalize-package-data": "^2.5.0",
     "plist": "^3.0.1",
     "sanitize-filename": "^1.6.1",
-    "semver": "^6.1.0",
+    "semver": "^6.1.1",
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
     "temp-file": "^3.3.2",

@@ -1856,6 +1856,11 @@
                     "description": "Whether your app has to be signed with hardened runtime.",
                     "type": "boolean"
                 },
+                "gatekeeperAssess": {
+                    "default": false,
+                    "description": "Whether to let electron-osx-sign validate the signing or not.",
+                    "type": "boolean"
+                },
                 "detectUpdateChannel": {
                     "default": true,
                     "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
