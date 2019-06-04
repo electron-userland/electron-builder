@@ -22,7 +22,8 @@
     "builder-util-runtime": "^0.0.0-semantic-release",
     "source-map-support": "^0.5.12",
     "7zip-bin": "~4.1.0",
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.13.1",
+    "@types/debug": "^4.1.4"
   },
   "typings": "./out/util.d.ts"
 }

@@ -33,9 +33,14 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   // console.log(result)
 
-  const unusedDependencies = (packageName === "electron-builder" ?
-    result.dependencies.filter(it => it !== "dmg-builder") :
-    result.dependencies).filter(it => it !== "bluebird-lst")
+  let unusedDependencies: any
+  if (packageName === "electron-builder") {
+    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder").filter(it => it !== "bluebird-lst")
+  }
+  else {
+    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug")
+  }
+
   if (unusedDependencies.length > 0) {
     console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
     return false
