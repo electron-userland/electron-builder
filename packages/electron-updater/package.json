@@ -12,6 +12,7 @@
     "out"
   ],
   "dependencies": {
+    "@types/semver": "^6.0.0",
     "lazy-val": "^1.0.4",
     "bluebird-lst": "^1.0.8",
     "fs-extra-p": "^8.0.0",

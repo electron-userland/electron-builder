@@ -38,7 +38,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder").filter(it => it !== "bluebird-lst")
   }
   else {
-    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug")
+    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver")
   }
 
   if (unusedDependencies.length > 0) {
