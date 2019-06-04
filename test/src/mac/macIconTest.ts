@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { copy, move, remove, unlink } from "fs-extra-p"
+import { copyFile, rename, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
@@ -43,7 +43,7 @@ test.ifMac.ifAll("custom icon set", () => {
     projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
-      move(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
+      rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -63,8 +63,8 @@ test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
     projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
-      copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
-      copy(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
+      copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
+      copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -98,7 +98,7 @@ test.ifMac.ifAll("default png icon", () => {
     projectDirCreated: projectDir => Promise.all([
       unlink(path.join(projectDir, "build", "icon.icns")),
       unlink(path.join(projectDir, "build", "icon.ico")),
-      copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
+      copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
         .then(() => remove(path.join(projectDir, "build", "icons")))
     ]),
     packed: () => assertIcon(platformPackager!!),

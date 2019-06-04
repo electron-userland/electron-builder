@@ -2,7 +2,7 @@ import { walk } from "builder-util/out/fs"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { move, outputJson, readFileSync } from "fs-extra-p"
+import { outputJson, readFileSync, rename } from "fs-extra-p"
 import * as path from "path"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
@@ -180,7 +180,7 @@ test.ifDevOrLinuxCi("electron version from build", app({
 test("www as default dir", appTwo({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
-  projectDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
+  projectDirCreated: projectDir => rename(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test.ifLinuxOrDevMac("afterPack", () => {

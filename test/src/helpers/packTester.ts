@@ -87,7 +87,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
   }
-  else if (configuration == null || (configuration as Configuration).cscLink == null) {
+  else if ((configuration as Configuration).cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, {config: {mac: {identity: null}}})
   }
 

@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { copy, writeFile } from "fs-extra-p"
+import { copyFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -164,7 +164,7 @@ test.skip("big file pack", app(
     },
   }, {
   projectDirCreated: async projectDir => {
-    await copy("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
+    await copyFile("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
   },
 }))
 

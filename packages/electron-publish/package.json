@@ -12,9 +12,9 @@
   ],
   "dependencies": {
     "lazy-val": "^1.0.4",
-    "fs-extra-p": "^8.0.0",
+    "fs-extra-p": "^8.0.2",
     "mime": "^2.4.3",
-    "bluebird-lst": "^1.0.8",
+    "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "~0.0.0-semantic-release",
     "chalk": "^2.4.2"

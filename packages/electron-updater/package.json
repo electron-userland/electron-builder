@@ -14,8 +14,8 @@
   "dependencies": {
     "@types/semver": "^6.0.0",
     "lazy-val": "^1.0.4",
-    "bluebird-lst": "^1.0.8",
-    "fs-extra-p": "^8.0.0",
+    "bluebird-lst": "^1.0.9",
+    "fs-extra-p": "^8.0.2",
     "js-yaml": "^3.13.1",
     "semver": "^6.1.1",
     "source-map-support": "^0.5.12",

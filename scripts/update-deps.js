@@ -34,7 +34,7 @@ async function main() {
       }
     }
 
-    if (changed) {
+    if (changed && Object.keys(packageData).length !== 0) {
       return await fs.writeJson(packageFile, packageData, {spaces: 2})
     }
   })

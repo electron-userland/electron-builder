@@ -13,10 +13,10 @@
   "dependencies": {
     "app-builder-bin": "2.6.6",
     "temp-file": "^3.3.2",
-    "fs-extra-p": "^8.0.0",
+    "fs-extra-p": "^8.0.2",
     "is-ci": "^2.0.0",
     "stat-mode": "^0.3.0",
-    "bluebird-lst": "^1.0.8",
+    "bluebird-lst": "^1.0.9",
     "chalk": "^2.4.2",
     "debug": "^4.1.1",
     "builder-util-runtime": "^0.0.0-semantic-release",

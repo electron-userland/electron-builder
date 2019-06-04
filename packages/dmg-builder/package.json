@@ -13,8 +13,8 @@
     "vendor"
   ],
   "dependencies": {
-    "fs-extra-p": "^8.0.0",
-    "bluebird-lst": "^1.0.8",
+    "fs-extra-p": "^8.0.2",
+    "bluebird-lst": "^1.0.9",
     "parse-color": "^1.0.0",
     "builder-util": "~0.0.0-semantic-release",
     "iconv-lite": "^0.4.24",
