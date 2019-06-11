@@ -366,7 +366,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
-  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml")))
+  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/"))
+    .filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")))
 
   expect(files).toMatchSnapshot()
 
@@ -408,9 +409,9 @@ async function getContents(packageFile: string) {
       SZA_PATH: path7za,
     }
   })
-  return pathSorter(parseFileList(result, true)
-    .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
-  )
+
+  const contents = parseFileList(result, true)
+  return pathSorter(contents.filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`) || it.includes("/inspector/"))))
 }
 
 export function parseFileList(data: string, fromDpkg: boolean): Array<string> {

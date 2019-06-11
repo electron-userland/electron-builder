@@ -919,7 +919,7 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 3034,
+              "size": 3023,
             },
             "license.md": Object {
               "size": 1077,
@@ -937,13 +937,13 @@ Object {
             "doc": Object {
               "files": Object {
                 "asyncworker.md": Object {
-                  "size": 4605,
+                  "size": 5348,
                 },
                 "buffers.md": Object {
                   "size": 2121,
                 },
                 "callback.md": Object {
-                  "size": 1513,
+                  "size": 2633,
                 },
                 "converters.md": Object {
                   "size": 1950,
@@ -952,37 +952,37 @@ Object {
                   "size": 7404,
                 },
                 "json.md": Object {
-                  "size": 1941,
+                  "size": 1944,
                 },
                 "maybe_types.md": Object {
-                  "size": 22056,
+                  "size": 22401,
                 },
                 "methods.md": Object {
-                  "size": 27014,
+                  "size": 27247,
                 },
                 "new.md": Object {
                   "size": 4859,
                 },
                 "node_misc.md": Object {
-                  "size": 2240,
+                  "size": 5704,
                 },
                 "object_wrappers.md": Object {
-                  "size": 8204,
+                  "size": 8226,
                 },
                 "persistent.md": Object {
-                  "size": 10837,
+                  "size": 10889,
                 },
                 "scopes.md": Object {
                   "size": 2362,
                 },
                 "script.md": Object {
-                  "size": 1279,
+                  "size": 1287,
                 },
                 "string_bytes.md": Object {
                   "size": 1900,
                 },
                 "v8_internals.md": Object {
-                  "size": 7405,
+                  "size": 7388,
                 },
                 "v8_misc.md": Object {
                   "size": 2914,
@@ -993,13 +993,13 @@ Object {
               "size": 55,
             },
             "nan.h": Object {
-              "size": 72616,
+              "size": 87801,
             },
             "nan_callbacks.h": Object {
               "size": 3089,
             },
             "nan_callbacks_12_inl.h": Object {
-              "size": 17501,
+              "size": 17536,
             },
             "nan_callbacks_pre_12_inl.h": Object {
               "size": 17085,
@@ -1008,31 +1008,34 @@ Object {
               "size": 2109,
             },
             "nan_converters_43_inl.h": Object {
-              "size": 1728,
+              "size": 2748,
             },
             "nan_converters_pre_43_inl.h": Object {
               "size": 1254,
             },
+            "nan_define_own_property_helper.h": Object {
+              "size": 1027,
+            },
             "nan_implementation_12_inl.h": Object {
-              "size": 14156,
+              "size": 15054,
             },
             "nan_implementation_pre_12_inl.h": Object {
               "size": 7943,
             },
             "nan_json.h": Object {
-              "size": 5473,
+              "size": 5772,
             },
             "nan_maybe_43_inl.h": Object {
-              "size": 12082,
+              "size": 12375,
             },
             "nan_maybe_pre_43_inl.h": Object {
-              "size": 8415,
+              "size": 7161,
             },
             "nan_new.h": Object {
               "size": 8786,
             },
             "nan_object_wrap.h": Object {
-              "size": 4097,
+              "size": 4128,
             },
             "nan_persistent_12_inl.h": Object {
               "size": 3873,
@@ -1050,10 +1053,10 @@ Object {
               "size": 2866,
             },
             "nan_weak.h": Object {
-              "size": 14998,
+              "size": 15354,
             },
             "package.json": Object {
-              "size": 505,
+              "size": 507,
             },
             "tools": Object {
               "files": Object {

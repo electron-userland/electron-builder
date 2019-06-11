@@ -42,7 +42,7 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "7zip-bin": "~4.1.0",
-    "app-builder-bin": "2.6.6",
+    "app-builder-bin": "2.6.7",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
     "chromium-pickle-js": "^0.2.0",
@@ -53,7 +53,7 @@
     "fs-extra-p": "^8.0.2",
     "hosted-git-info": "^2.7.1",
     "is-ci": "^2.0.0",
-    "isbinaryfile": "^4.0.0",
+    "isbinaryfile": "^4.0.1",
     "js-yaml": "^3.13.1",
     "read-config-file": "3.2.2",
     "minimatch": "^3.0.4",
@@ -63,7 +63,7 @@
     "semver": "^6.1.1",
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
-    "temp-file": "^3.3.2",
+    "temp-file": "^3.3.3",
     "ejs": "^2.6.1"
   },
   "typings": "./out/index.d.ts"

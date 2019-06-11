@@ -193,6 +193,7 @@ test.ifNotWindows("icons from ICNS", app({
     const projectDir = context.getResources(Platform.LINUX)
 
     await rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))
+    await remove(path.join(projectDir, "inspector"))
 
     await build({
       targets: appImageTarget,

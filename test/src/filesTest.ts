@@ -149,10 +149,9 @@ async function doExtraResourcesTest(platform: Platform) {
   })
 }
 
-test.ifDevOrLinuxCi("extraResources on Linux and Windows", async () => {
-  await doExtraResourcesTest(Platform.LINUX)
-  await doExtraResourcesTest(Platform.WINDOWS)
-})
+test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platform.LINUX))
+
+test.ifWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", async () => {
   await doExtraResourcesTest(Platform.MAC)

@@ -290,7 +290,7 @@ async function verifySmartUnpack(resourceDir: string) {
   })
   expect(removeUnstableProperties(fs.header)).toMatchSnapshot()
 
-  const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".")))
+  const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`)))
     .map(it => {
       const name = it.substring(resourceDir.length + 1)
       if (it.endsWith("package.json")) {
@@ -323,7 +323,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
       "edge-cs": "1.2.1",
       // no prebuilt for electron 3
       // "lzma-native": "3.0.10",
-      keytar: "4.3.0",
+      keytar: "4.9.0",
     }
   }),
   packed: context => {

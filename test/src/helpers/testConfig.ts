@@ -1,7 +1,7 @@
 import * as os from "os"
 import * as path from "path"
 
-export const ELECTRON_VERSION = "3.0.10"
+export const ELECTRON_VERSION = "5.0.3"
 
 export function getElectronCacheDir() {
   if (process.platform === "win32") {
