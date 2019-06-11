@@ -50,5 +50,5 @@ export interface PrepareApplicationStageDirectoryOptions {
 }
 
 export function isElectronBased(framework: Framework) {
-  return framework.name === "electron" || framework.name === "muon"
+  return framework.name === "electron"
 }

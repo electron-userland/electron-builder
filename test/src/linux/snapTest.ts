@@ -2,8 +2,13 @@ import { Platform } from "electron-builder"
 import { app, assertPack } from "../helpers/packTester"
 
 if (process.env.SNAP_TEST === "false") {
-  fit("Skip snapTest suite — SNAP_TEST is set to false", () => {
+  fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
     console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
+  })
+}
+else if (process.platform === "win32") {
+  fit("Skip snapTest suite — Windows is not supported", () => {
+    console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
   })
 }
 
@@ -50,9 +55,10 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
           useTemplateApp: false,
         }
       },
-      effectiveOptionComputed: async ({snap}) => {
+      effectiveOptionComputed: async ({snap, args}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
+        expect(args).toContain("--exclude")
         return true
       },
     })
@@ -122,9 +128,10 @@ test.ifDevOrLinuxCi("plugs option", async () => {
           useTemplateApp: false,
         }
       },
-      effectiveOptionComputed: async ({snap}) => {
+      effectiveOptionComputed: async ({snap, args}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
+        expect(args).not.toContain("--exclude")
         return true
       },
     })

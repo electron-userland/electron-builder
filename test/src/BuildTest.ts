@@ -5,7 +5,7 @@ import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputJson, readFileSync, rename } from "fs-extra-p"
 import * as path from "path"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
-import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 test("cli", async () => {
@@ -244,7 +244,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
     config: {
       npmRebuild: true,
       onNodeModuleFile: file => {
-        const name = path.relative(p, file)
+        const name = toSystemIndependentPath(path.relative(p, file))
         if (!name.startsWith(".") && !name.endsWith(".dll") && name.includes(".")) {
           nodeModuleFiles.push(name)
         }
@@ -285,14 +285,14 @@ export function removeUnstableProperties(data: any) {
 
 async function verifySmartUnpack(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  expect(await fs.readJson("node_modules/debug/package.json")).toMatchObject({
+  expect(await fs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
     name: "debug"
   })
   expect(removeUnstableProperties(fs.header)).toMatchSnapshot()
 
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`)))
     .map(it => {
-      const name = it.substring(resourceDir.length + 1)
+      const name = toSystemIndependentPath(it.substring(resourceDir.length + 1))
       if (it.endsWith("package.json")) {
         return {name, content: readFileSync(it, "utf-8")}
       }

@@ -163,11 +163,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly ?: boolean
 
   /**
-   * The version of muon you are packaging for.
-   */
-  readonly muonVersion?: string | null
-
-  /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
    */

@@ -366,7 +366,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
-  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/"))
+  const files = pathSorter(fileDescriptors.map(it => toSystemIndependentPath(it.path))
     .filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")))
 
   expect(files).toMatchSnapshot()
@@ -481,7 +481,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
 }
 
 export async function checkDirContents(dir: string) {
-  expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => it.substring(dir.length + 1))).toMatchSnapshot()
+  expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => toSystemIndependentPath(it.substring(dir.length + 1)))).toMatchSnapshot()
 }
 
 export function removeUnstableProperties(data: any) {
@@ -498,4 +498,8 @@ export async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
   // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
   expect(fs.header).toMatchSnapshot()
+}
+
+export function toSystemIndependentPath(s: string): string {
+  return path.sep === "/" ? s : s.replace(/\\/g, "/")
 }

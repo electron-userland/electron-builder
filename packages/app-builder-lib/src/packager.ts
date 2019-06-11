@@ -472,7 +472,7 @@ export class Packager {
       return
     }
 
-    const frameworkInfo = {version: this.framework.version, useCustomDist: this.config.muonVersion == null}
+    const frameworkInfo = {version: this.framework.version, useCustomDist: true}
     const config = this.config
     if (config.nodeGypRebuild === true) {
       log.info({arch: Arch[arch]}, "executing node-gyp rebuild")

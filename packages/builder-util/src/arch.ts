@@ -4,14 +4,14 @@ export enum Arch {
 
 export type ArchType = "x64" | "ia32" | "armv7l" | "arm64"
 
-export function toLinuxArchString(arch: Arch): string {
+export function toLinuxArchString(arch: Arch, isSnap: boolean = false): string {
   switch (arch) {
     case Arch.x64:
       return "amd64"
     case Arch.ia32:
       return "i386"
     case Arch.armv7l:
-      return "armv7l"
+      return isSnap ? "armhf" : "armv7l"
     case Arch.arm64:
       return "arm64"
 

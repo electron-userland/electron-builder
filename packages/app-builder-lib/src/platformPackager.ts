@@ -148,11 +148,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   get electronDistExecutableName() {
-    return this.config.muonVersion == null ? "electron" : "brave"
+    return "electron"
   }
 
   get electronDistMacOsExecutableName() {
-    return this.config.muonVersion == null ? "Electron" : "Brave"
+    return "Electron"
   }
 
   createGetFileMatchersOptions(outDir: string, arch: Arch, customBuildOptions: PlatformSpecificBuildOptions): GetFileMatchersOptions {

@@ -303,7 +303,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       const timer = time("executable cache")
       const hash = createHash("sha512")
       hash.update(config.electronVersion || "no electronVersion")
-      hash.update(config.muonVersion || "no muonVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
       hash.update(this.platformSpecificBuildOptions.certificateSha1 || "no certificateSha1")

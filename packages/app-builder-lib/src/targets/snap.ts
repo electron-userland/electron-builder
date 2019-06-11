@@ -1,18 +1,17 @@
-import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
+import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, deepAssign } from "builder-util"
 import { asArray } from "builder-util-runtime"
-import { outputFile } from "fs-extra-p"
+import { outputFile, readFile, rename } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
+import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
+import { safeLoad } from "js-yaml"
 
-// libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-// noinspection SpellCheckingInspection
-const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6", "libappindicator1", "libsecret-1-0"]
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
@@ -32,55 +31,70 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private get isElectron2(): boolean {
-    return semver.gte(this.packager.config.electronVersion || "1.8.3", "2.0.0-beta.1")
+  private getDefaultStagePackages() {
+    // libxss1, libasound2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
+    // noinspection SpellCheckingInspection
+    const result = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
+    // const result = []
+    if (semver.lt(this.packager.config.electronVersion || "5.0.3", "4.0.0")) {
+      result.push("libgconf2-4")
+    }
+    return result
   }
 
-  private createDescriptor(arch: Arch): any {
+  private async createDescriptor(arch: Arch): Promise<any> {
+    if (semver.lt(this.packager.config.electronVersion || "5.0.3", "2.0.0-beta.1")) {
+      throw new Error("Electron 2 and higher is required to build Snap")
+    }
+
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
     const linuxArchName = toAppImageOrSnapArch(arch)
 
-    const plugs = normalizePlugConfiguration(options.plugs)
-    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
-    const desktopPart = this.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
+    const plugs = normalizePlugConfiguration(this.options.plugs)
 
+    const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
     const buildPackages = asArray(options.buildPackages)
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0 && this.isElectron2
+    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
 
     const appDescriptor: any = {
-      command: `command.sh`,
+      command: "command.sh",
+      // command: "$SNAP/" + (this.isUseTemplateApp ? "" : "app/") + this.packager.executableName
       plugs: plugNames,
+      adapter: "none",
     }
-    const snap: any = {
+
+    const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    if (options.grade != null) {
+      snap.grade = options.grade
+    }
+    if (options.confinement != null) {
+      snap.confinement = options.confinement
+    }
+    deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
       summary: options.summary || appInfo.productName,
       description: this.helper.getDescription(options),
-      confinement: options.confinement || "strict",
-      grade: options.grade || "stable",
-      architectures: [toLinuxArchString(arch)],
+      architectures: [toLinuxArchString(arch, true)],
       apps: {
         [snapName]: appDescriptor
       },
       parts: {
         app: {
-          plugin: "nil",
-          "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
-          after: this.replaceDefault(options.after, [desktopPart]),
+          "stage-packages": this.replaceDefault(options.stagePackages, this.getDefaultStagePackages()),
         }
       },
-    }
+    })
 
     if (options.confinement !== "classic") {
       appDescriptor.environment = {
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
           "$SNAP_LIBRARY_PATH",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
           "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
           "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
           "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
@@ -89,12 +103,11 @@ export default class SnapTarget extends Target {
       }
     }
 
-    if (!this.isUseTemplateApp) {
-      appDescriptor.adapter = "none"
-    }
-
     if (buildPackages.length > 0) {
       snap.parts.app["build-packages"] = buildPackages
+    }
+    if (options.after != null) {
+      snap.parts.app.after = options.after
     }
 
     if (plugs != null) {
@@ -104,42 +117,12 @@ export default class SnapTarget extends Target {
           continue
         }
 
-        if (snap.plugs == null) {
-          snap.plugs = {}
-        }
         snap.plugs[plugName] = plugOptions
       }
     }
 
     if (options.assumes != null) {
       snap.assumes = asArray(options.assumes)
-    }
-
-    if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
-      // call super build (snapcraftctl build) otherwise /bin/desktop not created
-      // noinspection SpellCheckingInspection
-      const desktopPartOverride: any = {
-        "override-build": `set -x
-snapcraftctl build
-export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
-update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
-
-for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
-  if [ -f $dir/index.theme ]; then
-    if which gtk-update-icon-cache-3.0 &> /dev/null; then
-      gtk-update-icon-cache-3.0 -q $dir
-    elif which gtk-update-icon-cache &> /dev/null; then
-      gtk-update-icon-cache -q $dir
-    fi
-  fi
-done`
-      }
-
-      if (appDescriptor.plugs.includes("desktop") || appDescriptor.plugs.includes("desktop-legacy")) {
-        desktopPartOverride.stage = ["-./usr/share/fonts/**"]
-      }
-
-      snap.parts[desktopPart] = desktopPartOverride
     }
 
     return snap
@@ -157,7 +140,7 @@ done`
       arch,
     })
 
-    const snap: any = this.createDescriptor(arch)
+    const snap = await this.createDescriptor(arch)
     if (this.isUseTemplateApp) {
       delete snap.parts
     }
@@ -170,10 +153,9 @@ done`
       "snap",
       "--app", appOutDir,
       "--stage", stageDir,
-      "--arch", toLinuxArchString(arch),
-      "--output", artifactPath,
+      "--arch", toLinuxArchString(arch, true),
+      "--output", this.isUseTemplateApp ? artifactPath : "out.snap",
       "--executable", this.packager.executableName,
-      "--docker-image", "electronuserland/builder:latest",
     ]
 
     await this.helper.icons
@@ -190,7 +172,12 @@ done`
       Icon: "${SNAP}/meta/gui/icon.png"
     })
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile})) {
+    if (semver.gte(this.packager.config.electronVersion || "5.0.3", "5.0.0") && !isBrowserSandboxAllowed(snap)) {
+      args.push("--extraAppArgs=--no-sandbox")
+      args.push("--exclude", "chrome-sandbox")
+    }
+
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile, args})) {
       return
     }
 
@@ -202,14 +189,19 @@ done`
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", "electron2")
+      args.push("--template-url", semver.gte(this.packager.config.electronVersion || "5.0.3", "4.0.0") ? "electron4" : "electron2")
     }
     await executeAppBuilder(args)
+
+    if (!this.isUseTemplateApp) {
+      // multipass cannot access files outside of snapcraft command working dir
+      await rename(path.join(stageDir, "out.snap"), artifactPath)
+    }
     await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
   }
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: PlugDescriptor | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any; } | null } | null {
   if (raw == null) {
     return null
   }
@@ -224,4 +216,16 @@ function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDe
     }
   }
   return result
+}
+
+function isBrowserSandboxAllowed(snap: any): boolean {
+  if (snap.plugs != null) {
+    for (const plugName of Object.keys(snap.plugs)) {
+      const plug = snap.plugs[plugName]
+      if (plug.interface === "browser-support" && plug["allow-sandbox"] === true) {
+        return true
+      }
+    }
+  }
+  return false
 }

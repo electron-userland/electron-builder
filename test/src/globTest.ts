@@ -20,7 +20,7 @@ async function createFiles(appDir: string) {
   await symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }
 
-test.ifDevOrLinuxCi("unpackDir one", app({
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   config: {
     asarUnpack: [
@@ -47,7 +47,7 @@ async function assertDirs(context: PackedContext) {
   await verifyAsarFileTree(resourceDir)
 }
 
-test.ifDevOrLinuxCi("unpackDir", () => {
+test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack("test-app", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     config: {

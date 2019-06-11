@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/Donate-Donorbox-green.svg)](https://www.electron.build/donate)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) or [Muon](https://github.com/brave/muon) app for macOS, Windows and Linux with “auto update” support out of the box.
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box.
 
 See documentation on [electron.build](https://www.electron.build).
 
@@ -21,7 +21,7 @@ See documentation on [electron.build](https://www.electron.build).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
     * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
-* [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) and [Muon](https://github.com/brave/muon) support.
+* [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) support.
 * Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
 
 | Question | Answer |
