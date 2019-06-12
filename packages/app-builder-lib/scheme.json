@@ -804,7 +804,7 @@
                     "description": "The DMG windows position and size."
                 },
                 "sign": {
-                    "default": true,
+                    "default": false,
                     "description": "Disable signing of the DMG when building. This can help solve issues with Gatekeeper disabling installation of your app.",
                     "type": "boolean"
                 }
