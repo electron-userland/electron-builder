@@ -126,7 +126,7 @@ export abstract class HttpExecutor<REQUEST> {
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
-      reject(createHttpError(response, `method: ${options.method} url: ${options.protocol || "https:"}//${options.hostname}${options.path}
+      reject(createHttpError(response, `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
 `))
