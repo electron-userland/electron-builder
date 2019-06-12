@@ -61,7 +61,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly rfc3161TimeStampServer?: string | null
   /**
    * The URL of the time stamp server.
-   * @default http://timestamp.verisign.com/scripts/timstamp.dll
+   * @default http://timestamp.digicert.com
    */
   readonly timeStampServer?: string | null
 
