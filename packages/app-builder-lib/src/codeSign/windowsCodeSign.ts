@@ -199,7 +199,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-    const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.verisign.com/scripts/timstamp.dll"
+    const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.digicert.com"
     if (isWin) {
       args.push(options.isNest || options.hash === "sha256" ? "/tr" : "/t", options.isNest || options.hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
     }
