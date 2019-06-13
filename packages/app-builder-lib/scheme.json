@@ -4969,6 +4969,13 @@
     },
     "description": "Configuration Options",
     "properties": {
+        "$schema": {
+            "description": "JSON Schema for this document.",
+            "type": [
+                "null",
+                "string"
+            ]
+        },
         "afterAllArtifactBuild": {
             "anyOf": [
                 {
