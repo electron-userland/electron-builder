@@ -650,9 +650,11 @@
                     "type": "string"
                 },
                 "x": {
+                    "description": "The device-independent pixel offset from the left of the window to the **center** of the icon.",
                     "type": "number"
                 },
                 "y": {
+                    "description": "The device-independent pixel offset from the top of the window to the **center** of the icon.",
                     "type": "number"
                 }
             },
@@ -688,7 +690,7 @@
                     ]
                 },
                 "contents": {
-                    "description": "The content — to customize icon locations.",
+                    "description": "The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.",
                     "items": {
                         "$ref": "#/definitions/DmgContent"
                     },
