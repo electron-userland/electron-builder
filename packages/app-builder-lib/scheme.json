@@ -802,6 +802,11 @@
                 "window": {
                     "$ref": "#/definitions/DmgWindow",
                     "description": "The DMG windows position and size."
+                },
+                "sign": {
+                    "default": false,
+                    "description": "Disable signing of the DMG when building. This can help solve issues with Gatekeeper disabling installation of your app.",
+                    "type": "boolean"
                 }
             },
             "title": "DmgOptions",
