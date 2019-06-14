@@ -351,18 +351,6 @@ Object {
     "sep": Object {
       "adapter": "none",
       "command": "command.sh",
-      "plugs": Array [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-      ],
     },
   },
   "architectures": Array [
@@ -500,28 +488,6 @@ Object {
     "launch-scripts": Object {
       "plugin": "dump",
       "source": "scripts",
-    },
-  },
-  "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
     },
   },
   "summary": "Sep",
@@ -541,19 +507,6 @@ Object {
     "sep": Object {
       "adapter": "none",
       "command": "command.sh",
-      "plugs": Array [
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-        "custom",
-      ],
     },
   },
   "architectures": Array [
@@ -692,28 +645,6 @@ Object {
     "launch-scripts": Object {
       "plugin": "dump",
       "source": "scripts",
-    },
-  },
-  "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
     },
   },
   "summary": "Sep",
@@ -733,19 +664,6 @@ Object {
     "sep": Object {
       "adapter": "none",
       "command": "command.sh",
-      "plugs": Array [
-        "custom",
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-      ],
     },
   },
   "architectures": Array [
@@ -884,28 +802,6 @@ Object {
     "launch-scripts": Object {
       "plugin": "dump",
       "source": "scripts",
-    },
-  },
-  "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
     },
   },
   "summary": "Sep",
@@ -925,20 +821,6 @@ Object {
     "sep": Object {
       "adapter": "none",
       "command": "command.sh",
-      "plugs": Array [
-        "foo1",
-        "desktop",
-        "desktop-legacy",
-        "home",
-        "x11",
-        "unity7",
-        "browser-support",
-        "network",
-        "gsettings",
-        "pulseaudio",
-        "opengl",
-        "foo2",
-      ],
     },
   },
   "architectures": Array [
@@ -1078,28 +960,6 @@ Object {
     "launch-scripts": Object {
       "plugin": "dump",
       "source": "scripts",
-    },
-  },
-  "plugs": Object {
-    "gnome-3-28-1804": Object {
-      "default-provider": "gnome-3-28-1804",
-      "interface": "content",
-      "target": "$SNAP/gnome-platform",
-    },
-    "gtk-3-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/themes",
-    },
-    "icon-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/icons",
-    },
-    "sound-themes": Object {
-      "default-provider": "gtk-common-themes",
-      "interface": "content",
-      "target": "$SNAP/data-dir/sounds",
     },
   },
   "summary": "Sep",

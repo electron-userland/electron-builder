@@ -91,7 +91,11 @@ export default class SnapTarget extends Target {
       },
     })
 
-    if (options.confinement !== "classic") {
+    if (options.confinement === "classic") {
+      delete appDescriptor.plugs
+      delete snap.plugs
+    }
+    else {
       appDescriptor.environment = {
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
@@ -104,6 +108,17 @@ export default class SnapTarget extends Target {
         ].join(":"),
         ...options.environment,
       }
+
+      if (plugs != null) {
+        for (const plugName of plugNames) {
+          const plugOptions = plugs[plugName]
+          if (plugOptions == null) {
+            continue
+          }
+
+          snap.plugs[plugName] = plugOptions
+        }
+      }
     }
 
     if (buildPackages.length > 0) {
@@ -111,17 +126,6 @@ export default class SnapTarget extends Target {
     }
     if (options.after != null) {
       snap.parts.app.after = options.after
-    }
-
-    if (plugs != null) {
-      for (const plugName of plugNames) {
-        const plugOptions = plugs[plugName]
-        if (plugOptions == null) {
-          continue
-        }
-
-        snap.plugs[plugName] = plugOptions
-      }
     }
 
     if (options.assumes != null) {
