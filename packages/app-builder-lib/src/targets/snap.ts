@@ -66,6 +66,9 @@ export default class SnapTarget extends Target {
     }
 
     const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    if (this.isUseTemplateApp) {
+      delete appDescriptor.adapter
+    }
     if (options.grade != null) {
       snap.grade = options.grade
     }

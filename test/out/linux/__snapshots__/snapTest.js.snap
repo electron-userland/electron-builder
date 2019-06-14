@@ -216,7 +216,6 @@ exports[`custom after, no desktop 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "adapter": "none",
       "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
@@ -283,7 +282,6 @@ exports[`custom env 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "adapter": "none",
       "command": "command.sh",
       "environment": Object {
         "FOO": "bar",
@@ -1119,7 +1117,6 @@ exports[`no desktop plugs 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "adapter": "none",
       "command": "command.sh",
       "environment": Object {
         "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",

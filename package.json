@@ -106,7 +106,7 @@
     "babel-preset-ts-node6-bluebird": "^3.0.2",
     "convert-source-map": "^1.6.0",
     "decompress-zip": "^0.3.1",
-    "depcheck": "^0.8.0",
+    "depcheck": "^0.8.1",
     "electron-builder-tslint-config": "^1.1.0",
     "globby": "^9.2.0",
     "jest-cli": "^24.8.0",
