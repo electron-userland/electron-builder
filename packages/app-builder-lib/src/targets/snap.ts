@@ -1,4 +1,4 @@
-import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, deepAssign } from "builder-util"
+import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, deepAssign, isEnvTrue } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { outputFile, readFile, rename } from "fs-extra-p"
 import * as path from "path"
@@ -156,12 +156,13 @@ export default class SnapTarget extends Target {
     // snapcraft.yaml inside a snap directory
     const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
 
+    const snapEffectiveOutput = this.isUseTemplateApp || isEnvTrue("SNAP_DESTRUCTIVE_MODE") ? artifactPath : "out.snap"
     const args = [
       "snap",
       "--app", appOutDir,
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch, true),
-      "--output", this.isUseTemplateApp ? artifactPath : "out.snap",
+      "--output", snapEffectiveOutput,
       "--executable", this.packager.executableName,
     ]
 
@@ -200,9 +201,9 @@ export default class SnapTarget extends Target {
     }
     await executeAppBuilder(args)
 
-    if (!this.isUseTemplateApp) {
+    if (artifactPath !== snapEffectiveOutput) {
       // multipass cannot access files outside of snapcraft command working dir
-      await rename(path.join(stageDir, "out.snap"), artifactPath)
+      await rename(path.join(stageDir, snapEffectiveOutput), artifactPath)
     }
     await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
   }
