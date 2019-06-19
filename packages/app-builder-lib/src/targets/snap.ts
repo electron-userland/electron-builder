@@ -1,6 +1,7 @@
-import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, deepAssign, isEnvTrue } from "builder-util"
+import { Arch, deepAssign, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, InvalidConfigurationError, log } from "builder-util"
 import { asArray } from "builder-util-runtime"
-import { outputFile, readFile, rename } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
@@ -10,7 +11,6 @@ import { PlugDescriptor } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
-import { safeLoad } from "js-yaml"
 
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
 
@@ -31,20 +31,19 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private getDefaultStagePackages() {
-    // libxss1, libasound2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
+  private static getDefaultStagePackages() {
+    // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
     // noinspection SpellCheckingInspection
-    const result = ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
-    // const result = []
-    if (semver.lt(this.packager.config.electronVersion || "5.0.3", "4.0.0")) {
-      result.push("libgconf2-4")
-    }
-    return result
+    return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
   }
 
   private async createDescriptor(arch: Arch): Promise<any> {
-    if (semver.lt(this.packager.config.electronVersion || "5.0.3", "2.0.0-beta.1")) {
-      throw new Error("Electron 2 and higher is required to build Snap")
+    if (!this.isElectronVersionGreaterOrEqualThen("4.0.0")) {
+      if (!this.isElectronVersionGreaterOrEqualThen("2.0.0-beta.1")) {
+        throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
+      }
+
+      log.warn("Electron 4 and higher is highly recommended for Snap")
     }
 
     const appInfo = this.packager.appInfo
@@ -86,7 +85,7 @@ export default class SnapTarget extends Target {
       },
       parts: {
         app: {
-          "stage-packages": this.replaceDefault(options.stagePackages, this.getDefaultStagePackages()),
+          "stage-packages": this.replaceDefault(options.stagePackages, SnapTarget.getDefaultStagePackages()),
         }
       },
     })
@@ -153,16 +152,12 @@ export default class SnapTarget extends Target {
     }
 
     const stageDir = await createStageDirPath(this, packager, arch)
-    // snapcraft.yaml inside a snap directory
-    const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
-
-    const snapEffectiveOutput = this.isUseTemplateApp || isEnvTrue("SNAP_DESTRUCTIVE_MODE") ? artifactPath : "out.snap"
     const args = [
       "snap",
       "--app", appOutDir,
       "--stage", stageDir,
       "--arch", toLinuxArchString(arch, true),
-      "--output", snapEffectiveOutput,
+      "--output", artifactPath,
       "--executable", this.packager.executableName,
     ]
 
@@ -174,15 +169,19 @@ export default class SnapTarget extends Target {
       args.push("--icon", this.helper.maxIconPath)
     }
 
+    // snapcraft.yaml inside a snap directory
+    const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, packager.executableName, desktopFile, {
       // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png"
     })
 
-    if (semver.gte(this.packager.config.electronVersion || "5.0.3", "5.0.0") && !isBrowserSandboxAllowed(snap)) {
+    if (this.isElectronVersionGreaterOrEqualThen("5.0.0") && !isBrowserSandboxAllowed(snap)) {
       args.push("--extraAppArgs=--no-sandbox")
-      args.push("--exclude", "chrome-sandbox")
+      if (this.isUseTemplateApp) {
+        args.push("--exclude", "chrome-sandbox")
+      }
     }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile, args})) {
@@ -197,15 +196,15 @@ export default class SnapTarget extends Target {
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", semver.gte(this.packager.config.electronVersion || "5.0.3", "4.0.0") ? "electron4" : "electron2")
+      args.push("--template-url", "electron4")
     }
     await executeAppBuilder(args)
 
-    if (artifactPath !== snapEffectiveOutput) {
-      // multipass cannot access files outside of snapcraft command working dir
-      await rename(path.join(stageDir, snapEffectiveOutput), artifactPath)
-    }
     await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
+  }
+
+  private isElectronVersionGreaterOrEqualThen(version: string) {
+    return semver.gte(this.packager.config.electronVersion || "5.0.3", version)
   }
 }
 

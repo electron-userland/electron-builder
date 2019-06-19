@@ -1362,10 +1362,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@2.6.15:
-  version "2.6.15"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.6.15.tgz#675f18a0893f2beeed125826309bfef5d671879f"
-  integrity sha512-wML9y0kesDzwVcvnbCAnU75rY5wpKyDkN/tuNiWIN6pTf9dfgbu8+z69s+qkVrvdEd1kFaTTA+nmLZuAHVtMyQ==
+app-builder-bin@2.6.16:
+  version "2.6.16"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.6.16.tgz#5b27f74e52112cfefb10a841d222812af9599ec8"
+  integrity sha512-TSq2/AwXbFI+jK4SPRRASZEpZ32HsrugxuCzHshnZ3Wj5LDVIAMU3EGXfaciXWx7TV047G69RlA4/Y8OiHBn3w==
 
 aproba@^1.0.3:
   version "1.2.0"
@@ -2399,9 +2399,9 @@ electron-osx-sign@0.4.11:
     plist "^3.0.1"
 
 electron-to-chromium@^1.3.164:
-  version "1.3.164"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.164.tgz#8680b875577882c1572c42218d53fa9ba5f71d5d"
-  integrity sha512-VLlalqUeduN4+fayVtRZvGP2Hl1WrRxlwzh2XVVMJym3IFrQUS29BFQ1GP/BxOJXJI1OFCrJ5BnFEsAe8NHtOg==
+  version "1.3.165"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.165.tgz#51864c9e3c9bd9e1c020b9493fddcc0f49888e3a"
+  integrity sha512-iIS8axR524EAnvUtWUNnREnYjQrS0zUvutIKYgTVuN3MzcjrV31EuJYKw7DGOtFO9DQw+JiXeaVDPQWMskG1wQ==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
