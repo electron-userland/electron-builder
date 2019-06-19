@@ -59,7 +59,6 @@ export default class SnapTarget extends Target {
 
     const appDescriptor: any = {
       command: "command.sh",
-      // command: "$SNAP/" + (this.isUseTemplateApp ? "" : "app/") + this.packager.executableName
       plugs: plugNames,
       adapter: "none",
     }
