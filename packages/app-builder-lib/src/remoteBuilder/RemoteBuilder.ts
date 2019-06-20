@@ -24,7 +24,7 @@ export class RemoteBuilder {
 
   scheduleBuild(target: Target, arch: Arch, unpackedDirectory: string) {
     if (!isEnvTrue(process.env._REMOTE_BUILD) && this.packager.config.remoteBuild === false) {
-      throw new Error("Target is not supported on your OS and using of Electron Build Service is disabled (\"remoteBuild\" option)")
+      throw new InvalidConfigurationError("Target is not supported on your OS and using of Electron Build Service is disabled (\"remoteBuild\" option)")
     }
 
     let list = this.toBuild.get(arch)
@@ -61,7 +61,6 @@ export class RemoteBuilder {
 
     const projectInfoManager = new ProjectInfoManager(packager.info)
 
-    // let result: RemoteBuilderResponse | null = null
     const req = Buffer.from(JSON.stringify({
       targets: targets.map(it => {
         return {
@@ -126,9 +125,4 @@ interface ArtifactInfo extends UploadTask {
 
   readonly isWriteUpdateInfo?: boolean
   readonly updateInfo?: any
-}
-
-export interface RemoteBuilderResponse {
-  files: Array<ArtifactInfo> | null
-  error: string | null
 }

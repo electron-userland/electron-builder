@@ -1362,10 +1362,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@2.6.17:
-  version "2.6.17"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.6.17.tgz#636b7645bedeba7ed12e930591de5444ed5b1360"
-  integrity sha512-/nzacJvyB484CR3cAB0LiZVPhl3PSzD6S5BsJXBlQuBmiilj/qW4kklv+GEJQ2C0qPAifzEiCbR8+L/+5Eby8A==
+app-builder-bin@2.7.0:
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-2.7.0.tgz#a7f6a41871af5ee89d6bf1593985f8cbe301e15c"
+  integrity sha512-BTgXdaHAEet9F4nTMuaX77rCSrZqrbA22aOVJ74GZ0pxuJJQ2bppD7CqhHdRCiVC5KhD0lj57ocJD1eUPj/AWA==
 
 aproba@^1.0.3:
   version "1.2.0"
@@ -2399,9 +2399,9 @@ electron-osx-sign@0.4.11:
     plist "^3.0.1"
 
 electron-to-chromium@^1.3.164:
-  version "1.3.165"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.165.tgz#51864c9e3c9bd9e1c020b9493fddcc0f49888e3a"
-  integrity sha512-iIS8axR524EAnvUtWUNnREnYjQrS0zUvutIKYgTVuN3MzcjrV31EuJYKw7DGOtFO9DQw+JiXeaVDPQWMskG1wQ==
+  version "1.3.166"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.166.tgz#99d267514f4b92339788172400bc527545deb75b"
+  integrity sha512-7XwtJz81H/PBnkmQ/07oVPOGTkBZs6ibZN8OqXNUrxjRPzR0Xj+MFcMmRZEXGilEg1Pm+97V8BZVI63qnBX1hQ==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -3082,9 +3082,9 @@ inflight@^1.0.4:
     wrappy "1"
 
 inherits@2, inherits@~2.0.1, inherits@~2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.3.tgz#633c2c83e3da42a502f52466022480f4208261de"
-  integrity sha1-Yzwsg+PaQqUC9SRmAiSA9CCCYd4=
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.4.tgz#0fa2c64f932917c3433a0ded55363aae37416b7c"
+  integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
 
 ini@^1.3.4, ini@^1.3.5, ini@~1.3.0:
   version "1.3.5"
@@ -4861,9 +4861,9 @@ private@^0.1.6:
   integrity sha512-VvivMrbvd2nKkiG38qjULzlc+4Vx4wm/whI9pQD35YrARNnhxeiRktSOhSukRLFNlzg6Br/cJPet5J/u19r/mg==
 
 process-nextick-args@~2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.0.tgz#a37d732f4271b4ab1ad070d35508e8290788ffaa"
-  integrity sha512-MtEC1TqN0EU5nephaJ4rAtThHtC86dNN9qCuEhtshvpVBkAW5ZO7BASN9REnF9eoXGcRub+pFuKEpOHE+HbEMw==
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"
+  integrity sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==
 
 prompts@^2.0.1:
   version "2.1.0"
@@ -4884,9 +4884,9 @@ pseudomap@^1.0.2:
   integrity sha1-8FKijacOYYkX7wqKw0wa5aaChrM=
 
 psl@^1.1.24, psl@^1.1.28:
-  version "1.1.32"
-  resolved "https://registry.yarnpkg.com/psl/-/psl-1.1.32.tgz#3f132717cf2f9c169724b2b6caf373cf694198db"
-  integrity sha512-MHACAkHpihU/REGGPLj4sEfc/XKW2bheigvHO1dUqjaKigMp1C8+WLQYRGgeKFMsw5PMfegZcaN8IDXK/cD0+g==
+  version "1.1.33"
+  resolved "https://registry.yarnpkg.com/psl/-/psl-1.1.33.tgz#5533d9384ca7aab86425198e10e8053ebfeab661"
+  integrity sha512-LTDP2uSrsc7XCb5lO7A8BI1qYxRe/8EqlRvMeEl6rsnYAqDOl8xHR+8lSAIVfrNaSAlTPTNOCgNjWcoUL3AZsw==
 
 pump@^3.0.0:
   version "3.0.0"

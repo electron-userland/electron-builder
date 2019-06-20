@@ -1,5 +1,5 @@
 import { Platform } from "electron-builder"
-import { app, assertPack } from "../helpers/packTester"
+import { app, assertPack, snapTarget } from "../helpers/packTester"
 
 if (process.env.SNAP_TEST === "false") {
   fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
@@ -12,8 +12,6 @@ else if (process.platform === "win32") {
   })
 }
 
-const snapTarget = Platform.LINUX.createTarget("snap")
-
 test.ifAll.ifDevOrLinuxCi("snap", app({
   targets: snapTarget,
   config: {
@@ -21,20 +19,6 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
       name: "sep",
     },
     productName: "Sep",
-  },
-}))
-
-// very slow
-test.skip("snap full", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "se-wo-template",
-    },
-    productName: "Snap Electron App (full build)",
-    snap: {
-      useTemplateApp: false,
-    },
   },
 }))
 
@@ -58,7 +42,7 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
       effectiveOptionComputed: async ({snap, args}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
-        expect(args).toContain("--exclude")
+        expect(args).not.toContain("--exclude")
         return true
       },
     })
@@ -185,8 +169,9 @@ test.ifDevOrLinuxCi("no desktop plugs", app({
       plugs: ["foo", "bar"]
     }
   },
-  effectiveOptionComputed: async ({ snap }) => {
+  effectiveOptionComputed: async ({ snap, args }) => {
     expect(snap).toMatchSnapshot()
+    expect(args).toContain("--exclude")
     return true
   },
 }))

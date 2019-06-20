@@ -333,6 +333,7 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
       SNAP_USE_HARD_LINKS_IF_POSSIBLE: isCI.toString(),
       ...process.env,
       SZA_PATH: path7za,
+      FORCE_COLOR: chalk.enabled ? "1" : "0",
     }
     const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
     if (cacheEnv != null && cacheEnv.length > 0) {

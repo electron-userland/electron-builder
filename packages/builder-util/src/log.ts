@@ -70,7 +70,7 @@ export class Logger {
       message = message.toString()
     }
 
-    const levelIndicator = "•"
+    const levelIndicator = level === "error" ? "⨯" : "•"
     const color = LEVEL_TO_COLOR[level]
     this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
     this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
@@ -82,11 +82,8 @@ export class Logger {
       return message
     }
 
-    let text = message
-
     const fieldPadding = " ".repeat(Math.max(1, 16 - message.length))
-    text += fieldPadding
-
+    let text = message + fieldPadding
     const fieldNames = Object.keys(fields)
     let counter = 0
     for (const name of fieldNames) {

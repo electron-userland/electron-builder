@@ -44,7 +44,7 @@ test.ifAll("custom mas", () => {
   })
 })
 
-test.ifAll("entitlements in the package.json", () => {
+test.ifAll.ifNotCi("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
@@ -66,7 +66,7 @@ test.ifAll("entitlements in the package.json", () => {
   })
 })
 
-test.ifAll("entitlements in build dir", () => {
+test.ifAll.ifNotCi("entitlements in build dir", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),

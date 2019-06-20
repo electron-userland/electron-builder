@@ -1,5 +1,5 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
-import { rename } from "fs-extra-p"
+import { promises } from "fs"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
@@ -26,7 +26,7 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
     packed: async context => {
       await assertThat(path.join(context.projectDir, "customDist", "latest")).isDirectory()
     },
-    projectDirCreated: projectDir => rename(path.join(projectDir, "build"), path.join(projectDir, "custom"))
+    projectDirCreated: projectDir => promises.rename(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   })
 }
 

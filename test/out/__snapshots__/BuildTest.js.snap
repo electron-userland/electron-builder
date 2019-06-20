@@ -466,7 +466,7 @@ Object {
             "dist": Object {
               "files": Object {
                 "debug.js": Object {
-                  "size": 26324,
+                  "size": 27572,
                 },
               },
             },
@@ -479,7 +479,7 @@ Object {
                   "size": 5831,
                 },
                 "common.js": Object {
-                  "size": 5874,
+                  "size": 5930,
                 },
                 "index.js": Object {
                   "size": 314,
@@ -768,13 +768,13 @@ Object {
               "size": 749,
             },
             "inherits.js": Object {
-              "size": 192,
+              "size": 250,
             },
             "inherits_browser.js": Object {
-              "size": 672,
+              "size": 753,
             },
             "package.json": Object {
-              "size": 393,
+              "size": 394,
             },
           },
         },
@@ -1102,7 +1102,7 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 4826,
+              "size": 4896,
             },
             "package.json": Object {
               "size": 524,
@@ -1244,7 +1244,7 @@ Object {
         "process-nextick-args": Object {
           "files": Object {
             "index.js": Object {
-              "size": 1045,
+              "size": 1083,
             },
             "license.md": Object {
               "size": 1064,

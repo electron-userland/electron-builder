@@ -2,7 +2,8 @@ import { walk } from "builder-util/out/fs"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { outputJson, readFileSync, rename } from "fs-extra-p"
+import { outputJson } from "fs-extra-p"
+import { promises, readFileSync } from "fs"
 import * as path from "path"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
@@ -180,7 +181,7 @@ test.ifDevOrLinuxCi("electron version from build", app({
 test("www as default dir", appTwo({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
-  projectDirCreated: projectDir => rename(path.join(projectDir, "app"), path.join(projectDir, "www"))
+  projectDirCreated: projectDir => promises.rename(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test.ifLinuxOrDevMac("afterPack", () => {
@@ -319,7 +320,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
 }, {
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      debug: "4.1.0",
+      debug: "4.1.1",
       "edge-cs": "1.2.1",
       // no prebuilt for electron 3
       // "lzma-native": "3.0.10",

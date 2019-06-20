@@ -166,6 +166,9 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
     mode.group.read = true
     mode.others.read = true
 
+    mode.setuid = false
+    mode.setgid = false
+
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
         const oldMode = new Mode({mode: originalModeNumber})
