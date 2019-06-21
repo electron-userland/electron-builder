@@ -28,7 +28,7 @@ You don't need to clean dist output before build — output directory is cleaned
     matrix:
       include:
         - os: osx
-          osx_image: xcode9.4
+          osx_image: xcode10.2
           language: node_js
           node_js: "10"
           env:
@@ -89,7 +89,7 @@ Otherwise see above sample `.travis.yml` to build Windows on Linux using provide
       - git config --global core.autocrlf input
     
     install:
-      - ps: Install-Product node 8 x64
+      - ps: Install-Product node 10 x64
       - yarn
     
     build_script:
@@ -100,7 +100,7 @@ Otherwise see above sample `.travis.yml` to build Windows on Linux using provide
 
 ## macOS
 
-All required system dependencies (except rpm) will be downloaded automatically on demand on macOS 10.12+ (macOS Sierra). On Travis, please add `osx_image: xcode9.0` (see above sample `.travis.yml`).
+All required system dependencies (except rpm) will be downloaded automatically on demand on macOS 10.12+ (macOS Sierra). On Travis, please add `osx_image: xcode10.2` (see above sample `.travis.yml`).
 
 To build rpm: `brew install rpm` ([brew](https://brew.sh)).
 
@@ -117,7 +117,11 @@ To build rpm: `sudo apt-get install --no-install-recommends -y rpm` (or `sudo yu
 
 To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
-To build snap: `sudo apt-get install --no-install-recommends -y snapcraft`.
+To build snap *if and only of you have custom stage packages* (if you don't have custom snap build configuration, you don't need to install). See [snapcraft](https://snapcraft.io/snapcraft) in Store.
+```
+sudo snap install snapcraft --classic
+sudo snap install multipass --beta --classic
+```
 
 ### To build app for Windows on Linux:
 
@@ -133,16 +137,16 @@ sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
 ## Travis Linux
-[Trusty](https://docs.travis-ci.com/user/trusty-ci-environment/) is required.
+[Xenial](https://docs.travis-ci.com/user/trusty-ci-environment/) is required.
 ```yaml
 sudo: required
-dist: trusty
+dist: xenial
 ```
 
 ### Travis macOS
-[macOS 10.12+](https://docs.travis-ci.com/user/osx-ci-environment/#OS-X-Version) is required.
+[macOS 10.14+](https://docs.travis-ci.com/user/osx-ci-environment/#OS-X-Version) is required.
 ```yaml
-osx_image: xcode9.0
+osx_image: xcode10.2
 ```
 
 ## Docker
@@ -184,8 +188,8 @@ Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dis
 
 ### Provided Docker Images
 
-* `electronuserland/builder:base` — Required system dependencies. Not supposed to be used directly.
-* `electronuserland/builder:10` or `builder` — NodeJS 10 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
+* `electronuserland/builder` or `electronuserland/builder:12` — NodeJS 10 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
 * `electronuserland/builder:wine` — Wine, NodeJS 10 and required system dependencies. Based on `builder:10`. Use this image if you need to build Windows targets.
 * `electronuserland/builder:wine-mono` — Mono for Squirrel.Windows. Based on `builder:wine`. Use this image if you need to build Squirrel.Windows target.
 * `electronuserland/builder:wine-chrome` — `google-chrome-stable` and `xvfb` are available — you can use this image for headless testing of Electron application. Based on `builder:wine`.
+* `electronuserland/builder:base` — Required system dependencies. Not supposed to be used directly.

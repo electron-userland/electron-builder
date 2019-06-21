@@ -70,7 +70,7 @@ Without target configuration, electron-builder builds Electron app for current p
 
 * macOS - DMG and ZIP for Squirrel.Mac.
 * Windows - [NSIS](configuration/nsis.md).
-* Linux - [AppImage](configuration/appimage.md).
+* Linux - [Snap](configuration/snap.md) and (not on Windows) [AppImage](configuration/appimage.md).
 
 Platforms and archs can be configured or using [CLI args](https://github.com/electron-userland/electron-builder#cli-usage), or in the configuration. 
 
