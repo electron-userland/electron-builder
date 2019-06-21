@@ -22,7 +22,8 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   }
 
   get defaultTarget(): Array<string> {
-    return ["snap", "appimage"]
+    // on Windows default target is only Snap - reduce build server load, and... snap in most cases is fully enough.
+    return process.platform === "win32" ? ["snap"] : ["snap", "appimage"]
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
