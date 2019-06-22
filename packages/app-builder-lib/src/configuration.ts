@@ -112,11 +112,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly npmRebuild?: boolean
-  /**
-   * @deprecated Please use npmBuildFromSource.
-   * @private
-   */
-  readonly npmSkipBuildFromSource?: boolean
 
   /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.

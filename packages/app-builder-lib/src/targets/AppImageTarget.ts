@@ -65,6 +65,7 @@ export default class AppImageTarget extends Target {
       "--app", appOutDir,
       "--configuration", (JSON.stringify({
         productName: this.packager.appInfo.productName,
+        productFilename: this.packager.appInfo.productFilename,
         desktopEntry: c[0],
         executableName: this.packager.executableName,
         icons: c[1],

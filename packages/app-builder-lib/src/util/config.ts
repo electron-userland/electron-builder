@@ -214,9 +214,12 @@ export async function validateConfig(config: Configuration, debugLogger: DebugLo
     }
   }
 
-  // noinspection JSDeprecatedSymbols
-  if (config.npmSkipBuildFromSource === false) {
-    config.buildDependenciesFromSource = false
+  const oldConfig: any = config
+  if (oldConfig.npmSkipBuildFromSource === false) {
+    throw new InvalidConfigurationError(`npmSkipBuildFromSource is deprecated, please use buildDependenciesFromSource"`)
+  }
+  if (oldConfig.appImage != null && oldConfig.appImage.systemIntegration != null) {
+    throw new InvalidConfigurationError(`appImage.systemIntegration is deprecated, https://github.com/TheAssassin/AppImageLauncher is used for desktop integration"`)
   }
 
   await _validateConfig(config, schemeDataPromise, (message, errors) => {

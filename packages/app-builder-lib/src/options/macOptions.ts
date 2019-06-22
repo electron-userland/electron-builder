@@ -164,7 +164,7 @@ export interface DmgOptions extends TargetSpecificOptions {
   readonly title?: string | null
 
   /**
-   * The content — to customize icon locations.
+   * The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.
    */
   contents?: Array<DmgContent>
 
@@ -217,7 +217,13 @@ export interface DmgWindow {
 }
 
 export interface DmgContent {
+  /**
+   * The device-independent pixel offset from the left of the window to the **center** of the icon.
+   */
   x: number
+  /**
+   * The device-independent pixel offset from the top of the window to the **center** of the icon.
+   */
   y: number
   type?: "link" | "file" | "dir"
 

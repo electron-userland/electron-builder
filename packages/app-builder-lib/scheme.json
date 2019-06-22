@@ -112,15 +112,6 @@
                         "null",
                         "string"
                     ]
-                },
-                "systemIntegration": {
-                    "default": "ask",
-                    "description": "The system integration installation.",
-                    "enum": [
-                        "ask",
-                        "doNotAsk"
-                    ],
-                    "type": "string"
                 }
             },
             "title": "AppImageOptions",

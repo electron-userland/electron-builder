@@ -41,12 +41,18 @@ test.ifAll.ifNotWindows.ifNotCiMac("AppImage arm, max compression", app({
   },
 }))
 
-test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
+test.ifNotWindows.ifNotCiMac.ifAll("AppImage - deprecated systemIntegration", appThrows({
   targets: appImageTarget,
   config: {
     appImage: {
       systemIntegration: "doNotAsk",
-    },
+    } as any,
+  },
+}))
+
+test.ifNotWindows.ifNotCiMac.ifAll("text license and file associations", app({
+  targets: appImageTarget,
+  config: {
     extraResources: {
       from: "build/icons"
     },
@@ -57,7 +63,7 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
         mimeType: "application/x-example",
       }
     ],
-  }
+  },
 }, {
   projectDirCreated: projectDir => {
     return Promise.all([
