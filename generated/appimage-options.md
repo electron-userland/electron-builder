@@ -1,4 +1,3 @@
-* <code id="AppImageOptions-systemIntegration">systemIntegration</code> = `ask` "ask" | "doNotAsk" - The system integration installation.
 * <code id="AppImageOptions-license">license</code> String - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
 
 Inherited from `CommonLinuxOptions`:

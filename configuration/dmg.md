@@ -10,9 +10,9 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
     
     Macro `${productName}`, `${version}` and `${name}` are supported.
 
-* <code id="DmgOptions-contents">contents</code> Array&lt;DmgContent&gt;<a name="DmgContent"></a> - The content — to customize icon locations.
-    * **<code id="DmgContent-x">x</code>** Number
-    * **<code id="DmgContent-y">y</code>** Number
+* <code id="DmgOptions-contents">contents</code> Array&lt;DmgContent&gt;<a name="DmgContent"></a> - The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.
+    * **<code id="DmgContent-x">x</code>** Number - The device-independent pixel offset from the left of the window to the **center** of the icon.
+    * **<code id="DmgContent-y">y</code>** Number - The device-independent pixel offset from the top of the window to the **center** of the icon.
     * <code id="DmgContent-type">type</code> "link" | "file" | "dir"
     * <code id="DmgContent-name">name</code> String - The name of the file within the DMG. Defaults to basename of `path`.
     * <code id="DmgContent-path">path</code> String - The path of the file within the DMG.
