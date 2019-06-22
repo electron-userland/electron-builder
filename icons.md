@@ -21,7 +21,7 @@ needs to be placed in the [buildResources](configuration/configuration.md#Metada
 Linux icon set will be generated automatically based on the macOS `icns` file or common `icon.png`.
 
 Or you can put them into the `build/icons` directory if you want to specify them yourself.
-The filename must contain the size (e.g. `32x32.png`) of the icon). Recommended sizes: 16, 24, 32, 48, 64, 96, 128, 256 (or just 512).
+The filename must contain the size (e.g. `256x256.png`) of the icon). Recommended sizes: 16, 32, 48, 64, 128, 256 (or just 512).
 
 ## AppX
 
