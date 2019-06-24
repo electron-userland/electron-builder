@@ -64,7 +64,6 @@ export class LinuxTargetHelper {
 
     const desktopMeta: any = {
       Name: appInfo.productName,
-      Comment: this.getDescription(targetSpecificOptions),
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${packager.executableName}" %U` : exec,
       Terminal: "false",
       Type: "Application",
@@ -77,6 +76,11 @@ export class LinuxTargetHelper {
       StartupWMClass: appInfo.productName,
       ...extra,
       ...targetSpecificOptions.desktop,
+    }
+
+    const description = this.getDescription(targetSpecificOptions)
+    if (!isEmptyOrSpaces(description)) {
+      desktopMeta.Comment = description
     }
 
     const mimeTypes: Array<string> = asArray(targetSpecificOptions.mimeTypes)

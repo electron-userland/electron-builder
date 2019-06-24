@@ -1362,10 +1362,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.0.0.tgz#9195a588e5b06aa2efb52d51ac10bc014703890b"
-  integrity sha512-UnRAu90RAM8mwBg/vKoVb+84sMGLMNgI9OOYTLpt/21RC2UXu00WqK24CsY32adkM/362FCDNzv4E8NJ0JxcXQ==
+app-builder-bin@3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.0.1.tgz#08ea930efcd374dfdbe50523c8abe7eee06fdcc9"
+  integrity sha512-eSC1ZxQIGuvhXKB9m7rRwTbou522FbQuc95XoqOMqMjf50//So1IjNPFOzXd6SDHcMx7f5SYEW5AYSs1Pwovtw==
 
 aproba@^1.0.3:
   version "1.2.0"
@@ -2399,9 +2399,9 @@ electron-osx-sign@0.4.11:
     plist "^3.0.1"
 
 electron-to-chromium@^1.3.164:
-  version "1.3.168"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.168.tgz#5153da97cacb718dde876b925b2a7a64f9fbaa81"
-  integrity sha512-Jm2oiuJPzPvsN9Jg4yGbDrflqMFPUtT88Y+ZlCxDdDEXSbt7cVzyzlxGKJkfa0NfcaykDtisCSz7BJ6mDW/NpA==
+  version "1.3.172"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.172.tgz#1eafb3afdc47bcb9c2a2249b2736be352016da4b"
+  integrity sha512-bHgFvYeHBiQNNuY/WvoX37zLosPgMbR8nKU1r4mylHptLvuMMny/KG/L28DTIlcoOCJjMAhEimy3DHDgDayPbg==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -5291,10 +5291,10 @@ semver-diff@^2.0.0:
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.0.tgz#790a7cf6fea5459bac96110b29b60412dc8ff96b"
   integrity sha512-Ya52jSX2u7QKghxeoFGpLwCtGlt7j0oY9DYb5apt9nPlJ42ID+ulTXESnt/qAQcoSERyZ5sl3LDIOw0nAn/5DA==
 
-semver@^6.0.0, semver@^6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-6.1.1.tgz#53f53da9b30b2103cd4f15eab3a18ecbcb210c9b"
-  integrity sha512-rWYq2e5iYW+fFe/oPPtYJxYgjBm8sC4rmoGdUOgBB7VnwKt6HrL793l2voH1UlsyYZpJ4g0wfjnTEO1s1NP2eQ==
+semver@^6.0.0, semver@^6.1.1, semver@^6.1.2:
+  version "6.1.2"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-6.1.2.tgz#079960381376a3db62eb2edc8a3bfb10c7cfe318"
+  integrity sha512-z4PqiCpomGtWj8633oeAdXm1Kn1W++3T8epkZYnwiVgIYIJ0QHszhInYSJTYxebByQH7KVCEAn8R9duzZW2PhQ==
 
 set-blocking@^2.0.0, set-blocking@~2.0.0:
   version "2.0.0"
