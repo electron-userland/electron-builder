@@ -4,7 +4,7 @@
       <env name="TEST_APP_TMP_DIR" value="$PROJECT_DIR$/../../../ramdisk/electron-builder-test" />
       <env name="DEBUG" value="electron-builder" />
       <env name="_REMOTE_BUILD" value="true" />
-      <env name="BUILD_AGENT_HOST" value="51.15.76.176" />
+      <env name="BUILD_AGENT_HOST" value="service.electron.build" />
     </envs>
     <method v="2">
       <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="true" />

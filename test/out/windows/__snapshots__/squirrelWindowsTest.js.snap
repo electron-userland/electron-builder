@@ -68,7 +68,7 @@ Object {
     Object {
       "arch": "x64",
       "file": "Test TestApp foo.zip",
-      "safeArtifactName": "TestApp-1.1.0-win.zip",
+      "safeArtifactName": "Test-TestApp-foo.zip",
     },
   ],
 }

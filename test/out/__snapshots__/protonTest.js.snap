@@ -5,8 +5,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "notepad 1.0.0.AppImage",
-      "safeArtifactName": "notepad-1.0.0-x86_64.AppImage",
+      "file": "notepad-1.0.0.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -57,7 +56,7 @@ Object {
     Object {
       "arch": "x64",
       "file": "notepad Setup 1.0.0.exe",
-      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "safeArtifactName": "notepad-Setup-1.0.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -65,7 +64,7 @@ Object {
     },
     Object {
       "file": "notepad Setup 1.0.0.exe.blockmap",
-      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "safeArtifactName": "notepad-Setup-1.0.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -81,7 +80,7 @@ Object {
     Object {
       "arch": "ia32",
       "file": "notepad Setup 1.0.0.exe",
-      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "safeArtifactName": "notepad-Setup-1.0.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -89,7 +88,7 @@ Object {
     },
     Object {
       "file": "notepad Setup 1.0.0.exe.blockmap",
-      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "safeArtifactName": "notepad-Setup-1.0.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

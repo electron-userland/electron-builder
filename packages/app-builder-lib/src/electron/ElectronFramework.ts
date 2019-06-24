@@ -9,6 +9,7 @@ import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirector
 import { ElectronPlatformName, Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
+import { isSafeToUnpackElectronOnRemoteBuildServer } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
@@ -55,9 +56,11 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   const packager = options.packager
   const appOutDir = options.appOutDir
   if (packager.platform === Platform.LINUX) {
-    const linuxPackager = (packager as LinuxPackager)
-    const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rename(path.join(appOutDir, "electron"), executable)
+    if (!isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
+      const linuxPackager = (packager as LinuxPackager)
+      const executable = path.join(appOutDir, linuxPackager.executableName)
+      await rename(path.join(appOutDir, "electron"), executable)
+    }
   }
   else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
@@ -155,6 +158,10 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
 
   let isFullCleanup = false
   if (dist == null) {
+    if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
+      return
+    }
+
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", out, "--distMacOsAppName", distMacOsAppName])
   }
   else {
