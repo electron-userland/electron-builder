@@ -30,7 +30,7 @@ export default class AppImageTarget extends Target {
     // https://github.com/electron-userland/electron-builder/issues/775
     // https://github.com/electron-userland/electron-builder/issues/1726
     // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactBeautyNamePattern(options, "AppImage", arch)
+    const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "AppImage",

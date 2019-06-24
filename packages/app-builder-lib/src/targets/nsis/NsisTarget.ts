@@ -11,7 +11,7 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
-import { isSafeGithubName, normalizeExt } from "../../platformPackager"
+import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
@@ -265,8 +265,7 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
-    const safeArtifactName = isSafeGithubName(installerFilename) ? installerFilename : this.generateGitHubInstallerName()
-
+    const safeArtifactName = computeSafeArtifactNameIfNeeded(installerFilename, () => this.generateGitHubInstallerName())
     let updateInfo: any
     if (this.isWebInstaller) {
       updateInfo = createNsisWebDifferentialUpdateInfo(installerPath, packageFiles)

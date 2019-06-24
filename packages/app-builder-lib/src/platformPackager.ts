@@ -147,14 +147,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
-  get electronDistExecutableName() {
-    return "electron"
-  }
-
-  get electronDistMacOsExecutableName() {
-    return "Electron"
-  }
-
   createGetFileMatchersOptions(outDir: string, arch: Arch, customBuildOptions: PlatformSpecificBuildOptions): GetFileMatchersOptions {
     return {
       macroExpander: it => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"}),
@@ -463,12 +455,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // tslint:disable-next-line:no-invalid-template-strings
   computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
-    // GitHub only allows the listed characters in file names.
-    if (suggestedName != null && isSafeGithubName(suggestedName)) {
-      return null
-    }
-
-    return this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
+    return computeSafeArtifactNameIfNeeded(suggestedName, () => this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch))
   }
 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
@@ -494,7 +481,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.expandArtifactNamePattern(targetSpecificOptions, ext, arch, "${productName} ${version} ${arch}.${ext}", true)
   }
 
-  private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined) {
+  private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
     let archName: string | null = arch == null ? null : Arch[arch]
     if (arch === Arch.x64) {
       if (ext === "AppImage" || ext === "rpm") {
@@ -637,6 +624,23 @@ export type IconFormat = "icns" | "ico" | "set"
 
 export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)
+}
+
+export function computeSafeArtifactNameIfNeeded(suggestedName: string | null, safeNameProducer: () => string): string | null {
+  // GitHub only allows the listed characters in file names.
+  if (suggestedName != null) {
+    if (isSafeGithubName(suggestedName)) {
+      return null
+    }
+
+    // prefer to use suggested name - so, if space is the only problem, just replace only space to dash
+    suggestedName = suggestedName.replace(/ /g, "-")
+    if (isSafeGithubName(suggestedName)) {
+      return suggestedName
+    }
+  }
+
+  return safeNameProducer()
 }
 
 // remove leading dot

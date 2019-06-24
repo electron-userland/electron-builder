@@ -7,10 +7,6 @@ Array [
     "size": 16,
   },
   Object {
-    "file": "icon_24x24.png",
-    "size": 24,
-  },
-  Object {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -21,10 +17,6 @@ Array [
   Object {
     "file": "icon_64x64.png",
     "size": 64,
-  },
-  Object {
-    "file": "icon_96x96.png",
-    "size": 96,
   },
   Object {
     "file": "icon_128x128.png",
@@ -48,10 +40,6 @@ Array [
     "size": 16,
   },
   Object {
-    "file": "icon_24x24.png",
-    "size": 24,
-  },
-  Object {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -62,10 +50,6 @@ Array [
   Object {
     "file": "icon_64x64.png",
     "size": 64,
-  },
-  Object {
-    "file": "icon_96x96.png",
-    "size": 96,
   },
   Object {
     "file": "icon_128x128.png",
@@ -89,10 +73,6 @@ Array [
     "size": 16,
   },
   Object {
-    "file": "icon_24x24.png",
-    "size": 24,
-  },
-  Object {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -103,10 +83,6 @@ Array [
   Object {
     "file": "icon_64x64.png",
     "size": 64,
-  },
-  Object {
-    "file": "icon_96x96.png",
-    "size": 96,
   },
   Object {
     "file": "icon_128x128.png",
@@ -130,10 +106,6 @@ Array [
     "size": 16,
   },
   Object {
-    "file": "icon_24x24.png",
-    "size": 24,
-  },
-  Object {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -144,10 +116,6 @@ Array [
   Object {
     "file": "icon_64x64.png",
     "size": 64,
-  },
-  Object {
-    "file": "icon_96x96.png",
-    "size": 96,
   },
   Object {
     "file": "icon_128x128.png",
@@ -171,10 +139,6 @@ Array [
     "size": 16,
   },
   Object {
-    "file": "icon_24x24.png",
-    "size": 24,
-  },
-  Object {
     "file": "icon_32x32.png",
     "size": 32,
   },
@@ -185,10 +149,6 @@ Array [
   Object {
     "file": "icon_64x64.png",
     "size": 64,
-  },
-  Object {
-    "file": "icon_96x96.png",
-    "size": 96,
   },
   Object {
     "file": "icon_128x128.png",

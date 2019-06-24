@@ -57,11 +57,11 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   if (packager.platform === Platform.LINUX) {
     const linuxPackager = (packager as LinuxPackager)
     const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rename(path.join(appOutDir, packager.electronDistExecutableName), executable)
+    await rename(path.join(appOutDir, "electron"), executable)
   }
   else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, `${packager.electronDistExecutableName}.exe`), executable)
+    await rename(path.join(appOutDir, "electron.exe"), executable)
   }
   else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
