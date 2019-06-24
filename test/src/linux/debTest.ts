@@ -24,3 +24,18 @@ test.ifNotWindows("custom depends", app({
     return false
   }
 }))
+
+test.ifNotWindows("no quotes for safe exec name", app({
+  targets: Platform.LINUX.createTarget("deb"),
+  config: {
+    productName: "foo",
+    linux: {
+      executableName: "Boo",
+    },
+  },
+  effectiveOptionComputed: async it => {
+    const content = await readFile(it[1], "utf8")
+    expect(content).toMatchSnapshot()
+    return false
+  }
+}))

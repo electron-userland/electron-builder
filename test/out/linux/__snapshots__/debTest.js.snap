@@ -48,19 +48,15 @@ Array [
   "/usr/share/icons/hicolor/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
-  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
   "/usr/share/icons/hicolor/512x512/",
   "/usr/share/icons/hicolor/64x64/",
-  "/usr/share/icons/hicolor/96x96/",
   "/usr/share/icons/hicolor/128x128/apps/",
   "/usr/share/icons/hicolor/128x128/apps/testapp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/testapp.png",
-  "/usr/share/icons/hicolor/24x24/apps/",
-  "/usr/share/icons/hicolor/24x24/apps/testapp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/testapp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -71,8 +67,6 @@ Array [
   "/usr/share/icons/hicolor/512x512/apps/testapp.png",
   "/usr/share/icons/hicolor/64x64/apps/",
   "/usr/share/icons/hicolor/64x64/apps/testapp.png",
-  "/usr/share/icons/hicolor/96x96/apps/",
-  "/usr/share/icons/hicolor/96x96/apps/testapp.png",
 ]
 `;
 
@@ -125,19 +119,15 @@ Array [
   "/usr/share/icons/hicolor/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
-  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
   "/usr/share/icons/hicolor/512x512/",
   "/usr/share/icons/hicolor/64x64/",
-  "/usr/share/icons/hicolor/96x96/",
   "/usr/share/icons/hicolor/128x128/apps/",
   "/usr/share/icons/hicolor/128x128/apps/testapp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/testapp.png",
-  "/usr/share/icons/hicolor/24x24/apps/",
-  "/usr/share/icons/hicolor/24x24/apps/testapp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/testapp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -148,8 +138,6 @@ Array [
   "/usr/share/icons/hicolor/512x512/apps/testapp.png",
   "/usr/share/icons/hicolor/64x64/apps/",
   "/usr/share/icons/hicolor/64x64/apps/testapp.png",
-  "/usr/share/icons/hicolor/96x96/apps/",
-  "/usr/share/icons/hicolor/96x96/apps/testapp.png",
 ]
 `;
 
@@ -172,12 +160,12 @@ exports[`arm 7`] = `"Test Application (test quite “ #378)"`;
 exports[`custom depends 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Comment=Test Application (test quite “ #378)
 Exec=\\"/opt/Test App ßW/Boo\\" %U
 Terminal=false
 Type=Application
 Icon=Boo
 StartupWMClass=Test App ßW
+Comment=Test Application (test quite “ #378)
 Categories=Development;
 "
 `;
@@ -229,19 +217,15 @@ Array [
   "/usr/share/icons/hicolor/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
-  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
   "/usr/share/icons/hicolor/512x512/",
   "/usr/share/icons/hicolor/64x64/",
-  "/usr/share/icons/hicolor/96x96/",
   "/usr/share/icons/hicolor/128x128/apps/",
   "/usr/share/icons/hicolor/128x128/apps/Boo.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/Boo.png",
-  "/usr/share/icons/hicolor/24x24/apps/",
-  "/usr/share/icons/hicolor/24x24/apps/Boo.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/Boo.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -252,8 +236,6 @@ Array [
   "/usr/share/icons/hicolor/512x512/apps/Boo.png",
   "/usr/share/icons/hicolor/64x64/apps/",
   "/usr/share/icons/hicolor/64x64/apps/Boo.png",
-  "/usr/share/icons/hicolor/96x96/apps/",
-  "/usr/share/icons/hicolor/96x96/apps/Boo.png",
 ]
 `;
 
@@ -320,19 +302,15 @@ Array [
   "/usr/share/icons/hicolor/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",
-  "/usr/share/icons/hicolor/24x24/",
   "/usr/share/icons/hicolor/256x256/",
   "/usr/share/icons/hicolor/32x32/",
   "/usr/share/icons/hicolor/48x48/",
   "/usr/share/icons/hicolor/512x512/",
   "/usr/share/icons/hicolor/64x64/",
-  "/usr/share/icons/hicolor/96x96/",
   "/usr/share/icons/hicolor/128x128/apps/",
   "/usr/share/icons/hicolor/128x128/apps/testapp.png",
   "/usr/share/icons/hicolor/16x16/apps/",
   "/usr/share/icons/hicolor/16x16/apps/testapp.png",
-  "/usr/share/icons/hicolor/24x24/apps/",
-  "/usr/share/icons/hicolor/24x24/apps/testapp.png",
   "/usr/share/icons/hicolor/256x256/apps/",
   "/usr/share/icons/hicolor/256x256/apps/testapp.png",
   "/usr/share/icons/hicolor/32x32/apps/",
@@ -343,8 +321,6 @@ Array [
   "/usr/share/icons/hicolor/512x512/apps/testapp.png",
   "/usr/share/icons/hicolor/64x64/apps/",
   "/usr/share/icons/hicolor/64x64/apps/testapp.png",
-  "/usr/share/icons/hicolor/96x96/apps/",
-  "/usr/share/icons/hicolor/96x96/apps/testapp.png",
 ]
 `;
 
@@ -363,3 +339,101 @@ Object {
 `;
 
 exports[`deb 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`no quotes for safe exec name 1`] = `
+"[Desktop Entry]
+Name=foo
+Exec=/opt/foo/Boo %U
+Terminal=false
+Type=Application
+Icon=Boo
+StartupWMClass=foo
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
+`;
+
+exports[`no quotes for safe exec name 2`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`no quotes for safe exec name 3`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/foo/",
+  "/opt/foo/Boo",
+  "/opt/foo/chrome-sandbox",
+  "/opt/foo/chrome_100_percent.pak",
+  "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/icudtl.dat",
+  "/opt/foo/libEGL.so",
+  "/opt/foo/libffmpeg.so",
+  "/opt/foo/libGLESv2.so",
+  "/opt/foo/LICENSE.electron.txt",
+  "/opt/foo/LICENSES.chromium.html",
+  "/opt/foo/natives_blob.bin",
+  "/opt/foo/resources.pak",
+  "/opt/foo/snapshot_blob.bin",
+  "/opt/foo/v8_context_snapshot.bin",
+  "/usr/share/",
+  "/opt/foo/resources/",
+  "/opt/foo/resources/app.asar",
+  "/opt/foo/resources/electron.asar",
+  "/opt/foo/swiftshader/",
+  "/opt/foo/swiftshader/libEGL.so",
+  "/opt/foo/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`no quotes for safe exec name 4`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "extra",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`no quotes for safe exec name 5`] = `"Test Application (test quite “ #378)"`;

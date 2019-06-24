@@ -62,9 +62,17 @@ export class LinuxTargetHelper {
 
     const productFilename = appInfo.productFilename
 
+    if (exec == null) {
+      exec = `${installPrefix}/${productFilename}/${packager.executableName}`
+      if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
+        exec = `"${exec}"`
+      }
+      exec += " %U"
+    }
+
     const desktopMeta: any = {
       Name: appInfo.productName,
-      Exec: exec == null ? `"${installPrefix}/${productFilename}/${packager.executableName}" %U` : exec,
+      Exec: exec,
       Terminal: "false",
       Type: "Application",
       Icon: packager.executableName,

@@ -3,13 +3,13 @@
 exports[`AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Comment=Test Application (test quite “ #378)
 Exec=AppRun
 Terminal=true
 Type=Application
 Icon=Foo
 StartupWMClass=Test App ßW
 X-Foo=bar
+Comment=Test Application (test quite “ #378)
 Categories=Development;
 "
 `;
