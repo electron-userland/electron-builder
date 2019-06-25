@@ -1,6 +1,8 @@
 !include "common.nsh"
 !include "extractAppPackage.nsh"
 
+# https://github.com/electron-userland/electron-builder/issues/3972#issuecomment-505171582
+CRCCheck off
 WindowIcon Off
 AutoCloseWindow True
 RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
