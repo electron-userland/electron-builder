@@ -82,8 +82,8 @@ export class Logger {
       return message
     }
 
-    const fieldPadding = " ".repeat(Math.max(1, 16 - message.length))
-    let text = message + fieldPadding
+    const fieldPadding = " ".repeat(Math.max(2, 16 - message.length))
+    let text = (level === "error" ? color(message) : message) + fieldPadding
     const fieldNames = Object.keys(fields)
     let counter = 0
     for (const name of fieldNames) {

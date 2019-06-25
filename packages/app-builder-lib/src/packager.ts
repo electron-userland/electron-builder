@@ -238,7 +238,7 @@ export class Packager {
     }
 
     try {
-      log.info({version: PACKAGE_VERSION}, "electron-builder")
+      log.info({version: PACKAGE_VERSION, os: require("os").release()}, "electron-builder")
     }
     catch (e) {
       // error in dev mode without babel

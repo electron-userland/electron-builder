@@ -3,7 +3,7 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputJson } from "fs-extra-p"
-import { promises, readFileSync } from "fs"
+import { promises as fs, readFileSync } from "fs"
 import * as path from "path"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
@@ -181,7 +181,7 @@ test.ifDevOrLinuxCi("electron version from build", app({
 test("www as default dir", appTwo({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
-  projectDirCreated: projectDir => promises.rename(path.join(projectDir, "app"), path.join(projectDir, "www"))
+  projectDirCreated: projectDir => fs.rename(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test.ifLinuxOrDevMac("afterPack", () => {
@@ -285,11 +285,11 @@ export function removeUnstableProperties(data: any) {
 }
 
 async function verifySmartUnpack(resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  expect(await fs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
+  const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
+  expect(await asarFs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
     name: "debug"
   })
-  expect(removeUnstableProperties(fs.header)).toMatchSnapshot()
+  expect(removeUnstableProperties(asarFs.header)).toMatchSnapshot()
 
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`)))
     .map(it => {

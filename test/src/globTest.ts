@@ -1,7 +1,8 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
+import { mkdirs, outputFile, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { promises as fs } from "fs"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, modifyPackageJson, PackedContext, verifyAsarFileTree } from "./helpers/packTester"
 
@@ -17,7 +18,7 @@ async function createFiles(appDir: string) {
   await mkdirs(dir)
   await writeFile(path.join(dir, "file-in-asar"), "{}")
 
-  await symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
+  await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }
 
 test.ifNotWindows.ifDevOrLinuxCi("unpackDir one", app({
@@ -84,7 +85,7 @@ test.ifNotWindows("link", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   projectDirCreated: projectDir => {
-    return symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+    return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
   },
   packed: async context => {
     expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
@@ -97,7 +98,7 @@ test.ifNotWindows("outside link", app({
   projectDirCreated: async (projectDir, tmpDir) => {
     const tempDir = await tmpDir.getTempDir()
     await outputFile(path.join(tempDir, "foo"), "data")
-    await symlink(tempDir, path.join(projectDir, "o-dir"))
+    await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
   },
   packed: async context => {
     expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)).toMatchSnapshot()

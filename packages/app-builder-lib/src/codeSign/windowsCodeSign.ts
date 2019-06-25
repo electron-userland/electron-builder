@@ -28,7 +28,7 @@ export interface WindowsSignOptions {
 }
 
 export interface WindowsSignTaskConfiguration extends WindowsSignOptions {
-  // set if output path differs from input (e.g. osslsigncode cannot sign file inplace)
+  // set if output path differs from input (e.g. osslsigncode cannot sign file in-place)
   resultOutputPath?: string
 
   hash: string

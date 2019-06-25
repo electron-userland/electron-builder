@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { readFile } from "fs-extra-p"
+import { promises as fs } from "fs"
 import { app } from "../helpers/packTester"
 
 test.ifNotWindows("deb", app({
@@ -18,11 +18,6 @@ test.ifNotWindows("custom depends", app({
       depends: ["foo"],
     },
   },
-  effectiveOptionComputed: async it => {
-    const content = await readFile(it[1], "utf8")
-    expect(content).toMatchSnapshot()
-    return false
-  }
 }))
 
 test.ifNotWindows("no quotes for safe exec name", app({
@@ -34,7 +29,7 @@ test.ifNotWindows("no quotes for safe exec name", app({
     },
   },
   effectiveOptionComputed: async it => {
-    const content = await readFile(it[1], "utf8")
+    const content = await fs.readFile(it[1], "utf8")
     expect(content).toMatchSnapshot()
     return false
   }

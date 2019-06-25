@@ -11,7 +11,8 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, readFile, readJson, unlink, writeJson } from "fs-extra-p"
+import { emptyDir, readFile, readJson, writeJson } from "fs-extra-p"
+import { promises as fs } from "fs"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -431,7 +432,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   const data = await readJson(file)
   task(data)
   // because copied as hard link
-  await unlink(file)
+  await fs.unlink(file)
   return await writeJson(file, data)
 }
 

@@ -22,12 +22,6 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly vendor?: string | null
 
   /**
-   * @deprecated
-   * @private
-   */
-  readonly depends?: Array<string> | null
-
-  /**
    * The executable name. Defaults to `productName`.
    * Cannot be specified per target, allowed only in the `linux`.
    */

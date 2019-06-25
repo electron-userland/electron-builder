@@ -1,10 +1,11 @@
 import { Arch, build, Platform } from "electron-builder"
-import { copyFile, mkdirs, outputFile, remove, rename } from "fs-extra-p"
+import { copyFile, mkdirs, outputFile, remove } from "fs-extra-p"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
+import { promises as fs } from "fs"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
 
@@ -131,7 +132,7 @@ test.ifNotWindows("icons from ICNS (mac)", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await mkdirs(path.join(projectDir, "resources")).then(() => rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
+    await mkdirs(path.join(projectDir, "resources")).then(() => fs.rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
     await remove(path.join(projectDir, "build"))
   },
   packed: async context => {
@@ -177,9 +178,9 @@ test.ifNotWindows("icons dir with images without size in the filename", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await rename(path.join(projectDir, "build", "icons", "256x256.png"), path.join(projectDir, "build", "icon.png"))
+    await fs.rename(path.join(projectDir, "build", "icons", "256x256.png"), path.join(projectDir, "build", "icon.png"))
     await remove(path.join(projectDir, "build", "icons"))
-    await rename(path.join(projectDir, "build"), path.join(projectDir, "icons"))
+    await fs.rename(path.join(projectDir, "build"), path.join(projectDir, "icons"))
   },
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
@@ -198,7 +199,7 @@ test.ifNotWindows("icons from ICNS", app({
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
 
-    await rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))
+    await fs.rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))
     await remove(path.join(projectDir, "inspector"))
 
     await build({

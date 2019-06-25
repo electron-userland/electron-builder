@@ -1,20 +1,19 @@
 import { path7za } from "7zip-bin"
-import { appBuilderPath } from "app-builder-bin"
-import { Arch, debug, exec, log, TmpDir, toLinuxArchString, use } from "builder-util"
-import { smarten } from "../appInfo"
-import { objectToArgs } from "../util/appBuilder"
-import { computeEnv } from "../util/bundledTool"
+import { Arch, debug, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import { DebOptions, LinuxTargetSpecificOptions } from ".."
+import { smarten } from "../appInfo"
 import { Target } from "../core"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
+import { objectToArgs } from "../util/appBuilder"
+import { computeEnv } from "../util/bundledTool"
 import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
-import { fpmPath, getLinuxToolsPath } from "./tools"
+import { getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
   maintainer: string | undefined
@@ -91,8 +90,6 @@ export default class FpmTarget extends Target {
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
-    const fpmMetaInfoOptions = await this.computeFpmMetaInfoOptions()
-
     const target = this.name
 
     // tslint:disable:no-invalid-template-strings
@@ -126,11 +123,8 @@ export default class FpmTarget extends Target {
     const options = this.options
     const synopsis = options.synopsis
     const args = [
-      "-s", "dir",
-      "-t", target,
       "--architecture", (target === "pacman" && arch === Arch.ia32) ? "i686" : toLinuxArchString(arch),
       "--name", appInfo.linuxPackageName,
-      "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
       "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
@@ -138,12 +132,10 @@ export default class FpmTarget extends Target {
       "--package", artifactPath,
     ]
 
-    objectToArgs(args, fpmMetaInfoOptions as any)
+    objectToArgs(args, await this.computeFpmMetaInfoOptions() as any)
 
     if (debug.enabled) {
-      args.push(
-        "--log", "debug",
-        "--debug")
+      args.push("--log", "debug")
     }
 
     const packageCategory = options.packageCategory
@@ -151,50 +143,38 @@ export default class FpmTarget extends Target {
       args.push("--category", packageCategory)
     }
 
-    const compression = options.compression
     if (target === "deb") {
-      args.push("--deb-compression", compression || "xz")
       use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
-      args.push("--rpm-compression", (compression === "xz" ? "xzmt" : compression) || "xzmt")
-      args.push("--rpm-os", "linux")
-
       if (synopsis != null) {
         args.push("--rpm-summary", smarten(synopsis))
       }
     }
 
-    // noinspection JSDeprecatedSymbols
-    let depends = options.depends || packager.platformSpecificBuildOptions.depends
-    if (depends == null) {
-      if (target === "deb") {
-        depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1"]
-      }
-      else if (target === "pacman") {
-        // noinspection SpellCheckingInspection
-        depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk2", "libappindicator-gtk3", "libappindicator-sharp"]
-      }
-      else if (target === "rpm") {
-        // noinspection SpellCheckingInspection
-        depends = ["libnotify", "libappindicator", "libXScrnSaver"]
-      }
-      else {
-        depends = []
-      }
-    }
-    else if (!Array.isArray(depends)) {
-      // noinspection SuspiciousTypeOfGuard
-      if (typeof depends === "string") {
-        depends = [depends as string]
-      }
-      else {
-        throw new Error(`depends must be Array or String, but specified as: ${depends}`)
-      }
+    const fpmConfiguration: FpmConfiguration = {
+      args, target,
     }
 
-    for (const dep of depends) {
-      args.push("--depends", dep)
+    if (options.compression != null) {
+      fpmConfiguration.compression = options.compression
+    }
+
+    // noinspection JSDeprecatedSymbols
+    const depends = options.depends
+    if (depends != null) {
+      if (Array.isArray(depends)) {
+        fpmConfiguration.customDepends = depends
+      }
+      else {
+        // noinspection SuspiciousTypeOfGuard
+        if (typeof depends === "string") {
+          fpmConfiguration.customDepends = [depends as string]
+        }
+        else {
+          throw new Error(`depends must be Array or String, but specified as: ${depends}`)
+        }
+      }
     }
 
     use(packager.info.metadata.license, it => args.push("--license", it!))
@@ -218,10 +198,8 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      FPM_COMPRESS_PROGRAM: appBuilderPath,
       SZA_PATH: path7za,
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
-      SZA_ARCHIVE_TYPE: "xz",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -233,10 +211,17 @@ export default class FpmTarget extends Target {
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
       })
     }
-    await exec(await fpmPath.value, args, {env})
+    await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, {env})
 
     await packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
+}
+
+interface FpmConfiguration {
+  target: string
+  args: Array<string>
+  customDepends?: Array<string>
+  compression?: string | null
 }
 
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {

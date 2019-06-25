@@ -73,7 +73,7 @@ Array [
 exports[`arm 3`] = `
 Object {
   "Architecture": "armv7l",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -144,7 +144,7 @@ Array [
 exports[`arm 6`] = `
 Object {
   "Architecture": "armv7l",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -158,19 +158,6 @@ Object {
 exports[`arm 7`] = `"Test Application (test quite “ #378)"`;
 
 exports[`custom depends 1`] = `
-"[Desktop Entry]
-Name=Test App ßW
-Exec=\\"/opt/Test App ßW/Boo\\" %U
-Terminal=false
-Type=Application
-Icon=Boo
-StartupWMClass=Test App ßW
-Comment=Test Application (test quite “ #378)
-Categories=Development;
-"
-`;
-
-exports[`custom depends 2`] = `
 Object {
   "linux": Array [
     Object {
@@ -181,7 +168,7 @@ Object {
 }
 `;
 
-exports[`custom depends 3`] = `
+exports[`custom depends 2`] = `
 Array [
   "/",
   "/opt/",
@@ -239,7 +226,7 @@ Array [
 ]
 `;
 
-exports[`custom depends 4`] = `
+exports[`custom depends 3`] = `
 Object {
   "Architecture": "amd64",
   "Depends": "foo",
@@ -253,7 +240,7 @@ Object {
 }
 `;
 
-exports[`custom depends 5`] = `"Test Application (test quite “ #378)"`;
+exports[`custom depends 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`deb 1`] = `
 Object {
@@ -327,7 +314,7 @@ Array [
 exports[`deb 3`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -425,7 +412,7 @@ Array [
 exports[`no quotes for safe exec name 4`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
