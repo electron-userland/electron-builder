@@ -61,6 +61,10 @@ test.ifAll.ifLinuxOrDevMac("retrieve latest electron version", app({
   targets: linuxDirTarget,
 }, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.devDependencies = {
+      ...data.devDependencies,
+      electron: "latest",
+    }
     delete data.build.electronVersion
   }),
 }))
