@@ -1,14 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
-import { readFile, rename, utimes, writeFile } from "fs-extra-p"
+import { rename, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { build as buildPlist, parse as parsePlist } from "plist"
+import { build as buildPlist } from "plist"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import MacPackager from "../macPackager"
 import { normalizeExt } from "../platformPackager"
+import { executeAppBuilderAsJson } from "../util/appBuilder"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -48,24 +48,22 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, "Electron Login Helper.app", "Contents", "Info.plist")
 
+  const plistContent: Array<any> = await executeAppBuilderAsJson(["decode-plist", "-f", appPlistFilename, "-f", helperPlistFilename, "-f", helperEHPlistFilename, "-f", helperNPPlistFilename, "-f", helperLoginPlistFilename])
+
+  if (plistContent[0] == null) {
+    throw new Error("corrupted Electron dist")
+  }
+
   const buildMetadata = packager.config!
-  const fileContents: Array<string | null> = await BluebirdPromise.map([
-    appPlistFilename,
-    helperPlistFilename,
-    helperEHPlistFilename,
-    helperNPPlistFilename,
-    helperLoginPlistFilename,
-    (buildMetadata as any)["extend-info"]
-  ], it => it == null ? it : orIfFileNotExist(readFile(it, "utf8"), null))
-  const appPlist = parsePlist(fileContents[0]!!)
-  const helperPlist = parsePlist(fileContents[1]!!)
-  const helperEHPlist = fileContents[2] == null ? null : parsePlist(fileContents[2]!!)
-  const helperNPPlist = fileContents[3] == null ? null : parsePlist(fileContents[3]!!)
-  const helperLoginPlist = fileContents[4] == null ? null : parsePlist(fileContents[4]!!)
+  const appPlist = plistContent[0]!!
+  const helperPlist = plistContent[1]!!
+  const helperEHPlist = plistContent[2]
+  const helperNPPlist = plistContent[3]
+  const helperLoginPlist = plistContent[4]
 
   // if an extend-info file was supplied, copy its contents in first
-  if (fileContents[5] != null) {
-    Object.assign(appPlist, parsePlist(fileContents[5]!!))
+  if (plistContent[5] != null) {
+    Object.assign(appPlist, plistContent[5])
   }
 
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]

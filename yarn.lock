@@ -1195,9 +1195,9 @@
     "@types/lodash" "*"
 
 "@types/lodash@*":
-  version "4.14.134"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.134.tgz#9032b440122db3a2a56200e91191996161dde5b9"
-  integrity sha512-2/O0khFUCFeDlbi7sZ7ZFRCcT812fAeOLm7Ev4KbwASkZ575TDrDcY7YyaoHdTOzKcNbfiwLYZqPmoC4wadrsw==
+  version "4.14.135"
+  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.135.tgz#d2607c35dd68f70c2b35ba020c667493dedd8447"
+  integrity sha512-Ed+tSZ9qM1oYpi5kzdsBuOzcAIn1wDW+e8TFJ50IMJMlSopGdJgKAbhHzN6h1E1OfjlGOr2JepzEWtg9NIfoNg==
 
 "@types/minimatch@*":
   version "3.0.3"
@@ -1362,10 +1362,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.0.2.tgz#2843d8790a647c9716a80a72f4ebf753c7bb2509"
-  integrity sha512-nYARpMlJqqL9n+xGQ/vRo9Bvh4wDffLS0nxnulcEtjgiv0TIqcT8JJWEQlCLfzgyaaJoQnNC8ggM6V1xPh0qXA==
+app-builder-bin@3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.0.3.tgz#6b82a82c0e855ae90db20b4f80563ce767cf36f4"
+  integrity sha512-e/mnAyzGC9q5OGnWbbiAZ429ECWYtHB2YUM42KEaoIJcEc1LNecA5MNAvFyB85znOKHPGpcOygBrcWPlGJcQgw==
 
 aproba@^1.0.3:
   version "1.2.0"
@@ -2914,9 +2914,9 @@ got@^9.6.0:
     url-parse-lax "^3.0.0"
 
 graceful-fs@^4.1.0, graceful-fs@^4.1.11, graceful-fs@^4.1.15, graceful-fs@^4.1.2, graceful-fs@^4.1.3, graceful-fs@^4.1.6, graceful-fs@^4.1.9:
-  version "4.1.15"
-  resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.15.tgz#ffb703e1066e8a0eeaa4c8b80ba9253eeefbfb00"
-  integrity sha512-6uHUhOPEBgQ24HM+r6b/QwWfZq+yiFcipKFrOFiBEnWdy5sdzYoi+pJeQaPI5qOLRFqWmAXUPQNsielzdLoecA==
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.0.tgz#8d8fdc73977cb04104721cb53666c1ca64cd328b"
+  integrity sha512-jpSvDPV4Cq/bgtpndIWbI5hmYxhQGHPC4d4cqBPb4DLniCfhJokdXhwhaDuLBGLQdvvRum/UiX6ECVIPvDXqdg==
 
 growly@^1.3.0:
   version "1.3.0"
