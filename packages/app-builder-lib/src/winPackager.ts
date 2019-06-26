@@ -1,8 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, InvalidConfigurationError, log, use } from "builder-util"
 import { parseDn } from "builder-util-runtime"
-import { CopyFileTransformer, FileTransformer } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
+import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import { readdir } from "fs-extra-p"
 import isCI from "is-ci"
@@ -372,13 +371,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
-      if (file.endsWith(".exe") || file.endsWith(".dll")) {
-        return this.sign(path.join(outResourcesDir, file))
-      }
-      else {
-        return null
-      }
-    })
+    // noinspection JSUnusedLocalSymbols
+    const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || file.endsWith(".dll"))
+    await BluebirdPromise.map(fileToSign, file => this.sign(file), {concurrency: 4})
   }
 }

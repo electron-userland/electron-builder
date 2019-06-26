@@ -59,8 +59,8 @@ export interface PackedContext {
   readonly tmpDir: TmpDir
 }
 
-export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws()
+export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function appTwoThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {

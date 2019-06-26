@@ -55,7 +55,7 @@ class Assertions {
     }
   }
 
-  async throws() {
+  async throws(customErrorAssert?: (error: Error) => void) {
     let actualError: Error | null = null
     let result: any
     try {
@@ -85,7 +85,12 @@ class Assertions {
       m = m.replace(/'(C:)?(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$4'`)
     }
     try {
-      expect(m).toMatchSnapshot()
+      if (customErrorAssert == null) {
+        expect(m).toMatchSnapshot()
+      }
+      else {
+        customErrorAssert(actualError!!)
+      }
     }
     catch (matchError) {
       throw new Error(matchError + " " + actualError)

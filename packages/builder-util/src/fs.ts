@@ -3,7 +3,7 @@ import { access, chmod, copyFile as _nodeCopyFile, createReadStream, createWrite
 import * as path from "path"
 import Mode from "stat-mode"
 import { log } from "./log"
-import { orNullIfFileNotExist } from "./promise"
+import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}
@@ -65,7 +65,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       }
     }
 
-    const childNames = await readdir(dirPath)
+    const childNames = await orIfFileNotExist(readdir(dirPath), [])
     childNames.sort()
 
     let nodeModuleContent: Array<string> | null = null
