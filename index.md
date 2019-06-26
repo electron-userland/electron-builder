@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-green.svg)](https://www.electron.build/donate) [![project chat](https://img.shields.io/badge/chat-on_zulip-brightgreen.svg)](https://electron-builder.zulipchat.com)
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
@@ -28,8 +28,6 @@ A complete solution to package and build a ready for distribution Electron app f
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development” | [Donate](donate.md) |
-
-Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
 ## Installation
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
@@ -110,7 +108,7 @@ You can use electron-builder only to pack your electron app in a AppImage, Snaps
 and other distributable formats.
 
 ```
-./node_modules/.bin/build --prepackaged <packed dir>
+./node_modules/.bin/electron-builder --prepackaged <packed dir>
 ```
 
 `--projectDir` (the path to project directory) option also can be useful.
