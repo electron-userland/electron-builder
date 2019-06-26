@@ -8,7 +8,6 @@
   ],
   "bin": {
     "electron-builder": "./out/cli/cli.js",
-    "build": "./out/cli/cli.js",
     "install-app-deps": "./out/cli/install-app-deps.js"
   },
   "repository": "electron-userland/electron-builder",
