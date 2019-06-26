@@ -1,11 +1,11 @@
-import { walk } from "builder-util/out/fs"
-import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { outputJson } from "fs-extra-p"
-import { promises as fs, readFileSync } from "fs"
-import * as path from "path"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
+import { walk } from "builder-util/out/fs"
+import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { promises as fs, readFileSync } from "fs"
+import { outputJson } from "fs-extra-p"
+import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
@@ -22,26 +22,14 @@ test("cli", async () => {
     return options
   }
 
-  function expected(opt: any): object {
-    return {
-      draft: undefined,
-      prerelease: undefined,
-      ...opt
-    }
-  }
-
-  expect(parse("--platform mac")).toMatchSnapshot()
-
   expect(parse("-owl --x64 --ia32"))
   expect(parse("-mwl --x64 --ia32"))
 
-  expect(parse("--dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET)}))
+  expect(parse("--dir")).toMatchObject({targets: Platform.current().createTarget(DIR_TARGET)})
   expect(parse("--mac --dir")).toMatchSnapshot()
-  expect(parse("--x64 --dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.x64)}))
-  expect(parse("--platform linux --dir")).toMatchSnapshot()
+  expect(parse("--x64 --dir")).toMatchObject({targets: Platform.current().createTarget(DIR_TARGET, Arch.x64)})
 
-  expect(parse("--arch x64")).toMatchObject(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
-  expect(parse("--ia32 --x64")).toMatchObject(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
+  expect(parse("--ia32 --x64")).toMatchObject({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)})
   expect(parse("--linux")).toMatchSnapshot()
   expect(parse("--win")).toMatchSnapshot()
   expect(parse("-owl")).toMatchSnapshot()

@@ -1,7 +1,8 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir } from "builder-util"
 import { copyDir } from "builder-util/out/fs"
-import { mkdirs, outputFile, readFile, rename, stat, symlink } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
@@ -56,7 +57,7 @@ test.ifDevOrLinuxCi("files.from asar", app({
   },
 }, {
   projectDirCreated: projectDir => Promise.all([
-    mkdirs(path.join(projectDir, "app/node")).then(() => rename(path.join(projectDir, "index.js"), path.join(projectDir, "app/node/index.js"))),
+    fs.mkdir(path.join(projectDir, "app/node"), {recursive: true}).then(() => fs.rename(path.join(projectDir, "index.js"), path.join(projectDir, "app/node/index.js"))),
     modifyPackageJson(projectDir, data => {
       data.main = "app/node/index.js"
     })
@@ -238,7 +239,7 @@ test.ifNotWindows("postpone symlink", async () => {
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
   await outputFile(aSourceFile, "test")
-  await symlink(aSourceFile, bSourceFileLink)
+  await fs.symlink(aSourceFile, bSourceFileLink)
 
   const dest = await tmpDir.getTempDir()
   await copyDir(source, dest)
@@ -247,7 +248,7 @@ test.ifNotWindows("postpone symlink", async () => {
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new Mode(await stat(file))
+  const mode = new Mode(await fs.stat(file))
 
   function checkExecute(value: Permissions) {
     if (value.execute !== execute) {

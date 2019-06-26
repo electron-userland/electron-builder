@@ -25,15 +25,15 @@ exports[`build in the app package.json 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONF
 
 exports[`cli 1`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "mac",
       "name": "mac",
       "nodeName": "darwin",
     } => Map {
-      1 => Array [],
+      1 => Array [
+        "dir",
+      ],
     },
   },
 }
@@ -41,49 +41,45 @@ Object {
 
 exports[`cli 2`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {
-      1 => Array [
-        "dir",
-      ],
-    },
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {},
   },
 }
 `;
 
 exports[`cli 3`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "dir",
-      ],
-    },
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {},
   },
 }
 `;
 
 exports[`cli 4`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {},
     Platform {
       "buildConfigurationKey": "linux",
       "name": "linux",
       "nodeName": "linux",
+    } => Map {},
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
     } => Map {},
   },
 }
@@ -91,46 +87,6 @@ Object {
 
 exports[`cli 5`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "win",
-      "name": "windows",
-      "nodeName": "win32",
-    } => Map {},
-  },
-}
-`;
-
-exports[`cli 6`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {},
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {},
-    Platform {
-      "buildConfigurationKey": "win",
-      "name": "windows",
-      "nodeName": "win32",
-    } => Map {},
-  },
-}
-`;
-
-exports[`cli 7`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -145,46 +101,40 @@ Object {
 }
 `;
 
+exports[`cli 6`] = `
+Object {
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
+exports[`cli 7`] = `
+Object {
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
 exports[`cli 8`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "tar.gz",
-      ],
-    },
-  },
-}
-`;
-
-exports[`cli 9`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "tar.gz",
-      ],
-    },
-  },
-}
-`;
-
-exports[`cli 10`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",
@@ -199,10 +149,8 @@ Object {
 }
 `;
 
-exports[`cli 11`] = `
+exports[`cli 9`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "publish": "always",
   "targets": Map {
     Platform {
@@ -216,11 +164,9 @@ Object {
 }
 `;
 
-exports[`cli 12`] = `
+exports[`cli 10`] = `
 Object {
-  "draft": undefined,
   "prepackaged": "someDir",
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",
@@ -233,10 +179,8 @@ Object {
 }
 `;
 
-exports[`cli 13`] = `
+exports[`cli 11`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "projectDir": "someDir",
   "targets": Map {
     Platform {

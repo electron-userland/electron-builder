@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { copyFile, mkdirs, outputFile, remove } from "fs-extra-p"
+import { copyFile, outputFile, remove } from "fs-extra-p"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
@@ -132,7 +132,7 @@ test.ifNotWindows("icons from ICNS (mac)", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await mkdirs(path.join(projectDir, "resources")).then(() => fs.rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
+    await fs.mkdir(path.join(projectDir, "resources"), {recursive: true}).then(() => fs.rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
     await remove(path.join(projectDir, "build"))
   },
   packed: async context => {
