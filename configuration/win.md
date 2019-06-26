@@ -37,7 +37,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 ## Common Questions
 #### How do delegate code signing?
 
-Use [sign](#WindowsConfiguration-sign) option.
+Use [sign](#WindowsConfiguration-sign) option. Please also see [why sign.js is called 8 times](https://github.com/electron-userland/electron-builder/issues/3995).
 
 ```json
 "win": {
@@ -53,7 +53,6 @@ exports.default = async function(configuration) {
 ```
 
 #### How do create Parallels Windows 10 Virtual Machine?
-
 
 !!! warning "Disable "Share Mac user folders with Windows""
     If you use Parallels, you [must not use](https://github.com/electron-userland/electron-builder/issues/865#issuecomment-258105498) "Share Mac user folders with Windows" feature and must not run installers from such folders.
