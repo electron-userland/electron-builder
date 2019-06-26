@@ -1,9 +1,3 @@
-Execute `./node_modules/.bin/electron-builder --help` (`node_modules/.bin/electron-builder build --help` for `build` subcommand) to get the actual CLI usage guide.
-
-!!! tip 
-
-    Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
-
 ```
 Commands:
   electron-builder build                    Build                      [default]
@@ -39,30 +33,33 @@ Publishing:
                  https://goo.gl/tSFycD
                 [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
 
-Deprecated:
-  --draft       Please set releaseType in the GitHub publish options instead
-                                                                       [boolean]
-  --prerelease  Please set releaseType in the GitHub publish options instead
-                                                                       [boolean]
-  --platform    The target platform (preferred to use --mac, --win or --linux)
-           [choices: "mac", "win", "linux", "darwin", "win32", "all", undefined]
-  --arch        The target arch (preferred to use --x64 or --ia32)
-                   [choices: "ia32", "x64", "armv7l", "arm64", "all", undefined]
-
 Other:
   --help     Show help                                                 [boolean]
   --version  Show version number                                       [boolean]
-
-Examples:
-  electron-builder -mwl                        build for macOS, Windows and Linux
-  electron-builder --linux deb tar.xz          build deb and tar.xz for Linux
-   electron-builder                          set package.json property `foo` to
-    -c.extraMetadata.foo=bar                  `bar`
-    electron-builder                          configure unicode options for NSIS
-    --config.nsis.unicode=false
 ```
 
 For other commands please see help using `--help` arg, e.g. `./node_modules/.bin/electron-builder install-app-deps --help`
+
+!!! tip 
+    Since Node.js 8 [npx](https://medium.com/@maybekatz/introducing-npx-an-npm-package-runner-55f7d4bd282b) is bundled, so, you can simply use `npx electron-builder`.
+    
+    
+Prepend `npx` to sample commands below if you run it from Terminal and not from `package.json` scripts.
+
+!!! example "build for macOS, Windows and Linux"
+    `electron-builder -mwl`
+    
+!!! example "build deb and tar.xz for Linux"
+    `electron-builder --linux deb tar.xz`
+    
+!!! example "build NSIS 32-bit installer for Windows"
+    `electron-builder --windows nsis:ia32`
+    
+!!! example "set package.json property `foo` to `bar`"
+    `electron-builder -c.extraMetadata.foo=bar`
+    
+!!! example "configure unicode options for NSIS"
+    `electron-builder -c.nsis.unicode=false`
 
 ## Target
 
