@@ -122,6 +122,8 @@ Set the `DEBUG` environment variable to debug what electron-builder is doing:
 DEBUG=electron-builder
 ```
 
+`FPM_DEBUG` env to add more details about building linux targets (except snap and appimage).
+
 !!! tip "cmd"
     On [Windows](https://github.com/visionmedia/debug#windows-command-prompt-notes) the environment variable is set using the set command.
     ```bash
