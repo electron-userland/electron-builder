@@ -99,7 +99,6 @@ export class GitHubPublisher extends HttpPublisher {
       }
 
       // https://github.com/electron-userland/electron-builder/issues/1197
-      // https://electron-builder.slack.com/archives/general/p1485961449000202
       // https://github.com/electron-userland/electron-builder/issues/2072
       if (this.releaseType === "draft") {
         this.releaseLogFields = {
