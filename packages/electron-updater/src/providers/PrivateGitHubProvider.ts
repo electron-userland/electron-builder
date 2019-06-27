@@ -73,7 +73,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     try {
       let version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
       if (allowPrerelease) {
-        version = version.find((v: any) => v.prerelease)
+        version = version.find((v: any) => v.prerelease) || version[0]
       }
       return version
     }
