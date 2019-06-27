@@ -33,6 +33,39 @@ Object {
 }
 `;
 
+exports[`asarUnpack node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`asarUnpack node_modules 2`] = `
+Object {
+  "files": Object {
+    "ci-info": Object {
+      "files": Object {
+        "LICENSE": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "index.js": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "package.json": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "vendors.json": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+      },
+    },
+  },
+}
+`;
+
 exports[`failed peer dep 1`] = `
 Object {
   "linux": Array [],

@@ -4,7 +4,7 @@ import { outputFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { promises as fs } from "fs"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext, verifyAsarFileTree } from "./helpers/packTester"
+import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
 
 async function createFiles(appDir: string) {
   await Promise.all([
@@ -136,11 +136,32 @@ test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
     projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
       //noinspection SpellCheckingInspection
       data.dependencies = {
-        "is-ci": "*",
+        "ci-info": "2.0.0",
       }
     }),
     packed: context => {
       return assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
+    }
+  })
+})
+
+test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    config: {
+      asarUnpack: "node_modules",
+    }
+  }, {
+    isInstallDepsBefore: true,
+    projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+      data.dependencies = {
+        "ci-info": "2.0.0",
+      }
+    }),
+    packed: async context => {
+      const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
+      expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
+      await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
     }
   })
 })

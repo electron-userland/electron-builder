@@ -95,9 +95,9 @@ export class AsarFilesystem {
     return node
   }
 
-  getNode(p: string) {
-    const node = this.searchNodeFromDirectory(path.dirname(p), false)!
-    return node.files![path.basename(p)]
+  getNode(p: string): Node | null {
+    const node = this.searchNodeFromDirectory(path.dirname(p), false)!!
+    return node.files!![path.basename(p)]
   }
 
   getFile(p: string, followLinks: boolean = true): Node {
@@ -110,8 +110,8 @@ export class AsarFilesystem {
     return JSON.parse((await this.readFile(file)).toString())
   }
 
-  async readFile(file: string): Promise<Buffer> {
-    return await readFileFromAsar(this, file, this.getFile(file))
+  readFile(file: string): Promise<Buffer> {
+    return readFileFromAsar(this, file, this.getFile(file))
   }
 }
 
