@@ -1,3 +1,11 @@
+## 4.0.14
+
+From 4.0.5 to 4.0.13 — maintenance-only releases to update dependencies.
+
+### Bug Fixes
+
+* update from prerelease to prerelease crash, closes [#3163](https://github.com/electron-userland/electron-builder/issues/3163)
+
 ## 4.0.5
 
 ### Bug Fixes

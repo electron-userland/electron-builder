@@ -115,7 +115,7 @@
     "path-sort": "^0.1.0",
     "sumchecker": "^3.0.0",
     "ts-babel": "6.1.4",
-    "ts-jsdoc": "^3.0.1",
+    "ts-jsdoc": "^3.1.1",
     "tslint": "^5.18.0",
     "typescript": "~3.5.2",
     "whitespace": "^2.1.0",
