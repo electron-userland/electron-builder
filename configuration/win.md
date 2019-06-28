@@ -18,7 +18,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 * <code id="WindowsConfiguration-certificateSha1">certificateSha1</code> String - The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
 * <code id="WindowsConfiguration-additionalCertificateFile">additionalCertificateFile</code> String - The path to an additional certificate file you want to add to the signature block.
 * <code id="WindowsConfiguration-rfc3161TimeStampServer">rfc3161TimeStampServer</code> = `http://timestamp.comodoca.com/rfc3161` String - The URL of the RFC 3161 time stamp server.
-* <code id="WindowsConfiguration-timeStampServer">timeStampServer</code> = `http://timestamp.verisign.com/scripts/timstamp.dll` String - The URL of the time stamp server.
+* <code id="WindowsConfiguration-timeStampServer">timeStampServer</code> = `http://timestamp.digicert.com` String - The URL of the time stamp server.
 
 ---
 

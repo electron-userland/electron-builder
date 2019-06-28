@@ -23,6 +23,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
     * <code id="DmgWindow-width">width</code> Number - The width. Defaults to background image width or 540.
     * <code id="DmgWindow-height">height</code> Number - The height. Defaults to background image height or 380.
 * <code id="DmgOptions-internetEnabled">internetEnabled</code> = `false` Boolean - Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).
+* <code id="DmgOptions-sign">sign</code> = `false` Boolean - Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.
 
 Inherited from `TargetSpecificOptions`:
 

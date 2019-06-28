@@ -70,6 +70,10 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
     * <code id="NsisWebOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
 * <code id="Configuration-portable">portable</code><a name="PortableOptions"></a> - Portable options.
     * <code id="PortableOptions-requestExecutionLevel">requestExecutionLevel</code> = `user` "user" | "highest" | "admin" - The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.
+    * <code id="PortableOptions-unpackDirName">unpackDirName</code> String - The unpack directory name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.
+        
+        Defaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).
+
 * <code id="Configuration-appx">appx</code> [AppXOptions](appx)
 * <code id="Configuration-squirrelWindows">squirrelWindows</code> [SquirrelWindowsOptions](squirrel-windows.md)
 
@@ -97,7 +101,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 
 ---
 
-* <code id="Configuration-buildVersion">buildVersion</code> String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
+* <code id="Configuration-buildVersion">buildVersion</code> String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).
 * <code id="Configuration-electronCompile">electronCompile</code> Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
 * <code id="Configuration-electronDist">electronDist</code> String - The path to custom Electron build (e.g. `~/electron/out/R`).
 * <code id="Configuration-electronDownload">electronDownload</code><a name="ElectronDownloadOptions"></a> - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
@@ -125,7 +129,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * <code id="Configuration-afterSign">afterSign</code> - The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format).
 * <code id="Configuration-artifactBuildStarted">artifactBuildStarted</code> module:app-builder-lib/out/configuration.__type | String - The function (or path to file or module id) to be run on artifact build start.
 * <code id="Configuration-artifactBuildCompleted">artifactBuildCompleted</code> module:app-builder-lib/out/configuration.__type | String - The function (or path to file or module id) to be run on artifact build completed.
-* <code id="Configuration-afterAllArtifactBuild">afterAllArtifactBuild</code> - The function (or path to file or module id) to be [run after all artifacts are built](#afterAllArtifactBuild).
+* <code id="Configuration-afterAllArtifactBuild">afterAllArtifactBuild</code> - The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
 * <code id="Configuration-onNodeModuleFile">onNodeModuleFile</code> - The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
 * <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
     
