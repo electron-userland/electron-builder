@@ -46,8 +46,8 @@ export class NsisTarget extends Target {
     this.packageHelper.refCount++
 
     this.options = targetName === "portable" ? Object.create(null) : {
-      ...this.packager.config.nsis,
       preCompressedFileExtensions: [".avi", ".mov", ".m4v", ".mp4", ".m4p", ".qt", ".mkv", ".webm", ".vmdk"],
+      ...this.packager.config.nsis,
     }
 
     if (targetName !== "nsis") {
