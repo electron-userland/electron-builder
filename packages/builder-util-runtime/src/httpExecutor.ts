@@ -1,6 +1,6 @@
 import { createHash, Hash } from "crypto"
 import _debug from "debug"
-import { createWriteStream } from "fs-extra-p"
+import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"

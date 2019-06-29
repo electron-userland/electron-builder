@@ -14,11 +14,9 @@
   "dependencies": {
     "@types/semver": "^6.0.1",
     "lazy-val": "^1.0.4",
-    "bluebird-lst": "^1.0.9",
-    "fs-extra-p": "^8.0.2",
+    "fs-extra": "^8.1.0",
     "js-yaml": "^3.13.1",
     "semver": "^6.1.2",
-    "source-map-support": "^0.5.12",
     "builder-util-runtime": "0.0.0-semantic-release",
     "lodash.isequal": "^4.5.0",
     "pako": "^1.0.10"

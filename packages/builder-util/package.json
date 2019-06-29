@@ -13,7 +13,7 @@
   "dependencies": {
     "app-builder-bin": "3.0.3",
     "temp-file": "^3.3.3",
-    "fs-extra-p": "^8.0.2",
+    "fs-extra-p": "^8.1.0",
     "is-ci": "^2.0.0",
     "stat-mode": "^0.3.0",
     "bluebird-lst": "^1.0.9",

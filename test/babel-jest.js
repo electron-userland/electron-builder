@@ -68,7 +68,7 @@ function createTransformer(options) {
       const finalOptions = Object.assign({}, options, {
         filename,
         plugins,
-        presets: ["babel-preset-ts-node6-bluebird"],
+        presets: ["babel-preset-ts-node8"],
         inputSourceMap: JSON.parse(fs.readFileSync(sourceMapFile, "utf-8")),
         sourceMaps: true,
         ast: false,
