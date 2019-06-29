@@ -11,14 +11,14 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, readFile, readJson, writeJson } from "fs-extra-p"
+import { emptyDir, writeJson } from "fs-extra-p"
 import { promises as fs } from "fs"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { parse as parsePlist } from "plist"
 import { TmpDir } from "temp-file"
 import { readAsar } from "app-builder-lib/out/asar/asar"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -196,7 +196,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       const file = result.file
       if (file != null) {
         if (file.endsWith(".yml")) {
-          result.fileContent = removeUnstableProperties(safeLoad(await readFile(file, "utf-8")))
+          result.fileContent = removeUnstableProperties(safeLoad(await fs.readFile(file, "utf-8")))
         }
         result.file = path.basename(file)
       }
@@ -304,7 +304,7 @@ function parseDebControl(info: string): any {
 
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
-  const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
+  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", path.join(packedAppDir, "Contents", "Info.plist")]))[0]
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
@@ -377,7 +377,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
       path: path.dirname(packageFile),
     })
-    const expectedSpec = (await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
+    const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
     // console.log(expectedSpec)
     expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
@@ -429,7 +429,7 @@ export function packageJson(task: (data: any) => void, isApp = false) {
 
 export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp = false): Promise<any> {
   const file = isApp ? path.join(projectDir, "app", "package.json") : path.join(projectDir, "package.json")
-  const data = await readJson(file)
+  const data = await fs.readFile(file, "utf-8").then(it => JSON.parse(it))
   task(data)
   // because copied as hard link
   await fs.unlink(file)

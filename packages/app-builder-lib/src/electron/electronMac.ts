@@ -1,14 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
-import { rename, utimes, writeFile } from "fs-extra-p"
+import { rename, utimes } from "fs-extra-p"
 import * as path from "path"
-import { build as buildPlist } from "plist"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import MacPackager from "../macPackager"
 import { normalizeExt } from "../platformPackager"
-import { executeAppBuilderAsJson } from "../util/appBuilder"
+import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -54,7 +53,6 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     throw new Error("corrupted Electron dist")
   }
 
-  const buildMetadata = packager.config!
   const appPlist = plistContent[0]!!
   const helperPlist = plistContent[1]!!
   const helperEHPlist = plistContent[2]
@@ -66,6 +64,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, plistContent[5])
   }
 
+  const buildMetadata = packager.config!!
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
@@ -149,12 +148,22 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
 
+  const plistDataToWrite: any = {
+    [appPlistFilename]: appPlist,
+    [helperPlistFilename]: helperPlist,
+  }
+  if (helperEHPlist != null) {
+    plistDataToWrite[helperEHPlistFilename] = helperEHPlist
+  }
+  if (helperNPPlist != null) {
+    plistDataToWrite[helperNPPlistFilename] = helperNPPlist
+  }
+  if (helperLoginPlist != null) {
+    plistDataToWrite[helperLoginPlistFilename] = helperLoginPlist
+  }
+
   await Promise.all([
-    writeFile(appPlistFilename, buildPlist(appPlist)),
-    writeFile(helperPlistFilename, buildPlist(helperPlist)),
-    helperEHPlist == null ? Promise.resolve() : writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
-    helperNPPlist == null ? Promise.resolve() : writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
-    helperLoginPlist == null ? Promise.resolve() : writeFile(helperLoginPlistFilename, buildPlist(helperLoginPlist)),
+    executeAppBuilderAndWriteJson(["encode-plist"], plistDataToWrite),
     doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),

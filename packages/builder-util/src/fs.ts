@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { access, chmod, copyFile as _nodeCopyFile, createReadStream, createWriteStream, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
+import { access, chmod, copyFile as _nodeCopyFile, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra"
 import * as path from "path"
 import Mode from "stat-mode"
 import { log } from "./log"
@@ -204,20 +204,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 }
 
 function doCopyFile(src: string, dest: string, stats: Stats | null | undefined): Promise<any> {
-  if (_nodeCopyFile == null) {
-    return new Promise((resolve, reject) => {
-      const reader = createReadStream(src)
-      const writer = createWriteStream(dest, stats == null ? undefined : {mode: stats!!.mode})
-      reader.on("error", reject)
-      writer.on("error", reject)
-      writer.on("open", () => {
-        reader.pipe(writer)
-      })
-      writer.once("close", resolve)
-    })
-  }
-
-  // node 8.5.0+
+  console.log("copy", src, dest)
   const promise = _nodeCopyFile(src, dest)
   if (stats == null) {
     return promise

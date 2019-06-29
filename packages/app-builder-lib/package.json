@@ -57,7 +57,6 @@
     "read-config-file": "3.3.0",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.5.0",
-    "plist": "^3.0.1",
     "sanitize-filename": "^1.6.1",
     "semver": "^6.1.2",
     "debug": "^4.1.1",

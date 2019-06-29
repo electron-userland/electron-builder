@@ -1,9 +1,9 @@
 import { Arch, debug, exec, use } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
+import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { build as buildPlist, parse as parsePlist } from "plist"
 import { PkgOptions } from ".."
 import { filterCFBundleIdentifier } from "../appInfo"
 import { findIdentity, Identity } from "../codeSign/macCodeSign"
@@ -124,7 +124,7 @@ export class PkgTarget extends Target {
     ])
 
     // process the template plist
-    const plistInfo = parsePlist(await readFile(propertyListOutputFile, "utf8"))
+    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0]
     if (plistInfo.length > 0) {
       const packageInfo = plistInfo[0]
 
@@ -149,7 +149,7 @@ export class PkgTarget extends Target {
         packageInfo.BundleOverwriteAction = options.overwriteAction
       }
 
-      await writeFile(propertyListOutputFile, buildPlist(plistInfo))
+      await executeAppBuilderAndWriteJson(["encode-plist"], {[propertyListOutputFile]: plistInfo})
     }
 
     // now build the package
