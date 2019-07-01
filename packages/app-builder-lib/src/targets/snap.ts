@@ -102,7 +102,7 @@ export default class SnapTarget extends Target {
           "$SNAP_LIBRARY_PATH",
           "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
           "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + archTriplet + "-:$SNAP/usr/lib/" + archTriplet
+          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet
         ].join(":"),
         ...options.environment,
       }
