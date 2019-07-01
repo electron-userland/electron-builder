@@ -6,7 +6,7 @@ import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
 import { Target } from "../core"
-import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
+import { LinuxPackager } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
@@ -49,7 +49,6 @@ export default class SnapTarget extends Target {
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
-    const linuxArchName = toAppImageOrSnapArch(arch)
 
     const plugs = normalizePlugConfiguration(this.options.plugs)
 
@@ -94,15 +93,16 @@ export default class SnapTarget extends Target {
       delete snap.plugs
     }
     else {
+      const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
           "$SNAP_LIBRARY_PATH",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
+          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
           "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
+          "$SNAP/lib/" + archTriplet + "-:$SNAP/usr/lib/" + archTriplet
         ].join(":"),
         ...options.environment,
       }
@@ -204,6 +204,23 @@ export default class SnapTarget extends Target {
 
   private isElectronVersionGreaterOrEqualThen(version: string) {
     return semver.gte(this.packager.config.electronVersion || "5.0.3", version)
+  }
+}
+
+function archNameToTriplet(arch: Arch): string {
+  switch (arch) {
+    case Arch.x64:
+      return "x86_64-linux-gnu"
+    case Arch.ia32:
+      return "i386-linux-gnu"
+    case Arch.armv7l:
+      // noinspection SpellCheckingInspection
+      return "arm-linux-gnueabihf"
+    case Arch.arm64:
+      return "aarch64-linux-gnu"
+
+    default:
+      throw new Error(`Unsupported arch ${arch}`)
   }
 }
 
