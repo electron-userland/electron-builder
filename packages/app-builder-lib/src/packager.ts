@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, deepAssign, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { exists } from "builder-util/out/fs"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile } from "fs-extra-p"
@@ -21,7 +20,7 @@ import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { expandMacro } from "./util/macroExpander"
-import { Dependency, getProductionDependencies } from "./util/packageDependencies"
+import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
@@ -127,21 +126,22 @@ export class Packager {
     return this._repositoryInfo.value
   }
 
-  private _productionDeps: Lazy<Array<Dependency>> | null = null
+  private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
 
-  private get productionDeps(): Lazy<Array<Dependency>> {
-    let result = this._productionDeps
+  getNodeDependencyInfo(platform: Platform | null): Lazy<Array<NodeModuleDirInfo>> {
+    let key = ""
+    let excludedDependencies: Array<string> | null = null
+    if (platform != null && this.framework.getExcludedDependencies != null) {
+      excludedDependencies = this.framework.getExcludedDependencies(platform)
+      if (excludedDependencies != null) {
+        key += `-${platform.name}`
+      }
+    }
+
+    let result = this.nodeDependencyInfo.get(key)
     if (result == null) {
-      // https://github.com/electron-userland/electron-builder/issues/2551
-      result = new Lazy(async () => {
-        if (this.config.beforeBuild == null || (await exists(path.join(this.appDir, "node_modules")))) {
-          return await getProductionDependencies(this.appDir)
-        }
-        else {
-          return []
-        }
-      })
-      this._productionDeps = result
+      result = createLazyProductionDeps(this.appDir, excludedDependencies)
+      this.nodeDependencyInfo.set(key, result)
     }
     return result
   }
@@ -510,7 +510,7 @@ export class Packager {
         frameworkInfo,
         platform: platform.nodeName,
         arch: Arch[arch],
-        productionDeps: this.productionDeps,
+        productionDeps: this.getNodeDependencyInfo(null),
       })
     }
   }

@@ -1,4 +1,5 @@
 import { executeAppBuilder } from "builder-util"
+import { SpawnOptions } from "child_process"
 
 export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
   return executeAppBuilder(args)
@@ -12,10 +13,13 @@ export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
     })
 }
 
-export function executeAppBuilderAndWriteJson(args: Array<string>, data: any): Promise<string> {
+export function executeAppBuilderAndWriteJson(args: Array<string>, data: any, extraOptions: SpawnOptions = {}): Promise<string> {
   return executeAppBuilder(args, childProcess => {
     childProcess.stdin!!.end(JSON.stringify(data))
-  }, {stdio: ["pipe", "pipe", process.stdout]})
+  }, {
+    ...extraOptions,
+    stdio: ["pipe", "pipe", process.stdout]
+  })
 }
 
 export function objectToArgs(to: Array<string>, argNameToValue: { [key: string]: string | null; }): void {
