@@ -50,7 +50,8 @@ export class HttpError extends Error {
   constructor(readonly statusCode: number, message: string = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
     super(message)
 
-    this.name = "HttpError"
+    this.name = "HttpError";
+    (this as NodeJS.ErrnoException).code = `HTTP_ERROR_${statusCode}`
   }
 }
 

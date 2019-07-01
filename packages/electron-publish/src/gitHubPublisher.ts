@@ -182,12 +182,12 @@ export class GitHubPublisher extends HttpPublisher {
         }, this.token), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
-        if (e instanceof HttpError && e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+        if ((e as any).statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
           await this.overwriteArtifact(fileName, release)
           continue
         }
 
-        if (!(attemptNumber++ < 3 && (e instanceof HttpError || (e.code === "EPIPE" || e.code === "ECONNRESET")))) {
+        if (!(attemptNumber++ < 3 && ((e.code != null && e.code.startsWith("HTTP_ERROR_")) || e.code === "EPIPE" || e.code === "ECONNRESET"))) {
           throw e
         }
       }
