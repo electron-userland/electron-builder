@@ -1,5 +1,5 @@
 import { createTargets, Platform } from "electron-builder"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"

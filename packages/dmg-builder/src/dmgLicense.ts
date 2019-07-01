@@ -1,7 +1,7 @@
 import { exec, log } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra"
 import { serializeString } from "./dmgUtil"
 import { getLicenseButtons, getLicenseButtonsFile } from "./licenseButtons"
 

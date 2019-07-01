@@ -11,7 +11,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, writeJson } from "fs-extra-p"
+import { emptyDir, writeJson } from "fs-extra"
 import { promises as fs } from "fs"
 import { safeLoad } from "js-yaml"
 import * as path from "path"

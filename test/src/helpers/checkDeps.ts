@@ -1,7 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import chalk from "chalk"
 import depCheck, { DepCheckResult } from "depcheck"
-import { readdir, readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
+import { promises as fs } from "fs"
 import * as path from "path"
 
 const printErrorAndExit = require("../../../packages/builder-util/out/promise").printErrorAndExit
@@ -93,7 +94,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 }
 
 async function main(): Promise<void> {
-  const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
+  const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
   const devPackageData = await readJson(path.join(rootDir, "package.json"))
   if ((await BluebirdPromise.map(packages, it => check(path.join(packageDir, it), devPackageData))).includes(false)) {
     process.exitCode = 1

@@ -1,6 +1,6 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { readAsar } from "app-builder-lib/out/asar/asar"
-import { outputFile, writeFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { promises as fs } from "fs"
 import { assertThat } from "./helpers/fileAssert"
@@ -11,12 +11,12 @@ async function createFiles(appDir: string) {
     outputFile(path.join(appDir, "assets", "file"), "data"),
     outputFile(path.join(appDir, "b2", "file"), "data"),
     outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}")
-      .then(() => writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}"))
+      .then(() => fs.writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}"))
   ])
 
   const dir = path.join(appDir, "do-not-unpack-dir", "dir-2", "dir-3", "dir-3")
   await fs.mkdir(dir, {recursive: true})
-  await writeFile(path.join(dir, "file-in-asar"), "{}")
+  await fs.writeFile(path.join(dir, "file-in-asar"), "{}")
 
   await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }

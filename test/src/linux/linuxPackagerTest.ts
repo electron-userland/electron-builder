@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { copyFile, outputFile, remove } from "fs-extra-p"
+import { outputFile, remove } from "fs-extra"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
@@ -159,7 +159,7 @@ test.ifNotWindows("icons from dir and one icon with suffix", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await copyFile(path.join(projectDir, "build", "icons", "16x16.png"), path.join(projectDir, "build", "icons", "16x16-dev.png"))
+    await fs.copyFile(path.join(projectDir, "build", "icons", "16x16.png"), path.join(projectDir, "build", "icons", "16x16-dev.png"))
   },
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)

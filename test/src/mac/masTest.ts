@@ -1,8 +1,8 @@
 import { Platform } from "electron-builder"
-import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
+import { promises as fs } from "fs"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {
@@ -73,8 +73,8 @@ test.ifAll.ifNotCi("entitlements in build dir", () => {
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
   }), {
     projectDirCreated: projectDir => Promise.all([
-      writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
-      writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
+      fs.writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
+      fs.writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
     ]),
     packed: context => {
       expect(platformPackager!!.effectiveSignOptions).toMatchObject({

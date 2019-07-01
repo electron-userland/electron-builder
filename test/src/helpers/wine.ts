@@ -1,6 +1,7 @@
 import { exec, safeStringifyJson } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { emptyDir, ensureDir, readFile, writeFile } from "fs-extra-p"
+import { emptyDir, ensureDir } from "fs-extra"
+import { promises as fs } from "fs"
 import { homedir } from "os"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -48,14 +49,14 @@ export class WineManager {
     await exec("wineboot", ["--init"], {env})
 
     // regedit often doesn't modify correctly
-    let systemReg = await readFile(path.join(wineDir, "system.reg"), "utf8")
+    let systemReg = await fs.readFile(path.join(wineDir, "system.reg"), "utf8")
     systemReg = systemReg.replace('"CSDVersion"="Service Pack 3"', '"CSDVersion"=" "')
     systemReg = systemReg.replace('"CurrentBuildNumber"="2600"', '"CurrentBuildNumber"="10240"')
     systemReg = systemReg.replace('"CurrentVersion"="5.1"', '"CurrentVersion"="10.0"')
     systemReg = systemReg.replace('"ProductName"="Microsoft Windows XP"', '"ProductName"="Microsoft Windows 10"')
     // noinspection SpellCheckingInspection
     systemReg = systemReg.replace('"CSDVersion"=dword:00000300', '"CSDVersion"=dword:00000000')
-    await writeFile(path.join(wineDir, "system.reg"), systemReg)
+    await fs.writeFile(path.join(wineDir, "system.reg"), systemReg)
 
     // remove links to host OS
     const userDir = this.userDir!!

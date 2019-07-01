@@ -3,7 +3,7 @@ import { PlatformPackager } from "app-builder-lib"
 import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
 import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 

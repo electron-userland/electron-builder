@@ -1,7 +1,7 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir } from "builder-util"
 import { copyDir } from "builder-util/out/fs"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
 import { promises as fs } from "fs"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
@@ -226,7 +226,7 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
         allCan(path.join(resourcesDir, "bar", "hello.txt"), false),
       ])
 
-      expect(await readFile(path.join(resourcesDir, "bar", "hello.txt"), "utf-8")).toEqual("data")
+      expect(await fs.readFile(path.join(resourcesDir, "bar", "hello.txt"), "utf-8")).toEqual("data")
     },
   })
 })

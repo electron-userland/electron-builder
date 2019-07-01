@@ -3,8 +3,9 @@ import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
-import { remove, unlink, writeFile } from "fs-extra-p"
+import { remove } from "fs-extra"
 import * as path from "path"
+import { promises as fs } from "fs"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
@@ -87,7 +88,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
 
       await extractPng(0, "")
       await extractPng(1, "@2x")
-      await unlink(path.join(resourceDir, "background.tiff"))
+      await fs.unlink(path.join(resourceDir, "background.tiff"))
     },
   })
 })
@@ -218,15 +219,15 @@ test.ifAll.ifMac("multi language license", app(packagerOptions, {
   projectDirCreated: projectDir => {
     return Promise.all([
       // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
-      writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo"),
-      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+      fs.writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo"),
+      fs.writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
     ])
   },
 }))
 
 test.ifAll.ifMac("license ru", app(packagerOptions, {
   projectDirCreated: projectDir => {
-    return writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет".repeat(12))
+    return fs.writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет".repeat(12))
   },
 }))
 

@@ -1,5 +1,5 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { remove, writeFile } from "fs-extra-p"
+import { remove } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -36,7 +36,7 @@ test.ifNotCiMac("icon not an image", appThrows(platform(Platform.WINDOWS), {
     const file = path.join(projectDir, "build", "icon.ico")
     // because we use hardlinks
     await fs.unlink(file)
-    await writeFile(file, "foo")
+    await fs.writeFile(file, "foo")
   }
 }))
 

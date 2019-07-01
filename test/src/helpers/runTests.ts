@@ -1,5 +1,5 @@
 import { createHash } from "crypto"
-import { emptyDir, readJson, realpathSync, remove } from "fs-extra-p"
+import { emptyDir, readJson, realpathSync, remove } from "fs-extra"
 import isCi from "is-ci"
 import { tmpdir } from "os"
 import * as path from "path"

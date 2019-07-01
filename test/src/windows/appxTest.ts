@@ -2,7 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir } from "fs-extra"
 import { isEnvTrue } from "builder-util"
 
 // test that we can get info from protected pfx

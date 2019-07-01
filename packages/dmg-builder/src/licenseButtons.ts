@@ -1,7 +1,7 @@
 import { log } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseAssets } from "app-builder-lib/out/util/license"
-import { readFile } from "fs-extra-p"
+import { readFile } from "fs-extra"
 import * as iconv from "iconv-lite"
 import { safeLoad } from "js-yaml"
 import { serializeString } from "./dmgUtil"
