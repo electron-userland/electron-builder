@@ -43,3 +43,30 @@ export function archFromString(name: string): Arch {
       throw new Error(`Unsupported arch ${name}`)
   }
 }
+
+export function getArtifactArchName(arch: Arch, ext: string): string {
+  let archName = Arch[arch]
+  const isAppImage = ext === "AppImage" || ext === "appimage"
+  if (arch === Arch.x64) {
+    if (isAppImage || ext === "rpm") {
+      archName = "x86_64"
+    }
+    else if (ext === "deb" || ext === "snap") {
+      archName = "amd64"
+    }
+  }
+  else if (arch === Arch.ia32) {
+    if (ext === "deb" || isAppImage || ext === "snap") {
+      archName = "i386"
+    }
+    else if (ext === "pacman" || ext === "rpm") {
+      archName = "i686"
+    }
+  }
+  else if (arch === Arch.armv7l) {
+    if (ext === "snap") {
+      archName = "armhf"
+    }
+  }
+  return archName
+}

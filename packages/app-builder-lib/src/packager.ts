@@ -7,6 +7,7 @@ import { ensureDir, outputFile } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import { getArtifactArchName } from "builder-util/out/arch"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
@@ -147,7 +148,7 @@ export class Packager {
   }
 
   stageDirPathCustomizer: (target: Target, packager: PlatformPackager<any>, arch: Arch) => string = (target, packager, arch) => {
-    return path.join(target.outDir, `__${target.name}-${Arch[arch]}`)
+    return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
   }
 
   private _buildResourcesDir: string | null = null

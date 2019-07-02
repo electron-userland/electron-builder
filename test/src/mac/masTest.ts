@@ -19,7 +19,7 @@ test.ifNotCi("mas", createMacTargetTest(["mas"]))
 test.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
-test.ifAll("custom mas", () => {
+test.skip.ifAll("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),

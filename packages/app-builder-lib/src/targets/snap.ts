@@ -1,4 +1,4 @@
-import { Arch, deepAssign, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString, InvalidConfigurationError, log } from "builder-util"
+import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -31,12 +31,6 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private static getDefaultStagePackages() {
-    // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-    // noinspection SpellCheckingInspection
-    return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
-  }
-
   private async createDescriptor(arch: Arch): Promise<any> {
     if (!this.isElectronVersionGreaterOrEqualThen("4.0.0")) {
       if (!this.isElectronVersionGreaterOrEqualThen("2.0.0-beta.1")) {
@@ -54,7 +48,13 @@ export default class SnapTarget extends Target {
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
     const buildPackages = asArray(options.buildPackages)
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0
+    const defaultStagePackages = getDefaultStagePackages()
+    const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
+
+    this.isUseTemplateApp = this.options.useTemplateApp !== false &&
+      (arch === Arch.x64 || arch === Arch.armv7l) &&
+      buildPackages.length === 0 &&
+      isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
 
     const appDescriptor: any = {
       command: "command.sh",
@@ -83,7 +83,7 @@ export default class SnapTarget extends Target {
       },
       parts: {
         app: {
-          "stage-packages": this.replaceDefault(options.stagePackages, SnapTarget.getDefaultStagePackages()),
+          "stage-packages": stagePackages,
         }
       },
     })
@@ -151,11 +151,12 @@ export default class SnapTarget extends Target {
     }
 
     const stageDir = await createStageDirPath(this, packager, arch)
+    const snapArch = toLinuxArchString(arch, true)
     const args = [
       "snap",
       "--app", appOutDir,
       "--stage", stageDir,
-      "--arch", toLinuxArchString(arch, true),
+      "--arch", snapArch,
       "--output", artifactPath,
       "--executable", this.packager.executableName,
     ]
@@ -195,7 +196,7 @@ export default class SnapTarget extends Target {
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", "electron4")
+      args.push("--template-url", `electron4:${snapArch}`)
     }
     await executeAppBuilder(args)
 
@@ -222,6 +223,14 @@ function archNameToTriplet(arch: Arch): string {
     default:
       throw new Error(`Unsupported arch ${arch}`)
   }
+}
+
+function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
 function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any; } | null } | null {
@@ -251,4 +260,10 @@ function isBrowserSandboxAllowed(snap: any): boolean {
     }
   }
   return false
+}
+
+function getDefaultStagePackages() {
+  // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
+  // noinspection SpellCheckingInspection
+  return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
 }

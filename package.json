@@ -58,7 +58,7 @@
     "normalize-package-data": "^2.5.0",
     "pako": "^1.0.10",
     "parse-color": "^1.0.0",
-    "read-config-file": "3.3.0",
+    "read-config-file": "4.0.0",
     "sanitize-filename": "^1.6.1",
     "sax": "^1.2.4",
     "semver": "^6.1.3",

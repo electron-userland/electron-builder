@@ -1,5 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`arm 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "armv7l",
+      "file": "sep_1.1.0_armhf.snap",
+    },
+  ],
+}
+`;
+
 exports[`buildPackages 1`] = `
 Object {
   "apps": Object {

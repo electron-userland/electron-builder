@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, isEnvTrue } from "builder-util"
+import { getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir } from "fs-extra-p"
@@ -482,24 +483,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
-    let archName: string | null = arch == null ? null : Arch[arch]
-    if (arch === Arch.x64) {
-      if (ext === "AppImage" || ext === "rpm") {
-        archName = "x86_64"
-      }
-      else if (ext === "deb" || ext === "snap") {
-        archName = "amd64"
-      }
-    }
-    else if (arch === Arch.ia32) {
-      if (ext === "deb" || ext === "AppImage" || ext === "snap") {
-        archName = "i386"
-      }
-      else if (ext === "pacman" || ext === "rpm") {
-        archName = "i686"
-      }
-    }
-
+    const archName = arch == null ? null : getArtifactArchName(arch, ext)
     return this.expandMacro(pattern, this.platform === Platform.MAC ? null : archName, {
       ext
     })

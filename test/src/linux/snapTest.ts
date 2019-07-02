@@ -1,4 +1,4 @@
-import { Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import { app, assertPack, snapTarget } from "../helpers/packTester"
 
 if (process.env.SNAP_TEST === "false") {
@@ -14,6 +14,16 @@ else if (process.platform === "win32") {
 
 test.ifAll.ifDevOrLinuxCi("snap", app({
   targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+  },
+}))
+
+test.ifAll.ifDevOrLinuxCi("arm", app({
+  targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
   config: {
     extraMetadata: {
       name: "sep",
