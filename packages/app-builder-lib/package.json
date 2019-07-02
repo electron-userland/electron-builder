@@ -59,7 +59,7 @@
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.5.0",
     "sanitize-filename": "^1.6.1",
-    "semver": "^6.1.3",
+    "semver": "^6.2.0",
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
     "temp-file": "^3.3.3",
