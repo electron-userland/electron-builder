@@ -204,7 +204,6 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 }
 
 function doCopyFile(src: string, dest: string, stats: Stats | null | undefined): Promise<any> {
-  console.log("copy", src, dest)
   const promise = _nodeCopyFile(src, dest)
   if (stats == null) {
     return promise

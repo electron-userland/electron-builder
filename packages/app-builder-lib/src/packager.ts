@@ -1,9 +1,8 @@
-import BluebirdPromise from "bluebird-lst"
 import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, deepAssign, exec, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
-import { ensureDir, outputFile } from "fs-extra-p"
+import { mkdirs, chmod, outputFile } from "fs-extra"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -483,7 +482,7 @@ export class Packager {
     }
 
     if (config.npmRebuild === false) {
-      log.info({reason: "npmRebuild is set to false"}, "skipped app dependencies rebuild")
+      log.info({reason: "npmRebuild is set to false"}, "skipped dependencies rebuild")
       return
     }
 
@@ -504,7 +503,7 @@ export class Packager {
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({reason: "platform is different and buildDependenciesFromSource is set to true"}, "skipped app dependencies rebuild")
+      log.info({reason: "platform is different and buildDependenciesFromSource is set to true"}, "skipped dependencies rebuild")
     }
     else {
       await installOrRebuild(config, this.appDir, {
@@ -516,14 +515,17 @@ export class Packager {
     }
   }
 
-  afterPack(context: AfterPackContext): Promise<any> {
+  async afterPack(context: AfterPackContext): Promise<any> {
     const afterPack = resolveFunction(this.config.afterPack, "afterPack")
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last
       handlers.push(afterPack)
     }
-    return BluebirdPromise.each(handlers, it => it(context))
+
+    for (const handler of handlers) {
+      await Promise.resolve(handler(context))
+    }
   }
 }
 
@@ -541,13 +543,15 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     }
   }
 
-  if (ourDirs.size > 0) {
-    return BluebirdPromise.map(Array.from(ourDirs).sort(), it => {
-      createdOutDirs.add(it)
-      return ensureDir(it)
-    })
+  if (ourDirs.size === 0) {
+    return Promise.resolve()
   }
-  return Promise.resolve()
+
+  return Promise.all(Array.from(ourDirs).sort().map(dir => {
+    return mkdirs(dir)
+      .then(() => chmod(dir, 0o755) /* set explicitly */)
+      .then(() => createdOutDirs.add(dir))
+  }))
 }
 
 export interface BuildResult {
