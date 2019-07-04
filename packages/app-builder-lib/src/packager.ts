@@ -399,7 +399,7 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
-    for (const [platform, archToType] of this.options.targets!) {
+    for (const [platform, archToType] of this.options.targets!!) {
       if (this.cancellationToken.cancelled) {
         break
       }
