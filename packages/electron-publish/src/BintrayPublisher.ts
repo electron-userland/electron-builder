@@ -41,7 +41,7 @@ export class BintrayPublisher extends HttpPublisher {
       if (e instanceof HttpError && e.statusCode === 404) {
         if (this.options.publish !== "onTagOrDraft") {
           log.info({version: this.version}, "version doesn't exist, creating one")
-          return this.client.createVersion(this.version)
+          return await this.client.createVersion(this.version)
         }
         else {
           log.notice({reason: "version doesn't exist", version: this.version}, "skipped publishing")
@@ -67,7 +67,7 @@ export class BintrayPublisher extends HttpPublisher {
         "Content-Length": dataLength,
         "X-Bintray-Override": "1",
         "X-Bintray-Publish": "1",
-        "X-Bintray-Debian-Architecture": toLinuxArchString(arch)
+        "X-Bintray-Debian-Architecture": toLinuxArchString(arch, "deb")
       }
     }
 

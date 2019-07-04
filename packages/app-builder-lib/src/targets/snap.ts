@@ -77,7 +77,7 @@ export default class SnapTarget extends Target {
       version: appInfo.version,
       summary: options.summary || appInfo.productName,
       description: this.helper.getDescription(options),
-      architectures: [toLinuxArchString(arch, true)],
+      architectures: [toLinuxArchString(arch, "snap")],
       apps: {
         [snapName]: appDescriptor
       },
@@ -154,7 +154,7 @@ export default class SnapTarget extends Target {
     }
 
     const stageDir = await createStageDirPath(this, packager, arch)
-    const snapArch = toLinuxArchString(arch, true)
+    const snapArch = toLinuxArchString(arch, "snap")
     const args = [
       "snap",
       "--app", appOutDir,

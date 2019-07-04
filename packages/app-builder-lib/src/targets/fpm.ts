@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { Arch, debug, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
+import { Arch, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
@@ -123,7 +123,7 @@ export default class FpmTarget extends Target {
     const options = this.options
     const synopsis = options.synopsis
     const args = [
-      "--architecture", (target === "pacman" && arch === Arch.ia32) ? "i686" : toLinuxArchString(arch),
+      "--architecture", toLinuxArchString(arch, target),
       "--name", appInfo.linuxPackageName,
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
@@ -133,10 +133,6 @@ export default class FpmTarget extends Target {
     ]
 
     objectToArgs(args, await this.computeFpmMetaInfoOptions() as any)
-
-    if (debug.enabled) {
-      args.push("--log", "debug")
-    }
 
     const packageCategory = options.packageCategory
     if (packageCategory != null) {

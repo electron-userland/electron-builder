@@ -72,7 +72,7 @@ Array [
 
 exports[`arm 3`] = `
 Object {
-  "Architecture": "armv7l",
+  "Architecture": "armhf",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
@@ -143,7 +143,7 @@ Array [
 
 exports[`arm 6`] = `
 Object {
-  "Architecture": "armv7l",
+  "Architecture": "armhf",
   "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator1, libgnome-keyring0, gir1.2-gnomekeyring-1.0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
