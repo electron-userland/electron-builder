@@ -305,6 +305,23 @@ Object {
             "bl.js": Object {
               "size": 6400,
             },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1585,
+                    },
+                    "package.json": Object {
+                      "size": 500,
+                    },
+                  },
+                },
+              },
+            },
             "package.json": Object {
               "size": 741,
             },
@@ -1564,6 +1581,23 @@ Object {
             },
             "index.js": Object {
               "size": 6884,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1585,
+                    },
+                    "package.json": Object {
+                      "size": 500,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 542,

@@ -64,7 +64,7 @@ export class DmgTarget extends Target {
       await packager.packagerOptions.effectiveOptionComputed({licenseData})
     }
 
-    if (this.options.sign) {
+    if (this.options.sign === true) {
       await this.signDmg(artifactPath)
     }
 

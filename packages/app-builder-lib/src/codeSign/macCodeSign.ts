@@ -9,7 +9,6 @@ import { homedir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { isMacOsSierra } from "../util/macosVersion"
 import { downloadCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
@@ -186,9 +185,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
-    if (await isMacOsSierra()) {
-      await exec("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainName])
-    }
+    await exec("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainName])
   }
 
   return {

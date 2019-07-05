@@ -113,7 +113,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether your app has to be signed with hardened runtime.
-   * @default false
+   * @default true
    */
   readonly hardenedRuntime?: boolean
 

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
-import { ensureDir, readdir } from "fs-extra-p"
+import { mkdirs, readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
@@ -16,6 +16,8 @@ import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { isMacOsHighSierra } from "./util/macosVersion"
+import { getTemplatePath } from "./util/pathManager"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -156,6 +158,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
+    if (!isMacOsHighSierra()) {
+      throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
+    }
+
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
@@ -175,8 +181,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
-      "gatekeeper-assess": macOptions.gatekeeperAssess,
-      "hardened-runtime": macOptions.hardenedRuntime,
+      "gatekeeper-assess": macOptions.gatekeeperAssess === true,
+      hardenedRuntime: macOptions.hardenedRuntime !== false,
     }
 
     await this.adjustSignOptions(signOptions, masOptions)
@@ -206,34 +212,32 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
   private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
     const resourceList = await this.resourceList
-    if (resourceList.includes(`entitlements.osx.plist`)) {
-      throw new InvalidConfigurationError("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
-    }
-    if (resourceList.includes(`entitlements.osx.inherit.plist`)) {
-      throw new InvalidConfigurationError("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
-    }
-
     const customSignOptions = masOptions || this.platformSpecificBuildOptions
     const entitlementsSuffix = masOptions == null ? "mac" : "mas"
-    if (customSignOptions.entitlements == null) {
+
+    let entitlements = customSignOptions.entitlements
+    if (entitlements == null) {
       const p = `entitlements.${entitlementsSuffix}.plist`
       if (resourceList.includes(p)) {
-        signOptions.entitlements = path.join(this.info.buildResourcesDir, p)
+        entitlements = path.join(this.info.buildResourcesDir, p)
+      }
+      else {
+        entitlements = getTemplatePath("entitlements.mac.plist")
       }
     }
-    else {
-      signOptions.entitlements = customSignOptions.entitlements
-    }
+    signOptions.entitlements = entitlements
 
-    if (customSignOptions.entitlementsInherit == null) {
+    let entitlementsInherit = customSignOptions.entitlementsInherit
+    if (entitlementsInherit == null) {
       const p = `entitlements.${entitlementsSuffix}.inherit.plist`
       if (resourceList.includes(p)) {
-        signOptions["entitlements-inherit"] = path.join(this.info.buildResourcesDir, p)
+        entitlementsInherit = path.join(this.info.buildResourcesDir, p)
+      }
+      else {
+        entitlementsInherit = getTemplatePath("entitlements.mac.plist")
       }
     }
-    else {
-      signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
-    }
+    signOptions["entitlements-inherit"] = entitlementsInherit
 
     if (customSignOptions.provisioningProfile != null) {
       signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
@@ -248,7 +252,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   //noinspection JSMethodCanBeStatic
   protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
     // productbuild doesn't created directory for out file
-    await ensureDir(path.dirname(outFile))
+    await mkdirs(path.dirname(outFile))
 
     const args = prepareProductBuildArgs(identity, keychain)
     args.push("--component", appPath, "/Applications")

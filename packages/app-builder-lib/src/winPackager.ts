@@ -3,7 +3,7 @@ import { Arch, asArray, InvalidConfigurationError, log, use } from "builder-util
 import { parseDn } from "builder-util-runtime"
 import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
-import { readdir } from "fs-extra-p"
+import { readdir } from "fs-extra"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
