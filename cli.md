@@ -63,11 +63,13 @@ Prepend `npx` to sample commands below if you run it from Terminal and not from 
 
 ## Target
 
-Without target configuration, electron-builder builds Electron app for current platform and current arch using default target.
+Without target configuration, electron-builder builds Electron app for current platform and current architecture using default target.
 
 * macOS - DMG and ZIP for Squirrel.Mac.
 * Windows - [NSIS](configuration/nsis.md).
-* Linux - [Snap](configuration/snap.md) and (not on Windows) [AppImage](configuration/appimage.md).
+* Linux:
+    - if you build on Windows or macOS: [Snap](configuration/snap.md) and [AppImage](configuration/appimage.md) for x64.
+    - if you build on Linux: [Snap](configuration/snap.md) and [AppImage](configuration/appimage.md) for current architecture.
 
 Platforms and archs can be configured or using [CLI args](https://github.com/electron-userland/electron-builder#cli-usage), or in the configuration. 
 
