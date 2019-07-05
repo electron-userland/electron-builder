@@ -1390,10 +1390,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@3.1.5:
-  version "3.1.5"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.1.5.tgz#235c42dddee88045c8b6efec8ba7a7abdcaa81e9"
-  integrity sha512-WShO6mkz3Syvxzylg8JftHyILnWWPL/vrEwZSGy366QFvD3X1lvMuyKeIffmpFEXemveziamFOl/3rBLMaNfPg==
+app-builder-bin@3.1.6:
+  version "3.1.6"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.1.6.tgz#1d35ca0a81dfba15181481fbe8adf68954fedfb9"
+  integrity sha512-jq07wuzB3WXJ7kDtMS7ANQLEH/ZPKtVS5Vtg8xjM2+vc2wdN2qCApvkBRLKuCjaQhVBdN4ZkEVrXzztavuuj4Q==
 
 aproba@^1.0.3:
   version "1.2.0"
@@ -2434,9 +2434,9 @@ electron-osx-sign@0.4.11:
     plist "^3.0.1"
 
 electron-to-chromium@^1.3.164:
-  version "1.3.186"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.186.tgz#17d87e7661121724ea4c81c9960c3f26a5228c0c"
-  integrity sha512-lRyyEUDKenKv/EBVFgfDZDYTDdoAZhzuE+inMUP79+22NDPAA2Ox+f3AShILIjPoUIqRGwvPNbzFcyU8km8g4A==
+  version "1.3.187"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.187.tgz#fea64435f370892c0f27aded1bbdcb6f235c592b"
+  integrity sha512-XCEygaK7Fs35/RwS+67YbBWs/ydG+oUFPuy1wv558jC3Opd2DHwRyRqrCmhxpmPmCSVlZujYX4TOmOXuMz2GZA==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -2891,10 +2891,10 @@ globals@^11.1.0:
   resolved "https://registry.yarnpkg.com/globals/-/globals-11.12.0.tgz#ab8795338868a0babd8525758018c2a7eb95c42e"
   integrity sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA==
 
-globby@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/globby/-/globby-10.0.0.tgz#abfcd0630037ae174a88590132c2f6804e291072"
-  integrity sha512-3LifW9M4joGZasyYPz2A1U74zbC/45fvpXUvO/9KbSa+VV0aGZarWkfdgKyR9sExNP0t0x0ss/UMJpNpcaTspw==
+globby@^10.0.1:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/globby/-/globby-10.0.1.tgz#4782c34cb75dd683351335c5829cc3420e606b22"
+  integrity sha512-sSs4inE1FB2YQiymcmTv6NWENryABjUNPeWhOvmn4SjtKybglsyPZxFB3U1/+L1bYi0rNZDqCLlHyLYDl1Pq5A==
   dependencies:
     "@types/glob" "^7.1.1"
     array-union "^2.1.0"
