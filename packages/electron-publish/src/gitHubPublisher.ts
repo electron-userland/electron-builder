@@ -146,7 +146,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private async overwriteArtifact(fileName: string, release: Release) {
     // delete old artifact and re-upload
-    log.notice({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
+    log.warn({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
 
     const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
     for (const asset of assets) {

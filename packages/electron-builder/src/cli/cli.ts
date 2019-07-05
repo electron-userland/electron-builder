@@ -10,6 +10,7 @@ import * as path from "path"
 import { loadEnv } from "read-config-file"
 import updateNotifier from "update-notifier"
 import yargs from "yargs"
+import { ExecError } from "builder-util/out/util"
 import { build, configureBuildCommand } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
@@ -51,8 +52,12 @@ function wrap(task: (args: any) => Promise<any>) {
         process.exitCode = 1
         // https://github.com/electron-userland/electron-builder/issues/2940
         process.on("exit", () => process.exitCode = 1)
-
-        console.error(chalk.red(error instanceof InvalidConfigurationError ? error.message : (error.stack || error).toString()))
+        if (error instanceof InvalidConfigurationError) {
+          log.error(null, error.message)
+        }
+        else if (!(error instanceof ExecError) || !error.alreadyLogged) {
+          log.error({stackTrace: error.stack}, error.message)
+        }
       })
   }
 }

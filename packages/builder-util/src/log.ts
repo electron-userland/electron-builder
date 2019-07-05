@@ -38,8 +38,8 @@ export class Logger {
     this.doLog(message, messageOrFields, "info")
   }
 
-  notice(messageOrFields: Fields | null | string, message?: string): void {
-    this.doLog(message, messageOrFields, "notice")
+  error(messageOrFields: Fields | null | string, message?: string) {
+    this.doLog(message, messageOrFields, "error")
   }
 
   warn(messageOrFields: Fields | null | string, message?: string): void {
@@ -128,8 +128,8 @@ export class Logger {
 
 const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
   info: chalk.blue,
-  notice: chalk.yellow,
   warn: chalk.yellow,
+  error: chalk.red,
   debug: chalk.white,
 }
 

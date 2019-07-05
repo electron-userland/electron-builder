@@ -44,7 +44,7 @@ export class BintrayPublisher extends HttpPublisher {
           return await this.client.createVersion(this.version)
         }
         else {
-          log.notice({reason: "version doesn't exist", version: this.version}, "skipped publishing")
+          log.warn({reason: "version doesn't exist", version: this.version}, "skipped publishing")
         }
       }
 
@@ -55,7 +55,7 @@ export class BintrayPublisher extends HttpPublisher {
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
     const version = await this._versionPromise.value
     if (version == null) {
-      log.notice({file: fileName, reason: "version doesn't exist and is not created", version: this.version}, "skipped publishing")
+      log.warn({file: fileName, reason: "version doesn't exist and is not created", version: this.version}, "skipped publishing")
       return
     }
 

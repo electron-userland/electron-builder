@@ -236,13 +236,23 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
       }
     }
     else {
-      function formatOut(text: string, title: string) {
-        return text.length === 0 ? "" : `\n${title}:\n${text}`
-      }
-
-      reject(new Error(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`))
+      reject(new ExecError(command, code, formatOut(out, "Output"), formatOut(errorOut, "Error output")))
     }
   })
+}
+
+function formatOut(text: string, title: string) {
+  return text.length === 0 ? "" : `\n${title}:\n${text}`
+}
+
+export class ExecError extends Error {
+  alreadyLogged = false
+
+  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code: string = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+    super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`);
+
+    (this as NodeJS.ErrnoException).code = code
+  }
 }
 
 export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
@@ -349,6 +359,11 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
     if (childProcessConsumer != null) {
       childProcessConsumer(childProcess)
     }
-    handleProcess("close", childProcess, command, resolve, reject)
+    handleProcess("close", childProcess, command, resolve, error => {
+      if (error instanceof ExecError && error.exitCode === 2) {
+        error.alreadyLogged = true
+      }
+      reject(error)
+    })
   })
 }
