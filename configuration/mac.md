@@ -27,7 +27,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 * <code id="MacConfiguration-requirements">requirements</code> String - Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
 * <code id="MacConfiguration-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales. By default Electron locales used as is.
 * <code id="MacConfiguration-extraDistFiles">extraDistFiles</code> Array&lt;String&gt; | String - Extra files to put in archive. Not applicable for `tar.*`.
-* <code id="MacConfiguration-hardenedRuntime">hardenedRuntime</code> = `false` Boolean - Whether your app has to be signed with hardened runtime.
+* <code id="MacConfiguration-hardenedRuntime">hardenedRuntime</code> = `true` Boolean - Whether your app has to be signed with hardened runtime.
 * <code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = `false` Boolean - Whether to let electron-osx-sign validate the signing or not.
 
 <!-- end of generated block -->
