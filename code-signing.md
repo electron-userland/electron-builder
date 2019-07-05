@@ -2,6 +2,10 @@ macOS and Windows code signing is supported. Windows is dual code-signed (SHA1 &
 
 On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used.
 
+!!! tip 
+    See article [Notarizing your Electron application](https://kilianvalkhof.com/2019/electron/notarizing-your-electron-application/).
+  
+
 | Env Name       |  Description
 | -------------- | -----------
 | `CSC_LINK`                   | The HTTPS link (or base64-encoded data, or `file://` link, or local path) to certificate (`*.p12` or `*.pfx` file). Shorthand `~/` is supported (home directory).
