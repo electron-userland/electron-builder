@@ -11,7 +11,7 @@ environment:
 
 install:
   - ps: Install-Product node 10 x64
-  - yarn
+  - yarn --frozen-lockfile
 
 build: off
 

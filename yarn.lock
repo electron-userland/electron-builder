@@ -1390,10 +1390,10 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-app-builder-bin@3.1.6:
-  version "3.1.6"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.1.6.tgz#1d35ca0a81dfba15181481fbe8adf68954fedfb9"
-  integrity sha512-jq07wuzB3WXJ7kDtMS7ANQLEH/ZPKtVS5Vtg8xjM2+vc2wdN2qCApvkBRLKuCjaQhVBdN4ZkEVrXzztavuuj4Q==
+app-builder-bin@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.2.0.tgz#3ba41721fa38375a4c0ed8f63325dc33f46c20ed"
+  integrity sha512-KmT/k5sKYKixeTUp/chXJ608ddV7M6tsC31BskJ9WWMund+NU+2J5EYTnfysnP+oy6qRtClgPlRgRVFnJOYgzg==
 
 aproba@^1.0.3:
   version "1.2.0"
