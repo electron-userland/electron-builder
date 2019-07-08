@@ -30,7 +30,7 @@ If you are using an EV Certificate, you need to provide [win.certificateSubjectN
 
 If you use Windows 7, please ensure that [PowerShell](https://blogs.technet.microsoft.com/heyscriptingguy/2013/06/02/weekend-scripter-install-powershell-3-0-on-windows-7/) is updated to version 3.0.
 
-If you are on Linux or Mac and you want sign a Windows app, please use [the guide for Unix systems](tutorials/code-signing-windows-apps-on-unix.md).
+If you are on Linux or Mac and you want sign a Windows app using EV Code Signing Certificate, please use [the guide for Unix systems](tutorials/code-signing-windows-apps-on-unix.md).
 
 ## Travis, AppVeyor and other CI Servers
 To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
