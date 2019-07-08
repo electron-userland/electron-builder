@@ -1,6 +1,6 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"

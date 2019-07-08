@@ -1,5 +1,5 @@
 import { Filter } from "builder-util/out/fs"
-import { Stats } from "fs-extra-p"
+import { Stats } from "fs-extra"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"

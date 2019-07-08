@@ -4,7 +4,7 @@ import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra-p"
+import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
 
 const archiver = require("archiver")

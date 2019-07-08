@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "app-builder-bin": "3.2.0",
-    "temp-file": "^3.3.3",
+    "temp-file": "^3.3.4",
     "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
     "stat-mode": "^0.3.0",

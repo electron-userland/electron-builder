@@ -1,6 +1,6 @@
 import { DebugLogger, deepAssign, InvalidConfigurationError, log } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"

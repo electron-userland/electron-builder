@@ -1,5 +1,5 @@
 import { asArray, isEmptyOrSpaces, log } from "builder-util"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"

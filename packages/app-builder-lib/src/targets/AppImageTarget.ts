@@ -1,5 +1,5 @@
 import { Arch, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppImageOptions } from ".."

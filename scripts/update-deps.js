@@ -1,6 +1,6 @@
 const BluebirdPromise = require("bluebird-lst")
 const path = require("path")
-const fs = require("fs-extra-p")
+const fs = require("fs-extra")
 
 async function main() {
   const rootDeps = (await fs.readJson(path.join(__dirname, "..", "package.json"))).dependencies

@@ -1,4 +1,4 @@
-import { emptyDir, remove } from "fs-extra-p"
+import { emptyDir, remove } from "fs-extra"
 import * as path from "path"
 import { Target, AppInfo } from "../"
 import { Arch, debug } from "builder-util"

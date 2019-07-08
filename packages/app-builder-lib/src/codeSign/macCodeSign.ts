@@ -3,7 +3,7 @@ import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequ
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes } from "crypto"
-import { rename } from "fs-extra-p"
+import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"

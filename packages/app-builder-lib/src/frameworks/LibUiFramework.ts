@@ -1,4 +1,4 @@
-import { chmod, emptyDir, ensureDir, rename, writeFile } from "fs-extra-p"
+import { chmod, emptyDir, ensureDir, rename, writeFile } from "fs-extra"
 import * as path from "path"
 import { executeAppBuilder } from "builder-util"
 import { AfterPackContext } from "../configuration"

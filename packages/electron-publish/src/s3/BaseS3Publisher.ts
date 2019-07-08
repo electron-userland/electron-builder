@@ -1,7 +1,7 @@
 import { log, executeAppBuilder } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { PublishContext, Publisher, UploadTask } from "../publisher"
-import { ensureDir, symlink } from "fs-extra-p"
+import { ensureDir, symlink } from "fs-extra"
 import * as path from "path"
 
 export abstract class BaseS3Publisher extends Publisher {

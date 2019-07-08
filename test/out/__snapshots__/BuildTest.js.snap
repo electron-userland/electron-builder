@@ -1720,11 +1720,8 @@ Object {
         },
         "xtend": Object {
           "files": Object {
-            "LICENCE": Object {
-              "size": 1056,
-            },
-            "Makefile": Object {
-              "size": 49,
+            "LICENSE": Object {
+              "size": 1078,
             },
             "immutable.js": Object {
               "size": 384,

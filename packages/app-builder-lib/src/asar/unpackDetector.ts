@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir } from "fs-extra"
 import { isBinaryFile } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"

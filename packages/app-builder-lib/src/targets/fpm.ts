@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { ensureDir, outputFile, readFile } from "fs-extra-p"
+import { ensureDir, outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import { DebOptions, LinuxTargetSpecificOptions } from ".."
 import { smarten } from "../appInfo"

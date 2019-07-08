@@ -1,4 +1,4 @@
-import { readJson, writeFile } from "fs-extra-p"
+import { readJson, writeFile } from "fs-extra"
 import * as path from "path"
 import { UploadTask, Arch, Packager, PackagerOptions, PublishOptions } from ".."
 import { InvalidConfigurationError } from "builder-util"

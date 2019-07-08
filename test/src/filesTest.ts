@@ -1,7 +1,7 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir } from "builder-util"
 import { copyDir } from "builder-util/out/fs"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
@@ -188,13 +188,13 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
     projectDirCreated: projectDir => {
       return Promise.all([
         outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-        outputFile(path.join(projectDir, "bar/hello.txt"), "data", {mode: "400"}),
+        outputFile(path.join(projectDir, "bar/hello.txt"), "data", {mode: 0o400}),
         outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
         outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
         outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
         outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
-        outputFile(path.join(projectDir, "executable"), "executable", {mode: "755"}),
-        outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", {mode: "740"}),
+        outputFile(path.join(projectDir, "executable"), "executable", {mode: 0o755}),
+        outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", {mode: 0o740}),
       ])
     },
     packed: async context => {

@@ -4,7 +4,7 @@ require("source-map-support").install()
 
 const globby = require("globby")
 const path = require("path")
-const fs = require("fs-extra-p")
+const fs = require("fs-extra")
 const jsdoc2md = require("jsdoc-to-markdown")
 const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")

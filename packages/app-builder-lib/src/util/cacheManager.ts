@@ -3,7 +3,7 @@ import { Arch, log } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { Hash } from "crypto"
-import { ensureDir, readFile, readJson, writeJson } from "fs-extra-p"
+import { ensureDir, readFile, readJson, writeJson } from "fs-extra"
 import * as path from "path"
 
 export interface BuildCacheInfo {

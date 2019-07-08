@@ -3,7 +3,7 @@ import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArc
 import { getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
-import { readdir } from "fs-extra-p"
+import { readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"

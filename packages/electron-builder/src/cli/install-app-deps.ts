@@ -6,7 +6,7 @@ import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
