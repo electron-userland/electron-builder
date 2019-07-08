@@ -16,6 +16,12 @@ We use [semantic-release](https://github.com/semantic-release/semantic-release),
 
 ## Documentation
 
+To avoid google indexing, documentation files located in the branch `docs`. To clone:
+
+```shell script
+git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs
+```
+
 Documentation files located in the `/docs`.
 
 `/docs` is deployed to Netlify when `next` release is marked as `latest` and available for all users.

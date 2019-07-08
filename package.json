@@ -20,7 +20,7 @@
     "schema": "",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
-    "/////": " git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs",
+    "/////": "git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs",
     "docs": "tsc -p ./scripts/renderer/tsconfig.json && yarn jsdoc && yarn jsdoc2md",
     "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",
     "////": "pip3 install mkdocs-material mkdocs pymdown-extensions markdown-include Pygments --upgrade"
