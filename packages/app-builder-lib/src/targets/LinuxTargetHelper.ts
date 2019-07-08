@@ -9,6 +9,9 @@ export const installPrefix = "/opt"
 
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
+  private readonly mimeTypeFilesPromise = new Lazy(() =>
+    this.computeMimeTypeFiles()
+  )
 
   maxIconPath: string | null = null
 
@@ -17,6 +20,35 @@ export class LinuxTargetHelper {
 
   get icons(): Promise<Array<IconInfo>> {
     return this.iconPromise.value
+  }
+
+  get mimeTypeFiles(): Promise<Array<string>> {
+    return this.mimeTypeFilesPromise.value
+  }
+
+  private async computeMimeTypeFiles(): Promise<Array<string>> {
+    const files = []
+    for (const fileAssociation of this.packager.fileAssociations) {
+      if (!fileAssociation.mimeType) {
+        continue
+      }
+
+      const data = `<?xml version="1.0" encoding="utf-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="${fileAssociation.mimeType}">
+    <glob pattern="*.${fileAssociation.ext}"/>
+    ${fileAssociation.description ? `<comment>${fileAssociation.description}</comment>` : ""}
+    <icon name="x-office-document" />
+  </mime-type>
+</mime-info>`
+
+      const filename = `${fileAssociation.mimeType.replace("/", "-")}.xml`
+      const file = await this.packager.getTempFile(filename)
+      await outputFile(file, data)
+      files.push(file)
+    }
+    console.log(await this.icons)
+    return files
   }
 
   // must be name without spaces and other special characters, but not product name used
