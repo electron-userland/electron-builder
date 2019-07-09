@@ -12,14 +12,14 @@ const tmpDir = new TmpDir("mac-code-sign-test")
 
 test.ifMac("create keychain", async () => {
   const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})
-  expect(result.keychainName).not.toEqual("")
+  expect(result.keychainFile).not.toEqual("")
 })
 
 afterEach(() => tmpDir.cleanup())
 
 test.ifMac("create keychain with installers", async () => {
   const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})
-  expect(result.keychainName).not.toEqual("")
+  expect(result.keychainFile).not.toEqual("")
 })
 
 test.ifDevOrLinuxCi("remove password from log", async () => {

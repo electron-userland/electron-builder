@@ -170,6 +170,12 @@ export class Packager {
     return this._framework!!
   }
 
+  private readonly toDispose: Array<() => Promise<void>> = []
+
+  disposeOnBuildFinish(disposer: () => Promise<void>) {
+    this.toDispose.push(disposer)
+  }
+
   //noinspection JSUnusedGlobalSymbols
   constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
     if ("devMetadata" in options) {
@@ -363,11 +369,19 @@ export class Packager {
       }
     })
 
+    this.disposeOnBuildFinish(() => this.tempDirManager.cleanup())
     const platformToTargets = await executeFinally(this.doBuild(), async () => {
       if (this.debugLogger.isEnabled) {
         await this.debugLogger.save(path.join(commonOutDirWithoutPossibleOsMacro, "builder-debug.yml"))
       }
-      await this.tempDirManager.cleanup()
+
+      const toDispose = this.toDispose.slice()
+      this.toDispose.length = 0
+      for (const disposer of toDispose) {
+        await disposer().catch(e => {
+          log.warn({error: e}, "cannot dispose")
+        })
+      }
     })
 
     return {

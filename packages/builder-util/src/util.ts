@@ -33,7 +33,7 @@ export function serializeToYaml(object: any, skipInvalid = false, noRefs = false
 }
 
 export function removePassword(input: string) {
-  return input.replace(/(-String |-P |pass:| \/p |-pass |--secretKey |--accessKey )([^ ]+)/g, (match, p1, p2) => {
+  return input.replace(/(-String |-P |pass:| \/p |-pass |--secretKey |--accessKey |-p )([^ ]+)/g, (match, p1, p2) => {
     if (p1.trim() === "/p" && p2.startsWith("\\\\Mac\\Host\\\\")) {
       // appx /p
       return `${p1}${p2}`

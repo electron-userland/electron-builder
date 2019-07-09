@@ -7,7 +7,7 @@ import * as path from "path"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign/macCodeSign"
+import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration } from "./options/macOptions"
@@ -23,7 +23,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
     const cscLink = this.getCscLink()
     if (cscLink == null || process.platform !== "darwin") {
-      return Promise.resolve({keychainName: process.env.CSC_KEYCHAIN || null})
+      return Promise.resolve({keychainFile: process.env.CSC_KEYCHAIN || null})
     }
 
     return createKeychain({
@@ -34,6 +34,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
       currentDir: this.projectDir
     })
+      .then(result => {
+        const keychainFile = result.keychainFile
+        if (keychainFile != null) {
+          this.info.disposeOnBuildFinish(() => removeKeychain(keychainFile))
+        }
+        return result
+      })
   })
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
@@ -138,22 +145,22 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       return
     }
 
-    const keychainName = (await this.codeSigningInfo.value).keychainName
+    const keychainFile = (await this.codeSigningInfo.value).keychainFile
     const explicitType = isMas ? masOptions!.type : macOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
     const certificateType = getCertificateType(isMas, isDevelopment)
-    let identity = await findIdentity(certificateType, qualifier, keychainName)
+    let identity = await findIdentity(certificateType, qualifier, keychainFile)
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
-        identity = await findIdentity("Mac Developer", qualifier, keychainName)
+        identity = await findIdentity("Mac Developer", qualifier, keychainFile)
         if (identity != null) {
           log.warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
       }
 
       if (identity == null) {
-        await reportError(isMas, certificateType, qualifier, keychainName, this.forceCodeSigning)
+        await reportError(isMas, certificateType, qualifier, keychainFile, this.forceCodeSigning)
         return
       }
     }
@@ -176,7 +183,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion,
       app: appPath,
-      keychain: keychainName || undefined,
+      keychain: keychainFile || undefined,
       binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
@@ -197,7 +204,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
       const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
-      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
+      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainFile)
       if (masInstallerIdentity == null) {
         throw new InvalidConfigurationError(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
@@ -205,7 +212,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // mas uploaded to AppStore, so, use "-" instead of space for name
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
       const artifactPath = path.join(outDir!, artifactName)
-      await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainName)
+      await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
       await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg"))
     }
   }

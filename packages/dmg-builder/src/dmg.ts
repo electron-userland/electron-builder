@@ -94,19 +94,19 @@ export class DmgTarget extends Target {
       return
     }
 
-    const keychainName = (await packager.codeSigningInfo.value).keychainName
+    const keychainFile = (await packager.codeSigningInfo.value).keychainFile
     const certificateType = "Developer ID Application"
-    let identity = await findIdentity(certificateType, qualifier, keychainName)
+    let identity = await findIdentity(certificateType, qualifier, keychainFile)
     if (identity == null) {
-      identity = await findIdentity("Mac Developer", qualifier, keychainName)
+      identity = await findIdentity("Mac Developer", qualifier, keychainFile)
       if (identity == null) {
         return
       }
     }
 
     const args = ["--sign", identity.hash]
-    if (keychainName != null) {
-      args.push("--keychain", keychainName)
+    if (keychainFile != null) {
+      args.push("--keychain", keychainFile)
     }
     args.push(artifactPath)
     await exec("codesign", args)

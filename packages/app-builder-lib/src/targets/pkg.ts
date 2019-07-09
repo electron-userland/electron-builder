@@ -43,7 +43,7 @@ export class PkgTarget extends Target {
       arch,
     })
 
-    const keychainName = (await packager.codeSigningInfo.value).keychainName
+    const keychainFile = (await packager.codeSigningInfo.value).keychainFile
 
     const appOutDir = this.outDir
     // https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
@@ -52,7 +52,7 @@ export class PkgTarget extends Target {
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)
     const componentPropertyListFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.plist`)
     const identity = (await Promise.all([
-      findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainName),
+      findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainFile),
       this.customizeDistributionConfiguration(distInfoFile, appPath),
       this.buildComponentPackage(appPath, componentPropertyListFile, innerPackageFile),
     ]))[0]
@@ -61,7 +61,7 @@ export class PkgTarget extends Target {
       throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://electron.build/code-signing`)
     }
 
-    const args = prepareProductBuildArgs(identity, keychainName)
+    const args = prepareProductBuildArgs(identity, keychainFile)
     args.push("--distribution", distInfoFile)
     args.push(artifactPath)
     use(options.productbuild, it => args.push(...it as any))
