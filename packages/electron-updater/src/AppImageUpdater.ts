@@ -13,7 +13,7 @@ export class AppImageUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  protected isUpdaterActive(): boolean {
+  public isUpdaterActive(): boolean {
     if (process.env.APPIMAGE == null) {
       if (process.env.SNAP == null) {
         this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")

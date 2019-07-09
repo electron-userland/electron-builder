@@ -231,7 +231,7 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
-  protected isUpdaterActive(): boolean {
+  public isUpdaterActive(): boolean {
     if (!this.app.isPackaged) {
       this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
       return false

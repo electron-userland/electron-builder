@@ -1,3 +1,14 @@
+## 4.1.2
+
+### Features
+
+* expose `isUpdaterActive`, closes [#4028](https://github.com/electron-userland/electron-builder/issues/4028)
+
+### Bug Fixes
+
+* cannot download differentially: Error: Maximum allowed size is 5 MB ([c5c2eeb](https://github.com/electron-userland/electron-builder/commit/c5c2eeb)), closes [#3564](https://github.com/electron-userland/electron-builder/issues/3564)
+* reduce electron-updater size ([8025fb4](https://github.com/electron-userland/electron-builder/commit/8025fb4)), closes [#3953](https://github.com/electron-userland/electron-builder/issues/3953)
+
 ## 4.0.14
 
 From 4.0.5 to 4.0.13 — maintenance-only releases to update dependencies.
