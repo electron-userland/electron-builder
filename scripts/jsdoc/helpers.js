@@ -289,7 +289,7 @@ function identifierToLink(id, root) {
       id !== "module:https.RequestOptions" &&
       !id.endsWith(".__type")
     ) {
-      for (const name of ["GithubOptions", "GenericServerOptions", "BintrayOptions", "S3Options", "SpacesOptions", "PublishConfiguration"]) {
+      for (const name of ["GithubOptions", "GenericServerOptions", "BintrayOptions", "S3Options", "SpacesOptions", "PublishConfiguration", "SnapStoreOptions"]) {
         if (id.endsWith(`.${name}`)) {
           return `[${name}](/configuration/publish#${name.toLowerCase()})`
         }

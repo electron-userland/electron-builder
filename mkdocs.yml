@@ -16,6 +16,9 @@ edit_uri: ""
 dev_addr: 0.0.0.0:8000
 strict: true
 
+extra_javascript:
+  - extra.js
+
 markdown_extensions:
   - admonition
   - smarty

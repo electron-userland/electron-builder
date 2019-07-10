@@ -4,7 +4,7 @@ import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest, RequestOptions } from "http"
 import { Lazy } from "lazy-val"
-import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
+import { HttpPublisher, PublishContext, PublishOptions } from "electron-publish"
 
 export class BintrayPublisher extends HttpPublisher {
   private readonly _versionPromise = new Lazy(() => this.init())

@@ -612,7 +612,7 @@ export abstract class AppUpdater extends EventEmitter {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {
-        log.info("Cancelled")
+        log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
       }
       throw e

@@ -3,11 +3,11 @@ import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSp
 import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from "electron-publish"
-import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
+import { BintrayPublisher } from "./BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import S3Publisher from "electron-publish/out/s3/s3Publisher"
-import SpacesPublisher from "electron-publish/out/s3/spacesPublisher"
+import S3Publisher from "./s3/s3Publisher"
+import SpacesPublisher from "./s3/spacesPublisher"
 import { writeFile } from "fs-extra"
 import isCi from "is-ci"
 import * as path from "path"
@@ -18,6 +18,7 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
+import { SnapStoreOptions, SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -276,6 +277,9 @@ export function createPublisher(context: PublishContext, version: string, publis
 
     case "generic":
       return null
+
+    case "snapStore":
+      return new SnapStorePublisher(context, publishConfig as SnapStoreOptions)
 
     default:
       const clazz = requireProviderClass(provider, packager)

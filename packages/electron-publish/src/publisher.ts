@@ -68,7 +68,7 @@ export abstract class Publisher {
 }
 
 export abstract class HttpPublisher extends Publisher {
-  constructor(protected readonly context: PublishContext, private readonly useSafeArtifactName = false) {
+  protected constructor(protected readonly context: PublishContext, private readonly useSafeArtifactName = false) {
     super(context)
   }
 

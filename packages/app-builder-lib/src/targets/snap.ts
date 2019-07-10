@@ -203,7 +203,14 @@ export default class SnapTarget extends Target {
     }
     await executeAppBuilder(args)
 
-    await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
+    await packager.info.callArtifactBuildCompleted({
+      file: artifactPath,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
+      target: this,
+      arch,
+      packager,
+      publishConfig: options.publish == null ? {provider: "snapStore"} : null,
+    })
   }
 
   private isElectronVersionGreaterOrEqualThen(version: string) {

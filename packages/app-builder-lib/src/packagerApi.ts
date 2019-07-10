@@ -32,7 +32,7 @@ export interface ArtifactCreated extends UploadTask {
 
   readonly safeArtifactName?: string | null
 
-  readonly publishConfig?: PublishConfiguration
+  readonly publishConfig?: PublishConfiguration | null
 
   readonly isWriteUpdateInfo?: boolean
 }
