@@ -1,25 +1,42 @@
 The [publish](configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](../auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions), [S3Options](#s3options) or [SpacesOptions](#spacesoptions). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Bintray](#bintrayoptions), [Generic Server](#genericserveroptions), [GitHub](#githuboptions), [S3](#s3options), [Spaces](#spacesoptions) or [Snap Store](#snapstoreoptions) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+
+Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
+`electron-builder` makes publishing dead simple.
 
 If `GH_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
 If `BT_TOKEN` is defined and `GH_TOKEN` is not — defaults to `[{provider: "bintray"}]`.
 
-Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
-`electron-builder` makes publishing dead simple.
+!!! info "Snap store"
+    `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
 
 You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bintray (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
-```json
-"win": {
-  "publish": ["github", "bintray"]
+
+```json tab="package.json"
+{
+  "build": {
+    "win": {
+      "publish": ["github", "bintray"]
+    }
+  }
 }
 ```
+
+```yaml tab="electron-builder.yaml"
+win:
+  publish:
+    - github
+    - bintray
+```
+
+You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
 
 [Custom](https://github.com/electron-userland/electron-builder/issues/3261) publish provider can be used if need.
 
 !!! tip "Macros"
-    In all publish options [File Macros](../file-patterns.md#file-macros) are supported. 
+    In all publish options [File Macros](../file-patterns.md#file-macros) are supported.
 
 ## How to Publish
 
@@ -48,9 +65,11 @@ But please consider using automatic rules instead of explicitly specifying `publ
 * If [npm script](https://docs.npmjs.com/misc/scripts) named `release`, — `always`.
 
  Add to `scripts` in the development `package.json`:
- ```json
+ 
+ ```json tab="package.json"
  "release": "build"
  ```
+
  and if you run `yarn release`, a release will be drafted (if doesn't already exist) and artifacts published.
  
 ### Recommended GitHub Releases Workflow
@@ -158,13 +177,20 @@ Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](h
 Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
 
 Example configuration:
-```json
-"publish": {
-  "provider": "s3",
-  "bucket": "bucket-name"
+
+```json tab="package.json"
+{
+  "build":
+    "publish": {
+      "provider": "s3",
+      "bucket": "bucket-name"
+    }
+  }
 }
 ```
 
 {!generated/s3-options.md!}
 
 {!generated/spaces-options.md!}
+
+{!generated/snap-store-options.md!}
