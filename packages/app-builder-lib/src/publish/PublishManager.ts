@@ -301,6 +301,9 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
     case "s3":
       return S3Publisher
 
+    case "snapStore":
+      return SnapStorePublisher
+
     case "spaces":
       return SpacesPublisher
 
