@@ -13,7 +13,7 @@ import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdate
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
 import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
-import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
+import { DOWNLOAD_PROGRESS, ElevationHelper, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
 import Session = Electron.Session
@@ -93,6 +93,16 @@ export abstract class AppUpdater extends EventEmitter {
    *  The request headers.
    */
   requestHeaders: OutgoingHttpHeaders | null = null
+
+  protected _elevationHelper?: ElevationHelper = undefined
+
+  get elevationHelper(): ElevationHelper | undefined {
+    return this._elevationHelper
+  }
+
+  set elevationHelper(value: ElevationHelper | undefined) {
+    this._elevationHelper = value
+  }
 
   protected _logger: Logger = console
 

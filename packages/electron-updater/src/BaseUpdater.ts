@@ -1,6 +1,7 @@
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
+import { ElevationHelper } from "./main"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -60,6 +61,7 @@ export abstract class BaseUpdater extends AppUpdater {
         installerPath,
         isSilent,
         isForceRunAfter,
+        elevationHelper: this._elevationHelper,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
       })
     }
@@ -97,5 +99,6 @@ export interface InstallOptions {
   readonly installerPath: string
   readonly isSilent: boolean
   readonly isForceRunAfter: boolean
+  readonly elevationHelper?: ElevationHelper
   readonly isAdminRightsRequired: boolean
 }

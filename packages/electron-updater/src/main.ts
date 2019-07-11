@@ -120,6 +120,8 @@ export interface Logger {
   debug?(message: string): void
 }
 
+export type ElevationHelper = (path: string, args: Array<string>) => boolean
+
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 /** @internal */
 export function newBaseUrl(url: string): URL {
