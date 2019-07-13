@@ -52,7 +52,7 @@
     "fs-extra": "^8.1.0",
     "hosted-git-info": "^2.7.1",
     "is-ci": "^2.0.0",
-    "isbinaryfile": "^4.0.1",
+    "isbinaryfile": "^4.0.2",
     "js-yaml": "^3.13.1",
     "read-config-file": "4.0.1",
     "minimatch": "^3.0.4",
