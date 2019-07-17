@@ -40,7 +40,7 @@
         StrCpy $isPackageFileExplicitlySpecified "true"
       ${endIf}
 
-      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
+      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitely want to use this file and it is user responsibility to check
       # 1. auto-updater uses --package-file and validates checksum
       # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
       ${if} ${FileExists} "$packageFile"

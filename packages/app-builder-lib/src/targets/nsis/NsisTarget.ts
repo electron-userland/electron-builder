@@ -12,6 +12,7 @@ import * as path from "path"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
+import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
 import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
@@ -30,7 +31,7 @@ const debug = _debug("electron-builder:nsis")
 const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = new Lazy(() => getBinFromUrl("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
+const nsisResourcePathPromise = new Lazy(() => getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q=="))
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -320,7 +321,15 @@ export class NsisTarget extends Target {
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
-    await execWine(installerPath)
+
+    // http://forums.winamp.com/showthread.php?p=3078545
+    //
+    if (await isMacOsCatalina()) {
+      (await packager.vm.value).exec(installerPath, [])
+    }
+    else {
+      await execWine(installerPath)
+    }
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER

@@ -256,6 +256,7 @@
       <w>mkdocs</w>
       <w>mkdtemp</w>
       <w>mksnapshot</w>
+      <w>mozilla</w>
       <w>mpass</w>
       <w>msiinstallperuser</w>
       <w>multilib</w>
@@ -269,6 +270,7 @@
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
+      <w>noproxy</w>
       <w>noupdate</w>
       <w>npmignore</w>
       <w>npmrc</w>
