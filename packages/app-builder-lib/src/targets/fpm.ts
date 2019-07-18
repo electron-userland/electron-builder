@@ -185,6 +185,11 @@ export default class FpmTarget extends Target {
       args.push(`${icon.file}=/usr/share/icons/hicolor/${sizeName}/apps/${packager.executableName}${extWithDot}`)
     }
 
+    const mimeTypeFilePath = await this.helper.mimeTypeFiles
+    if (mimeTypeFilePath != null) {
+      args.push(`${mimeTypeFilePath}=/usr/share/mime/packages/${packager.executableName}.xml`)
+    }
+
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
     args.push(`${desktopFilePath}=/usr/share/applications/${packager.executableName}.desktop`)
 
