@@ -7,7 +7,8 @@
     "out",
     "templates",
     "scheme.json",
-    "certs/root_certs.keychain"
+    "certs/root_certs.keychain",
+    "electron-osx-sign"
   ],
   "repository": "electron-userland/electron-builder",
   "engines": {
