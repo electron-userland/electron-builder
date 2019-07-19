@@ -169,13 +169,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly launchUiVersion?: boolean | string | null
 
   /**
-   * @private
-   * @deprecated Set framework and nodeVersion if need.
-   */
-  readonly protonNodeVersion?: string | null
-
-  /**
-   * The framework name. One of `electron`, `proton-native`, `libui`. Defaults to `electron`.
+   * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
    */
   readonly framework?: string | null
 

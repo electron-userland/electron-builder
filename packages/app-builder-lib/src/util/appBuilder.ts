@@ -4,6 +4,10 @@ import { SpawnOptions } from "child_process"
 export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
   return executeAppBuilder(args)
     .then(rawResult => {
+      if (rawResult === "") {
+        return Object.create(null) as T
+      }
+
       try {
         return JSON.parse(rawResult) as T
       }

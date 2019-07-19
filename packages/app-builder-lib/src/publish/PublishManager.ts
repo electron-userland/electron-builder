@@ -390,7 +390,7 @@ async function resolvePublishConfigurations(publishers: any, platformPackager: P
     }
 
     if (serviceName != null) {
-      log.debug(null, `Detect ${serviceName} as publish provider`)
+      log.debug(null, `detect ${serviceName} as publish provider`)
       return [(await getResolvedPublishConfig(platformPackager, packager, {provider: serviceName}, arch, errorIfCannot))!]
     }
   }

@@ -1,9 +1,7 @@
 import { exec } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
-import { AsyncTaskManager } from "builder-util/out/asyncTaskManager"
 import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
-import { outputFile, readFile } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 
@@ -52,10 +50,6 @@ export async function detach(name: string) {
   }
 }
 
-export function computeBackgroundColor(rawValue: string) {
-  return require("parse-color")(rawValue).hex
-}
-
 export async function computeBackground(packager: PlatformPackager<any>): Promise<string> {
   const resourceList = await packager.resourceList
   if (resourceList.includes("background.tiff")) {
@@ -67,17 +61,6 @@ export async function computeBackground(packager: PlatformPackager<any>): Promis
   else {
     return path.join(getDmgTemplatePath(), "background.tiff")
   }
-}
-
-export async function applyProperties(entries: any, env: any, asyncTaskManager: AsyncTaskManager, packager: PlatformPackager<any>) {
-  const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
-  asyncTaskManager.addTask(outputFile(dmgPropertiesFile, (await readFile(path.join(getDmgTemplatePath(), "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
-  await asyncTaskManager.awaitTasks()
-
-  await exec("/usr/bin/perl", [dmgPropertiesFile], {
-    cwd: getDmgVendorPath(),
-    env
-  })
 }
 
 export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir): Promise<string> {

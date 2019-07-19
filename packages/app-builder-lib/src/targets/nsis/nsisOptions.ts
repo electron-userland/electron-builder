@@ -124,7 +124,7 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * Defaults to `true` for web installer (`nsis-web`)
+   * @private
    */
   differentialPackage?: boolean
 

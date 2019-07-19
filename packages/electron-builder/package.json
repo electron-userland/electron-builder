@@ -51,7 +51,7 @@
     "builder-util": "0.0.0-semantic-release",
     "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
-    "read-config-file": "4.0.1",
+    "read-config-file": "5.0.0",
     "sanitize-filename": "^1.6.1",
     "update-notifier": "^3.0.1",
     "yargs": "^13.3.0",

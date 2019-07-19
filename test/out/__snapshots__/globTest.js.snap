@@ -98,7 +98,7 @@ Object {
 
 exports[`outside link 2`] = `
 Object {
-  "offset": "5195",
+  "offset": "5281",
   "size": 4,
 }
 `;
@@ -197,13 +197,13 @@ Object {
         "package.json": Object {
           "files": Object {
             "readme.md": Object {
-              "offset": "5277",
+              "offset": "5363",
               "size": 32,
             },
           },
         },
         "readme.md": Object {
-          "offset": "5199",
+          "offset": "5285",
           "size": 78,
         },
       },
@@ -236,7 +236,7 @@ Object {
                 "dir-3": Object {
                   "files": Object {
                     "file-in-asar": Object {
-                      "offset": "5197",
+                      "offset": "5283",
                       "size": 2,
                     },
                   },
@@ -250,7 +250,7 @@ Object {
           "unpacked": true,
         },
         "must-be-not-unpacked": Object {
-          "offset": "5195",
+          "offset": "5281",
           "size": 2,
         },
       },
@@ -261,10 +261,10 @@ Object {
     },
     "index.js": Object {
       "offset": "841",
-      "size": 4098,
+      "size": 4184,
     },
     "package.json": Object {
-      "offset": "4939",
+      "offset": "5025",
       "size": 256,
     },
   },

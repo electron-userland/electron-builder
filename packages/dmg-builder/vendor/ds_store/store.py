@@ -1146,7 +1146,7 @@ class DSStore(object):
 
     # Find implementation
     def _find(self, node, filename_lc, code=None):
-        if not isinstance(code, bytes):
+        if code is not None and not isinstance(code, bytes):
             code = code.encode('latin_1')
         with self._get_block(node) as block:
             next_node, count = block.read(b'>II')

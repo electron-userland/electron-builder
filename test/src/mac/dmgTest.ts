@@ -31,6 +31,28 @@ test.ifMac("no build directory", app({
   projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
+test.ifMac("background color", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "BackgroundColor",
+    publish: null,
+    dmg: {
+      backgroundColor: "orange",
+      // speed-up test
+      writeUpdateInfo: false,
+    },
+  },
+  effectiveOptionComputed: async it => {
+    if (!("volumePath" in it)) {
+      return false
+    }
+    delete it.specification.icon
+    expect(it.specification).toMatchSnapshot()
+    return false
+  },
+}))
+
 test.ifMac("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
@@ -43,6 +65,8 @@ test.ifMac("custom background - new way", () => {
       dmg: {
         background: customBackground,
         icon: "foo.icns",
+        // speed-up test
+        writeUpdateInfo: false,
       },
     },
     effectiveOptionComputed: async it => {

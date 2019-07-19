@@ -1,6 +1,6 @@
 {
   "name": "dmg-builder",
-  "version": "1.0.1",
+  "version": "0.0.0-semantic-release",
   "main": "out/dmgUtil.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -15,7 +15,6 @@
   "dependencies": {
     "fs-extra": "^8.1.0",
     "bluebird-lst": "^1.0.9",
-    "parse-color": "^1.0.0",
     "builder-util": "~0.0.0-semantic-release",
     "iconv-lite": "^0.5.0",
     "js-yaml": "^3.13.1",

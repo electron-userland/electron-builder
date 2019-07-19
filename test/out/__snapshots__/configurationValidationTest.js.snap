@@ -17,4 +17,23 @@ Object {
 }
 `;
 
-exports[`validation 1`] = `"ERR_CONFIG_INVALID"`;
+exports[`validation 1`] = `
+"Invalid configuration object. electron-builder 0.0.0-semantic-release has been initialised using a configuration object that does not match the API schema.
+ - configuration has an unknown property 'foo'. These properties are valid:
+   object { $schema?, afterAllArtifactBuild?, afterPack?, afterSign?, apk?, appId?, appImage?, appx?, artifactBuildCompleted?, artifactBuildStarted?, artifactName?, asar?, asarUnpack?, beforeBuild?, buildDependenciesFromSource?, buildVersion?, compression?, copyright?, cscKeyPassword?, cscLink?, deb?, detectUpdateChannel?, directories?, dmg?, electronCompile?, electronDist?, electronDownload?, electronUpdaterCompatibility?, electronVersion?, extends?, extraFiles?, extraMetadata?, extraResources?, fileAssociations?, files?, forceCodeSigning?, framework?, freebsd?, generateUpdatesFilesForAllChannels?, icon?, includePdb?, launchUiVersion?, linux?, mac?, mas?, msi?, muonVersion?, nodeGypRebuild?, nodeVersion?, npmArgs?, npmRebuild?, npmSkipBuildFromSource?, nsis?, nsisWeb?, onNodeModuleFile?, p5p?, pacman?, pkg?, portable?, productName?, protocols?, protonNodeVersion?, publish?, readonly?, releaseInfo?, remoteBuild?, removePackageScripts?, rpm?, snap?, squirrelWindows?, target?, win? }
+   -> Configuration Options
+     How to fix:
+     1. Open https://www.electron.build/configuration/configuration
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+
+ - configuration.mac has an unknown property 'foo'. These properties are valid:
+   object { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, hardenedRuntime?, gatekeeperAssess?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, generateUpdatesFilesForAllChannels?, helperBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, target?, type? }
+     How to fix:
+     1. Open https://www.electron.build/configuration/mac
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+"
+`;

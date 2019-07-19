@@ -39,13 +39,6 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
   }
 
   let nodeVersion = configuration.nodeVersion
-  // noinspection JSDeprecatedSymbols
-  if (framework == null && configuration.protonNodeVersion != null) {
-    framework = "proton"
-    // noinspection JSDeprecatedSymbols
-    nodeVersion = configuration.protonNodeVersion
-  }
-
   if (framework === "electron" || framework == null) {
     return await createElectronFrameworkSupport(configuration, packager)
   }
@@ -56,7 +49,7 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
 
   const distMacOsName = `${packager.appInfo.productFilename}.app`
   const isUseLaunchUi = configuration.launchUiVersion !== false
-  if (framework === "proton") {
+  if (framework === "proton" || framework === "proton-native") {
     return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
   }
   else if (framework === "libui") {
