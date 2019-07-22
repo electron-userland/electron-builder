@@ -36,8 +36,7 @@ export class LinuxTargetHelper {
   <glob pattern="*.${fileAssociation.ext}"/>
     ${fileAssociation.description ? `<comment>${fileAssociation.description}</comment>` : ""}
   <icon name="x-office-document" />
-  </mime-type>
-</mime-info>`
+  </mime-type>`
       items.push(data)
     }
 
