@@ -12,7 +12,6 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * The custom environment. Defaults to `{"TMPDIR: "$XDG_RUNTIME_DIR"}`. If you set custom, it will be merged with default.
    */
   readonly environment?: { [key: string]: string } | null
-  // { [key: string]: string } Our scheme generator cannot validate this type
 
   /**
    * The 78 character long summary. Defaults to [productName](/configuration/configuration#Configuration-productName).

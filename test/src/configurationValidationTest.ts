@@ -11,7 +11,7 @@ test.ifAll.ifDevOrLinuxCi("validation", appThrows({
       foo: 12123,
     },
   } as any,
-}))
+}, undefined, error => error.message.includes("configuration has an unknown property 'foo'")))
 
 test.skip.ifDevOrLinuxCi("appId as object", appThrows({
   targets: linuxDirTarget,
