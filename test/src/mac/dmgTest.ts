@@ -9,8 +9,18 @@ import { promises as fs } from "fs"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
+const dmgTarget = Platform.MAC.createTarget("dmg")
+
+test.ifMac("dmg", app({
+  targets: dmgTarget,
+  config: {
+    productName: "DefaultDmg",
+    publish: null,
+  },
+}))
+
 test.ifMac("no build directory", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "NoBuildDirectory",
@@ -32,7 +42,7 @@ test.ifMac("no build directory", app({
 }))
 
 test.ifMac("background color", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "BackgroundColor",
@@ -157,7 +167,7 @@ test.ifMac.ifAll("no Applications link", () => {
 })
 
 test.ifMac("unset dmg icon", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -179,7 +189,7 @@ test.ifMac("unset dmg icon", app({
 
 // test also "only dmg"
 test.ifMac("no background", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -199,7 +209,7 @@ test.ifMac("no background", app({
 
 // test also darkModeSupport
 test.ifAll.ifMac("bundleShortVersion", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -233,7 +243,7 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
 })
 
 const packagerOptions = {
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
   }

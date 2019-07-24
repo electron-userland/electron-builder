@@ -40,19 +40,12 @@ def build_dmg():
   options = {
     'icon': None,
     'badge_icon': None,
-    'show_status_bar': False,
-    'show_tab_view': False,
-    'show_toolbar': False,
-    'show_pathbar': False,
-    'show_sidebar': False,
     'sidebar_width': 180,
     'arrange_by': None,
     'grid_offset': (0, 0),
     'grid_spacing': 100.0,
     'scroll_position': (0.0, 0.0),
     'show_icon_preview': False,
-    'show_item_info': False,
-    'label_pos': 'bottom',
     'text_size': os.environ['iconTextSize'],
     'icon_size': os.environ['iconSize'],
     'include_icon_view_settings': 'auto',
@@ -61,8 +54,6 @@ def build_dmg():
     'list_text_size': 12.0,
     'list_scroll_position': (0, 0),
     'list_sort_by': 'name',
-    'list_use_relative_dates': True,
-    'list_calculate_all_sizes': False,
     'list_columns': ('name', 'date-modified', 'size', 'kind', 'date-added'),
     'list_column_widths': {
       'name': 300,
@@ -87,20 +78,19 @@ def build_dmg():
       'label': 'ascending',
       'version': 'ascending',
       'comments': 'ascending',
-    },
-    'default_view': 'icon-view',
+    }
   }
 
   # Set up the finder data
   bwsp = {
-    'ShowStatusBar': options['show_status_bar'],
+    'ShowStatusBar': False,
     'ContainerShowSidebar': False,
     'PreviewPaneVisibility': False,
     'SidebarWidth': options['sidebar_width'],
-    'ShowTabView': options['show_tab_view'],
-    'ShowToolbar': options['show_toolbar'],
-    'ShowPathbar': options['show_pathbar'],
-    'ShowSidebar': options['show_sidebar']
+    'ShowTabView': False,
+    'ShowToolbar': False,
+    'ShowPathbar': False,
+    'ShowSidebar': False
   }
 
   window_x = os.environ.get('windowX')
@@ -133,8 +123,8 @@ def build_dmg():
     'gridSpacing': float(options['grid_spacing']),
     'arrangeBy': str(arrange_options.get(options['arrange_by'], 'none')),
     'showIconPreview': options['show_icon_preview'] == True,
-    'showItemInfo': options['show_item_info'] == True,
-    'labelOnBottom': options['label_pos'] == 'bottom',
+    'showItemInfo': False,
+    'labelOnBottom': True,
     'textSize': float(options['text_size']),
     'iconSize': float(options['icon_size']),
     'scrollPositionX': float(options['scroll_position'][0]),
@@ -188,8 +178,8 @@ def build_dmg():
     'showIconPreview': options['show_icon_preview'],
     'scrollPositionX': options['list_scroll_position'][0],
     'scrollPositionY': options['list_scroll_position'][1],
-    'useRelativeDates': options['list_use_relative_dates'],
-    'calculateAllSizes': options['list_calculate_all_sizes'],
+    'useRelativeDates': True,
+    'calculateAllSizes': False,
   }
 
   lsvp['columns'] = {}
@@ -225,7 +215,7 @@ def build_dmg():
 
     n += 1
 
-  default_view = options['default_view']
+  default_view = 'icon-view'
   views = {
     'icon-view': b'icnv',
     'column-view': b'clmv',
