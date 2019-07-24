@@ -7,7 +7,7 @@ import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadCo
 import { FileSet } from ".."
 import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
-const validateSchema = require("schema-utils")
+const validateSchema = require("@develar/schema-utils")
 
 declare const PACKAGE_VERSION: string
 

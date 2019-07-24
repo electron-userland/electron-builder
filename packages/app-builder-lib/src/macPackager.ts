@@ -106,9 +106,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         continue
       }
 
-      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (this.config as any).mas)
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
       if (targetName === "mas-dev") {
-        deepAssign(masBuildOptions, (this.config as any)[targetName], {
+        deepAssign(masBuildOptions, this.config.masDev, {
           type: "development",
         })
       }
@@ -134,8 +134,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const isMas = masOptions != null
-    const macOptions = this.platformSpecificBuildOptions
-    const qualifier = (isMas ? masOptions!.identity : null) || macOptions.identity
+    const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
+    const qualifier = options.identity
 
     if (!isMas && qualifier === null) {
       if (this.forceCodeSigning) {
@@ -146,7 +146,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
-    const explicitType = isMas ? masOptions!.type : macOptions.type
+    const explicitType = options.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
     const certificateType = getCertificateType(isMas, isDevelopment)
@@ -184,12 +184,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       version: this.config.electronVersion,
       app: appPath,
       keychain: keychainFile || undefined,
-      binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
-      requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
+      binaries: options.binaries || undefined,
+      requirements: isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
-      "gatekeeper-assess": macOptions.gatekeeperAssess === true,
-      hardenedRuntime: macOptions.hardenedRuntime !== false,
+      "gatekeeper-assess": options.gatekeeperAssess === true,
+      hardenedRuntime: options.hardenedRuntime !== false,
     }
 
     await this.adjustSignOptions(signOptions, masOptions)

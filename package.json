@@ -31,6 +31,7 @@
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
     "7zip-bin": "~5.0.3",
+    "@develar/schema-utils": "~2.1.0",
     "@types/debug": "^4.1.4",
     "@types/is-ci": "^2.0.0",
     "@types/semver": "^6.0.1",
@@ -58,7 +59,6 @@
     "read-config-file": "5.0.0",
     "sanitize-filename": "^1.6.1",
     "sax": "^1.2.4",
-    "schema-utils": "^2.0.1",
     "semver": "^6.3.0",
     "source-map-support": "^0.5.12",
     "stat-mode": "^0.3.0",

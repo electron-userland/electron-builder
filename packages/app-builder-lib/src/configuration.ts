@@ -49,6 +49,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly mas?: MasConfiguration | null
   /**
+   * MAS (Mac Application Store) development options (`mas-dev` target).
+   */
+  readonly masDev?: MasConfiguration | null
+  /**
    * macOS DMG options.
    */
   readonly dmg?: DmgOptions | null
