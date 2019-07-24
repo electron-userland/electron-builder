@@ -81,16 +81,17 @@ export interface FileCodeSigningInfo {
 
 export async function getCertInfo(file: string, password: string): Promise<CertificateInfo> {
   let result: any = null
+  const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
   try {
     result = await executeAppBuilderAsJson<any>(["certificate-info", "--input", file, "--password", password])
   }
   catch (e) {
-    throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
+    throw new Error(`${errorMessagePrefix}${e.stack || e}`)
   }
 
   if (result.error != null) {
     // noinspection ExceptionCaughtLocallyJS
-    throw new InvalidConfigurationError(`Cannot extract publisher name from code signing certificate: ${result.error}`)
+    throw new InvalidConfigurationError(`${errorMessagePrefix}${result.error}`)
   }
   return result
 }
