@@ -1,6 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import { promises as fs } from "fs"
-import { app } from "../helpers/packTester"
+import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
 test.ifNotWindows("deb", app({
   targets: Platform.LINUX.createTarget("deb"),
@@ -46,4 +46,11 @@ test.ifNotWindows.ifNotCiMac.ifAll("deb file associations", app({
       }
     ],
   },
+}, {
+  packed: async context => {
+    const mime = await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} Jx --to-stdout ./usr/share/mime/packages/testapp.xml`, {
+      maxBuffer: 10 * 1024 * 1024,
+    })
+    expect(mime.trim()).toMatchSnapshot()
+  }
 }))

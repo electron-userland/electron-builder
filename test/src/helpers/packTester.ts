@@ -274,6 +274,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
   const control = parseDebControl(await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
     maxBuffer: 10 * 1024 * 1024,
   }))
+
   delete control.Version
   delete control.Size
   const description = control.Description
@@ -397,9 +398,9 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
+export const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
 
-async function getTarExecutable() {
+export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
 }
 

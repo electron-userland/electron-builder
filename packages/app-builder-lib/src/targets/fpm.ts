@@ -212,6 +212,7 @@ export default class FpmTarget extends Target {
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
       })
     }
+
     await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, {env})
 
     await packager.dispatchArtifactCreated(artifactPath, this, arch)

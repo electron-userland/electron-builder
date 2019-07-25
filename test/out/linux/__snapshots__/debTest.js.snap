@@ -415,6 +415,17 @@ Object {
 
 exports[`deb file associations 4`] = `"Test Application (test quite “ #378)"`;
 
+exports[`deb file associations 5`] = `
+"<?xml version=\\"1.0\\" encoding=\\"utf-8\\"?>
+<mime-info xmlns=\\"http://www.freedesktop.org/standards/shared-mime-info\\">
+<mime-type type=\\"application/x-example\\">
+  <glob pattern=\\"*.my-app\\"/>
+    
+  <icon name=\\"x-office-document\\" />
+</mime-type>
+</mime-info>"
+`;
+
 exports[`no quotes for safe exec name 1`] = `
 "[Desktop Entry]
 Name=foo
