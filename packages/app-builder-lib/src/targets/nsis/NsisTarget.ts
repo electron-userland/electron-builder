@@ -3,7 +3,7 @@ import BluebirdPromise from "bluebird-lst"
 import { executeAppBuilder, Arch, asArray, AsyncTaskManager, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
 import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromUrl } from "../../binDownload"
-import { statOrNull, walk } from "builder-util/out/fs"
+import { statOrNull, walk, exists } from "builder-util/out/fs"
 import { hashFile } from "../../util/hash"
 import _debug from "debug"
 import { readFile, stat, unlink } from "fs-extra"
@@ -316,16 +316,22 @@ export class NsisTarget extends Target {
 
     // https://github.com/electron-userland/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
-    const uninstallerPath = path.join(this.outDir, `.__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
+    const uninstallerPath = path.join(this.outDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
 
     // http://forums.winamp.com/showthread.php?p=3078545
-    //
-    if (await isMacOsCatalina()) {
+    if (isMacOsCatalina()) {
       (await packager.vm.value).exec(installerPath, [])
+
+      // Parallels VM can exit after command execution, but NSIS continue to be running
+      let i = 0
+      while (!(await exists(uninstallerPath)) && i++ < 100) {
+        // noinspection JSUnusedLocalSymbols
+        await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+      }
     }
     else {
       await execWine(installerPath)

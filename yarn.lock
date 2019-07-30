@@ -1211,10 +1211,10 @@
   resolved "https://registry.npmjs.org/@types/jest-diff/-/jest-diff-20.0.1.tgz#35cc15b9c4f30a18ef21852e255fdb02f6d59b89"
   integrity sha512-yALhelO3i0hqZwhjtcr6dYyaLoCHbAMshwtj6cGxTvHZAKXHsYGdff6E8EPw3xLKY0ELUTQ69Q1rQiJENnccMA==
 
-"@types/jest@^24.0.15":
-  version "24.0.15"
-  resolved "https://registry.npmjs.org/@types/jest/-/jest-24.0.15.tgz#6c42d5af7fe3b44ffff7cc65de7bf741e8fa427f"
-  integrity sha512-MU1HIvWUme74stAoc3mgAi+aMlgKOudgEvQDIm1v4RkrDudBh1T+NFp5sftpBAdXdx1J0PbdpJ+M2EsSOi1djA==
+"@types/jest@^24.0.16":
+  version "24.0.16"
+  resolved "https://registry.npmjs.org/@types/jest/-/jest-24.0.16.tgz#8d3e406ec0f0dc1688d6711af3062ff9bd428066"
+  integrity sha512-JrAiyV+PPGKZzw6uxbI761cHZ0G7QMOHXPhtSpcl08rZH6CswXaaejckn3goFKmF7M3nzEoJ0lwYCbqLMmjziQ==
   dependencies:
     "@types/jest-diff" "*"
 
@@ -1294,10 +1294,10 @@
   resolved "https://registry.npmjs.org/@types/yargs/-/yargs-12.0.12.tgz#45dd1d0638e8c8f153e87d296907659296873916"
   integrity sha512-SOhuU4wNBxhhTHxYaiG5NY4HBhDIDnJF60GU+2LqHAdKKer86//e4yg69aENCtQ04n0ovz+tq2YPME5t5yp4pw==
 
-"@types/yargs@^13.0.0":
-  version "13.0.0"
-  resolved "https://registry.npmjs.org/@types/yargs/-/yargs-13.0.0.tgz#d2acb3bec0047d8f648ebacdab6b928a900c42c4"
-  integrity sha512-hY0o+kcz9M6kH32NUeb6VURghqMuCVkiUx+8Btsqhj4Hhov/hVGUx9DmBJeIkzlp1uAQK4wngQBCjqWdUUkFyA==
+"@types/yargs@^13.0.1":
+  version "13.0.1"
+  resolved "https://registry.npmjs.org/@types/yargs/-/yargs-13.0.1.tgz#a45b3c9faadd7adfdb40646d14a7f6b70f4e8233"
+  integrity sha512-7X+FaCpRQ1scFQnWUY0TnVuuNaP5ajN45IGmwHVkAbsH1g4txz4hNb6sjJeR/wLaqUdNoInOwLk7oRL5M4zVFA==
   dependencies:
     "@types/yargs-parser" "*"
 
@@ -1828,9 +1828,9 @@ camelcase@^5.0.0, camelcase@^5.3.1:
   integrity sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
 
 caniuse-lite@^1.0.30000984:
-  version "1.0.30000985"
-  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30000985.tgz#0eb40f6c8a8c219155cbe43c4975c0efb4a0f77f"
-  integrity sha512-1ngiwkgqAYPG0JSSUp3PUDGPKKY59EK7NrGGX+VOxaKCNzRbNc7uXMny+c3VJfZxtoK3wSImTvG9T9sXiTw2+w==
+  version "1.0.30000987"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30000987.tgz#bc6b47217afd8226a2b1964635c6bff62cdf5738"
+  integrity sha512-O3VrjtRMTxoU5Cn5/QSmXeIR1gkVps4j9jqfIm4FLaQ5JzqBlVjMUG1xWnoYFv8N+H3Lp++aa05TekyIbjHL7g==
 
 capture-exit@^2.0.0:
   version "2.0.0"
@@ -2283,9 +2283,9 @@ depcheck@^0.8.3:
     yargs "^13.2.2"
 
 deprecate@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.npmjs.org/deprecate/-/deprecate-1.1.0.tgz#bbd069d62b232175b4e8459b2650cd2bad51f4b8"
-  integrity sha512-b5dDNQYdy2vW9WXUD8+RQlfoxvqztLLhDE+T7Gd37I5E8My7nJkKu6FmhdDeRWJ8B+yjZKuwjCta8pgi8kgSqA==
+  version "1.1.1"
+  resolved "https://registry.npmjs.org/deprecate/-/deprecate-1.1.1.tgz#4632e981fc815eeaf00be945a40359c0f8bf9913"
+  integrity sha512-ZGDXefq1xknT292LnorMY5s8UVU08/WKdzDZCUT6t9JzsiMSP4uzUhgpqugffNVcT5WC6wMBiSQ+LFjlv3v7iQ==
 
 deps-regex@^0.1.4:
   version "0.1.4"
@@ -2400,9 +2400,9 @@ electron-builder-tslint-config@^1.1.0:
   integrity sha512-m/oAwS+NYB/b182bGY8C7uj1cDy8XXnHTl5CwD98dng7wE/nZGV2mJD9NyqbFmhJ1kF61wbsYDVx2KLIN5s5tg==
 
 electron-to-chromium@^1.3.191:
-  version "1.3.200"
-  resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.200.tgz#78fb858b466269e8eb46d31a52562f00c865127f"
-  integrity sha512-PUurrpyDA74MuAjJRD+79ss5BqJlU3mdArRbuu4wO/dt6jc3Ic/6BDmFJxkdwbfq39cHf/XKm2vW98XSvut9Dg==
+  version "1.3.204"
+  resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.3.204.tgz#1ea5c6d495bab77995aa135dbcbc1d383dd4e21e"
+  integrity sha512-T0eXE6hfbtpzRUaI7aHI/HYJ29Ndk84aVSborRAmXfWvBvz2EuB2OWYUxNcUX9d+jtqEIjgZjWMdoxS0hp5j1g==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -5263,10 +5263,10 @@ sane@^4.0.3:
     minimist "^1.1.1"
     walker "~1.0.5"
 
-sanitize-filename@^1.6.1:
-  version "1.6.1"
-  resolved "https://registry.npmjs.org/sanitize-filename/-/sanitize-filename-1.6.1.tgz#612da1c96473fa02dccda92dcd5b4ab164a6772a"
-  integrity sha1-YS2hyWRz+gLczaktzVtKsWSmdyo=
+sanitize-filename@^1.6.2:
+  version "1.6.2"
+  resolved "https://registry.npmjs.org/sanitize-filename/-/sanitize-filename-1.6.2.tgz#01b4fc8809f14e9d22761fe70380fe7f3f902185"
+  integrity sha512-cmTzND7RMxUB+f7gI+4+KAVHWEg0lfXvQJdko+FXDP5bNbGIdx4KMP5pX6lv5jfT9jSf6OBbjyxjFtZQwYA/ig==
   dependencies:
     truncate-utf8-bytes "^1.0.0"
 

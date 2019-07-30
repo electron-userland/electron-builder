@@ -58,7 +58,7 @@
     "read-config-file": "5.0.0",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.5.0",
-    "sanitize-filename": "^1.6.1",
+    "sanitize-filename": "^1.6.2",
     "@develar/schema-utils": "~2.1.0",
     "semver": "^6.3.0",
     "debug": "^4.1.1",
