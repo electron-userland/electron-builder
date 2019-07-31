@@ -113,7 +113,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     configureHelper(helperPluginPlist, "(Plugin)")
   }
   if (helperGPUPlist != null) {
-    configureHelper(helperGPUPlist, "(GPU)");
+    configureHelper(helperGPUPlist, "(GPU)")
   }
   if (helperEHPlist != null) {
     configureHelper(helperEHPlist, "EH")
