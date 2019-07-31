@@ -21,13 +21,23 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
   })
 }
 
-function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null) {
+function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperRendererPlist: string | null, helperPluginPlist: string | null, helperGPUPlist: string | null) {
+
   const result = [" Helper"]
   if (helperEHPlist != null) {
     result.push(" Helper EH")
   }
   if (helperNPPlist != null) {
     result.push(" Helper NP")
+  }
+  if (helperRendererPlist != null) {
+    result.push(" Helper (Renderer)")
+  }
+  if (helperPluginPlist != null) {
+    result.push(" Helper (Plugin)")
+  }
+  if (helperGPUPlist != null) {
+    result.push(" Helper (GPU)")
   }
   return result
 }
@@ -45,9 +55,12 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperPlistFilename = path.join(frameworksPath, "Electron Helper.app", "Contents", "Info.plist")
   const helperEHPlistFilename = path.join(frameworksPath, "Electron Helper EH.app", "Contents", "Info.plist")
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
+  const helperRendererPlistFilename = path.join(frameworksPath, "Electron Helper (Renderer).app", "Contents", "Info.plist")
+  const helperPluginPlistFilename = path.join(frameworksPath, "Electron Helper (Plugin).app", "Contents", "Info.plist")
+  const helperGPUPlistFilename = path.join(frameworksPath, "Electron Helper (GPU).app", "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, "Electron Login Helper.app", "Contents", "Info.plist")
 
-  const plistContent: Array<any> = await executeAppBuilderAsJson(["decode-plist", "-f", appPlistFilename, "-f", helperPlistFilename, "-f", helperEHPlistFilename, "-f", helperNPPlistFilename, "-f", helperLoginPlistFilename])
+  const plistContent: Array<any> = await executeAppBuilderAsJson(["decode-plist", "-f", appPlistFilename, "-f", helperPlistFilename, "-f", helperEHPlistFilename, "-f", helperNPPlistFilename, "-f", helperRendererPlistFilename, "-f", helperPluginPlistFilename, "-f", helperGPUPlistFilename, "-f", helperLoginPlistFilename])
 
   if (plistContent[0] == null) {
     throw new Error("corrupted Electron dist")
@@ -57,11 +70,14 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperPlist = plistContent[1]!!
   const helperEHPlist = plistContent[2]
   const helperNPPlist = plistContent[3]
-  const helperLoginPlist = plistContent[4]
+  const helperRendererPlist = plistContent[4]
+  const helperPluginPlist = plistContent[5]
+  const helperGPUPlist = plistContent[6]
+  const helperLoginPlist = plistContent[7]
 
   // if an extend-info file was supplied, copy its contents in first
-  if (plistContent[5] != null) {
-    Object.assign(appPlist, plistContent[5])
+  if (plistContent[8] != null) {
+    Object.assign(appPlist, plistContent[8])
   }
 
   const buildMetadata = packager.config!!
@@ -90,6 +106,15 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 
+  if (helperRendererPlist != null) {
+    configureHelper(helperRendererPlist, "(Renderer)")
+  }
+  if (helperPluginPlist != null) {
+    configureHelper(helperPluginPlist, "(Plugin)")
+  }
+  if (helperGPUPlist != null) {
+    configureHelper(helperGPUPlist, "(GPU)")
+  }
   if (helperEHPlist != null) {
     configureHelper(helperEHPlist, "EH")
   }
@@ -158,6 +183,15 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   if (helperNPPlist != null) {
     plistDataToWrite[helperNPPlistFilename] = helperNPPlist
   }
+  if (helperRendererPlist != null) {
+    plistDataToWrite[helperRendererPlistFilename] = helperRendererPlist
+  }
+  if (helperPluginPlist != null) {
+    plistDataToWrite[helperPluginPlistFilename] = helperPluginPlist
+  }
+  if (helperGPUPlist != null) {
+    plistDataToWrite[helperGPUPlistFilename] = helperGPUPlist
+  }
   if (helperLoginPlist != null) {
     plistDataToWrite[helperLoginPlistFilename] = helperLoginPlist
   }
@@ -169,7 +203,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist), frameworksPath, appFilename, "Electron")
+  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist), frameworksPath, appFilename, "Electron")
 
   if (helperLoginPlist != null) {
     const prefix = "Electron"
