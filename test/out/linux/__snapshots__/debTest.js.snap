@@ -73,7 +73,7 @@ Array [
 exports[`arm 3`] = `
 Object {
   "Architecture": "armhf",
-  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0, gir1.2-gnomekeyring-1.0",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -144,7 +144,7 @@ Array [
 exports[`arm 6`] = `
 Object {
   "Architecture": "armhf",
-  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0, gir1.2-gnomekeyring-1.0",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -314,7 +314,7 @@ Array [
 exports[`deb 3`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0, gir1.2-gnomekeyring-1.0",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -402,7 +402,7 @@ Array [
 exports[`deb file associations 3`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0, gir1.2-gnomekeyring-1.0",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -511,7 +511,7 @@ Array [
 exports[`no quotes for safe exec name 4`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0, gir1.2-gnomekeyring-1.0",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libappindicator3-1, libsecret-1-0",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
