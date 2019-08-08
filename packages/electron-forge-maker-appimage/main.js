@@ -5,10 +5,10 @@ Object.defineProperty(exports, '__esModule', {
 });
 
 const buildForge = require('app-builder-lib').buildForge;
-const Target = require('app-builder-lib').Target;
+const MakerBase = require('@electron-forge/maker-base').default;
 const platform = require('os').platform;
 
-class MakerAppImage extends Target {
+class MakerAppImage extends MakerBase {
   constructor(configFetcher, providedPlatforms) {
     super(configFetcher, providedPlatforms);
     this.name = 'AppImage';
@@ -19,19 +19,6 @@ class MakerAppImage extends Target {
   }
   make(options) {
     return buildForge(options, { linux: [`appimage:${options.targetArch}`] });
-  }
-
-  get platforms() {
-    if (this.providedPlatforms) return this.providedPlatforms;
-    return this.defaultPlatforms;
-  }
-
-  prepareConfig(targetArch) {
-    if (typeof this.configFetcher === 'function') {
-      this.config = this.configFetcher(targetArch);
-    } else {
-      this.config = this.configFetcher;
-    }
   }
 }
 exports.default = MakerAppImage;

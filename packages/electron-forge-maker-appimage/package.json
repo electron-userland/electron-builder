@@ -11,6 +11,7 @@
     "*.js"
   ],
   "dependencies": {
+    "@electron-forge/maker-base": "^6.0.0-beta.43",
     "app-builder-lib": "^0.0.0-semantic-release"
   }
 }
