@@ -12,8 +12,17 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs), ...options
   }
+  let isDependenciesInstalled = false
 
-  if (forceInstall || !(await pathExists(path.join(appDir, "node_modules")))) {
+  for (const fileOrDir of ["node_modules", ".pnp.js"]) {
+    if (await pathExists(path.join(appDir, fileOrDir))) {
+      isDependenciesInstalled = true
+
+      break
+    }
+  }
+
+  if (forceInstall || !isDependenciesInstalled) {
     await installDependencies(appDir, effectiveOptions)
   }
   else {
