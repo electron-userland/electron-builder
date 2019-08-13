@@ -102,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   function configureHelper(helper: any, postfix: string) {
     helper.CFBundleExecutable = `${appFilename} Helper ${postfix}`
     helper.CFBundleDisplayName = `${appInfo.productName} Helper ${postfix}`
-    helper.CFBundleIdentifier = `${helperBundleIdentifier}.${postfix}`
+    helper.CFBundleIdentifier = `${helperBundleIdentifier}.${postfix.replace(/[^a-z0-9]/gim,"")}`
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 
