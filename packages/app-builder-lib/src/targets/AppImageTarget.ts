@@ -1,5 +1,5 @@
 import { Arch, serializeToYaml } from "builder-util"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { AppImageOptions } from ".."
@@ -19,7 +19,6 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    // we add X-AppImage-BuildId to ensure that new desktop file will be installed
     this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
     }))
@@ -31,7 +30,7 @@ export default class AppImageTarget extends Target {
     // https://github.com/electron-userland/electron-builder/issues/775
     // https://github.com/electron-userland/electron-builder/issues/1726
     // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactBeautyNamePattern(options, "AppImage", arch)
+    const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "AppImage",
@@ -66,6 +65,7 @@ export default class AppImageTarget extends Target {
       "--app", appOutDir,
       "--configuration", (JSON.stringify({
         productName: this.packager.appInfo.productName,
+        productFilename: this.packager.appInfo.productFilename,
         desktopEntry: c[0],
         executableName: this.packager.executableName,
         icons: c[1],

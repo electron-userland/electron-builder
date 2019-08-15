@@ -1,14 +1,16 @@
-import { log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
 import { orNullIfFileNotExist } from "read-config-file"
+import * as semver from "semver"
 import { Configuration } from "../configuration"
 import { getConfig } from "../util/config"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
+
+const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile"]
 
 export async function getElectronVersion(projectDir: string, config?: Configuration, projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<string> {
   if (config == null) {
@@ -21,7 +23,7 @@ export async function getElectronVersion(projectDir: string, config?: Configurat
 }
 
 export async function getElectronVersionFromInstalled(projectDir: string) {
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+  for (const name of electronPackages) {
     try {
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
     }
@@ -41,8 +43,10 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     return result
   }
 
-  const electronPrebuiltDep = findFromElectronPrebuilt(await projectMetadata!!.value)
-  if (electronPrebuiltDep == null || electronPrebuiltDep === "latest") {
+  const electronVersionFromMetadata = findFromPackageMetadata(await projectMetadata!!.value)
+
+  if (electronVersionFromMetadata === "latest") {
+    log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
     try {
       const releaseInfo = JSON.parse((await httpExecutor.request({
         hostname: "github.com",
@@ -57,18 +61,19 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
       log.warn(e)
     }
 
-    throw new Error(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
+    throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
 
-  const version = semver.coerce(electronPrebuiltDep)
-  if (version == null) {
-    throw new Error("cannot compute electron version")
+  if (electronVersionFromMetadata == null || !/^\d/.test(electronVersionFromMetadata)) {
+    const versionMessage = electronVersionFromMetadata == null ? "" : ` and version ("${electronVersionFromMetadata}") is not fixed in project`
+    throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
   }
-  return version.toString()
+
+  return semver.coerce(electronVersionFromMetadata)!!.toString()
 }
 
-function findFromElectronPrebuilt(packageData: any): any {
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+function findFromPackageMetadata(packageData: any): string | null {
+  for (const name of electronPackages) {
     const devDependencies = packageData.devDependencies
     let dep = devDependencies == null ? null : devDependencies[name]
     if (dep == null) {

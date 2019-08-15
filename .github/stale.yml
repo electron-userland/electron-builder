@@ -1,0 +1,4 @@
+exemptLabels:
+  - bug
+  - feature
+staleLabel: backlog

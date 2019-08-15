@@ -1,8 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, isEnvTrue } from "builder-util"
+import { getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
-import { readdir } from "fs-extra-p"
+import { readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -145,14 +146,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
-  }
-
-  get electronDistExecutableName() {
-    return this.config.muonVersion == null ? "electron" : "brave"
-  }
-
-  get electronDistMacOsExecutableName() {
-    return this.config.muonVersion == null ? "Electron" : "Brave"
   }
 
   createGetFileMatchersOptions(outDir: string, arch: Arch, customBuildOptions: PlatformSpecificBuildOptions): GetFileMatchersOptions {
@@ -463,12 +456,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // tslint:disable-next-line:no-invalid-template-strings
   computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
-    // GitHub only allows the listed characters in file names.
-    if (suggestedName != null && isSafeGithubName(suggestedName)) {
-      return null
-    }
-
-    return this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
+    return computeSafeArtifactNameIfNeeded(suggestedName, () => this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch))
   }
 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
@@ -494,25 +482,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.expandArtifactNamePattern(targetSpecificOptions, ext, arch, "${productName} ${version} ${arch}.${ext}", true)
   }
 
-  private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined) {
-    let archName: string | null = arch == null ? null : Arch[arch]
-    if (arch === Arch.x64) {
-      if (ext === "AppImage" || ext === "rpm") {
-        archName = "x86_64"
-      }
-      else if (ext === "deb" || ext === "snap") {
-        archName = "amd64"
-      }
-    }
-    else if (arch === Arch.ia32) {
-      if (ext === "deb" || ext === "AppImage" || ext === "snap") {
-        archName = "i386"
-      }
-      else if (ext === "pacman" || ext === "rpm") {
-        archName = "i686"
-      }
-    }
-
+  private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
+    const archName = arch == null ? null : getArtifactArchName(arch, ext)
     return this.expandMacro(pattern, this.platform === Platform.MAC ? null : archName, {
       ext
     })
@@ -639,6 +610,23 @@ export function isSafeGithubName(name: string) {
   return /^[0-9A-Za-z._-]+$/.test(name)
 }
 
+export function computeSafeArtifactNameIfNeeded(suggestedName: string | null, safeNameProducer: () => string): string | null {
+  // GitHub only allows the listed characters in file names.
+  if (suggestedName != null) {
+    if (isSafeGithubName(suggestedName)) {
+      return null
+    }
+
+    // prefer to use suggested name - so, if space is the only problem, just replace only space to dash
+    suggestedName = suggestedName.replace(/ /g, "-")
+    if (isSafeGithubName(suggestedName)) {
+      return suggestedName
+    }
+  }
+
+  return safeNameProducer()
+}
+
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
@@ -678,4 +666,15 @@ export function chooseNotNull(v1: string | null | undefined, v2: string | null |
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+export function isSafeToUnpackElectronOnRemoteBuildServer(packager: PlatformPackager<any>) {
+  if (packager.platform !== Platform.LINUX || packager.config.remoteBuild === false) {
+    return false
+  }
+
+  if (process.platform === "win32" || isEnvTrue(process.env._REMOTE_BUILD)) {
+    return packager.config.electronDist == null && packager.config.electronDownload == null
+  }
+  return false
 }

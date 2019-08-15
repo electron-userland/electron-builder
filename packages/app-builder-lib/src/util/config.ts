@@ -1,12 +1,15 @@
-import { DebugLogger, deepAssign, InvalidConfigurationError, log } from "builder-util"
+import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "read-config-file"
 import { FileSet } from ".."
 import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
+const validateSchema = require("@develar/schema-utils")
+
+declare const PACKAGE_VERSION: string
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
@@ -214,24 +217,38 @@ export async function validateConfig(config: Configuration, debugLogger: DebugLo
     }
   }
 
-  // noinspection JSDeprecatedSymbols
-  if (config.npmSkipBuildFromSource === false) {
-    config.buildDependenciesFromSource = false
+  const oldConfig: any = config
+  if (oldConfig.npmSkipBuildFromSource === false) {
+    throw new InvalidConfigurationError(`npmSkipBuildFromSource is deprecated, please use buildDependenciesFromSource"`)
+  }
+  if (oldConfig.appImage != null && oldConfig.appImage.systemIntegration != null) {
+    throw new InvalidConfigurationError(`appImage.systemIntegration is deprecated, https://github.com/TheAssassin/AppImageLauncher is used for desktop integration"`)
   }
 
-  await _validateConfig(config, schemeDataPromise, (message, errors) => {
-    if (debugLogger.isEnabled) {
-      debugLogger.add("invalidConfig", JSON.stringify(errors, null, 2))
-    }
+  // noinspection JSUnusedGlobalSymbols
+  validateSchema(await schemeDataPromise.value, config, {
+    name: `electron-builder ${PACKAGE_VERSION}`,
+    postFormatter: (formattedError: string, error: any): string => {
+      if (debugLogger.isEnabled) {
+        debugLogger.add("invalidConfig", safeStringifyJson(error))
+      }
 
-    return `${message}
+      const site = "https://www.electron.build"
+      let url = `${site}/configuration/configuration`
+      const targets = new Set(["mac", "dmg", "pkg", "mas", "win", "nsis", "appx", "linux", "appimage", "snap"])
+      const dataPath: string = error.dataPath == null ? null : error.dataPath
+      const targetPath = dataPath.startsWith(".") ? dataPath.substr(1).toLowerCase() : null
+      if (targetPath != null && targets.has(targetPath)) {
+        url = `${site}/configuration/${targetPath}`
+      }
 
-How to fix:
-1. Open https://electron.build/configuration/configuration
-2. Search the option name on the page.
-  * Not found? The option was deprecated or not exists (check spelling).
-  * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+      return `${formattedError}\n  How to fix:
+  1. Open ${url}
+  2. Search the option name on the page (or type in into Search to find across the docs).
+    * Not found? The option was deprecated or not exists (check spelling).
+    * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
 `
+    },
   })
 }
 
@@ -242,7 +259,7 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     const absolutePath = path.resolve(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)
     if (stat == null) {
-      throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exists`)
+      throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exist`)
     }
     else if (!stat.isDirectory()) {
       throw new InvalidConfigurationError(`Application directory ${userAppDir} is not a directory`)

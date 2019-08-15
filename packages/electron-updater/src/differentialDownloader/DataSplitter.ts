@@ -1,5 +1,5 @@
 import { newError } from "builder-util-runtime"
-import { createReadStream } from "fs-extra-p"
+import { createReadStream } from "fs"
 import { Writable } from "stream"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
 

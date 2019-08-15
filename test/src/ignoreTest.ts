@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"

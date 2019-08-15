@@ -103,7 +103,25 @@ Object {
 }
 `;
 
-exports[`invalid target 1`] = `"ERR_CONFIG_INVALID"`;
+exports[`invalid target 1`] = `
+"Invalid configuration object. electron-builder 0.0.0-semantic-release has been initialised using a configuration object that does not match the API schema.
+ - configuration.mac should be one of these:
+   object { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, target?, type? } | null
+   -> Options related to how build macOS targets.
+   Details:
+    * configuration.mac.target[0] should be an object:
+      object { target, arch? }
+    * configuration.mac.target[0] should be one of these:
+      \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+    * configuration.mac.target[0] should be one of these:
+      object { target, arch? } | \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+     How to fix:
+     1. Open https://www.electron.build/configuration/mac
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+"
+`;
 
 exports[`only zip 1`] = `
 Object {
@@ -319,8 +337,6 @@ Array [
   "Test App ßW.app/Contents/Frameworks/Mantle.framework",
   "Test App ßW.app/Contents/Frameworks/ReactiveCocoa.framework",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app",
   "Test App ßW.app/Contents/MacOS/Test App ßW",
   "Test App ßW.app/Contents/Resources/am.lproj",
@@ -398,8 +414,6 @@ Array [
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Resources",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Squirrel",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app/Contents",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app/Contents",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/Current",
@@ -409,12 +423,6 @@ Array [
   "Test App ßW.app/Contents/Frameworks/ReactiveCocoa.framework/Versions/Current",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/Current",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app/Contents/Info.plist",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app/Contents/MacOS",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app/Contents/PkgInfo",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app/Contents/Info.plist",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app/Contents/MacOS",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app/Contents/PkgInfo",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/Info.plist",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/MacOS",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/PkgInfo",
@@ -433,19 +441,15 @@ Array [
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Modules",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources",
   "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper EH.app/Contents/MacOS/Test App ßW Helper EH",
-  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper NP.app/Contents/MacOS/Test App ßW Helper NP",
   "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/MacOS/Test App ßW Helper",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libnode.dylib",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/blink_image_resources_200_percent.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bn.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ca.lproj",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/content_resources_200_percent.pak",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/content_shell.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_100_percent.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_200_percent.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/crashpad_handler",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/cs.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/da.lproj",
@@ -484,6 +488,7 @@ Array [
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pl.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_BR.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_PT.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/resources.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ro.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ru.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sk.lproj",
@@ -495,11 +500,9 @@ Array [
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/te.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ui_resources_200_percent.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/v8_context_snapshot.bin",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj",
-  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/views_resources_200_percent.pak",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj",
   "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW.lproj",
   "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Headers/Mantle.h",
@@ -707,7 +710,7 @@ XElement {
           "elements": Array [
             XElement {
               "attributes": Object {
-                "min": "10.9.0",
+                "min": "10.10.0",
               },
               "elements": null,
               "isCData": false,

@@ -1,11 +1,11 @@
 import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
-import { PlatformSpecificBuildOptions, DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from "../index"
+import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfiguration } from ".."
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "./ArchiveTarget"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
-export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, options: PlatformSpecificBuildOptions, platform: Platform): Map<Arch, Array<string>> {
+export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platformPackager: PlatformPackager<any>, platform: Platform): Map<Arch, Array<string>> {
   for (const targetNames of raw.values()) {
     if (targetNames.length > 0) {
       // https://github.com/electron-userland/electron-builder/issues/1355
@@ -15,7 +15,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, optio
 
   const defaultArchs: Array<ArchType> = raw.size === 0 ? [platform === Platform.MAC ? "x64" : process.arch as ArchType] : Array.from(raw.keys()).map(it => Arch[it] as ArchType)
   const result = new Map(raw)
-  for (const target of asArray(options.target).map<TargetConfiguration>(it => typeof it === "string" ? {target: it} : it)) {
+  for (const target of asArray(platformPackager.platformSpecificBuildOptions.target).map<TargetConfiguration>(it => typeof it === "string" ? {target: it} : it)) {
     let name = target.target
     let archs = target.arch
     const suffixPos = name.lastIndexOf(":")
@@ -32,8 +32,16 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, optio
   }
 
   if (result.size === 0) {
-    for (const arch of defaultArchs) {
-      result.set(archFromString(arch), [])
+    const defaultTarget = platformPackager.defaultTarget
+    if (raw.size === 0 && platform === Platform.LINUX && (process.platform === "darwin" || process.platform === "win32")) {
+      result.set(Arch.x64, defaultTarget)
+      // cannot enable arm because of native dependencies - e.g. keytar doesn't provide pre-builds for arm
+      // result.set(Arch.armv7l, ["snap"])
+    }
+    else {
+      for (const arch of defaultArchs) {
+        result.set(archFromString(arch), defaultTarget)
+      }
     }
   }
 

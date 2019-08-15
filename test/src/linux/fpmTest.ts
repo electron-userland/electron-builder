@@ -1,6 +1,13 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
+if (process.platform === "win32") {
+  const message = "fpmTest suite — Windows is not supported"
+  fit("Skip " + message, () => {
+    console.info(`[SKIP] ${message}`)
+  })
+}
+
 // "apk" is very slow, don't test for now
 test.ifAll.ifDevOrLinuxCi("targets", app({targets: Platform.LINUX.createTarget(["sh", "freebsd", "pacman", "zip", "7z"])}))
 

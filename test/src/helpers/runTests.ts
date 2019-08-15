@@ -1,5 +1,5 @@
 import { createHash } from "crypto"
-import { emptyDir, readJson, realpathSync, remove } from "fs-extra-p"
+import { emptyDir, readJson, realpathSync, remove } from "fs-extra"
 import isCi from "is-ci"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -121,16 +121,12 @@ async function runTests() {
       else if (scriptArg.startsWith("skip")) {
         if (!isCi) {
           const suffix = scriptArg.substring("skip".length)
-          switch (scriptArg) {
-            case "skipArtifactPublisher": {
-              testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
-              config.cacheDirectory += `-${suffix}`
-            }
-              // noinspection TsLint
-              break
-
-            default:
-              throw new Error(`Unknown opt ${scriptArg}`)
+          if (scriptArg === "skipArtifactPublisher") {
+            testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
+            config.cacheDirectory += `-${suffix}`
+          }
+          else {
+            throw new Error(`Unknown opt ${scriptArg}`)
           }
         }
       }

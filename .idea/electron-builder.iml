@@ -5,7 +5,6 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/_book" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/docs/generated" />
       <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
       <excludeFolder url="file://$MODULE_DIR$/packages/app-builder-lib/out" />
@@ -39,7 +38,6 @@
       <excludeFolder url="file://$MODULE_DIR$/test/out" />
       <excludeFolder url="file://$MODULE_DIR$/test/vendor" />
       <excludePattern pattern="yarn.lock" />
-      <excludePattern pattern="scheme.json" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

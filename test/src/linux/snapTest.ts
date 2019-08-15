@@ -1,13 +1,16 @@
-import { Platform } from "electron-builder"
-import { app, assertPack } from "../helpers/packTester"
+import { Arch, Platform } from "electron-builder"
+import { app, assertPack, snapTarget } from "../helpers/packTester"
 
 if (process.env.SNAP_TEST === "false") {
-  fit("Skip snapTest suite — SNAP_TEST is set to false", () => {
+  fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
     console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
   })
 }
-
-const snapTarget = Platform.LINUX.createTarget("snap")
+else if (process.platform === "win32") {
+  fit("Skip snapTest suite — Windows is not supported", () => {
+    console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
+  })
+}
 
 test.ifAll.ifDevOrLinuxCi("snap", app({
   targets: snapTarget,
@@ -19,17 +22,13 @@ test.ifAll.ifDevOrLinuxCi("snap", app({
   },
 }))
 
-// very slow
-test.skip("snap full", app({
-  targets: snapTarget,
+test.ifAll.ifDevOrLinuxCi("arm", app({
+  targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
   config: {
     extraMetadata: {
-      name: "se-wo-template",
+      name: "sep",
     },
-    productName: "Snap Electron App (full build)",
-    snap: {
-      useTemplateApp: false,
-    },
+    productName: "Sep",
   },
 }))
 
@@ -50,9 +49,10 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
           useTemplateApp: false,
         }
       },
-      effectiveOptionComputed: async ({snap}) => {
+      effectiveOptionComputed: async ({snap, args}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
+        expect(args).not.toContain("--exclude")
         return true
       },
     })
@@ -122,9 +122,10 @@ test.ifDevOrLinuxCi("plugs option", async () => {
           useTemplateApp: false,
         }
       },
-      effectiveOptionComputed: async ({snap}) => {
+      effectiveOptionComputed: async ({snap, args}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
+        expect(args).not.toContain("--exclude")
         return true
       },
     })
@@ -178,8 +179,9 @@ test.ifDevOrLinuxCi("no desktop plugs", app({
       plugs: ["foo", "bar"]
     }
   },
-  effectiveOptionComputed: async ({ snap }) => {
+  effectiveOptionComputed: async ({ snap, args }) => {
     expect(snap).toMatchSnapshot()
+    expect(args).toContain("--exclude")
     return true
   },
 }))

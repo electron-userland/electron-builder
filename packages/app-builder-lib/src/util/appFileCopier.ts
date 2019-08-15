@@ -1,15 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
-import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
-import { ensureDir, readlink, Stats, symlink } from "fs-extra-p"
+import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
+import { ensureDir, readlink, Stats, symlink } from "fs-extra"
 import * as path from "path"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
 import { excludedExts, FileMatcher } from "../fileMatcher"
 import { createElectronCompilerHost, NODE_MODULES_PATTERN } from "../fileTransformer"
-import { executeAppBuilderAsJson } from "./appBuilder"
+import { Packager } from "../packager"
+import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 
@@ -181,20 +180,12 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const args = ["node-dep-tree", "--dir", platformPackager.info.appDir]
-  if (platformPackager.info.framework.getExcludedDependencies != null) {
-    const excludedDependencies = platformPackager.info.framework.getExcludedDependencies(platformPackager.platform)
-    if (excludedDependencies != null) {
-      for (const name of excludedDependencies) {
-        args.push("--exclude-dep", name)
-      }
-    }
-  }
-
-  const deps = await executeAppBuilderAsJson<Array<any>>(args)
+  const deps = await platformPackager.info.getNodeDependencyInfo(platformPackager.platform).value
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
-  // mapSeries instead of map because copyNodeModules is concurrent and so, no need to increase queue/pressure
-  return await BluebirdPromise.mapSeries(deps, async info => {
+  // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
+  const result = new Array<ResolvedFileSet>()
+  let index = 0
+  for (const info of deps) {
     const source = info.dir
     let destination: string
     if (source.length > mainMatcher.from.length && source.startsWith(mainMatcher.from) && source[mainMatcher.from.length] === path.sep) {
@@ -208,10 +199,10 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
     const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const names = info.deps
-    const files = await copier.collectNodeModules(source, names, nodeModuleExcludedExts)
-    return validateFileSet({src: source, destination, files, metadata: copier.metadata})
-  })
+    const files = await copier.collectNodeModules(source, info.deps.map(it => it.name), nodeModuleExcludedExts)
+    result[index++] = validateFileSet({src: source, destination, files, metadata: copier.metadata})
+  }
+  return result
 }
 
 async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {

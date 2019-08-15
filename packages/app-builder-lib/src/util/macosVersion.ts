@@ -1,7 +1,8 @@
-import { readFile } from "fs-extra-p"
+import { readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as semver from "semver"
 import { log } from "builder-util/out/log"
+import { release as osRelease } from "os"
 
 const macOsVersion = new Lazy<string>(async () => {
   const file = await readFile("/System/Library/CoreServices/SystemVersion.plist", "utf8")
@@ -21,10 +22,15 @@ async function isOsVersionGreaterThanOrEqualTo(input: string) {
   return semver.gte(await macOsVersion.value, clean(input))
 }
 
-export function getMacOsVersion() {
-  return macOsVersion.value
+export function isMacOsHighSierra(): boolean {
+  // 17.7.0 === 10.13.6
+  return process.platform === "darwin" && semver.gte(osRelease(), "17.7.0")
 }
 
 export async function isMacOsSierra() {
   return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
+}
+
+export function isMacOsCatalina() {
+  return process.platform === "darwin" && semver.gte(osRelease(), "19.0.0")
 }

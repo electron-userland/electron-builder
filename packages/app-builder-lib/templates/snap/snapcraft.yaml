@@ -1,0 +1,140 @@
+base: core18
+grade: stable
+confinement: strict
+parts:
+  launch-scripts:
+    plugin: dump
+    source: scripts
+  gnome-platform-empty-dirs:
+    plugin: nil
+    override-build: >
+      mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/themes"
+      mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/icons"
+      mkdir -p "$SNAPCRAFT_PART_INSTALL/data-dir/sounds"
+      mkdir $SNAPCRAFT_PART_INSTALL/gnome-platform
+
+  app-files:
+    plugin: dump
+    source: app
+    organize:
+      '*': app/
+    stage:
+      - -app/chrome-sandbox
+      - -LICENSES.chromium.html
+  app:
+    plugin: "nil"
+      # cd ~ && rm -rf ~/squashfs-root && unsquashfs /media/psf/ramdisk/electron-builder-test/dist/__snap-x64/se-wo-template_1.1.0_amd64.snap
+      # comm -12 <(ls ~/squashfs-root/usr/lib/x86_64-linux-gnu/) <(ls /snap/gnome-3-28-1804/current/usr/lib/x86_64-linux-gnu/) > /media/psf/Home/f.txt
+      # run snap-exclude-list.js
+    stage:
+      - '-usr/lib/python*'
+      - '-usr/bin/python*'
+      - '-var/lib/ucf'
+      - '-usr/include'
+      - '-usr/lib/X11'
+      - '-usr/share'
+      - '-usr/sbin'
+      - '-usr/bin'
+      - "-usr/lib/*/libicudata.*"
+      - "-usr/lib/*/libicui18n.*"
+      - "-usr/lib/*/libgtk-*"
+      - "-usr/lib/*/libgdk-*"
+      - "-usr/lib/*/glib-*"
+      - "-usr/lib/*/gtk-*"
+      - "-usr/lib/*/gdk-*"
+      - "-usr/lib/*/krb5"
+      - "-usr/lib/systemd"
+      - "-usr/lib/glib-networking"
+      - "-usr/lib/dconf"
+      - "-usr/lib/*/avahi"
+      - "-usr/lib/*/gio"
+      - "-usr/lib/*/libatk*"
+      - "-usr/lib/*/libatspi*"
+      - "-usr/lib/*/libavahi*"
+      - "-usr/lib/*/libcairo*"
+      - "-usr/lib/*/libcolordprivate*"
+      - "-usr/lib/*/libcolord*"
+      - "-usr/lib/*/libcroco*"
+      - "-usr/lib/*/libcups*"
+      - "-usr/lib/*/libdatrie*"
+      - "-usr/lib/*/libdconf*"
+      - "-usr/lib/*/libepoxy*"
+      - "-usr/lib/*/libexpatw*"
+      - "-usr/lib/*/libffi*"
+      - "-usr/lib/*/libfontconfig*"
+      - "-usr/lib/*/libfreetype*"
+      - "-usr/lib/*/libgdk_pixbuf*"
+      - "-usr/lib/*/libgdk_pixbuf_xlib*"
+      - "-usr/lib/*/libgio*"
+      - "-usr/lib/*/libglib*"
+      - "-usr/lib/*/libgmodule*"
+      - "-usr/lib/*/libgmp*"
+      - "-usr/lib/*/libgnutls*"
+      - "-usr/lib/*/libgobject*"
+      - "-usr/lib/*/libgraphite2*"
+      - "-usr/lib/*/libgssapi_krb5*"
+      - "-usr/lib/*/libgthread*"
+      - "-usr/lib/*/libharfbuzz*"
+      - "-usr/lib/*/libhogweed*"
+      - "-usr/lib/*/libicuio*"
+      - "-usr/lib/*/libicutest*"
+      - "-usr/lib/*/libicutu*"
+      - "-usr/lib/*/libicuuc*"
+      - "-usr/lib/*/libidn2*"
+      - "-usr/lib/*/libjbig*"
+      - "-usr/lib/*/libjpeg*"
+      - "-usr/lib/*/libjson*"
+      - "-usr/lib/*/libk5crypto*"
+      - "-usr/lib/*/libkrb5*"
+      - "-usr/lib/*/libkrb5support*"
+      - "-usr/lib/*/liblcms2*"
+      - "-usr/lib/*/libnettle*"
+      - "-usr/lib/*/libp11*"
+      - "-usr/lib/*/libpango*"
+      - "-usr/lib/*/libpangocairo*"
+      - "-usr/lib/*/libpangoft2*"
+      - "-usr/lib/*/libpixman*"
+      - "-usr/lib/*/libpng16*"
+      - "-usr/lib/*/libproxy*"
+      - "-usr/lib/*/librest*"
+      - "-usr/lib/*/librsvg*"
+      - "-usr/lib/*/libsecret*"
+      - "-usr/lib/*/libsoup*"
+      - "-usr/lib/*/libsqlite3*"
+      - "-usr/lib/*/libtasn1*"
+      - "-usr/lib/*/libthai*"
+      - "-usr/lib/*/libtiff*"
+      - "-usr/lib/*/libunistring*"
+      - "-usr/lib/*/libwayland*"
+      - "-usr/lib/*/libX11*"
+      - "-usr/lib/*/libXau*"
+      - "-usr/lib/*/libxcb*"
+      - "-usr/lib/*/libXcomposite*"
+      - "-usr/lib/*/libXcursor*"
+      - "-usr/lib/*/libXdamage*"
+      - "-usr/lib/*/libXdmcp*"
+      - "-usr/lib/*/libXext*"
+      - "-usr/lib/*/libXfixes*"
+      - "-usr/lib/*/libXinerama*"
+      - "-usr/lib/*/libXi*"
+      - "-usr/lib/*/libxkbcommon*"
+      - "-usr/lib/*/libxml2*"
+      - "-usr/lib/*/libXrandr*"
+      - "-usr/lib/*/libXrender*"
+plugs:
+  gnome-3-28-1804:
+    interface: content
+    target: $SNAP/gnome-platform
+    default-provider: gnome-3-28-1804
+  gtk-3-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes

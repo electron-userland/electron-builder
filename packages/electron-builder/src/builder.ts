@@ -1,40 +1,35 @@
-import { addValue, Arch, archFromString, deepAssign, getArchCliNames, InvalidConfigurationError, log } from "builder-util"
+import { addValue, Arch, archFromString, deepAssign } from "builder-util"
 import chalk from "chalk"
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { PublishOptions } from "electron-publish"
+import yargs from "yargs"
 
-/** @internal */
+export function createYargs() {
+  return yargs
+    .parserConfiguration({
+      "camel-case-expansion": false,
+    })
+}
+
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
 export interface CliOptions extends PackagerOptions, PublishOptions {
-  arch?: string
-
   x64?: boolean
   ia32?: boolean
   armv7l?: boolean
   arm64?: boolean
 
   dir?: boolean
-
-  platform?: string
 }
 
-/** @internal */
+/** @private */
 export function normalizeOptions(args: CliOptions): BuildOptions {
-  if ((args as any).extraMetadata != null) {
-    throw new InvalidConfigurationError("Please specify extraMetadata under config field")
-  }
-
   if (args.targets != null) {
     return args
   }
 
-  if ((args as any).draft != null || (args as any).prerelease != null) {
-    log.warn({solution: "set releaseType (http://electron.build/configuration/publish#GithubOptions-releaseType) in the GitHub publish options"}, "--draft and --prerelease is deprecated")
-  }
-
-  let targets = new Map<Platform, Map<Arch, Array<string>>>()
+  const targets = new Map<Platform, Map<Arch, Array<string>>>()
 
   function processTargets(platform: Platform, types: Array<string>) {
     function commonArch(currentIfNotSpecified: boolean): Array<Arch> {
@@ -57,13 +52,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
 
       return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
-    }
-
-    if (args.platform != null) {
-      throw new InvalidConfigurationError(`--platform cannot be used if --${platform.buildConfigurationKey} is passed`)
-    }
-    if (args.arch != null) {
-      throw new InvalidConfigurationError(`--arch cannot be used if --${platform.buildConfigurationKey} is passed`)
     }
 
     let archToType = targets.get(platform)
@@ -106,12 +94,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   }
 
   if (targets.size === 0) {
-    if (args.platform == null && args.arch == null) {
-      processTargets(Platform.current(), [])
-    }
-    else {
-      targets = createTargets(normalizePlatforms(args.platform), args.dir ? DIR_TARGET : null, args.arch)
-    }
+    processTargets(Platform.current(), [])
   }
 
   const result = {...args}
@@ -121,8 +104,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.mac
   delete result.linux
   delete result.win
-  delete result.platform
-  delete result.arch
 
   const r = result as any
   delete r.m
@@ -163,12 +144,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     result.config = newConfig
   }
 
+  // AJV cannot coerce "null" string to null if string is also allowed (because null string is a valid value)
   if (config != null && typeof config !== "string") {
     if (config.extraMetadata != null) {
       coerceTypes(config.extraMetadata)
     }
+
+    // ability to disable code sign using -c.mac.identity=null
     if (config.mac != null) {
-      // ability to disable code sign using -c.mac.identity=null
       coerceValue(config.mac, "identity")
     }
   }
@@ -229,13 +212,10 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
 
 /**
  * @private
- * @internal
  */
-export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
+export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const publishGroup = "Publishing:"
   const buildGroup = "Building:"
-  const deprecated = "Deprecated:"
-
   return yargs
     .option("mac", {
       group: buildGroup,
@@ -286,28 +266,6 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       description: `Publish artifacts, see ${chalk.underline("https://goo.gl/tSFycD")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
-    .option("draft", {
-      group: deprecated,
-      description: "Please set releaseType in the GitHub publish options instead",
-      type: "boolean",
-      default: undefined,
-    })
-    .option("prerelease", {
-      group: deprecated,
-      description: "Please set releaseType in the GitHub publish options instead",
-      type: "boolean",
-      default: undefined,
-    })
-    .option("platform", {
-      group: deprecated,
-      description: "The target platform (preferred to use --mac, --win or --linux)",
-      choices: ["mac", "win", "linux", "darwin", "win32", "all", undefined as any],
-    })
-    .option("arch", {
-      group: deprecated,
-      description: "The target arch (preferred to use --x64 or --ia32)",
-      choices: getArchCliNames().concat("all", undefined as any),
-    })
     .option("prepackaged", {
       alias: ["pd"],
       group: buildGroup,
@@ -329,26 +287,4 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .example("electron-builder --win --ia32", "build for Windows ia32")
     .example("electron-builder -c.extraMetadata.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
-}
-
-function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | null | undefined): Array<Platform> {
-  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | null | undefined>) : [rawPlatforms]
-  if (platforms as any == null || platforms.length === 0) {
-    return [Platform.fromString(process.platform)]
-  }
-  else if (platforms[0] === "all") {
-    if (process.platform === Platform.MAC.nodeName) {
-      return [Platform.MAC, Platform.LINUX, Platform.WINDOWS]
-    }
-    else if (process.platform === Platform.LINUX.nodeName) {
-      // macOS code sign works only on macOS
-      return [Platform.LINUX, Platform.WINDOWS]
-    }
-    else {
-      return [Platform.WINDOWS]
-    }
-  }
-  else {
-    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
-  }
 }

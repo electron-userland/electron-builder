@@ -1,11 +1,11 @@
-import BluebirdPromise from "bluebird-lst"
 import { asArray, log, spawn } from "builder-util"
-import { exists } from "builder-util/out/fs"
+import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { Dependency } from "./packageDependencies"
+import { executeAppBuilderAndWriteJson } from "./appBuilder"
+import { NodeModuleDirInfo } from "./packageDependencies"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
   const effectiveOptions = {
@@ -13,7 +13,7 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
     additionalArgs: asArray(config.npmArgs), ...options
   }
 
-  if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
+  if (forceInstall || !(await pathExists(path.join(appDir, "node_modules")))) {
     await installDependencies(appDir, effectiveOptions)
   }
   else {
@@ -44,6 +44,9 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
     npm_config_fallback_to_build: true,
   }
 
+  if (platform !== process.platform) {
+    common.npm_config_force = "true"
+  }
   if (platform === "win32") {
     common.npm_config_target_libc = "unknown"
   }
@@ -55,7 +58,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   // https://github.com/nodejs/node-gyp/issues/21
   return {
     ...common,
-    npm_config_disturl: "https://atom.io/download/electron",
+    npm_config_disturl: "https://electronjs.org/headers",
     npm_config_target: frameworkInfo.version,
     npm_config_runtime: "electron",
     npm_config_devdir: getElectronGypCacheDir(),
@@ -113,7 +116,7 @@ function isRunningYarn(execPath: string | null | undefined) {
 
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps?: Lazy<Array<Dependency>>
+  productionDeps?: Lazy<Array<NodeModuleDirInfo>>
 
   platform?: NodeJS.Platform
   arch?: string
@@ -125,60 +128,16 @@ export interface RebuildOptions {
 
 /** @internal */
 export async function rebuild(appDir: string, options: RebuildOptions) {
-  const nativeDeps = await BluebirdPromise.filter(await options.productionDeps!.value, it => exists(path.join(it.path, "binding.gyp")), {concurrency: 8})
-  if (nativeDeps.length === 0) {
-    log.info("no native production dependencies")
-    return
+  const configuration: any = {
+    dependencies: await options.productionDeps!!.value,
+    nodeExecPath: process.execPath,
+    platform: options.platform || process.platform,
+    arch: options.arch || process.arch,
+    additionalArgs: options.additionalArgs,
+    execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
+    buildFromSource: options.buildFromSource === true,
   }
 
-  const platform = options.platform || process.platform
-  const arch = options.arch || process.arch
-  const additionalArgs = options.additionalArgs
-
-  log.info({platform, arch}, "rebuilding native production dependencies")
-
-  let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const isYarn = isRunningYarn(execPath)
-  const execArgs: Array<string> = []
-  if (execPath == null) {
-    execPath = getPackageToolPath()
-  }
-  else {
-    execArgs.push(execPath)
-    execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
-  }
-
-  const env = getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true)
-  if (isYarn) {
-    execArgs.push("run", "install")
-    if (additionalArgs != null) {
-      execArgs.push(...additionalArgs)
-    }
-    await BluebirdPromise.map(nativeDeps, dep => {
-      log.info({name: dep.name}, `rebuilding native dependency`)
-      return spawn(execPath!, execArgs, {
-        cwd: dep.path,
-        env,
-      })
-        .catch(error => {
-          if (dep.optional) {
-            log.warn({dep: dep.name}, "cannot build optional native dep")
-          }
-          else {
-            throw error
-          }
-        })
-    }, {concurrency: process.platform === "win32" ? 1 : 2})
-  }
-  else {
-    execArgs.push("rebuild")
-    if (additionalArgs != null) {
-      execArgs.push(...additionalArgs)
-    }
-    execArgs.push(...nativeDeps.map(it => `${it.name}@${it.version}`))
-    await spawn(execPath, execArgs, {
-      cwd: appDir,
-      env,
-    })
-  }
+  const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
+  await executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, {env, cwd: appDir})
 }

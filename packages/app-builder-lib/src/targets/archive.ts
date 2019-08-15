@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import { debug7z, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
-import { move } from "fs-extra-p"
+import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"

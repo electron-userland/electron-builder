@@ -2,9 +2,10 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, isEnvTrue, log, InvalidConfigurationError } from "builder-util"
 import * as path from "path"
 import { UploadTask } from "electron-publish/out/publisher"
-import { Target, TargetSpecificOptions } from "../core"
+import { Platform, Target, TargetSpecificOptions } from "../core"
+import { LinuxPackager } from "../linuxPackager"
 import { ArtifactCreated } from "../packagerApi"
-import { PlatformPackager } from "../platformPackager"
+import { isSafeToUnpackElectronOnRemoteBuildServer, PlatformPackager } from "../platformPackager"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { ProjectInfoManager } from "./ProjectInfoManager"
 
@@ -24,7 +25,7 @@ export class RemoteBuilder {
 
   scheduleBuild(target: Target, arch: Arch, unpackedDirectory: string) {
     if (!isEnvTrue(process.env._REMOTE_BUILD) && this.packager.config.remoteBuild === false) {
-      throw new Error("Target is not supported on your OS and using of Electron Build Service is disabled (\"remoteBuild\" option)")
+      throw new InvalidConfigurationError("Target is not supported on your OS and using of Electron Build Service is disabled (\"remoteBuild\" option)")
     }
 
     let list = this.toBuild.get(arch)
@@ -61,8 +62,7 @@ export class RemoteBuilder {
 
     const projectInfoManager = new ProjectInfoManager(packager.info)
 
-    // let result: RemoteBuilderResponse | null = null
-    const req = Buffer.from(JSON.stringify({
+    const buildRequest: any = {
       targets: targets.map(it => {
         return {
           name: it.name,
@@ -71,7 +71,20 @@ export class RemoteBuilder {
         }
       }),
       platform: packager.platform.buildConfigurationKey,
-    })).toString("base64")
+    }
+
+    if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
+      buildRequest.electronDownload = {
+        version: packager.info.framework.version,
+        platform: Platform.LINUX.nodeName,
+        arch: targets[0].arch,
+      }
+
+      const linuxPackager = (packager as LinuxPackager)
+      buildRequest.executableName = linuxPackager.executableName
+    }
+
+    const req = Buffer.from(JSON.stringify(buildRequest)).toString("base64")
     const outDir = targets[0].outDir
     const args = ["remote-build", "--request", req, "--output", outDir]
 
@@ -126,9 +139,4 @@ interface ArtifactInfo extends UploadTask {
 
   readonly isWriteUpdateInfo?: boolean
   readonly updateInfo?: any
-}
-
-export interface RemoteBuilderResponse {
-  files: Array<ArtifactInfo> | null
-  error: string | null
 }

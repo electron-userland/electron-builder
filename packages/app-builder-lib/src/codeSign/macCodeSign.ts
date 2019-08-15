@@ -2,14 +2,13 @@ import BluebirdPromise from "bluebird-lst"
 import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir } from "builder-util/out/util"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
-import { randomBytes } from "crypto"
-import { rename } from "fs-extra-p"
+import { randomBytes, createHash } from "crypto"
+import { rename } from "fs-extra"
 import { Lazy } from "lazy-val"
-import { homedir } from "os"
+import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { isMacOsSierra } from "../util/macosVersion"
 import { downloadCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
@@ -17,7 +16,7 @@ export const appleCertificatePrefixes = ["Developer ID Application:", "Developer
 export type CertType = "Developer ID Application" | "Developer ID Installer" | "3rd Party Mac Developer Application" | "3rd Party Mac Developer Installer" | "Mac Developer"
 
 export interface CodeSigningInfo {
-  keychainName?: string | null
+  keychainFile?: string | null
 }
 
 export function isSignAllowed(isPrintWarn = true): boolean {
@@ -50,7 +49,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined, isForceCodeSigning: boolean) {
+export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainFile: string | null | undefined, isForceCodeSigning: boolean) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""
@@ -68,8 +67,8 @@ export async function reportError(isMas: boolean, certificateType: CertType, qua
   }
 
   const args = ["find-identity"]
-  if (keychainName != null) {
-    args.push(keychainName)
+  if (keychainFile != null) {
+    args.push(keychainFile)
   }
 
   if (qualifier != null || isAutoDiscoveryCodeSignIdentity()) {
@@ -133,14 +132,14 @@ export interface CreateKeychainOptions {
   currentDir: string
 }
 
-async function removeKeychain(keychainFile: string) {
-  try {
-    await exec("security", ["delete-keychain", keychainFile])
-  }
-  catch (e) {
-    console.warn(`Cannot delete keychain ${keychainFile}: ${e.stack || e}`)
-    await unlinkIfExists(keychainFile)
-  }
+export function removeKeychain(keychainFile: string, printWarn = true): Promise<any> {
+  return exec("security", ["delete-keychain", keychainFile])
+    .catch(e => {
+      if (printWarn) {
+        log.warn({file: keychainFile, error: e.stack || e}, "cannot delete keychain")
+      }
+      return unlinkIfExists(keychainFile)
+    })
 }
 
 export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
@@ -149,7 +148,11 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     await bundledCertKeychainAdded.value
   }
 
-  const keychainFile = await tmpDir.getTempFile({suffix: ".keychain", disposer: removeKeychain})
+  // https://github.com/electron-userland/electron-builder/issues/3685
+  // use constant file
+  const keychainFile = path.join(process.env.APP_BUILDER_TMP_DIR || tmpdir(), `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`)
+  // noinspection JSUnusedLocalSymbols
+  await removeKeychain(keychainFile, false).catch(_ => {/* ignore*/})
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -157,7 +160,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   }
 
   const certPaths = new Array(certLinks.length)
-  const keychainPassword = randomBytes(8).toString("base64")
+  const keychainPassword = randomBytes(32).toString("base64")
   const securityCommands = [
     ["create-keychain", "-p", keychainPassword, keychainFile],
     ["unlock-keychain", "-p", keychainPassword, keychainFile],
@@ -179,20 +182,18 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
 }
 
-async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
+async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
     const password = keyPasswords[i]
-    await exec("security", ["import", paths[i], "-k", keychainName, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
+    await exec("security", ["import", paths[i], "-k", keychainFile, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
     // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
     // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
-    if (await isMacOsSierra()) {
-      await exec("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainName])
-    }
+    await exec("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainFile])
   }
 
   return {
-    keychainName,
+    keychainFile,
   }
 }
 
@@ -293,7 +294,7 @@ export declare class Identity {
   constructor(name: string, hash: string)
 }
 
-const _Identity = require("electron-osx-sign/util-identities").Identity
+const _Identity = require("../../electron-osx-sign/util-identities").Identity
 
 function parseIdentity(line: string): Identity {
   const firstQuoteIndex = line.indexOf('"')

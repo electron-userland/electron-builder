@@ -1,6 +1,7 @@
 import { DebugLogger } from "builder-util/out/DebugLogger"
-import { Platform } from "electron-builder"
+import { Configuration, Platform } from "electron-builder"
 import { validateConfig } from "app-builder-lib/out/util/config"
+import { createYargs, configureBuildCommand, normalizeOptions, CliOptions } from "electron-builder/out/builder"
 import { app, appThrows, linuxDirTarget } from "./helpers/packTester"
 
 test.ifAll.ifDevOrLinuxCi("validation", appThrows({
@@ -11,7 +12,7 @@ test.ifAll.ifDevOrLinuxCi("validation", appThrows({
       foo: 12123,
     },
   } as any,
-}))
+}, undefined, error => error.message.includes("configuration has an unknown property 'foo'")))
 
 test.skip.ifDevOrLinuxCi("appId as object", appThrows({
   targets: linuxDirTarget,
@@ -62,4 +63,13 @@ test.ifAll.ifDevOrLinuxCi("files", () => {
       icon: "build/icon.ico"
     }
   }, new DebugLogger())
+})
+
+test.ifAll.ifDevOrLinuxCi("null string as null", async () => {
+  const yargs = configureBuildCommand(createYargs())
+  const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
+  const config = options.config as Configuration
+  await validateConfig(config, new DebugLogger())
+  expect(config.mac!!.identity).toBeNull()
+  expect(config.mac!!.hardenedRuntime).toBe(false)
 })

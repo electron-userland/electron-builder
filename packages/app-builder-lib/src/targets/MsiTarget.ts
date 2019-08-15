@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
-import { getBinFromGithub } from "../binDownload"
+import { getBinFromUrl } from "../binDownload"
 import { walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
-import { readFile, writeFile } from "fs-extra-p"
+import { readFile, writeFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
@@ -71,7 +71,7 @@ export default class MsiTarget extends Target {
     }
 
     // noinspection SpellCheckingInspection
-    const vendorPath = await getBinFromGithub("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
+    const vendorPath = await getBinFromUrl("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
 
     // noinspection SpellCheckingInspection
     const candleArgs = [
@@ -237,7 +237,7 @@ export default class MsiTarget extends Target {
         result += `${fileSpace}</File>`
 
         if (hasMenuCategory) {
-          result += `<RemoveFolder Id="${startMenuShortcutDirectoryId}" On="uninstall"/>\n`
+          result += `<RemoveFolder Id="${startMenuShortcutDirectoryId}" Directory="${startMenuShortcutDirectoryId}" On="uninstall"/>\n`
         }
       }
       else {

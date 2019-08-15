@@ -1,5 +1,5 @@
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { move } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 import { appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 
@@ -42,7 +42,7 @@ test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", appTw
 test.ifLinuxOrDevMac("main in the app package.json (no asar)", () => assertPack("test-app", packagerOptions, {
   projectDirCreated: projectDir => {
     return Promise.all([
-      move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
+      fs.rename(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
       modifyPackageJson(projectDir, data => {
         data.main = "main.js"
       }, true),

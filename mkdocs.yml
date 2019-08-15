@@ -16,6 +16,9 @@ edit_uri: ""
 dev_addr: 0.0.0.0:8000
 strict: true
 
+extra_javascript:
+  - extra.js
+
 markdown_extensions:
   - admonition
   - smarty
@@ -74,3 +77,4 @@ nav:
       - Two package.json Structure: tutorials/two-package-structure.md
       - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md
       - Release Using Channels: tutorials/release-using-channels.md
+      - Sign a Windows app on macOS/Linux: tutorials/code-signing-windows-apps-on-unix.md

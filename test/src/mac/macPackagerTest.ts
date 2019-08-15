@@ -1,6 +1,6 @@
 import { copyOrLinkFile } from "builder-util/out/fs"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { readdir } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
@@ -21,7 +21,7 @@ test.ifMac.ifAll("two-package", () => assertPack("test-app", {
 }, {
   signed: true,
   checkMacApp: async appDir => {
-    expect((await readdir(path.join(appDir, "Contents", "Resources")))
+    expect((await fs.readdir(path.join(appDir, "Contents", "Resources")))
       .filter(it => !it.startsWith("."))
       .sort()).toMatchSnapshot()
   },

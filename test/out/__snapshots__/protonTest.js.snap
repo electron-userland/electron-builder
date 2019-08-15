@@ -5,8 +5,8 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "notepad 1.0.0.AppImage",
-      "safeArtifactName": "notepad-1.0.0-x86_64.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -22,14 +22,16 @@ Object {
   "mac": Array [
     Object {
       "arch": "x64",
-      "file": "notepad-1.0.0.dmg",
+      "file": "Test App ßW-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "notepad-1.0.0.dmg.blockmap",
+      "file": "Test App ßW-1.1.0.dmg.blockmap",
+      "safeArtifactName": "TestApp-1.1.0.dmg.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -41,12 +43,13 @@ Object {
 
 exports[`mac 2`] = `
 Object {
-  "CFBundleDisplayName": "notepad",
-  "CFBundleExecutable": "notepad",
-  "CFBundleIconFile": "notepad.icns",
-  "CFBundleIdentifier": "com.proton-native.notepad",
-  "CFBundleName": "notepad",
-  "CFBundleShortVersionString": "1.0.0",
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleName": "Test App ßW",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
   "NSHighResolutionCapable": true,
 }
 `;
@@ -56,16 +59,16 @@ Object {
   "win": Array [
     Object {
       "arch": "x64",
-      "file": "notepad Setup 1.0.0.exe",
-      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "notepad Setup 1.0.0.exe.blockmap",
-      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -80,16 +83,16 @@ Object {
   "win": Array [
     Object {
       "arch": "ia32",
-      "file": "notepad Setup 1.0.0.exe",
-      "safeArtifactName": "notepad-setup-1.0.0.exe",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "notepad Setup 1.0.0.exe.blockmap",
-      "safeArtifactName": "notepad-setup-1.0.0.exe.blockmap",
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

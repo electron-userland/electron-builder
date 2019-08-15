@@ -1,5 +1,5 @@
 import { orNullIfFileNotExist } from "builder-util/out/promise"
-import { readFile } from "fs-extra-p"
+import { readFile } from "fs-extra"
 import { fromUrl, Info } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"

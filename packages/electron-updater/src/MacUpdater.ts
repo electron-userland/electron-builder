@@ -1,5 +1,6 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { createReadStream, stat } from "fs-extra-p"
+import { stat } from "fs-extra"
+import { createReadStream } from "fs"
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"

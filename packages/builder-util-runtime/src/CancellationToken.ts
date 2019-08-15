@@ -116,6 +116,6 @@ export class CancellationToken extends EventEmitter {
 
 export class CancellationError extends Error {
   constructor() {
-    super("Cancelled")
+    super("cancelled")
   }
 }

@@ -1,4 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows } from "../helpers/packTester"
@@ -11,61 +12,72 @@ test("parseDn", () => {
   expect(safeLoad("publisherName:\n  - 7digital Limited")).toMatchObject({publisherName: ["7digital Limited"]})
 })
 
-describe.ifAll("sign", () => {
-  const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
+const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-  function testCustomSign(sign: any) {
-    return app({
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-      platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
-      config: {
-        win: {
-          certificatePassword: "pass",
-          certificateFile: "secretFile",
-          sign,
-          signingHashAlgorithms: ["sha256"],
-          // to be sure that sign code will be executed
-          forceCodeSigning: true,
-        }
-      },
-    })
+test("sign nested asar unpacked executables", appThrows({
+  targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+  config: {
+    publish: "never",
+    asarUnpack: ["assets"],
   }
+}, {
+  signedWin: true,
+  projectDirCreated: async projectDir => {
+    await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
+  },
+}, error => expect(error.message).toContain("Unrecognized file type")))
 
-  test.ifNotCiMac("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
-  test.ifNotCiMac("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+function testCustomSign(sign: any) {
+  return app({
+    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
+    config: {
+      win: {
+        certificatePassword: "pass",
+        certificateFile: "secretFile",
+        sign,
+        signingHashAlgorithms: ["sha256"],
+        // to be sure that sign code will be executed
+        forceCodeSigning: true,
+      }
+    },
+  })
+}
 
-  test.ifNotCiMac("custom sign if no code sign info", () => {
-    let called = false
-    return app({
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-      platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
-      config: {
-        win: {
-          // to be sure that sign code will be executed
-          forceCodeSigning: true,
-          sign: async () => {
-            called = true
-          },
+test.ifAll.ifNotCiMac("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
+test.ifAll.ifNotCiMac("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
+
+test.ifAll.ifNotCiMac("custom sign if no code sign info", () => {
+  let called = false
+  return app({
+    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    platformPackagerFactory: (packager, platform) => new CheckingWinPackager(packager),
+    config: {
+      win: {
+        // to be sure that sign code will be executed
+        forceCodeSigning: true,
+        sign: async () => {
+          called = true
         },
       },
-    }, {
-      packed: async () => {
-        expect(called).toBe(true)
-      }
-    })()
-  })
-
-  test.ifNotCiMac("forceCodeSigning", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      forceCodeSigning: true,
+    },
+  }, {
+    packed: async () => {
+      expect(called).toBe(true)
     }
-  }))
-
-  test.ifNotCiMac("electronDist", appThrows({
-    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-    config: {
-      electronDist: "foo",
-    }
-  }))
+  })()
 })
+
+test.ifAll.ifNotCiMac("forceCodeSigning", appThrows({
+  targets: windowsDirTarget,
+  config: {
+    forceCodeSigning: true,
+  }
+}))
+
+test.ifAll.ifNotCiMac("electronDist", appThrows({
+  targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+  config: {
+    electronDist: "foo",
+  }
+}))

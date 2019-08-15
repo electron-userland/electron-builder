@@ -142,7 +142,7 @@ Function uninstallOldVersion
     Goto Done
   ${endif}
 
-  !insertmacro moveFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
+  !insertmacro copyFile "$uninstallerFileName" "$PLUGINSDIR\old-uninstaller.exe"
   StrCpy $uninstallerFileName "$PLUGINSDIR\old-uninstaller.exe"
 
   ${if} $installMode == "CurrentUser"
@@ -170,8 +170,12 @@ Function uninstallOldVersion
     StrCpy $0 "$0 --updated"
   ${endif}
 
-  ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir'
-
+  ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
+  ${if} $R0 != 0
+    DetailPrint `Aborting, uninstall was not successful. Uninstaller error code: $R0.`
+    SetErrorLevel 5
+    Abort "Cannot uninstall"
+  ${endif}
   Done:
 FunctionEnd
 

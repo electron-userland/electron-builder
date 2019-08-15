@@ -4,7 +4,7 @@ require("source-map-support").install()
 
 const globby = require("globby")
 const path = require("path")
-const fs = require("fs-extra-p")
+const fs = require("fs-extra")
 const jsdoc2md = require("jsdoc-to-markdown")
 const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")
@@ -215,10 +215,8 @@ async function render2(files, jsdoc2MdOptions) {
     }),
 
     new Page("generated/s3-options.md", "S3Options"),
-
-    new Page("generated/spaces-options.md", null, {
-      "SpacesOptions": "",
-    }),
+    new Page("generated/snap-store-options.md", null, {"SnapStoreOptions": ""}),
+    new Page("generated/spaces-options.md", null, {"SpacesOptions": ""}),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),
     new Page("generated/DebOptions.md", "DebOptions"),

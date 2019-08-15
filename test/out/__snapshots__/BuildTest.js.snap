@@ -25,15 +25,15 @@ exports[`build in the app package.json 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONF
 
 exports[`cli 1`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "mac",
       "name": "mac",
       "nodeName": "darwin",
     } => Map {
-      1 => Array [],
+      1 => Array [
+        "dir",
+      ],
     },
   },
 }
@@ -41,49 +41,45 @@ Object {
 
 exports[`cli 2`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {
-      1 => Array [
-        "dir",
-      ],
-    },
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {},
   },
 }
 `;
 
 exports[`cli 3`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "dir",
-      ],
-    },
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {},
   },
 }
 `;
 
 exports[`cli 4`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {},
     Platform {
       "buildConfigurationKey": "linux",
       "name": "linux",
       "nodeName": "linux",
+    } => Map {},
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
     } => Map {},
   },
 }
@@ -91,46 +87,6 @@ Object {
 
 exports[`cli 5`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "win",
-      "name": "windows",
-      "nodeName": "win32",
-    } => Map {},
-  },
-}
-`;
-
-exports[`cli 6`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "mac",
-      "name": "mac",
-      "nodeName": "darwin",
-    } => Map {},
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {},
-    Platform {
-      "buildConfigurationKey": "win",
-      "name": "windows",
-      "nodeName": "win32",
-    } => Map {},
-  },
-}
-`;
-
-exports[`cli 7`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "linux",
@@ -145,46 +101,40 @@ Object {
 }
 `;
 
+exports[`cli 6`] = `
+Object {
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
+exports[`cli 7`] = `
+Object {
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
 exports[`cli 8`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "tar.gz",
-      ],
-    },
-  },
-}
-`;
-
-exports[`cli 9`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
-  "targets": Map {
-    Platform {
-      "buildConfigurationKey": "linux",
-      "name": "linux",
-      "nodeName": "linux",
-    } => Map {
-      1 => Array [
-        "tar.gz",
-      ],
-    },
-  },
-}
-`;
-
-exports[`cli 10`] = `
-Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",
@@ -199,10 +149,8 @@ Object {
 }
 `;
 
-exports[`cli 11`] = `
+exports[`cli 9`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "publish": "always",
   "targets": Map {
     Platform {
@@ -216,11 +164,9 @@ Object {
 }
 `;
 
-exports[`cli 12`] = `
+exports[`cli 10`] = `
 Object {
-  "draft": undefined,
   "prepackaged": "someDir",
-  "prerelease": undefined,
   "targets": Map {
     Platform {
       "buildConfigurationKey": "win",
@@ -233,10 +179,8 @@ Object {
 }
 `;
 
-exports[`cli 13`] = `
+exports[`cli 11`] = `
 Object {
-  "draft": undefined,
-  "prerelease": undefined,
   "projectDir": "someDir",
   "targets": Map {
     Platform {
@@ -295,7 +239,7 @@ Object {
       "size": 841,
     },
     "index.js": Object {
-      "size": 4057,
+      "size": 4184,
     },
     "node_modules": Object {
       "files": Object {
@@ -361,6 +305,23 @@ Object {
             "bl.js": Object {
               "size": 6400,
             },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1585,
+                    },
+                    "package.json": Object {
+                      "size": 500,
+                    },
+                  },
+                },
+              },
+            },
             "package.json": Object {
               "size": 741,
             },
@@ -402,7 +363,7 @@ Object {
               "size": 765,
             },
             "chownr.js": Object {
-              "size": 2488,
+              "size": 3512,
             },
             "package.json": Object {
               "size": 402,
@@ -466,7 +427,7 @@ Object {
             "dist": Object {
               "files": Object {
                 "debug.js": Object {
-                  "size": 26324,
+                  "size": 27572,
                 },
               },
             },
@@ -479,7 +440,7 @@ Object {
                   "size": 5831,
                 },
                 "common.js": Object {
-                  "size": 5874,
+                  "size": 5930,
                 },
                 "index.js": Object {
                   "size": 314,
@@ -768,13 +729,13 @@ Object {
               "size": 749,
             },
             "inherits.js": Object {
-              "size": 192,
+              "size": 250,
             },
             "inherits_browser.js": Object {
-              "size": 672,
+              "size": 753,
             },
             "package.json": Object {
-              "size": 393,
+              "size": 394,
             },
           },
         },
@@ -845,7 +806,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 790,
+              "size": 791,
             },
           },
         },
@@ -919,7 +880,7 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 3034,
+              "size": 3023,
             },
             "license.md": Object {
               "size": 1077,
@@ -937,13 +898,13 @@ Object {
             "doc": Object {
               "files": Object {
                 "asyncworker.md": Object {
-                  "size": 4605,
+                  "size": 5348,
                 },
                 "buffers.md": Object {
                   "size": 2121,
                 },
                 "callback.md": Object {
-                  "size": 1513,
+                  "size": 2633,
                 },
                 "converters.md": Object {
                   "size": 1950,
@@ -952,37 +913,37 @@ Object {
                   "size": 7404,
                 },
                 "json.md": Object {
-                  "size": 1941,
+                  "size": 1944,
                 },
                 "maybe_types.md": Object {
-                  "size": 22056,
+                  "size": 22401,
                 },
                 "methods.md": Object {
-                  "size": 27014,
+                  "size": 27247,
                 },
                 "new.md": Object {
                   "size": 4859,
                 },
                 "node_misc.md": Object {
-                  "size": 2240,
+                  "size": 5704,
                 },
                 "object_wrappers.md": Object {
-                  "size": 8204,
+                  "size": 8226,
                 },
                 "persistent.md": Object {
-                  "size": 10837,
+                  "size": 10889,
                 },
                 "scopes.md": Object {
                   "size": 2362,
                 },
                 "script.md": Object {
-                  "size": 1279,
+                  "size": 1287,
                 },
                 "string_bytes.md": Object {
                   "size": 1900,
                 },
                 "v8_internals.md": Object {
-                  "size": 7405,
+                  "size": 7388,
                 },
                 "v8_misc.md": Object {
                   "size": 2914,
@@ -993,13 +954,13 @@ Object {
               "size": 55,
             },
             "nan.h": Object {
-              "size": 72616,
+              "size": 87801,
             },
             "nan_callbacks.h": Object {
               "size": 3089,
             },
             "nan_callbacks_12_inl.h": Object {
-              "size": 17501,
+              "size": 17536,
             },
             "nan_callbacks_pre_12_inl.h": Object {
               "size": 17085,
@@ -1008,31 +969,34 @@ Object {
               "size": 2109,
             },
             "nan_converters_43_inl.h": Object {
-              "size": 1728,
+              "size": 2748,
             },
             "nan_converters_pre_43_inl.h": Object {
               "size": 1254,
             },
+            "nan_define_own_property_helper.h": Object {
+              "size": 1027,
+            },
             "nan_implementation_12_inl.h": Object {
-              "size": 14156,
+              "size": 15054,
             },
             "nan_implementation_pre_12_inl.h": Object {
               "size": 7943,
             },
             "nan_json.h": Object {
-              "size": 5473,
+              "size": 5772,
             },
             "nan_maybe_43_inl.h": Object {
-              "size": 12082,
+              "size": 12375,
             },
             "nan_maybe_pre_43_inl.h": Object {
-              "size": 8415,
+              "size": 7161,
             },
             "nan_new.h": Object {
               "size": 8786,
             },
             "nan_object_wrap.h": Object {
-              "size": 4097,
+              "size": 4128,
             },
             "nan_persistent_12_inl.h": Object {
               "size": 3873,
@@ -1050,10 +1014,10 @@ Object {
               "size": 2866,
             },
             "nan_weak.h": Object {
-              "size": 14998,
+              "size": 15354,
             },
             "package.json": Object {
-              "size": 505,
+              "size": 507,
             },
             "tools": Object {
               "files": Object {
@@ -1099,7 +1063,7 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 4626,
+              "size": 4896,
             },
             "package.json": Object {
               "size": 524,
@@ -1207,13 +1171,13 @@ Object {
             },
             "bin.js": Object {
               "executable": true,
-              "size": 2255,
+              "size": 2570,
             },
             "download.js": Object {
               "size": 3611,
             },
             "error.js": Object {
-              "size": 330,
+              "size": 355,
             },
             "help.txt": Object {
               "size": 867,
@@ -1225,23 +1189,23 @@ Object {
               "size": 232,
             },
             "package.json": Object {
-              "size": 1158,
+              "size": 1137,
             },
             "proxy.js": Object {
               "size": 1079,
             },
             "rc.js": Object {
-              "size": 2339,
+              "size": 2477,
             },
             "util.js": Object {
-              "size": 3007,
+              "size": 3034,
             },
           },
         },
         "process-nextick-args": Object {
           "files": Object {
             "index.js": Object {
-              "size": 1045,
+              "size": 1083,
             },
             "license.md": Object {
               "size": 1064,
@@ -1416,18 +1380,18 @@ Object {
               "files": Object {
                 "semver": Object {
                   "executable": true,
-                  "size": 4784,
+                  "size": 4418,
                 },
               },
             },
             "package.json": Object {
-              "size": 358,
+              "size": 407,
             },
             "range.bnf": Object {
               "size": 619,
             },
             "semver.js": Object {
-              "size": 37959,
+              "size": 38803,
             },
           },
         },
@@ -1618,6 +1582,23 @@ Object {
             "index.js": Object {
               "size": 6884,
             },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1585,
+                    },
+                    "package.json": Object {
+                      "size": 500,
+                    },
+                  },
+                },
+              },
+            },
             "package.json": Object {
               "size": 542,
             },
@@ -1739,11 +1720,8 @@ Object {
         },
         "xtend": Object {
           "files": Object {
-            "LICENCE": Object {
-              "size": 1056,
-            },
-            "Makefile": Object {
-              "size": 49,
+            "LICENSE": Object {
+              "size": 1078,
             },
             "immutable.js": Object {
               "size": 384,
@@ -1759,7 +1737,7 @@ Object {
       },
     },
     "package.json": Object {
-      "size": 349,
+      "size": 350,
     },
   },
 }
@@ -1805,7 +1783,7 @@ Object {
       "size": 841,
     },
     "index.js": Object {
-      "size": 4057,
+      "size": 4184,
     },
     "node_modules": Object {
       "files": Object {

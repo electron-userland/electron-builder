@@ -1,7 +1,6 @@
 import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { spawn } from "child_process"
 import * as path from "path"
-import "source-map-support/register"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
@@ -9,7 +8,7 @@ import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDo
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./providers/Provider"
-import { unlink } from "fs-extra-p"
+import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 

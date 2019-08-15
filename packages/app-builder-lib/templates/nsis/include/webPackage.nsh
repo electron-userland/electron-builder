@@ -28,8 +28,19 @@
   ${endif}
 
   download:
-  inetc::get /USERAGENT "electron-builder (Mozilla)" /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+  inetc::get /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
   Pop $0
+
+  ${if} $0 == "Cancelled"
+    Quit
+  ${endif}
+
+  ${if} $0 != "OK"
+    # try without proxy
+    inetc::get /NOPROXY /USERAGENT "electron-builder (Mozilla)" /HEADER "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    Pop $0
+  ${endif}
+
   ${if} $0 == "Cancelled"
     quit
   ${elseif} $0 != "OK"

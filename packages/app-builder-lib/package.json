@@ -7,11 +7,13 @@
     "out",
     "templates",
     "scheme.json",
-    "certs/root_certs.keychain"
+    "electron-osx-sign",
+    "certs/root_certs.keychain",
+    "electron-osx-sign"
   ],
   "repository": "electron-userland/electron-builder",
   "engines": {
-    "node": ">=6.11.4"
+    "node": ">=8.12.0"
   },
   "keywords": [
     "electron",
@@ -41,30 +43,28 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "7zip-bin": "~4.1.0",
-    "app-builder-bin": "2.6.1",
+    "7zip-bin": "~5.0.3",
     "async-exit-hook": "^2.0.1",
-    "bluebird-lst": "^1.0.6",
+    "bluebird-lst": "^1.0.9",
     "chromium-pickle-js": "^0.2.0",
     "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "0.0.0-semantic-release",
-    "electron-osx-sign": "0.4.11",
     "electron-publish": "0.0.0-semantic-release",
-    "fs-extra-p": "^7.0.0",
+    "fs-extra": "^8.1.0",
     "hosted-git-info": "^2.7.1",
     "is-ci": "^2.0.0",
-    "isbinaryfile": "^3.0.3",
-    "js-yaml": "^3.12.0",
-    "read-config-file": "3.2.0",
+    "isbinaryfile": "^4.0.2",
+    "js-yaml": "^3.13.1",
+    "read-config-file": "5.0.0",
     "minimatch": "^3.0.4",
-    "normalize-package-data": "^2.4.0",
-    "plist": "^3.0.1",
-    "sanitize-filename": "^1.6.1",
-    "semver": "^5.6.0",
-    "debug": "^4.1.0",
-    "lazy-val": "^1.0.3",
-    "temp-file": "^3.3.2",
-    "ejs": "^2.6.1"
+    "normalize-package-data": "^2.5.0",
+    "sanitize-filename": "^1.6.2",
+    "@develar/schema-utils": "~2.1.0",
+    "semver": "^6.3.0",
+    "debug": "^4.1.1",
+    "lazy-val": "^1.0.4",
+    "temp-file": "^3.3.4",
+    "ejs": "^2.6.2"
   },
   "typings": "./out/index.d.ts"
 }

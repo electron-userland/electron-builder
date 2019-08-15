@@ -1,5 +1,5 @@
 import { Arch, archFromString, Platform } from "electron-builder"
-import { writeFile } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
@@ -129,7 +129,7 @@ test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await writeFile(path.join(projectDir, "build", "release-notes.md"), "New release with new bugs and\n\nwithout features")
+    await fs.writeFile(path.join(projectDir, "build", "release-notes.md"), "New release with new bugs and\n\nwithout features")
     await copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
   },
   packed: async context => {

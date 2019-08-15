@@ -1,8 +1,8 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
 import { execFileSync, spawn } from "child_process"
-import { chmod, unlinkSync } from "fs-extra-p"
+import { chmod } from "fs-extra"
+import { unlinkSync } from "fs"
 import * as path from "path"
-import "source-map-support/register"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
@@ -13,7 +13,7 @@ export class AppImageUpdater extends BaseUpdater {
     super(options, app)
   }
 
-  protected isUpdaterActive(): boolean {
+  public isUpdaterActive(): boolean {
     if (process.env.APPIMAGE == null) {
       if (process.env.SNAP == null) {
         this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")

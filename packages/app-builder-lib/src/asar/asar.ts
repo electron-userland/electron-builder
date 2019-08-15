@@ -1,5 +1,5 @@
 import { createFromBuffer } from "chromium-pickle-js"
-import { close, open, read, readFile, Stats } from "fs-extra-p"
+import { close, open, read, readFile, Stats } from "fs-extra"
 import * as path from "path"
 
 /** @internal */
@@ -95,9 +95,9 @@ export class AsarFilesystem {
     return node
   }
 
-  getNode(p: string) {
-    const node = this.searchNodeFromDirectory(path.dirname(p), false)!
-    return node.files![path.basename(p)]
+  getNode(p: string): Node | null {
+    const node = this.searchNodeFromDirectory(path.dirname(p), false)!!
+    return node.files!![path.basename(p)]
   }
 
   getFile(p: string, followLinks: boolean = true): Node {
@@ -110,25 +110,25 @@ export class AsarFilesystem {
     return JSON.parse((await this.readFile(file)).toString())
   }
 
-  async readFile(file: string): Promise<Buffer> {
-    return await readFileFromAsar(this, file, this.getFile(file))
+  readFile(file: string): Promise<Buffer> {
+    return readFileFromAsar(this, file, this.getFile(file))
   }
 }
 
 export async function readAsar(archive: string): Promise<AsarFilesystem> {
   const fd = await open(archive, "r")
-  let size
+  let size: number
   let headerBuf
   try {
     const sizeBuf = Buffer.allocUnsafe(8)
-    if (await read(fd, sizeBuf, 0, 8, null as any) !== 8) {
+    if ((await read(fd, sizeBuf, 0, 8, null as any)).bytesRead !== 8) {
       throw new Error("Unable to read header size")
     }
 
     const sizePickle = createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
     headerBuf = Buffer.allocUnsafe(size)
-    if (await read(fd, headerBuf, 0, size, null as any) !== size) {
+    if ((await read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
   }

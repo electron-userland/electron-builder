@@ -11,13 +11,13 @@
     "out"
   ],
   "dependencies": {
-    "lazy-val": "^1.0.3",
-    "fs-extra-p": "^7.0.0",
-    "mime": "^2.4.0",
-    "bluebird-lst": "^1.0.6",
-    "builder-util-runtime": "^0.0.0-semantic-release",
+    "lazy-val": "^1.0.4",
+    "fs-extra": "^8.1.0",
+    "mime": "^2.4.4",
+    "bluebird-lst": "^1.0.9",
+    "builder-util-runtime": "0.0.0-semantic-release",
     "builder-util": "~0.0.0-semantic-release",
-    "chalk": "^2.4.1"
+    "chalk": "^2.4.2"
   },
   "typings": "./out/publisher.d.ts"
 }

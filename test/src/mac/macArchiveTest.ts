@@ -1,7 +1,8 @@
 import { exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
-import { outputFile, readFile, symlink } from "fs-extra-p"
+import { outputFile } from "fs-extra"
+import { promises as fs } from "fs"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { assertThat } from "../helpers/fileAssert"
@@ -70,7 +71,7 @@ test.ifAll.ifMac("pkg extended configuration", app({
     await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
 
     const packageInfoFile = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "PackageInfo")
-    const info = parseXml(await readFile(packageInfoFile, "utf8"))
+    const info = parseXml(await fs.readFile(packageInfoFile, "utf8"))
 
     const relocateElement = info.elementOrNull("relocate")
     if (relocateElement) {
@@ -99,7 +100,7 @@ test.ifAll.ifMac("pkg scripts", app({
 }, {
   signed: false,
   projectDirCreated: async projectDir => {
-    await symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))
+    await fs.symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))
   },
   packed: async context => {
     const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
@@ -110,7 +111,7 @@ test.ifAll.ifMac("pkg scripts", app({
     const unpackedDir = path.join(context.outDir, "pkg-unpacked")
     await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
 
-    const info = parseXml(await readFile(path.join(unpackedDir, "Distribution"), "utf8"))
+    const info = parseXml(await fs.readFile(path.join(unpackedDir, "Distribution"), "utf8"))
     for (const element of info.getElements("pkg-ref")) {
       element.removeAttribute("installKBytes")
       const bundleVersion = element.elementOrNull("bundle-version")

@@ -1,5 +1,6 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { copy, move, remove, unlink } from "fs-extra-p"
+import { promises as fs } from "fs"
+import { remove } from "fs-extra"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
@@ -22,8 +23,8 @@ test.ifMac.ifAll("icon set", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -41,9 +42,9 @@ test.ifMac.ifAll("custom icon set", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
-      move(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -61,10 +62,10 @@ test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
-      copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
-      copy(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
+      fs.copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -82,8 +83,8 @@ test.ifMac.ifAll("png icon", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()
@@ -96,9 +97,9 @@ test.ifMac.ifAll("default png icon", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
-      copy(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
         .then(() => remove(path.join(projectDir, "build", "icons")))
     ]),
     packed: () => assertIcon(platformPackager!!),
@@ -117,8 +118,8 @@ test.ifMac.ifAll("png icon small", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.icns")),
-      unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.unlink(path.join(projectDir, "build", "icon.icns")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
     ]),
     packed: async () => {
       try {

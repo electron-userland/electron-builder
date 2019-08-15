@@ -1,0 +1,5834 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "AppImageOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "license": {
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "AppXOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "addAutoLaunchExtension": {
+          "description": "Whether to add auto launch extension. Defaults to `true` if [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) in the dependencies.",
+          "type": "boolean"
+        },
+        "applicationId": {
+          "description": "The application id. Defaults to `identityName`. Can’t start with numbers.",
+          "type": "string"
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "backgroundColor": {
+          "default": "#464646",
+          "description": "The background color of the app tile. See [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "displayName": {
+          "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "electronUpdaterAware": {
+          "default": false,
+          "type": "boolean"
+        },
+        "identityName": {
+          "description": "The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](/configuration/configuration#Metadata-name).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "languages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store.\nThe first entry (index 0) will be the default language.\nDefaults to en-US if omitted."
+        },
+        "makeappxArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "publisher": {
+          "description": "The Windows Store publisher. Not used if AppX is build for testing. See [AppX Package Code Signing](#appx-package-code-signing) below.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publisherDisplayName": {
+          "description": "A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).\nDefaults to company name from the application metadata.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "setBuildNumber": {
+          "default": false,
+          "description": "Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875",
+          "type": "boolean"
+        },
+        "showNameOnTiles": {
+          "default": false,
+          "description": "Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "AsarOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "externalAllowed": {
+          "default": false,
+          "description": "Allows external asar files.",
+          "type": "boolean"
+        },
+        "ordering": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "smartUnpack": {
+          "default": true,
+          "description": "Whether to automatically unpack executables files.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "BintrayOptions": {
+      "additionalProperties": false,
+      "description": "[Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page (\"Edit Your Profile\" -> API Key).\nDefine `BT_TOKEN` environment variable.",
+      "properties": {
+        "component": {
+          "description": "The Bintray component (Debian only).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "distribution": {
+          "default": "stable",
+          "description": "The Bintray distribution (Debian only).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "owner": {
+          "description": "The owner.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "package": {
+          "description": "The Bintray package name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "description": "The provider. Must be `bintray`.",
+          "enum": [
+            "bintray"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "repo": {
+          "default": "generic",
+          "description": "The Bintray repository name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "token": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "user": {
+          "description": "The Bintray user account. Used in cases where the owner is an organization.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "CustomPublishOptions": {
+      "additionalProperties": {},
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/PublishProvider",
+          "description": "The provider."
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "DebOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gz",
+                "xz"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xz",
+          "description": "The compression type."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`."
+        },
+        "description": {
+          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "priority": {
+          "description": "The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "DmgContent": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "The name of the file within the DMG. Defaults to basename of `path`.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path of the file within the DMG.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "dir",
+            "file",
+            "link"
+          ],
+          "type": "string"
+        },
+        "x": {
+          "description": "The device-independent pixel offset from the left of the window to the **center** of the icon.",
+          "type": "number"
+        },
+        "y": {
+          "description": "The device-independent pixel offset from the top of the window to the **center** of the icon.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "type": "object"
+    },
+    "DmgOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "background": {
+          "description": "The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.\nIf background is not specified, use `window.size`. Default locations expected background size to be 540x380.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "backgroundColor": {
+          "description": "The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "contents": {
+          "description": "The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.",
+          "items": {
+            "$ref": "#/definitions/DmgContent"
+          },
+          "type": "array"
+        },
+        "format": {
+          "default": "UDZO",
+          "description": "The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).",
+          "enum": [
+            "UDBZ",
+            "UDCO",
+            "UDRO",
+            "UDRW",
+            "UDZO",
+            "ULFO"
+          ],
+          "type": "string"
+        },
+        "icon": {
+          "description": "The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to the application icon (`build/icon.icns`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "iconSize": {
+          "default": 80,
+          "description": "The size of all the icons inside the DMG.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "iconTextSize": {
+          "default": 12,
+          "description": "The size of all the icon texts inside the DMG.",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
+        "internetEnabled": {
+          "default": false,
+          "description": "Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).",
+          "type": "boolean"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "sign": {
+          "default": false,
+          "description": "Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.",
+          "type": "boolean"
+        },
+        "title": {
+          "default": "${productName} ${version}",
+          "description": "The title of the produced DMG, which will be shown when mounted (volume name).\n\nMacro `${productName}`, `${version}` and `${name}` are supported.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "window": {
+          "$ref": "#/definitions/DmgWindow",
+          "description": "The DMG window position and size. With y co-ordinates running from bottom to top.\n\nThe Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `\"x\": 0, \"y\": 100000` as the x, y co-ordinates.\nIt is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen."
+        },
+        "writeUpdateInfo": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "DmgWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "description": "The height. Defaults to background image height or 380.",
+          "type": "number"
+        },
+        "width": {
+          "description": "The width. Defaults to background image width or 540.",
+          "type": "number"
+        },
+        "x": {
+          "default": 400,
+          "description": "The X position relative to left of the screen.",
+          "type": "number"
+        },
+        "y": {
+          "default": 100,
+          "description": "The Y position relative to bottom of the screen.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ElectronDownloadOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "arch": {
+          "type": "string"
+        },
+        "cache": {
+          "description": "The [cache location](https://github.com/electron-userland/electron-download#cache-location).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customDir": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "customFilename": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "isVerifyChecksum": {
+          "type": "boolean"
+        },
+        "mirror": {
+          "description": "The mirror.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "platform": {
+          "enum": [
+            "darwin",
+            "linux",
+            "mas",
+            "win32"
+          ],
+          "type": "string"
+        },
+        "strictSSL": {
+          "type": "boolean"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "FileAssociation": {
+      "additionalProperties": false,
+      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only.\n\nOn Windows works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.",
+      "properties": {
+        "description": {
+          "description": "*windows-only.* The description.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "ext": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The extension (minus the leading period). e.g. `png`."
+        },
+        "icon": {
+          "description": "The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.\n\nNot supported on Linux, file issue if need (default icon will be `x-office-document`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "isPackage": {
+          "description": "*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.",
+          "type": "boolean"
+        },
+        "mimeType": {
+          "description": "*linux-only.* The mime-type.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "name": {
+          "description": "The name. e.g. `PNG`. Defaults to `ext`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "role": {
+          "default": "Editor",
+          "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ext"
+      ],
+      "type": "object"
+    },
+    "FileSet": {
+      "additionalProperties": false,
+      "properties": {
+        "filter": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The [glob patterns](/file-patterns)."
+        },
+        "from": {
+          "description": "The source path relative to the project directory.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GenericServerOptions": {
+      "additionalProperties": false,
+      "description": "Generic (any HTTP(S) server) options.\nIn all publish options [File Macros](/file-patterns#file-macros) are supported.",
+      "properties": {
+        "channel": {
+          "default": "latest",
+          "description": "The channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "description": "The provider. Must be `generic`.",
+          "enum": [
+            "generic"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "url": {
+          "description": "The base url. e.g. `https://bucket_name.s3.amazonaws.com`.",
+          "type": "string"
+        },
+        "useMultipleRangeRequest": {
+          "description": "Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provider",
+        "url"
+      ],
+      "type": "object"
+    },
+    "GithubOptions": {
+      "additionalProperties": false,
+      "description": "[GitHub](https://help.github.com/articles/about-releases/) options.\n\nGitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.\nDefine `GH_TOKEN` environment variable.",
+      "properties": {
+        "host": {
+          "default": "github.com",
+          "description": "The host (including the port if need).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "owner": {
+          "description": "The owner.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "private": {
+          "description": "Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "enum": [
+                "http",
+                "https"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "https",
+          "description": "The protocol. GitHub Publisher supports only `https`."
+        },
+        "provider": {
+          "description": "The provider. Must be `github`.",
+          "enum": [
+            "github"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "releaseType": {
+          "anyOf": [
+            {
+              "enum": [
+                "draft",
+                "prerelease",
+                "release"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "draft",
+          "description": "The type of release. By default `draft` release will be created.\n\nAlso you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`."
+        },
+        "repo": {
+          "description": "The repository name. [Detected automatically](#github-repository-and-bintray-package).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "token": {
+          "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vPrefixedTagName": {
+          "default": true,
+          "description": "Whether to use `v`-prefixed tag name.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "LinuxConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "default": "com.electron.${name}",
+          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "asar": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work."
+        },
+        "asarUnpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "maximum",
+                "normal",
+                "store"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "normal",
+          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+        },
+        "cscKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "description": {
+          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "detectUpdateChannel": {
+          "default": true,
+          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
+          "type": "boolean"
+        },
+        "electronUpdaterCompatibility": {
+          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.\nCannot be specified per target, allowed only in the `linux`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "extraFiles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "fileAssociations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileAssociation"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/FileAssociation"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The file associations."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "forceCodeSigning": {
+          "description": "Whether to fail if app will be not code signed.",
+          "type": "boolean"
+        },
+        "generateUpdatesFilesForAllChannels": {
+          "default": false,
+          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "type": "boolean"
+        },
+        "icon": {
+          "description": "The path to icon set directory or one png file, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.\nBy default will be generated automatically based on the macOS icns file.",
+          "type": "string"
+        },
+        "maintainer": {
+          "description": "The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "protocols": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Protocol"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Protocol"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The URL protocol schemes."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "releaseInfo": {
+          "$ref": "#/definitions/ReleaseInfo",
+          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/TargetConfiguration"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": "AppImage",
+          "description": "Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+        },
+        "vendor": {
+          "description": "The vendor. Defaults to [author](/configuration/configuration#Metadata-author).",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "LinuxTargetSpecificOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "afterInstall": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "afterRemove": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "bzip2",
+                "gz",
+                "xz"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "xz",
+          "description": "The compression type."
+        },
+        "depends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Package dependencies."
+        },
+        "description": {
+          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "fpm": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "maintainer": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "packageCategory": {
+          "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "vendor": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "MacConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "default": "com.electron.${name}",
+          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "asar": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work."
+        },
+        "asarUnpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+        },
+        "binaries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Paths of any extra binaries that need to be signed."
+        },
+        "bundleShortVersion": {
+          "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "bundleVersion": {
+          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.\n\nFor example, `\"category\": \"public.app-category.developer-tools\"` will set the application category to *Developer Tools*.\n\nValid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "maximum",
+                "normal",
+                "store"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "normal",
+          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+        },
+        "cscInstallerKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscInstallerLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "darkModeSupport": {
+          "default": false,
+          "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
+          "type": "boolean"
+        },
+        "detectUpdateChannel": {
+          "default": true,
+          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
+          "type": "boolean"
+        },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales. By default Electron locales used as is."
+        },
+        "electronUpdaterCompatibility": {
+          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlements": {
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](/configuration/mas).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).\n\nThis option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "extendInfo": {
+          "description": "The extra entries for `Info.plist`."
+        },
+        "extraDistFiles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Extra files to put in archive. Not applicable for `tar.*`."
+        },
+        "extraFiles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "fileAssociations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileAssociation"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/FileAssociation"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The file associations."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "forceCodeSigning": {
+          "description": "Whether to fail if app will be not code signed.",
+          "type": "boolean"
+        },
+        "gatekeeperAssess": {
+          "default": false,
+          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "type": "boolean"
+        },
+        "generateUpdatesFilesForAllChannels": {
+          "default": false,
+          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "type": "boolean"
+        },
+        "hardenedRuntime": {
+          "default": true,
+          "description": "Whether your app has to be signed with hardened runtime.",
+          "type": "boolean"
+        },
+        "helperBundleId": {
+          "default": "${appBundleIdentifier}.helper",
+          "description": "The bundle identifier to use in the application helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "icon": {
+          "default": "build/icon.icns",
+          "description": "The path to application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "identity": {
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](/configuration/mas).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "minimumSystemVersion": {
+          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "protocols": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Protocol"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Protocol"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The URL protocol schemes."
+        },
+        "provisioningProfile": {
+          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "releaseInfo": {
+          "$ref": "#/definitions/ReleaseInfo",
+          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+        },
+        "requirements": {
+          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/TargetConfiguration"
+                  },
+                  {
+                    "enum": [
+                      "7z",
+                      "default",
+                      "dir",
+                      "dmg",
+                      "mas",
+                      "mas-dev",
+                      "pkg",
+                      "tar.bz2",
+                      "tar.gz",
+                      "tar.lz",
+                      "tar.xz",
+                      "zip"
+                    ],
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "enum": [
+                "7z",
+                "default",
+                "dir",
+                "dmg",
+                "mas",
+                "mas-dev",
+                "pkg",
+                "tar.bz2",
+                "tar.gz",
+                "tar.lz",
+                "tar.xz",
+                "zip"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "development",
+                "distribution"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "distribution",
+          "description": "Whether to sign app for development or for distribution."
+        }
+      },
+      "type": "object"
+    },
+    "MasConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "default": "com.electron.${name}",
+          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "asar": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work."
+        },
+        "asarUnpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+        },
+        "binaries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Paths of any extra binaries that need to be signed."
+        },
+        "bundleShortVersion": {
+          "description": "The `CFBundleShortVersionString`. Do not use it unless you need to.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "bundleVersion": {
+          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "category": {
+          "description": "The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.\n\nFor example, `\"category\": \"public.app-category.developer-tools\"` will set the application category to *Developer Tools*.\n\nValid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "maximum",
+                "normal",
+                "store"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "normal",
+          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+        },
+        "cscInstallerKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscInstallerLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "darkModeSupport": {
+          "default": false,
+          "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
+          "type": "boolean"
+        },
+        "detectUpdateChannel": {
+          "default": true,
+          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
+          "type": "boolean"
+        },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales. By default Electron locales used as is."
+        },
+        "electronUpdaterCompatibility": {
+          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlements": {
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsInherit": {
+          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "extendInfo": {
+          "description": "The extra entries for `Info.plist`."
+        },
+        "extraDistFiles": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Extra files to put in archive. Not applicable for `tar.*`."
+        },
+        "extraFiles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "fileAssociations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileAssociation"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/FileAssociation"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The file associations."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "forceCodeSigning": {
+          "description": "Whether to fail if app will be not code signed.",
+          "type": "boolean"
+        },
+        "gatekeeperAssess": {
+          "default": false,
+          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "type": "boolean"
+        },
+        "generateUpdatesFilesForAllChannels": {
+          "default": false,
+          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "type": "boolean"
+        },
+        "hardenedRuntime": {
+          "default": true,
+          "description": "Whether your app has to be signed with hardened runtime.",
+          "type": "boolean"
+        },
+        "helperBundleId": {
+          "default": "${appBundleIdentifier}.helper",
+          "description": "The bundle identifier to use in the application helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "icon": {
+          "default": "build/icon.icns",
+          "description": "The path to application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "identity": {
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.\nMAS installer identity is specified in the [mas](/configuration/mas).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "minimumSystemVersion": {
+          "description": "The minimum version of macOS required for the app to run. Corresponds to `LSMinimumSystemVersion`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "protocols": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Protocol"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Protocol"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The URL protocol schemes."
+        },
+        "provisioningProfile": {
+          "description": "The path to the provisioning profile to use when signing, absolute or relative to the app root.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "releaseInfo": {
+          "$ref": "#/definitions/ReleaseInfo",
+          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+        },
+        "requirements": {
+          "description": "Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/TargetConfiguration"
+                  },
+                  {
+                    "enum": [
+                      "7z",
+                      "default",
+                      "dir",
+                      "dmg",
+                      "mas",
+                      "mas-dev",
+                      "pkg",
+                      "tar.bz2",
+                      "tar.gz",
+                      "tar.lz",
+                      "tar.xz",
+                      "zip"
+                    ],
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "enum": [
+                "7z",
+                "default",
+                "dir",
+                "dmg",
+                "mas",
+                "mas-dev",
+                "pkg",
+                "tar.bz2",
+                "tar.gz",
+                "tar.lz",
+                "tar.xz",
+                "zip"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
+        },
+        "type": {
+          "anyOf": [
+            {
+              "enum": [
+                "development",
+                "distribution"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "distribution",
+          "description": "Whether to sign app for development or for distribution."
+        }
+      },
+      "type": "object"
+    },
+    "MetadataDirectories": {
+      "additionalProperties": false,
+      "properties": {
+        "app": {
+          "description": "The application directory (containing the application package.json), defaults to `app`, `www` or working directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "buildResources": {
+          "default": "build",
+          "description": "The path to build resources.\n\nPlease note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "output": {
+          "default": "dist",
+          "description": "The output directory. [File macros](/file-patterns#file-macros) are supported.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "MsiOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "createDesktopShortcut": {
+          "default": true,
+          "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
+          "enum": [
+            "always",
+            false,
+            true
+          ]
+        },
+        "createStartMenuShortcut": {
+          "default": true,
+          "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "menuCategory": {
+          "default": false,
+          "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "oneClick": {
+          "default": true,
+          "description": "One-click installation.",
+          "type": "boolean"
+        },
+        "perMachine": {
+          "default": false,
+          "description": "Whether to install per all users (per-machine).",
+          "type": "boolean"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "runAfterFinish": {
+          "default": true,
+          "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
+          "type": "boolean"
+        },
+        "shortcutName": {
+          "description": "The name that will be used for all shortcuts. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "upgradeCode": {
+          "description": "The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NsisOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "allowElevation": {
+          "default": true,
+          "description": "*assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.",
+          "type": "boolean"
+        },
+        "allowToChangeInstallationDirectory": {
+          "default": false,
+          "description": "*assisted installer only.* Whether to allow user to change installation directory.",
+          "type": "boolean"
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "createDesktopShortcut": {
+          "default": true,
+          "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
+          "enum": [
+            "always",
+            false,
+            true
+          ]
+        },
+        "createStartMenuShortcut": {
+          "default": true,
+          "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "deleteAppDataOnUninstall": {
+          "default": false,
+          "description": "*one-click installer only.* Whether to delete app data on uninstall.",
+          "type": "boolean"
+        },
+        "differentialPackage": {
+          "type": "boolean"
+        },
+        "displayLanguageSelector": {
+          "default": false,
+          "description": "Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).",
+          "type": "boolean"
+        },
+        "guid": {
+          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "include": {
+          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerHeader": {
+          "default": "build/installerHeader.bmp",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerHeaderIcon": {
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerIcon": {
+          "description": "The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
+        },
+        "installerSidebar": {
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "language": {
+          "description": "[LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "license": {
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "menuCategory": {
+          "default": false,
+          "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "multiLanguageInstaller": {
+          "description": "Whether to create multi-language installer. Defaults to `unicode` option value.",
+          "type": "boolean"
+        },
+        "oneClick": {
+          "default": true,
+          "description": "Whether to create one-click installer or assisted.",
+          "type": "boolean"
+        },
+        "packElevateHelper": {
+          "default": true,
+          "description": "Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.",
+          "type": "boolean"
+        },
+        "perMachine": {
+          "default": false,
+          "description": "Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).\n\nIf `oneClick` is `true` (default): Whether to install per all users (per-machine).\n\nIf `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.\n\nIf `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.",
+          "type": "boolean"
+        },
+        "preCompressedFileExtensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": [
+            ".avi",
+            ".mov",
+            ".m4v",
+            ".mp4",
+            ".m4p",
+            ".qt",
+            ".mkv",
+            ".webm",
+            ".vmdk"
+          ],
+          "description": "The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "runAfterFinish": {
+          "default": true,
+          "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
+          "type": "boolean"
+        },
+        "script": {
+          "description": "The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "shortcutName": {
+          "description": "The name that will be used for all shortcuts. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "unicode": {
+          "default": true,
+          "description": "Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).",
+          "type": "boolean"
+        },
+        "uninstallDisplayName": {
+          "default": "${productName} ${version}",
+          "description": "The uninstaller display name in the control panel.",
+          "type": "string"
+        },
+        "uninstallerIcon": {
+          "description": "The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallerSidebar": {
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useZip": {
+          "default": false,
+          "type": "boolean"
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NsisWebOptions": {
+      "additionalProperties": false,
+      "description": "Web Installer options.",
+      "properties": {
+        "allowElevation": {
+          "default": true,
+          "description": "*assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.",
+          "type": "boolean"
+        },
+        "allowToChangeInstallationDirectory": {
+          "default": false,
+          "description": "*assisted installer only.* Whether to allow user to change installation directory.",
+          "type": "boolean"
+        },
+        "appPackageUrl": {
+          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "createDesktopShortcut": {
+          "default": true,
+          "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
+          "enum": [
+            "always",
+            false,
+            true
+          ]
+        },
+        "createStartMenuShortcut": {
+          "default": true,
+          "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "deleteAppDataOnUninstall": {
+          "default": false,
+          "description": "*one-click installer only.* Whether to delete app data on uninstall.",
+          "type": "boolean"
+        },
+        "differentialPackage": {
+          "type": "boolean"
+        },
+        "displayLanguageSelector": {
+          "default": false,
+          "description": "Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).",
+          "type": "boolean"
+        },
+        "guid": {
+          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "include": {
+          "description": "The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerHeader": {
+          "default": "build/installerHeader.bmp",
+          "description": "*assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerHeaderIcon": {
+          "description": "*one-click installer only.* The path to header icon (above the progress bar), relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerHeaderIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerIcon": {
+          "description": "The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installerLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what."
+        },
+        "installerSidebar": {
+          "description": "*assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`. Image size 164 × 314 pixels.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "language": {
+          "description": "[LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "license": {
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "menuCategory": {
+          "default": false,
+          "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "multiLanguageInstaller": {
+          "description": "Whether to create multi-language installer. Defaults to `unicode` option value.",
+          "type": "boolean"
+        },
+        "oneClick": {
+          "default": true,
+          "description": "Whether to create one-click installer or assisted.",
+          "type": "boolean"
+        },
+        "packElevateHelper": {
+          "default": true,
+          "description": "Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.",
+          "type": "boolean"
+        },
+        "perMachine": {
+          "default": false,
+          "description": "Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).\n\nIf `oneClick` is `true` (default): Whether to install per all users (per-machine).\n\nIf `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.\n\nIf `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.",
+          "type": "boolean"
+        },
+        "preCompressedFileExtensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": [
+            ".avi",
+            ".mov",
+            ".m4v",
+            ".mp4",
+            ".m4p",
+            ".qt",
+            ".mkv",
+            ".webm",
+            ".vmdk"
+          ],
+          "description": "The file extension of files that will be not compressed. Applicable only for `extraResources` and `extraFiles` files."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "runAfterFinish": {
+          "default": true,
+          "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
+          "type": "boolean"
+        },
+        "script": {
+          "description": "The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "shortcutName": {
+          "description": "The name that will be used for all shortcuts. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "unicode": {
+          "default": true,
+          "description": "Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).",
+          "type": "boolean"
+        },
+        "uninstallDisplayName": {
+          "default": "${productName} ${version}",
+          "description": "The uninstaller display name in the control panel.",
+          "type": "string"
+        },
+        "uninstallerIcon": {
+          "description": "The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `build/uninstallerIcon.ico` or application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "uninstallerSidebar": {
+          "description": "*assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.\nDefaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\\\Contrib\\\\Graphics\\\\Wizard\\\\nsis3-metro.bmp`",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useZip": {
+          "default": false,
+          "type": "boolean"
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "PkgBackgroundOptions": {
+      "additionalProperties": false,
+      "description": "Options for the background image in a PKG installer",
+      "properties": {
+        "alignment": {
+          "anyOf": [
+            {
+              "enum": [
+                "bottom",
+                "bottomleft",
+                "bottomright",
+                "center",
+                "left",
+                "right",
+                "top",
+                "topleft",
+                "topright"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "center",
+          "description": "Alignment of the background image.\nOptions are: center, left, right, top, bottom, topleft, topright, bottomleft, bottomright"
+        },
+        "file": {
+          "description": "Path to the image to use as an installer background.",
+          "type": "string"
+        },
+        "scaling": {
+          "anyOf": [
+            {
+              "enum": [
+                "none",
+                "proportional",
+                "tofit"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "tofit",
+          "description": "Scaling of the background image.\nOptions are: tofit, none, proportional"
+        }
+      },
+      "type": "object"
+    },
+    "PkgOptions": {
+      "additionalProperties": false,
+      "description": "macOS product archive options.",
+      "properties": {
+        "allowAnywhere": {
+          "default": true,
+          "description": "Whether can be installed at the root of any volume, including non-system volumes. Otherwise, it cannot be installed at the root of a volume.\n\nCorresponds to [enable_anywhere](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "allowCurrentUserHome": {
+          "default": true,
+          "description": "Whether can be installed into the current user’s home directory.\nA home directory installation is done as the current user (not as root), and it cannot write outside of the home directory.\nIf the product cannot be installed in the user’s home directory and be not completely functional from user’s home directory.\n\nCorresponds to [enable_currentUserHome](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "allowRootDirectory": {
+          "default": true,
+          "description": "Whether can be installed into the root directory. Should usually be `true` unless the product can be installed only to the user’s home directory.\n\nCorresponds to [enable_localSystem](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "background": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PkgBackgroundOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Options for the background image for the installer."
+        },
+        "conclusion": {
+          "description": "The path to the conclusion file. This may be used to customize the text on the final \"Summary\" page of the installer.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "hasStrictIdentifier": {
+          "default": true,
+          "description": "Require identical bundle identifiers at install path?",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "identity": {
+          "description": "The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "installLocation": {
+          "default": "/Applications",
+          "description": "The install location. [Do not use it](https://stackoverflow.com/questions/12863944/how-do-you-specify-a-default-install-location-to-home-with-pkgbuild) to create per-user package.\nMostly never you will need to change this option. `/Applications` would install it as expected into `/Applications` if the local system domain is chosen, or into `$HOME/Applications` if the home installation is chosen.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "isRelocatable": {
+          "default": true,
+          "description": "Install bundle over previous version if moved by user?",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "isVersionChecked": {
+          "default": true,
+          "description": "Don't install bundle if newer version on disk?",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "license": {
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "overwriteAction": {
+          "anyOf": [
+            {
+              "enum": [
+                "update",
+                "upgrade"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "upgrade",
+          "description": "Specifies how an existing version of the bundle on disk should be handled when the version in\nthe package is installed.\n\nIf you specify upgrade, the bundle in the package atomi-cally replaces any version on disk;\nthis has the effect of deleting old paths that no longer exist in the new version of\nthe bundle.\n\nIf you specify update, the bundle in the package overwrites the version on disk, and any files\nnot contained in the package will be left intact; this is appropriate when you are delivering\nan update-only package.\n\nAnother effect of update is that the package bundle will not be installed at all if there is\nnot already a version on disk; this allows a package to deliver an update for an app that\nthe user might have deleted."
+        },
+        "productbuild": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "should be not documented, only to experiment"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "scripts": {
+          "default": "build/pkg-scripts",
+          "description": "The scripts directory, relative to `build` (build resources directory).\nThe scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter.\nScripts are required to be executable (`chmod +x file`).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "welcome": {
+          "description": "The path to the welcome file. This may be used to customize the text on the Introduction page of the installer.",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "PlugDescriptor": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "type": "object"
+    },
+    "PortableOptions": {
+      "additionalProperties": false,
+      "description": "Portable options.",
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "guid": {
+          "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "requestExecutionLevel": {
+          "default": "user",
+          "description": "The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.",
+          "enum": [
+            "admin",
+            "highest",
+            "user"
+          ],
+          "type": "string"
+        },
+        "unicode": {
+          "default": true,
+          "description": "Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).",
+          "type": "boolean"
+        },
+        "unpackDirName": {
+          "description": "The unpack directory name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.\n\nDefaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).",
+          "type": "string"
+        },
+        "useZip": {
+          "default": false,
+          "type": "boolean"
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "Protocol": {
+      "additionalProperties": false,
+      "description": "URL Protocol Schemes. Protocols to associate the app with. macOS only.\n\nPlease note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).",
+      "properties": {
+        "name": {
+          "description": "The name. e.g. `IRC server URL`.",
+          "type": "string"
+        },
+        "role": {
+          "default": "Editor",
+          "description": "*macOS-only* The app’s role with respect to the type.",
+          "enum": [
+            "Editor",
+            "None",
+            "Shell",
+            "Viewer"
+          ],
+          "type": "string"
+        },
+        "schemes": {
+          "description": "The schemes. e.g. `[\"irc\", \"ircs\"]`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "schemes"
+      ],
+      "type": "object"
+    },
+    "PublishProvider": {
+      "enum": [
+        "bintray",
+        "custom",
+        "generic",
+        "github",
+        "s3",
+        "snapStore",
+        "spaces"
+      ],
+      "type": "string"
+    },
+    "ReleaseInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "releaseDate": {
+          "description": "The release date.",
+          "type": "string"
+        },
+        "releaseName": {
+          "description": "The release name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "releaseNotes": {
+          "description": "The release notes.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "releaseNotesFile": {
+          "description": "The path to release notes file. Defaults to `release-notes-${platform}.md` (where `platform` it is current platform — `mac`, `linux` or `windows`) or `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "S3Options": {
+      "additionalProperties": false,
+      "properties": {
+        "acl": {
+          "anyOf": [
+            {
+              "enum": [
+                "private",
+                "public-read"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "public-read",
+          "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).\n\nPlease see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128)."
+        },
+        "bucket": {
+          "description": "The bucket name.",
+          "type": "string"
+        },
+        "channel": {
+          "default": "latest",
+          "description": "The update channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "encryption": {
+          "anyOf": [
+            {
+              "enum": [
+                "AES256",
+                "aws:kms"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Server-side encryption algorithm to use for the object."
+        },
+        "endpoint": {
+          "description": "The endpoint URI to send requests to. The default endpoint is built from the configured region.\nThe endpoint should be a string like `https://{service}.{region}.amazonaws.com`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "path": {
+          "default": "/",
+          "description": "The directory path.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "description": "The provider. Must be `s3`.",
+          "enum": [
+            "s3"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region": {
+          "description": "The region. Is determined and set automatically when publishing.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "storageClass": {
+          "anyOf": [
+            {
+              "enum": [
+                "REDUCED_REDUNDANCY",
+                "STANDARD",
+                "STANDARD_IA"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "STANDARD",
+          "description": "The type of storage to use for the object."
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "bucket",
+        "provider"
+      ],
+      "type": "object"
+    },
+    "SnapOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "assumes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The list of features that must be supported by the core in order for this snap to install."
+        },
+        "buildPackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of debian packages needs to be installed for building this snap."
+        },
+        "category": {
+          "description": "The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "confinement": {
+          "anyOf": [
+            {
+              "enum": [
+                "classic",
+                "devmode",
+                "strict"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "strict",
+          "description": "The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap."
+        },
+        "description": {
+          "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "desktop": {
+          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default."
+        },
+        "grade": {
+          "anyOf": [
+            {
+              "enum": [
+                "devel",
+                "stable"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "stable",
+          "description": "The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels)."
+        },
+        "hooks": {
+          "default": "build/snap-hooks",
+          "description": "The [hooks](https://docs.snapcraft.io/build-snaps/hooks) directory, relative to `build` (build resources directory).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "mimeTypes": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing."
+        },
+        "plugs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PlugDescriptor"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/PlugDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "stagePackages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.\nDefaults to `[\"libasound2\", \"libgconf2-4\", \"libnotify4\", \"libnspr4\", \"libnss3\", \"libpcre3\", \"libpulse0\", \"libxss1\", \"libxtst6\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom package `foo` in addition to defaults."
+        },
+        "summary": {
+          "description": "The 78 character long summary. Defaults to [productName](/configuration/configuration#Configuration-productName).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "synopsis": {
+          "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useTemplateApp": {
+          "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "SnapStoreOptions": {
+      "additionalProperties": false,
+      "description": "[Snap Store](https://snapcraft.io/) options.",
+      "properties": {
+        "channels": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": [
+            "edge"
+          ],
+          "description": "The list of channels the snap would be released."
+        },
+        "provider": {
+          "$ref": "#/definitions/PublishProvider",
+          "description": "The provider."
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "SpacesOptions": {
+      "additionalProperties": false,
+      "description": "[DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) options.\nAccess key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.",
+      "properties": {
+        "acl": {
+          "anyOf": [
+            {
+              "enum": [
+                "private",
+                "public-read"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "public-read",
+          "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822)."
+        },
+        "channel": {
+          "default": "latest",
+          "description": "The update channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "name": {
+          "description": "The space name.",
+          "type": "string"
+        },
+        "path": {
+          "default": "/",
+          "description": "The directory path.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "provider": {
+          "description": "The provider. Must be `spaces`.",
+          "enum": [
+            "spaces"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region": {
+          "description": "The region (e.g. `nyc3`).",
+          "type": "string"
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "provider",
+        "region"
+      ],
+      "type": "object"
+    },
+    "SquirrelWindowsOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "iconUrl": {
+          "description": "A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.\n\nPlease note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.\n\nIf you don't plan to build windows installer, you can omit it.\nIf your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "loadingGif": {
+          "description": "The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)\n(otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "msi": {
+          "description": "Whether to create an MSI installer. Defaults to `false` (MSI is not created).",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "https://github.com/electron-userland/electron-builder/issues/1743",
+          "type": "string"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "remoteReleases": {
+          "description": "A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.",
+          "type": [
+            "null",
+            "string",
+            "boolean"
+          ]
+        },
+        "remoteToken": {
+          "description": "Authentication token for remote updates",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "useAppIdAsId": {
+          "description": "Use `appId` to identify package instead of `name`.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "TargetConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "arch": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "arm64",
+                  "armv7l",
+                  "ia32",
+                  "x64"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "enum": [
+                "arm64",
+                "armv7l",
+                "ia32",
+                "x64"
+              ],
+              "type": "string"
+            }
+          ],
+          "description": "The arch or list of archs."
+        },
+        "target": {
+          "description": "The target name. e.g. `snap`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "type": "object"
+    },
+    "WindowsConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalCertificateFile": {
+          "description": "The path to an additional certificate file you want to add to the signature block.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "appId": {
+          "default": "com.electron.${name}",
+          "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "asar": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AsarOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work."
+        },
+        "asarUnpack": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+        },
+        "certificateFile": {
+          "description": "The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificatePassword": {
+          "description": "The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.\nPlease see [Code Signing](/code-signing).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSha1": {
+          "description": "The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "certificateSubjectName": {
+          "description": "The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "maximum",
+                "normal",
+                "store"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "normal",
+          "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+        },
+        "cscKeyPassword": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "cscLink": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "detectUpdateChannel": {
+          "default": true,
+          "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
+          "type": "boolean"
+        },
+        "electronUpdaterCompatibility": {
+          "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "extraFiles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "fileAssociations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileAssociation"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/FileAssociation"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The file associations."
+        },
+        "files": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FileSet"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/FileSet"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "forceCodeSigning": {
+          "description": "Whether to fail if app will be not code signed.",
+          "type": "boolean"
+        },
+        "generateUpdatesFilesForAllChannels": {
+          "default": false,
+          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "type": "boolean"
+        },
+        "icon": {
+          "default": "build/icon.ico",
+          "description": "The path to application icon.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "legalTrademarks": {
+          "description": "The trademarks and registered trademarks.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "protocols": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Protocol"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Protocol"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The URL protocol schemes."
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/BintrayOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BintrayOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+        },
+        "releaseInfo": {
+          "$ref": "#/definitions/ReleaseInfo",
+          "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+        },
+        "requestedExecutionLevel": {
+          "anyOf": [
+            {
+              "enum": [
+                "asInvoker",
+                "highestAvailable",
+                "requireAdministrator"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "asInvoker",
+          "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
+        },
+        "rfc3161TimeStampServer": {
+          "default": "http://timestamp.comodoca.com/rfc3161",
+          "description": "The URL of the RFC 3161 time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign Windows executable."
+        },
+        "signAndEditExecutable": {
+          "default": true,
+          "description": "Whether to sign and add metadata to executable. Advanced option.",
+          "type": "boolean"
+        },
+        "signDlls": {
+          "default": false,
+          "description": "Whether to sign DLL files. Advanced option.",
+          "type": "boolean"
+        },
+        "signingHashAlgorithms": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "sha1",
+                  "sha256"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "['sha1', 'sha256']",
+          "description": "Array of signing algorithms used. For AppX `sha256` is always used."
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/TargetConfiguration"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "default": "nsis",
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+        },
+        "timeStampServer": {
+          "default": "http://timestamp.digicert.com",
+          "description": "The URL of the time stamp server.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "verifyUpdateCodeSignature": {
+          "default": true,
+          "description": "Whether to verify the signature of an available update before installation.\nThe [publisher name](#publisherName) will be used for the signature verification.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "description": "Configuration Options",
+  "properties": {
+    "afterAllArtifactBuild": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild)."
+    },
+    "afterPack": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign)."
+    },
+    "afterSign": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run after pack and sign](#aftersign) (but before pack into distributable format)."
+    },
+    "apk": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "appId": {
+      "default": "com.electron.${name}",
+      "description": "The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as\n[Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "appImage": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AppImageOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "AppImage options."
+    },
+    "appx": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AppXOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "artifactBuildCompleted": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be run on artifact build completed."
+    },
+    "artifactBuildStarted": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be run on artifact build start."
+    },
+    "artifactName": {
+      "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "asar": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AsarOptions"
+        },
+        {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        }
+      ],
+      "default": true,
+      "description": "Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).\n\nNode modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work."
+    },
+    "asarUnpack": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive."
+    },
+    "beforeBuild": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.\n\nIf provided and `node_modules` are missing, it will not invoke production dependencies check."
+    },
+    "buildDependenciesFromSource": {
+      "default": false,
+      "description": "Whether to build the application native dependencies from source.",
+      "type": "boolean"
+    },
+    "buildVersion": {
+      "description": "The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.\nIf `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "compression": {
+      "anyOf": [
+        {
+          "enum": [
+            "maximum",
+            "normal",
+            "store"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "normal",
+      "description": "The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time."
+    },
+    "copyright": {
+      "default": "Copyright © year ${author}",
+      "description": "The human-readable copyright line for the app.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "cscKeyPassword": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "cscLink": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "deb": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DebOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Debian package options."
+    },
+    "detectUpdateChannel": {
+      "default": true,
+      "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
+      "type": "boolean"
+    },
+    "directories": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MetadataDirectories"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dmg": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DmgOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "macOS DMG options."
+    },
+    "electronCompile": {
+      "description": "Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.",
+      "type": "boolean"
+    },
+    "electronDist": {
+      "description": "The path to custom Electron build (e.g. `~/electron/out/R`).",
+      "type": "string"
+    },
+    "electronDownload": {
+      "$ref": "#/definitions/ElectronDownloadOptions",
+      "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+    },
+    "electronUpdaterCompatibility": {
+      "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "electronVersion": {
+      "description": "The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "extends": {
+      "description": "The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.\n\nIf `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "extraFiles": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FileSet"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FileSet"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
+    },
+    "extraMetadata": {
+      "description": "Inject properties to `package.json`."
+    },
+    "extraResources": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FileSet"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FileSet"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
+    },
+    "fileAssociations": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FileAssociation"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/FileAssociation"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "The file associations."
+    },
+    "files": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FileSet"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FileSet"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
+    },
+    "forceCodeSigning": {
+      "description": "Whether to fail if app will be not code signed.",
+      "type": "boolean"
+    },
+    "framework": {
+      "description": "The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "freebsd": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "generateUpdatesFilesForAllChannels": {
+      "default": false,
+      "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+      "type": "boolean"
+    },
+    "icon": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "includePdb": {
+      "default": false,
+      "description": "Whether to include PDB files.",
+      "type": "boolean"
+    },
+    "launchUiVersion": {
+      "description": "*libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.",
+      "type": [
+        "null",
+        "string",
+        "boolean"
+      ]
+    },
+    "linux": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxConfiguration"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Options related to how build Linux targets."
+    },
+    "mac": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MacConfiguration"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Options related to how build macOS targets."
+    },
+    "mas": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MasConfiguration"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "MAS (Mac Application Store) options."
+    },
+    "msi": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MsiOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nodeGypRebuild": {
+      "default": false,
+      "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
+      "type": "boolean"
+    },
+    "nodeVersion": {
+      "description": "*libui-based frameworks only* The version of NodeJS you are packaging for.\nYou can set it to `current` to set the Node.js version that you use to run.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "npmArgs": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Additional command line arguments to use when installing app native deps."
+    },
+    "npmRebuild": {
+      "default": true,
+      "description": "Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies before starting to package the app.",
+      "type": "boolean"
+    },
+    "nsis": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NsisOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nsisWeb": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NsisWebOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "onNodeModuleFile": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file."
+    },
+    "p5p": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pacman": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pkg": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PkgOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "macOS PKG options."
+    },
+    "portable": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PortableOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "productName": {
+      "description": "As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "protocols": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Protocol"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/Protocol"
+          },
+          "type": "array"
+        }
+      ],
+      "description": "The URL protocol schemes."
+    },
+    "publish": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/GithubOptions"
+        },
+        {
+          "$ref": "#/definitions/S3Options"
+        },
+        {
+          "$ref": "#/definitions/SpacesOptions"
+        },
+        {
+          "$ref": "#/definitions/GenericServerOptions"
+        },
+        {
+          "$ref": "#/definitions/BintrayOptions"
+        },
+        {
+          "$ref": "#/definitions/CustomPublishOptions"
+        },
+        {
+          "$ref": "#/definitions/SnapStoreOptions"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/GithubOptions"
+              },
+              {
+                "$ref": "#/definitions/S3Options"
+              },
+              {
+                "$ref": "#/definitions/SpacesOptions"
+              },
+              {
+                "$ref": "#/definitions/GenericServerOptions"
+              },
+              {
+                "$ref": "#/definitions/BintrayOptions"
+              },
+              {
+                "$ref": "#/definitions/CustomPublishOptions"
+              },
+              {
+                "$ref": "#/definitions/SnapStoreOptions"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
+    },
+    "readonly": {
+      "default": false,
+      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
+      "type": "boolean"
+    },
+    "releaseInfo": {
+      "$ref": "#/definitions/ReleaseInfo",
+      "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
+    },
+    "remoteBuild": {
+      "default": true,
+      "description": "Whether to build using Electron Build Service if target not supported on current OS.",
+      "type": "boolean"
+    },
+    "removePackageScripts": {
+      "default": true,
+      "description": "Whether to remove `scripts` field from `package.json` files.",
+      "type": "boolean"
+    },
+    "rpm": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/LinuxTargetSpecificOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "snap": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SnapOptions"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Snap options."
+    },
+    "squirrelWindows": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SquirrelWindowsOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "target": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TargetConfiguration"
+        },
+        {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/TargetConfiguration"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/WindowsConfiguration"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Options related to how build Windows targets."
+    },
+    "$schema": {
+      "description": "JSON Schema for this document.",
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  },
+  "type": "object"
+}

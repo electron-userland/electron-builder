@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst/index"
-import { readdir, unlink } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
+import { promises as fs } from "fs"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
 
 const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
@@ -13,10 +13,10 @@ export function deleteOldElectronVersion(): Promise<any> {
   }
 
   const cacheDir = getElectronCacheDir()
-  return BluebirdPromise.map(readdir(cacheDir), (file): any => {
+  return BluebirdPromise.map(fs.readdir(cacheDir), (file): any => {
     if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
       console.log(`Remove old electron ${file}`)
-      return unlink(path.join(cacheDir, file))
+      return fs.unlink(path.join(cacheDir, file))
     }
     return null
   })

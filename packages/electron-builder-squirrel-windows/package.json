@@ -12,10 +12,10 @@
   ],
   "dependencies": {
     "builder-util": "~0.0.0-semantic-release",
-    "bluebird-lst": "^1.0.6",
-    "fs-extra-p": "^7.0.0",
-    "archiver": "^3.0.0",
-    "sanitize-filename": "^1.6.1"
+    "bluebird-lst": "^1.0.9",
+    "fs-extra": "^8.1.0",
+    "archiver": "^3.0.3",
+    "sanitize-filename": "^1.6.2"
   },
   "optionalDependencies": {
     "7zip-bin": "~4.0.2"

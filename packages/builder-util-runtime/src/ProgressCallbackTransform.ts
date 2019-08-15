@@ -22,7 +22,7 @@ export class ProgressCallbackTransform extends Transform {
 
   _transform(chunk: any, encoding: string, callback: any) {
     if (this.cancellationToken.cancelled) {
-      callback(new Error("Cancelled"), null)
+      callback(new Error("cancelled"), null)
       return
     }
 
@@ -48,7 +48,7 @@ export class ProgressCallbackTransform extends Transform {
 
   _flush(callback: any): void {
     if (this.cancellationToken.cancelled) {
-      callback(new Error("Cancelled"))
+      callback(new Error("cancelled"))
       return
     }
 

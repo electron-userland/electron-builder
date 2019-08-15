@@ -34,6 +34,7 @@ export { PublishManager } from "./publish/PublishManager"
 export { PlatformPackager } from "./platformPackager"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
+export { SnapStoreOptions } from "./publish/SnapStorePublisher"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

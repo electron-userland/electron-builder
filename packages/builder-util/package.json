@@ -11,18 +11,19 @@
     "out"
   ],
   "dependencies": {
-    "app-builder-bin": "2.6.1",
-    "temp-file": "^3.3.2",
-    "fs-extra-p": "^7.0.0",
+    "app-builder-bin": "3.4.3",
+    "temp-file": "^3.3.4",
+    "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
-    "stat-mode": "^0.2.2",
-    "bluebird-lst": "^1.0.6",
-    "chalk": "^2.4.1",
-    "debug": "^4.1.0",
-    "builder-util-runtime": "^0.0.0-semantic-release",
-    "source-map-support": "^0.5.9",
-    "7zip-bin": "~4.1.0",
-    "js-yaml": "^3.12.0"
+    "stat-mode": "^0.3.0",
+    "bluebird-lst": "^1.0.9",
+    "chalk": "^2.4.2",
+    "debug": "^4.1.1",
+    "builder-util-runtime": "0.0.0-semantic-release",
+    "source-map-support": "^0.5.13",
+    "7zip-bin": "~5.0.3",
+    "js-yaml": "^3.13.1",
+    "@types/debug": "^4.1.4"
   },
   "typings": "./out/util.d.ts"
 }

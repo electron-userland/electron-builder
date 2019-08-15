@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { copy, writeFile } from "fs-extra-p"
+import { copyFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
@@ -8,7 +8,7 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
 test("one-click", app({
-  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
   config: {
     publish: {
       provider: "bintray",
@@ -23,9 +23,9 @@ test("one-click", app({
 }, {
   signedWin: true,
   packed: async context => {
-    await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), false)
+    await checkHelpers(context.getResources(Platform.WINDOWS, Arch.x64), false)
     await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)
-    await expectUpdateMetadata(context, Arch.ia32, true)
+    await expectUpdateMetadata(context, Arch.x64, true)
   }
 }))
 
@@ -164,7 +164,7 @@ test.skip("big file pack", app(
     },
   }, {
   projectDirCreated: async projectDir => {
-    await copy("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
+    await copyFile("/Volumes/Pegasus/15.02.18.m4v", path.join(projectDir, "foo/bar/video.mov"))
   },
 }))
 

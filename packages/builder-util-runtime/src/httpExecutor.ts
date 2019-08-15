@@ -1,6 +1,6 @@
 import { createHash, Hash } from "crypto"
 import _debug from "debug"
-import { createWriteStream } from "fs-extra-p"
+import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
@@ -50,7 +50,8 @@ export class HttpError extends Error {
   constructor(readonly statusCode: number, message: string = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
     super(message)
 
-    this.name = "HttpError"
+    this.name = "HttpError";
+    (this as NodeJS.ErrnoException).code = `HTTP_ERROR_${statusCode}`
   }
 }
 
@@ -126,7 +127,7 @@ export abstract class HttpExecutor<REQUEST> {
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
-      reject(createHttpError(response, `method: ${options.method} url: ${options.protocol || "https:"}//${options.hostname}${options.path}
+      reject(createHttpError(response, `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
 `))
@@ -203,8 +204,8 @@ Please double check that your authentication token is correct. Due to security r
           if (contentLength != null) {
             const size = parseInt(contentLength, 10)
             if (size > 0) {
-              if (size > 5242880) {
-                callback(new Error("Maximum allowed size is 5 MB"))
+              if (size > 52428800) {
+                callback(new Error("Maximum allowed size is 50 MB"))
                 return
               }
 
@@ -221,8 +222,8 @@ Please double check that your authentication token is correct. Due to security r
               result = chunk
             }
             else {
-              if (result.length > 5242880) {
-                callback(new Error("Maximum allowed size is 5 MB"))
+              if (result.length > 52428800) {
+                callback(new Error("Maximum allowed size is 50 MB"))
                 return
               }
               result = Buffer.concat([result, chunk])

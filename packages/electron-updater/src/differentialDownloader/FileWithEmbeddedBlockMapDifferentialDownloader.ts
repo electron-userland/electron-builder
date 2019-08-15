@@ -1,5 +1,5 @@
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
-import { close, fstat, open, read } from "fs-extra-p"
+import { close, fstat, open, read } from "fs-extra"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 
 const pako = require("pako")

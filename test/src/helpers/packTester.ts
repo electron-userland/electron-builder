@@ -11,13 +11,14 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, readFile, readJson, unlink, writeJson } from "fs-extra-p"
+import { emptyDir, writeJson } from "fs-extra"
+import { promises as fs } from "fs"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { parse as parsePlist } from "plist"
 import { TmpDir } from "temp-file"
 import { readAsar } from "app-builder-lib/out/asar/asar"
+import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -26,6 +27,7 @@ if (process.env.TRAVIS !== "true") {
 }
 
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
+export const snapTarget = Platform.LINUX.createTarget("snap")
 
 export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
@@ -57,8 +59,8 @@ export interface PackedContext {
   readonly tmpDir: TmpDir
 }
 
-export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws()
+export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}, customErrorAssert?: (error: Error) => void) {
+  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws(customErrorAssert)
 }
 
 export function appTwoThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -87,7 +89,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
   }
-  else if (configuration == null || (configuration as Configuration).cscLink == null) {
+  else if ((configuration as Configuration).cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, {config: {mac: {identity: null}}})
   }
 
@@ -194,7 +196,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       const file = result.file
       if (file != null) {
         if (file.endsWith(".yml")) {
-          result.fileContent = removeUnstableProperties(safeLoad(await readFile(file, "utf-8")))
+          result.fileContent = removeUnstableProperties(safeLoad(await fs.readFile(file, "utf-8")))
         }
         result.file = path.basename(file)
       }
@@ -235,7 +237,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   expect(objectToCompare).toMatchSnapshot()
 
   c: for (const [platform, archToType] of packagerOptions.targets!!) {
-    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, (packagerOptions as any)[platform.buildConfigurationKey] || {}, platform)) {
+    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, {platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: []} as any, platform)) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
@@ -272,6 +274,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
   const control = parseDebControl(await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
     maxBuffer: 10 * 1024 * 1024,
   }))
+
   delete control.Version
   delete control.Size
   const description = control.Description
@@ -302,7 +305,7 @@ function parseDebControl(info: string): any {
 
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
-  const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
+  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", path.join(packedAppDir, "Contents", "Info.plist")]))[0]
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
@@ -366,7 +369,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
-  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml")))
+  const files = pathSorter(fileDescriptors.map(it => toSystemIndependentPath(it.path))
+    .filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")))
 
   expect(files).toMatchSnapshot()
 
@@ -374,7 +378,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
       path: path.dirname(packageFile),
     })
-    const expectedSpec = (await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
+    const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
     // console.log(expectedSpec)
     expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
@@ -394,9 +398,9 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
+export const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
 
-async function getTarExecutable() {
+export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
 }
 
@@ -408,9 +412,9 @@ async function getContents(packageFile: string) {
       SZA_PATH: path7za,
     }
   })
-  return pathSorter(parseFileList(result, true)
-    .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
-  )
+
+  const contents = parseFileList(result, true)
+  return pathSorter(contents.filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`) || it.includes("/inspector/"))))
 }
 
 export function parseFileList(data: string, fromDpkg: boolean): Array<string> {
@@ -426,10 +430,10 @@ export function packageJson(task: (data: any) => void, isApp = false) {
 
 export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp = false): Promise<any> {
   const file = isApp ? path.join(projectDir, "app", "package.json") : path.join(projectDir, "package.json")
-  const data = await readJson(file)
+  const data = await fs.readFile(file, "utf-8").then(it => JSON.parse(it))
   task(data)
   // because copied as hard link
-  await unlink(file)
+  await fs.unlink(file)
   return await writeJson(file, data)
 }
 
@@ -480,7 +484,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Con
 }
 
 export async function checkDirContents(dir: string) {
-  expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => it.substring(dir.length + 1))).toMatchSnapshot()
+  expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => toSystemIndependentPath(it.substring(dir.length + 1)))).toMatchSnapshot()
 }
 
 export function removeUnstableProperties(data: any) {
@@ -497,4 +501,8 @@ export async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
   // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
   expect(fs.header).toMatchSnapshot()
+}
+
+export function toSystemIndependentPath(s: string): string {
+  return path.sep === "/" ? s : s.replace(/\\/g, "/")
 }

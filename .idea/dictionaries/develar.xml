@@ -29,6 +29,7 @@
       <w>appxmanifest</w>
       <w>archiver</w>
       <w>archs</w>
+      <w>armhf</w>
       <w>armv</w>
       <w>arpproducticon</w>
       <w>asar</w>
@@ -114,6 +115,8 @@
       <w>epipe</w>
       <w>evolvehq</w>
       <w>exdev</w>
+      <w>exedir</w>
+      <w>exepath</w>
       <w>exitdialogoptionalcheckbox</w>
       <w>exitdialogoptionalcheckboxtext</w>
       <w>extname</w>
@@ -187,6 +190,7 @@
       <w>kext</w>
       <w>keyserver</w>
       <w>keytar</w>
+      <w>ksuid</w>
       <w>langs</w>
       <w>launchui</w>
       <w>lcid</w>
@@ -252,9 +256,11 @@
       <w>mkdocs</w>
       <w>mkdtemp</w>
       <w>mksnapshot</w>
+      <w>mozilla</w>
       <w>mpass</w>
       <w>msiinstallperuser</w>
       <w>multilib</w>
+      <w>multipass</w>
       <w>multiuser</w>
       <w>muon</w>
       <w>mutators</w>
@@ -264,6 +270,7 @@
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
+      <w>noproxy</w>
       <w>noupdate</w>
       <w>npmignore</w>
       <w>npmrc</w>
@@ -305,6 +312,7 @@
       <w>psexec</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>
+      <w>pythonioencoding</w>
       <w>pythonpath</w>
       <w>rcedit</w>
       <w>readpass</w>
@@ -337,6 +345,7 @@
       <w>snapcraftctl</w>
       <w>splitted</w>
       <w>srcfolder</w>
+      <w>stringified</w>
       <w>subcommand</w>
       <w>subsequence</w>
       <w>targetdir</w>
@@ -365,11 +374,13 @@
       <w>uninstaller</w>
       <w>unmount</w>
       <w>unmounting</w>
+      <w>unnotarized</w>
       <w>unorm</w>
       <w>unpage</w>
       <w>unref</w>
       <w>unregister</w>
       <w>unwelcomefinishpage</w>
+      <w>updatable</w>
       <w>userbase</w>
       <w>userland</w>
       <w>userprofile</w>
@@ -407,6 +418,7 @@
       <w>zisofs</w>
       <w>zlib</w>
       <w>zsync</w>
+      <w>zulip</w>
     </words>
   </dictionary>
 </component>

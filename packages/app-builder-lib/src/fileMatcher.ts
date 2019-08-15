@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, log } from "builder-util"
 import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir } from "fs-extra"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"

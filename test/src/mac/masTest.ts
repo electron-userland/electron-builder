@@ -1,8 +1,8 @@
 import { Platform } from "electron-builder"
-import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
+import { promises as fs } from "fs"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {
@@ -19,7 +19,7 @@ test.ifNotCi("mas", createMacTargetTest(["mas"]))
 test.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
-test.ifAll("custom mas", () => {
+test.skip.ifAll("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
@@ -44,7 +44,7 @@ test.ifAll("custom mas", () => {
   })
 })
 
-test.ifAll("entitlements in the package.json", () => {
+test.ifAll.ifNotCi("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
@@ -66,15 +66,15 @@ test.ifAll("entitlements in the package.json", () => {
   })
 })
 
-test.ifAll("entitlements in build dir", () => {
+test.ifAll.ifNotCi("entitlements in build dir", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
   }), {
     projectDirCreated: projectDir => Promise.all([
-      writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
-      writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
+      fs.writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
+      fs.writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
     ]),
     packed: context => {
       expect(platformPackager!!.effectiveSignOptions).toMatchObject({

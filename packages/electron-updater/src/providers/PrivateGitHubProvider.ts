@@ -62,20 +62,21 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private async getLatestVersionInfo(cancellationToken: CancellationToken): Promise<ReleaseInfo> {
-    let basePath = this.basePath
     const allowPrerelease = this.updater.allowPrerelease
-
+    let basePath = this.basePath
     if (!allowPrerelease) {
       basePath = `${basePath}/latest`
     }
 
     const url = newUrlFromBase(basePath, this.baseUrl)
     try {
-      let version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
+      const version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
       if (allowPrerelease) {
-        version = version.find((v: any) => v.prerelease)
+        return version.find((v: any) => v.prerelease) || version[0]
       }
-      return version
+      else {
+        return version
+      }
     }
     catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")

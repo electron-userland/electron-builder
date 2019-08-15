@@ -1,4 +1,4 @@
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { homedir } from "os"
 import * as path from "path"
 import { TmpDir } from "temp-file"

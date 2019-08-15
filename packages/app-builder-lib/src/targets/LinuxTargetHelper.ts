@@ -1,5 +1,5 @@
 import { asArray, isEmptyOrSpaces, log } from "builder-util"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
@@ -10,6 +10,8 @@ export const installPrefix = "/opt"
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
 
+  private readonly mimeTypeFilesPromise = new Lazy(() => this.computeMimeTypeFiles())
+
   maxIconPath: string | null = null
 
   constructor(private packager: LinuxPackager) {
@@ -17,6 +19,34 @@ export class LinuxTargetHelper {
 
   get icons(): Promise<Array<IconInfo>> {
     return this.iconPromise.value
+  }
+
+  get mimeTypeFiles(): Promise<string | null> {
+    return this.mimeTypeFilesPromise.value
+  }
+
+  private async computeMimeTypeFiles(): Promise<string | null> {
+    const items: Array<string> = []
+    for (const fileAssociation of this.packager.fileAssociations) {
+      if (!fileAssociation.mimeType) {
+        continue
+      }
+
+      const data = `<mime-type type="${fileAssociation.mimeType}">
+  <glob pattern="*.${fileAssociation.ext}"/>
+    ${fileAssociation.description ? `<comment>${fileAssociation.description}</comment>` : ""}
+  <icon name="x-office-document" />
+</mime-type>`
+      items.push(data)
+    }
+
+    if (items.length === 0) {
+      return null
+    }
+
+    const file = await this.packager.getTempFile(".xml")
+    await outputFile(file, '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>")
+    return file
   }
 
   // must be name without spaces and other special characters, but not product name used
@@ -62,10 +92,17 @@ export class LinuxTargetHelper {
 
     const productFilename = appInfo.productFilename
 
+    if (exec == null) {
+      exec = `${installPrefix}/${productFilename}/${packager.executableName}`
+      if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
+        exec = `"${exec}"`
+      }
+      exec += " %U"
+    }
+
     const desktopMeta: any = {
       Name: appInfo.productName,
-      Comment: this.getDescription(targetSpecificOptions),
-      Exec: exec == null ? `"${installPrefix}/${productFilename}/${packager.executableName}" %U` : exec,
+      Exec: exec,
       Terminal: "false",
       Type: "Application",
       Icon: packager.executableName,
@@ -77,6 +114,11 @@ export class LinuxTargetHelper {
       StartupWMClass: appInfo.productName,
       ...extra,
       ...targetSpecificOptions.desktop,
+    }
+
+    const description = this.getDescription(targetSpecificOptions)
+    if (!isEmptyOrSpaces(description)) {
+      desktopMeta.Comment = description
     }
 
     const mimeTypes: Array<string> = asArray(targetSpecificOptions.mimeTypes)
@@ -110,7 +152,7 @@ export class LinuxTargetHelper {
         }
         log.warn({
           reason: "linux.category is not set and cannot map from macOS",
-          docs: "https://electron.build/configuration/configuration#LinuxBuildOptions-category",
+          docs: "https://www.electron.build/configuration/linux",
         }, "application Linux category is set to default \"Utility\"")
         category = "Utility"
       }

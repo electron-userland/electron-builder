@@ -110,6 +110,18 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Extra files to put in archive. Not applicable for `tar.*`.
    */
   readonly extraDistFiles?: Array<string> | string | null
+
+  /**
+   * Whether your app has to be signed with hardened runtime.
+   * @default true
+   */
+  readonly hardenedRuntime?: boolean
+
+  /**
+   * Whether to let electron-osx-sign validate the signing or not.
+   * @default false
+   */
+  readonly gatekeeperAssess?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
@@ -129,7 +141,7 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
-  readonly icon?: string | null
+  icon?: string | null
 
   /**
    * The size of all the icons inside the DMG.
@@ -152,7 +164,7 @@ export interface DmgOptions extends TargetSpecificOptions {
   readonly title?: string | null
 
   /**
-   * The content — to customize icon locations.
+   * The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.
    */
   contents?: Array<DmgContent>
 
@@ -160,10 +172,13 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
    * @default UDZO
    */
-  readonly format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
+  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
-   * The DMG windows position and size.
+   * The DMG window position and size. With y co-ordinates running from bottom to top.
+   *
+   * The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `"x": 0, "y": 100000` as the x, y co-ordinates.
+   * It is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
    */
   window?: DmgWindow
 
@@ -172,6 +187,18 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly internetEnabled?: boolean
+
+  /**
+   * Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.
+   * @default false
+   */
+  readonly sign?: boolean
+
+  /**
+   * @private
+   * @default true
+   */
+  writeUpdateInfo?: boolean
 }
 
 export interface DmgWindow {
@@ -182,7 +209,7 @@ export interface DmgWindow {
   x?: number
 
   /**
-   * The Y position relative to top of the screen.
+   * The Y position relative to bottom of the screen.
    * @default 100
    */
   y?: number
@@ -199,7 +226,13 @@ export interface DmgWindow {
 }
 
 export interface DmgContent {
+  /**
+   * The device-independent pixel offset from the left of the window to the **center** of the icon.
+   */
   x: number
+  /**
+   * The device-independent pixel offset from the top of the window to the **center** of the icon.
+   */
   y: number
   type?: "link" | "file" | "dir"
 

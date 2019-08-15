@@ -1,6 +1,6 @@
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -109,7 +109,7 @@ test("file url generic", async () => {
   await validateDownload(updater)
 })
 
-test("DigitalOcean Spaces", async () => {
+test.skip("DigitalOcean Spaces", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<SpacesOptions>({
     provider: "spaces",

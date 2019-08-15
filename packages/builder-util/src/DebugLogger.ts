@@ -1,4 +1,4 @@
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import { serializeToYaml } from "./util"
 
 export class DebugLogger {

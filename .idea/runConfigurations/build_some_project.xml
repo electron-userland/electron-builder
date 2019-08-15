@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="build some project" type="NodeJSConfigurationType" application-parameters="build --linux appimage" path-to-js-file="$PROJECT_DIR$/packages/electron-builder/out/cli/cli.js" working-dir="$PROJECT_DIR$/../electron-webpack-quick-start">
+    <envs>
+      <env name="NODE_PATH" value="$PROJECT_DIR$/packages:$PROJECT_DIR$/../electron-webpack-quick-start/node_modules" />
+      <env name="DEBUG" value="electron-builder" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

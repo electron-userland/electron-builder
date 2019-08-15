@@ -1,5 +1,73 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`background color 1`] = `
+Object {
+  "backgroundColor": "orange",
+  "contents": Array [
+    Object {
+      "x": 130,
+      "y": 220,
+    },
+    Object {
+      "path": "/Applications",
+      "type": "link",
+      "x": 410,
+      "y": 220,
+    },
+  ],
+  "format": "UDRO",
+  "writeUpdateInfo": false,
+}
+`;
+
+exports[`background color 2`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "BackgroundColor-1.1.0.dmg",
+    },
+  ],
+}
+`;
+
+exports[`background color 3`] = `
+Object {
+  "CFBundleDisplayName": "BackgroundColor",
+  "CFBundleExecutable": "BackgroundColor",
+  "CFBundleIconFile": "BackgroundColor.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "BackgroundColor",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
 exports[`bundleShortVersion 1`] = `
 Object {
   "mac": Array [
@@ -139,6 +207,65 @@ Object {
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "DefaultDmg-1.1.0.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "DefaultDmg-1.1.0.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg 2`] = `
+Object {
+  "CFBundleDisplayName": "DefaultDmg",
+  "CFBundleExecutable": "DefaultDmg",
+  "CFBundleIconFile": "DefaultDmg.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "DefaultDmg",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",

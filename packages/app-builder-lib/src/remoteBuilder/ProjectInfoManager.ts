@@ -1,4 +1,4 @@
-import { outputJson } from "fs-extra-p"
+import { outputJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Packager } from "../packager"

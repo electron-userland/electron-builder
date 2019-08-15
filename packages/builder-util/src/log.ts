@@ -38,8 +38,8 @@ export class Logger {
     this.doLog(message, messageOrFields, "info")
   }
 
-  notice(messageOrFields: Fields | null | string, message?: string): void {
-    this.doLog(message, messageOrFields, "notice")
+  error(messageOrFields: Fields | null | string, message?: string) {
+    this.doLog(message, messageOrFields, "error")
   }
 
   warn(messageOrFields: Fields | null | string, message?: string): void {
@@ -70,7 +70,7 @@ export class Logger {
       message = message.toString()
     }
 
-    const levelIndicator = "•"
+    const levelIndicator = level === "error" ? "⨯" : "•"
     const color = LEVEL_TO_COLOR[level]
     this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
     this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
@@ -82,11 +82,8 @@ export class Logger {
       return message
     }
 
-    let text = message
-
-    const fieldPadding = " ".repeat(Math.max(1, 16 - message.length))
-    text += fieldPadding
-
+    const fieldPadding = " ".repeat(Math.max(2, 16 - message.length))
+    let text = (level === "error" ? color(message) : message) + fieldPadding
     const fieldNames = Object.keys(fields)
     let counter = 0
     for (const name of fieldNames) {
@@ -131,8 +128,8 @@ export class Logger {
 
 const LEVEL_TO_COLOR: { [index: string]: Chalk } = {
   info: chalk.blue,
-  notice: chalk.yellow,
   warn: chalk.yellow,
+  error: chalk.red,
   debug: chalk.white,
 }
 

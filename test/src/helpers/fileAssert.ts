@@ -1,5 +1,5 @@
 import { exists, statOrNull } from "builder-util/out/fs"
-import { lstat } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 
 // http://joel-costigliola.github.io/assertj/
@@ -32,7 +32,7 @@ class Assertions {
   }
 
   async isSymbolicLink() {
-    const info = await lstat(this.actual)
+    const info = await fs.lstat(this.actual)
     if (!info.isSymbolicLink()) {
       throw new Error(`Path ${this.actual} is not a symlink`)
     }
@@ -55,7 +55,7 @@ class Assertions {
     }
   }
 
-  async throws() {
+  async throws(customErrorAssert?: (error: Error) => void) {
     let actualError: Error | null = null
     let result: any
     try {
@@ -85,7 +85,12 @@ class Assertions {
       m = m.replace(/'(C:)?(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$4'`)
     }
     try {
-      expect(m).toMatchSnapshot()
+      if (customErrorAssert == null) {
+        expect(m).toMatchSnapshot()
+      }
+      else {
+        customErrorAssert(actualError!!)
+      }
     }
     catch (matchError) {
       throw new Error(matchError + " " + actualError)

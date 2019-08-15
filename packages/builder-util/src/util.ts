@@ -9,7 +9,6 @@ import { safeDump } from "js-yaml"
 import * as path from "path"
 import "source-map-support/register"
 import { debug, log } from "./log"
-import isCI from "is-ci"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -25,7 +24,7 @@ export { deepAssign } from "./deepAssign"
 
 export const debug7z = _debug("electron-builder:7z")
 
-export function serializeToYaml(object: object, skipInvalid = false, noRefs = false) {
+export function serializeToYaml(object: any, skipInvalid = false, noRefs = false) {
   return safeDump(object, {
     lineWidth: 8000,
     skipInvalid,
@@ -34,7 +33,7 @@ export function serializeToYaml(object: object, skipInvalid = false, noRefs = fa
 }
 
 export function removePassword(input: string) {
-  return input.replace(/(-String |-P |pass:| \/p |-pass |--secretKey |--accessKey )([^ ]+)/g, (match, p1, p2) => {
+  return input.replace(/(-String |-P |pass:| \/p |-pass |--secretKey |--accessKey |-p )([^ ]+)/g, (match, p1, p2) => {
     if (p1.trim() === "/p" && p2.startsWith("\\\\Mac\\Host\\\\")) {
       // appx /p
       return `${p1}${p2}`
@@ -89,7 +88,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
   return new Promise<string>((resolve, reject) => {
     execFile(file, args, {
     ...options,
-    maxBuffer: 10 * 1024 * 1024,
+    maxBuffer: 1000 * 1024 * 1024,
     env: getProcessEnv(options == null ? null : options.env),
   }, (error, stdout, stderr) => {
       if (error == null) {
@@ -191,7 +190,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
       }
     })
 
-    childProcess.stdin.end(data)
+    childProcess.stdin!!.end(data)
   })
 }
 
@@ -237,13 +236,23 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
       }
     }
     else {
-      function formatOut(text: string, title: string) {
-        return text.length === 0 ? "" : `\n${title}:\n${text}`
-      }
-
-      reject(new Error(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`))
+      reject(new ExecError(command, code, formatOut(out, "Output"), formatOut(errorOut, "Error output")))
     }
   })
+}
+
+function formatOut(text: string, title: string) {
+  return text.length === 0 ? "" : `\n${title}:\n${text}`
+}
+
+export class ExecError extends Error {
+  alreadyLogged = false
+
+  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code: string = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+    super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`);
+
+    (this as NodeJS.ErrnoException).code = code
+  }
 }
 
 export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
@@ -325,14 +334,13 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: ExecFileOptions = {}): Promise<string> {
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const command = appBuilderPath
     const env: any = {
-      // before process.env to allow customize by user
-      SNAP_USE_HARD_LINKS_IF_POSSIBLE: isCI.toString(),
       ...process.env,
       SZA_PATH: path7za,
+      FORCE_COLOR: chalk.enabled ? "1" : "0",
     }
     const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
     if (cacheEnv != null && cacheEnv.length > 0) {
@@ -344,13 +352,18 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
     }
 
     const childProcess = doSpawn(command, args, {
-      ...extraOptions,
       env,
-      stdio: ["ignore", "pipe", process.stdout]
+      stdio: ["ignore", "pipe", process.stdout],
+      ...extraOptions,
     })
     if (childProcessConsumer != null) {
       childProcessConsumer(childProcess)
     }
-    handleProcess("close", childProcess, command, resolve, reject)
+    handleProcess("close", childProcess, command, resolve, error => {
+      if (error instanceof ExecError && error.exitCode === 2) {
+        error.alreadyLogged = true
+      }
+      reject(error)
+    })
   })
 }

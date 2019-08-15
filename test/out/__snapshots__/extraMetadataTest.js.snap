@@ -7,8 +7,6 @@ Object {
       "foo": "bar",
     },
   },
-  "draft": undefined,
-  "prerelease": undefined,
 }
 `;
 
@@ -21,8 +19,6 @@ Object {
       },
     },
   },
-  "draft": undefined,
-  "prerelease": undefined,
 }
 `;
 

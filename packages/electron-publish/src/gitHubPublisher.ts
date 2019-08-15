@@ -5,7 +5,7 @@ import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import mime from "mime"
-import { parse as parseUrl } from "url"
+import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export interface Release {
@@ -57,7 +57,7 @@ export class GitHubPublisher extends HttpPublisher {
     this.token = token!
 
     if (version.startsWith("v")) {
-      throw new InvalidConfigurationError(`Version must not starts with "v": ${version}`)
+      throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
@@ -99,7 +99,6 @@ export class GitHubPublisher extends HttpPublisher {
       }
 
       // https://github.com/electron-userland/electron-builder/issues/1197
-      // https://electron-builder.slack.com/archives/general/p1485961449000202
       // https://github.com/electron-userland/electron-builder/issues/2072
       if (this.releaseType === "draft") {
         this.releaseLogFields = {
@@ -147,7 +146,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private async overwriteArtifact(fileName: string, release: Release) {
     // delete old artifact and re-upload
-    log.notice({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
+    log.warn({file: fileName, reason: "already exists on GitHub"}, "overwrite published file")
 
     const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
     for (const asset of assets) {
@@ -168,31 +167,40 @@ export class GitHubPublisher extends HttpPublisher {
     }
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
-    let attemptNumber = 0
-    for (let i = 0; i < 3; i++) {
-      try {
-        return await httpExecutor.doApiRequest(configureRequestOptions({
-          hostname: parsedUrl.hostname,
-          path: parsedUrl.path,
-          method: "POST",
-          headers: {
-            accept: "application/vnd.github.v3+json",
-            "Content-Type": mime.getType(fileName) || "application/octet-stream",
-            "Content-Length": dataLength
-          }
-        }, this.token), this.context.cancellationToken, requestProcessor)
+    return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
+  }
+
+  private doUploadFile(attemptNumber: number, parsedUrl: UrlWithStringQuery, fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, release: any): Promise<any> {
+    return httpExecutor.doApiRequest(configureRequestOptions({
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.path,
+      method: "POST",
+      headers: {
+        accept: "application/vnd.github.v3+json",
+        "Content-Type": mime.getType(fileName) || "application/octet-stream",
+        "Content-Length": dataLength
       }
-      catch (e) {
-        if (e instanceof HttpError && e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
-          await this.overwriteArtifact(fileName, release)
-          continue
+    }, this.token), this.context.cancellationToken, requestProcessor)
+      .catch(e => {
+        if ((e as any).statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+          return this.overwriteArtifact(fileName, release)
+            .then(() => this.doUploadFile(attemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release))
         }
 
-        if (!(attemptNumber++ < 3 && (e instanceof HttpError || (e.code === "EPIPE" || e.code === "ECONNRESET")))) {
-          throw e
+        if (attemptNumber > 3) {
+          return Promise.reject(e)
         }
-      }
-    }
+        else {
+          return new Promise((resolve, reject) => {
+            const newAttemptNumber = attemptNumber + 1
+            setTimeout(() => {
+              this.doUploadFile(newAttemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release)
+                .then(resolve)
+                .catch(reject)
+            }, newAttemptNumber * 2000)
+          })
+        }
+      })
   }
 
   private createRelease() {

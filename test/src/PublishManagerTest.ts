@@ -1,11 +1,11 @@
 import { createTargets, Platform } from "electron-builder"
-import { outputFile } from "fs-extra-p"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
 
-test.ifDevOrLinuxCi("generic, github and spaces", app({
+test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", app({
   targets: Platform.MAC.createTarget("zip"),
   config: {
     generateUpdatesFilesForAllChannels: true,
@@ -43,7 +43,7 @@ function genericPublisher(url: string): GenericServerOptions {
   }
 }
 
-test.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
+test.ifNotWindows.ifDevOrLinuxCi("github and spaces (publishAutoUpdate)", app({
   targets: Platform.LINUX.createTarget("AppImage"),
   config: {
     mac: {

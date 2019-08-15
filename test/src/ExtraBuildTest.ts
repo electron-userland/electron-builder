@@ -1,5 +1,5 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
-import { move } from "fs-extra-p"
+import { promises as fs } from "fs"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
@@ -26,7 +26,7 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
     packed: async context => {
       await assertThat(path.join(context.projectDir, "customDist", "latest")).isDirectory()
     },
-    projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
+    projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   })
 }
 
@@ -61,6 +61,10 @@ test.ifAll.ifLinuxOrDevMac("retrieve latest electron version", app({
   targets: linuxDirTarget,
 }, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.devDependencies = {
+      ...data.devDependencies,
+      electron: "latest",
+    }
     delete data.build.electronVersion
   }),
 }))

@@ -11,12 +11,10 @@
     "out"
   ],
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "dependencies": {
-    "debug": "^4.1.0",
-    "fs-extra-p": "^7.0.0",
-    "bluebird-lst": "^1.0.6",
+    "debug": "^4.1.1",
     "sax": "^1.2.4"
   },
   "types": "./out/index.d.ts"

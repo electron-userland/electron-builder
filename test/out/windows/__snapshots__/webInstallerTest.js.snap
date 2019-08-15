@@ -153,7 +153,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "WorkFlowy.exe",
-      "safeArtifactName": "WorkFlowy.exe",
       "updateInfo": Object {
         "packages": Object {
           "x64": Object {

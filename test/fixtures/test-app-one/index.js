@@ -4,11 +4,6 @@ const { app, ipcMain, BrowserWindow, Menu, Tray } = require("electron")
 const fs = require("fs")
 const path = require("path")
 
-if (handleSquirrelEvent()) {
-  // squirrel event handled and app will exit in 1000ms, so don't do anything else
-  return;
-}
-
 function handleSquirrelEvent() {
   if (process.argv.length === 1) {
     return false;
@@ -87,7 +82,7 @@ function createWindow () {
   }
 
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600});
+  mainWindow = new BrowserWindow({width: 800, height: 600, webPreferences: {nodeIntegration: true}});
 
   // and load the index.html of the app.
   mainWindow.loadURL('file://' + __dirname + '/index.html');
@@ -107,31 +102,40 @@ function createWindow () {
   });
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-app.on('ready', createWindow);
+function main() {
+  if (handleSquirrelEvent()) {
+    // squirrel event handled and app will exit in 1000ms, so don't do anything else
+    return;
+  }
 
-// Quit when all windows are closed.
-app.on('window-all-closed', function () {
-  // On MacOS it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+  // This method will be called when Electron has finished
+  // initialization and is ready to create browser windows.
+  app.on('ready', createWindow);
 
-app.on("activate", function () {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
+  // Quit when all windows are closed.
+  app.on('window-all-closed', function () {
+    // On MacOS it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
 
-ipcMain.on("saveAppData", () => {
-  try {
-    // electron doesn't escape / in the product name
-    fs.writeFileSync(path.join(app.getPath("appData"), "Test App ßW", "testFile"), "test")
-  }
-  catch (e) {
-    mainWindow.webContents.executeJavaScript(`console.log(\`userData: ${e}\`)`)
-  }
-})
+  app.on("activate", function () {
+    if (mainWindow === null) {
+      createWindow()
+    }
+  })
+
+  ipcMain.on("saveAppData", () => {
+    try {
+      // electron doesn't escape / in the product name
+      fs.writeFileSync(path.join(app.getPath("appData"), "Test App ßW", "testFile"), "test")
+    }
+    catch (e) {
+      mainWindow.webContents.executeJavaScript(`console.log(\`userData: ${e}\`)`)
+    }
+  })
+}
+
+main()

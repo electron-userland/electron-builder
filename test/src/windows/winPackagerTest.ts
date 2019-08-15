@@ -1,5 +1,6 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { remove, rename, unlink, writeFile } from "fs-extra-p"
+import { remove } from "fs-extra"
+import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
@@ -27,15 +28,15 @@ test.ifNotCiMac.ifAll("zip artifactName", app({
 }))
 
 test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
-  projectDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
+  projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }))
 
 test.ifNotCiMac("icon not an image", appThrows(platform(Platform.WINDOWS), {
   projectDirCreated: async projectDir => {
     const file = path.join(projectDir, "build", "icon.ico")
     // because we use hardlinks
-    await unlink(file)
-    await writeFile(file, "foo")
+    await fs.unlink(file)
+    await fs.writeFile(file, "foo")
   }
 }))
 
@@ -50,7 +51,7 @@ test.ifMac("custom icon", () => {
       },
     },
   }, {
-    projectDirCreated: projectDir => rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
+    projectDirCreated: projectDir => fs.rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
     packed: async context => {
       expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },
@@ -69,7 +70,7 @@ test.ifAll("win icon from icns", () => {
     platformPackagerFactory: packager => platformPackager = new CheckingWinPackager(packager)
   }, {
     projectDirCreated: projectDir => Promise.all([
-      unlink(path.join(projectDir, "build", "icon.ico")),
+      fs.unlink(path.join(projectDir, "build", "icon.ico")),
       remove(path.join(projectDir, "build", "icons")),
     ]),
     packed: async () => {

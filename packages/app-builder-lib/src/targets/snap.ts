@@ -1,19 +1,18 @@
-import { Arch, executeAppBuilder, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
+import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray } from "builder-util-runtime"
-import { outputFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
 import { Target } from "../core"
-import { LinuxPackager, toAppImageOrSnapArch } from "../linuxPackager"
+import { LinuxPackager } from "../linuxPackager"
 import { PlugDescriptor } from "../options/SnapOptions"
+import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
 
-// libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-// noinspection SpellCheckingInspection
-const defaultStagePackages = ["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6", "libappindicator1", "libsecret-1-0"]
-const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
+const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -32,114 +31,106 @@ export default class SnapTarget extends Target {
     return result
   }
 
-  private get isElectron2(): boolean {
-    return semver.gte(this.packager.config.electronVersion || "1.8.3", "2.0.0-beta.1")
-  }
+  private async createDescriptor(arch: Arch): Promise<any> {
+    if (!this.isElectronVersionGreaterOrEqualThen("4.0.0")) {
+      if (!this.isElectronVersionGreaterOrEqualThen("2.0.0-beta.1")) {
+        throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
+      }
 
-  private createDescriptor(arch: Arch): any {
+      log.warn("Electron 4 and higher is highly recommended for Snap")
+    }
+
     const appInfo = this.packager.appInfo
     const snapName = this.packager.executableName.toLowerCase()
     const options = this.options
-    const linuxArchName = toAppImageOrSnapArch(arch)
 
-    const plugs = normalizePlugConfiguration(options.plugs)
+    const plugs = normalizePlugConfiguration(this.options.plugs)
+
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
-    const desktopPart = this.isElectron2 ? "desktop-gtk3" : "desktop-gtk2"
-
     const buildPackages = asArray(options.buildPackages)
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && arch === Arch.x64 && buildPackages.length === 0 && this.isElectron2
+    const defaultStagePackages = getDefaultStagePackages()
+    const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
+
+    this.isUseTemplateApp = this.options.useTemplateApp !== false &&
+      (arch === Arch.x64 || arch === Arch.armv7l) &&
+      buildPackages.length === 0 &&
+      isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
 
     const appDescriptor: any = {
-      command: `command.sh`,
+      command: "command.sh",
       plugs: plugNames,
+      adapter: "none",
     }
-    const snap: any = {
+
+    const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    if (this.isUseTemplateApp) {
+      delete appDescriptor.adapter
+    }
+    if (options.grade != null) {
+      snap.grade = options.grade
+    }
+    if (options.confinement != null) {
+      snap.confinement = options.confinement
+    }
+    deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
       summary: options.summary || appInfo.productName,
       description: this.helper.getDescription(options),
-      confinement: options.confinement || "strict",
-      grade: options.grade || "stable",
-      architectures: [toLinuxArchString(arch)],
+      architectures: [toLinuxArchString(arch, "snap")],
       apps: {
         [snapName]: appDescriptor
       },
       parts: {
         app: {
-          plugin: "nil",
-          "stage-packages": this.replaceDefault(options.stagePackages, defaultStagePackages),
-          after: this.replaceDefault(options.after, [desktopPart]),
+          "stage-packages": stagePackages,
         }
       },
-    }
+    })
 
-    if (options.confinement !== "classic") {
+    if (options.confinement === "classic") {
+      delete appDescriptor.plugs
+      delete snap.plugs
+    }
+    else {
+      const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
+        // https://github.com/electron-userland/electron-builder/issues/4007
+        // https://github.com/electron/electron/issues/9056
+        DISABLE_WAYLAND: "1",
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
           "$SNAP_LIBRARY_PATH",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/pulseaudio",
-          "$SNAP/usr/lib/" + linuxArchName + "-linux-gnu/mesa-egl",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu",
+          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
           "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + linuxArchName + "-linux-gnu:$SNAP/usr/lib/" + linuxArchName + "-linux-gnu"
+          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet
         ].join(":"),
         ...options.environment,
       }
-    }
 
-    if (!this.isUseTemplateApp) {
-      appDescriptor.adapter = "none"
+      if (plugs != null) {
+        for (const plugName of plugNames) {
+          const plugOptions = plugs[plugName]
+          if (plugOptions == null) {
+            continue
+          }
+
+          snap.plugs[plugName] = plugOptions
+        }
+      }
     }
 
     if (buildPackages.length > 0) {
       snap.parts.app["build-packages"] = buildPackages
     }
-
-    if (plugs != null) {
-      for (const plugName of plugNames) {
-        const plugOptions = plugs[plugName]
-        if (plugOptions == null) {
-          continue
-        }
-
-        if (snap.plugs == null) {
-          snap.plugs = {}
-        }
-        snap.plugs[plugName] = plugOptions
-      }
+    if (options.after != null) {
+      snap.parts.app.after = options.after
     }
 
     if (options.assumes != null) {
       snap.assumes = asArray(options.assumes)
-    }
-
-    if (!this.isUseTemplateApp && snap.parts.app.after.includes(desktopPart)) {
-      // call super build (snapcraftctl build) otherwise /bin/desktop not created
-      // noinspection SpellCheckingInspection
-      const desktopPartOverride: any = {
-        "override-build": `set -x
-snapcraftctl build
-export XDG_DATA_DIRS=$SNAPCRAFT_PART_INSTALL/usr/share
-update-mime-database $SNAPCRAFT_PART_INSTALL/usr/share/mime
-
-for dir in $SNAPCRAFT_PART_INSTALL/usr/share/icons/*/; do
-  if [ -f $dir/index.theme ]; then
-    if which gtk-update-icon-cache-3.0 &> /dev/null; then
-      gtk-update-icon-cache-3.0 -q $dir
-    elif which gtk-update-icon-cache &> /dev/null; then
-      gtk-update-icon-cache -q $dir
-    fi
-  fi
-done`
-      }
-
-      if (appDescriptor.plugs.includes("desktop") || appDescriptor.plugs.includes("desktop-legacy")) {
-        desktopPartOverride.stage = ["-./usr/share/fonts/**"]
-      }
-
-      snap.parts[desktopPart] = desktopPartOverride
     }
 
     return snap
@@ -157,23 +148,20 @@ done`
       arch,
     })
 
-    const snap: any = this.createDescriptor(arch)
+    const snap = await this.createDescriptor(arch)
     if (this.isUseTemplateApp) {
       delete snap.parts
     }
 
     const stageDir = await createStageDirPath(this, packager, arch)
-    // snapcraft.yaml inside a snap directory
-    const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
-
+    const snapArch = toLinuxArchString(arch, "snap")
     const args = [
       "snap",
       "--app", appOutDir,
       "--stage", stageDir,
-      "--arch", toLinuxArchString(arch),
+      "--arch", snapArch,
       "--output", artifactPath,
       "--executable", this.packager.executableName,
-      "--docker-image", "electronuserland/builder:latest",
     ]
 
     await this.helper.icons
@@ -184,13 +172,22 @@ done`
       args.push("--icon", this.helper.maxIconPath)
     }
 
+    // snapcraft.yaml inside a snap directory
+    const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, packager.executableName, desktopFile, {
       // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png"
     })
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile})) {
+    if (this.isElectronVersionGreaterOrEqualThen("5.0.0") && !isBrowserSandboxAllowed(snap)) {
+      args.push("--extraAppArgs=--no-sandbox")
+      if (this.isUseTemplateApp) {
+        args.push("--exclude", "chrome-sandbox")
+      }
+    }
+
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile, args})) {
       return
     }
 
@@ -202,14 +199,51 @@ done`
     }
 
     if (this.isUseTemplateApp) {
-      args.push("--template-url", "electron2")
+      args.push("--template-url", `electron4:${snapArch}`)
     }
     await executeAppBuilder(args)
-    await packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "snap", arch, false))
+
+    await packager.info.callArtifactBuildCompleted({
+      file: artifactPath,
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "snap", arch, false),
+      target: this,
+      arch,
+      packager,
+      publishConfig: options.publish == null ? {provider: "snapStore"} : null,
+    })
+  }
+
+  private isElectronVersionGreaterOrEqualThen(version: string) {
+    return semver.gte(this.packager.config.electronVersion || "5.0.3", version)
   }
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: PlugDescriptor | null } | null {
+function archNameToTriplet(arch: Arch): string {
+  switch (arch) {
+    case Arch.x64:
+      return "x86_64-linux-gnu"
+    case Arch.ia32:
+      return "i386-linux-gnu"
+    case Arch.armv7l:
+      // noinspection SpellCheckingInspection
+      return "arm-linux-gnueabihf"
+    case Arch.arm64:
+      return "aarch64-linux-gnu"
+
+    default:
+      throw new Error(`Unsupported arch ${arch}`)
+  }
+}
+
+function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
+  a = a.slice()
+  b = b.slice()
+  a.sort()
+  b.sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any; } | null } | null {
   if (raw == null) {
     return null
   }
@@ -224,4 +258,22 @@ function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDe
     }
   }
   return result
+}
+
+function isBrowserSandboxAllowed(snap: any): boolean {
+  if (snap.plugs != null) {
+    for (const plugName of Object.keys(snap.plugs)) {
+      const plug = snap.plugs[plugName]
+      if (plug.interface === "browser-support" && plug["allow-sandbox"] === true) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+function getDefaultStagePackages() {
+  // libxss1 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
+  // noinspection SpellCheckingInspection
+  return ["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]
 }

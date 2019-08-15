@@ -1,4 +1,4 @@
-osx_image: xcode10.1
+osx_image: xcode10.2
 language: node_js
 
 env:
@@ -28,9 +28,7 @@ cache:
     - /tmp/jest-electron-builder-tests
 
 install:
-  - curl -L https://yarnpkg.com/latest.tar.gz | tar xz && mv yarn-* $HOME/.yarn
-  - export PATH="$HOME/.yarn/bin:$PATH"
-  - yarn
+  - yarn --frozen-lockfile
 
 script:
   - yarn test

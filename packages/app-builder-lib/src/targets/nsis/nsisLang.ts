@@ -1,7 +1,7 @@
 import { asArray } from "builder-util"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
 import _debug from "debug"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager"

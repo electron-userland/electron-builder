@@ -1,15 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, executeAppBuilder, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
-import { emptyDir, readdir, remove, rename } from "fs-extra-p"
+import { emptyDir, readdir, remove, rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { ElectronPlatformName, Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
+import { isSafeToUnpackElectronOnRemoteBuildServer } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
@@ -52,26 +52,19 @@ function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName,
   }
 }
 
-async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions, isClearExecStack: boolean) {
+async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   const packager = options.packager
   const appOutDir = options.appOutDir
   if (packager.platform === Platform.LINUX) {
-    const linuxPackager = (packager as LinuxPackager)
-    const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rename(path.join(appOutDir, packager.electronDistExecutableName), executable)
-
-    if (isClearExecStack) {
-      try {
-        await executeAppBuilder(["clear-exec-stack", "--input", executable])
-      }
-      catch (e) {
-        log.debug({error: e}, "cannot clear exec stack")
-      }
+    if (!isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
+      const linuxPackager = (packager as LinuxPackager)
+      const executable = path.join(appOutDir, linuxPackager.executableName)
+      await rename(path.join(appOutDir, "electron"), executable)
     }
   }
   else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, `${packager.electronDistExecutableName}.exe`), executable)
+    await rename(path.join(appOutDir, "electron.exe"), executable)
   }
   else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
@@ -126,30 +119,11 @@ class ElectronFramework implements Framework {
   }
 
   beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
-    return beforeCopyExtraFiles(options, this.name === "electron" && semver.lte(this.version || "1.8.3", "1.8.3"))
-  }
-}
-
-class MuonFramework extends ElectronFramework {
-  constructor(version: string) {
-    super("muon", version, "Brave.app")
-  }
-
-  prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    return unpack(options, {
-      mirror: "https://github.com/brave/muon/releases/download/v",
-      customFilename: `brave-v${options.version}-${options.platformName}-${options.arch}.zip`,
-      isVerifyChecksum: false,
-      ...createDownloadOpts(options.packager.config, options.platformName, options.arch, options.version),
-    }, this.distMacOsAppName)
+    return beforeCopyExtraFiles(options)
   }
 }
 
 export async function createElectronFrameworkSupport(configuration: Configuration, packager: Packager): Promise<Framework> {
-  if (configuration.muonVersion != null) {
-    return new MuonFramework(configuration.muonVersion!!)
-  }
-
   let version = configuration.electronVersion
   if (version == null) {
     // for prepacked app asar no dev deps in the app.asar
@@ -184,6 +158,10 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
 
   let isFullCleanup = false
   if (dist == null) {
+    if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
+      return
+    }
+
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", out, "--distMacOsAppName", distMacOsAppName])
   }
   else {

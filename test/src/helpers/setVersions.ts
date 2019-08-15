@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { readJson, writeJson, readdir, stat, writeFile } from "fs-extra-p"
+import { readJson, writeJson } from "fs-extra"
+import { promises as fs } from "fs"
 import * as path from "path"
 import * as semver from "semver"
 
@@ -10,8 +11,8 @@ const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
 
 async function readProjectMetadata(packageDir: string) {
-  const packageDirs = BluebirdPromise.filter((await readdir(packageDir)).filter(it => !it.includes(".")).sort(), it => {
-    return stat(path.join(packageDir, it, "package.json"))
+  const packageDirs = BluebirdPromise.filter((await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort(), it => {
+    return fs.stat(path.join(packageDir, it, "package.json"))
       .then(it => it.isFile())
       .catch(() => false)
   })
@@ -85,7 +86,7 @@ ln -f README.md packages/electron-builder/README.md
     }
   }
 
-  await writeFile(path.join(rootDir, "__publish.sh"), publishScript)
+  await fs.writeFile(path.join(rootDir, "__publish.sh"), publishScript)
 }
 
 async function setDepVersions(packageData: Array<any>) {

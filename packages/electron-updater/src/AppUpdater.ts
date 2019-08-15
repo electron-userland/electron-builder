@@ -2,13 +2,12 @@ import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfigu
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import { EventEmitter } from "events"
-import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra-p"
+import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
-import "source-map-support/register"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
@@ -239,7 +238,7 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
-  protected isUpdaterActive(): boolean {
+  public isUpdaterActive(): boolean {
     if (!this.app.isPackaged) {
       this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
       return false
@@ -620,7 +619,7 @@ export abstract class AppUpdater extends EventEmitter {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {
-        log.info("Cancelled")
+        log.info("cancelled")
         this.emit("update-cancelled", updateInfo)
       }
       throw e

@@ -1,5 +1,5 @@
-import { readdir } from "fs-extra-p"
 import * as path from "path"
+import { promises as fs } from "fs"
 
 const workerFarm = require("worker-farm")
 
@@ -10,7 +10,7 @@ const packageDir = path.join(rootDir, "packages")
 const workers = workerFarm({maxRetries: 1, maxCallTime: 2 * 60 * 1000}, path.join(rootDir, "scripts", "lint.js"))
 
 async function main(): Promise<void> {
-  const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
+  const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
   for (const name of packages) {
     if (name.includes("electron-forge-maker-") || name.includes("electron-installer-")) {
       continue

@@ -1,15 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, use } from "builder-util"
+import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder } from "builder-util"
 import { parseDn } from "builder-util-runtime"
-import { CopyFileTransformer, FileTransformer } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
+import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
-import { readdir } from "fs-extra-p"
+import { readdir } from "fs-extra"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign/codesign"
-import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -24,7 +23,6 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { getWindowsVm, VmManager } from "./vm/vm"
-import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -303,7 +301,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       const timer = time("executable cache")
       const hash = createHash("sha512")
       hash.update(config.electronVersion || "no electronVersion")
-      hash.update(config.muonVersion || "no muonVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
       hash.update(this.platformSpecificBuildOptions.certificateSha1 || "no certificateSha1")
@@ -320,8 +317,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const timer = time("wine&sign")
     // rcedit crashed of executed using wine, resourcehacker works
     if (process.platform === "win32" || this.info.framework.name === "electron") {
-      const vendorPath = await getSignVendorPath()
-      await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
+      await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)])
     }
 
     await this.sign(file)
@@ -373,13 +369,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
-      if (file.endsWith(".exe") || file.endsWith(".dll")) {
-        return this.sign(path.join(outResourcesDir, file))
-      }
-      else {
-        return null
-      }
-    })
+    // noinspection JSUnusedLocalSymbols
+    const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || file.endsWith(".dll"))
+    await BluebirdPromise.map(fileToSign, file => this.sign(file), {concurrency: 4})
   }
 }

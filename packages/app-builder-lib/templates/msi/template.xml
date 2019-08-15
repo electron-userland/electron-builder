@@ -50,7 +50,13 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="${programFilesId}">
-        <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
+        {{ if (menuCategory) { }}
+          <Directory Id="COMPANYDIR" Name="${menuCategory}">
+        {{ } -}}
+              <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
+        {{ if (menuCategory) { }}
+          </Directory>
+        {{ } -}}
       </Directory>
 
       <!-- Desktop link -->

@@ -1,12 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra-p"
+import { ensureDir } from "fs-extra"
+import { isBinaryFile } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
-
-const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   let list = map.get(key)

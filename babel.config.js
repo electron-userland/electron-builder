@@ -6,7 +6,7 @@ module.exports = function (api) {
   api.env()
   return {
     "presets": [
-      "babel-preset-ts-node6-bluebird",
+      "babel-preset-ts-node8",
     ],
     "plugins": [
       "./scripts/babel-plugin-version-transform.js",

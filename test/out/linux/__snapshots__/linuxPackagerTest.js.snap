@@ -3,13 +3,13 @@
 exports[`AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Comment=Test Application (test quite “ #378)
 Exec=AppRun
 Terminal=true
 Type=Application
 Icon=Foo
 StartupWMClass=Test App ßW
 X-Foo=bar
+Comment=Test Application (test quite “ #378)
 Categories=Development;
 "
 `;
@@ -31,29 +31,14 @@ Object {
 }
 `;
 
-exports[`AppImage - doNotAsk system integration 1`] = `
-Object {
-  "linux": Array [
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
-      "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-  ],
-}
-`;
+exports[`AppImage - deprecated systemIntegration 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
 
 exports[`AppImage 1`] = `
 Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -69,10 +54,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "Test App ßW 1.1.0.AppImage",
+            "url": "Test App ßW-1.1.0.AppImage",
           },
         ],
-        "path": "Test App ßW 1.1.0.AppImage",
+        "path": "Test App ßW-1.1.0.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
@@ -87,7 +72,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "armv7l",
-      "file": "Test App ßW 1.1.0 armv7l.AppImage",
+      "file": "Test App ßW-1.1.0-armv7l.AppImage",
       "safeArtifactName": "TestApp-1.1.0-armv7l.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -103,10 +88,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "Test App ßW 1.1.0 armv7l.AppImage",
+            "url": "Test App ßW-1.1.0-armv7l.AppImage",
           },
         ],
-        "path": "Test App ßW 1.1.0 armv7l.AppImage",
+        "path": "Test App ßW-1.1.0-armv7l.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
@@ -121,7 +106,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "ia32",
-      "file": "Test App ßW 1.1.0 i386.AppImage",
+      "file": "Test App ßW-1.1.0-i386.AppImage",
       "safeArtifactName": "TestApp-1.1.0-i386.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -137,10 +122,10 @@ Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "Test App ßW 1.1.0 i386.AppImage",
+            "url": "Test App ßW-1.1.0-i386.AppImage",
           },
         ],
-        "path": "Test App ßW 1.1.0 i386.AppImage",
+        "path": "Test App ßW-1.1.0-i386.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
@@ -157,7 +142,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -174,7 +159,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -207,7 +192,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -224,7 +209,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -241,7 +226,7 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "Test App ßW 1.1.0.AppImage",
+      "file": "Test App ßW-1.1.0.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
@@ -261,4 +246,21 @@ See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
 It is required to set Linux .deb package maintainer. Or you can set maintainer in the custom linux options.
 (see https://www.electron.build/configuration/linux).
 "
+`;
+
+exports[`text license and file associations 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
 `;

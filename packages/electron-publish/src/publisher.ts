@@ -2,7 +2,7 @@ import { Arch, log } from "builder-util"
 import { CancellationToken, ProgressCallbackTransform } from "builder-util-runtime"
 import { PADDING } from "builder-util/out/log"
 import chalk from "chalk"
-import { createReadStream, stat, Stats } from "fs-extra-p"
+import { createReadStream, stat, Stats } from "fs-extra"
 import { ClientRequest } from "http"
 import { basename } from "path"
 import { MultiProgress } from "./multiProgress"
@@ -68,7 +68,7 @@ export abstract class Publisher {
 }
 
 export abstract class HttpPublisher extends Publisher {
-  constructor(protected readonly context: PublishContext, private readonly useSafeArtifactName = false) {
+  protected constructor(protected readonly context: PublishContext, private readonly useSafeArtifactName = false) {
     super(context)
   }
 

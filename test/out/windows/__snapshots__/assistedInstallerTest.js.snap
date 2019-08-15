@@ -6,7 +6,7 @@ Object {
     Object {
       "arch": "x64",
       "file": "test Setup 1.1.0.exe",
-      "safeArtifactName": "test-setup-1.1.0.exe",
+      "safeArtifactName": "test-Setup-1.1.0.exe",
     },
   ],
 }
@@ -22,10 +22,10 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "test-custom-inst-dir-setup-1.1.0.exe",
+            "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
           },
         ],
-        "path": "test-custom-inst-dir-setup-1.1.0.exe",
+        "path": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
         "releaseDate": "@releaseDate",
         "releaseNotes": "New release with new bugs and
 
@@ -37,7 +37,7 @@ without features",
     Object {
       "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
-      "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -45,7 +45,7 @@ without features",
     },
     Object {
       "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
-      "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

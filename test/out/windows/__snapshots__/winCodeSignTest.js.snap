@@ -1,5 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`electronDist 1`] = `"ENOENT"`;
+
+exports[`forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;
+
 exports[`parseDn 1`] = `
 Map {
   "CN" => "7digital Limited",
@@ -8,7 +12,3 @@ Map {
   "C" => "GB",
 }
 `;
-
-exports[`sign electronDist 1`] = `"ENOENT"`;
-
-exports[`sign forceCodeSigning 1`] = `"ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION"`;

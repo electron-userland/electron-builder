@@ -6,7 +6,7 @@ import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
 import { installOrRebuild } from "app-builder-lib/out/util/yarn"
-import { readJson } from "fs-extra-p"
+import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
@@ -15,10 +15,13 @@ import yargs from "yargs"
 declare const PACKAGE_VERSION: string
 
 /** @internal */
-export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs {
+export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
   // https://github.com/yargs/yargs/issues/760
   // demandOption is required to be set
   return yargs
+    .parserConfiguration({
+      "camel-case-expansion": false,
+    })
     .option("platform", {
       choices: ["linux", "darwin", "win32"],
       default: process.platform,
@@ -46,18 +49,17 @@ export async function installAppDeps(args: any) {
   const projectDir = process.cwd()
   const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
-  const muonVersion = config.muonVersion
   const results = await Promise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
-    muonVersion == null ? getElectronVersion(projectDir, config, packageMetadata) : Promise.resolve(muonVersion),
+    getElectronVersion(projectDir, config, packageMetadata),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
   await installOrRebuild(config, results[0], {
-    frameworkInfo: {version: results[1], useCustomDist: muonVersion == null},
+    frameworkInfo: {version: results[1], useCustomDist: true},
     platform: args.platform,
     arch: args.arch,
-    productionDeps: createLazyProductionDeps(results[0]),
+    productionDeps: createLazyProductionDeps(results[0], null),
   }, results[0] !== projectDir)
 }
 

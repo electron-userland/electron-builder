@@ -1,6 +1,6 @@
 import { isPrimitiveType, Item, Renderer, renderMemberName, TypeNamePlace } from "./main"
 
-// mkdocs requires 4 spaces (not 2 as gitbook) for items of nested list
+// mkdocs requires 4 spaces (not 2 as git book) for items of nested list
 const nestedSpace = "    "
 
 export function renderProperties(renderer: Renderer, object: Item, level = 0) {
@@ -57,6 +57,7 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
       }
 
       if (child != null) {
+        // noinspection HtmlDeprecatedAttribute
         result += `<a name="${child.name}"></a>`
       }
 

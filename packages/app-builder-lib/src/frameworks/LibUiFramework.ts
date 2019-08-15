@@ -1,12 +1,12 @@
-import { chmod, emptyDir, ensureDir, rename, writeFile } from "fs-extra-p"
+import { chmod, emptyDir, ensureDir, rename, writeFile } from "fs-extra"
 import * as path from "path"
-import { build as buildPlist } from "plist"
 import { executeAppBuilder } from "builder-util"
 import { AfterPackContext } from "../configuration"
 import { Platform } from "../core"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
+import { executeAppBuilderAndWriteJson } from "../util/appBuilder"
 
 export class LibUiFramework implements Framework {
   readonly name: string = "libui"
@@ -63,7 +63,7 @@ export class LibUiFramework implements Framework {
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
     await Promise.all([
-      writeFile(path.join(appContentsDir, "Info.plist"), buildPlist(appPlist)),
+      executeAppBuilderAndWriteJson(["encode-plist"], {[path.join(appContentsDir, "Info.plist")]: appPlist}),
       writeExecutableMain(path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable), `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"

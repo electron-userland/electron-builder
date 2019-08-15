@@ -1,14 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, InvalidConfigurationError, log } from "builder-util"
 import { copyOrLinkFile, unlinkIfExists } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
-import { readFile, rename, utimes, writeFile } from "fs-extra-p"
+import { rename, utimes } from "fs-extra"
 import * as path from "path"
-import { build as buildPlist, parse as parsePlist } from "plist"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { AsarIntegrity } from "../asar/integrity"
 import MacPackager from "../macPackager"
 import { normalizeExt } from "../platformPackager"
+import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -22,13 +21,23 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
   })
 }
 
-function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null) {
+function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperRendererPlist: string | null, helperPluginPlist: string | null, helperGPUPlist: string | null) {
+
   const result = [" Helper"]
   if (helperEHPlist != null) {
     result.push(" Helper EH")
   }
   if (helperNPPlist != null) {
     result.push(" Helper NP")
+  }
+  if (helperRendererPlist != null) {
+    result.push(" Helper (Renderer)")
+  }
+  if (helperPluginPlist != null) {
+    result.push(" Helper (Plugin)")
+  }
+  if (helperGPUPlist != null) {
+    result.push(" Helper (GPU)")
   }
   return result
 }
@@ -43,31 +52,35 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const loginItemPath = path.join(contentsPath, "Library", "LoginItems")
 
   const appPlistFilename = path.join(contentsPath, "Info.plist")
-  const helperPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper.app`, "Contents", "Info.plist")
-  const helperEHPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper EH.app`, "Contents", "Info.plist")
-  const helperNPPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper NP.app`, "Contents", "Info.plist")
-  const helperLoginPlistFilename = path.join(loginItemPath, `${packager.electronDistMacOsExecutableName} Login Helper.app`, "Contents", "Info.plist")
+  const helperPlistFilename = path.join(frameworksPath, "Electron Helper.app", "Contents", "Info.plist")
+  const helperEHPlistFilename = path.join(frameworksPath, "Electron Helper EH.app", "Contents", "Info.plist")
+  const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
+  const helperRendererPlistFilename = path.join(frameworksPath, "Electron Helper (Renderer).app", "Contents", "Info.plist")
+  const helperPluginPlistFilename = path.join(frameworksPath, "Electron Helper (Plugin).app", "Contents", "Info.plist")
+  const helperGPUPlistFilename = path.join(frameworksPath, "Electron Helper (GPU).app", "Contents", "Info.plist")
+  const helperLoginPlistFilename = path.join(loginItemPath, "Electron Login Helper.app", "Contents", "Info.plist")
 
-  const buildMetadata = packager.config!
-  const fileContents: Array<string | null> = await BluebirdPromise.map([
-    appPlistFilename,
-    helperPlistFilename,
-    helperEHPlistFilename,
-    helperNPPlistFilename,
-    helperLoginPlistFilename,
-    (buildMetadata as any)["extend-info"]
-  ], it => it == null ? it : orIfFileNotExist(readFile(it, "utf8"), null))
-  const appPlist = parsePlist(fileContents[0]!!)
-  const helperPlist = parsePlist(fileContents[1]!!)
-  const helperEHPlist = fileContents[2] == null ? null : parsePlist(fileContents[2]!!)
-  const helperNPPlist = fileContents[3] == null ? null : parsePlist(fileContents[3]!!)
-  const helperLoginPlist = fileContents[4] == null ? null : parsePlist(fileContents[4]!!)
+  const plistContent: Array<any> = await executeAppBuilderAsJson(["decode-plist", "-f", appPlistFilename, "-f", helperPlistFilename, "-f", helperEHPlistFilename, "-f", helperNPPlistFilename, "-f", helperRendererPlistFilename, "-f", helperPluginPlistFilename, "-f", helperGPUPlistFilename, "-f", helperLoginPlistFilename])
 
-  // if an extend-info file was supplied, copy its contents in first
-  if (fileContents[5] != null) {
-    Object.assign(appPlist, parsePlist(fileContents[5]!!))
+  if (plistContent[0] == null) {
+    throw new Error("corrupted Electron dist")
   }
 
+  const appPlist = plistContent[0]!!
+  const helperPlist = plistContent[1]!!
+  const helperEHPlist = plistContent[2]
+  const helperNPPlist = plistContent[3]
+  const helperRendererPlist = plistContent[4]
+  const helperPluginPlist = plistContent[5]
+  const helperGPUPlist = plistContent[6]
+  const helperLoginPlist = plistContent[7]
+
+  // if an extend-info file was supplied, copy its contents in first
+  if (plistContent[8] != null) {
+    Object.assign(appPlist, plistContent[8])
+  }
+
+  const buildMetadata = packager.config!!
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
@@ -93,6 +106,15 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 
+  if (helperRendererPlist != null) {
+    configureHelper(helperRendererPlist, "(Renderer)")
+  }
+  if (helperPluginPlist != null) {
+    configureHelper(helperPluginPlist, "(Plugin)")
+  }
+  if (helperGPUPlist != null) {
+    configureHelper(helperGPUPlist, "(GPU)")
+  }
   if (helperEHPlist != null) {
     configureHelper(helperEHPlist, "EH")
   }
@@ -151,21 +173,40 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
 
+  const plistDataToWrite: any = {
+    [appPlistFilename]: appPlist,
+    [helperPlistFilename]: helperPlist,
+  }
+  if (helperEHPlist != null) {
+    plistDataToWrite[helperEHPlistFilename] = helperEHPlist
+  }
+  if (helperNPPlist != null) {
+    plistDataToWrite[helperNPPlistFilename] = helperNPPlist
+  }
+  if (helperRendererPlist != null) {
+    plistDataToWrite[helperRendererPlistFilename] = helperRendererPlist
+  }
+  if (helperPluginPlist != null) {
+    plistDataToWrite[helperPluginPlistFilename] = helperPluginPlist
+  }
+  if (helperGPUPlist != null) {
+    plistDataToWrite[helperGPUPlistFilename] = helperGPUPlist
+  }
+  if (helperLoginPlist != null) {
+    plistDataToWrite[helperLoginPlistFilename] = helperLoginPlist
+  }
+
   await Promise.all([
-    writeFile(appPlistFilename, buildPlist(appPlist)),
-    writeFile(helperPlistFilename, buildPlist(helperPlist)),
-    helperEHPlist == null ? Promise.resolve() : writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
-    helperNPPlist == null ? Promise.resolve() : writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
-    helperLoginPlist == null ? Promise.resolve() : writeFile(helperLoginPlistFilename, buildPlist(helperLoginPlist)),
-    doRename(path.join(contentsPath, "MacOS"), packager.electronDistMacOsExecutableName, appPlist.CFBundleExecutable),
+    executeAppBuilderAndWriteJson(["encode-plist"], plistDataToWrite),
+    doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist), frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
+  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist), frameworksPath, appFilename, "Electron")
 
   if (helperLoginPlist != null) {
-    const prefix = packager.electronDistMacOsExecutableName
+    const prefix = "Electron"
     const suffix = " Login Helper"
     const executableBasePath = path.join(loginItemPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
     await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix)

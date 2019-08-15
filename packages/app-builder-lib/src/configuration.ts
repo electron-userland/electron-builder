@@ -49,6 +49,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly mas?: MasConfiguration | null
   /**
+   * MAS (Mac Application Store) development options (`mas-dev` target).
+   */
+  readonly masDev?: MasConfiguration | null
+  /**
    * macOS DMG options.
    */
   readonly dmg?: DmgOptions | null
@@ -112,15 +116,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly npmRebuild?: boolean
-  /**
-   * @deprecated Please use npmBuildFromSource.
-   * @private
-   */
-  readonly npmSkipBuildFromSource?: boolean
 
   /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
-   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
+   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).
    */
   readonly buildVersion?: string | null
 
@@ -163,11 +162,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly ?: boolean
 
   /**
-   * The version of muon you are packaging for.
-   */
-  readonly muonVersion?: string | null
-
-  /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
    * You can set it to `current` to set the Node.js version that you use to run.
    */
@@ -179,13 +173,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly launchUiVersion?: boolean | string | null
 
   /**
-   * @private
-   * @deprecated Set framework and nodeVersion if need.
-   */
-  readonly protonNodeVersion?: string | null
-
-  /**
-   * The framework name. One of `electron`, `proton-native`, `libui`. Defaults to `electron`.
+   * The framework name. One of `electron`, `proton`, `libui`. Defaults to `electron`.
    */
   readonly framework?: string | null
 

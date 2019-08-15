@@ -15,14 +15,14 @@ Object {
     },
     "index.js": Object {
       "offset": "841",
-      "size": 4371,
+      "size": 2501,
     },
     "node_modules": Object {
       "files": Object {
         "foo": Object {
           "files": Object {
             "package.json": Object {
-              "offset": "5513",
+              "offset": "3643",
               "size": 127,
             },
           },
@@ -30,15 +30,15 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "9950",
+              "offset": "8080",
               "size": 3034,
             },
             "license.md": Object {
-              "offset": "12984",
+              "offset": "11114",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "14061",
+              "offset": "12191",
               "size": 470,
             },
           },
@@ -46,7 +46,7 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "5212",
+      "offset": "3342",
       "size": 301,
     },
   },
@@ -68,58 +68,58 @@ Object {
     },
     "index.js": Object {
       "offset": "841",
-      "size": 4371,
+      "size": 2501,
     },
     "node_modules": Object {
       "files": Object {
         "electron-log": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "9832",
+              "offset": "7962",
               "size": 1082,
             },
             "index.js": Object {
-              "offset": "10914",
+              "offset": "9044",
               "size": 140,
             },
             "lib": Object {
               "files": Object {
                 "format.js": Object {
-                  "offset": "14120",
+                  "offset": "12250",
                   "size": 1021,
                 },
                 "log.js": Object {
-                  "offset": "15141",
+                  "offset": "13271",
                   "size": 877,
                 },
                 "transports": Object {
                   "files": Object {
                     "console.js": Object {
-                      "offset": "16018",
+                      "offset": "14148",
                       "size": 343,
                     },
                     "file": Object {
                       "files": Object {
                         "find-log-path.js": Object {
-                          "offset": "18656",
+                          "offset": "16786",
                           "size": 2078,
                         },
                         "get-app-name.js": Object {
-                          "offset": "20734",
+                          "offset": "18864",
                           "size": 1780,
                         },
                         "index.js": Object {
-                          "offset": "22514",
+                          "offset": "20644",
                           "size": 2068,
                         },
                       },
                     },
                     "log-s.js": Object {
-                      "offset": "16361",
+                      "offset": "14491",
                       "size": 1751,
                     },
                     "renderer-console.js": Object {
-                      "offset": "18112",
+                      "offset": "16242",
                       "size": 544,
                     },
                   },
@@ -127,15 +127,15 @@ Object {
               },
             },
             "main.js": Object {
-              "offset": "11054",
+              "offset": "9184",
               "size": 1343,
             },
             "package.json": Object {
-              "offset": "12397",
+              "offset": "10527",
               "size": 745,
             },
             "renderer.js": Object {
-              "offset": "13142",
+              "offset": "11272",
               "size": 978,
             },
           },
@@ -143,15 +143,15 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "5522",
+              "offset": "3652",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "8286",
+              "offset": "6416",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "9363",
+              "offset": "7493",
               "size": 469,
             },
           },
@@ -159,7 +159,7 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "5212",
+      "offset": "3342",
       "size": 310,
     },
   },
@@ -181,7 +181,7 @@ Object {
     },
     "index.js": Object {
       "offset": "841",
-      "size": 4371,
+      "size": 2501,
     },
     "node_modules": Object {
       "files": Object {
@@ -190,71 +190,71 @@ Object {
             "core": Object {
               "files": Object {
                 "LICENSE": Object {
-                  "offset": "5592",
+                  "offset": "3722",
                   "size": 1527,
                 },
                 "dist": Object {
                   "files": Object {
                     "base.js": Object {
-                      "offset": "7885",
+                      "offset": "6015",
                       "size": 17489,
                     },
                     "base.js.map": Object {
-                      "offset": "25374",
+                      "offset": "23504",
                       "size": 16432,
                     },
                     "dsn.js": Object {
-                      "offset": "41806",
+                      "offset": "39936",
                       "size": 4214,
                     },
                     "dsn.js.map": Object {
-                      "offset": "46020",
+                      "offset": "44150",
                       "size": 5742,
                     },
                     "error.js": Object {
-                      "offset": "51762",
+                      "offset": "49892",
                       "size": 1180,
                     },
                     "error.js.map": Object {
-                      "offset": "52942",
+                      "offset": "51072",
                       "size": 844,
                     },
                     "index.js": Object {
-                      "offset": "53786",
+                      "offset": "51916",
                       "size": 475,
                     },
                     "index.js.map": Object {
-                      "offset": "54261",
+                      "offset": "52391",
                       "size": 589,
                     },
                     "interfaces.js": Object {
-                      "offset": "54850",
+                      "offset": "52980",
                       "size": 649,
                     },
                     "interfaces.js.map": Object {
-                      "offset": "55499",
+                      "offset": "53629",
                       "size": 11257,
                     },
                     "sdk.js": Object {
-                      "offset": "66756",
+                      "offset": "64886",
                       "size": 1039,
                     },
                     "sdk.js.map": Object {
-                      "offset": "67795",
+                      "offset": "65925",
                       "size": 1554,
                     },
                     "status.js": Object {
-                      "offset": "69349",
+                      "offset": "67479",
                       "size": 1630,
                     },
                     "status.js.map": Object {
-                      "offset": "70979",
+                      "offset": "69109",
                       "size": 2118,
                     },
                   },
                 },
                 "package.json": Object {
-                  "offset": "7119",
+                  "offset": "5249",
                   "size": 766,
                 },
               },
@@ -262,119 +262,119 @@ Object {
             "shim": Object {
               "files": Object {
                 "LICENSE": Object {
-                  "offset": "73097",
+                  "offset": "71227",
                   "size": 1527,
                 },
                 "dist": Object {
                   "files": Object {
                     "domain.js": Object {
-                      "offset": "90903",
+                      "offset": "89033",
                       "size": 672,
                     },
                     "domain.js.map": Object {
-                      "offset": "91575",
+                      "offset": "89705",
                       "size": 1230,
                     },
                     "global.js": Object {
-                      "offset": "92805",
+                      "offset": "90935",
                       "size": 500,
                     },
                     "global.js.map": Object {
-                      "offset": "93305",
+                      "offset": "91435",
                       "size": 906,
                     },
                     "index.js": Object {
-                      "offset": "94211",
+                      "offset": "92341",
                       "size": 826,
                     },
                     "index.js.map": Object {
-                      "offset": "95037",
+                      "offset": "93167",
                       "size": 920,
                     },
                     "interfaces.js": Object {
-                      "offset": "95957",
+                      "offset": "94087",
                       "size": 115,
                     },
                     "interfaces.js.map": Object {
-                      "offset": "96072",
+                      "offset": "94202",
                       "size": 501,
                     },
                     "models.js": Object {
-                      "offset": "96573",
+                      "offset": "94703",
                       "size": 522,
                     },
                     "models.js.map": Object {
-                      "offset": "97095",
+                      "offset": "95225",
                       "size": 2711,
                     },
                     "sdk.js": Object {
-                      "offset": "99806",
+                      "offset": "97936",
                       "size": 7245,
                     },
                     "sdk.js.map": Object {
-                      "offset": "107051",
+                      "offset": "105181",
                       "size": 10056,
                     },
                     "shim.js": Object {
-                      "offset": "117107",
+                      "offset": "115237",
                       "size": 4438,
                     },
                     "shim.js.map": Object {
-                      "offset": "121545",
+                      "offset": "119675",
                       "size": 6607,
                     },
                   },
                 },
                 "jest.config.js": Object {
-                  "offset": "74624",
+                  "offset": "72754",
                   "size": 265,
                 },
                 "package.json": Object {
-                  "offset": "74889",
+                  "offset": "73019",
                   "size": 705,
                 },
                 "src": Object {
                   "files": Object {
                     "domain.ts": Object {
-                      "offset": "76088",
+                      "offset": "74218",
                       "size": 630,
                     },
                     "global.ts": Object {
-                      "offset": "76718",
+                      "offset": "74848",
                       "size": 510,
                     },
                     "index.ts": Object {
-                      "offset": "77228",
+                      "offset": "75358",
                       "size": 421,
                     },
                     "interfaces.ts": Object {
-                      "offset": "77649",
+                      "offset": "75779",
                       "size": 352,
                     },
                     "models.ts": Object {
-                      "offset": "78001",
+                      "offset": "76131",
                       "size": 2213,
                     },
                     "sdk.ts": Object {
-                      "offset": "80214",
+                      "offset": "78344",
                       "size": 6858,
                     },
                     "shim.ts": Object {
-                      "offset": "87072",
+                      "offset": "85202",
                       "size": 3831,
                     },
                   },
                 },
                 "tsconfig.build.json": Object {
-                  "offset": "75594",
+                  "offset": "73724",
                   "size": 160,
                 },
                 "tsconfig.json": Object {
-                  "offset": "75754",
+                  "offset": "73884",
                   "size": 244,
                 },
                 "tslint.json": Object {
-                  "offset": "75998",
+                  "offset": "74128",
                   "size": 90,
                 },
               },
@@ -384,51 +384,51 @@ Object {
         "electron-log": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "128152",
+              "offset": "126282",
               "size": 1082,
             },
             "index.js": Object {
-              "offset": "129234",
+              "offset": "127364",
               "size": 140,
             },
             "lib": Object {
               "files": Object {
                 "format.js": Object {
-                  "offset": "132440",
+                  "offset": "130570",
                   "size": 1021,
                 },
                 "log.js": Object {
-                  "offset": "133461",
+                  "offset": "131591",
                   "size": 877,
                 },
                 "transports": Object {
                   "files": Object {
                     "console.js": Object {
-                      "offset": "134338",
+                      "offset": "132468",
                       "size": 343,
                     },
                     "file": Object {
                       "files": Object {
                         "find-log-path.js": Object {
-                          "offset": "136976",
+                          "offset": "135106",
                           "size": 2078,
                         },
                         "get-app-name.js": Object {
-                          "offset": "139054",
+                          "offset": "137184",
                           "size": 1780,
                         },
                         "index.js": Object {
-                          "offset": "140834",
+                          "offset": "138964",
                           "size": 2068,
                         },
                       },
                     },
                     "log-s.js": Object {
-                      "offset": "134681",
+                      "offset": "132811",
                       "size": 1751,
                     },
                     "renderer-console.js": Object {
-                      "offset": "136432",
+                      "offset": "134562",
                       "size": 544,
                     },
                   },
@@ -436,15 +436,15 @@ Object {
               },
             },
             "main.js": Object {
-              "offset": "129374",
+              "offset": "127504",
               "size": 1343,
             },
             "package.json": Object {
-              "offset": "130717",
+              "offset": "128847",
               "size": 745,
             },
             "renderer.js": Object {
-              "offset": "131462",
+              "offset": "129592",
               "size": 978,
             },
           },
@@ -452,7 +452,7 @@ Object {
       },
     },
     "package.json": Object {
-      "offset": "5212",
+      "offset": "3342",
       "size": 380,
     },
   },
