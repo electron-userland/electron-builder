@@ -68,7 +68,7 @@ function checkIsOutdated() {
       if (it.version === "0.0.0-semantic-release") {
         return
       }
-    
+
       const packageManager = existsSync(path.join(__dirname, "..", "..", "package-lock.json")) ? "npm" : "yarn"
 
       const notifier = updateNotifier({pkg: it})
