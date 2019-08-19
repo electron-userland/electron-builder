@@ -69,7 +69,7 @@ function checkIsOutdated() {
         return
       }
     
-      const packageManager = existsSync(path.join(__dirname, "..", "..", "package-lock.json")) ? "npm" : "yarn";
+      const packageManager = existsSync(path.join(__dirname, "..", "..", "package-lock.json")) ? "npm" : "yarn"
 
       const notifier = updateNotifier({pkg: it})
       if (notifier.update != null) {
