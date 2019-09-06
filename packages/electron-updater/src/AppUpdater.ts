@@ -7,7 +7,7 @@ import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { eq as isVersionsEqual, gt as isVersionGreaterThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
+import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
@@ -317,18 +317,17 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405033227
     // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405030797
     const isLatestVersionNewer = isVersionGreaterThan(latestVersion, currentVersion)
-    if (!this.allowDowngrade) {
-      return isLatestVersionNewer
+    const isLatestVersionOlder = isVersionLessThan(latestVersion, currentVersion)
+
+    if (isLatestVersionNewer) {
+      return true
     }
 
-    const currentVersionPrereleaseComponent = getVersionPreleaseComponents(currentVersion)
-    const latestVersionPrereleaseComponent = getVersionPreleaseComponents(latestVersion)
-    if (currentVersionPrereleaseComponent === latestVersionPrereleaseComponent) {
-      // allowDowngrade taken in account only if channel differs
-      return isLatestVersionNewer
+    if (this.allowDowngrade && isLatestVersionOlder) {
+      return true
     }
 
-    return true
+    return false
   }
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
