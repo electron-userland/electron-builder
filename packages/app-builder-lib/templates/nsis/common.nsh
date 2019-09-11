@@ -27,7 +27,7 @@ Name "${PRODUCT_NAME}"
     ${If} ${RunningX64}
       SetRegView 64
     ${EndIf}
-    ${If} ${IsNativeARM64}
+    ${If} ${IsNativeARM64} == true
       SetRegView 64
     ${EndIf}
   !else

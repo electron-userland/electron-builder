@@ -8,21 +8,21 @@
   !ifdef APP_PACKAGE_URL_IS_INCOMLETE
     !ifdef APP_64_NAME
       !ifdef APP_32_NAME
-	  	!ifdef APP_ARM64_NAME
-			${if} ${IsNativeARM64}
+	    	!ifdef APP_ARM64_NAME
+	  		  ${if} ${IsNativeARM64} == true
 	          StrCpy $packageUrl "$packageUrl/${APP_ARM64_NAME}"
 	        ${elseif} ${IsNativeAMD64}
 	          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
 	        ${else}
 	          StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
 	        ${endif}
-		!else
-	        ${if} ${IsNativeAMD64}
+		    !else
+	        ${if} ${IsNativeAMD64} == true
 	          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
 	        ${else}
 	          StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
 	        ${endif}
-		!endif
+	     	!endif
       !else
         StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
       !endif
@@ -31,7 +31,7 @@
     !endif
   !endif
 
-  ${if} ${IsNativeARM64}
+  ${if} ${IsNativeARM64} == true
     StrCpy $packageArch "ARM64"
   ${elseif} ${IsNativeAMD64}
     StrCpy $packageArch "64"

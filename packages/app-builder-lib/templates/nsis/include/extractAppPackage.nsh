@@ -12,19 +12,26 @@
     StrCpy $packageArch "64"
 	!endif
 
-    !ifdef APP_32
-      ${if} ${IsNativeARM64}
-    !insertmacro arm64_app_files
-      ${elseif} ${IsNativeAMD64}
-    !insertmacro x64_app_files
+  !ifdef APP_32
+    !ifdef APP_ARM64
+      ${if} ${IsNativeARM64} == true
+      !insertmacro arm64_app_files
+      ${elseif} ${IsNativeAMD64} == true
+      !insertmacro x64_app_files
       ${else}
-    !insertmacro ia32_app_files
+      !insertmacro ia32_app_files
       ${endIf}
     !else
-      !insertmacro x64_app_files
+      ${if} ${RunningX64} == true
+        !ifdef APP_32
+          !insertmacro x64_app_files
+        !endif
+      ${else}
+        !insertmacro ia32_app_files
+      ${endIf}
     !endif
   !else
-    !insertmacro ia32_app_files
+    !insertmacro x64_app_files
   !endif
 
   !ifdef COMPRESS
