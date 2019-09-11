@@ -232,7 +232,7 @@ export default class AppXTarget extends Target {
             return splashScreenTag(userAssets)
 
           case "arch":
-            return arch === Arch.ia32 ? "x86" : "x64"
+            return arch === Arch.ia32 ? "x86" : (arch === Arch.arm64 ? "arm64" : "x64")
 
           case "resourceLanguages":
             return resourceLanguageTag(asArray(options.languages))

@@ -18,13 +18,26 @@
       ${if} $packageFile == ""
         !ifdef APP_64_NAME
           !ifdef APP_32_NAME
-            ${if} ${RunningX64}
-              StrCpy $packageFile "${APP_64_NAME}"
-              StrCpy $1 "${APP_64_HASH}"
-            ${else}
-              StrCpy $packageFile "${APP_32_NAME}"
-              StrCpy $1 "${APP_32_HASH}"
-            ${endif}
+		  	!ifdef APP_ARM64_NAME
+				${if} ${IsNativeARM64}
+				  StrCpy $packageFile "${APP_ARM64_NAME}"
+				  StrCpy $1 "${APP_ARM64_HASH}"
+				${elseif} ${IsNativeAMD64}
+				  StrCpy $packageFile "${APP_64_NAME}"
+				  StrCpy $1 "${APP_64_HASH}"
+				${else}
+				  StrCpy $packageFile "${APP_32_NAME}"
+				  StrCpy $1 "${APP_32_HASH}"
+				${endif}
+			!else
+	            ${if} ${RunningX64}
+	              StrCpy $packageFile "${APP_64_NAME}"
+	              StrCpy $1 "${APP_64_HASH}"
+	            ${else}
+	              StrCpy $packageFile "${APP_32_NAME}"
+	              StrCpy $1 "${APP_32_HASH}"
+	            ${endif}
+			!endif
           !else
             StrCpy $packageFile "${APP_64_NAME}"
             StrCpy $1 "${APP_64_HASH}"

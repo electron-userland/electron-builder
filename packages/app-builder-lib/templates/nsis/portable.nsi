@@ -16,17 +16,35 @@ FunctionEnd
 Section
   StrCpy $INSTDIR "$TEMP\${UNPACK_DIR_NAME}"
   RMDir /r $INSTDIR
-	SetOutPath $INSTDIR
+  SetOutPath $INSTDIR
 
-	!ifdef APP_DIR_64
-    !ifdef APP_DIR_32
-      ${if} ${RunningX64}
-        File /r "${APP_DIR_64}\*.*"
-      ${else}
-        File /r "${APP_DIR_32}\*.*"
-      ${endIf}
+  !ifdef APP_DIR_64
+    !ifdef APP_DIR_ARM64
+      !ifdef APP_DIR_32
+        ${if} ${IsNativeARM64}
+          File /r "${APP_DIR_ARM64}\*.*"
+        ${elseif} ${RunningX64}
+          File /r "${APP_DIR_64}\*.*"
+        ${else}
+          File /r "${APP_DIR_32}\*.*"
+        ${endIf}
+      !else
+        ${if} ${IsNativeARM64}
+          File /r "${APP_DIR_ARM64}\*.*"
+        ${else}
+          File /r "${APP_DIR_64}\*.*"
+        {endIf}
+      !endif
     !else
-      File /r "${APP_DIR_64}\*.*"
+      !ifdef APP_DIR_32
+        ${if} ${RunningX64}
+          File /r "${APP_DIR_64}\*.*"
+        ${else}
+          File /r "${APP_DIR_32}\*.*"
+        ${endIf}
+      !else
+        File /r "${APP_DIR_64}\*.*"
+      !endif
     !endif
   !else
     !ifdef APP_DIR_32
