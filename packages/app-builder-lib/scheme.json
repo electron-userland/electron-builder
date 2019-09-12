@@ -4230,7 +4230,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
