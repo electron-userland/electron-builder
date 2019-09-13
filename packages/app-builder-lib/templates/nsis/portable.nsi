@@ -21,7 +21,7 @@ Section
   !ifdef APP_DIR_64
     !ifdef APP_DIR_ARM64
       !ifdef APP_DIR_32
-        ${if} ${IsNativeARM64} == true
+        ${if} ${IsNativeARM64}
           File /r "${APP_DIR_ARM64}\*.*"
         ${elseif} ${RunningX64}
           File /r "${APP_DIR_64}\*.*"
@@ -29,7 +29,7 @@ Section
           File /r "${APP_DIR_32}\*.*"
         ${endIf}
       !else
-        ${if} ${IsNativeARM64} == true
+        ${if} ${IsNativeARM64}
           File /r "${APP_DIR_ARM64}\*.*"
         ${else}
           File /r "${APP_DIR_64}\*.*"

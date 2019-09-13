@@ -19,10 +19,10 @@
         !ifdef APP_64_NAME
           !ifdef APP_32_NAME
             !ifdef APP_ARM64_NAME
-              ${if} ${IsNativeARM64} == true
+              ${if} ${IsNativeARM64}
                 StrCpy $packageFile "${APP_ARM64_NAME}"
                 StrCpy $1 "${APP_ARM64_HASH}"
-              ${elseif} ${IsNativeAMD64} == true
+              ${elseif} ${IsNativeAMD64}
                 StrCpy $packageFile "${APP_64_NAME}"
                 StrCpy $1 "${APP_64_HASH}"
               ${else}
@@ -143,7 +143,7 @@
     ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
     IntFmt $0 "0x%08X" $0
   !endif
-  
+
   WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 

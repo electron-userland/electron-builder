@@ -9,7 +9,7 @@
     !ifdef APP_64_NAME
       !ifdef APP_32_NAME
 	    	!ifdef APP_ARM64_NAME
-	  		  ${if} ${IsNativeARM64} == true
+	  		  ${if} ${IsNativeARM64}
 	          StrCpy $packageUrl "$packageUrl/${APP_ARM64_NAME}"
 	        ${elseif} ${IsNativeAMD64}
 	          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
@@ -31,7 +31,7 @@
     !endif
   !endif
 
-  ${if} ${IsNativeARM64} == true
+  ${if} ${IsNativeARM64} 
     StrCpy $packageArch "ARM64"
   ${elseif} ${IsNativeAMD64}
     StrCpy $packageArch "64"
