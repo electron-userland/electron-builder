@@ -8,6 +8,9 @@ export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo }
 export { CancellationToken } from "builder-util-runtime"
 export { Provider } from "./providers/Provider"
+export { AppImageUpdater } from "./AppImageUpdater"
+export { MacUpdater } from "./MacUpdater"
+export { NsisUpdater } from "./NsisUpdater"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
