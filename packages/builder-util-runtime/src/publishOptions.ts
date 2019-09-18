@@ -1,3 +1,5 @@
+import { OutgoingHttpHeaders } from "http"
+
 export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
@@ -30,6 +32,11 @@ export interface PublishConfiguration {
    * @default true
    */
   readonly publishAutoUpdate?: boolean
+
+  /**
+   * Any custom request headers
+   */
+  readonly requestHeaders?: OutgoingHttpHeaders
 }
 
 // https://github.com/electron-userland/electron-builder/issues/3261
