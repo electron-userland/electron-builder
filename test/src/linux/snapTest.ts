@@ -185,3 +185,21 @@ test.ifDevOrLinuxCi("no desktop plugs", app({
     return true
   },
 }))
+
+test.ifAll.ifDevOrLinuxCi("auto start", app({
+  targets: snapTarget,
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+    snap: {
+      autoStart: true
+    }
+  },
+  effectiveOptionComputed: async ({ snap, args }) => {
+    expect(snap).toMatchSnapshot()
+    expect(snap.apps.sep.autostart).toEqual("sep.desktop")
+    return true
+  },
+}))

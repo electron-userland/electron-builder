@@ -4325,6 +4325,10 @@
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
           "type": "boolean"
+        },
+        "autoStart": {
+          "description": "Whether or not the snap should automatically start on login.",
+          "type": "boolean"
         }
       },
       "type": "object"

@@ -81,6 +81,12 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
    */
   readonly useTemplateApp?: boolean
+
+  /**
+   * Whether or not the snap should automatically start on login.
+   * @default false
+   */
+  readonly autoStart?: boolean
 }
 
 export interface PlugDescriptor {
