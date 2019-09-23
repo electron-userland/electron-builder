@@ -15,7 +15,7 @@ test.ifNotCiMac("web installer", app({
 }))
 
 test.ifAll.ifNotCiMac("web installer (default github)", app({
-  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64),
+  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64, Arch.arm64),
   config: {
     publish: {
       provider: "github",

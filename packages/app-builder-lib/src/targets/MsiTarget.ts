@@ -75,7 +75,7 @@ export default class MsiTarget extends Target {
 
     // noinspection SpellCheckingInspection
     const candleArgs = [
-      "-arch", arch === Arch.ia32 ? "x86" : (arch === Arch.armv7l ? "arm" : "x64"),
+      "-arch", arch === Arch.ia32 ? "x86" : (arch === Arch.arm64 ? "arm64" : "x64"),
       `-dappDir=${vm.toVmFile(appOutDir)}`,
     ].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
