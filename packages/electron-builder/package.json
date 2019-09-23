@@ -52,9 +52,9 @@
     "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
     "read-config-file": "5.0.0",
-    "sanitize-filename": "^1.6.2",
+    "sanitize-filename": "^1.6.3",
     "update-notifier": "^3.0.1",
-    "yargs": "^13.3.0",
+    "yargs": "^14.0.0",
     "lazy-val": "^1.0.4",
     "app-builder-lib": "0.0.0-semantic-release",
     "dmg-builder": "0.0.0-semantic-release"

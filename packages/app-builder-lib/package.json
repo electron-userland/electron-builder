@@ -51,20 +51,20 @@
     "builder-util": "0.0.0-semantic-release",
     "electron-publish": "0.0.0-semantic-release",
     "fs-extra": "^8.1.0",
-    "hosted-git-info": "^2.7.1",
+    "hosted-git-info": "^3.0.0",
     "is-ci": "^2.0.0",
     "isbinaryfile": "^4.0.2",
     "js-yaml": "^3.13.1",
     "read-config-file": "5.0.0",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.5.0",
-    "sanitize-filename": "^1.6.2",
+    "sanitize-filename": "^1.6.3",
     "@develar/schema-utils": "~2.1.0",
     "semver": "^6.3.0",
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
     "temp-file": "^3.3.4",
-    "ejs": "^2.6.2"
+    "ejs": "^2.7.1"
   },
   "typings": "./out/index.d.ts"
 }

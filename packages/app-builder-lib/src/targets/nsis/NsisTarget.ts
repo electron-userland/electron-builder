@@ -203,7 +203,7 @@ export class NsisTarget extends Target {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
         const fileInfo = await this.packageHelper.packArch(arch, this)
         const file = fileInfo.path
-        const defineKey = arch === Arch.x64 ? "APP_64" : (Arch.arm64 ? "APP_ARM64" : "APP_32")
+        const defineKey = arch === Arch.x64 ? "APP_64" : (arch === Arch.arm64 ? "APP_ARM64" : "APP_32")
         defines[defineKey] = file
         defines[`${defineKey}_NAME`] = path.basename(file)
         // nsis expect a hexadecimal string

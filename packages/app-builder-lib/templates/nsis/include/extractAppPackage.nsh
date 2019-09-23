@@ -7,31 +7,14 @@
 
   !ifdef APP_64
   	!ifdef APP_ARM64
-    StrCpy $packageArch "ARM64"
-	!else
-    StrCpy $packageArch "64"
-	!endif
+      StrCpy $packageArch "ARM64"
+	  !else
+      StrCpy $packageArch "64"
+	  !endif
 
-  !ifdef APP_32
-    !ifdef APP_ARM64
-      ${if} ${IsNativeARM64} == true
-      !insertmacro arm64_app_files
-      ${elseif} ${IsNativeAMD64} == true
-      !insertmacro x64_app_files
-      ${else}
-      !insertmacro ia32_app_files
-      ${endIf}
-    !else
-      ${if} ${RunningX64} == true
-        !ifdef APP_32
-          !insertmacro x64_app_files
-        !endif
-      ${else}
-        !insertmacro ia32_app_files
-      ${endIf}
-    !endif
+    !insertmacro compute_files_for_current_arch
   !else
-    !insertmacro x64_app_files
+    !insertmacro ia32_app_files
   !endif
 
   !ifdef COMPRESS
@@ -58,6 +41,36 @@
       !insertmacro customFiles_ia32
     !endif
   ${endIf}
+!macroend
+
+!macro compute_files_for_current_arch
+  !ifdef APP_32
+    !ifdef APP_ARM64
+      ${if} ${IsNativeARM64}
+        !insertmacro arm64_app_files
+      ${elseif} ${RunningX64}
+        !insertmacro x64_app_files
+      ${else}
+        !insertmacro ia32_app_files
+      ${endIf}
+    !else
+      ${if} ${RunningX64}
+        !insertmacro x64_app_files
+      ${else}
+        !insertmacro ia32_app_files
+      ${endIf}
+    !endif
+  !else
+    !ifdef APP_ARM64
+      ${if} ${IsNativeARM64}
+        !insertmacro arm64_app_files
+      ${else}
+        !insertmacro x64_app_files
+      ${endIf}
+    !else
+      !insertmacro x64_app_files
+    !endif
+  !endif
 !macroend
 
 !macro arm64_app_files

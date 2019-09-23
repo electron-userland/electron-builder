@@ -176,7 +176,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (options != null) {
       this.setFeedURL(options)
 
-      if (typeof options !== 'string' && options.requestHeaders) {
+      if (typeof options !== "string" && options.requestHeaders) {
         this.requestHeaders = options.requestHeaders
       }
     }

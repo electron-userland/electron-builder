@@ -321,6 +321,9 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.DTSDKBuild
   delete info.DTSDKName
   delete info.DTCompiler
+  delete info.ElectronTeamID
+  delete info.NSCameraUsageDescription
+  delete info.NSMicrophoneUsageDescription
   if (info.NSAppTransportSecurity != null) {
     delete info.NSAppTransportSecurity.NSAllowsArbitraryLoads
   }

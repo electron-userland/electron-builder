@@ -4,7 +4,7 @@ import { exec, InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { getGypEnv } from "app-builder-lib/out/util/yarn"
-import { existsSync, readJson } from "fs-extra"
+import { pathExists, readJson } from "fs-extra"
 import isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "read-config-file"
@@ -64,12 +64,12 @@ function checkIsOutdated() {
   }
 
   readJson(path.join(__dirname, "..", "..", "package.json"))
-    .then(it => {
+    .then(async it => {
       if (it.version === "0.0.0-semantic-release") {
         return
       }
 
-      const packageManager = existsSync(path.join(__dirname, "..", "..", "package-lock.json")) ? "npm" : "yarn"
+      const packageManager = await pathExists(path.join(__dirname, "..", "..", "package-lock.json")) ? "npm" : "yarn"
 
       const notifier = updateNotifier({pkg: it})
       if (notifier.update != null) {
