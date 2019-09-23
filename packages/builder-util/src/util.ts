@@ -264,7 +264,7 @@ export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | 
 }
 
 export function isTokenCharValid(token: string) {
-  return /^[\w\/=+-]+$/.test(token)
+  return /^[.\w\/=+-]+$/.test(token)
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
