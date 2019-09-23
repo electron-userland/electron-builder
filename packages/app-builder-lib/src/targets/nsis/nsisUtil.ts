@@ -17,7 +17,7 @@ export const NSIS_PATH = new Lazy(() => {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
-  return getBinFromUrl("nsis", "3.0.4", "FVF4HClUCsTZ32vYOIC7rTo1qb2pvt2nZwzb86MbKbORukMH0rS3SGBYg/MHmT58PqvRCSlEFai6impEYDYp2Q==")
+  return getBinFromUrl("nsis", "3.0.4", "MNETIF8tex6+oiA0mgBi3/XKNH+jog4IBUp/F+Or7zUEhIP+c7cRjb9qGuBIofAXQ51z3RpyCfII4aPadsZB5Q==")
 })
 
 export class AppPackageHelper {
