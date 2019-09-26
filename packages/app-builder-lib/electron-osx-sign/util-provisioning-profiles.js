@@ -64,8 +64,13 @@ var getProvisioningProfileAsync = module.exports.getProvisioningProfileAsync = f
     '-i', filePath // Use infile as source of data
   ])
     .then(async function (result) {
+      // make filename unique so it doesn't create issues with parallel method calls
+      const timestamp = process.hrtime.bigint
+        ? process.hrtime.bigint().toString()
+        : process.hrtime().join('')
+
       // todo read directly
-      const tempFile = path.join(os.tmpdir(), `${require('crypto').createHash('sha1').update(filePath).digest("hex")}.plist`)
+      const tempFile = path.join(os.tmpdir(), `${require('crypto').createHash('sha1').update(filePath).update(timestamp).digest('hex')}.plist`)
       await fs.outputFile(tempFile, result)
       const plistContent = await executeAppBuilderAsJson(["decode-plist", "-f", tempFile])
       await fs.unlink(tempFile)
