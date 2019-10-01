@@ -26,7 +26,9 @@ Documentation files located in the `/docs`.
 
 `/docs` is deployed to Netlify when `next` release is marked as `latest` and available for all users.
 
-`pip3 install mkdocs-material mkdocs pymdown-extensions pygments --upgrade`
+`pip3 install mkdocs-material mkdocs markdown-include pymdown-extensions pygments --upgrade`
+
+You'll want to copy the `mkdocs.yml` file from the master branch and then: `mkdocs build`
 
 ## Debug Tests
 
@@ -43,7 +45,7 @@ Or you can create Node.js run configuration manually:
   ```
 * Set `Environment Variables`:
   * Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test uses temporary directory (only if `--match` is used). Specified directory will be used instead of random temporary directory and *cleared* on each run.
-  
+
 ### Run Test using CLI
 ```sh
 TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'assisted' '/oneClickInstallerTest\.\w+$'
