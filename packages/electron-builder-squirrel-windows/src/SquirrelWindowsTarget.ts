@@ -114,7 +114,7 @@ export default class SquirrelWindowsTarget extends Target {
     if (!options.description) {
       throw new InvalidConfigurationError("Description is required, go to package.json and create a description in order to successfully build a windows installer with squirrel.")
     }
-    
+
     if (options.remoteToken == null) {
       options.remoteToken = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     }
