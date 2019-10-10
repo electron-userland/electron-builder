@@ -5,14 +5,13 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { UpdateDownloadedEvent } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
-  private updateInfoForPendingUpdateDownloadedEvent: UpdateDownloadedEvent | null = null
+  private squirrelDownloadedUpdate: boolean = false
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -22,15 +21,11 @@ export class MacUpdater extends AppUpdater {
       this.emit("error", it)
     })
     this.nativeUpdater.on("update-downloaded", () => {
-      const updateInfo = this.updateInfoForPendingUpdateDownloadedEvent
-      this.updateInfoForPendingUpdateDownloadedEvent = null
-      this.dispatchUpdateDownloaded(updateInfo!!)
+      this.squirrelDownloadedUpdate = true
     })
   }
 
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
-    this.updateInfoForPendingUpdateDownloadedEvent = null
-
     const files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
@@ -56,7 +51,6 @@ export class MacUpdater extends AppUpdater {
       },
       done: async event => {
         const downloadedFile = event.downloadedFile
-        this.updateInfoForPendingUpdateDownloadedEvent = event
         let updateFileSize = zipFileInfo.info.size
         if (updateFileSize == null) {
           updateFileSize = (await stat(downloadedFile)).size
@@ -123,7 +117,14 @@ export class MacUpdater extends AppUpdater {
             })
 
             this.nativeUpdater.once("error", reject)
-            this.nativeUpdater.checkForUpdates()
+
+            // The update has been dowloaded and is ready to be served to Squirrel
+            this.dispatchUpdateDownloaded(event)
+
+            if (this.autoInstallOnAppQuit) {
+              // This will trigger fetching and installing the file on Squirrel side
+              this.nativeUpdater.checkForUpdates()
+            }
           })
         })
       }
@@ -131,6 +132,17 @@ export class MacUpdater extends AppUpdater {
   }
 
   quitAndInstall(): void {
-    this.nativeUpdater.quitAndInstall()
+    if (this.squirrelDownloadedUpdate) {
+      // Update already fetched by Squirrel, it's ready to install
+      this.nativeUpdater.quitAndInstall()
+    } else {
+      // Quit and install as soon as Squirrel get the update
+      this.nativeUpdater.on("update-downloaded", () => {
+        this.nativeUpdater.quitAndInstall()
+      })
+
+      // And trigger the update
+      this.nativeUpdater.checkForUpdates()
+    }
   }
 }
