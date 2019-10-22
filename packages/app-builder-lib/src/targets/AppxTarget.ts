@@ -251,13 +251,16 @@ export default class AppXTarget extends Target {
     const uriSchemes = asArray(this.packager.config.protocols)
       .concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
 
+    const fileAssociations = asArray(this.packager.config.fileAssociations)
+      .concat(asArray(this.packager.platformSpecificBuildOptions.fileAssociations))
+
     let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     if (isAddAutoLaunchExtension === undefined) {
       const deps = this.packager.info.metadata.dependencies
       isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
-    if (!isAddAutoLaunchExtension && uriSchemes.length === 0) {
+    if (!isAddAutoLaunchExtension && uriSchemes.length === 0 && fileAssociations.length === 0) {
       return ""
     }
 
@@ -277,6 +280,19 @@ export default class AppXTarget extends Target {
             <uap:Protocol Name="${scheme}">
                <uap:DisplayName>${protocol.name}</uap:DisplayName>
              </uap:Protocol>
+          </uap:Extension>`
+      }
+    }
+
+    for (const fileAssociation of fileAssociations) {
+      for (const ext of asArray(fileAssociation.ext)) {
+        extensions += `
+          <uap:Extension Category="windows.fileTypeAssociation">
+            <uap:FileTypeAssociation Name="${ext}">
+              <uap:SupportedFileTypes>
+                <uap:FileType>.${ext}</uap:FileType>
+              </uap:SupportedFileTypes>
+            </uap:FileTypeAssociation>
           </uap:Extension>`
       }
     }
