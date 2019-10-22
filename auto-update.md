@@ -9,7 +9,7 @@ See [publish configuration](configuration/publish.md) for information on how to 
 * Linux: AppImage.
 * Windows: NSIS.
 
-All these targets are default, custom configuration is not required.
+All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
 
 !!! info "Squirrel.Windows is not supported"
     Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
@@ -64,6 +64,49 @@ All these targets are default, custom configuration is not required.
 
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 * An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/docs/encapsulated%20manual%20update%20via%20menu.js).
+
+### Custom Options instantiating updater Directly
+
+If you want to more control over the updater configuration (e.g. request header for authorization purposes), you can instantiate the updater directly.
+
+```typescript
+import { NsisUpdater } from "electron-updater"
+// Or MacUpdater, AppImageUpdater
+
+export default class AppUpdater {
+    constructor() {
+        const options = {
+            requestHeaders: {
+                // Any request headers to include here
+                Authorization: 'Basic AUTH_CREDS_VALUE'
+            },
+            provider: 'generic',
+            url: 'https://example.com/auto-updates'
+        }
+
+        const autoUpdater = new NsisUpdater(options)
+        autoUpdater.checkForUpdatesAndNotify()
+    }
+}
+```
+
+Note: When you use autoUpdater from electron-updater there is some logic there to select which updater to use, you could mimic that logic to support multiple platforms. For example, checking the value of `process.platform`:
+
+```typescript
+import { AppImageUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+
+const options = { … }
+
+if (process.platform === "win32") {
+    autoUpdater = new NsisUpdater(options)
+}
+else if (process.platform === "darwin") {
+    autoUpdater = new MacUpdater(options)
+}
+else {
+    autoUpdater = new AppImageUpdater(options)
+}
+```
 
 ## Debugging
 
