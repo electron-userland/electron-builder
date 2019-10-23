@@ -124,7 +124,7 @@ export class PkgTarget extends Target {
     ])
 
     // process the template plist
-    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0]
+    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter((it: any) => it.RootRelativeBundlePath !== "Electron.dSYM")
     if (plistInfo.length > 0) {
       const packageInfo = plistInfo[0]
 
@@ -155,7 +155,6 @@ export class PkgTarget extends Target {
     // now build the package
     const args = [
       "--root", rootPath,
-      "--identifier", this.packager.appInfo.id,
       "--component-plist", propertyListOutputFile,
     ]
 
