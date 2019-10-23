@@ -18,7 +18,6 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -48,7 +47,6 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -83,7 +81,6 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

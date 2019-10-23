@@ -219,7 +219,7 @@ export default class SnapTarget extends Target {
   }
 
   private isElectronVersionGreaterOrEqualThen(version: string) {
-    return semver.gte(this.packager.config.electronVersion || "5.0.3", version)
+    return semver.gte(this.packager.config.electronVersion || "7.0.0", version)
   }
 }
 

@@ -118,7 +118,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -208,7 +207,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -220,7 +218,6 @@ Array [
   "app-update.yml",
   "app.asar",
   "bn.lproj",
-  "electron.asar",
   "en.lproj",
 ]
 `;

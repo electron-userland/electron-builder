@@ -62,7 +62,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -121,7 +120,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSRequiresAquaSystemAppearance": false,
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -176,7 +174,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -230,7 +227,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -289,7 +285,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2412,7 +2407,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2473,7 +2467,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2534,7 +2527,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2595,7 +2587,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2656,7 +2647,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2739,7 +2729,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2798,7 +2787,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2872,7 +2860,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2926,7 +2913,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -2987,7 +2973,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

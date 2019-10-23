@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { Arch, debug, exec, log, spawn } from "builder-util"
+import { Arch, debug, exec, log, spawn, isEmptyOrSpaces } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
@@ -70,8 +70,8 @@ export class SquirrelBuilder {
         .then(() => ensureDir(outputDirectory))
     ])
 
-    if (!options.description) {
-      throw new Error("Description is required, go to package.json and create a description in order to successfully build a windows installer with squirrel.")
+    if (isEmptyOrSpaces(options.description)) {
+      options.description = options.productName
     }
 
     if (options.remoteReleases) {

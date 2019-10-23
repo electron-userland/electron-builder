@@ -8,7 +8,7 @@
 -
   <<: *defaults
   lineRegExp: '^\s*(?:test|it|testAndIgnoreApiRate)(?:\.[\w.]+)?\("([^"'']+)'
-  scriptArgs: ["-i", "-t", "${0regExp}", *filePattern]
+  scriptArgs: ["-iu", "-t", "${0regExp}", *filePattern]
   rcName: "${fileNameWithoutExt}.${0}"
   env:
     TEST_APP_TMP_DIR: /tmp/electron-builder-test

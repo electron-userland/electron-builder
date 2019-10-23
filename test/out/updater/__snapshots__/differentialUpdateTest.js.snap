@@ -267,7 +267,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -360,7 +359,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

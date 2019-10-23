@@ -199,7 +199,6 @@ test.ifNotWindows("icons from ICNS", app({
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
 
-    await fs.rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))
     await remove(path.join(projectDir, "inspector"))
 
     await build({
@@ -214,7 +213,6 @@ test.ifNotWindows("icons from ICNS", app({
     })
 
     await assertThat(path.join(projectDir, "dist")).isDirectory()
-    await assertThat(path.join(projectDir, "dist", "linux-unpacked", "resources", "someAsarFile.asar")).isFile()
   },
 }))
 

@@ -155,6 +155,7 @@ export class PkgTarget extends Target {
     // now build the package
     const args = [
       "--root", rootPath,
+      "--identifier", this.packager.appInfo.id,
       "--component-plist", propertyListOutputFile,
     ]
 

@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
@@ -111,8 +111,8 @@ export default class SquirrelWindowsTarget extends Target {
       ...this.options as any,
     }
 
-    if (!options.description) {
-      throw new InvalidConfigurationError("Description is required, go to package.json and create a description in order to successfully build a windows installer with squirrel.")
+    if (isEmptyOrSpaces(options.description)) {
+      options.description = options.productName
     }
 
     if (options.remoteToken == null) {

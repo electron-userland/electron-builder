@@ -43,7 +43,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -97,7 +96,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -171,7 +169,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -220,7 +217,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -269,7 +265,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -318,7 +313,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
@@ -352,7 +346,6 @@ Array [
   "Test App ßW.app/Contents/Resources/da.lproj",
   "Test App ßW.app/Contents/Resources/de.lproj",
   "Test App ßW.app/Contents/Resources/el.lproj",
-  "Test App ßW.app/Contents/Resources/electron.asar",
   "Test App ßW.app/Contents/Resources/en.lproj",
   "Test App ßW.app/Contents/Resources/en_GB.lproj",
   "Test App ßW.app/Contents/Resources/es.lproj",
@@ -886,7 +879,6 @@ Object {
     },
   },
   "NSHighResolutionCapable": true,
-  "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }

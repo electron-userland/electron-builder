@@ -4,12 +4,6 @@ exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
 
 exports[`extraResources - two-package 1`] = `
 Object {
-  "mac": Array [],
-}
-`;
-
-exports[`extraResources - two-package 2`] = `
-Object {
   "linux": Array [],
 }
 `;
@@ -60,7 +54,6 @@ Array [
   "lib/net45/v8_context_snapshot.bin",
   "lib/net45/locales/en-US.pak",
   "lib/net45/resources/app.asar",
-  "lib/net45/resources/electron.asar",
   "lib/net45/resources/platformSpecificR",
   "lib/net45/swiftshader/libEGL.dll",
   "lib/net45/swiftshader/libGLESv2.dll",
