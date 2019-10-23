@@ -71,22 +71,22 @@ test.ifAll.ifMac("pkg extended configuration", app({
     const info = parseXml(await fs.readFile(packageInfoFile, "utf8"))
 
     const relocateElement = info.elementOrNull("relocate")
-    if (relocateElement) {
+    if (relocateElement != null) {
       expect(relocateElement.elements).toBeNull()
     }
 
     const upgradeBundleElement = info.elementOrNull("upgrade-bundle")
-    if (upgradeBundleElement) {
+    if (upgradeBundleElement != null) {
       expect(upgradeBundleElement.elements).toBeNull()
     }
 
     const updateBundleElement = info.elementOrNull("update-bundle")
-    if (updateBundleElement) {
+    if (updateBundleElement != null) {
       expect(updateBundleElement.elements).toHaveLength(1)
     }
 
     const strictIdentifierElement = info.elementOrNull("strict-identifier")
-    if (strictIdentifierElement) {
+    if (strictIdentifierElement != null) {
       expect(strictIdentifierElement.elements).toBeNull()
     }
   }
