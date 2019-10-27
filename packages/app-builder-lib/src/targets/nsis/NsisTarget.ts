@@ -23,7 +23,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -324,13 +324,21 @@ export class NsisTarget extends Target {
 
     // http://forums.winamp.com/showthread.php?p=3078545
     if (isMacOsCatalina()) {
-      (await packager.vm.value).exec(installerPath, [])
+      try {
+        UninstallerReader.exec(installerPath, uninstallerPath)
+      }
+      catch (error) {
+        log.warn(error.message)
+        log.warn("packager.vm is used")
 
-      // Parallels VM can exit after command execution, but NSIS continue to be running
-      let i = 0
-      while (!(await exists(uninstallerPath)) && i++ < 100) {
-        // noinspection JSUnusedLocalSymbols
-        await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+        const vm = await packager.vm.value
+        vm.exec(installerPath, [])
+        // Parallels VM can exit after command execution, but NSIS continue to be running
+        let i = 0
+        while (!(await exists(uninstallerPath)) && i++ < 100) {
+          // noinspection JSUnusedLocalSymbols
+          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+        }
       }
     }
     else {
