@@ -127,7 +127,11 @@ export class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const options = this.options
-    const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, this.installerFilenamePattern)
+    let arch = null
+    if (this.archs.size === 1) {
+      arch = this.archs.keys().next().value
+    }
+    const installerFilename = packager.expandArtifactNamePattern(options, "exe", arch, this.installerFilenamePattern)
     const oneClick = options.oneClick !== false
     const installerPath = path.join(this.outDir, installerFilename)
 
