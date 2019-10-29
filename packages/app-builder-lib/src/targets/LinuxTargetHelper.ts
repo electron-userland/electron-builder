@@ -99,7 +99,7 @@ export class LinuxTargetHelper {
       }
       if (executableArgs) {
         exec += " "
-        exec += executableArgs.join(' ')
+        exec += executableArgs.join(" ")
       }
       exec += " %U"
     }
