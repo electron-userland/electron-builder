@@ -65,6 +65,11 @@ export interface CommonLinuxOptions {
    * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
    */
   readonly desktop?: any | null
+
+  /**
+   * The executable parameters. Pass to executableName
+   */
+  readonly executableArgs?: Array<string> | null
 }
 
 // fpm-only specific options
