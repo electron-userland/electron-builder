@@ -21,15 +21,13 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
   const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
 
-  const oldEntryMap = buildEntryMap(oldBlockMap.files)
-
   let lastOperation: Operation | null = null
 
   // for now only one file is supported in block map
   const blockMapFile = newBlockMap.files[0]
   const operations: Array<Operation> = []
   const name = blockMapFile.name
-  const oldEntry = oldEntryMap.get(name)
+  const oldEntry = nameToOldBlocks.get(name)
   if (oldEntry == null) {
     // new file (unrealistic case for now, because in any case both blockmap contain the only file named as "file")
     throw new Error(`no file ${name} in old blockmap`)
@@ -128,14 +126,6 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
     offset += size
   }
   return {checksumToOffset, checksumToOldSize: checksumToSize}
-}
-
-function buildEntryMap(list: Array<BlockMapFile>) {
-  const result = new Map<string, BlockMapFile>()
-  for (const item of list) {
-    result.set(item.name, item)
-  }
-  return result
 }
 
 function buildBlockFileMap(list: Array<BlockMapFile>) {
