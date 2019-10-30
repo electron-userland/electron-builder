@@ -97,7 +97,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     processTargets(Platform.current(), [])
   }
 
-  const result = {...args}
+  const result: any = {...args}
   result.targets = targets
 
   delete result.dir

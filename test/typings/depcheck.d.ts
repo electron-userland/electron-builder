@@ -1,6 +1,7 @@
 module "depcheck" {
   interface DepCheckOptions {
     ignoreDirs?: Array<string>
+    parsers: { [name: string]: any; }
   }
 
   interface DepCheckResult {

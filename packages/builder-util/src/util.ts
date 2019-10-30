@@ -340,7 +340,7 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
     const env: any = {
       ...process.env,
       SZA_PATH: path7za,
-      FORCE_COLOR: chalk.enabled ? "1" : "0",
+      FORCE_COLOR: chalk.level === 0 ? "0" : "1",
     }
     const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
     if (cacheEnv != null && cacheEnv.length > 0) {

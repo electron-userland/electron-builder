@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { access, chmod, copyFile as _nodeCopyFile, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra"
 import * as path from "path"
-import Mode from "stat-mode"
+import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 

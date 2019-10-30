@@ -9,8 +9,9 @@ import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
+import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
-import { attachAndExecute, computeBackground, detach, getDmgVendorPath, transformBackgroundFileIfNeed } from "./dmgUtil"
+import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -317,4 +318,19 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
     }
   }
   return result
+}
+
+async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir): Promise<string> {
+  if (file.endsWith(".tiff") || file.endsWith(".TIFF")) {
+    return file
+  }
+
+  const retinaFile = file.replace(/\.([a-z]+)$/, "@2x.$1")
+  if (await exists(retinaFile)) {
+    const tiffFile = await tmpDir.getTempFile({suffix: ".tiff"})
+    await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
+    return tiffFile
+  }
+
+  return file
 }

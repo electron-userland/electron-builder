@@ -46,7 +46,7 @@ export default class AppImageTarget extends Target {
       createStageDir(this, packager, arch),
     ])
     const license = c[3]
-    const stageDir = c[4]
+    const stageDir = c[4]!!
 
     const publishConfig = c[2]
     if (publishConfig != null) {

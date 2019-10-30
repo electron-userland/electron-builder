@@ -328,11 +328,10 @@ export class NsisTarget extends Target {
         UninstallerReader.exec(installerPath, uninstallerPath)
       }
       catch (error) {
-        log.warn(error.message)
-        log.warn("packager.vm is used")
+        log.warn("packager.vm is used: " + error.message)
 
         const vm = await packager.vm.value
-        vm.exec(installerPath, [])
+        await vm.exec(installerPath, [])
         // Parallels VM can exit after command execution, but NSIS continue to be running
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {

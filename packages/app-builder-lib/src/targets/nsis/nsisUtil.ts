@@ -19,7 +19,7 @@ export const NSIS_PATH = new Lazy(() => {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
-  return getBinFromUrl("nsis", "3.0.4", "MNETIF8tex6+oiA0mgBi3/XKNH+jog4IBUp/F+Or7zUEhIP+c7cRjb9qGuBIofAXQ51z3RpyCfII4aPadsZB5Q==")
+  return getBinFromUrl("nsis", "3.0.4.1", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
 })
 
 export class AppPackageHelper {
@@ -105,8 +105,7 @@ export class CopyElevateHelper {
 }
 
 class BinaryReader {
-
-  private _buffer: Buffer
+  private readonly _buffer: Buffer
   private _position: number
 
   constructor(buffer: Buffer) {
@@ -165,7 +164,7 @@ class BinaryReader {
 }
 
 export class UninstallerReader {
-
+  // noinspection SpellCheckingInspection
   static exec(installerPath: string, uninstallerPath: string) {
     const buffer = fs.readFileSync(installerPath)
     const reader = new BinaryReader(buffer)
@@ -174,7 +173,8 @@ export class UninstallerReader {
       throw new Error("Invalid 'MZ' signature.")
     }
     reader.skip(58)
-    reader.skip(reader.uint32() - reader.position) // e_lfanew
+    // e_lfanew
+    reader.skip(reader.uint32() - reader.position)
     // IMAGE_FILE_HEADER
     if (!reader.match([ 0x50, 0x45, 0x00, 0x00 ])) {
       throw new Error("Invalid 'PE' signature.")
@@ -221,6 +221,7 @@ export class UninstallerReader {
     if (nsisSize !== nsisReader.uint32()) {
       throw new Error("Size mismatch.")
     }
+
     let innerBuffer = null
     while (true) {
       let size = nsisReader.uint32()
