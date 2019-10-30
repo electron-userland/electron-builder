@@ -29,6 +29,20 @@
         "desktop": {
           "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
         },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
+        },
         "license": {
           "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.",
           "type": [
@@ -373,6 +387,10 @@
             "string"
           ]
         },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
         "token": {
           "type": [
             "null",
@@ -422,6 +440,10 @@
               "type": "null"
             }
           ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
         },
         "updaterCacheDirName": {
           "type": [
@@ -504,6 +526,20 @@
         },
         "desktop": {
           "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
         },
         "fpm": {
           "anyOf": [
@@ -1029,6 +1065,10 @@
             }
           ]
         },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -1140,6 +1180,10 @@
             "null",
             "string"
           ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
         },
         "token": {
           "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
@@ -1272,6 +1316,20 @@
             "null",
             "string"
           ]
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
         },
         "executableName": {
           "description": "The executable name. Defaults to `productName`.\nCannot be specified per target, allowed only in the `linux`.",
@@ -1607,6 +1665,20 @@
         },
         "desktop": {
           "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
         },
         "fpm": {
           "anyOf": [
@@ -3484,6 +3556,25 @@
       },
       "type": "object"
     },
+    "OutgoingHttpHeaders": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        ]
+      },
+      "type": "object"
+    },
     "PkgBackgroundOptions": {
       "additionalProperties": false,
       "description": "Options for the background image in a PKG installer",
@@ -4037,6 +4128,10 @@
             "string"
           ]
         },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
         "storageClass": {
           "anyOf": [
             {
@@ -4108,6 +4203,11 @@
           ],
           "description": "The list of features that must be supported by the core in order for this snap to install."
         },
+        "autoStart": {
+          "default": false,
+          "description": "Whether or not the snap should automatically start on login.",
+          "type": "boolean"
+        },
         "buildPackages": {
           "anyOf": [
             {
@@ -4169,6 +4269,20 @@
             }
           ],
           "description": "The custom environment. Defaults to `{\"TMPDIR: \"$XDG_RUNTIME_DIR\"}`. If you set custom, it will be merged with default."
+        },
+        "executableArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The executable parameters. Pass to executableName"
         },
         "grade": {
           "anyOf": [
@@ -4325,10 +4439,6 @@
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
           "type": "boolean"
-        },
-        "autoStart": {
-          "description": "Whether or not the snap should automatically start on login.",
-          "type": "boolean"
         }
       },
       "type": "object"
@@ -4378,6 +4488,10 @@
               "type": "null"
             }
           ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
         },
         "updaterCacheDirName": {
           "type": [
@@ -4459,6 +4573,10 @@
         "region": {
           "description": "The region (e.g. `nyc3`).",
           "type": "string"
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
         },
         "updaterCacheDirName": {
           "type": [
@@ -5536,6 +5654,17 @@
         }
       ],
       "description": "MAS (Mac Application Store) options."
+    },
+    "masDev": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MasConfiguration"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "MAS (Mac Application Store) development options (`mas-dev` target)."
     },
     "msi": {
       "anyOf": [
