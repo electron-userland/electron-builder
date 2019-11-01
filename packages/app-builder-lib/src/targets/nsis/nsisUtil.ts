@@ -18,6 +18,11 @@ export const NSIS_PATH = new Lazy(() => {
   if (custom != null && custom.length > 0) {
     return Promise.resolve(custom.trim())
   }
+  // PR #4228 broke building Win NSIS installers on macOS. Temporary workaround to fall back to previous version (#4374)
+  if (process.platform === "darwin") {
+    return getBinFromUrl("nsis", "3.0.3.2", "tUrlDPQtbjcooNbTrjUzLupttWlATLDNWqK57TVr+gAt3wkaxFxBS3k80AzEFJbmSeOWrUooO72FFOVGXcoxhA==")
+  }
+
   // noinspection SpellCheckingInspection
   return getBinFromUrl("nsis", "3.0.4", "MNETIF8tex6+oiA0mgBi3/XKNH+jog4IBUp/F+Or7zUEhIP+c7cRjb9qGuBIofAXQ51z3RpyCfII4aPadsZB5Q==")
 })
