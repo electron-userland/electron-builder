@@ -80,6 +80,17 @@ export class PkgTarget extends Target {
 
     const options = this.options
     let distInfo = await readFile(distInfoFile, "utf-8")
+
+    if (options.mustClose != null && options.mustClose.length !== 0) {
+      const startContent = `    <pkg-ref id="${this.packager.appInfo.id}">\n        <must-close>\n`
+      const endContent = "        </must-close>\n    </pkg-ref>\n</installer-gui-script>"
+      let mustCloseContent = ""
+      options.mustClose.forEach(appId => {
+        mustCloseContent += `            <app id="${appId}"/>\n`
+      })
+      distInfo = distInfo.replace("</installer-gui-script>", `${startContent}${mustCloseContent}${endContent}`)
+    }
+
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
 
