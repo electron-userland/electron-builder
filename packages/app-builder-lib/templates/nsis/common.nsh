@@ -23,24 +23,15 @@ Name "${PRODUCT_NAME}"
     Quit
   ${EndIf}
 
-  !ifdef APP_ARM64
+  !ifdef APP_64
     ${If} ${RunningX64}
       SetRegView 64
+    ${Else}
+      !ifndef APP_32
+        MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)"
+        Quit
+      !endif
     ${EndIf}
-    ${If} ${IsNativeARM64}
-      SetRegView 64
-    ${EndIf}
-  !else
-    !ifdef APP_64
-      ${If} ${RunningX64}
-        SetRegView 64
-      ${Else}
-        !ifndef APP_32
-          MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)"
-          Quit
-        !endif
-      ${EndIf}
-    !endif
   !endif
 !macroend
 

@@ -19,7 +19,7 @@ export const NSIS_PATH = new Lazy(() => {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
-  return getBinFromUrl("nsis", "3.0.4", "MNETIF8tex6+oiA0mgBi3/XKNH+jog4IBUp/F+Or7zUEhIP+c7cRjb9qGuBIofAXQ51z3RpyCfII4aPadsZB5Q==")
+  return getBinFromUrl("nsis", "3.0.3.2", "tUrlDPQtbjcooNbTrjUzLupttWlATLDNWqK57TVr+gAt3wkaxFxBS3k80AzEFJbmSeOWrUooO72FFOVGXcoxhA==")
 })
 
 export class AppPackageHelper {
@@ -102,7 +102,6 @@ export class CopyElevateHelper {
     this.copied.set(appOutDir, promise)
     return promise
   }
-}
 
 class BinaryReader {
 
