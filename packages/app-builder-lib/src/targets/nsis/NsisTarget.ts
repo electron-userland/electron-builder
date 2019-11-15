@@ -231,6 +231,7 @@ export class NsisTarget extends Target {
       const portableOptions = options as PortableOptions
       defines.REQUEST_EXECUTION_LEVEL = portableOptions.requestExecutionLevel || "user"
       defines.UNPACK_DIR_NAME = portableOptions.unpackDirName || (await executeAppBuilder(["ksuid"]))
+      defines.SPLASH_IMAGE = portableOptions.splashImage || null
     }
     else {
       await this.configureDefines(oneClick, defines)
