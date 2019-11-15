@@ -20,7 +20,7 @@ Function .onGUIInit
 
   File /NONFATAL "${SPLASH_IMAGE}"
   ${If} ${FileExists} "${SPLASH_IMAGE}"
-    File /oname=$PLUGINSDIR\splash.bmp "C:\image.bmp"
+    File /oname=$PLUGINSDIR\splash.bmp "${SPLASH_IMAGE}"
     BgImage::SetBg $PLUGINSDIR\splash.bmp
     BgImage::Redraw
   ${EndIf}
