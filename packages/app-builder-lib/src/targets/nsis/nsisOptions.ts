@@ -178,7 +178,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
   /**
    * An image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.
    */
-   readonly splashImage?: string | null
+  readonly splashImage?: string | null
 }
 
 /**
