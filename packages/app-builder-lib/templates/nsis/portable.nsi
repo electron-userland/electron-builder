@@ -7,13 +7,23 @@ WindowIcon Off
 AutoCloseWindow True
 RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
 
-SilentInstall silent
-
 Function .onInit
+  # TODO set to silent if no splash image was defined
+  # SetSilent silent
   !insertmacro check64BitAndSetRegView
 FunctionEnd
 
+Function .onGUIInit
+  InitPluginsDir
+  # TODO figure out how to pass in a variable for the image
+  File /oname=$PLUGINSDIR\splash.bmp "C:\image.bmp"
+  BgImage::SetBg $PLUGINSDIR\splash.bmp
+  BgImage::Redraw
+FunctionEnd
+
 Section
+  HideWindow
+
   StrCpy $INSTDIR "$TEMP\${UNPACK_DIR_NAME}"
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
@@ -53,6 +63,8 @@ Section
       !insertmacro extractEmbeddedAppPackage
     !endif
   !endif
+
+  BgImage::Destroy
 
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_FILE", "$EXEPATH").r0'
