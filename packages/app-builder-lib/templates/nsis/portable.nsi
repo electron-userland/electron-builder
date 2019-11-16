@@ -8,9 +8,9 @@ AutoCloseWindow True
 RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
 
 Function .onInit
-  ${IfNot} ${FileExists} "${SPLASH_IMAGE}"
+  !ifndef SPLASH_IMAGE
     SetSilent silent
-  ${EndIf}
+  !endif
 
   !insertmacro check64BitAndSetRegView
 FunctionEnd
@@ -18,12 +18,11 @@ FunctionEnd
 Function .onGUIInit
   InitPluginsDir
 
-  File /NONFATAL "${SPLASH_IMAGE}"
-  ${If} ${FileExists} "${SPLASH_IMAGE}"
-    File /oname=$PLUGINSDIR\splash.bmp "${SPLASH_IMAGE}"
+  !ifdef SPLASH_IMAGE
+    File /NONFATAL /oname=$PLUGINSDIR\splash.bmp "${SPLASH_IMAGE}"
     BgImage::SetBg $PLUGINSDIR\splash.bmp
     BgImage::Redraw
-  ${EndIf}
+  !endif
 FunctionEnd
 
 Section
@@ -69,9 +68,9 @@ Section
     !endif
   !endif
 
-  ${If} ${FileExists} "${SPLASH_IMAGE}"
+  !ifdef SPLASH_IMAGE
     BgImage::Destroy
-  ${EndIf}
+  !endif
 
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_FILE", "$EXEPATH").r0'
