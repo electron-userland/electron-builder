@@ -3928,6 +3928,13 @@
             }
           ]
         },
+        "splashImage": {
+          "describe": "An image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "requestExecutionLevel": {
           "default": "user",
           "description": "The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.",
