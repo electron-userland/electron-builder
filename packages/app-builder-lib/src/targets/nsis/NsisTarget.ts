@@ -167,7 +167,7 @@ export class NsisTarget extends Target {
       APP_PACKAGE_NAME: appInfo.name
     }
     if (uninstallAppKey !== guid) {
-      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{${guid}}`
+      defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
     const commands: any = {
