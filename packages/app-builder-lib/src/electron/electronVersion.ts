@@ -69,7 +69,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
   }
 
-  return semver.coerce(electronVersionFromMetadata)!!.toString()
+  return String(electronVersionFromMetadata)
 }
 
 function findFromPackageMetadata(packageData: any): string | null {
