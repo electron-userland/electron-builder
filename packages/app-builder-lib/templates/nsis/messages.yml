@@ -52,7 +52,7 @@ appRunning:
   hu: "${PRODUCT_NAME} éppen fut. \nKattiontson az «OK»-ra a bezárásához."
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
-  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
+  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
   sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
   no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
