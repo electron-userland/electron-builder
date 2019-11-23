@@ -44,8 +44,19 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   }
 
   const electronVersionFromMetadata = findFromPackageMetadata(await projectMetadata!!.value)
-
-  if (electronVersionFromMetadata === "latest") {
+if (electronVersionFromInstalled === "electron-nightly"){
+  log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
+  try{
+    const releaseInfo = JSON.parse((await httpExecutor.request({
+        hostname: "github.com",
+        path: "/electron/nightlies/releases/latest",
+        headers: {
+          accept: "application/json",
+        },
+      }))!!)
+      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+  }
+  else if (electronVersionFromInstalled === "electron" && electronVersionFromInstalled === "electron-prebuilt" && electronVersionFromInstalled === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
     log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
     try {
       const releaseInfo = JSON.parse((await httpExecutor.request({
