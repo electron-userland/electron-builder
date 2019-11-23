@@ -10,7 +10,7 @@ import { getConfig } from "../util/config"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
-const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile"]
+const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile", "electron-nightly"]
 
 export async function getElectronVersion(projectDir: string, config?: Configuration, projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<string> {
   if (config == null) {
