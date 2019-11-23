@@ -18,7 +18,7 @@
     "sanitize-filename": "^1.6.3"
   },
   "optionalDependencies": {
-    "7zip-bin": "~4.0.2"
+    "7zip-bin": "~5.0.3"
   },
   "peerDependencies": {
     "app-builder-lib": "~0.0.0-semantic-release"
