@@ -57,16 +57,10 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     return result
   }
 
-export async function getElectronPackageName(projectDir: string, projectMetadata: MetadataValue): Promise<string> {
-  const resultPackage = await getElectronPackage(projectDir)
-  if (resultPackage != null) {
-    return resultPackage
-  }
-
   const electronVersionFromMetadata = findFromPackageMetadata(await projectMetadata!!.value)
-  const electronPackageName = getElectronPackageName(await projectMetadata!!.value)
+  const electronPackageName = findFromPackageMetadata(await projectMetadata!!.value)
   
-  if (await electronPackageName === "electron-nightly") {
+  if (electronPackageName === "electron-nightly") {
     log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     try {
       const releaseInfo = JSON.parse((await httpExecutor.request({
@@ -83,7 +77,7 @@ export async function getElectronPackageName(projectDir: string, projectMetadata
     }
     throw new InvalidConfigurationError(`Cannot find electron in '${path.join(projectDir, "package.json")}'`)
   }
-  if (await electronPackageName === "electron" && await electronPackageName === "electron-prebuilt" && await electronPackageName === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
+  else if (electronPackageName === "electron" || electronPackageName === "electron-prebuilt" || electronPackageName === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
     log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
     try {
       const releaseInfo = JSON.parse((await httpExecutor.request({
