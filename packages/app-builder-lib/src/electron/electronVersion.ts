@@ -62,47 +62,48 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   const electronPackage = getElectronPackage(await readJson(path.join(projectDir, "node_modules", name, "package.json")))
 
 if (await electronPackage === "electron-nightly") {
- log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
+log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
+  try {
+  const releaseInfo = JSON.parse((await httpExecutor.request({
+      hostname: "github.com",
+      path: "/electron/nightlies/releases/latest",
+      headers: {
+        accept: "application/json",
+      },
+  }))!!)
+  return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+  }
+  catch (e) {
+    log.warn(e)
+  }
+  throw new InvalidConfigurationError(`Cannot find electron in '${path.join(projectDir, "package.json")}'`)
+}
+
+if (await electronPackage === "electron" && await electronPackage === "electron-prebuilt" && await electronPackage === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
+  log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
   try {
     const releaseInfo = JSON.parse((await httpExecutor.request({
-        hostname: "github.com",
-        path: "/electron/nightlies/releases/latest",
-        headers: {
-          accept: "application/json",
-        },
+      hostname: "github.com",
+      path: "/electron/electron/releases/latest",
+      headers: {
+        accept: "application/json",
+      },
     }))!!)
     return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-    }
-    catch (e) {
-      log.warn(e)
-    }
-  throw new InvalidConfigurationError(`Cannot find electron in '${path.join(projectDir, "package.json")}'`)
   }
-  if (await electronPackage === "electron" && await electronPackage === "electron-prebuilt" && await electronPackage === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
-    log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
-    try {
-      const releaseInfo = JSON.parse((await httpExecutor.request({
-        hostname: "github.com",
-        path: "/electron/electron/releases/latest",
-        headers: {
-          accept: "application/json",
-        },
-      }))!!)
-      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-    }
-    catch (e) {
-      log.warn(e)
-    }
-
-    throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
+  catch (e) {
+    log.warn(e)
   }
 
-  if (electronVersionFromMetadata == null || !/^\d/.test(electronVersionFromMetadata)) {
-    const versionMessage = electronVersionFromMetadata == null ? "" : ` and version ("${electronVersionFromMetadata}") is not fixed in project`
-    throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
-  }
+  throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
+}
 
-  return semver.coerce(electronVersionFromMetadata)!!.toString()
+if (electronVersionFromMetadata == null || !/^\d/.test(electronVersionFromMetadata)) {
+  const versionMessage = electronVersionFromMetadata == null ? "" : ` and version ("${electronVersionFromMetadata}") is not fixed in project`
+  throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
+}
+
+return semver.coerce(electronVersionFromMetadata)!!.toString()
 }
 
 function findFromPackageMetadata(packageData: any): string | null {
