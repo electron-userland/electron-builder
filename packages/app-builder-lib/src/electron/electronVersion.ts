@@ -59,7 +59,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
 
   const electronVersionFromMetadata = findFromPackageMetadata(await projectMetadata!!.value)
   const electronPackageName = findFromPackageMetadata(await projectMetadata!!.value)
-  
+
   if (electronPackageName === "electron-nightly") {
     log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     try {
