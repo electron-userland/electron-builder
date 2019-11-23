@@ -60,17 +60,16 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
 
   const electronVersionFromMetadata = findFromPackageMetadata(await projectMetadata!!.value)
   const electronPackage = getElectronPackage(await readJson(path.join(projectDir, "node_modules", name, "package.json")))
-
 if (await electronPackage === "electron-nightly") {
-log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
+  log.warn("You are using a nightly version of electron, be warned that those builds are highly unstable.")
   try {
-  const releaseInfo = JSON.parse((await httpExecutor.request({
-      hostname: "github.com",
-      path: "/electron/nightlies/releases/latest",
-      headers: {
-        accept: "application/json",
-      },
-  }))!!)
+    const releaseInfo = JSON.parse((await httpExecutor.request({
+        hostname: "github.com",
+        path: "/electron/nightlies/releases/latest",
+        headers: {
+          accept: "application/json",
+        },
+    }))!!)
   return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
   }
   catch (e) {
@@ -78,7 +77,6 @@ log.warn("You are using a nightly version of electron, be warned that those buil
   }
   throw new InvalidConfigurationError(`Cannot find electron in '${path.join(projectDir, "package.json")}'`)
 }
-
 if (await electronPackage === "electron" && await electronPackage === "electron-prebuilt" && await electronPackage === "electron-prebuilt-compile" && electronVersionFromMetadata === "latest") {
   log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
   try {
