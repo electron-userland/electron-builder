@@ -157,7 +157,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
   if (stats != null) {
     const originalModeNumber = stats.mode
-    const mode = new Mode(stats)
+    const mode = new Mode.Mode(stats)
     if (mode.owner.execute) {
       mode.group.execute = true
       mode.others.execute = true
@@ -171,7 +171,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
-        const oldMode = new Mode({mode: originalModeNumber})
+        const oldMode = new Mode.Mode({mode: originalModeNumber})
         log.debug({file: dest, oldMode, mode}, "permissions fixed from")
       }
 

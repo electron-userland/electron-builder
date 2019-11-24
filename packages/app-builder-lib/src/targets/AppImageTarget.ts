@@ -49,14 +49,14 @@ export default class AppImageTarget extends Target {
     const stageDir = c[4]
 
     const publishConfig = c[2]
-    if (publishConfig != null) {
+    if (publishConfig != null && stageDir != null) {
       await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
       return
     }
-
+    if(stageDir != null){
     const args = [
       "appimage",
       "--stage", stageDir.dir,
@@ -79,7 +79,6 @@ export default class AppImageTarget extends Target {
     if (packager.compression === "maximum") {
       args.push("--compression", "xz")
     }
-
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
       safeArtifactName: packager.computeSafeArtifactName(artifactName, "AppImage", arch, false),
@@ -90,4 +89,5 @@ export default class AppImageTarget extends Target {
       updateInfo: await executeAppBuilderAsJson(args),
     })
   }
+ }
 }

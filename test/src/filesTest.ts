@@ -4,10 +4,9 @@ import { copyDir } from "builder-util/out/fs"
 import { outputFile } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
-import Mode, { Permissions } from "stat-mode"
+import Mode, { RWX } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-
 test.ifDevOrLinuxCi("expand not defined env", appThrows({
   targets: linuxDirTarget,
   config: {
@@ -248,15 +247,15 @@ test.ifNotWindows("postpone symlink", async () => {
 })
 
 async function allCan(file: string, execute: boolean) {
-  const mode = new Mode(await fs.stat(file))
+  const mode = new Mode.Mode(await fs.stat(file))
 
-  function checkExecute(value: Permissions) {
+  function checkExecute(value: RWX) {
     if (value.execute !== execute) {
       throw new Error(`${file} is ${execute ? "not " : ""}executable`)
     }
   }
 
-  function checkRead(value: Permissions) {
+  function checkRead(value: RWX) {
     if (!value.read) {
       throw new Error(`${file} is not readable`)
     }
