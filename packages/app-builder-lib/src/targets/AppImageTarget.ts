@@ -56,7 +56,8 @@ export default class AppImageTarget extends Target {
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
       return
     }
-    if(stageDir != null){
+
+    if (stageDir != null) {
     const args = [
       "appimage",
       "--stage", stageDir.dir,
