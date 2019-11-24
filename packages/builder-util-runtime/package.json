@@ -4,9 +4,9 @@
   "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
-  "bugs": "https://github.com/electron-userland/electron-builder/issues",
-  "homepage": "https://github.com/electron-userland/electron-builder",
+  "repository": "ShadixAced/electron-builder",
+  "bugs": "https://github.com/ShadixAced/electron-builder/issues",
+  "homepage": "https://github.com/ShadixAced/electron-builder",
   "files": [
     "out"
   ],

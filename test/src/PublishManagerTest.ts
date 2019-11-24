@@ -99,7 +99,7 @@ test.ifAll.ifNotWindows("os macro", app({
 
 // disable on ifNotCi for now - slow on CircleCI
 // error should be ignored because publish: never
-// https://github.com/electron-userland/electron-builder/issues/2670
+// https://github.com/ShadixAced/electron-builder/issues/2670
 test.ifAll.ifNotCi("dotted s3 bucket", app({
   targets: createTargets([Platform.LINUX], "zip"),
   config: {
@@ -112,7 +112,7 @@ test.ifAll.ifNotCi("dotted s3 bucket", app({
   publish: "never"
 }))
 
-// https://github.com/electron-userland/electron-builder/issues/3261
+// https://github.com/ShadixAced/electron-builder/issues/3261
 test.ifAll.ifNotWindows("custom provider", app({
   targets: createTargets([Platform.LINUX], "zip"),
   config: {

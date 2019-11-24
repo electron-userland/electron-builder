@@ -223,7 +223,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
   })
 })
 
-// https://github.com/electron-userland/electron-builder/issues/1738
+// https://github.com/ShadixAced/electron-builder/issues/1738
 test.ifDevOrLinuxCi("win smart unpack", () => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
@@ -290,11 +290,11 @@ async function verifySmartUnpack(resourceDir: string) {
   expect(files).toMatchSnapshot()
 }
 
-// https://github.com/electron-userland/electron-builder/issues/1738
+// https://github.com/ShadixAced/electron-builder/issues/1738
 test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   targets: linuxDirTarget,
   config: {
-    // https://github.com/electron-userland/electron-builder/issues/3273
+    // https://github.com/ShadixAced/electron-builder/issues/3273
     // tslint:disable-next-line:no-invalid-template-strings
     copyright: "Copyright © 2018 ${author}",
     npmRebuild: true,

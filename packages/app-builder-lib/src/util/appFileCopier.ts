@@ -49,7 +49,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
   const createdParentDirs = new Set<string>()
 
   const fileCopier = new FileCopier(file => {
-    // https://github.com/electron-userland/electron-builder/issues/3038
+    // https://github.com/ShadixAced/electron-builder/issues/3038
     return !(isLibOrExe(file) || file.endsWith(".node"))
   }, transformer)
   const links: Array<Link> = []
@@ -161,13 +161,13 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 }
 
 function getNodeModuleExcludedExts(platformPackager: PlatformPackager<any>) {
-  // do not exclude *.h files (https://github.com/electron-userland/electron-builder/issues/2852)
+  // do not exclude *.h files (https://github.com/ShadixAced/electron-builder/issues/2852)
   const result = [".o", ".obj"].concat(excludedExts.split(",").map(it => `.${it}`))
   if (platformPackager.config.includePdb !== true) {
     result.push(".pdb")
   }
   if (platformPackager.platform !== Platform.WINDOWS) {
-    // https://github.com/electron-userland/electron-builder/issues/1738
+    // https://github.com/ShadixAced/electron-builder/issues/1738
     result.push(".dll")
     result.push(".exe")
   }

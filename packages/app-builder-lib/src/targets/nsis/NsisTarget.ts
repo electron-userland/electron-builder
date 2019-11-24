@@ -314,7 +314,7 @@ export class NsisTarget extends Target {
       return script
     }
 
-    // https://github.com/electron-userland/electron-builder/issues/2103
+    // https://github.com/ShadixAced/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
     const uninstallerPath = path.join(this.outDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
     const isWin = process.platform === "win32"

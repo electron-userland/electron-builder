@@ -1,6 +1,6 @@
 # electron-forge-maker-nsis
 
-[electron-builder](https://github.com/electron-userland/electron-builder) [nsis](https://electron.build/configuration/nsis) target for electron-forge.
+[electron-builder](https://github.com/ShadixAced/electron-builder) [nsis](https://electron.build/configuration/nsis) target for electron-forge.
 
 Recommended to build electron-forge project using electron-builder directly.
 [Publishing](https://www.electron.build/configuration/publish),

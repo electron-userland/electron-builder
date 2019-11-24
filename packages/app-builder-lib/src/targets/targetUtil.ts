@@ -34,8 +34,8 @@ export async function createStageDirPath(target: Target, packager: PlatformPacka
   return tempDir
 }
 
-// https://github.com/electron-userland/electron-builder/issues/3100
-// https://github.com/electron-userland/electron-builder/commit/2539cfba20dc639128e75c5b786651b652bb4b78
+// https://github.com/ShadixAced/electron-builder/issues/3100
+// https://github.com/ShadixAced/electron-builder/commit/2539cfba20dc639128e75c5b786651b652bb4b78
 export function getWindowsInstallationDirName(appInfo: AppInfo, isTryToUseProductName: boolean): string {
   return isTryToUseProductName && /^[-_+0-9a-zA-Z .]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName
 }

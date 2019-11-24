@@ -98,7 +98,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
 
   if (electronVersionFromMetadata == null || !/^\d/.test(electronVersionFromMetadata)) {
     const versionMessage = electronVersionFromMetadata == null ? "" : ` and version ("${electronVersionFromMetadata}") is not fixed in project`
-    throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
+    throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/ShadixAced/electron-builder/issues/3984#issuecomment-504968246`)
   }
 
   return semver.coerce(electronVersionFromMetadata)!!.toString()

@@ -66,7 +66,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly timeStampServer?: string | null
 
   /**
-   * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
+   * [The publisher name](https://github.com/ShadixAced/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
    * Defaults to common name from your code signing certificate.
    */
   readonly publisherName?: string | Array<string> | null
@@ -94,7 +94,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Whether to sign DLL files. Advanced option.
-   * @see https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
+   * @see https://github.com/ShadixAced/electron-builder/issues/3101#issuecomment-404212384
    * @default false
    */
   readonly signDlls?: boolean

@@ -151,7 +151,7 @@ export default class AppXTarget extends Target {
     return {userAssets, mappings, allAssets}
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
+  // https://github.com/ShadixAced/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
     if (await this.packager.cscInfo.value == null) {
       log.info({reason: "Windows Store only build"}, "AppX is not signed")

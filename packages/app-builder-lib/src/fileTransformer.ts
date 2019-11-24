@@ -73,7 +73,7 @@ interface CleanupPackageFileOptions {
 
 function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any {
   const deps = data.dependencies
-  // https://github.com/electron-userland/electron-builder/issues/507#issuecomment-312772099
+  // https://github.com/ShadixAced/electron-builder/issues/507#issuecomment-312772099
   const isRemoveBabel = deps != null && typeof deps === "object" && !Object.getOwnPropertyNames(deps).some(it => it.startsWith("babel"))
   try {
     let changed = false
@@ -107,7 +107,7 @@ async function modifyMainPackageJson(file: string, extraMetadata: any, isRemoveP
     deepAssign(mainPackageData, extraMetadata)
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/1212
+  // https://github.com/ShadixAced/electron-builder/issues/1212
   const serializedDataIfChanged = cleanupPackageJson(mainPackageData, {
     isMain: true,
     isRemovePackageScripts,

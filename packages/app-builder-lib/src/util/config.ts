@@ -11,7 +11,7 @@ const validateSchema = require("@develar/schema-utils")
 
 declare const PACKAGE_VERSION: string
 
-// https://github.com/electron-userland/electron-builder/issues/1847
+// https://github.com/ShadixAced/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {
   // if config from disk doesn't have publish (or object), no need to handle, it will be simply merged by deepAssign
   const publish = Array.isArray(config.publish) ? configFromOptions.publish : null

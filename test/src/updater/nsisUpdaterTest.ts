@@ -156,7 +156,7 @@ test("file url generic - manual download", async () => {
   await assertThat(path.join((await updater.downloadUpdate())[0])).isFile()
 })
 
-// https://github.com/electron-userland/electron-builder/issues/1045
+// https://github.com/ShadixAced/electron-builder/issues/1045
 test("checkForUpdates several times", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({

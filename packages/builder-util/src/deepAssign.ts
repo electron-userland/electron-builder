@@ -9,7 +9,7 @@ function isObject(x: any) {
 
 function assignKey(target: any, from: any, key: string) {
   const value = from[key]
-  // https://github.com/electron-userland/electron-builder/pull/562
+  // https://github.com/ShadixAced/electron-builder/pull/562
   if (value === undefined) {
     return
   }

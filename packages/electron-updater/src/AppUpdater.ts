@@ -193,7 +193,7 @@ export abstract class AppUpdater extends EventEmitter {
    */
   setFeedURL(options: PublishConfiguration | AllPublishOptions | string) {
     const runtimeOptions = this.createProviderRuntimeOptions()
-    // https://github.com/electron-userland/electron-builder/issues/1105
+    // https://github.com/ShadixAced/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
       provider = new GenericProvider({provider: "generic", url: options}, this, {
@@ -318,8 +318,8 @@ export abstract class AppUpdater extends EventEmitter {
       return false
     }
 
-    // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405033227
-    // https://github.com/electron-userland/electron-builder/pull/3111#issuecomment-405030797
+    // https://github.com/ShadixAced/electron-builder/pull/3111#issuecomment-405033227
+    // https://github.com/ShadixAced/electron-builder/pull/3111#issuecomment-405030797
     const isLatestVersionNewer = isVersionGreaterThan(latestVersion, currentVersion)
     const isLatestVersionOlder = isVersionLessThan(latestVersion, currentVersion)
 
@@ -404,7 +404,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     this._logger.info(`Downloading update from ${asArray(updateInfoAndProvider.info.files).map(it => it.url).join(", ")}`)
     const errorHandler = (e: Error) => {
-      // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159
+      // https://github.com/ShadixAced/electron-builder/issues/1150#issuecomment-436891159
       if (!(e instanceof CancellationError)) {
         try {
           this.dispatchError(e)
@@ -504,7 +504,7 @@ export abstract class AppUpdater extends EventEmitter {
   /** @internal */
   get isAddNoCacheQuery(): boolean {
     const headers = this.requestHeaders
-    // https://github.com/electron-userland/electron-builder/issues/3021
+    // https://github.com/ShadixAced/electron-builder/issues/3021
     if (headers == null) {
       return true
     }

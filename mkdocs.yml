@@ -10,8 +10,8 @@ theme:
     primary: 'blue'
     accent: 'blue'
 
-repo_name: electron-userland/electron-builder
-repo_url: 'https://github.com/electron-userland/electron-builder'
+repo_name: ShadixAced/electron-builder
+repo_url: 'https://github.com/ShadixAced/electron-builder'
 edit_uri: ""
 dev_addr: 0.0.0.0:8000
 strict: true

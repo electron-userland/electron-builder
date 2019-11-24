@@ -35,7 +35,7 @@ export abstract class FileCopyHelper {
     const resolvedLinkTarget = path.resolve(parent, linkTarget)
     const link = path.relative(this.matcher.from, resolvedLinkTarget)
     if (link.startsWith("..")) {
-      // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
+      // outside of project, linked module (https://github.com/ShadixAced/electron-builder/issues/675)
       return stat(resolvedLinkTarget)
         .then(targetFileStat => {
           this.metadata.set(file, targetFileStat)
@@ -82,7 +82,7 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   // noinspection JSUnusedGlobalSymbols
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
-      // https://github.com/electron-userland/electron-builder/issues/1539
+      // https://github.com/ShadixAced/electron-builder/issues/1539
       // but do not filter if we inside node_modules dir
       // update: solution disabled, node module resolver should support such setup
       if (file.endsWith(nodeModulesSystemDependentSuffix)) {

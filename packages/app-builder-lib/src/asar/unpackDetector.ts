@@ -78,7 +78,7 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
       continue
     }
 
-    // https://github.com/electron-userland/electron-builder/issues/2679
+    // https://github.com/ShadixAced/electron-builder/issues/2679
     let shouldUnpack = false
     // ffprobe-static and ffmpeg-static are known packages to always unpack
     const moduleName = path.basename(packageDir)

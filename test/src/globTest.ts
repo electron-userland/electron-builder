@@ -105,7 +105,7 @@ test.ifNotWindows("outside link", app({
   },
 }))
 
-// https://github.com/electron-userland/electron-builder/issues/611
+// https://github.com/ShadixAced/electron-builder/issues/611
 test.ifDevOrLinuxCi("failed peer dep", () => {
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),

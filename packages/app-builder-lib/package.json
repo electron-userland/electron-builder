@@ -11,7 +11,7 @@
     "certs/root_certs.keychain",
     "electron-osx-sign"
   ],
-  "repository": "electron-userland/electron-builder",
+  "repository": "ShadixAced/electron-builder",
   "engines": {
     "node": ">=8.12.0"
   },
@@ -40,8 +40,8 @@
   ],
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "bugs": "https://github.com/electron-userland/electron-builder/issues",
-  "homepage": "https://github.com/electron-userland/electron-builder",
+  "bugs": "https://github.com/ShadixAced/electron-builder/issues",
+  "homepage": "https://github.com/ShadixAced/electron-builder",
   "dependencies": {
     "7zip-bin": "~5.0.3",
     "async-exit-hook": "^2.0.1",

@@ -46,7 +46,7 @@ function wrap(task: (args: any) => Promise<any>) {
       .then(() => task(args))
       .catch(error => {
         process.exitCode = 1
-        // https://github.com/electron-userland/electron-builder/issues/2940
+        // https://github.com/ShadixAced/electron-builder/issues/2940
         process.on("exit", () => process.exitCode = 1)
         if (error instanceof InvalidConfigurationError) {
           log.error(null, error.message)

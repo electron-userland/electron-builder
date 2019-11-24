@@ -215,7 +215,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const appPath = path.join(appOutDir, `${appFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
-  // https://github.com/electron-userland/electron-builder/issues/840
+  // https://github.com/ShadixAced/electron-builder/issues/840
   const now = Date.now() / 1000
   await utimes(appPath, now, now)
 }
@@ -229,7 +229,7 @@ function configureLocalhostAts(appPlist: any) {
   }
 
   ats.NSAllowsLocalNetworking = true
-  // https://github.com/electron-userland/electron-builder/issues/3377#issuecomment-446035814
+  // https://github.com/ShadixAced/electron-builder/issues/3377#issuecomment-446035814
   ats.NSAllowsArbitraryLoads = true
 
   let exceptionDomains = ats.NSExceptionDomains

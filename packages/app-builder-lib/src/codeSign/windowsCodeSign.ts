@@ -128,7 +128,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
     const parentPath = certInfo.PSParentPath
     const store = parentPath.substring(parentPath.lastIndexOf("\\") + 1)
     log.debug({store, PSParentPath: parentPath}, "auto-detect certificate store")
-    // https://github.com/electron-userland/electron-builder/issues/1717
+    // https://github.com/ShadixAced/electron-builder/issues/1717
     const isLocalMachineStore = (parentPath.includes("Certificate::LocalMachine"))
     log.debug(null, "auto-detect using of LocalMachine store")
     return {
@@ -143,7 +143,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
 }
 
 async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
-  // https://github.com/electron-userland/electron-builder/pull/1944
+  // https://github.com/ShadixAced/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
 
   let tool: string
@@ -268,7 +268,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   }
 
   if (isWin) {
-    // https://github.com/electron-userland/electron-builder/issues/2875#issuecomment-387233610
+    // https://github.com/ShadixAced/electron-builder/issues/2875#issuecomment-387233610
     args.push("/debug")
     // must be last argument
     args.push(inputFile)

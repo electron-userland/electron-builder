@@ -10,7 +10,7 @@
     "electron-builder": "./out/cli/cli.js",
     "install-app-deps": "./out/cli/install-app-deps.js"
   },
-  "repository": "electron-userland/electron-builder",
+  "repository": "ShadixAced/electron-builder",
   "engines": {
     "node": ">=8.12.0"
   },
@@ -42,8 +42,8 @@
     "Stefan Judis"
   ],
   "license": "MIT",
-  "bugs": "https://github.com/electron-userland/electron-builder/issues",
-  "homepage": "https://github.com/electron-userland/electron-builder",
+  "bugs": "https://github.com/ShadixAced/electron-builder/issues",
+  "homepage": "https://github.com/ShadixAced/electron-builder",
   "dependencies": {
     "bluebird-lst": "^1.0.9",
     "chalk": "^3.0.0",

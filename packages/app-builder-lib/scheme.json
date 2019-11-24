@@ -288,7 +288,7 @@
         },
         "setBuildNumber": {
           "default": false,
-          "description": "Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875",
+          "description": "Whether to set build number. See https://github.com/ShadixAced/electron-builder/issues/3875",
           "type": "boolean"
         },
         "showNameOnTiles": {
@@ -853,7 +853,7 @@
         },
         "window": {
           "$ref": "#/definitions/DmgWindow",
-          "description": "The DMG window position and size. With y co-ordinates running from bottom to top.\n\nThe Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `\"x\": 0, \"y\": 100000` as the x, y co-ordinates.\nIt is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen."
+          "description": "The DMG window position and size. With y co-ordinates running from bottom to top.\n\nThe Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `\"x\": 0, \"y\": 100000` as the x, y co-ordinates.\nIt is not to be possible to position the window relative to the [top left](https://github.com/ShadixAced/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen."
         },
         "writeUpdateInfo": {
           "default": true,
@@ -1436,7 +1436,7 @@
         },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
-          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "description": "Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).",
           "type": "boolean"
         },
         "icon": {
@@ -1874,7 +1874,7 @@
           ]
         },
         "bundleVersion": {
-          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
+          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/ShadixAced/electron-builder/issues/565#issuecomment-230678643).",
           "type": [
             "null",
             "string"
@@ -2096,7 +2096,7 @@
         },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
-          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "description": "Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).",
           "type": "boolean"
         },
         "hardenedRuntime": {
@@ -2374,7 +2374,7 @@
           ]
         },
         "bundleVersion": {
-          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).",
+          "description": "The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/ShadixAced/electron-builder/issues/565#issuecomment-230678643).",
           "type": [
             "null",
             "string"
@@ -2596,7 +2596,7 @@
         },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
-          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "description": "Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).",
           "type": "boolean"
         },
         "hardenedRuntime": {
@@ -3270,7 +3270,7 @@
           "type": "boolean"
         },
         "appPackageUrl": {
-          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
+          "description": "The application package download URL. Optional — by default computed using publish configuration.\n\nURL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).\nPlease note — it is [full URL](https://github.com/ShadixAced/electron-builder/issues/1810#issuecomment-317650878).\n\nCustom `X-Arch` http header is set to `32` or `64`.",
           "type": [
             "null",
             "string"
@@ -4052,7 +4052,7 @@
             }
           ],
           "default": "public-read",
-          "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).\n\nPlease see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128)."
+          "description": "The ACL. Set to `null` to not [add](https://github.com/ShadixAced/electron-builder/issues/1822).\n\nPlease see [required permissions for the S3 provider](https://github.com/ShadixAced/electron-builder/issues/1618#issuecomment-314679128)."
         },
         "bucket": {
           "description": "The bucket name.",
@@ -4523,7 +4523,7 @@
             }
           ],
           "default": "public-read",
-          "description": "The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822)."
+          "description": "The ACL. Set to `null` to not [add](https://github.com/ShadixAced/electron-builder/issues/1822)."
         },
         "channel": {
           "default": "latest",
@@ -4621,7 +4621,7 @@
           "type": "boolean"
         },
         "name": {
-          "description": "https://github.com/electron-userland/electron-builder/issues/1743",
+          "description": "https://github.com/ShadixAced/electron-builder/issues/1743",
           "type": "string"
         },
         "publish": {
@@ -4971,7 +4971,7 @@
         },
         "generateUpdatesFilesForAllChannels": {
           "default": false,
-          "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+          "description": "Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).",
           "type": "boolean"
         },
         "icon": {
@@ -5080,7 +5080,7 @@
               ]
             }
           ],
-          "description": "[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
+          "description": "[The publisher name](https://github.com/ShadixAced/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.\nDefaults to common name from your code signing certificate."
         },
         "releaseInfo": {
           "$ref": "#/definitions/ReleaseInfo",
@@ -5600,7 +5600,7 @@
     },
     "generateUpdatesFilesForAllChannels": {
       "default": false,
-      "description": "Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).",
+      "description": "Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).",
       "type": "boolean"
     },
     "icon": {
@@ -5678,7 +5678,7 @@
     },
     "nodeGypRebuild": {
       "default": false,
-      "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
+      "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/ShadixAced/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
       "type": "boolean"
     },
     "nodeVersion": {

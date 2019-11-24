@@ -45,7 +45,7 @@ export class AppInfo {
 
   getVersionInWeirdWindowsForm(isSetBuildNumber = true): string {
     const parsedVersion = new SemVer(this.version)
-    // https://github.com/electron-userland/electron-builder/issues/2635#issuecomment-371792272
+    // https://github.com/ShadixAced/electron-builder/issues/2635#issuecomment-371792272
     let buildNumber = isSetBuildNumber ? this.buildNumber : null
     if (buildNumber == null || !/^\d+$/.test(buildNumber)) {
       buildNumber = "0"
@@ -94,7 +94,7 @@ export class AppInfo {
 
   get linuxPackageName(): string {
     const name = this.name
-    // https://github.com/electron-userland/electron-builder/issues/2963
+    // https://github.com/ShadixAced/electron-builder/issues/2963
     return name.startsWith("@") ? this.productFilename : name
   }
 

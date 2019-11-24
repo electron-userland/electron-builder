@@ -35,7 +35,7 @@ export class DmgTarget extends Target {
     const tempDmg = await createStageDmg(await packager.getTempFile(".dmg"), appPath, volumeName)
 
     const specification = await this.computeDmgOptions()
-    // https://github.com/electron-userland/electron-builder/issues/2115
+    // https://github.com/ShadixAced/electron-builder/issues/2115
     const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
     const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
     const expandingFinalSize = (finalSize * 0.1) + finalSize
@@ -51,7 +51,7 @@ export class DmgTarget extends Target {
       return
     }
 
-    // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
+    // dmg file must not exist otherwise hdiutil failed (https://github.com/ShadixAced/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     const args = ["convert", tempDmg, "-ov", "-format", specification.format!!, "-o", artifactPath]
     if (specification.format === "UDZO") {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
@@ -304,7 +304,7 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
     if (c.type === "link") {
       asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath.startsWith("/") ? entryPath.substring(1) : entryPath}`, `${volumePath}/${entryName}`]))
     }
-    // use c.path instead of entryPath (to be sure that this logic is not applied to .app bundle) https://github.com/electron-userland/electron-builder/issues/2147
+    // use c.path instead of entryPath (to be sure that this logic is not applied to .app bundle) https://github.com/ShadixAced/electron-builder/issues/2147
     else if (!isEmptyOrSpaces(c.path) && (c.type === "file" || c.type === "dir")) {
       const source = await packager.getResource(c.path)
       if (source == null) {

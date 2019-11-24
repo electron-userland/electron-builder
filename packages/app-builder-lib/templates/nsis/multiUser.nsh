@@ -40,7 +40,7 @@ Var installMode
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
 
-    # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
+    # allow /D switch to override installation path https://github.com/ShadixAced/electron-builder/issues/1551
     ${StdUtils.GetParameter} $R0 "D" ""
     ${If} $R0 != ""
       StrCpy $INSTDIR $R0
@@ -83,7 +83,7 @@ Var installMode
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
     ${endif}
 
-    # allow /D switch to override installation path https://github.com/electron-userland/electron-builder/issues/1551
+    # allow /D switch to override installation path https://github.com/ShadixAced/electron-builder/issues/1551
     ${StdUtils.GetParameter} $R0 "D" ""
     ${If} $R0 != ""
       StrCpy $INSTDIR $R0

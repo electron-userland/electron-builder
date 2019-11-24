@@ -27,8 +27,8 @@ export default class AppImageTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
     const options = this.options
-    // https://github.com/electron-userland/electron-builder/issues/775
-    // https://github.com/electron-userland/electron-builder/issues/1726
+    // https://github.com/ShadixAced/electron-builder/issues/775
+    // https://github.com/ShadixAced/electron-builder/issues/1726
     // tslint:disable-next-line:no-invalid-template-strings
     const artifactName = packager.expandArtifactNamePattern(options, "AppImage", arch)
     const artifactPath = path.join(this.outDir, artifactName)

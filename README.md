@@ -17,7 +17,7 @@ See documentation on [electron.build](https://www.electron.build).
 * [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Advanced building:
     * Pack in a distributable format [already packaged app](https://www.electron.build/#pack-only-in-a-distributable-format).
-    * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
+    * Separate [build steps](https://github.com/ShadixAced/electron-builder/issues/1102#issuecomment-271845854).
     * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
     * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 * [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
@@ -27,12 +27,12 @@ See documentation on [electron.build](https://www.electron.build).
 | Question | Answer |
 |----------|-------|
 | “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
-| “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
+| “I have a question” | [Open an issue](https://github.com/ShadixAced/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
+| “I found a bug” | [Open an issue](https://github.com/ShadixAced/electron-builder/issues/new) |
 | “I want to support development” | [Donate](https://www.electron.build/donate) |
 
 ## Installation
-[Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
+[Yarn](http://yarnpkg.com/) is [strongly](https://github.com/ShadixAced/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
 `yarn add electron-builder --dev`
 

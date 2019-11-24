@@ -1,5 +1,5 @@
 # one-click installer messages, see assistedMessages.yml for assisted installer messages
-# en must be first (https://github.com/electron-userland/electron-builder/issues/2517)
+# en must be first (https://github.com/ShadixAced/electron-builder/issues/2517)
 win7Required:
   en: Windows 7 and above is required
   de: Windows 7 oder höher wird vorausgesetzt

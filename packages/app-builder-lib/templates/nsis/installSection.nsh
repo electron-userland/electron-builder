@@ -83,7 +83,7 @@ ${endIf}
 !macroend
 
 !ifdef ONE_CLICK
-  # https://github.com/electron-userland/electron-builder/pull/3093#issuecomment-403734568
+  # https://github.com/ShadixAced/electron-builder/pull/3093#issuecomment-403734568
   !ifdef RUN_AFTER_FINISH
     ${ifNot} ${Silent}
     ${orIf} ${isForceRun}

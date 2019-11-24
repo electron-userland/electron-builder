@@ -230,7 +230,7 @@ test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
   })
 })
 
-// https://github.com/electron-userland/electron-builder/pull/998
+// https://github.com/ShadixAced/electron-builder/pull/998
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
 test.ifNotWindows("postpone symlink", async () => {
   const tmpDir = new TmpDir("files-test")

@@ -66,7 +66,7 @@ export class GitHubPublisher extends HttpPublisher {
       this.releaseType = "draft"
       log.info({reason: "env EP_DRAFT is set to true"}, "GitHub provider release type is set to draft")
     }
-    else if (isEnvTrue(process.env.EP_PRE_RELEASE) || isEnvTrue(process.env.EP_PRELEASE) /* https://github.com/electron-userland/electron-builder/issues/2878 */) {
+    else if (isEnvTrue(process.env.EP_PRE_RELEASE) || isEnvTrue(process.env.EP_PRELEASE) /* https://github.com/ShadixAced/electron-builder/issues/2878 */) {
       this.releaseType = "prerelease"
       log.info({reason: "env EP_PRE_RELEASE is set to true"}, "GitHub provider release type is set to prerelease")
     }
@@ -98,8 +98,8 @@ export class GitHubPublisher extends HttpPublisher {
         return release
       }
 
-      // https://github.com/electron-userland/electron-builder/issues/1197
-      // https://github.com/electron-userland/electron-builder/issues/2072
+      // https://github.com/ShadixAced/electron-builder/issues/1197
+      // https://github.com/ShadixAced/electron-builder/issues/2072
       if (this.releaseType === "draft") {
         this.releaseLogFields = {
           reason: "existing type not compatible with publishing type",
@@ -111,12 +111,12 @@ export class GitHubPublisher extends HttpPublisher {
         return null
       }
 
-      // https://github.com/electron-userland/electron-builder/issues/1133
-      // https://github.com/electron-userland/electron-builder/issues/2074
+      // https://github.com/ShadixAced/electron-builder/issues/1133
+      // https://github.com/ShadixAced/electron-builder/issues/2074
       // if release created < 2 hours — allow to upload
       const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
       if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
-        // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
+        // https://github.com/ShadixAced/electron-builder/issues/1183#issuecomment-275867187
         this.releaseLogFields = {
           reason: "existing release published more than 2 hours ago",
           ...logFields,
@@ -128,7 +128,7 @@ export class GitHubPublisher extends HttpPublisher {
       return release
     }
 
-    // https://github.com/electron-userland/electron-builder/issues/1835
+    // https://github.com/ShadixAced/electron-builder/issues/1835
     if (this.options.publish === "always" || getCiTag() != null) {
       log.info({
         reason: "release doesn't exist",

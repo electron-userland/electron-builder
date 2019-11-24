@@ -73,7 +73,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           break
 
         case "zip":
-          // https://github.com/electron-userland/electron-builder/issues/2313
+          // https://github.com/ShadixAced/electron-builder/issues/2313
           mapper(name, outDir => new ArchiveTarget(name, outDir, this, true))
           break
 
@@ -175,11 +175,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const signOptions: any = {
       "identity-validation": false,
-      // https://github.com/electron-userland/electron-builder/issues/1699
+      // https://github.com/ShadixAced/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
         return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          // https://github.com/electron-userland/electron-builder/issues/2010
+          // https://github.com/ShadixAced/electron-builder/issues/2010
           file.includes("/node_modules/puppeteer/.local-chromium")
       },
       identity: identity!,
@@ -205,7 +205,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }, "signing")
     await this.doSign(signOptions)
 
-    // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
+    // https://github.com/ShadixAced/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
       const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
       const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainFile)
@@ -284,7 +284,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const appInfo = this.appInfo
     const appFilename = appInfo.productFilename
 
-    // https://github.com/electron-userland/electron-builder/issues/1278
+    // https://github.com/ShadixAced/electron-builder/issues/1278
     appPlist.CFBundleExecutable = appFilename.endsWith(" Helper") ? appFilename.substring(0, appFilename.length - " Helper".length) : appFilename
 
     const icon = await this.getIconPath()

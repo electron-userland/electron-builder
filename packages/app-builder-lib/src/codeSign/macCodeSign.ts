@@ -38,7 +38,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
     }
     else {
       if (isPrintWarn) {
-        // https://github.com/electron-userland/electron-builder/issues/1524
+        // https://github.com/ShadixAced/electron-builder/issues/1524
         log.warn("Current build is a part of pull request, code signing will be skipped." +
           "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
           `\n${buildForPrWarning}`)
@@ -90,7 +90,7 @@ export async function reportError(isMas: boolean, certificateType: CertType, qua
 // "Note that filename will not be searched to resolve the signing identity's certificate chain unless it is also on the user's keychain search list."
 // but "security list-keychains" doesn't support add - we should 1) get current list 2) set new list - it is very bad http://stackoverflow.com/questions/10538942/add-a-keychain-to-search-list
 // "overly complicated and introduces a race condition."
-// https://github.com/electron-userland/electron-builder/issues/398
+// https://github.com/ShadixAced/electron-builder/issues/398
 const bundledCertKeychainAdded = new Lazy<void>(async () => {
   // copy to temp and then atomic rename to final path
   const cacheDir = getCacheDirectory()
@@ -148,7 +148,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     await bundledCertKeychainAdded.value
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/3685
+  // https://github.com/ShadixAced/electron-builder/issues/3685
   // use constant file
   const keychainFile = path.join(process.env.APP_BUILDER_TMP_DIR || tmpdir(), `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`)
   // noinspection JSUnusedLocalSymbols
@@ -168,7 +168,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   ]
 
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
-  // https://github.com/electron-userland/electron-builder/issues/1457
+  // https://github.com/ShadixAced/electron-builder/issues/1457
   const list = await listUserKeychains()
   if (!list.includes(keychainFile)) {
     securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
@@ -218,8 +218,8 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
 
   let result = findIdentityRawResult
   if (result == null || keychain != null) {
-    // https://github.com/electron-userland/electron-builder/issues/481
-    // https://github.com/electron-userland/electron-builder/issues/535
+    // https://github.com/ShadixAced/electron-builder/issues/481
+    // https://github.com/ShadixAced/electron-builder/issues/535
     result = Promise.all<Array<string>>([
       exec("security", addKeychain(["find-identity", "-v"]))
         .then(it => it.trim().split("\n").filter(it => {
@@ -249,7 +249,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
 }
 
 async function _findIdentity(type: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
-  // https://github.com/electron-userland/electron-builder/issues/484
+  // https://github.com/ShadixAced/electron-builder/issues/484
   //noinspection SpellCheckingInspection
   const lines = await getValidIdentities(keychain)
   const namePrefix = `${type}:`
@@ -265,7 +265,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
 
   if (type === "Developer ID Application") {
     // find non-Apple certificate
-    // https://github.com/electron-userland/electron-builder/issues/458
+    // https://github.com/ShadixAced/electron-builder/issues/458
     l: for (const line of lines) {
       if (qualifier != null && !line.includes(qualifier)) {
         continue

@@ -19,7 +19,7 @@ We use [semantic-release](https://github.com/semantic-release/semantic-release),
 To avoid google indexing, documentation files located in the branch `docs`. To clone:
 
 ```shell script
-git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs
+git clone --single-branch -b docs git@github.com:ShadixAced/electron-builder.git docs
 ```
 
 Documentation files located in the `/docs`.

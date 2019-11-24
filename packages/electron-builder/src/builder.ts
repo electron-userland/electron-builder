@@ -128,7 +128,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   let config = result.config
 
   // config is array when combining dot-notation values with a config file value
-  // https://github.com/electron-userland/electron-builder/issues/2016
+  // https://github.com/ShadixAced/electron-builder/issues/2016
   if (Array.isArray(config)) {
     const newConfig: Configuration = {}
     for (const configItem of config) {

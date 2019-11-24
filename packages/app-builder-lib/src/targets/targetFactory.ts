@@ -8,7 +8,7 @@ const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.
 export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, platformPackager: PlatformPackager<any>, platform: Platform): Map<Arch, Array<string>> {
   for (const targetNames of raw.values()) {
     if (targetNames.length > 0) {
-      // https://github.com/electron-userland/electron-builder/issues/1355
+      // https://github.com/ShadixAced/electron-builder/issues/1355
       return raw
     }
   }

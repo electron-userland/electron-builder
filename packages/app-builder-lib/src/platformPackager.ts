@@ -470,7 +470,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
     }
     else {
-      // https://github.com/electron-userland/electron-builder/issues/3510
+      // https://github.com/ShadixAced/electron-builder/issues/3510
       // always respect arch in user custom artifact pattern
       skipArchIfX64 = false
     }

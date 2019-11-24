@@ -15,7 +15,7 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
         buildResources: "custom",
         // tslint:disable:no-invalid-template-strings
         output: "customDist/${channel}",
-        // https://github.com/electron-userland/electron-builder/issues/601
+        // https://github.com/ShadixAced/electron-builder/issues/601
         app: ".",
       },
       nsis: {
@@ -78,7 +78,7 @@ test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
       linux: ["deb"],
       config: {
         publish: null,
-        // https://github.com/electron-userland/electron-builder/issues/1355
+        // https://github.com/ShadixAced/electron-builder/issues/1355
         linux: {
           target: [
             "AppImage",
@@ -92,14 +92,14 @@ test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
   }
 }))
 
-// test https://github.com/electron-userland/electron-builder/issues/1182 also
+// test https://github.com/ShadixAced/electron-builder/issues/1182 also
 test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
   targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
   config: {
     extraMetadata: {
       version: "1.0.0-beta.1",
     },
-    // https://github.com/electron-userland/electron-builder/issues/1348
+    // https://github.com/ShadixAced/electron-builder/issues/1348
     win: {
       // tslint:disable:no-invalid-template-strings
       artifactName: "${channel}-${name}.exe",

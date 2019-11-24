@@ -94,7 +94,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly detectUpdateChannel?: boolean
 
   /**
-   * Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
+   * Please see [Building and Releasing using Channels](https://github.com/ShadixAced/electron-builder/issues/1182#issuecomment-324947139).
    * @default false
    */
   readonly generateUpdatesFilesForAllChannels?: boolean

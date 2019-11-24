@@ -49,7 +49,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly provisioningProfile?: string | null
 
   /**
-   * The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
+   * The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/ShadixAced/electron-builder/issues/565#issuecomment-230678643).
    */
   readonly bundleVersion?: string | null
 
@@ -178,7 +178,7 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The DMG window position and size. With y co-ordinates running from bottom to top.
    *
    * The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `"x": 0, "y": 100000` as the x, y co-ordinates.
-   * It is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
+   * It is not to be possible to position the window relative to the [top left](https://github.com/ShadixAced/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
    */
   window?: DmgWindow
 

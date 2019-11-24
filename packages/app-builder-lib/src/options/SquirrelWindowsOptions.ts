@@ -41,7 +41,7 @@ export interface SquirrelWindowsOptions extends TargetSpecificOptions {
   readonly useAppIdAsId?: boolean
 
   /**
-   * https://github.com/electron-userland/electron-builder/issues/1743
+   * https://github.com/ShadixAced/electron-builder/issues/1743
    * @private
    */
   readonly name?: string

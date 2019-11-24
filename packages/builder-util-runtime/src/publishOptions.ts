@@ -39,7 +39,7 @@ export interface PublishConfiguration {
   readonly requestHeaders?: OutgoingHttpHeaders
 }
 
-// https://github.com/electron-userland/electron-builder/issues/3261
+// https://github.com/ShadixAced/electron-builder/issues/3261
 export interface CustomPublishOptions extends PublishConfiguration {
   [index: string]: any
 }
@@ -149,7 +149,7 @@ export interface BaseS3Options extends PublishConfiguration {
   readonly path?: string | null
 
   /**
-   * The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+   * The ACL. Set to `null` to not [add](https://github.com/ShadixAced/electron-builder/issues/1822).
    *
    * @default public-read
    */
@@ -173,9 +173,9 @@ export interface S3Options extends BaseS3Options {
   region?: string | null
 
   /**
-   * The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+   * The ACL. Set to `null` to not [add](https://github.com/ShadixAced/electron-builder/issues/1822).
    *
-   * Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
+   * Please see [required permissions for the S3 provider](https://github.com/ShadixAced/electron-builder/issues/1618#issuecomment-314679128).
    *
    * @default public-read
    */

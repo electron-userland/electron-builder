@@ -100,7 +100,7 @@ export class RemoteBuilder {
 
     const result: any = await executeAppBuilderAsJson(args)
     if (result.error != null) {
-      throw new InvalidConfigurationError(`Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`, "REMOTE_BUILDER_ERROR")
+      throw new InvalidConfigurationError(`Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/ShadixAced/electron-builder/issues):\n\n${result.error}`, "REMOTE_BUILDER_ERROR")
     }
     else if (result.files != null) {
       for (const artifact of result.files) {

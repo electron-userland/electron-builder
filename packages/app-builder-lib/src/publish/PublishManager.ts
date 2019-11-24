@@ -247,7 +247,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
 
   if (publishConfigs.length === 0) {
     log.debug(null, "getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
-    // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
+    // https://github.com/ShadixAced/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
     debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)

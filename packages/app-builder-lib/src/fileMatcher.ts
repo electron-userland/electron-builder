@@ -8,7 +8,7 @@ import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
 
-// https://github.com/electron-userland/electron-builder/issues/733
+// https://github.com/ShadixAced/electron-builder/issues/733
 const minimatchOptions = {dot: true}
 
 // noinspection SpellCheckingInspection
@@ -96,7 +96,7 @@ export class FileMatcher {
 
       // do not add if contains dot (possibly file if has extension)
       if (!pattern.includes(".") && !hasMagic(parsedPattern)) {
-        // https://github.com/electron-userland/electron-builder/issues/545
+        // https://github.com/ShadixAced/electron-builder/issues/545
         // add **/*
         result.push(new Minimatch(`${pattern}/**/*`, minimatchOptions))
       }
@@ -135,7 +135,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     return matchers
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive patterns
+  // https://github.com/ShadixAced/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive patterns
   const patterns = matcher.patterns
 
   const customFirstPatterns: Array<string> = []
@@ -147,7 +147,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     patterns.push("package.json")
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/1482
+  // https://github.com/ShadixAced/electron-builder/issues/1482
   const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
   if (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) {
     customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
@@ -177,7 +177,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
     patterns.push("!.cache{,/**/*}")
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/1969
+  // https://github.com/ShadixAced/electron-builder/issues/1969
   // exclude ony for app root, use .yarnclean to clean node_modules
   patterns.push("!.editorconfig")
 
@@ -191,7 +191,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
 
 /** @internal */
 export function getNodeModuleFileMatcher(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: Packager): FileMatcher {
-  // https://github.com/electron-userland/electron-builder/pull/2948#issuecomment-392241632
+  // https://github.com/ShadixAced/electron-builder/pull/2948#issuecomment-392241632
   // grab only excludes
   const matcher = new FileMatcher(appDir, destination, macroExpander)
 
@@ -316,7 +316,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
 
     if (fromStat.isFile()) {
       const toStat = await statOrNull(matcher.to)
-      // https://github.com/electron-userland/electron-builder/issues/1245
+      // https://github.com/ShadixAced/electron-builder/issues/1245
       if (toStat != null && toStat.isDirectory()) {
         return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat, isUseHardLink)
       }

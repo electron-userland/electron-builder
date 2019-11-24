@@ -8,8 +8,8 @@ import { Logger } from "./main"
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, tempUpdateFile: string, logger: Logger): Promise<string | null> {
   return new Promise<string | null>(resolve => {
-    // https://github.com/electron-userland/electron-builder/issues/2421
-    // https://github.com/electron-userland/electron-builder/issues/2535
+    // https://github.com/ShadixAced/electron-builder/issues/2421
+    // https://github.com/ShadixAced/electron-builder/issues/2535
     execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
       timeout: 20 * 1000
     }, (error, stdout, stderr) => {

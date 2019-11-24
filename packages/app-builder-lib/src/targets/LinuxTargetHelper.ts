@@ -82,7 +82,7 @@ export class LinuxTargetHelper {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
-    // https://github.com/electron-userland/electron-builder/issues/3418
+    // https://github.com/ShadixAced/electron-builder/issues/3418
     if (targetSpecificOptions.desktop != null && targetSpecificOptions.desktop.Exec != null) {
       throw new Error("Please specify executable name as linux.executableName instead of linux.desktop.Exec")
     }

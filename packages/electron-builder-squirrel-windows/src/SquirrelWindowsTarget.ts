@@ -33,7 +33,7 @@ export default class SquirrelWindowsTarget extends Target {
     })
 
     if (arch === Arch.ia32) {
-      log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
+      log.warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/ShadixAced/electron-builder/issues/359#issuecomment-214851130")
     }
 
     const distOptions = await this.computeEffectiveDistOptions()

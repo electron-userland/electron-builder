@@ -103,7 +103,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * Whether to execute `node-gyp rebuild` before starting to package the app.
    *
-   * Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.
+   * Don't [use](https://github.com/ShadixAced/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.
    * @default false
    */
   readonly nodeGypRebuild?: boolean

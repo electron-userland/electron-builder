@@ -93,7 +93,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     }
 
     if (!isLevelSet) {
-      // https://github.com/electron-userland/electron-builder/pull/3032
+      // https://github.com/ShadixAced/electron-builder/pull/3032
       args.push("-mx=" + ((!isZip || options.compression === "maximum") ? "9" : "7"))
     }
   }

@@ -31,7 +31,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return this.vm.value
         .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
         .catch(e => {
-          // https://github.com/electron-userland/electron-builder/pull/2397
+          // https://github.com/ShadixAced/electron-builder/pull/2397
           if (platformSpecificBuildOptions.sign == null) {
             throw e
           }
@@ -244,7 +244,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         break
       }
       catch (e) {
-        // https://github.com/electron-userland/electron-builder/issues/1414
+        // https://github.com/ShadixAced/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
           log.warn({error: message, attempt: i + 1}, `cannot sign`)

@@ -164,7 +164,7 @@ function hashFile(file: string, algorithm: string = "sha512", encoding: "base64"
 }
 
 export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger) {
-  // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
+  // https://github.com/ShadixAced/electron-builder/pull/2474#issuecomment-366481912
   let nameCounter = 0
   let result = path.join(cacheDir, name)
   for (let i = 0; i < 3; i++) {

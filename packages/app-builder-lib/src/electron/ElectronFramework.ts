@@ -17,7 +17,7 @@ import { computeElectronVersion, getElectronVersionFromInstalled } from "./elect
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
 export interface ElectronDownloadOptions {
-  // https://github.com/electron-userland/electron-builder/issues/3077
+  // https://github.com/ShadixAced/electron-builder/issues/3077
   // must be optional
   version?: string
 

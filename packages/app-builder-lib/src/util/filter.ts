@@ -56,7 +56,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
     }
 
     const relative = getRelativePath(file, srcWithEndSlash)
-    // https://github.com/electron-userland/electron-builder/issues/867
+    // https://github.com/ShadixAced/electron-builder/issues/867
     return minimatchAll(relative, patterns, stat) && (excludePatterns == null || stat.isDirectory() || !minimatchAll(relative, excludePatterns, stat))
   }
 }
