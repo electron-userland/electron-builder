@@ -9,15 +9,15 @@ matrix:
   include:
     - os: osx
       env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macIconTest
-      node_js: "12"
+      node_js: "13"
 
     - os: osx
       env: TEST_FILES=CodeSignTest,macArchiveTest,macPackagerTest
-      node_js: "12"
+      node_js: "13"
 
     - os: osx
       env: TEST_FILES=masTest,dmgTest,protonTest
-      node_js: "12"
+      node_js: "13"
 
 cache:
   yarn: true
