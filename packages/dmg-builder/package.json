@@ -19,7 +19,8 @@
     "iconv-lite": "^0.5.0",
     "js-yaml": "^3.13.1",
     "app-builder-lib": "~22.1.0",
-    "sanitize-filename": "^1.6.3"
+    "sanitize-filename": "^1.6.3",
+    "temp-file": "3.3.4"
   },
   "typings": "./out/dmg.d.ts"
 }

@@ -57,7 +57,8 @@
     "yargs": "^15.0.2",
     "lazy-val": "^1.0.4",
     "app-builder-lib": "22.1.0",
-    "dmg-builder": "21.2.0"
+    "dmg-builder": "21.2.0",
+    "electron-publish": "22.1.0"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {
