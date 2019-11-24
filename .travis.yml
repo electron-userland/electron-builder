@@ -28,7 +28,7 @@ cache:
     - /tmp/jest-electron-builder-tests
 
 install:
-  - yarn --frozen-lockfile
+  - yarn
 
 script:
   - yarn test
