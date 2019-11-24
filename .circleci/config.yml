@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:12.13.0
+      - image: circleci/node:13.2.0
     steps:
       - checkout
       - restore_cache:
@@ -13,7 +13,7 @@ jobs:
           keys:
             - v-7.0.0-electron
       - run:
-          command: yarn --frozen-lockfile
+          command: yarn
       - run:
           command: yarn pretest
       - save_cache:
