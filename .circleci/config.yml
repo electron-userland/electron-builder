@@ -33,7 +33,7 @@ jobs:
       - image: electronuserland/builder:wine-mono
         environment:
           JEST_JUNIT_OUTPUT: ./test-reports/test.xml
-          TZ: Europe/Berlin
+          TZ: Europe/Paris
     steps:
       - checkout
       - restore_cache:
