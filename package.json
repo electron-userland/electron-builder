@@ -141,4 +141,6 @@
       "<rootDir>/test/jestSetup.js"
     ]
   }
+  "version": "21.2.0-saced-personal",
+  "name": "electron-builder"
 }
