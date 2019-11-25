@@ -1,6 +1,4 @@
 {
-  "version": "22.1.0-saced-personal",
-  "name": "electron-builder",
   "private": true,
   "license": "MIT",
   "scripts": {
