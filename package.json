@@ -1,4 +1,6 @@
 {
+  "version": "22.1.0-saced-personal",
+  "name": "electron-builder",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -141,6 +143,4 @@
       "<rootDir>/test/jestSetup.js"
     ]
   }
-  "version": "21.2.0-saced-personal",
-  "name": "electron-builder"
 }
