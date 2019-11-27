@@ -322,6 +322,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.DTSDKName
   delete info.DTCompiler
   delete info.ElectronTeamID
+  delete info.NSMainNibFile
   delete info.NSCameraUsageDescription
   delete info.NSMicrophoneUsageDescription
   delete info.NSRequiresAquaSystemAppearance
