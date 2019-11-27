@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "22.1.0",
+  "version": "0.0.0-semantic-release",
   "main": "out/index.js",
   "files": [
     "out",
@@ -47,11 +47,11 @@
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
     "chromium-pickle-js": "^0.2.0",
-    "builder-util-runtime": "8.4.0",
-    "builder-util": "22.1.0",
-    "electron-publish": "22.1.0",
+    "builder-util-runtime": "0.0.0-semantic-release",
+    "builder-util": "0.0.0-semantic-release",
+    "electron-publish": "0.0.0-semantic-release",
     "fs-extra": "^8.1.0",
-    "hosted-git-info": "^3.0.2",
+    "hosted-git-info": "^3.0.0",
     "is-ci": "^2.0.0",
     "isbinaryfile": "^4.0.2",
     "js-yaml": "^3.13.1",
@@ -64,7 +64,7 @@
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
     "temp-file": "^3.3.4",
-    "ejs": "^3.0.1"
+    "ejs": "^2.7.1"
   },
   "typings": "./out/index.d.ts"
 }

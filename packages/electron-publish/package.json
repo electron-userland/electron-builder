@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "22.1.0",
+  "version": "0.0.0-semantic-release",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -15,9 +15,9 @@
     "fs-extra": "^8.1.0",
     "mime": "^2.4.4",
     "bluebird-lst": "^1.0.9",
-    "builder-util-runtime": "8.4.0",
-    "builder-util": "~22.1.0",
-    "chalk": "^3.0.0"
+    "builder-util-runtime": "0.0.0-semantic-release",
+    "builder-util": "~0.0.0-semantic-release",
+    "chalk": "^2.4.2"
   },
   "typings": "./out/publisher.d.ts"
 }

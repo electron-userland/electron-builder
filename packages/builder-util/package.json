@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "22.1.0",
+  "version": "0.0.0-semantic-release",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -11,16 +11,16 @@
     "out"
   ],
   "dependencies": {
-    "app-builder-bin": "3.4.5",
+    "app-builder-bin": "3.4.4",
     "temp-file": "^3.3.4",
     "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
-    "stat-mode": "^1.0.0",
+    "stat-mode": "^0.3.0",
     "bluebird-lst": "^1.0.9",
-    "chalk": "^3.0.0",
+    "chalk": "^2.4.2",
     "debug": "^4.1.1",
-    "builder-util-runtime": "8.4.0",
-    "source-map-support": "^0.5.16",
+    "builder-util-runtime": "0.0.0-semantic-release",
+    "source-map-support": "^0.5.13",
     "7zip-bin": "~5.0.3",
     "js-yaml": "^3.13.1",
     "@types/debug": "^4.1.5"

@@ -1,6 +1,6 @@
 {
   "name": "builder-util-runtime",
-  "version": "8.4.0",
+  "version": "0.0.0-semantic-release",
   "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
