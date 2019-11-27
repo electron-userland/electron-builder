@@ -78,6 +78,11 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly welcome?: string | null
 
   /**
+   * Identifies applications that must be closed before the package is installed.\n\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)
+   */
+  readonly mustClose?: Array<string> | null
+
+  /**
    * The path to the conclusion file. This may be used to customize the text on the final "Summary" page of the installer.
    */
   readonly conclusion?: string | null
