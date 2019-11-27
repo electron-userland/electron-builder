@@ -67,7 +67,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
  Add to `scripts` in the development `package.json`:
  
  ```json tab="package.json"
- "release": "build"
+ "release": "electron-builder"
  ```
 
  and if you run `yarn release`, a release will be drafted (if doesn't already exist) and artifacts published.
