@@ -174,6 +174,11 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    * Defaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).
    */
   readonly unpackDirName?: string
+
+  /**
+   * The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.
+   */
+  readonly splashImage?: string | null
 }
 
 /**

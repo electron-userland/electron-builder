@@ -1,6 +1,6 @@
 import { Platform, Arch } from "electron-builder"
 import * as path from "path"
-import { app, copyTestAsset } from "../helpers/packTester"
+import { app, copyTestAsset, getFixtureDir } from "../helpers/packTester"
 
 // build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
 test.ifAll.ifNotCiMac("portable", app({
@@ -53,5 +53,17 @@ test.ifNotCiMac("portable - artifactName and request execution level", app({
 }, {
   projectDirCreated: projectDir => {
     return copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico"))
+  },
+}))
+
+test.ifDevOrWinCi("portable - splashImage", app({
+  targets: Platform.WINDOWS.createTarget(["portable"]),
+  config: {
+    publish: null,
+    portable: {
+      //tslint:disable-next-line:no-invalid-template-strings
+      artifactName: "${productName}Portable.${version}.${ext}",
+      splashImage: path.resolve(getFixtureDir(), "installerHeader.bmp"),
+    },
   },
 }))
