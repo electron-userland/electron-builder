@@ -170,13 +170,13 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   }
   catch (e) {
     if (e.message.includes("The file is being used by another process") || e.message.includes("The specified timestamp server either could not be reached")) {
-      log.warn(`First attempt to code sign failed, another attempt will be made in 2 seconds: ${e.message}`)
+      log.warn(`First attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
       await new Promise((resolve, reject) => {
         setTimeout(() => {
           vm.exec(tool, args, {timeout, env})
             .then(resolve)
             .catch(reject)
-        }, 2000)
+        }, 15000)
       })
     }
     throw e
