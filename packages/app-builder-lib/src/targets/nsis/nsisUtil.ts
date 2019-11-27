@@ -224,15 +224,15 @@ export class UninstallerReader {
     let innerBuffer = null
     while (true) {
       let size = nsisReader.uint32()
-      if ((size & 0x80000000) === 0) {
+      const compressed = (size & 0x80000000) !== 0
+      size = size & 0x7FFFFFFF
+      if (size === 0 || (nsisReader.position + size) > nsisReader.length || nsisReader.position >= nsisReader.length) {
         break
       }
-      size &= 0x7FFFFFFF
-      if (size === 0 || nsisReader.position >= nsisReader.length) {
-        break
+      let buffer = nsisReader.bytes(size)
+      if (compressed) {
+        buffer = zlib.inflateRawSync(buffer)
       }
-      const compressedData = nsisReader.bytes(size)
-      const buffer = zlib.inflateRawSync(compressedData)
       const innerReader = new BinaryReader(buffer)
       innerReader.uint32() // ?
       if (innerReader.match(nsisSignature)) {
