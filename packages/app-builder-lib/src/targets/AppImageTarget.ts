@@ -2,6 +2,7 @@ import { Arch, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as semver from "semver"
 import { AppImageOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
@@ -19,7 +20,15 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
+    const args = ["AppRun"]
+
+    if (this.isElectronVersionGreaterOrEqualThan("5.0.0")) {
+      args.push("--no-sandbox")
+    }
+
+    const exec = args.join(" ")
+
+    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, exec, {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
     }))
   }
@@ -89,5 +98,9 @@ export default class AppImageTarget extends Target {
       isWriteUpdateInfo: true,
       updateInfo: await executeAppBuilderAsJson(args),
     })
+  }
+
+  private isElectronVersionGreaterOrEqualThan(version: string) {
+    return semver.gte(this.packager.config.electronVersion || "7.0.0", version)
   }
 }
