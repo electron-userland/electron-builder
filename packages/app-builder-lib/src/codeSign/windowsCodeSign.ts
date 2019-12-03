@@ -116,12 +116,8 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress"])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
-    if (certificateSubjectName != null) {
-      if (!certInfo.Subject.includes(certificateSubjectName)) {
-        continue
-      }
-    }
-    else if (certInfo.Thumbprint !== certificateSha1) {
+    if ((certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName))
+        || certInfo.Thumbprint !== certificateSha1) {
       continue
     }
 
