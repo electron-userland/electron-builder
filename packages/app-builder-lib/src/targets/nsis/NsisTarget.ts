@@ -261,8 +261,21 @@ export class NsisTarget extends Target {
       return
     }
 
+    // prepare short-version variants of defines and commands, to make an uninstaller that doesn't differ much from the previous one
+    const defines_uninstaller: any = { ...defines }
+    const commands_uninstaller: any = { ...commands}
+    if (appInfo.shortVersion != null) {
+      defines_uninstaller.VERSION = appInfo.shortVersion
+      commands_uninstaller.VIProductVersion = appInfo.shortVersionWindows
+      commands_uninstaller.VIAddVersionKey = this.computeVersionKey(true)
+    }
+
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath, sharedHeader)
+    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines_uninstaller, commands_uninstaller, installerPath, sharedHeader)
+
+    // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
+    defines.UNINSTALLER_OUT_FILE = defines_uninstaller.UNINSTALLER_OUT_FILE
+
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
@@ -344,7 +357,7 @@ export class NsisTarget extends Target {
     return script
   }
 
-  private computeVersionKey() {
+  private computeVersionKey(short: boolean = false) {
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const localeId = this.options.language || "1033"
@@ -356,6 +369,10 @@ export class NsisTarget extends Target {
       `/LANG=${localeId} FileDescription "${appInfo.description}"`,
       `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
+    if (short) {
+      versionKey[1] = `/LANG=${localeId} ProductVersion "${appInfo.shortVersion}"`
+      versionKey[4] = `/LANG=${localeId} FileVersion "${appInfo.shortVersion}"`
+    }
     use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
     use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${it}"`))
     return versionKey
