@@ -154,6 +154,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     if (config.mac != null) {
       coerceValue(config.mac, "identity")
     }
+
+    if (config.nsis != null) {
+      coerceTypes(config.nsis);
+    }
   }
 
   if ("project" in r && !("projectDir" in result)) {
