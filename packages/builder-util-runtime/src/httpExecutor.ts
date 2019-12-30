@@ -449,11 +449,9 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.method = method
   }
 
-  let headers = options.headers
-  if (headers == null) {
-    headers = {}
-    options.headers = headers
-  }
+  options.headers = {...options.headers}
+  const headers = options.headers
+
   if (token != null) {
     (headers as any).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
