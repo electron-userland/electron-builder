@@ -37,10 +37,10 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   let unusedDependencies: any
   if (packageName === "electron-builder") {
-    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder" && it !== "bluebird-lst")
+    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder" && it !== "bluebird-lst" && it !== "@types/yargs")
   }
   else {
-    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver")
+    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver" && it !== "@types/fs-extra")
   }
 
   if (unusedDependencies.length > 0) {
