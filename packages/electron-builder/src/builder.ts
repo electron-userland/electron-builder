@@ -155,8 +155,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       coerceValue(config.mac, "identity")
     }
 
+    // fix Boolean type by coerceTypes
     if (config.nsis != null) {
       coerceTypes(config.nsis);
+    }
+    if (config.nsisWeb != null) {
+      coerceTypes(config.nsisWeb);
     }
   }
 
