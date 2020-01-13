@@ -195,7 +195,6 @@ export default class SnapTarget extends Target {
       return
     }
 
-    console.log(JSON.stringify(snap, null, 2))
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
