@@ -157,10 +157,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
     // fix Boolean type by coerceTypes
     if (config.nsis != null) {
-      coerceTypes(config.nsis);
+      coerceTypes(config.nsis)
     }
     if (config.nsisWeb != null) {
-      coerceTypes(config.nsisWeb);
+      coerceTypes(config.nsisWeb)
     }
   }
 
