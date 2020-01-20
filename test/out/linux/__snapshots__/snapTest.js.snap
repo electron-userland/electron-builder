@@ -34,6 +34,7 @@ Object {
         "browser-support",
         "network",
         "gsettings",
+        "audio-playback",
         "pulseaudio",
         "opengl",
       ],
