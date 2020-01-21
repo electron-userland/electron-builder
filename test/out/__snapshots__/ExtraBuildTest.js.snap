@@ -127,3 +127,9 @@ Object {
   "linux": Array [],
 }
 `;
+
+exports[`retrieve latest electron-nightly version 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
