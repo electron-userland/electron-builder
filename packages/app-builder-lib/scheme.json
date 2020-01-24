@@ -5331,6 +5331,20 @@
       ],
       "description": "The function (or path to file or module id) to be run on artifact build start."
     },
+    "appxManifestCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be run when appx manifest is created but before it is packed into the installer bundle."
+    },
     "artifactName": {
       "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
       "type": [
