@@ -73,7 +73,7 @@ export default class AppXTarget extends Target {
 
     const manifestFile = stageDir.getTempFile("AppxManifest.xml")
     await this.writeManifest(manifestFile, arch, await this.computePublisherName(), userAssets)
-    await packager.info.callAppxManifestCreated(manifestFile);
+    await packager.info.callAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
 
