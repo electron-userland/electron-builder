@@ -78,12 +78,14 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     try {
       const releaseInfo = JSON.parse((await httpExecutor.request({
         hostname: "github.com",
-        path: `/electron/${dependency?.name === "electron-nightly" ? "nightlies" : "electron"}/releases/latest`,
+        path: `/electron/${dependency.name === "electron-nightly" ? "nightlies" : "electron"}/releases/latest`,
         headers: {
           accept: "application/json",
         },
       }))!!)
-      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+      const version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+      log.info({version}, `resolve ${dependency.name}@${dependency.version}`)
+      return version
     }
     catch (e) {
       log.warn(e)
