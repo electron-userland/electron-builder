@@ -355,7 +355,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (appAsarStat == null || !appAsarStat.isFile()) {
         log.warn({
           solution: "enable asar and use asarUnpack to unpack files that must be externally available",
-        }, "asar using is disabled — it is strongly not recommended")
+        }, "asar usage is disabled — this is strongly not recommended")
       }
       return null
     }

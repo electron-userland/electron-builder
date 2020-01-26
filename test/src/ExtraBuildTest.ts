@@ -69,6 +69,18 @@ test.ifAll.ifLinuxOrDevMac("retrieve latest electron version", app({
   }),
 }))
 
+test.ifAll.ifLinuxOrDevMac("retrieve latest electron-nightly version", app({
+  targets: linuxDirTarget,
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.devDependencies = {
+      ...data.devDependencies,
+      "electron-nightly": "latest",
+    }
+    delete data.build.electronVersion
+  }),
+}))
+
 test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
   targets: linuxDirTarget,
 }, {

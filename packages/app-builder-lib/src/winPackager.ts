@@ -265,8 +265,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       "--set-version-string", "FileDescription", appInfo.productName,
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "LegalCopyright", appInfo.copyright,
-      "--set-file-version", appInfo.buildVersion,
-      "--set-product-version", appInfo.getVersionInWeirdWindowsForm(),
+      "--set-file-version", appInfo.shortVersion || appInfo.buildVersion,
+      "--set-product-version", appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
     ]
 
     if (internalName != null) {

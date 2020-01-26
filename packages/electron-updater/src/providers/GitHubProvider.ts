@@ -59,7 +59,6 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
             break
           }
         }
-
       }
     }
     catch (e) {

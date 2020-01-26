@@ -186,7 +186,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
         clearTimeout(timeout)
       }
       finally {
-        reject(error.stack || error.toString())
+        reject(error)
       }
     })
 

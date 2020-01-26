@@ -101,6 +101,7 @@ export class PkgTarget extends Target {
         // noinspection SpellCheckingInspection
         const scaling = options.background.scaling || "tofit"
         distInfo = distInfo.substring(0, insertIndex) + `    <background file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
+        distInfo = distInfo.substring(0, insertIndex) + `    <background-darkAqua file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
       }
     }
 
@@ -166,6 +167,7 @@ export class PkgTarget extends Target {
     // now build the package
     const args = [
       "--root", rootPath,
+      // "--identifier", this.packager.appInfo.id,
       "--component-plist", propertyListOutputFile,
     ]
 

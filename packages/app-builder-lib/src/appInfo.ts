@@ -8,6 +8,8 @@ import { expandMacro } from "./util/macroExpander"
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
+  readonly shortVersion: string | undefined
+  readonly shortVersionWindows: string | undefined
 
   readonly buildNumber: string | undefined
   readonly buildVersion: string
@@ -30,6 +32,13 @@ export class AppInfo {
       }
     }
     this.buildVersion = buildVersion
+
+    if (info.metadata.shortVersion) {
+      this.shortVersion = info.metadata.shortVersion
+    }
+    if (info.metadata.shortVersionWindows) {
+      this.shortVersionWindows = info.metadata.shortVersionWindows
+    }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
     this.productFilename = sanitizeFileName(this.productName)
@@ -121,7 +130,7 @@ export class AppInfo {
     }
 
     const info = await this.info.repositoryInfo
-    return info == null || info.type !== "github"  ? null : `https://${info.domain}/${info.user}/${info.project}`
+    return info == null || info.type !== "github" ? null : `https://${info.domain}/${info.user}/${info.project}`
   }
 }
 

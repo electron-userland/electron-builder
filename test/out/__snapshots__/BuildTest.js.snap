@@ -1063,7 +1063,7 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 5027,
+              "size": 5127,
             },
             "package.json": Object {
               "size": 525,
@@ -1299,19 +1299,19 @@ Object {
             "lib": Object {
               "files": Object {
                 "_stream_duplex.js": Object {
-                  "size": 4000,
+                  "size": 4015,
                 },
                 "_stream_passthrough.js": Object {
-                  "size": 1738,
+                  "size": 1753,
                 },
                 "_stream_readable.js": Object {
-                  "size": 31309,
+                  "size": 31324,
                 },
                 "_stream_transform.js": Object {
-                  "size": 7727,
+                  "size": 7742,
                 },
                 "_stream_writable.js": Object {
-                  "size": 20302,
+                  "size": 20317,
                 },
                 "internal": Object {
                   "files": Object {

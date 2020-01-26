@@ -154,7 +154,7 @@ async function runTests() {
 
   // console.log(JSON.stringify(jestOptions, null, 2))
 
-  const testResult = await require("jest-cli").runCLI(jestOptions, jestOptions.projects)
+  const testResult = await require("@jest/core").runCLI(jestOptions, jestOptions.projects)
   const exitCode = testResult.results == null || testResult.results.success ? 0 : testResult.globalConfig.testFailureExitCode
   if (isCi) {
     process.exit(exitCode)
