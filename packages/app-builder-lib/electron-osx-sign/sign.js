@@ -141,6 +141,7 @@ function signApplicationAsync (opts) {
 
       const args = [
         '--sign', opts.identity.hash || opts.identity.name,
+        '--deep',
         '--force'
       ]
       if (opts.keychain) {
@@ -151,6 +152,8 @@ function signApplicationAsync (opts) {
       }
       if (opts.timestamp) {
         args.push('--timestamp=' + opts.timestamp)
+      } else {
+        args.push('--timestamp')
       }
       if (opts.hardenedRuntime || opts['hardened-runtime']) {
         // 17.7.0 === 10.13.6
