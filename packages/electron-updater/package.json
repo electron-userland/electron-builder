@@ -12,14 +12,14 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^6.2.0",
+    "@types/semver": "^7.1.0",
     "lazy-val": "^1.0.4",
     "fs-extra": "^8.1.0",
     "js-yaml": "^3.13.1",
-    "semver": "^7.1.1",
+    "semver": "^7.1.2",
     "builder-util-runtime": "0.0.0-semantic-release",
     "lodash.isequal": "^4.5.0",
-    "pako": "^1.0.10"
+    "pako": "^1.0.11"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {

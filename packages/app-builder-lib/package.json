@@ -60,7 +60,7 @@
     "normalize-package-data": "^2.5.0",
     "sanitize-filename": "^1.6.3",
     "@develar/schema-utils": "~2.1.0",
-    "semver": "^7.1.1",
+    "semver": "^7.1.2",
     "debug": "^4.1.1",
     "lazy-val": "^1.0.4",
     "temp-file": "^3.3.6",
