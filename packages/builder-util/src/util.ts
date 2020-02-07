@@ -334,8 +334,7 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
     const command = appBuilderPath
     const env: any = {
       ...process.env,
@@ -351,19 +350,42 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
       Object.assign(env, extraOptions.env)
     }
 
-    const childProcess = doSpawn(command, args, {
-      env,
-      stdio: ["ignore", "pipe", process.stdout],
-      ...extraOptions,
-    })
-    if (childProcessConsumer != null) {
-      childProcessConsumer(childProcess)
-    }
-    handleProcess("close", childProcess, command, resolve, error => {
-      if (error instanceof ExecError && error.exitCode === 2) {
-        error.alreadyLogged = true
+  function runCommand() {
+    return new Promise<string>((resolve, reject) => {
+      const childProcess = doSpawn(command, args, {
+        env,
+        stdio: ["ignore", "pipe", process.stdout],
+        ...extraOptions
+      });
+      if (childProcessConsumer != null) {
+        childProcessConsumer(childProcess);
       }
-      reject(error)
-    })
-  })
+      handleProcess("close", childProcess, command, resolve, error => {
+        if (error instanceof ExecError && error.exitCode === 2) {
+          error.alreadyLogged = true;
+        }
+        reject(error);
+      });
+    });
+  }
+
+  return retry(runCommand, maxRetries);
 }
+
+async function retry<T>(
+  fn: () => Promise<T>,
+  retriesLeft = 5,
+  interval = 1000
+): Promise<T> {
+  try {
+    const val = await fn();
+    return val;
+  } catch (error) {
+    log.info("Above command failed, retrying " + retriesLeft + " more times");
+    if (retriesLeft) {
+      await new Promise(r => setTimeout(r, interval));
+      return retry(fn, retriesLeft - 1, interval);
+    } else throw new Error("Max retries reached");
+  }
+}
+
