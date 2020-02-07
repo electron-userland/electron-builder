@@ -372,7 +372,7 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
   return retry(runCommand, maxRetries);
 }
 
-async function retry<T>(
+export async function retry<T>(
   fn: () => Promise<T>,
   retriesLeft = 5,
   interval = 1000
