@@ -109,15 +109,4 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
   if (swVersion != null && !versionSatisfies(swVersion, ">=20.32.0")) {
     errors.push(`At least electron-builder-squirrel-windows 20.32.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.32.0"`)
   }
-
-  const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
-  if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
-    deps.push("electron-builder")
-  }
-  for (const name of deps) {
-    if (name in dependencies) {
-      errors.push(`Package "${name}" is only allowed in "devDependencies". `
-        + `Please remove it from the "dependencies" section in your package.json.`)
-    }
-  }
 }
