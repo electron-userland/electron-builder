@@ -240,7 +240,7 @@ export default class AppXTarget extends Target {
 
           case "extensions":
             return this.getExtensions(executable, displayName)
-         
+            
           case "minVersion":
             return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
             
