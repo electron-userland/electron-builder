@@ -71,6 +71,36 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly helperBundleId?: string | null
 
   /**
+   * The bundle identifier to use in the Renderer helper's plist.
+   * @default ${appBundleIdentifier}.helper.Renderer
+   */
+  readonly helperRendererBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the Plugin helper's plist.
+   * @default ${appBundleIdentifier}.helper.Plugin
+   */
+  readonly helperPluginBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the GPU helper's plist.
+   * @default ${appBundleIdentifier}.helper.GPU
+   */
+  readonly helperGPUBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the EH helper's plist.
+   * @default ${appBundleIdentifier}.helper.EH
+   */
+  readonly helperEHBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the NP helper's plist.
+   * @default ${appBundleIdentifier}.helper.NP
+   */
+  readonly helperNPBundleId?: string | null
+
+  /**
    * Whether to sign app for development or for distribution.
    * @default distribution
    */
