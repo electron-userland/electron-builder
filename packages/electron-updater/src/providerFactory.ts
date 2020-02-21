@@ -37,7 +37,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       }, updater, {
         ...runtimeOptions,
         // https://github.com/minio/minio/issues/5285#issuecomment-350428955
-        isUseMultipleRangeRequest: provider === "spaces",
+        isUseMultipleRangeRequest: false,
       })
 
     case "generic":
