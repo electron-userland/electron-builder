@@ -110,14 +110,14 @@ export interface CertificateFromStoreInfo {
 
 export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
   const certificateSubjectName = options.certificateSubjectName
-  const certificateSha1 = options.certificateSha1
+  const certificateSha1 = options.certificateSha1 ? options.certificateSha1.toUpperCase() : options.certificateSha1
   // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
   // powershell can return object if the only item
   const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress"])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
     if ((certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName))
-        || certInfo.Thumbprint !== certificateSha1) {
+        || certInfo.Thumbprint.toUpperCase() !== certificateSha1) {
       continue
     }
 
