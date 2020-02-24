@@ -2,6 +2,12 @@
 
 ### Bug Fixes
 
+* Forbid using of quotes in a file names. Thanks to [Doyensec](https://doyensec.com/).
+
+## 4.2.0
+
+### Bug Fixes
+
 * when AllowDowngrade is true and latest version is older, take the update ([#4218](https://github.com/electron-userland/electron-builder/issues/4218)) ([5bf4498](https://github.com/electron-userland/electron-builder/commit/5bf4498))
 
 ### Features

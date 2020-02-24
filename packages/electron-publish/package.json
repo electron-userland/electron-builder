@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "@types/fs-extra": "^8.0.1",
+    "@types/fs-extra": "^8.1.0",
     "lazy-val": "^1.0.4",
     "fs-extra": "^8.1.0",
     "mime": "^2.4.4",

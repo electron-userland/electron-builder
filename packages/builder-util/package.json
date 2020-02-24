@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "@types/fs-extra": "^8.0.1",
+    "@types/fs-extra": "^8.1.0",
     "app-builder-bin": "3.5.2",
     "temp-file": "^3.3.6",
     "fs-extra": "^8.1.0",
