@@ -162,6 +162,10 @@
             "string"
           ]
         },
+        "customExtensionsPath": {
+          "description": "Relative path to custom extensions xml to be included in appmanifest.xml",
+          "type": "string"
+        },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
           "type": [
@@ -1561,9 +1565,6 @@
         "target": {
           "anyOf": [
             {
-              "$ref": "#/definitions/TargetConfiguration"
-            },
-            {
               "items": {
                 "anyOf": [
                   {
@@ -1575,6 +1576,9 @@
                 ]
               },
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [
@@ -3725,6 +3729,20 @@
             "string"
           ]
         },
+        "mustClose": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Identifies applications that must be closed before the package is installed.\\n\\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
+        },
         "overwriteAction": {
           "anyOf": [
             {
@@ -3831,20 +3849,6 @@
             "null",
             "string"
           ]
-        },
-        "mustClose": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Identifies applications that must be closed before the package is installed.\n\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
         }
       },
       "type": "object"
@@ -3942,13 +3946,6 @@
             }
           ]
         },
-        "splashImage": {
-          "describe": "The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "requestExecutionLevel": {
           "default": "user",
           "description": "The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.",
@@ -3958,6 +3955,13 @@
             "user"
           ],
           "type": "string"
+        },
+        "splashImage": {
+          "description": "The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "unicode": {
           "default": true,
@@ -5178,9 +5182,6 @@
         "target": {
           "anyOf": [
             {
-              "$ref": "#/definitions/TargetConfiguration"
-            },
-            {
               "items": {
                 "anyOf": [
                   {
@@ -5192,6 +5193,9 @@
                 ]
               },
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [
@@ -5303,6 +5307,20 @@
         }
       ]
     },
+    "appxManifestCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Appx manifest created on disk - not packed into .appx package yet."
+    },
     "artifactBuildCompleted": {
       "anyOf": [
         {
@@ -5330,20 +5348,6 @@
         }
       ],
       "description": "The function (or path to file or module id) to be run on artifact build start."
-    },
-    "appxManifestCreated": {
-      "anyOf": [
-        {
-          "typeof": "function"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "The function (or path to file or module id) to be run when appx manifest is created but before it is packed into the installer bundle."
     },
     "artifactName": {
       "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
