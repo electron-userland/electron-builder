@@ -363,10 +363,10 @@ Object {
               "size": 765,
             },
             "chownr.js": Object {
-              "size": 3548,
+              "size": 4275,
             },
             "package.json": Object {
-              "size": 402,
+              "size": 452,
             },
           },
         },
@@ -1063,7 +1063,7 @@ Object {
               "size": 1069,
             },
             "index.js": Object {
-              "size": 5127,
+              "size": 5192,
             },
             "package.json": Object {
               "size": 525,
