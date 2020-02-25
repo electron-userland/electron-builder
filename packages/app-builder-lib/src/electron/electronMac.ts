@@ -85,7 +85,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   /**
    * Configure bundleIdentifier for the generic Electron Helper process
    *
-   * This was the only Helper in Electron 4 and before. Allow users to configure
+   * This was the only Helper in Electron 5 and before. Allow users to configure
    * the bundleIdentifier for continuity.
    */
 
@@ -110,7 +110,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   /**
    * Configure bundleIdentifier for Electron 5+ Helper processes
    *
-   * In Electron 5, parts of the generic Electron Helper process were split into
+   * In Electron 6, parts of the generic Electron Helper process were split into
    * individual helper processes. Allow users to configure the bundleIdentifiers
    * for continuity, specifically because macOS keychain access relies on
    * bundleIdentifiers not changing (i.e. across versions of Electron).
