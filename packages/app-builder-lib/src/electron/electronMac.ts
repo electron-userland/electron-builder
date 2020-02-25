@@ -82,16 +82,22 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const buildMetadata = packager.config!!
 
-  // Electron 4 and below - allow user to override bundleId for the Electron
-  // Helper
+  /**
+   * Configure bundleIdentifier for the generic Electron Helper process
+   *
+   * This was the only Helper in Electron 4 and before. Allow users to configure
+   * the bundleIdentifier for continuity.
+   */
+
   const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
-  const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
-
-  log.warn(`platformSpecificOptions is ${JSON.stringify(packager.platformSpecificBuildOptions)}`)
-
+  const helperBundleIdentifier = filterCFBundleIdentifier(
+    packager.platformSpecificBuildOptions.helperBundleId
+      || helperBundleId
+      || `${appInfo.macBundleIdentifier}.helper`
+  )
   await packager.applyCommonInfo(appPlist, contentsPath)
 
   // required for electron-updater proxy
@@ -104,58 +110,38 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   helperPlist.CFBundleIdentifier = helperBundleIdentifier
   helperPlist.CFBundleVersion = appPlist.CFBundleVersion
 
-  // Electron 5 and above - allow user to override bundleId for the various
-  // Electron helpers (i.e. to support backward compatible upgrades between
-  // Electron 4 -> 5)
+  /**
+   * Configure bundleIdentifier for Electron 5+ Helper processes
+   *
+   * In Electron 5, parts of the generic Electron Helper process were split into
+   * individual helper processes. Allow users to configure the bundleIdentifiers
+   * for continuity, specifically because macOS keychain access relies on
+   * bundleIdentifiers not changing (i.e. across versions of Electron).
+   */
 
-  function configureHelper(
-    helper: any,
-    postfix: string,
-    userProvidedBundleIdentifier?: string | null,
-  ) {
+  function configureHelper(helper: any, postfix: string, userProvidedBundleIdentifier?: string | null) {
     helper.CFBundleExecutable = `${appFilename} Helper ${postfix}`
     helper.CFBundleDisplayName = `${appInfo.productName} Helper ${postfix}`
     helper.CFBundleIdentifier = userProvidedBundleIdentifier
       ? filterCFBundleIdentifier(userProvidedBundleIdentifier)
       : `${helperBundleIdentifier}.${postfix.replace(/[^a-z0-9]/gim, "")}`
-    log.warn(`set CFBundleIdentifier for postfix ${postfix} to ${helper.CFBundleIdentifier}, userProvidedBundleIdentifier was ${userProvidedBundleIdentifier}`)
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 
   if (helperRendererPlist != null) {
-    configureHelper(
-      helperRendererPlist,
-      "(Renderer)",
-      packager.platformSpecificBuildOptions.helperRendererBundleId,
-    )
+    configureHelper(helperRendererPlist, "(Renderer)", packager.platformSpecificBuildOptions.helperRendererBundleId)
   }
   if (helperPluginPlist != null) {
-    configureHelper(
-      helperPluginPlist,
-      "(Plugin)",
-      packager.platformSpecificBuildOptions.helperPluginBundleId,
-    )
+    configureHelper(helperPluginPlist, "(Plugin)", packager.platformSpecificBuildOptions.helperPluginBundleId)
   }
   if (helperGPUPlist != null) {
-    configureHelper(
-      helperGPUPlist,
-      "(GPU)",
-      packager.platformSpecificBuildOptions.helperGPUBundleId,
-    )
+    configureHelper(helperGPUPlist, "(GPU)", packager.platformSpecificBuildOptions.helperGPUBundleId)
   }
   if (helperEHPlist != null) {
-    configureHelper(
-      helperEHPlist,
-      "EH",
-      packager.platformSpecificBuildOptions.helperEHBundleId,
-    )
+    configureHelper(helperEHPlist, "EH", packager.platformSpecificBuildOptions.helperEHBundleId)
   }
   if (helperNPPlist != null) {
-    configureHelper(
-      helperNPPlist,
-      "NP",
-      packager.platformSpecificBuildOptions.helperNPBundleId,
-    )
+    configureHelper(helperNPPlist, "NP", packager.platformSpecificBuildOptions.helperNPBundleId)
   }
   if (helperLoginPlist != null) {
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`
