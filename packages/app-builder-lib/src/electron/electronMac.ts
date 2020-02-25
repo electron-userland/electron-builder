@@ -94,6 +94,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
   const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
+
   await packager.applyCommonInfo(appPlist, contentsPath)
 
   // required for electron-updater proxy
