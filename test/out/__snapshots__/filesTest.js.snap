@@ -8,12 +8,6 @@ Object {
 }
 `;
 
-exports[`extraResources - two-package 2`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
 exports[`extraResources on Linux 1`] = `
 Object {
   "linux": Array [],
