@@ -1,4 +1,4 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 platform: x64
 
 cache:
@@ -10,7 +10,7 @@ environment:
   TEST_FILES: ExtraBuildTest,BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest,oneClickInstallerTest,installerTest,appxTest,msiTest,protonTest
 
 install:
-  - ps: Install-Product node 10 x64
+  - ps: Install-Product node 12 x64
   - yarn --frozen-lockfile
 
 build: off

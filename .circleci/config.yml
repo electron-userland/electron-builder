@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:12.14.1
+      - image: circleci/node:12.16.1
     steps:
       - checkout
       - restore_cache:
@@ -11,7 +11,7 @@ jobs:
             - deps-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-7.1.10-electron
+            - v-8.0.0-electron
       - run:
           command: yarn --frozen-lockfile
       - run:
@@ -23,7 +23,7 @@ jobs:
       - run:
           command: node ./test/out/helpers/downloadElectron.js
       - save_cache:
-          key: v-7.1.10-electron
+          key: v-8.0.0-electron
           paths:
             - ~/.cache/electron
 
@@ -34,7 +34,6 @@ jobs:
         environment:
           JEST_JUNIT_OUTPUT: ./test-reports/test.xml
           TZ: Europe/Berlin
-          DEBUG: electron-builder
     steps:
       - checkout
       - restore_cache:
@@ -42,7 +41,7 @@ jobs:
             - deps-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-7.1.10-electron
+            - v-8.0.0-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |

@@ -152,7 +152,8 @@ async function doExtraResourcesTest(platform: Platform) {
 
 test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platform.LINUX))
 
-test.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
+// Squirrel.Windows is not supported on macOS anymore (32-bit)
+test.ifNotMac.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", async () => {
   await doExtraResourcesTest(Platform.MAC)

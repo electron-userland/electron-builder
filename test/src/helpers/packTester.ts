@@ -326,6 +326,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.NSCameraUsageDescription
   delete info.NSMicrophoneUsageDescription
   delete info.NSRequiresAquaSystemAppearance
+  delete info.NSQuitAlwaysKeepsWindows
   if (info.NSAppTransportSecurity != null) {
     delete info.NSAppTransportSecurity.NSAllowsArbitraryLoads
   }

@@ -12,8 +12,8 @@
   ],
   "dependencies": {
     "@types/fs-extra": "^8.1.0",
-    "app-builder-bin": "3.5.2",
-    "temp-file": "^3.3.6",
+    "app-builder-bin": "3.5.4",
+    "temp-file": "^3.3.7",
     "fs-extra": "^8.1.0",
     "is-ci": "^2.0.0",
     "stat-mode": "^1.0.0",

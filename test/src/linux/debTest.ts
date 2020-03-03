@@ -35,7 +35,7 @@ test.ifNotWindows("no quotes for safe exec name", app({
   }
 }))
 
-test.ifNotWindows.ifNotCiMac.ifAll("deb file associations", app({
+test.ifNotWindows.ifAll("deb file associations", app({
   targets: Platform.LINUX.createTarget("deb"),
   config: {
     fileAssociations: [
