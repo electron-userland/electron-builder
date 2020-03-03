@@ -117,7 +117,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
     if ((certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName))
-        || certInfo.Thumbprint.toUpperCase() !== certificateSha1) {
+        || certificateSha1 != null && certInfo.Thumbprint.toUpperCase() !== certificateSha1) {
       continue
     }
 
