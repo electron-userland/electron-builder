@@ -172,6 +172,8 @@ export default class AppXTarget extends Target {
     const options = this.options
     const executable = `app\\${appInfo.productFilename}.exe`
     const displayName = options.displayName || appInfo.productName
+    const extensions = await this.getExtensions(executable, displayName)
+
     const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8"))
       .replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
         switch (p1) {
@@ -200,7 +202,7 @@ export default class AppXTarget extends Target {
             return result
 
           case "identityName":
-            return options.identityName  || appInfo.name
+            return options.identityName || appInfo.name
 
           case "executable":
             return executable
@@ -239,7 +241,7 @@ export default class AppXTarget extends Target {
             return resourceLanguageTag(asArray(options.languages))
 
           case "extensions":
-            return this.getExtensions(executable, displayName)
+            return extensions
 
           case "minVersion":
             return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
@@ -254,7 +256,7 @@ export default class AppXTarget extends Target {
     await writeFile(outFile, manifest)
   }
 
-  private getExtensions(executable: string, displayName: string): string {
+  private async getExtensions(executable: string, displayName: string): Promise<string> {
     const uriSchemes = asArray(this.packager.config.protocols)
       .concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
 
@@ -267,7 +269,10 @@ export default class AppXTarget extends Target {
       isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
-    if (!isAddAutoLaunchExtension && uriSchemes.length === 0 && fileAssociations.length === 0) {
+    if (!isAddAutoLaunchExtension
+      && uriSchemes.length === 0
+      && fileAssociations.length === 0
+      && this.options.customExtensionsPath === undefined) {
       return ""
     }
 
@@ -302,6 +307,11 @@ export default class AppXTarget extends Target {
             </uap:FileTypeAssociation>
           </uap:Extension>`
       }
+    }
+
+    if (this.options.customExtensionsPath !== undefined) {
+      const extensionsPath = path.resolve(this.packager.info.appDir, this.options.customExtensionsPath)
+      extensions += await readFile(extensionsPath, "utf8")
     }
 
     extensions += "</Extensions>"

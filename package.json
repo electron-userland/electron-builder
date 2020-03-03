@@ -117,6 +117,7 @@
     "ts-jsdoc": "^3.1.1",
     "tslint": "^6.0.0",
     "typescript": "~3.8.3",
+    "typescript-json-schema": "^0.42.0",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.7.0"
   },
