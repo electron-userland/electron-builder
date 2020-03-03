@@ -1495,10 +1495,10 @@ anymatch@^3.0.3:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
-app-builder-bin@3.5.4:
-  version "3.5.4"
-  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.5.4.tgz#2caa9a95358e1f02b7fed5ac47613ab878328de2"
-  integrity sha512-Bta3I+OU64ePwvSdhpYyCj11XcR8VGdlPSINM87LPg0apCbprLu03zvnmnHRw/RvZB2RGAQ93Z8NO3JT3DbXdA==
+app-builder-bin@3.5.5:
+  version "3.5.5"
+  resolved "https://registry.yarnpkg.com/app-builder-bin/-/app-builder-bin-3.5.5.tgz#c83200dccd8df5ccb2a5adcd41b2a76bacfb531a"
+  integrity sha512-ZcHzJ9Xl+azPqdKzXZKdRZmkNmbxHHZyl4cbobNf8qMQpoPChpcov8riVrZSbu/0cT/JqJ8LOwJjy1OAwbChaQ==
 
 archiver-utils@^2.1.0:
   version "2.1.0"

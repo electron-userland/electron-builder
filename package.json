@@ -37,7 +37,7 @@
     "@types/is-ci": "^2.0.0",
     "@types/semver": "^7.1.0",
     "@types/yargs": "^15.0.4",
-    "app-builder-bin": "3.5.4",
+    "app-builder-bin": "3.5.5",
     "archiver": "^3.1.1",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
