@@ -2112,6 +2112,46 @@
             "string"
           ]
         },
+        "helperRendererBundleId": {
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperEHBundleId": {
+          "default": "${appBundleIdentifier}.helper.EH",
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "default": "${appBundleIdentifier}.helper.NP",
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "icon": {
           "default": "build/icon.icns",
           "description": "The path to application icon.",
