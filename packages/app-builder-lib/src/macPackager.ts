@@ -88,14 +88,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private hasMasTarget(targets: Array<Target>) {
-    return targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
-    const hasMas = this.hasMasTarget(targets)
+    const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
     const prepackaged = this.packagerOptions.prepackaged
 
     if (!hasMas || targets.length > 1) {
@@ -327,16 +323,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const appFileName = `${this.appInfo.productFilename}.app`
 
-    const hasMas = this.hasMasTarget(packContext.targets)
-    // No need to sign on mas targets since we sign the folder on pack()
-    if (!hasMas) {
-      await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
-        if (file === appFileName) {
-          return this.sign(path.join(packContext.appOutDir, file), null, null)
-        }
-        return null
-      })
-    }
+    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+      if (file === appFileName) {
+        return this.sign(path.join(packContext.appOutDir, file), null, null)
+      }
+      return null
+    })
 
     if (!isAsar) {
       return
