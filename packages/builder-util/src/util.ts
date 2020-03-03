@@ -334,36 +334,61 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const command = appBuilderPath
-    const env: any = {
-      ...process.env,
-      SZA_PATH: path7za,
-      FORCE_COLOR: chalk.level === 0 ? "0" : "1",
-    }
-    const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-    if (cacheEnv != null && cacheEnv.length > 0) {
-      env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
-    }
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
+  const command = appBuilderPath
+  const env: any = {
+    ...process.env,
+    SZA_PATH: path7za,
+    FORCE_COLOR: chalk.level === 0 ? "0" : "1",
+  }
+  const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+  if (cacheEnv != null && cacheEnv.length > 0) {
+    env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
+  }
 
-    if (extraOptions.env != null) {
-      Object.assign(env, extraOptions.env)
-    }
+  if (extraOptions.env != null) {
+    Object.assign(env, extraOptions.env)
+  }
 
-    const childProcess = doSpawn(command, args, {
-      env,
-      stdio: ["ignore", "pipe", process.stdout],
-      ...extraOptions,
-    })
-    if (childProcessConsumer != null) {
-      childProcessConsumer(childProcess)
-    }
-    handleProcess("close", childProcess, command, resolve, error => {
-      if (error instanceof ExecError && error.exitCode === 2) {
-        error.alreadyLogged = true
+  function runCommand() {
+    return new Promise<string>((resolve, reject) => {
+      const childProcess = doSpawn(command, args, {
+        env,
+        stdio: ["ignore", "pipe", process.stdout],
+        ...extraOptions
+      })
+      if (childProcessConsumer != null) {
+        childProcessConsumer(childProcess)
       }
-      reject(error)
+      handleProcess("close", childProcess, command, resolve, error => {
+        if (error instanceof ExecError && error.exitCode === 2) {
+          error.alreadyLogged = true
+        }
+        reject(error)
+      })
     })
-  })
+  }
+
+  if (maxRetries === 0) {
+    return runCommand()
+  }
+  else {
+    return retry(runCommand, maxRetries, 1000)
+  }
+}
+
+async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+  try {
+    return await task()
+  }
+  catch (error) {
+    log.info(`Above command failed, retrying ${retriesLeft} more times`)
+    if (retriesLeft > 0) {
+      await new Promise(resolve => setTimeout(resolve, interval))
+      return await retry(task, retriesLeft - 1, interval)
+    }
+    else {
+      throw error
+    }
+  }
 }
