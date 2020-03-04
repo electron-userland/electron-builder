@@ -89,8 +89,8 @@ export class AppImageUpdater extends BaseUpdater {
     }
 
     execFileSync("mv", ["-f", options.installerPath, destination])
-    if(destination !== appImageFile){
-      this.emit('appimage-filename-updated',destination)
+    if (destination !== appImageFile) {
+      this.emit('appimage-filename-updated', destination)
     }
 
     const env: any = {
