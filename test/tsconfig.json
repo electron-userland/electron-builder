@@ -1,9 +1,12 @@
 {
-  "extends": "../node_modules/ts-babel/tsconfig-base.json",
+  "extends": "../tsconfig-base.json",
   "compilerOptions": {
+    "rootDir": "src",
+    "module": "commonjs",
     "outDir": "out",
     "skipLibCheck": true,
-    "baseUrl": "../packages"
+    "baseUrl": "../packages",
+    "esModuleInterop": true
   },
   "declaration": false,
   "include": [

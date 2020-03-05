@@ -11,13 +11,10 @@
 
 .DS_Store
 
-/packages/*/out/
-/out/
-# to not exclude .js.snap (jest snapshots)
-/test/out/**/*.js
-/test/out/**/*.map
+out/
 /test/test-report.xml
 
+/packages/dmg-builder/vendor/
 /packages/electron-builder/README.md
 #/packages/app-builder-lib/scheme.json
 
@@ -30,3 +27,9 @@ electron-builder-*.d.ts
 /docs/
 
 __publish.sh
+
+/.yarn/cache
+/.yarn/unplugged
+/.yarn/build-state.yml
+/.yarn/install-state.gz
+/.pnp.*

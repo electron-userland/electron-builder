@@ -70,7 +70,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     })
     const feed = parseXml(feedXml!!)
     const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    const v = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)!![1]
+    const v = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^/]+)$/)!![1]
     return v.startsWith("v") ? v.substring(1) : v
   }
   else if (dependency?.version === "latest") {

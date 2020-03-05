@@ -5697,7 +5697,8 @@
       ]
     },
     "forceCodeSigning": {
-      "description": "Whether to fail if app will be not code signed.",
+      "default": false,
+      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
       "type": "boolean"
     },
     "framework": {
@@ -5986,11 +5987,6 @@
           ]
         }
       ]
-    },
-    "readonly": {
-      "default": false,
-      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
-      "type": "boolean"
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",

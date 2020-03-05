@@ -1,4 +1,4 @@
-import { DIR_TARGET, Platform } from "electron-builder"
+import { DIR_TARGET, Platform } from "app-builder-lib"
 import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as path from "path"
@@ -105,6 +105,7 @@ test.ifNotWindows("outside link", app({
   },
 }))
 
+// cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
 test.ifDevOrLinuxCi("failed peer dep", () => {
   return assertPack("test-app-one", {

@@ -1,7 +1,6 @@
 "use strict"
 
-require('source-map-support').install()
-const isCi = require("is-ci")
+const isCi = require("ci-info").isCI
 
 const isWindows = process.platform === "win32"
 

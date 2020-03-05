@@ -1,25 +1,24 @@
-import BluebirdPromise from "bluebird-lst/index"
-import isCi from "is-ci"
+import { isCI as isCi } from "ci-info"
 import * as path from "path"
 import { promises as fs } from "fs"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
 
 const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
 
-export function deleteOldElectronVersion(): Promise<any> {
+export async function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually
   if (process.env.CIRCLECI || !isCi) {
     return Promise.resolve()
   }
 
   const cacheDir = getElectronCacheDir()
-  return BluebirdPromise.map(fs.readdir(cacheDir), (file): any => {
+  return await Promise.all((await fs.readdir(cacheDir)).map(file => {
     if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
       console.log(`Remove old electron ${file}`)
       return fs.unlink(path.join(cacheDir, file))
     }
-    return null
-  })
+    return Promise.resolve(null)
+  }))
     .catch(e => {
       if (e.code === "ENOENT") {
         return []

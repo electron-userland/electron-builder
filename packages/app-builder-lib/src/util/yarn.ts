@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -81,7 +82,12 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
 
   log.info({platform, arch, appDir}, `installing production dependencies`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const execArgs = ["install", "--production"]
+  const execArgs = ["install"]
+  const npmUserAgent = process.env["npm_config_user_agent"]
+  const isYarn2 = npmUserAgent != null && npmUserAgent.startsWith("yarn/2.")
+  if (!isYarn2) {
+    execArgs.push("--production")
+  }
 
   if (!isRunningYarn(execPath)) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
@@ -93,7 +99,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   if (execPath == null) {
     execPath = getPackageToolPath()
   }
-  else {
+  else if (!isYarn2) {
     execArgs.unshift(execPath)
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }

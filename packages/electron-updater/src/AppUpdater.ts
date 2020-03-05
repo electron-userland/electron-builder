@@ -326,12 +326,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (isLatestVersionNewer) {
       return true
     }
-
-    if (this.allowDowngrade && isLatestVersionOlder) {
-      return true
-    }
-
-    return false
+    return this.allowDowngrade && isLatestVersionOlder;
   }
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
@@ -350,6 +345,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private createProviderRuntimeOptions() {
     return {
       isUseMultipleRangeRequest: true,
@@ -385,7 +381,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  protected onUpdateAvailable(updateInfo: UpdateInfo) {
+  protected onUpdateAvailable(updateInfo: UpdateInfo): void {
     this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.files).map(it => it.url).join(", ")})`)
     this.emit("update-available", updateInfo)
   }
@@ -403,7 +399,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     this._logger.info(`Downloading update from ${asArray(updateInfoAndProvider.info.files).map(it => it.url).join(", ")}`)
-    const errorHandler = (e: Error) => {
+    const errorHandler = (e: Error): Error => {
       // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159
       if (!(e instanceof CancellationError)) {
         try {
@@ -432,11 +428,11 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  protected dispatchError(e: Error) {
+  protected dispatchError(e: Error): void {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected dispatchUpdateDownloaded(event: UpdateDownloadedEvent) {
+  protected dispatchUpdateDownloaded(event: UpdateDownloadedEvent): void {
     this.emit(UPDATE_DOWNLOADED, event)
   }
 
@@ -454,7 +450,7 @@ export abstract class AppUpdater extends EventEmitter {
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
-  private async loadUpdateConfig() {
+  private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath
     }
@@ -639,14 +635,17 @@ function hasPrereleaseComponents(version: SemVer) {
 
 /** @private */
 export class NoOpLogger implements Logger {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   info(message?: any) {
     // ignore
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   warn(message?: any) {
     // ignore
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   error(message?: any) {
     // ignore
   }

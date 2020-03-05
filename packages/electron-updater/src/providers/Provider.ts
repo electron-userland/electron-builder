@@ -25,7 +25,7 @@ export abstract class Provider<T extends UpdateInfo> {
     return this.runtimeOptions.isUseMultipleRangeRequest !== false
   }
 
-  private getChannelFilePrefix() {
+  private getChannelFilePrefix(): string {
     if (this.runtimeOptions.platform === "linux") {
       const arch = process.env.TEST_UPDATER_ARCH || process.arch
       const archSuffix = arch === "x64" ? "" : `-${arch}`
@@ -37,11 +37,11 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 
   // due to historical reasons for windows we use channel name without platform specifier
-  protected getDefaultChannelName() {
+  protected getDefaultChannelName(): string {
     return this.getCustomChannelName("latest")
   }
 
-  protected getCustomChannelName(channel: string) {
+  protected getCustomChannelName(channel: string): string {
     return `${channel}${this.getChannelFilePrefix()}`
   }
 
@@ -60,7 +60,7 @@ export abstract class Provider<T extends UpdateInfo> {
   /**
    * Method to perform API request only to resolve update info, but not to download update.
    */
-  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken) {
+  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
@@ -134,7 +134,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   }
 }
 
-export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = p => p): Array<ResolvedUpdateFileInfo> {
+export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = (p): string => p): Array<ResolvedUpdateFileInfo> {
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {

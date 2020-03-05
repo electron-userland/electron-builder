@@ -4,13 +4,13 @@ import { BintrayProvider } from "./providers/BintrayProvider"
 import { GenericProvider } from "./providers/GenericProvider"
 import { GitHubProvider } from "./providers/GitHubProvider"
 import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
-import { ProviderRuntimeOptions } from "./providers/Provider"
+import { Provider, ProviderRuntimeOptions } from "./providers/Provider"
 
 export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
   return !url.includes("s3.amazonaws.com")
 }
 
-export function createClient(data: PublishConfiguration | AllPublishOptions, updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+export function createClient(data: PublishConfiguration | AllPublishOptions, updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions): Provider<any> {
   // noinspection SuspiciousTypeOfGuard
   if (typeof data === "string") {
     throw newError("Please pass PublishConfiguration object", "ERR_UPDATER_INVALID_PROVIDER_CONFIGURATION")
@@ -18,7 +18,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
   const provider = data.provider
   switch (provider) {
-    case "github":
+    case "github": {
       const githubOptions = data as GithubOptions
       const token = (githubOptions.private ? process.env.GH_TOKEN || process.env.GITHUB_TOKEN : null) || githubOptions.token
       if (token == null) {
@@ -27,6 +27,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       else {
         return new PrivateGitHubProvider(githubOptions, updater, token, runtimeOptions)
       }
+    }
 
     case "s3":
     case "spaces":
@@ -40,12 +41,13 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         isUseMultipleRangeRequest: false,
       })
 
-    case "generic":
+    case "generic": {
       const options = data as GenericServerOptions
       return new GenericProvider(options, updater, {
         ...runtimeOptions,
         isUseMultipleRangeRequest: options.useMultipleRangeRequest !== false && isUrlProbablySupportMultiRangeRequests(options.url),
       })
+    }
 
     case "bintray":
       return new BintrayProvider(data as BintrayOptions, runtimeOptions)

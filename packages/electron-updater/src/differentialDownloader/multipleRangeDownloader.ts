@@ -5,8 +5,8 @@ import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
 
-export function executeTasksUsingMultipleRangeRequests(differentialDownloader: DifferentialDownloader, tasks: Array<Operation>, out: Writable, oldFileFd: number, reject: (error: Error) => void) {
-  const w = (taskOffset: number) => {
+export function executeTasksUsingMultipleRangeRequests(differentialDownloader: DifferentialDownloader, tasks: Array<Operation>, out: Writable, oldFileFd: number, reject: (error: Error) => void): (taskOffset: number) => void {
+  const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
       if (differentialDownloader.fileMetadataBuffer != null) {
         out.write(differentialDownloader.fileMetadataBuffer)
@@ -26,7 +26,7 @@ export function executeTasksUsingMultipleRangeRequests(differentialDownloader: D
   return w
 }
 
-function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void) {
+function doExecuteTasks(differentialDownloader: DifferentialDownloader, options: PartListDataTask, out: Writable, resolve: () => void, reject: (error: Error) => void): void {
   let ranges = "bytes="
   let partCount = 0
   const partIndexToTaskIndex = new Map<number, number>()
@@ -43,7 +43,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
   if (partCount <= 1) {
     // the only remote range - copy
-    const w = (index: number) => {
+    const w = (index: number): void => {
       if (index >= options.end) {
         resolve()
         return

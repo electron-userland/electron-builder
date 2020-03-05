@@ -5,6 +5,20 @@ import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOpt
 import { Packager } from "./packager"
 import { expandMacro } from "./util/macroExpander"
 
+// fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
+// http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
+export function smarten(s: string): string {
+  // opening singles
+  s = s.replace(/(^|[-\u2014\s(["])'/g, "$1\u2018")
+  // closing singles & apostrophes
+  s = s.replace(/'/g, "\u2019")
+  // opening doubles
+  s = s.replace(/(^|[-\u2014/[(\u2018\s])"/g, "$1\u201c")
+  // closing doubles
+  s = s.replace(/"/g, "\u201d")
+  return s
+}
+
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
@@ -139,18 +153,4 @@ export function filterCFBundleIdentifier(identifier: string) {
   // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.)
   // Apple documentation: https://developer.apple.com/library/mac/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
-}
-
-// fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
-// http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
-export function smarten(s: string): string {
-  // opening singles
-  s = s.replace(/(^|[-\u2014\s(\["])'/g, "$1\u2018")
-  // closing singles & apostrophes
-  s = s.replace(/'/g, "\u2019")
-  // opening doubles
-  s = s.replace(/(^|[-\u2014/\[(\u2018\s])"/g, "$1\u201c")
-  // closing doubles
-  s = s.replace(/"/g, "\u201d")
-  return s
 }

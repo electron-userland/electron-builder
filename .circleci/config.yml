@@ -8,22 +8,24 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - deps-{{ checksum "yarn.lock" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
       - restore_cache:
           keys:
-            - v-8.0.0-electron
+            - v-8.2.0-electron
       - run:
-          command: yarn --frozen-lockfile
+          command: YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-sources.js install
       - run:
-          command: yarn pretest
+          command: node .yarn/releases/yarn-sources.js pretest
+      - run:
+          command: cp .pnp.js .yarn/.pnp.js
       - save_cache:
-          key: deps-{{ checksum "yarn.lock" }}
+          key: install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
           paths:
-            - node_modules
+            - .yarn
       - run:
-          command: node ./test/out/helpers/downloadElectron.js
+          command: node .yarn/releases/yarn-sources.js node ./test/out/helpers/downloadElectron.js
       - save_cache:
-          key: v-8.0.0-electron
+          key: v-8.2.0-electron
           paths:
             - ~/.cache/electron
 
@@ -32,29 +34,31 @@ jobs:
     docker:
       - image: electronuserland/builder:wine-mono
         environment:
-          JEST_JUNIT_OUTPUT: ./test-reports/test.xml
+          JEST_JUNIT_OUTPUT_DIR: /tmp/test-reports/test.xml
           TZ: Europe/Berlin
     steps:
       - checkout
       - restore_cache:
           keys:
-            - deps-{{ checksum "yarn.lock" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
       - restore_cache:
           keys:
-            - v-8.0.0-electron
+            - v-8.2.0-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |
-            mv /home/circleci/project/node_modules node_modules
+            rm -rf .yarn
+            mv /home/circleci/project/.yarn .yarn
+            mv .yarn/.pnp.js .pnp.js
             mkdir -p ~/.cache
             mv /home/circleci/.cache/electron ~/.cache/electron
       - run:
           # do not use yarn test because lint is done in the build job
           command: |
-            yarn compile
-            node ./test/out/helpers/runTests.js
+            node .yarn/releases/yarn-sources.js compile
+            node .yarn/releases/yarn-sources.js node ./test/out/helpers/runTests.js
       - store_test_results:
-          path: test-reports
+          path: /tmp/test-reports
 
 workflows:
   version: 2

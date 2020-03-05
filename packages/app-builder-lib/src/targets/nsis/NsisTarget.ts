@@ -266,19 +266,19 @@ export class NsisTarget extends Target {
     }
 
     // prepare short-version variants of defines and commands, to make an uninstaller that doesn't differ much from the previous one
-    const defines_uninstaller: any = { ...defines }
-    const commands_uninstaller: any = { ...commands}
+    const definesUninstaller: any = { ...defines }
+    const commandsUninstaller: any = { ...commands}
     if (appInfo.shortVersion != null) {
-      defines_uninstaller.VERSION = appInfo.shortVersion
-      commands_uninstaller.VIProductVersion = appInfo.shortVersionWindows
-      commands_uninstaller.VIAddVersionKey = this.computeVersionKey(true)
+      definesUninstaller.VERSION = appInfo.shortVersion
+      commandsUninstaller.VIProductVersion = appInfo.shortVersionWindows
+      commandsUninstaller.VIAddVersionKey = this.computeVersionKey(true)
     }
 
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines_uninstaller, commands_uninstaller, installerPath, sharedHeader)
+    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader)
 
     // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
-    defines.UNINSTALLER_OUT_FILE = defines_uninstaller.UNINSTALLER_OUT_FILE
+    defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
 
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
@@ -353,6 +353,7 @@ export class NsisTarget extends Target {
         let i = 0
         while (!(await exists(uninstallerPath)) && i++ < 100) {
           // noinspection JSUnusedLocalSymbols
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           await new Promise((resolve, _reject) => setTimeout(resolve, 300))
         }
       }

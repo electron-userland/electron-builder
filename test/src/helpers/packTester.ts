@@ -1,5 +1,4 @@
 import { path7x, path7za } from "7zip-bin"
-import BluebirdPromise from "bluebird-lst"
 import { addValue, deepAssign, exec, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
@@ -15,6 +14,7 @@ import { emptyDir, writeJson } from "fs-extra"
 import { promises as fs } from "fs"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
+import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
 import { readAsar } from "app-builder-lib/out/asar/asar"
@@ -122,7 +122,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
     if (checkOptions.isInstallDepsBefore) {
       // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-      await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production", "--no-lockfile"], {
+      await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production"], {
         cwd: projectDir,
       })
     }
@@ -137,7 +137,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     }, checkOptions)
 
     if (checkOptions.packed != null) {
-      function base(platform: Platform, arch?: Arch): string {
+      const base = function (platform: Platform, arch?: Arch): string {
         return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
       }
 
@@ -191,7 +191,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   const objectToCompare: any = {}
   for (const platform of packagerOptions.targets!!.keys()) {
-    objectToCompare[platform.buildConfigurationKey] = await BluebirdPromise.map((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), async it => {
+    objectToCompare[platform.buildConfigurationKey] = await Promise.all((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b))).map(async it => {
       const result: any = {...it}
       const file = result.file
       if (file != null) {
@@ -231,7 +231,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       delete result.target
       delete result.publishConfig
       return result
-    })
+    }))
   }
 
   expect(objectToCompare).toMatchSnapshot()
@@ -271,9 +271,9 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
     expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
-  const control = parseDebControl(await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
-    maxBuffer: 10 * 1024 * 1024,
-  }))
+  const control = parseDebControl((await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+      maxBuffer: 10 * 1024 * 1024,
+    })).stdout)
 
   delete control.Version
   delete control.Size
@@ -404,7 +404,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-export const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
+export const execShell: any = promisify(require("child_process").exec)
 
 export async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
@@ -419,7 +419,7 @@ async function getContents(packageFile: string) {
     }
   })
 
-  const contents = parseFileList(result, true)
+  const contents = parseFileList(result.stdout, true)
   return pathSorter(contents.filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`) || it.includes("/inspector/"))))
 }
 
@@ -440,6 +440,8 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   task(data)
   // because copied as hard link
   await fs.unlink(file)
+
+  await fs.writeFile(path.join(projectDir, ".yarnrc.yml"), "nodeLinker: node-modules")
   return await writeJson(file, data)
 }
 

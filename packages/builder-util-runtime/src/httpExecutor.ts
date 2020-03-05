@@ -62,7 +62,7 @@ export function parseJson(result: Promise<string | null>) {
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string | null> {
+  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : Buffer.from(JSON.stringify(data))
     if (encodedData != null) {
@@ -101,6 +101,7 @@ export abstract class HttpExecutor<REQUEST> {
   }
 
   // noinspection JSUnusedLocalSymbols
+  // eslint-disable-next-line
   protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     // not required for NodeJS
   }

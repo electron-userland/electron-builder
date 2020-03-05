@@ -66,6 +66,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract get defaultTarget(): Array<string>
 
+  // eslint-disable-next-line
   protected prepareAppInfo(appInfo: AppInfo) {
     return new AppInfo(this.info, null, this.platformSpecificBuildOptions)
   }
@@ -248,6 +249,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
+  // eslint-disable-next-line
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
     return null
   }
@@ -322,6 +324,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     return Promise.resolve()
   }
@@ -416,7 +419,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         partWithAsarIndex = index
         return pathPart.endsWith(".asar")
       })
-      const asarPath = path.join.apply(path, pathSplit.slice(0, partWithAsarIndex + 1))
+      const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
       let mainPath = pathSplit.length > (partWithAsarIndex + 1) ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
       await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
@@ -650,6 +653,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
     p = path.resolve(p)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const m = require(p)
   const namedExport = m[name]
   if (namedExport == null) {

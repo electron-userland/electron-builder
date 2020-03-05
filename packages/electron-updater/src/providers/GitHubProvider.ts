@@ -5,7 +5,7 @@ import { AppUpdater } from "../AppUpdater"
 import { getChannelFilename, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
 import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
-const hrefRegExp = /\/tag\/v?([^\/]+)$/
+const hrefRegExp = /\/tag\/v?([^/]+)$/
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -24,7 +24,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
     this.baseApiUrl = newBaseUrl(githubUrl(options, apiHost))
   }
 
-  protected computeGithubBasePath(result: string) {
+  protected computeGithubBasePath(result: string): string {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const host = this.options.host
     return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
@@ -114,7 +114,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
   }
 
-  private get basePath() {
+  private get basePath(): string {
     return `/${this.options.owner}/${this.options.repo}/releases`
   }
 
@@ -123,7 +123,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return resolveFiles(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p.replace(/ /g, "-")))
   }
 
-  private getBaseDownloadPath(version: string, fileName: string) {
+  private getBaseDownloadPath(version: string, fileName: string): string {
     return `${this.basePath}/download/${this.options.vPrefixedTagName === false ? "" : "v"}${version}/${fileName}`
   }
 }
@@ -138,7 +138,7 @@ function getNoteValue(parent: XElement): string {
   return result === "No content." ? "" : result
 }
 
-export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: any) {
+export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangelog: boolean, feed: XElement, latestRelease: any): string | Array<ReleaseNoteInfo> | null {
   if (!isFullChangelog) {
     return getNoteValue(latestRelease)
   }
@@ -146,7 +146,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
     // noinspection TypeScriptValidateJSTypes
-    const versionRelease = release.element("link").attribute("href").match(/\/tag\/v?([^\/]+)$/)![1]
+    const versionRelease = release.element("link").attribute("href").match(/\/tag\/v?([^/]+)$/)![1]
     if (semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
         version: versionRelease,

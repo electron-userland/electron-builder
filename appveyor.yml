@@ -2,7 +2,7 @@ image: Visual Studio 2019
 platform: x64
 
 cache:
-  - node_modules
+  - .yarn
   - '%LOCALAPPDATA%\electron\Cache'
   - '%LOCALAPPDATA%\electron-builder\cache'
 
@@ -11,9 +11,9 @@ environment:
 
 install:
   - ps: Install-Product node 12 x64
-  - yarn --frozen-lockfile
+  - node .yarn/releases/yarn-sources.js
 
 build: off
 
 test_script:
-  - yarn test
+  - node .yarn/releases/yarn-sources.js test

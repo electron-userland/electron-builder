@@ -18,15 +18,15 @@ export class DownloadedUpdateHelper {
   }
 
   private _downloadedFileInfo: CachedUpdateInfo | null = null
-  get downloadedFileInfo() {
+  get downloadedFileInfo(): CachedUpdateInfo | null {
     return this._downloadedFileInfo
   }
 
-  get file() {
+  get file(): string | null {
     return this._file
   }
 
-  get packageFile() {
+  get packageFile(): string | null {
     return this._packageFile
   }
 
@@ -56,7 +56,7 @@ export class DownloadedUpdateHelper {
     return cachedUpdateFile
   }
 
-  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean) {
+  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean): Promise<void> {
     this._file = downloadedFile
     this._packageFile = packageFile
     this.versionInfo = versionInfo
@@ -72,7 +72,7 @@ export class DownloadedUpdateHelper {
     }
   }
 
-  async clear() {
+  async clear(): Promise<void> {
     this._file = null
     this._packageFile = null
     this.versionInfo = null
@@ -135,7 +135,7 @@ export class DownloadedUpdateHelper {
     return updateFile
   }
 
-  private getUpdateInfoFile() {
+  private getUpdateInfoFile(): string {
     return path.join(this.cacheDirForPendingUpdate, "update-info.json")
   }
 }
@@ -146,7 +146,7 @@ interface CachedUpdateInfo {
   readonly isAdminRightsRequired: boolean
 }
 
-function hashFile(file: string, algorithm: string = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {
+function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
@@ -163,7 +163,7 @@ function hashFile(file: string, algorithm: string = "sha512", encoding: "base64"
   })
 }
 
-export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger) {
+export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {
   // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
   let nameCounter = 0
   let result = path.join(cacheDir, name)

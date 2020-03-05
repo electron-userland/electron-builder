@@ -36,6 +36,7 @@
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/app/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/dist" />
       <excludeFolder url="file://$MODULE_DIR$/test/out" />
+      <excludeFolder url="file://$MODULE_DIR$/test/snapshots" />
       <excludeFolder url="file://$MODULE_DIR$/test/vendor" />
       <excludePattern pattern="yarn.lock" />
     </content>

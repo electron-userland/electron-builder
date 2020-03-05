@@ -7,8 +7,12 @@ import { createHash } from "crypto"
 import _debug from "debug"
 import { safeDump } from "js-yaml"
 import * as path from "path"
-import "source-map-support/register"
+import sourceMapSupport from "source-map-support"
 import { debug, log } from "./log"
+
+if (process.env.JEST_WORKER_ID == null) {
+  sourceMapSupport.install()
+}
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -264,7 +268,7 @@ export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | 
 }
 
 export function isTokenCharValid(token: string) {
-  return /^[.\w\/=+-]+$/.test(token)
+  return /^[.\w/=+-]+$/.test(token)
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

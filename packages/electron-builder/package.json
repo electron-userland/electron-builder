@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "0.0.0-semantic-release",
+  "version": "22.4.0",
   "main": "out/index.js",
   "files": [
     "out"
@@ -46,19 +46,23 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "@types/yargs": "^15.0.4",
+    "app-builder-lib": "workspace:*",
     "bluebird-lst": "^1.0.9",
+    "builder-util": "workspace:*",
+    "builder-util-runtime": "8.6.1",
     "chalk": "^3.0.0",
-    "builder-util-runtime": "0.0.0-semantic-release",
-    "builder-util": "0.0.0-semantic-release",
-    "fs-extra": "^8.1.0",
+    "dmg-builder": "workspace:*",
+    "fs-extra": "^9.0.0",
     "is-ci": "^2.0.0",
-    "read-config-file": "5.0.2",
+    "lazy-val": "^1.0.4",
+    "read-config-file": "6.0.0",
     "sanitize-filename": "^1.6.3",
     "update-notifier": "^4.1.0",
-    "yargs": "^15.1.0",
-    "lazy-val": "^1.0.4",
-    "app-builder-lib": "0.0.0-semantic-release",
-    "dmg-builder": "0.0.0-semantic-release"
+    "yargs": "^15.3.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^8.1.0",
+    "@types/is-ci": "^2.0.0"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

@@ -13,7 +13,7 @@ import { createStageDir } from "./targetUtil"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
-const vendorAssetsForDefaultAssets: { [key: string]: string; } = {
+const vendorAssetsForDefaultAssets: { [key: string]: string } = {
   "StoreLogo.png": "SampleAppx.50x50.png",
   "Square150x150Logo.png": "SampleAppx.150x150.png",
   "Square44x44Logo.png": "SampleAppx.44x44.png",
@@ -180,17 +180,18 @@ export default class AppXTarget extends Target {
           case "publisher":
             return publisher
 
-          case "publisherDisplayName":
+          case "publisherDisplayName": {
             const name = options.publisherDisplayName || appInfo.companyName
             if (name == null) {
               throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
             }
             return name
+          }
 
           case "version":
             return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
 
-          case "applicationId":
+          case "applicationId": {
             const result = options.applicationId || options.identityName || appInfo.name
             if (!isNaN(parseInt(result[0], 10))) {
               let message = `AppX Application.Id can’t start with numbers: "${result}"`
@@ -200,6 +201,7 @@ export default class AppXTarget extends Target {
               throw new InvalidConfigurationError(message)
             }
             return result
+          }
 
           case "identityName":
             return options.identityName || appInfo.name

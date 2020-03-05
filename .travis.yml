@@ -22,16 +22,16 @@ matrix:
 cache:
   yarn: true
   directories:
-    - node_modules
+    - .yarn
     - $HOME/Library/Caches/electron
     - $HOME/Library/Caches/electron-builder
     - /tmp/jest-electron-builder-tests
 
 install:
-  - yarn --frozen-lockfile
+  - node .yarn/releases/yarn-sources.js
 
 script:
-  - yarn test
+  - node .yarn/releases/yarn-sources.js test
 
 branches:
   except:

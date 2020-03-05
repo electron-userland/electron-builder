@@ -53,6 +53,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return this.info.framework.macOsDefaultTargets
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
     return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
   }
@@ -67,10 +68,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         case DIR_TARGET:
           break
 
-        case "dmg":
-          const { DmgTarget } = require("dmg-builder")
+        case "dmg": {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const {DmgTarget} = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
+        }
 
         case "zip":
           // https://github.com/electron-userland/electron-builder/issues/2313

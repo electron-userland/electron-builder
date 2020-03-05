@@ -159,7 +159,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
    * @default false
    */
-  readonly ?: boolean
+  readonly forceCodeSigning?: boolean
 
   /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.

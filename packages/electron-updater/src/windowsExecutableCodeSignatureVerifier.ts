@@ -60,7 +60,7 @@ function parseOut(out: string): any {
   return data
 }
 
-function handleError(logger: Logger, error: Error | null, stderr: string | null) {
+function handleError(logger: Logger, error: Error | null, stderr: string | null): void {
   if (isOldWin6()) {
     logger.warn(`Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
     return
@@ -84,7 +84,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null)
   }
 }
 
-function isOldWin6() {
+function isOldWin6(): boolean {
   const winVersion = os.release()
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
