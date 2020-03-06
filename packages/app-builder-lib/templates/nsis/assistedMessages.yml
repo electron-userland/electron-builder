@@ -297,7 +297,7 @@ perMachineInstall:
 reinstallUpgrade:
   en: Will reinstall/upgrade.
   de: Die Anwendung wird aktualisiert.
-  ru: Игра будет переустановлена/обновлена.
+  ru: Приложение будет переустановлено/обновлено.
   fr: Va réinstaller/mettre à jour.
   hu_HU: Újratelepít/frissít.
   pt_BR: Irá reinstalar/atualizar.
@@ -316,7 +316,7 @@ reinstallUpgrade:
 uninstall:
   en: Will uninstall.
   de: Die Anwendung wird deinstalliert.
-  ru: Игра будет удалена.
+  ru: Приложение будет удалено.
   fr: Va désinstaller.
   hu_HU: Eltávolít.
   pt_BR: Irá desinstalar.
