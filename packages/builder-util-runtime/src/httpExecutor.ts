@@ -285,16 +285,11 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   private addTimeOutHandler(request: any, callback: (error: Error) => void) {
-    const timeoutCb = () => {
-      request.abort()
-      callback(new Error("Request timed out"))
-    }
-
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(60 * 1000, timeoutCb)
-    })
-    request.on("close", () => {
-      setTimeout(timeoutCb, 30 * 1000)
+      socket.setTimeout(60 * 1000, () => {
+        request.abort()
+        callback(new Error("Request timed out"))
+      })
     })
   }
 
