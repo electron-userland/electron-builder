@@ -245,7 +245,7 @@ Emitted on progress.
 * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
     * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
@@ -261,11 +261,11 @@ Asks the server whether there is an update.
 Asks the server whether there is an update, download and notify if update available.
 
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
-**`appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>**
+**`appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>**
 
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Returns**: <code>Promise&lt;any&gt;</code> - Path to downloaded file.  
+**Returns**: <code>Promise&lt;Array&lt;string&gt;&gt;</code> - Where the first item in the list is guaranteed to be the path to downloaded file.
 
 - cancellationToken <code>CancellationToken</code>
 
