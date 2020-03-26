@@ -93,10 +93,10 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     const dicer = new DataSplitter(out, options, partIndexToTaskIndex, m[1] || m[2], partIndexToLength, resolve)
     dicer.on("error", reject)
     response.pipe(dicer)
-	
+
     response.on('end', () => {
       setTimeout(() => {
-        request && request.abort()
+        request.abort()
         reject(new Error("Response ends without calling any handlers"))
       }, 10000)
     })
