@@ -94,12 +94,12 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     dicer.on("error", reject)
     response.pipe(dicer)
 	
-	response.on('end', () => {
-	  setTimeout(() => {
-	    request && request.abort()
-	    reject(new Error("Response ends without calling any handlers"))
-	  }, 10000)
-	})
+	  response.on('end', () => {
+	    setTimeout(() => {
+	      request && request.abort()
+	      reject(new Error("Response ends without calling any handlers"))
+	    }, 10000)
+	  })
   })
   differentialDownloader.httpExecutor.addErrorAndTimeoutHandlers(request, reject)
   request.end()
