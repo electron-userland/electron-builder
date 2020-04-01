@@ -8,25 +8,29 @@ const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__di
 export async function deleteOldElectronVersion(): Promise<any> {
   // on CircleCi no need to clean manually
   if (process.env.CIRCLECI || !isCi) {
-    return Promise.resolve()
+    return
   }
 
   const cacheDir = getElectronCacheDir()
-  return await Promise.all((await fs.readdir(cacheDir)).map(file => {
+  let files: Array<string>
+  try {
+    files = await fs.readdir(cacheDir)
+  }
+  catch (e) {
+    if (e.code === "ENOENT") {
+      return
+    }
+    else {
+      throw e
+    }
+  }
+  return await Promise.all(files.map(file => {
     if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
       console.log(`Remove old electron ${file}`)
       return fs.unlink(path.join(cacheDir, file))
     }
     return Promise.resolve(null)
   }))
-    .catch(e => {
-      if (e.code === "ENOENT") {
-        return []
-      }
-      else {
-        throw e
-      }
-    })
 }
 
 export function downloadAllRequiredElectronVersions(): Promise<any> {
