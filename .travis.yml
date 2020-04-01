@@ -8,7 +8,7 @@ env:
 matrix:
   include:
     - os: osx
-      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macPackagerTest
+      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macPackagerTest,protonTest
       node_js: "12"
 
     - os: osx
@@ -16,7 +16,7 @@ matrix:
       node_js: "12"
 
     - os: osx
-      env: TEST_FILES=masTest,dmgTest,protonTest
+      env: TEST_FILES=masTest,dmgTest
       node_js: "12"
 
 cache:
