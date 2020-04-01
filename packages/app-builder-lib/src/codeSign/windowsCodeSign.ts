@@ -15,7 +15,7 @@ export function getSignVendorPath() {
   return getBin("winCodeSign")
 }
 
-export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>
+export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
 export interface WindowsSignOptions {
   readonly path: string
@@ -55,18 +55,14 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  function defaultExecutor(configuration: CustomWindowsSignTaskConfiguration) {
-    return doSign(configuration, packager)
-  }
-
-  const executor = resolveFunction(options.options.sign, "sign") || defaultExecutor
+  const executor = resolveFunction(options.options.sign, "sign") || doSign
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = {...options, hash, isNest}
     await executor({
       ...taskConfiguration,
       computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin)
-    })
+    }, packager)
     isNest = true
     if (taskConfiguration.resultOutputPath != null) {
       await rename(taskConfiguration.resultOutputPath, options.path)
@@ -138,7 +134,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}, all certs: ${rawResult}`)
 }
 
-async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
+export async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
 
