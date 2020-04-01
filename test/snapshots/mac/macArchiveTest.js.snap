@@ -102,17 +102,18 @@ Object {
 `;
 
 exports[`invalid target 1`] = `
-"Invalid configuration object. electron-builder 0.0.0-semantic-release has been initialised using a configuration object that does not match the API schema.
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
  - configuration.mac should be one of these:
    object { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, target?, type? } | null
    -> Options related to how build macOS targets.
    Details:
-    * configuration.mac.target[0] should be an object:
-      object { target, arch? }
-    * configuration.mac.target[0] should be one of these:
-      \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
     * configuration.mac.target[0] should be one of these:
       object { target, arch? } | \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+      Details:
+       * configuration.mac.target[0] should be an object:
+         object { target, arch? }
+       * configuration.mac.target[0] should be one of these:
+         \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
      How to fix:
      1. Open https://www.electron.build/configuration/mac
      2. Search the option name on the page (or type in into Search to find across the docs).

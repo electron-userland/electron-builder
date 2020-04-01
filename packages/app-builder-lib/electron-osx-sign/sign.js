@@ -77,18 +77,18 @@ function validateSignOptsAsync (opts) {
  * @param {Object} opts - Options.
  * @returns {Promise} Promise resolving output.
  */
-function verifySignApplicationAsync (opts) {
+async function verifySignApplicationAsync (opts) {
   // Verify with codesign
   const semver = require('semver')
   debuglog('Verifying application bundle with codesign...')
 
-  let promise = execFileAsync('codesign', [
+  await execFileAsync('codesign', [
     '--verify',
     '--deep'
   ]
     .concat(
       opts['strict-verify'] !== false &&
-      semver.gte(osRelease, '15.0.0') >= 0 // Only pass strict flag in El Capitan and later
+      semver.gte(osRelease, '15.0.0') >= 0 // Strict flag since darwin 15.0.0 --> OS X 10.11.0 El Capitan
         ? ['--strict' +
         (opts['strict-verify']
           ? '=' + opts['strict-verify'] // Array should be converted to a comma separated string
@@ -98,22 +98,16 @@ function verifySignApplicationAsync (opts) {
 
   // Additionally test Gatekeeper acceptance for darwin platform
   if (opts.platform === 'darwin' && opts['gatekeeper-assess'] !== false) {
-    promise = promise
-      .then(function () {
-        debuglog('Verifying Gatekeeper acceptance for darwin platform...')
-        return execFileAsync('spctl', [
-          '--assess',
-          '--type', 'execute',
-          '--verbose',
-          '--ignore-cache',
-          '--no-cache',
-          opts.app
-        ])
-      })
+    debuglog('Verifying Gatekeeper acceptance for darwin platform...')
+    await execFileAsync('spctl', [
+      '--assess',
+      '--type', 'execute',
+      '--verbose',
+      '--ignore-cache',
+      '--no-cache',
+      opts.app
+    ])
   }
-
-  return promise
-    .thenReturn()
 }
 
 /**
@@ -151,14 +145,46 @@ function signApplicationAsync (opts) {
       }
       if (opts.timestamp) {
         args.push('--timestamp=' + opts.timestamp)
+      } else {
+        args.push('--timestamp')
       }
-      if (opts.hardenedRuntime || opts['hardened-runtime']) {
-        // 17.7.0 === 10.13.6
-        if (semver.gte(osRelease, '17.7.0') >= 0) {
-          args.push('--options', 'runtime')
+      if (opts['signature-size']) {
+        if (Number.isInteger(opts['signature-size']) && opts['signature-size'] > 0) {
+          args.push('--signature-size', opts['signature-size'])
         } else {
-          debuglog('Not enabling hardened runtime, current macOS version too low, requires 10.13.6 and higher')
+          debugwarn(`Invalid value provided for --signature-size (${opts['signature-size']}). Must be a positive integer.`)
         }
+      }
+
+      let optionsArguments = []
+
+      if (opts['signature-flags']) {
+        if (Array.isArray(opts['signature-flags'])) {
+          optionsArguments = [...opts['signature-flags']]
+        } else {
+          const flags = opts['signature-flags'].split(',').map(function (flag) { return flag.trim() })
+          optionsArguments = [...flags]
+        }
+      }
+
+      if (opts.hardenedRuntime || opts['hardened-runtime'] || optionsArguments.includes('runtime')) {
+        // Hardened runtime since darwin 17.7.0 --> macOS 10.13.6
+        if (semver.gte(osRelease, '17.7.0') >= 0) {
+          optionsArguments.push('runtime')
+        } else {
+          // Remove runtime if passed in with --signature-flags
+          debuglog('Not enabling hardened runtime, current macOS version too low, requires 10.13.6 and higher')
+          optionsArguments = optionsArguments.filter(function (element, index) { return element !== 'runtime' })
+        }
+      }
+
+      if (opts['restrict']) {
+        optionsArguments.push('restrict')
+        debugwarn('This flag is to be deprecated, consider using --signature-flags=restrict instead')
+      }
+
+      if (optionsArguments.length) {
+        args.push('--options', [...new Set(optionsArguments)].join(','))
       }
 
       if (opts.entitlements) {

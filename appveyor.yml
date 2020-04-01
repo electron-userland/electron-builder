@@ -11,7 +11,7 @@ environment:
 
 install:
   - ps: Install-Product node 12 x64
-  - node .yarn/releases/yarn-sources.js
+  - YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-sources.js install
 
 build: off
 
