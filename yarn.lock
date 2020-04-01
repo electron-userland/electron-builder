@@ -2332,10 +2332,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app-builder-bin@npm:3.5.5":
-  version: 3.5.5
-  resolution: "app-builder-bin@npm:3.5.5"
-  checksum: 2/e3f859f132c90bab542e91d959110016524b33f30c52f942d936916e3049efa95a8973bf63196f5d986f1a4916f346ac52449441dadc5bcae0bee03373ae591f
+"app-builder-bin@npm:3.5.6":
+  version: 3.5.6
+  resolution: "app-builder-bin@npm:3.5.6"
+  checksum: 2/218341e8e6fa9398b40c410502aaeaeb945c9148d78d2c17498a697b50bb7fa9a622864d0c6c61e18cf1fb510b0f14491f5b05c2842d81d4c7500eb00dfb781d
   languageName: node
   linkType: hard
 
@@ -3040,7 +3040,7 @@ __metadata:
     "@types/fs-extra": ^8.1.0
     "@types/js-yaml": ^3.12.3
     "@types/source-map-support": ^0.5.1
-    app-builder-bin: 3.5.5
+    app-builder-bin: 3.5.6
     bluebird-lst: ^1.0.9
     builder-util-runtime: "workspace:*"
     chalk: ^3.0.0
