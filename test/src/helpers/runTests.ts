@@ -1,9 +1,10 @@
 import { createHash } from "crypto"
-import { emptyDir, readJson, realpathSync, remove } from "fs-extra"
+import { emptyDir, readJson, realpathSync } from "fs-extra"
 import { isCI as isCi } from "ci-info"
 import { tmpdir } from "os"
 import * as path from "path"
 import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron"
+import { promises as fs } from "fs"
 
 const baseDir = process.env.APP_BUILDER_TMP_DIR || realpathSync(tmpdir())
 const APP_BUILDER_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
@@ -154,7 +155,7 @@ async function runTests() {
     process.exit(exitCode)
   }
 
-  await remove(APP_BUILDER_TMP_DIR)
+  await fs.rmdir(APP_BUILDER_TMP_DIR, {recursive: true})
   process.exitCode = exitCode
   if (testResult.globalConfig.forceExit) {
     process.exit(exitCode)

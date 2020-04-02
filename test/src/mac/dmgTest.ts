@@ -3,7 +3,6 @@ import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
-import { remove } from "fs-extra"
 import * as path from "path"
 import { promises as fs } from "fs"
 import { assertThat } from "../helpers/fileAssert"
@@ -38,7 +37,7 @@ test.ifMac("no build directory", app({
     return false
   },
 }, {
-  projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
+  projectDirCreated: projectDir => fs.rmdir(path.join(projectDir, "build"), {recursive: true}),
 }))
 
 test.ifMac("background color", app({

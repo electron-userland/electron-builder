@@ -1,5 +1,5 @@
 import { Arch, build, Platform } from "electron-builder"
-import { outputFile, remove } from "fs-extra"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
@@ -111,7 +111,7 @@ test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and cus
     return false
   },
 }, {
-  projectDirCreated: it => remove(path.join(it, "build")),
+  projectDirCreated: it => fs.rmdir(path.join(it, "build"), {recursive: true}),
   packed: async context => {
     const projectDir = context.getContent(Platform.LINUX)
     await assertThat(path.join(projectDir, "Foo")).isFile()
@@ -133,7 +133,7 @@ test.ifNotWindows("icons from ICNS (mac)", app({
 }, {
   projectDirCreated: async projectDir => {
     await fs.mkdir(path.join(projectDir, "resources"), {recursive: true}).then(() => fs.rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
-    await remove(path.join(projectDir, "build"))
+    await fs.rmdir(path.join(projectDir, "build"), {recursive: true})
   },
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
@@ -148,7 +148,7 @@ test.ifNotWindows("icons from ICNS if nothing specified", app({
   },
 }, {
   projectDirCreated: async projectDir => {
-    await remove(path.join(projectDir, "build", "icons"))
+    await fs.rmdir(path.join(projectDir, "build", "icons"), {recursive: true})
   },
 }))
 
@@ -179,7 +179,7 @@ test.ifNotWindows("icons dir with images without size in the filename", app({
 }, {
   projectDirCreated: async projectDir => {
     await fs.rename(path.join(projectDir, "build", "icons", "256x256.png"), path.join(projectDir, "build", "icon.png"))
-    await remove(path.join(projectDir, "build", "icons"))
+    await fs.rmdir(path.join(projectDir, "build", "icons"), {recursive: true})
     await fs.rename(path.join(projectDir, "build"), path.join(projectDir, "icons"))
   },
   packed: async context => {
@@ -195,11 +195,11 @@ test.ifNotWindows("icons from ICNS", app({
     publish: null,
   },
 }, {
-  projectDirCreated: it => remove(path.join(it, "build", "icons")),
+  projectDirCreated: it => fs.rmdir(path.join(it, "build", "icons"), {recursive: true}),
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)
 
-    await remove(path.join(projectDir, "inspector"))
+    await fs.rmdir(path.join(projectDir, "inspector"), {recursive: true})
 
     await build({
       targets: appImageTarget,

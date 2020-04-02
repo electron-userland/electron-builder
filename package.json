@@ -18,7 +18,7 @@
     "test-all": "yarn pretest && node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/Library/Caches/electron:/root/.cache/electron  -v ~/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine /bin/bash -c \"yarn && TEST_FILES=HoistedNodeModuleTest node ./test/out/helpers/runTests.js\"",
     "docker-images": "docker/build.sh",
-    "release": "BABEL_ENV=production yarn compile && sh ./__publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release": "BABEL_ENV=production yarn compile && ln -f README.md packages/electron-builder/README.md && yarn workspaces foreach -p npm publish && yarn dlx -p conventional-changelog-cli conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",

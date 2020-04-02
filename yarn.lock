@@ -2374,7 +2374,7 @@ __metadata:
     async-exit-hook: ^2.0.1
     bluebird-lst: ^1.0.9
     builder-util: "workspace:*"
-    builder-util-runtime: 8.6.1
+    builder-util-runtime: "workspace:*"
     chromium-pickle-js: ^0.2.0
     debug: ^4.1.1
     dmg-builder: "workspace:*"
@@ -3020,7 +3020,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"builder-util-runtime@8.6.1, builder-util-runtime@workspace:*, builder-util-runtime@workspace:packages/builder-util-runtime":
+"builder-util-runtime@workspace:*, builder-util-runtime@workspace:packages/builder-util-runtime":
   version: 0.0.0-use.local
   resolution: "builder-util-runtime@workspace:packages/builder-util-runtime"
   dependencies:
@@ -3993,7 +3993,7 @@ __metadata:
     app-builder-lib: "workspace:*"
     bluebird-lst: ^1.0.9
     builder-util: "workspace:*"
-    builder-util-runtime: 8.6.1
+    builder-util-runtime: "workspace:*"
     chalk: ^3.0.0
     dmg-builder: "workspace:*"
     fs-extra: ^9.0.0
@@ -4048,7 +4048,7 @@ __metadata:
     "@types/fs-extra": ^8.1.0
     bluebird-lst: ^1.0.9
     builder-util: "workspace:*"
-    builder-util-runtime: 8.6.1
+    builder-util-runtime: "workspace:*"
     chalk: ^3.0.0
     fs-extra: ^9.0.0
     lazy-val: ^1.0.4
@@ -4071,7 +4071,7 @@ __metadata:
     "@types/js-yaml": ^3.12.3
     "@types/lodash.isequal": ^4.5.5
     "@types/semver": ^7.1.0
-    builder-util-runtime: 8.6.1
+    builder-util-runtime: "workspace:*"
     fs-extra: ^9.0.0
     js-yaml: ^3.13.1
     lazy-val: ^1.0.4

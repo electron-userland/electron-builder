@@ -14,7 +14,7 @@
     "@types/fs-extra": "^8.1.0",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
-    "builder-util-runtime": "8.6.1",
+    "builder-util-runtime": "workspace:*",
     "chalk": "^3.0.0",
     "fs-extra": "^9.0.0",
     "lazy-val": "^1.0.4",

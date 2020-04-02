@@ -26,8 +26,6 @@ electron-builder-*.d.ts
 /site/
 /docs/
 
-__publish.sh
-
 /.yarn/cache
 /.yarn/unplugged
 /.yarn/build-state.yml

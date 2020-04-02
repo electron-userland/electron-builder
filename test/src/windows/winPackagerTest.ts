@@ -1,5 +1,4 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { remove } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -71,7 +70,7 @@ test.ifAll("win icon from icns", () => {
   }, {
     projectDirCreated: projectDir => Promise.all([
       fs.unlink(path.join(projectDir, "build", "icon.ico")),
-      remove(path.join(projectDir, "build", "icons")),
+      fs.rmdir(path.join(projectDir, "build", "icons"), {recursive: true}),
     ]),
     packed: async () => {
       const file = await platformPackager!!.getIconPath()
