@@ -178,6 +178,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
         CFBundleTypeExtensions: extensions,
         CFBundleTypeName: fileAssociation.name || extensions[0],
         CFBundleTypeRole: fileAssociation.role || "Editor",
+        LSHandlerRank: fileAssociation.rank || "Default",
         CFBundleTypeIconFile: iconFile
       } as any
 
