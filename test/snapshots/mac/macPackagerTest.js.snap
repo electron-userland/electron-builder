@@ -78,8 +78,8 @@ Object {
       "CFBundleTypeIconFile": "Test App ßW.icns",
       "CFBundleTypeName": "Boo",
       "CFBundleTypeRole": "Shell",
-      "LSTypeIsPackage": true,
       "LSHandlerRank": "Owner",
+      "LSTypeIsPackage": true,
     },
     Object {
       "CFBundleTypeExtensions": Array [
