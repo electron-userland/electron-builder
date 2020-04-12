@@ -480,6 +480,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
+  expandArchiveNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string): string {
+    let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.archiveName
+    if (pattern == null) {
+      pattern = this.platformSpecificBuildOptions.archiveName || this.config.archiveName
+    }
+
+    if (pattern == null) {
+      // tslint:disable-next-line:no-invalid-template-strings
+      pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
+    }
+
+    return this.computeArtifactName(pattern, ext, arch)
+  }
+
   expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {
     // tslint:disable-next-line:no-invalid-template-strings
     return this.expandArtifactNamePattern(targetSpecificOptions, ext, arch, "${productName} ${version} ${arch}.${ext}", true)

@@ -199,4 +199,10 @@ export interface NsisWebOptions extends NsisOptions {
    * The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
+
+
+  /**
+   * The nsis archive name template. Defaults to `${productName}-{version}-${arch}.nsis.${ext}
+   */
+  readonly archiveName?: string | null
 }

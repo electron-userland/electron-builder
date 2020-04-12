@@ -96,6 +96,11 @@ export interface TargetSpecificOptions {
    */
   readonly artifactName?: string | null
 
+  /**
+   * The arcive file name
+   */
+  readonly archiveName?: string | null
+
   publish?: Publish
 }
 

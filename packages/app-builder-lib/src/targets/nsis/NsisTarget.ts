@@ -21,7 +21,7 @@ import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockma
 import { getWindowsInstallationDirName } from "../targetUtil"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
-import { NsisOptions, PortableOptions } from "./nsisOptions"
+import { NsisOptions, PortableOptions, NsisWebOptions } from './nsisOptions';
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
@@ -81,7 +81,8 @@ export class NsisTarget extends Target {
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
     const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const archiveFileName = packager.expandArchiveNamePattern(options, format, arch, "${sanitizedName}-${version}-${arch}.nsis.${ext}");
+    const archiveFile = path.join(this.outDir, archiveFileName);
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
@@ -121,6 +122,20 @@ export class NsisTarget extends Target {
 
   private get isPortable() {
     return this.name === "portable"
+  }
+
+  private expandArtifactNamePattern(options: NsisWebOptions, format: string) {
+    let pattern = options == null ? null : options.archiveName;
+
+    if (pattern == null) {
+      // tslint:disable-next-line:no-invalid-template-strings
+      pattern = "${productName}-${version}-${arch}.${ext}"
+    }
+    else {
+      // https://github.com/electron-userland/electron-builder/issues/3510
+      // always respect arch in user custom artifact pattern
+      skipArchIfX64 = false
+    }
   }
 
   private async buildInstaller(): Promise<any> {
