@@ -124,20 +124,6 @@ export class NsisTarget extends Target {
     return this.name === "portable"
   }
 
-  private expandArtifactNamePattern(options: NsisWebOptions, format: string) {
-    let pattern = options == null ? null : options.archiveName;
-
-    if (pattern == null) {
-      // tslint:disable-next-line:no-invalid-template-strings
-      pattern = "${productName}-${version}-${arch}.${ext}"
-    }
-    else {
-      // https://github.com/electron-userland/electron-builder/issues/3510
-      // always respect arch in user custom artifact pattern
-      skipArchIfX64 = false
-    }
-  }
-
   private async buildInstaller(): Promise<any> {
     const packager = this.packager
     const appInfo = packager.appInfo
