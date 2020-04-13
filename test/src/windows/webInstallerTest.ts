@@ -36,7 +36,7 @@ test.ifAll.ifNotCiMac("web installer, safe name on github", app({
     nsisWeb: {
       //tslint:disable-next-line:no-invalid-template-strings
       artifactName: "${productName}.${ext}",
-      archiveName: "${name}-custom.${ext}"
+      archiveName: "${sanitizedName}-${arch}-custom.${ext}"
     },
   },
 }))
