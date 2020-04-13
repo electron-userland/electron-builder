@@ -3368,7 +3368,7 @@
           ]
         },
         "archiveName": {
-          "description": "The archive names pattern. Default to `${productName}-${version}.{%target%}.${ext}`",
+          "description": "The archive names pattern. Default to `${sanitizedName}-${version}-${arch}.{%target%}.${ext}`",
           "type": [
             "null",
             "string"

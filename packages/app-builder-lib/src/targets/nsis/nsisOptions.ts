@@ -202,7 +202,7 @@ export interface NsisWebOptions extends NsisOptions {
 
 
   /**
-   * The nsis archive name template. Defaults to `${productName}-{version}-${arch}.nsis.${ext}
+   * The nsis archive name template. Defaults to `${sanitizedName}-{version}-${arch}.nsis.${ext}
    */
   readonly archiveName?: string | null
 }
