@@ -488,7 +488,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     if (pattern == null) {
       // tslint:disable-next-line:no-invalid-template-strings
-      pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
+      pattern = defaultPattern || "${sanitizedName}-${version}-${arch}.${ext}"
     }
 
     return this.computeArtifactName(pattern, ext, arch)

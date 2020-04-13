@@ -41,7 +41,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly artifactName?: string | null
 
   /**
-   * The archive names. Default to `${productName}-${version}.{%target%}.${ext}`
+   * The archive names. Default to `${name}-${version}-${arch}.${ext}`
    */
   readonly archiveName?: string | null
 
