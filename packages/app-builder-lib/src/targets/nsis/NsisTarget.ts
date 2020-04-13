@@ -21,7 +21,7 @@ import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockma
 import { getWindowsInstallationDirName } from "../targetUtil"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
-import { NsisOptions, PortableOptions, NsisWebOptions } from './nsisOptions';
+import { NsisOptions, PortableOptions } from "./nsisOptions";
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
