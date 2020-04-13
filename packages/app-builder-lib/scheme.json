@@ -3367,6 +3367,13 @@
             "string"
           ]
         },
+        "archiveName": {
+          "description": "The archive names pattern. Default to `${productName}-${version}.{%target%}.${ext}`",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "createDesktopShortcut": {
           "default": true,
           "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
