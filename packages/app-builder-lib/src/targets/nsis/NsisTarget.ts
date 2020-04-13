@@ -81,8 +81,8 @@ export class NsisTarget extends Target {
 
     const isBuildDifferentialAware = this.isBuildDifferentialAware
     const format = !isBuildDifferentialAware && options.useZip ? "zip" : "7z"
-    const archiveFileName = packager.expandArchiveNamePattern(options, format, arch, "${sanitizedName}-${version}-${arch}.nsis.${ext}");
-    const archiveFile = path.join(this.outDir, archiveFileName);
+    const archiveFileName = packager.expandArchiveNamePattern(options, format, arch, "${sanitizedName}-${version}-${arch}.nsis.${ext}")
+    const archiveFile = path.join(this.outDir, archiveFileName)
     const preCompressedFileExtensions = this.getPreCompressedFileExtensions()
     const archiveOptions: ArchiveOptions = {
       withoutDir: true,
