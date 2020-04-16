@@ -1,4 +1,4 @@
-import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions } from "builder-util-runtime"
 import { spawn } from "child_process"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
@@ -31,9 +31,10 @@ export class NsisUpdater extends BaseUpdater {
           throw newError(`destinationFile or packageFile contains illegal chars`, "ERR_UPDATER_ILLEGAL_FILE_NAME")
         }
 
+
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider)) {
+        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider, downloadOptions.onProgress)) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -45,7 +46,7 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider)) {
+          if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider, downloadUpdateOptions, downloadOptions.onProgress)) {
             try {
               await this.httpExecutor.download(new URL(packageInfo!!.path), packageFile!!, {
                 headers: downloadUpdateOptions.requestHeaders,
@@ -133,7 +134,7 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>, onProgress: DownloadOptions['onProgress']): Promise<boolean> {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
@@ -169,6 +170,8 @@ export class NsisUpdater extends BaseUpdater {
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: downloadUpdateOptions.requestHeaders,
+        onProgress,
+        cancellationToken: downloadUpdateOptions.cancellationToken
       })
         .download(blockMapDataList[0], blockMapDataList[1])
       return false
@@ -183,7 +186,7 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>, downloadUpdateOptions: DownloadUpdateOptions, onProgress: DownloadOptions['onProgress']): Promise<boolean> {
     if (packageInfo.blockMapSize == null) {
       return true
     }
@@ -196,6 +199,8 @@ export class NsisUpdater extends BaseUpdater {
         newFile: packagePath,
         requestHeaders: this.requestHeaders,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+        onProgress,
+        cancellationToken: downloadUpdateOptions.cancellationToken
       })
         .download()
     }

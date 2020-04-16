@@ -1,4 +1,4 @@
-import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions } from "builder-util-runtime"
+import { BlockMapDataHolder, createHttpError, DigestTransform, HttpExecutor, configureRequestUrl, configureRequestOptions, DownloadOptions, ProgressCallbackTransform, CancellationToken } from "builder-util-runtime"
 import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, open } from "fs-extra"
 import { createWriteStream } from "fs"
@@ -18,6 +18,8 @@ export interface DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 
   readonly isUseMultipleRangeRequest?: boolean
+  readonly onProgress: DownloadOptions['onProgress']
+  readonly cancellationToken: CancellationToken
 }
 
 export abstract class DifferentialDownloader {
@@ -115,10 +117,10 @@ export abstract class DifferentialDownloader {
 
   private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
-    fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
+    fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
     const newFileFd = await open(this.options.newFile, "w")
-    fdList.push({descriptor: newFileFd, path: this.options.newFile})
-    const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
+    fdList.push({ descriptor: newFileFd, path: this.options.newFile })
+    const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
     await new Promise((resolve, reject) => {
       const streams: Array<any> = []
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
@@ -144,6 +146,19 @@ export abstract class DifferentialDownloader {
       })
 
       streams.push(fileOut)
+
+      if (this.options.onProgress && this.options.cancellationToken) {
+        let contentLength = 0;
+        for (const task of tasks) {
+          const length = task.end - task.start
+          if (task.kind === OperationKind.DOWNLOAD) {
+            contentLength += length
+          }
+        }
+        if (contentLength) {
+          streams.push(new ProgressCallbackTransform(contentLength, this.options.cancellationToken, this.options.onProgress));
+        }
+      }
 
       let lastStream = null
       for (const stream of streams) {

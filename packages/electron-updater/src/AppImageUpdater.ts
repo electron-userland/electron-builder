@@ -49,6 +49,8 @@ export class AppImageUpdater extends BaseUpdater {
             newFile: updateFile,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             requestHeaders: downloadUpdateOptions.requestHeaders,
+            onProgress: downloadOptions.onProgress,
+            cancellationToken: downloadUpdateOptions.cancellationToken
           })
             .download()
         }
@@ -105,7 +107,7 @@ export class AppImageUpdater extends BaseUpdater {
     }
     else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], {env})
+      execFileSync(destination, [], { env })
     }
     return true
   }
