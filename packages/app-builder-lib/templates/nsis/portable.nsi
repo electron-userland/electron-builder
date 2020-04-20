@@ -7,6 +7,9 @@ AutoCloseWindow True
 RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
 
 Function .onInit
+  !ifndef SPLASH_IMAGE
+    SetSilent silent
+  !endif
   !insertmacro check64BitAndSetRegView
 FunctionEnd
 
