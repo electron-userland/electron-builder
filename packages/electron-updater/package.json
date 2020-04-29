@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "4.2.4",
+  "version": "4.3.1",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
@@ -18,7 +18,7 @@
     "js-yaml": "^3.13.1",
     "lazy-val": "^1.0.4",
     "lodash.isequal": "^4.5.0",
-    "semver": "^7.1.3"
+    "semver": "^7.3.2"
   },
   "devDependencies": {
     "@types/fs-extra": "^8.1.0",
