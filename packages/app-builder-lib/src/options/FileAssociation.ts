@@ -43,4 +43,10 @@ export interface FileAssociation {
    * *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
    */
   readonly isPackage?: boolean
+
+    /**
+   * *macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.
+   * @default Default
+   */
+  readonly rank?: string
 }

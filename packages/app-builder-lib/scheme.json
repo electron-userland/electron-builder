@@ -997,6 +997,11 @@
           "default": "Editor",
           "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
           "type": "string"
+        },
+        "rank": {
+          "default": "Default",
+          "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
+          "type": "string"
         }
       },
       "required": [
