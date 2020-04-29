@@ -76,10 +76,11 @@ export default class AppXTarget extends Target {
     await packager.info.callAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
+    const signToolArch = (arch === Arch.arm64 ? "x64" : Arch[arch])
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
-      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makepri.exe"))
 
       const assetRoot = stageDir.getTempFile("appx/assets")
       await emptyDir(assetRoot)
@@ -110,7 +111,7 @@ export default class AppXTarget extends Target {
     if (this.options.makeappxArgs != null) {
       makeAppXArgs.push(...this.options.makeappxArgs)
     }
-    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs)
+    await vm.exec(vm.toVmFile(path.join(vendorPath, "windows-10", signToolArch, "makeappx.exe")), makeAppXArgs)
     await packager.sign(artifactPath)
 
     await stageDir.cleanup()
