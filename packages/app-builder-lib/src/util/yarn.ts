@@ -86,13 +86,13 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   const npmUserAgent = process.env["npm_config_user_agent"]
   const isYarn2 = npmUserAgent != null && npmUserAgent.startsWith("yarn/2.")
   if (!isYarn2) {
+    if (process.env.NPM_NO_BIN_LINKS === "true") {
+      execArgs.push("--no-bin-links")
+    }
     execArgs.push("--production")
   }
 
   if (!isRunningYarn(execPath)) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
-      execArgs.push("--no-bin-links")
-    }
     execArgs.push("--cache-min", "999999999")
   }
 
