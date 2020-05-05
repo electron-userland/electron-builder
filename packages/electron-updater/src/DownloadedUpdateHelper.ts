@@ -48,7 +48,7 @@ export class DownloadedUpdateHelper {
 
     // update has already been downloaded from some previous app launch
     const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
-    if (cachedUpdateFile == null) {
+    if (cachedUpdateFile === null) {
       return null
     }
     logger.info(`Update has already been downloaded to ${updateFile}).`)
@@ -106,7 +106,7 @@ export class DownloadedUpdateHelper {
       return null
     }
 
-    if (cachedInfo.fileName == null) {
+    if (cachedInfo.fileName === null || cachedInfo.fileName === undefined) {
       logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
       return null
