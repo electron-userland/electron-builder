@@ -48,7 +48,7 @@ export class DownloadedUpdateHelper {
 
     // update has already been downloaded from some previous app launch
     const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
-    if (cachedUpdateFile == null) {
+    if (cachedUpdateFile === null) {
       return null
     }
     logger.info(`Update has already been downloaded to ${updateFile}).`)
