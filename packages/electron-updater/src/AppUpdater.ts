@@ -305,7 +305,7 @@ export abstract class AppUpdater extends EventEmitter {
   private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${latestVersion}"`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`, "ERR_UPDATER_INVALID_VERSION")
     }
 
     const currentVersion = this.currentVersion
