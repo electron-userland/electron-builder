@@ -678,8 +678,8 @@ export interface DownloadExecutorTask {
 }
 
 export interface DownloadNotification {
-  body: string;
-  title: string;
+  body: string
+  title: string
 }
 
 /** @private */
