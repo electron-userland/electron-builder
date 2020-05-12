@@ -1,8 +1,8 @@
 See [publish configuration](configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
-    
+
 !!! info "Code signing is required on macOS"
     macOS application must be [signed](code-signing.md) in order for auto updating to work.
-    
+
 ## Auto-updatable Targets
 
 * macOS: DMG.
@@ -35,7 +35,7 @@ All these targets are default, custom configuration is not required. (Though it 
     ```js tab="JavaScript"
     const { autoUpdater } = require("electron-updater")
     ```
-    
+
     ```js tab="ES2015"
     import { autoUpdater } from "electron-updater"
     ```
@@ -51,7 +51,7 @@ All these targets are default, custom configuration is not required. (Though it 
 !!! example "Example in TypeScript using system notifications"
     ```typescript
     import { autoUpdater } from "electron-updater"
-    
+
     export default class AppUpdater {
       constructor() {
         const log = require("electron-log")
@@ -217,23 +217,23 @@ Emitted on progress.
 <a name="AppUpdater"></a>
 #### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>  
+**Extends**: <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
 **Properties**
 
 * <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
 * <code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true` Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
-  
+
     Applicable only on Windows and Linux.
-  
+
 * <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
-  
+
     If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
-  
+
 * <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
 * <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
 
     Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
-    
+
 * <code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.
 * <code id="AppUpdater-channel">channel</code> String - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
 * <code id="AppUpdater-requestHeaders">requestHeaders</code> [key: string]: string - The request headers.
@@ -282,6 +282,8 @@ Configure update provider. If value is `string`, [GenericServerOptions](configur
 **`appUpdater.channel` (getter and setter)**
 
 Define the channel which the Auto-Updater will follow (see [the auto-update with channels tutorial](tutorials/release-using-channels.md#release_using_channels)) using `appUpdater.channel = 'beta'` or get the current channel with `currentChannel = appUpdater.channel`.
+
+Please note that if you update this property then `allowDowngrade` will automatically be set to `true`. If you do not want this behaviour then you can change `allowDowngrade` after the `channel` property is set.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 **`appUpdater.quitAndInstall(isSilent, isForceRunAfter)`**
