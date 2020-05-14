@@ -58,7 +58,7 @@ export class DmgTarget extends Target {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
     await spawn("hdiutil", addLogLevel(args))
-    if (this.options.internetEnabled && parseInt(require("os").split(".")[0], 10) < 19) {
+    if (this.options.internetEnabled && parseInt(require("os").release().split(".")[0], 10) < 19) {
       await exec("hdiutil", addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 
