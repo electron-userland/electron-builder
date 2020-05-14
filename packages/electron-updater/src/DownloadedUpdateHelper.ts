@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import isEqual from "lodash.isequal"
 import { Logger, ResolvedUpdateFileInfo } from "./main"
-import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
+import { pathExists, readJson, emptyDir, outputJson, unlink, pathExistsSync } from "fs-extra"
 import * as path from "path"
 
 /** @private **/
@@ -48,7 +48,7 @@ export class DownloadedUpdateHelper {
 
     // update has already been downloaded from some previous app launch
     const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
-    if (cachedUpdateFile == null) {
+    if (cachedUpdateFile === null) {
       return null
     }
     logger.info(`Update has already been downloaded to ${updateFile}).`)
@@ -90,23 +90,36 @@ export class DownloadedUpdateHelper {
     }
   }
 
+  /**
+   * Returns "update-info.json" which is created in the update cache directory's "pending" subfolder after the first update is downloaded.  If the update file does not exist then the cache is cleared and recreated.  If the update file exists then its properties are validated.
+   * @param fileInfo
+   * @param logger
+   */
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
-    let cachedInfo: CachedUpdateInfo
-    const updateInfoFile = this.getUpdateInfoFile()
-    try {
-      cachedInfo = await readJson(updateInfoFile)
+    const updateInfoFilePath: string = this.getUpdateInfoFile()
+
+    const doesUpdateInfoFileExist = await pathExistsSync(updateInfoFilePath);
+    if(!doesUpdateInfoFileExist) {
+      return null;
     }
-    catch (e) {
+
+
+    let cachedInfo: CachedUpdateInfo
+    try {
+      cachedInfo = await readJson(updateInfoFilePath)
+    }
+    catch (error) {
       let message = `No cached update info available`
-      if (e.code !== "ENOENT") {
+      if (error.code !== "ENOENT") {
         await this.cleanCacheDirForPendingUpdate()
-        message += ` (error on read: ${e.message})`
+        message += ` (error on read: ${error.message})`
       }
       logger.info(message)
       return null
     }
 
-    if (cachedInfo.fileName == null) {
+    const isCachedInfoFileNameValid = cachedInfo?.fileName !== null ?? false
+    if (!isCachedInfoFileNameValid) {
       logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
       return null
