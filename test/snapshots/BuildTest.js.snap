@@ -608,9 +608,6 @@ Object {
             "Makefile": Object {
               "size": 100,
             },
-            "Readme.md": Object {
-              "size": 1768,
-            },
             "index.js": Object {
               "size": 2065,
             },
@@ -988,7 +985,7 @@ Object {
         "mkdirp-classic": Object {
           "files": Object {
             "LICENSE": Object {
-              "size": 1079,
+              "size": 1118,
             },
             "index.js": Object {
               "size": 2630,
@@ -1198,9 +1195,6 @@ Object {
             },
             "Makefile": Object {
               "size": 119,
-            },
-            "Readme.md": Object {
-              "size": 585,
             },
             "lib": Object {
               "files": Object {
@@ -1470,10 +1464,10 @@ Object {
               "size": 1081,
             },
             "index.js": Object {
-              "size": 1585,
+              "size": 1670,
             },
             "package.json": Object {
-              "size": 500,
+              "size": 774,
             },
           },
         },
@@ -1618,7 +1612,7 @@ Object {
               "size": 1078,
             },
             "index.js": Object {
-              "size": 9455,
+              "size": 9523,
             },
             "package.json": Object {
               "size": 590,

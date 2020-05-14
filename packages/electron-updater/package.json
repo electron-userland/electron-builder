@@ -12,7 +12,7 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.1.0",
+    "@types/semver": "^7.2.0",
     "builder-util-runtime": "workspace:*",
     "fs-extra": "^9.0.0",
     "js-yaml": "^3.13.1",

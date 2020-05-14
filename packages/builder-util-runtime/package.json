@@ -11,7 +11,7 @@
     "out"
   ],
   "engines": {
-    "node": ">=8.2.0"
+    "node": ">=8.2.5"
   },
   "dependencies": {
     "debug": "^4.1.1",
