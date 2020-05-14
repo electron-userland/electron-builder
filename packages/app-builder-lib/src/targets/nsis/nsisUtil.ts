@@ -4,7 +4,6 @@ import { PackageFileInfo } from "builder-util-runtime"
 import { getBinFromUrl } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra"
-import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
@@ -13,14 +12,14 @@ import zlib from "zlib"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
-export const NSIS_PATH = new Lazy(() => {
+export const NSIS_PATH = () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
   if (custom != null && custom.length > 0) {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
   return getBinFromUrl("nsis", "3.0.4.1", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
-})
+}
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -90,7 +89,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH.value
+    promise = NSIS_PATH()
       .then(it => {
         const outFile = path.join(appOutDir, "resources", "elevate.exe")
         const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
