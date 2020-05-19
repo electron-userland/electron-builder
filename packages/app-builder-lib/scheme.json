@@ -162,6 +162,10 @@
             "string"
           ]
         },
+        "customExtensionsPath": {
+          "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
+          "type": "string"
+        },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
           "type": [
@@ -993,6 +997,11 @@
           "default": "Editor",
           "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
           "type": "string"
+        },
+        "rank": {
+          "default": "Default",
+          "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
+          "type": "string"
         }
       },
       "required": [
@@ -1561,9 +1570,6 @@
         "target": {
           "anyOf": [
             {
-              "$ref": "#/definitions/TargetConfiguration"
-            },
-            {
               "items": {
                 "anyOf": [
                   {
@@ -1575,6 +1581,9 @@
                 ]
               },
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [
@@ -2112,6 +2121,46 @@
             "string"
           ]
         },
+        "helperEHBundleId": {
+          "default": "${appBundleIdentifier}.helper.EH",
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "default": "${appBundleIdentifier}.helper.NP",
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperRendererBundleId": {
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "icon": {
           "default": "build/icon.icns",
           "description": "The path to application icon.",
@@ -2607,6 +2656,46 @@
         "helperBundleId": {
           "default": "${appBundleIdentifier}.helper",
           "description": "The bundle identifier to use in the application helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperEHBundleId": {
+          "default": "${appBundleIdentifier}.helper.EH",
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "default": "${appBundleIdentifier}.helper.NP",
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperRendererBundleId": {
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
           "type": [
             "null",
             "string"
@@ -3725,6 +3814,20 @@
             "string"
           ]
         },
+        "mustClose": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Identifies applications that must be closed before the package is installed.\\n\\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
+        },
         "overwriteAction": {
           "anyOf": [
             {
@@ -3937,6 +4040,13 @@
             "user"
           ],
           "type": "string"
+        },
+        "splashImage": {
+          "description": "The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "unicode": {
           "default": true,
@@ -4344,7 +4454,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
@@ -5157,9 +5267,6 @@
         "target": {
           "anyOf": [
             {
-              "$ref": "#/definitions/TargetConfiguration"
-            },
-            {
               "items": {
                 "anyOf": [
                   {
@@ -5171,6 +5278,9 @@
                 ]
               },
               "type": "array"
+            },
+            {
+              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [
@@ -5281,6 +5391,20 @@
           "type": "null"
         }
       ]
+    },
+    "appxManifestCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Appx manifest created on disk - not packed into .appx package yet."
     },
     "artifactBuildCompleted": {
       "anyOf": [
@@ -5578,7 +5702,8 @@
       ]
     },
     "forceCodeSigning": {
-      "description": "Whether to fail if app will be not code signed.",
+      "default": false,
+      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
       "type": "boolean"
     },
     "framework": {
@@ -5867,11 +5992,6 @@
           ]
         }
       ]
-    },
-    "readonly": {
-      "default": false,
-      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
-      "type": "boolean"
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",

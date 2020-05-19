@@ -62,7 +62,7 @@ export function parseJson(result: Promise<string | null>) {
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string | null> {
+  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : Buffer.from(JSON.stringify(data))
     if (encodedData != null) {
@@ -101,6 +101,7 @@ export abstract class HttpExecutor<REQUEST> {
   }
 
   // noinspection JSUnusedLocalSymbols
+  // eslint-disable-next-line
   protected addRedirectHandlers(request: any, options: RequestOptions, reject: (error: Error) => void, redirectCount: number, handler: (options: RequestOptions) => void) {
     // not required for NodeJS
   }
@@ -155,6 +156,7 @@ Please double check that your authentication token is correct. Due to security r
     response.setEncoding("utf8")
 
     let data = ""
+    response.on("error", reject)
     response.on("data", (chunk: string) => data += chunk)
     response.on("end", () => {
       try {
@@ -248,6 +250,10 @@ Please double check that your authentication token is correct. Due to security r
         options.callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
         return
       }
+
+      // It is possible for the response stream to fail, e.g. when a network is lost while
+      // response stream is in progress. Stop waiting and reject so consumer can catch the error.
+      response.on("error", options.callback)
 
       // this code not relevant for Electron (redirect event instead handled)
       const redirectUrl = safeGetHeader(response, "location")
@@ -449,11 +455,9 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.method = method
   }
 
-  let headers = options.headers
-  if (headers == null) {
-    headers = {}
-    options.headers = headers
-  }
+  options.headers = {...options.headers}
+  const headers = options.headers
+
   if (token != null) {
     (headers as any).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }

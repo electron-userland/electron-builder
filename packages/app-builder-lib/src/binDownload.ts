@@ -36,14 +36,16 @@ export function getBinFromUrl(name: string, version: string, checksum: string): 
 }
 
 export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
-  let promise = versionToPromise.get(name)
-  // if rejected, we will try to download again
+  // Old cache is ignored if cache environment variable changes
+  const cacheName = process.env.ELECTRON_BUILDER_CACHE + name;
+  let promise = versionToPromise.get(cacheName);// if rejected, we will try to download again
+
   if (promise != null) {
     return promise
   }
 
   promise = doGetBin(name, url, checksum)
-  versionToPromise.set(name, promise)
+  versionToPromise.set(cacheName, promise)
   return promise
 }
 

@@ -3,8 +3,7 @@ import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from ".."
-
-const normalizeData = require("normalize-package-data")
+import normalizeData from "normalize-package-data"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {

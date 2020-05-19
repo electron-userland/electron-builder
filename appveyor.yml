@@ -1,8 +1,8 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 platform: x64
 
 cache:
-  - node_modules
+  - .yarn
   - '%LOCALAPPDATA%\electron\Cache'
   - '%LOCALAPPDATA%\electron-builder\cache'
 
@@ -10,10 +10,12 @@ environment:
   TEST_FILES: ExtraBuildTest,BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest,oneClickInstallerTest,installerTest,appxTest,msiTest,protonTest
 
 install:
-  - ps: Install-Product node 10 x64
-  - yarn --frozen-lockfile
+  - ps: Install-Product node 12 x64
+  - set YARN_CHECKSUM_BEHAVIOR=ignore
+  - node .yarn/releases/yarn-sources.js install
 
 build: off
 
 test_script:
-  - yarn test
+  - node .yarn/releases/yarn-sources.js pretest
+  - node .yarn/releases/yarn-sources.js node ./test/out/helpers/runTests.js

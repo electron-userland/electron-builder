@@ -16,7 +16,7 @@ export interface PartListDataTask {
   readonly end: number
 }
 
-export function copyData(task: Operation, out: Writable, oldFileFd: number, reject: (error: Error) => void, resolve: () => void) {
+export function copyData(task: Operation, out: Writable, oldFileFd: number, reject: (error: Error) => void, resolve: () => void): void {
   const readStream = createReadStream("", {
     fd: oldFileFd,
     autoClose: false,
@@ -49,12 +49,12 @@ export class DataSplitter extends Writable {
     this.ignoreByteCount = this.boundaryLength - 2
   }
 
-  get isFinished() {
+  get isFinished(): boolean {
     return this.partIndex === this.partIndexToLength.length
   }
 
   // noinspection JSUnusedGlobalSymbols
-  _write(data: Buffer, encoding: string, callback: (error?: Error) => void) {
+  _write(data: Buffer, encoding: string, callback: (error?: Error) => void): void {
     if (this.isFinished) {
       console.error(`Trailing ignored data: ${data.length} bytes`)
       return
@@ -156,9 +156,9 @@ export class DataSplitter extends Writable {
     }
   }
 
-  private copyExistingData(index: number, end: number) {
+  private copyExistingData(index: number, end: number): Promise<void> {
     return new Promise((resolve, reject) => {
-      const w = () => {
+      const w = (): void => {
         if (index === end) {
           resolve()
           return
@@ -198,7 +198,7 @@ export class DataSplitter extends Writable {
 
   private actualPartLength = 0
 
-  private onPartEnd() {
+  private onPartEnd(): void {
     const expectedLength = this.partIndexToLength[this.partIndex - 1]
     if (this.actualPartLength !== expectedLength) {
       throw newError(`Expected length: ${expectedLength} differs from actual: ${this.actualPartLength}`, "ERR_DATA_SPLITTER_LENGTH_MISMATCH")

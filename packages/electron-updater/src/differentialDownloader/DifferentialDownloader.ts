@@ -79,7 +79,7 @@ export abstract class DifferentialDownloader {
 
   private downloadFile(tasks: Array<Operation>): Promise<any> {
     const fdList: Array<OpenedFile> = []
-    const closeFiles = () => {
+    const closeFiles = (): Promise<Array<void>> => {
       return Promise.all(fdList.map(openedFile => {
         return close(openedFile.descriptor)
           .catch(e => {
@@ -172,7 +172,7 @@ export abstract class DifferentialDownloader {
       const requestOptions = this.createRequestOptions();
       (requestOptions as any).redirect = "manual"
 
-      w = (index: number) => {
+      w = (index: number): void => {
         if (index >= tasks.length) {
           if (this.fileMetadataBuffer != null) {
             firstStream.write(this.fileMetadataBuffer)
@@ -228,7 +228,7 @@ export abstract class DifferentialDownloader {
     })
   }
 
-  protected async readRemoteBytes(start: number, endInclusive: number) {
+  protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
     const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
     const requestOptions = this.createRequestOptions()
     requestOptions.headers!!.range = `bytes=${start}-${endInclusive}`
@@ -244,7 +244,7 @@ export abstract class DifferentialDownloader {
     return buffer
   }
 
-  private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void) {
+  private request(requestOptions: RequestOptions, dataHandler: (chunk: Buffer) => void): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = this.httpExecutor.createRequest(requestOptions, response => {
         if (!checkIsRangesSupported(response, reject)) {
@@ -260,12 +260,12 @@ export abstract class DifferentialDownloader {
   }
 }
 
-function formatBytes(value: number, symbol = " KB") {
+function formatBytes(value: number, symbol = " KB"): string {
   return new Intl.NumberFormat("en").format((value / 1024).toFixed(2) as any) + symbol
 }
 
 // safety
-function removeQuery(url: string) {
+function removeQuery(url: string): string {
   const index = url.indexOf("?")
   return index < 0 ? url : url.substring(0, index)
 }

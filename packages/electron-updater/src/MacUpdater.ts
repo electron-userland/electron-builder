@@ -42,7 +42,7 @@ export class MacUpdater extends AppUpdater {
       this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${zipFileInfo.url.href})`)
     })
 
-    function getServerUrl() {
+    function getServerUrl(): string {
       const address = server.address() as AddressInfo
       return `http://127.0.0.1:${address.port}`
     }

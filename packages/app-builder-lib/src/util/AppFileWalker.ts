@@ -80,6 +80,7 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
   }
 
   // noinspection JSUnusedGlobalSymbols
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
       // https://github.com/electron-userland/electron-builder/issues/1539

@@ -12,6 +12,18 @@ Object {
 }
 `;
 
+exports[`portable - splashImage 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßWPortable.1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`portable 1`] = `
 Object {
   "win": Array [

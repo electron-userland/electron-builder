@@ -77,6 +77,7 @@ export class GitHubPublisher extends HttpPublisher {
       this.releaseType = "prerelease"
     }
     else {
+      // noinspection PointlessBooleanExpressionJS
       this.releaseType = (options as any).draft === false ? "release" : "draft"
     }
   }
@@ -205,6 +206,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private createRelease() {
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
+      // eslint-disable-next-line @typescript-eslint/camelcase
       tag_name: this.tag,
       name: this.version,
       draft: this.releaseType === "draft",
@@ -247,7 +249,7 @@ export class GitHubPublisher extends HttpPublisher {
     log.warn({releaseId: release.id}, "cannot delete release")
   }
 
-  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
+  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
     // host can contains port, but node http doesn't support host as url does
     const baseUrl = parseUrl(`https://${this.info.host || "api.github.com"}`)
     return parseJson(httpExecutor.request(configureRequestOptions({

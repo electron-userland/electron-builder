@@ -267,6 +267,7 @@
       <w>napi</w>
       <w>netlify</w>
       <w>nevershow</w>
+      <w>nightlies</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
@@ -309,6 +310,7 @@
       <w>progexe</w>
       <w>proguard</w>
       <w>promisify</w>
+      <w>provisionprofile</w>
       <w>psexec</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>
@@ -413,6 +415,7 @@
       <w>yaml</w>
       <w>yargs</w>
       <w>yarnclean</w>
+      <w>yarnrc</w>
       <w>yauzl</w>
       <w>zenity</w>
       <w>zisofs</w>

@@ -3,7 +3,6 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-
 test.ifAll.ifNotCiMac("Squirrel.Windows", app({
   targets: Platform.WINDOWS.createTarget(["squirrel"]),
   config: {

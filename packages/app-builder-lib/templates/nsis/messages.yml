@@ -13,6 +13,7 @@ win7Required:
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
+  zh_TW: 需要 Windows 7 或以上系統
   tr_TR: Windows 7 ve üstü gereklidir
   sv_SE: Windows 7 eller högre krävs
   no: Windows 7 og over er nødvendig
@@ -33,6 +34,7 @@ x64WinRequired:
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
+  zh_TW: 需要 64 位 Windows 系統
   tr_TR: 64 bit Windows gerekli
   sv_SE: 64-bitars Windows krävs
   no: 64-biters Windows er nødvendig
@@ -52,7 +54,8 @@ appRunning:
   hu: "${PRODUCT_NAME} éppen fut. \nKattiontson az «OK»-ra a bezárásához."
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
-  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击 OK 关闭."
+  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
+  zh_TW: "${PRODUCT_NAME} 正在運行.\n點擊“確定”關閉."
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
   sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
   no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
@@ -73,6 +76,7 @@ installing:
   pl: Zaczekaj na ukończenie instalacji...
   pt_BR: Instalando, por favor aguarde...
   zh_CN: 正在安装, 请稍候...
+  zh_TW: 正在安裝, 請稍候...
   tr_TR: Yükleniyor, lütfen bekleyin...
   sv_SE: Installerar, vänligen vänta...
   no: Installerer, vennligst vent...
@@ -93,6 +97,7 @@ areYouSureToUninstall:
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
+  zh_TW: 確定卸載 ${PRODUCT_NAME} 嗎？
   tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
   sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
   no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?

@@ -6,8 +6,7 @@ import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-build
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
-
-const archiver = require("archiver")
+import archiver from "archiver"
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")

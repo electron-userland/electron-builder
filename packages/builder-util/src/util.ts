@@ -7,8 +7,12 @@ import { createHash } from "crypto"
 import _debug from "debug"
 import { safeDump } from "js-yaml"
 import * as path from "path"
-import "source-map-support/register"
+import sourceMapSupport from "source-map-support"
 import { debug, log } from "./log"
+
+if (process.env.JEST_WORKER_ID == null) {
+  sourceMapSupport.install()
+}
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
@@ -186,7 +190,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
         clearTimeout(timeout)
       }
       finally {
-        reject(error.stack || error.toString())
+        reject(error)
       }
     })
 
@@ -264,7 +268,7 @@ export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | 
 }
 
 export function isTokenCharValid(token: string) {
-  return /^[.\w\/=+-]+$/.test(token)
+  return /^[.\w/=+-]+$/.test(token)
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
@@ -316,7 +320,7 @@ export function isPullRequest() {
     return value && value !== "false"
   }
 
-  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
 }
 
 export function isEnvTrue(value: string | null | undefined) {
@@ -334,36 +338,61 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const command = appBuilderPath
-    const env: any = {
-      ...process.env,
-      SZA_PATH: path7za,
-      FORCE_COLOR: chalk.enabled ? "1" : "0",
-    }
-    const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
-    if (cacheEnv != null && cacheEnv.length > 0) {
-      env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
-    }
+export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
+  const command = appBuilderPath
+  const env: any = {
+    ...process.env,
+    SZA_PATH: path7za,
+    FORCE_COLOR: chalk.level === 0 ? "0" : "1",
+  }
+  const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
+  if (cacheEnv != null && cacheEnv.length > 0) {
+    env.ELECTRON_BUILDER_CACHE = path.resolve(cacheEnv)
+  }
 
-    if (extraOptions.env != null) {
-      Object.assign(env, extraOptions.env)
-    }
+  if (extraOptions.env != null) {
+    Object.assign(env, extraOptions.env)
+  }
 
-    const childProcess = doSpawn(command, args, {
-      env,
-      stdio: ["ignore", "pipe", process.stdout],
-      ...extraOptions,
-    })
-    if (childProcessConsumer != null) {
-      childProcessConsumer(childProcess)
-    }
-    handleProcess("close", childProcess, command, resolve, error => {
-      if (error instanceof ExecError && error.exitCode === 2) {
-        error.alreadyLogged = true
+  function runCommand() {
+    return new Promise<string>((resolve, reject) => {
+      const childProcess = doSpawn(command, args, {
+        env,
+        stdio: ["ignore", "pipe", process.stdout],
+        ...extraOptions
+      })
+      if (childProcessConsumer != null) {
+        childProcessConsumer(childProcess)
       }
-      reject(error)
+      handleProcess("close", childProcess, command, resolve, error => {
+        if (error instanceof ExecError && error.exitCode === 2) {
+          error.alreadyLogged = true
+        }
+        reject(error)
+      })
     })
-  })
+  }
+
+  if (maxRetries === 0) {
+    return runCommand()
+  }
+  else {
+    return retry(runCommand, maxRetries, 1000)
+  }
+}
+
+async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+  try {
+    return await task()
+  }
+  catch (error) {
+    log.info(`Above command failed, retrying ${retriesLeft} more times`)
+    if (retriesLeft > 0) {
+      await new Promise(resolve => setTimeout(resolve, interval))
+      return await retry(task, retriesLeft - 1, interval)
+    }
+    else {
+      throw error
+    }
+  }
 }

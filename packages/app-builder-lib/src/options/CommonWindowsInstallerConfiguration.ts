@@ -65,7 +65,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
       menuCategory = sanitizeFileName(companyName)
     }
     else {
-      menuCategory = (options.menuCategory as string).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")
+      menuCategory = (options.menuCategory as string).split(/[/\\]/).map(it => sanitizeFileName(it)).join("\\")
     }
   }
 

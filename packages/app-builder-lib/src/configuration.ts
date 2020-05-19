@@ -159,7 +159,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
    * @default false
    */
-  readonly ?: boolean
+  readonly forceCodeSigning?: boolean
 
   /**
    * *libui-based frameworks only* The version of NodeJS you are packaging for.
@@ -198,7 +198,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild).
    */
   readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
-
+  /**
+   * Appx manifest created on disk - not packed into .appx package yet.
+   */
+  readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
   /**
    * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
    */

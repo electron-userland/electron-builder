@@ -1,4 +1,4 @@
-osx_image: xcode11.2
+osx_image: xcode11.3
 language: node_js
 
 env:
@@ -8,30 +8,31 @@ env:
 matrix:
   include:
     - os: osx
-      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macIconTest
+      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macPackagerTest,protonTest
       node_js: "12"
 
     - os: osx
-      env: TEST_FILES=CodeSignTest,macArchiveTest,macPackagerTest
+      env: TEST_FILES=CodeSignTest,macArchiveTest,macIconTest
       node_js: "12"
 
     - os: osx
-      env: TEST_FILES=masTest,dmgTest,protonTest
+      env: TEST_FILES=masTest,dmgTest
       node_js: "12"
 
 cache:
   yarn: true
   directories:
-    - node_modules
+    - .yarn
     - $HOME/Library/Caches/electron
     - $HOME/Library/Caches/electron-builder
     - /tmp/jest-electron-builder-tests
 
 install:
-  - yarn --frozen-lockfile
+  - YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-sources.js install
 
 script:
-  - yarn test
+  - node .yarn/releases/yarn-sources.js pretest
+  - node .yarn/releases/yarn-sources.js node ./test/out/helpers/runTests.js
 
 branches:
   except:

@@ -97,7 +97,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     processTargets(Platform.current(), [])
   }
 
-  const result = {...args}
+  const result: any = {...args}
   result.targets = targets
 
   delete result.dir
@@ -153,6 +153,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     // ability to disable code sign using -c.mac.identity=null
     if (config.mac != null) {
       coerceValue(config.mac, "identity")
+    }
+
+    // fix Boolean type by coerceTypes
+    if (config.nsis != null) {
+      coerceTypes(config.nsis)
+    }
+    if (config.nsisWeb != null) {
+      coerceTypes(config.nsisWeb)
     }
   }
 

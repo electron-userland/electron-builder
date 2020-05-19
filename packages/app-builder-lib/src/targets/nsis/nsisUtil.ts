@@ -4,7 +4,6 @@ import { PackageFileInfo } from "builder-util-runtime"
 import { getBinFromUrl } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
 import { unlink } from "fs-extra"
-import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
@@ -13,14 +12,14 @@ import zlib from "zlib"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 
-export const NSIS_PATH = new Lazy(() => {
+export const NSIS_PATH = () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
   if (custom != null && custom.length > 0) {
     return Promise.resolve(custom.trim())
   }
   // noinspection SpellCheckingInspection
-  return getBinFromUrl("nsis", "3.0.4", "MNETIF8tex6+oiA0mgBi3/XKNH+jog4IBUp/F+Or7zUEhIP+c7cRjb9qGuBIofAXQ51z3RpyCfII4aPadsZB5Q==")
-})
+  return getBinFromUrl("nsis", "3.0.4.1", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
+}
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -90,7 +89,7 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH.value
+    promise = NSIS_PATH()
       .then(it => {
         const outFile = path.join(appOutDir, "resources", "elevate.exe")
         const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
@@ -105,8 +104,7 @@ export class CopyElevateHelper {
 }
 
 class BinaryReader {
-
-  private _buffer: Buffer
+  private readonly _buffer: Buffer
   private _position: number
 
   constructor(buffer: Buffer) {
@@ -165,7 +163,7 @@ class BinaryReader {
 }
 
 export class UninstallerReader {
-
+  // noinspection SpellCheckingInspection
   static exec(installerPath: string, uninstallerPath: string) {
     const buffer = fs.readFileSync(installerPath)
     const reader = new BinaryReader(buffer)
@@ -174,7 +172,8 @@ export class UninstallerReader {
       throw new Error("Invalid 'MZ' signature.")
     }
     reader.skip(58)
-    reader.skip(reader.uint32() - reader.position) // e_lfanew
+    // e_lfanew
+    reader.skip(reader.uint32() - reader.position)
     // IMAGE_FILE_HEADER
     if (!reader.match([ 0x50, 0x45, 0x00, 0x00 ])) {
       throw new Error("Invalid 'PE' signature.")
@@ -221,18 +220,19 @@ export class UninstallerReader {
     if (nsisSize !== nsisReader.uint32()) {
       throw new Error("Size mismatch.")
     }
+
     let innerBuffer = null
     while (true) {
       let size = nsisReader.uint32()
-      if ((size & 0x80000000) === 0) {
+      const compressed = (size & 0x80000000) !== 0
+      size = size & 0x7FFFFFFF
+      if (size === 0 || (nsisReader.position + size) > nsisReader.length || nsisReader.position >= nsisReader.length) {
         break
       }
-      size &= 0x7FFFFFFF
-      if (size === 0 || nsisReader.position >= nsisReader.length) {
-        break
+      let buffer = nsisReader.bytes(size)
+      if (compressed) {
+        buffer = zlib.inflateRawSync(buffer)
       }
-      const compressedData = nsisReader.bytes(size)
-      const buffer = zlib.inflateRawSync(compressedData)
       const innerReader = new BinaryReader(buffer)
       innerReader.uint32() // ?
       if (innerReader.match(nsisSignature)) {

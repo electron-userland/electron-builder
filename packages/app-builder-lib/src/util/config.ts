@@ -7,6 +7,7 @@ import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadCo
 import { FileSet } from ".."
 import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const validateSchema = require("@develar/schema-utils")
 
 declare const PACKAGE_VERSION: string

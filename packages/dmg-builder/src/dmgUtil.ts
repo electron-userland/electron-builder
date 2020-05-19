@@ -1,9 +1,7 @@
 import { exec } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
-import { exists } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import * as path from "path"
-import { TmpDir } from "temp-file"
 
 export { DmgTarget } from "./dmg"
 
@@ -61,21 +59,6 @@ export async function computeBackground(packager: PlatformPackager<any>): Promis
   else {
     return path.join(getDmgTemplatePath(), "background.tiff")
   }
-}
-
-export async function transformBackgroundFileIfNeed(file: string, tmpDir: TmpDir): Promise<string> {
-  if (file.endsWith(".tiff") || file.endsWith(".TIFF")) {
-    return file
-  }
-
-  const retinaFile = file.replace(/\.([a-z]+)$/, "@2x.$1")
-  if (await exists(retinaFile)) {
-    const tiffFile = await tmpDir.getTempFile({suffix: ".tiff"})
-    await exec("tiffutil", ["-cathidpicheck", file, retinaFile, "-out", tiffFile])
-    return tiffFile
-  }
-
-  return file
 }
 
 /** @internal */

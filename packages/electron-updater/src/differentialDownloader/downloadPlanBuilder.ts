@@ -91,7 +91,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
 
 const isValidateOperationRange = process.env.DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES === "true"
 
-function validateAndAdd(operation: Operation, operations: Array<Operation>, checksum: string, index: number) {
+function validateAndAdd(operation: Operation, operations: Array<Operation>, checksum: string, index: number): void {
   if (isValidateOperationRange && operations.length !== 0) {
     const lastOperation = operations[operations.length - 1]
     if (lastOperation.kind === operation.kind && operation.start < lastOperation.end && operation.start > lastOperation.start) {
@@ -105,6 +105,7 @@ function validateAndAdd(operation: Operation, operations: Array<Operation>, chec
   operations.push(operation)
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger) {
   const checksumToOffset = new Map<string, number>()
   const checksumToSize = new Map<string, number>()
@@ -128,7 +129,7 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
   return {checksumToOffset, checksumToOldSize: checksumToSize}
 }
 
-function buildBlockFileMap(list: Array<BlockMapFile>) {
+function buildBlockFileMap(list: Array<BlockMapFile>): Map<string, BlockMapFile> {
   const result = new Map<string, BlockMapFile>()
   for (const item of list) {
     result.set(item.name, item)

@@ -7,13 +7,27 @@ WindowIcon Off
 AutoCloseWindow True
 RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
 
-SilentInstall silent
-
 Function .onInit
+  SetSilent silent
+
   !insertmacro check64BitAndSetRegView
 FunctionEnd
 
+Function .onGUIInit
+  InitPluginsDir
+
+  !ifdef SPLASH_IMAGE
+    File /oname=$PLUGINSDIR\splash.bmp "${SPLASH_IMAGE}"
+    BgImage::SetBg $PLUGINSDIR\splash.bmp
+    BgImage::Redraw
+  !endif
+FunctionEnd
+
 Section
+  !ifdef SPLASH_IMAGE
+    HideWindow
+  !endif
+
   StrCpy $INSTDIR "$TEMP\${UNPACK_DIR_NAME}"
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
@@ -58,6 +72,11 @@ Section
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_FILE", "$EXEPATH").r0'
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_APP_FILENAME", "${APP_FILENAME}").r0'
   ${StdUtils.GetAllParameters} $R0 0
+
+  !ifdef SPLASH_IMAGE
+    BgImage::Destroy
+  !endif
+
 	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0" $0
   SetErrorLevel $0
 

@@ -47,6 +47,11 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly addAutoLaunchExtension?: boolean
 
   /**
+   * Relative path to custom extensions xml to be included in an `appmanifest.xml`.
+   */
+  readonly customExtensionsPath?: string
+
+  /**
    * Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.
    * @default false
    */

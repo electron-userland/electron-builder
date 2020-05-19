@@ -10,7 +10,7 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  quitAndInstall(isSilent: boolean = false, isForceRunAfter: boolean = false): void {
+  quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
     const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
     if (isInstalled) {
@@ -69,7 +69,7 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
-  protected addQuitHandler() {
+  protected addQuitHandler(): void {
     if (this.quitHandlerAdded || !this.autoInstallOnAppQuit) {
       return
     }

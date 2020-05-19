@@ -15,7 +15,7 @@ export function getSignVendorPath() {
   return getBin("winCodeSign")
 }
 
-export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>
+export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration, packager?: WinPackager) => Promise<any>
 
 export interface WindowsSignOptions {
   readonly path: string
@@ -55,18 +55,14 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  function defaultExecutor(configuration: CustomWindowsSignTaskConfiguration) {
-    return doSign(configuration, packager)
-  }
-
-  const executor = resolveFunction(options.options.sign, "sign") || defaultExecutor
+  const executor = resolveFunction(options.options.sign, "sign") || doSign
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = {...options, hash, isNest}
     await executor({
       ...taskConfiguration,
       computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin)
-    })
+    }, packager)
     isNest = true
     if (taskConfiguration.resultOutputPath != null) {
       await rename(taskConfiguration.resultOutputPath, options.path)
@@ -110,18 +106,14 @@ export interface CertificateFromStoreInfo {
 
 export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
   const certificateSubjectName = options.certificateSubjectName
-  const certificateSha1 = options.certificateSha1
+  const certificateSha1 = options.certificateSha1 ? options.certificateSha1.toUpperCase() : options.certificateSha1
   // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
   // powershell can return object if the only item
   const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress"])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
-    if (certificateSubjectName != null) {
-      if (!certInfo.Subject.includes(certificateSubjectName)) {
-        continue
-      }
-    }
-    else if (certInfo.Thumbprint !== certificateSha1) {
+    if ((certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName))
+        || certificateSha1 != null && certInfo.Thumbprint.toUpperCase() !== certificateSha1) {
       continue
     }
 
@@ -142,7 +134,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}, all certs: ${rawResult}`)
 }
 
-async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
+export async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
 
@@ -170,13 +162,13 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, package
   }
   catch (e) {
     if (e.message.includes("The file is being used by another process") || e.message.includes("The specified timestamp server either could not be reached")) {
-      log.warn(`First attempt to code sign failed, another attempt will be made in 2 seconds: ${e.message}`)
+      log.warn(`First attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
       await new Promise((resolve, reject) => {
         setTimeout(() => {
           vm.exec(tool, args, {timeout, env})
             .then(resolve)
             .catch(reject)
-        }, 2000)
+        }, 15000)
       })
     }
     throw e

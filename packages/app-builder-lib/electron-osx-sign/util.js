@@ -5,10 +5,9 @@
 'use strict'
 
 const child = require('child_process')
-const fs = require('fs')
+const fs = require('fs-extra')
 const path = require('path')
 
-const Promise = require('bluebird-lst')
 const debug = require('debug')
 
 /**
@@ -52,20 +51,14 @@ module.exports.execFileAsync = function (file, args, options) {
   })
 }
 
-/** @function */
-const lstatAsync = module.exports.lstatAsync = Promise.promisify(fs.lstat)
-
-/** @function */
-const readdirAsync = module.exports.readdirAsync = Promise.promisify(fs.readdir)
-
 /**
  * This function returns a flattened list of elements from an array of lists.
  * @function
  * @param {*} list - List.
  * @returns Flattened list.
  */
-var flatList = module.exports.flatList = function (list) {
-  function populateResult (list) {
+module.exports.flatList = function (list) {
+  function populateResult(list) {
     if (!Array.isArray(list)) {
       result.push(list)
     } else if (list.length > 0) {
@@ -73,7 +66,7 @@ var flatList = module.exports.flatList = function (list) {
     }
   }
 
-  var result = []
+  let result = []
   populateResult(list)
   return result
 }
@@ -129,7 +122,7 @@ var detectElectronPlatformAsync = module.exports.detectElectronPlatformAsync = f
   return new Promise(function (resolve) {
     var appFrameworksPath = getAppFrameworksPath(opts)
     // The presence of Squirrel.framework identifies a Mac App Store build as used in https://github.com/atom/electron/blob/master/docs/tutorial/mac-app-store-submission-guide.md
-    return lstatAsync(path.join(appFrameworksPath, 'Squirrel.framework'))
+    return fs.lstat(path.join(appFrameworksPath, 'Squirrel.framework'))
       .then(function () {
         resolve('darwin')
       })
@@ -147,7 +140,7 @@ const isBinaryFile = require("isbinaryfile").isBinaryFile;
  * @param {string} filePath - Path to file.
  * @returns {Promise} Promise resolving file path or undefined.
  */
-var getFilePathIfBinaryAsync = module.exports.getFilePathIfBinaryAsync = function (filePath) {
+const getFilePathIfBinaryAsync = module.exports.getFilePathIfBinaryAsync = function (filePath) {
   return isBinaryFile(filePath)
     .then(function (isBinary) {
       return isBinary ? filePath : undefined
@@ -160,15 +153,14 @@ var getFilePathIfBinaryAsync = module.exports.getFilePathIfBinaryAsync = functio
  * @param {Object} opts - Options.
  * @returns {Promise} Promise.
  */
-module.exports.validateOptsAppAsync = function (opts) {
+module.exports.validateOptsAppAsync = async function (opts) {
   if (!opts.app) {
-    return Promise.reject(new Error('Path to aplication must be specified.'))
+    throw new Error('Path to aplication must be specified.')
   }
   if (path.extname(opts.app) !== '.app') {
-    return Promise.reject(new Error('Extension of application must be `.app`.'))
+    throw new Error('Extension of application must be `.app`.')
   }
-  return lstatAsync(opts.app)
-    .thenReturn()
+  await fs.lstat(opts.app)
 }
 
 /**
@@ -200,54 +192,45 @@ module.exports.validateOptsPlatformAsync = function (opts) {
  * @param {string} dirPath - Path to directory.
  * @returns {Promise} Promise resolving child paths needing signing in order.
  */
-module.exports.walkAsync = function (dirPath) {
+module.exports.walkAsync = async function (dirPath) {
   debuglog('Walking... ' + dirPath)
 
-  var unlinkAsync = Promise.promisify(fs.unlink)
-
-  function _walkAsync (dirPath) {
-    return readdirAsync(dirPath)
-      .then(function (names) {
-        return Promise.map(names, function (name) {
-          var filePath = path.join(dirPath, name)
-          return lstatAsync(filePath)
-            .then(function (stat) {
-              if (stat.isFile()) {
-                switch (path.extname(filePath)) {
-                  case '': // Binary
-                    if (path.basename(filePath)[0] !== '.') {
-                      return getFilePathIfBinaryAsync(filePath)
-                    } // Else reject hidden file
-                    break
-                  case '.dylib': // Dynamic library
-                  case '.node': // Native node addon
-                    return filePath
-                  case '.cstemp': // Temporary file generated from past codesign
-                    debuglog('Removing... ' + filePath)
-                    return unlinkAsync(filePath)
-                      .thenReturn(undefined)
-                  default:
-                    if (path.extname(filePath).indexOf(' ') >= 0) {
-                      // Still consider the file as binary if extension seems invalid
-                      return getFilePathIfBinaryAsync(filePath)
-                    }
-                }
-              } else if (stat.isDirectory() && !stat.isSymbolicLink()) {
-                return _walkAsync(filePath)
-                  .then(function (result) {
-                    switch (path.extname(filePath)) {
-                      case '.app': // Application
-                      case '.framework': // Framework
-                        result.push(filePath)
-                    }
-                    return result
-                  })
-              }
-            })
-        })
-      })
+  async function _walkAsync(dirPath) {
+    const names = await fs.readdir(dirPath)
+    return await Promise.all(names.map(async (name) => {
+      let filePath = path.join(dirPath, name)
+      const stat = await fs.lstat(filePath)
+      if (stat.isFile()) {
+        switch (path.extname(filePath)) {
+          case '': // Binary
+            if (path.basename(filePath)[0] !== '.') {
+              return getFilePathIfBinaryAsync(filePath)
+            } // Else reject hidden file
+            break
+          case '.dylib': // Dynamic library
+          case '.node': // Native node addon
+            return filePath
+          case '.cstemp': // Temporary file generated from past codesign
+            debuglog('Removing... ' + filePath)
+            await fs.unlink(filePath)
+            return
+          default:
+            if (path.extname(filePath).indexOf(' ') >= 0) {
+              // Still consider the file as binary if extension seems invalid
+              return getFilePathIfBinaryAsync(filePath)
+            }
+        }
+      } else if (stat.isDirectory() && !stat.isSymbolicLink()) {
+        const result = await _walkAsync(filePath)
+        switch (path.extname(filePath)) {
+          case '.app': // Application
+          case '.framework': // Framework
+            result.push(filePath)
+        }
+        return result
+      }
+    }))
   }
 
-  return _walkAsync(dirPath)
-    .then(flatList)
+  return module.exports.flatList(await _walkAsync(dirPath))
 }

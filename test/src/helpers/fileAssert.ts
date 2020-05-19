@@ -7,6 +7,8 @@ export function assertThat(actual: any): Assertions {
   return new Assertions(actual)
 }
 
+const appVersion = require(path.join(__dirname, "../../../packages/app-builder-lib/package.json")).version
+
 class Assertions {
   constructor(private actual: any) {
   }
@@ -80,9 +82,10 @@ class Assertions {
         m = m.substring(0, m.indexOf(","))
       }
 
-      m = m.replace(/\((C:)?(\/|\\)[^(]+(\/|\\)([^(\/\\]+)\)/g, `(<path>/$4)`)
-      m = m.replace(/"(C:)?(\/|\\)[^"]+(\/|\\)([^"\/\\]+)"/g, `"<path>/$4"`)
-      m = m.replace(/'(C:)?(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$4'`)
+      m = m.replace(appVersion, "<appVersion>")
+      m = m.replace(/\((C:)?([\/\\])[^(]+([\/\\])([^(\/\\]+)\)/g, `(<path>/$4)`)
+      m = m.replace(/"(C:)?([\/\\])[^"]+([\/\\])([^"\/\\]+)"/g, `"<path>/$4"`)
+      m = m.replace(/'(C:)?([\/\\])[^']+([\/\\])([^'\/\\]+)'/g, `'<path>/$4'`)
     }
     try {
       if (customErrorAssert == null) {

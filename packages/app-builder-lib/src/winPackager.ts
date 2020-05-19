@@ -265,8 +265,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       "--set-version-string", "FileDescription", appInfo.productName,
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "LegalCopyright", appInfo.copyright,
-      "--set-file-version", appInfo.buildVersion,
-      "--set-product-version", appInfo.getVersionInWeirdWindowsForm(),
+      "--set-file-version", appInfo.shortVersion || appInfo.buildVersion,
+      "--set-product-version", appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
     ]
 
     if (internalName != null) {
@@ -317,7 +317,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const timer = time("wine&sign")
     // rcedit crashed of executed using wine, resourcehacker works
     if (process.platform === "win32" || this.info.framework.name === "electron") {
-      await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)])
+      await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry five times */)
     }
 
     await this.sign(file)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { exec, log } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
@@ -94,7 +95,7 @@ function getRtfUnicodeEscapedString(text: string) {
       result += text[i]
     }
     else {
-      result += `\\u${text.codePointAt(i)}`
+      result += `\\u${text.codePointAt(i)}?`
     }
   }
   return result

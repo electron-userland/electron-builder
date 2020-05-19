@@ -1,3 +1,15 @@
+## 4.3.0
+
+### Bug Fixes
+
+* Remove dependency on pako module, use native API instead.
+
+## 4.2.0
+
+### Bug Fixes
+
+* Forbid using of quotes in a file names.
+
 ## 4.2.0
 
 ### Bug Fixes

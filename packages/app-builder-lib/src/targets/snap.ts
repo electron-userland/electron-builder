@@ -12,7 +12,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
 
-const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
+const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -195,7 +195,6 @@ export default class SnapTarget extends Target {
       return
     }
 
-    console.log(JSON.stringify(snap, null, 2))
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
@@ -248,7 +247,7 @@ function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any; } | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any } | null } | null {
   if (raw == null) {
     return null
   }

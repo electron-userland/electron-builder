@@ -69,6 +69,7 @@ Object {
       "CFBundleTypeIconFile": "foo.icns",
       "CFBundleTypeName": "Foo",
       "CFBundleTypeRole": "Viewer",
+      "LSHandlerRank": "Default",
     },
     Object {
       "CFBundleTypeExtensions": Array [
@@ -77,6 +78,7 @@ Object {
       "CFBundleTypeIconFile": "Test App ßW.icns",
       "CFBundleTypeName": "Boo",
       "CFBundleTypeRole": "Shell",
+      "LSHandlerRank": "Owner",
       "LSTypeIsPackage": true,
     },
     Object {
@@ -86,6 +88,7 @@ Object {
       "CFBundleTypeIconFile": "someFoo.icns",
       "CFBundleTypeName": "Bar",
       "CFBundleTypeRole": "Shell",
+      "LSHandlerRank": "Default",
     },
   ],
   "CFBundleExecutable": "Test App ßW",

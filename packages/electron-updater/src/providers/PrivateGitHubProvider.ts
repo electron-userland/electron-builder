@@ -54,6 +54,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     return this.configureHeaders("application/octet-stream")
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   private configureHeaders(accept: string) {
     return {
       accept,
@@ -83,7 +84,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
   }
 
-  private get basePath() {
+  private get basePath(): string {
     return this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
   }
 
