@@ -119,6 +119,17 @@ async function verifySignApplicationAsync (opts) {
 function signApplicationAsync (opts) {
   return walkAsync(getAppContentsPath(opts))
     .then(async function (childPaths) {
+      /**
+       * Sort the child paths by how deep they are in the file tree.  Some arcane apple
+       * logic expects the deeper files to be signed first otherwise strange errors get
+       * thrown our way
+       */
+      childPaths = childPaths.sort((a, b) => {
+        const aDepth = a.split(path.sep).length
+        const bDepth = b.split(path.sep).length
+        return bDepth - aDepth
+      })
+
       function ignoreFilePath (opts, filePath) {
         if (opts.ignore) {
           return opts.ignore.some(function (ignore) {
