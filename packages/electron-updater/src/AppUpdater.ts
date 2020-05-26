@@ -244,7 +244,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   // noinspection JSUnusedGlobalSymbols
-  checkForUpdatesAndNotify(): Promise<UpdateCheckResult | null> {
+  checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
     if (!this.isUpdaterActive()) {
       return Promise.resolve(null)
     }
@@ -262,14 +262,26 @@ export abstract class AppUpdater extends EventEmitter {
 
         downloadPromise
           .then(() => {
-            new Notification({
-              title: "A new update is ready to install",
-              body: `${this.app.name} version ${it.updateInfo.version} has been downloaded and will be automatically installed on exit`
-            }).show()
+            const notificationContent = this.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification);
+            new Notification(notificationContent).show()
           })
 
         return it
       })
+  }
+
+  private formatDownloadNotification(version: string, appName: string, downloadNotification?: DownloadNotification): DownloadNotification {
+    if (downloadNotification == null) {
+      downloadNotification = {
+        title: "A new update is ready to install",
+        body: `{appName} version {version} has been downloaded and will be automatically installed on exit`
+      }
+    }
+    downloadNotification = {
+      title: downloadNotification.title.replace("{appName}", appName).replace("{version}", version),
+      body: downloadNotification.body.replace("{appName}", appName).replace("{version}", version)
+    }
+    return downloadNotification;
   }
 
   private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
@@ -663,6 +675,11 @@ export interface DownloadExecutorTask {
   readonly task: (destinationFile: string, downloadOptions: DownloadOptions, packageFile: string | null, removeTempDirIfAny: () => Promise<any>) => Promise<any>
 
   readonly done?: (event: UpdateDownloadedEvent) => Promise<any>
+}
+
+export interface DownloadNotification {
+  body: string
+  title: string
 }
 
 /** @private */
