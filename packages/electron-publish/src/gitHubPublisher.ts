@@ -206,7 +206,6 @@ export class GitHubPublisher extends HttpPublisher {
 
   private createRelease() {
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       tag_name: this.tag,
       name: this.version,
       draft: this.releaseType === "draft",

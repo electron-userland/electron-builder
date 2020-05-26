@@ -53,7 +53,7 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
   return executeAppBuilder(["download-electron", "--configuration", JSON.stringify(versions)])
 }
 
-if (process.mainModule === module) {
+if (require.main === module) {
   downloadAllRequiredElectronVersions()
     .catch(error => {
       console.error((error.stack || error).toString())

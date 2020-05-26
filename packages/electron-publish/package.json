@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "22.6.0",
+  "version": "22.7.0",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "@types/fs-extra": "^8.1.0",
+    "@types/fs-extra": "^9.0.1",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",

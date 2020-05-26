@@ -134,7 +134,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   }
 }
 
-export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = (p): string => p): Array<ResolvedUpdateFileInfo> {
+export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransformer: (p: string) => string = (p: string): string => p): Array<ResolvedUpdateFileInfo> {
   const files = getFileList(updateInfo)
   const result: Array<ResolvedUpdateFileInfo> = files.map(fileInfo => {
     if ((fileInfo as any).sha2 == null && fileInfo.sha512 == null) {

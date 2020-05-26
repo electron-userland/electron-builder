@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { exec, log } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"

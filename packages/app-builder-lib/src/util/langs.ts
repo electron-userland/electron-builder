@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 export const bundledLanguages = [
   "en_US", "de_DE", "fr_FR", "es_ES", "zh_CN", "zh_TW", "ja_JP", "ko_KR", "it_IT", "nl_NL", "da_DK", "sv_SE",
   "nb_NO", "fi_FI", "ru_RU", "pt_PT", "pt_BR", "pl_PL", "uk_UA", "cs_CZ", "sk_SK", "hu_HU", "ar_SA", "tr_TR",

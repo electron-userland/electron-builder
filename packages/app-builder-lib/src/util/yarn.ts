@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
 import { Lazy } from "lazy-val"
