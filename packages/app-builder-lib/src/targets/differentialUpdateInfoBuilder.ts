@@ -68,7 +68,7 @@ export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> 
   log.info({file: log.filePath(file)}, "building embedded block map")
   const tmpFile = `${file}${TEMPORARY_FILE_SUFFIX}`
   fs.copyFileSync(file, tmpFile)
-  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpfile, "--compression", "deflate"])
+  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpFile, "--compression", "deflate"])
   fs.unlinkSync(tmpFile)
   return updateInfo
 }
@@ -78,7 +78,7 @@ export async function createBlockmap(file: string, target: Target, packager: Pla
   log.info({blockMapFile: log.filePath(blockMapFile)}, "building block map")
   const tmpFile = `${file}${TEMPORARY_FILE_SUFFIX}`
   fs.copyFileSync(file, tmpFile)
-  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpfile, "--output", blockMapFile])
+  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpFile, "--output", blockMapFile])
   fs.unlinkSync(tmpFile)
   await packager.info.callArtifactBuildCompleted({
     file: blockMapFile,
