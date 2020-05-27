@@ -1,12 +1,14 @@
 import { log } from "builder-util"
 import { BlockMapDataHolder, PackageFileInfo } from "builder-util-runtime"
 import * as path from "path"
+import * as fs from "fs"
 import { Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
 import { ArchiveOptions } from "./archive"
 
 export const BLOCK_MAP_FILE_SUFFIX = ".blockmap"
+const TEMPORARY_FILE_SUFFIX = ".tmp"
 
 export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packageFiles: { [arch: string]: PackageFileInfo }) {
   if (packageFiles == null) {
@@ -64,13 +66,20 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
 
 export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {
   log.info({file: log.filePath(file)}, "building embedded block map")
-  return await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--compression", "deflate"])
+  const tmpFile = `${file}${TEMPORARY_FILE_SUFFIX}`
+  fs.copyFileSync(file, tmpFile)
+  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpfile, "--compression", "deflate"])
+  fs.unlinkSync(tmpFile)
+  return updateInfo
 }
 
 export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null): Promise<BlockMapDataHolder> {
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
   log.info({blockMapFile: log.filePath(blockMapFile)}, "building block map")
-  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--output", blockMapFile])
+  const tmpFile = `${file}${TEMPORARY_FILE_SUFFIX}`
+  fs.copyFileSync(file, tmpFile)
+  const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", tmpfile, "--output", blockMapFile])
+  fs.unlinkSync(tmpFile)
   await packager.info.callArtifactBuildCompleted({
     file: blockMapFile,
     safeArtifactName: safeArtifactName == null ? null : `${safeArtifactName}${BLOCK_MAP_FILE_SUFFIX}`,
