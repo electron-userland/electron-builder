@@ -9,6 +9,7 @@ interface SignOptions extends BaseSignOptions {
   binaries?: string[];
   entitlements?: string;
   'entitlements-inherit'?: string;
+  'entitlements-loginhelper'?: string;
   'gatekeeper-assess'?: boolean;
   hardenedRuntime?: boolean;
   'identity-validation'?: boolean;

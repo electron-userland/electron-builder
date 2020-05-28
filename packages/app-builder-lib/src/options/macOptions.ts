@@ -43,6 +43,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly entitlementsInherit?: string | null
 
+  readonly entitlementsLoginHelper?: string | null
+
   /**
    * The path to the provisioning profile to use when signing, absolute or relative to the app root.
    */

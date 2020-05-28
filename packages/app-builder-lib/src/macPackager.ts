@@ -252,6 +252,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (customSignOptions.provisioningProfile != null) {
       signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
+    signOptions['entitlements-loginhelper'] = customSignOptions.entitlementsLoginHelper
   }
 
   //noinspection JSMethodCanBeStatic
