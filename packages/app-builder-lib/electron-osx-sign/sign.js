@@ -211,7 +211,7 @@ function signApplicationAsync (opts) {
             entitlementsFile = opts['entitlements-loginhelper']
           }
 
-          return execFileAsync('codesign', args.concat('--entitlements', entitlementsFile, filePath))
+          await execFileAsync('codesign', args.concat('--entitlements', entitlementsFile, filePath))
         }
         debuglog('Signing... ' + opts.app)
         await execFileAsync('codesign', args.concat('--entitlements', opts.entitlements, opts.app))
