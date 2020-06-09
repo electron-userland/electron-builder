@@ -1508,6 +1508,79 @@ Object {
 }
 `;
 
+exports[`slots option 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "command.sh",
+      "environment": Object {
+        "DISABLE_WAYLAND": "1",
+        "LD_LIBRARY_PATH": "$SNAP_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu",
+        "PATH": "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
+        "SNAP_DESKTOP_RUNTIME": "$SNAP/gnome-platform",
+        "TMPDIR": "$XDG_RUNTIME_DIR",
+      },
+      "plugs": Array [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "pulseaudio",
+        "opengl",
+      ],
+      "slots": Array [
+        "foo",
+        "bar",
+      ],
+    },
+  },
+  "architectures": Array [
+    "amd64",
+  ],
+  "base": "core18",
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "name": "sep",
+  "plugs": Object {
+    "gnome-3-28-1804": Object {
+      "default-provider": "gnome-3-28-1804",
+      "interface": "content",
+      "target": "$SNAP/gnome-platform",
+    },
+    "gtk-3-themes": Object {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/themes",
+    },
+    "icon-themes": Object {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/icons",
+    },
+    "sound-themes": Object {
+      "default-provider": "gtk-common-themes",
+      "interface": "content",
+      "target": "$SNAP/data-dir/sounds",
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`slots option 2`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`snap 1`] = `
 Object {
   "linux": Array [

@@ -70,6 +70,11 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
   /**
+   * The list of [slots](https://snapcraft.io/docs/reference/interfaces).
+   */
+  readonly slots?: Array<string> | null
+
+  /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
    * Defaults to `["desktop-gtk2""]`.
    *
