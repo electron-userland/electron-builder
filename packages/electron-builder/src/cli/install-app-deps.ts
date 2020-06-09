@@ -67,7 +67,7 @@ function main() {
   return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
 }
 
-if (process.mainModule === module) {
+if (require.main === module) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
   main()
     .catch(printErrorAndExit)
