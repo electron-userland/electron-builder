@@ -3,7 +3,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <!-- do not edit. start of generated block -->
 * <code id="SnapOptions-confinement">confinement</code> = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
 * <code id="SnapOptions-environment">environment</code> Object&lt;String, any&gt; - The custom environment. Defaults to `{"TMPDIR": "$XDG_RUNTIME_DIR"}`. If you set custom, it will be merged with default.
-* <code id="SnapOptions-summary">summary</code> String - A sentence summarising the snap. Max len. 78 characters, describing the snap in short and simple terms.
+* <code id="SnapOptions-summary">summary</code> String - A sentence summarising the snap. Defaults to the `productName`. Max len. 78 characters, describing the snap in short and simple terms.
 * <code id="SnapOptions-grade">grade</code> = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or `stable` (i.e. a stable release or release candidate, which can be released to all channels).
 * <code id="SnapOptions-assumes">assumes</code> Array&lt;String&gt; | String - The list of features that must be supported by the core in order for this snap to install. To learn more, see the [Snapcraft docs](https://snapcraft.io/docs/snapcraft-top-level-metadata#heading--assumes).
 * <code id="SnapOptions-buildPackages">buildPackages</code> Array&lt;String&gt; - The list of Debian packages needs to be installed for building this snap.
