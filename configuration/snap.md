@@ -23,6 +23,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
     If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
 
 * <code id="SnapOptions-useTemplateApp">useTemplateApp</code> Boolean - Whether to use template snap. Defaults to `true` if `stagePackages` not specified.
+* <code id="SnapOptions-autoStart">autoStart</code> Boolean - Whether or not the snap should automatically start on login. Defaults to `false`.
 
 Inherited from `CommonLinuxOptions`:
 
