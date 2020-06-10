@@ -4289,6 +4289,12 @@
           ],
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
+        "appPartStage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
           "type": [
@@ -4417,6 +4423,9 @@
             "null",
             "string"
           ]
+        },
+        "layout": {
+          "type": "object"
         },
         "mimeTypes": {
           "anyOf": [
