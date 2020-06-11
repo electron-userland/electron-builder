@@ -291,8 +291,7 @@ Please note that if you update this property then `allowDowngrade` will automati
 Restarts the app and installs the update after it has been downloaded.
 It should only be called after `update-downloaded` has been emitted.
 
-**Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
-This is different from the normal quit event sequence.
+**Note:** Like Electron's built-in [<code>quitAndInstall</code>](https://www.electronjs.org/docs/api/auto-updater#autoupdaterquitandinstall) method, `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that. This is different from the normal quit event sequence (i.e. not during an update). As a result you should listen to Electron's [<code>before-quit-for-update</code>](https://www.electronjs.org/docs/api/auto-updater#event-before-quit-for-update) event (on `electron.autoUpdater`) if you wish to perform actions before the windows are closed while a process is quitting, as well as listening to `before-quit`. However, that is not the case for the (Windows) NSIS or (Linux) AppImage targets. The `before-quit-for-update` event is not emitted. The `before-quit` event is emitted first, then windows will be closed.
 
 * isSilent <code>Boolean</code> - *windows-only* Runs the installer in silent mode. Defaults to `false`.
 * isForceRunAfter <code>Boolean</code> - Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
