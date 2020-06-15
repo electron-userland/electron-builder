@@ -10,7 +10,7 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
   return new Promise<string | null>(resolve => {
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
-    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {
+    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress | ForEach-Object { [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($_)) }`], {
       timeout: 20 * 1000
     }, (error, stdout, stderr) => {
       try {
@@ -20,7 +20,7 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
           return
         }
 
-        const data = parseOut(stdout)
+        const data = parseOut(Buffer.from(stdout, "base64").toString("utf-8"))
         if (data.Status === 0) {
           const name = parseDn(data.SignerCertificate.Subject).get("CN")!
           if (publisherNames.includes(name)) {
