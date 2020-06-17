@@ -24,8 +24,8 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
         if (data.Status === 0) {
           const name = parseDn(data.SignerCertificate.Subject).get("CN")!
           if (publisherNames.includes(name)) {
-            logger.warn(`Cannot execute due to unknown results: ${error}. Aborting update.`);
-            throw error;
+            resolve(null);
+            return
           }
         }
 
