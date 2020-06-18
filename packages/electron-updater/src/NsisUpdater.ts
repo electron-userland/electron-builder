@@ -27,7 +27,7 @@ export class NsisUpdater extends BaseUpdater {
       downloadUpdateOptions,
       fileInfo,
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
-        if (hasQuotes(destinationFile) || (packageFile != null && hasQuotes(packageFile))) {
+        if (isInvalid(destinationFile) || (packageFile != null && isInvalid(packageFile))) {
           throw newError(`destinationFile or packageFile contains illegal chars`, "ERR_UPDATER_ILLEGAL_FILE_NAME")
         }
 
@@ -235,6 +235,7 @@ async function _spawn(exe: string, args: Array<string>): Promise<any> {
   })
 }
 
-function hasQuotes(name: string): boolean {
-  return name.includes("'") || name.includes('"') || name.includes('`')
+function isInvalid(name: string): boolean {
+  return name.includes("'") || name.includes('"') || name.includes('`') || name.includes('#') || name.includes('|') || name.includes('/') || name.includes('\') || name.includes(':') || name.includes('*') || name.includes('<') ||
+  name.includes('>') || name.includes('?')
 }

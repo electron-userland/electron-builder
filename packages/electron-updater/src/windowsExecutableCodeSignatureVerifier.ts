@@ -16,8 +16,8 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
       try {
         if (error != null || stderr) {
           handleError(logger, error, stderr)
-          resolve(null)
-          return
+          logger.warn(`Can't verify the signature: ${error}`)
+          throw error
         }
 
         const data = parseOut(stdout)
@@ -35,8 +35,7 @@ export function verifySignature(publisherNames: Array<string>, tempUpdateFile: s
       }
       catch (e) {
         logger.warn(`Cannot execute Get-AuthenticodeSignature: ${error}. Ignoring signature validation due to unknown error.`)
-        resolve(null)
-        return
+        throw error
       }
     })
   })
