@@ -236,6 +236,6 @@ async function _spawn(exe: string, args: Array<string>): Promise<any> {
 }
 
 function isInvalid(name: string): boolean {
-  return name.includes("'") || name.includes('"') || name.includes('`') || name.includes('#') || name.includes('|') || name.includes('/') || name.includes('\') || name.includes(':') || name.includes('*') || name.includes('<') ||
+  return name.includes("'") || name.includes('"') || name.includes('`') || name.includes('#') || name.includes('|') || name.includes('*') || name.includes('<') ||
   name.includes('>') || name.includes('?')
 }
