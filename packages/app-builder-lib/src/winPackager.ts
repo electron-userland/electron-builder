@@ -370,7 +370,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
     // noinspection JSUnusedLocalSymbols
-    const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || file.endsWith(".dll"))
+    const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
     await BluebirdPromise.map(fileToSign, file => this.sign(file), {concurrency: 4})
   }
 }
