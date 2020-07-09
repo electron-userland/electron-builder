@@ -1982,6 +1982,13 @@
             "string"
           ]
         },
+        "entitlementsLoginHelper": {
+          "desciption": "Path to login helper entitlement file. When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inheritted entitlements cannot be inherited since the login helper is a standalone executable. Defaults to the value provided for `entitlements`.\n\nThis option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "extendInfo": {
           "description": "The extra entries for `Info.plist`."
         },
@@ -2517,6 +2524,13 @@
         },
         "entitlementsInherit": {
           "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "entitlementsLoginHelper": {
+          "desciption": "Path to login helper entitlement file. When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inheritted entitlements cannot be inherited since the login helper is a standalone executable. Defaults to the value provided for `entitlements`.\n\nThis option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
