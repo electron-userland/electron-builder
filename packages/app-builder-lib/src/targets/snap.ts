@@ -62,6 +62,10 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
+    if (options.slots != null) {
+      appDescriptor.slots = options.slots
+    }
+
     const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
