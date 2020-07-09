@@ -76,6 +76,12 @@ export default class SnapTarget extends Target {
     if (options.confinement != null) {
       snap.confinement = options.confinement
     }
+    if (options.appPartStage != null) {
+      snap.parts.app.stage = options.appPartStage
+    }
+    if (options.layout != null) {
+      snap.layout = options.layout
+    }
     deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
