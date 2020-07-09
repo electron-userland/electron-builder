@@ -5,6 +5,8 @@ Squirrel.Windows target is maintained, but deprecated. Please use [nsis](nsis.md
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
 To build for Squirrel.Windows on macOS, please install `mono` (`brew install mono`).
 
+Your app must be able to handle Squirrel.Windows startup events that occur during install and uninstall. See [electron-squirrel-startup](https://github.com/mongodb-js/electron-squirrel-startup).
+
 <!-- do not edit. start of generated block -->
 * <code id="SquirrelWindowsOptions-iconUrl">iconUrl</code> String - A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
     
