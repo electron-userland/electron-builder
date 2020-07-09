@@ -117,7 +117,7 @@ To build rpm: `sudo apt-get install --no-install-recommends -y rpm` (or `sudo yu
 
 To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
-To build snap *if and only of you have custom stage packages* (if you don't have custom snap build configuration, you don't need to install). See [snapcraft](https://snapcraft.io/snapcraft) in Store.
+To build snap *if and only if you have custom stage packages* (if you don't have custom snap build configuration, you don't need to install). See [snapcraft](https://snapcraft.io/snapcraft) in Store.
 ```
 sudo snap install snapcraft --classic
 sudo snap install multipass --beta --classic
