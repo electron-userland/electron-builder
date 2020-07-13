@@ -1994,6 +1994,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/aws4@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@types/aws4@npm:1.5.1"
+  checksum: 3/4e778ba02fff628380c57557af3852ce59ffcf2a94f946ebbe10a59fc42ef56eb4ae306b3d6343927966a31119d9b2237c5e3e64a69d9f63d3de2eafcf7222d9
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.1.7":
   version: 7.1.7
   resolution: "@types/babel__core@npm:7.1.7"
@@ -2817,6 +2824,13 @@ __metadata:
   version: 0.7.0
   resolution: "aws-sign2@npm:0.7.0"
   checksum: 3/7162b9b8fbd4cf451bd889b0ed27fc895f88e6a6cb5c5609de49759ea1a6e31646f86ca8e18d90bea0455c4caa466fc9692c1098a1784d2372a358cb68c1eea6
+  languageName: node
+  linkType: hard
+
+"aws4@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "aws4@npm:1.10.0"
+  checksum: 3/f8c20a0031a2ae88bb29a89d5e5f8139eb0cc8aa964d0a8d69a476a4b0f6cf3954e3dd40bd08cea69c95ee31e2e69226d82e804628261a2375223ac67582009d
   languageName: node
   linkType: hard
 
@@ -4390,10 +4404,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "electron-updater@workspace:packages/electron-updater"
   dependencies:
+    "@types/aws4": ^1.5.1
     "@types/fs-extra": ^9.0.1
     "@types/js-yaml": ^3.12.3
     "@types/lodash.isequal": ^4.5.5
     "@types/semver": ^7.2.0
+    aws4: ^1.10.0
     builder-util-runtime: "workspace:*"
     fs-extra: ^9.0.0
     js-yaml: ^3.14.0

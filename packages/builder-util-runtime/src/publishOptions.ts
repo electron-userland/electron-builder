@@ -162,6 +162,8 @@ export interface S3Options extends BaseS3Options {
    */
   readonly provider: "s3"
 
+  readonly url?: string
+
   /**
    * The bucket name.
    */
@@ -223,7 +225,9 @@ export interface SpacesOptions extends BaseS3Options {
 export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   const provider = configuration.provider
   if (provider === "s3") {
-    return s3Url((configuration as S3Options))
+    const typedConfig = configuration as S3Options
+
+    return s3Url(typedConfig.bucket, typedConfig.region, typedConfig.path, typedConfig.endpoint)
   }
   if (provider === "spaces") {
     return spacesUrl((configuration as SpacesOptions))
@@ -231,31 +235,32 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   throw new Error(`Not supported provider: ${provider}`)
 }
 
-function s3Url(options: S3Options) {
+// TODO Clean up undefined/null parameters
+export function s3Url(bucket: string, region?: string | null, path?: string | null, endpoint?: string | null) {
   let url: string
-  if (options.endpoint != null) {
-    url = `${options.endpoint}/${options.bucket}`
+  if (endpoint) {
+    url = `${endpoint}/${bucket}`
   }
-  else if (options.bucket.includes(".")) {
-    if (options.region == null) {
-      throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
+  else if (bucket.includes(".")) {
+    if (region === null) {
+      throw new Error(`Bucket name "${bucket}" includes a dot, but S3 region is missing`)
     }
 
     // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
-    if (options.region === "us-east-1") {
-      url = `https://s3.amazonaws.com/${options.bucket}`
+    if (region === "us-east-1") {
+      url = `https://s3.amazonaws.com/${bucket}`
     }
     else {
-      url = `https://s3-${options.region}.amazonaws.com/${options.bucket}`
+      url = `https://s3-${region}.amazonaws.com/${bucket}`
     }
   }
-  else if (options.region === "cn-north-1") {
-    url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
+  else if (region === "cn-north-1") {
+    url = `https://${bucket}.s3.${region}.amazonaws.com.cn`
   }
   else {
-    url = `https://${options.bucket}.s3.amazonaws.com`
+    url = `https://${bucket}.s3.amazonaws.com`
   }
-  return appendPath(url, options.path)
+  return appendPath(url, path)
 }
 
 function appendPath(url: string, p: string | null | undefined): string {

@@ -1,6 +1,7 @@
-import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME, DownloadOptions } from "builder-util-runtime"
 import { spawn } from "child_process"
 import * as path from "path"
+import { OutgoingHttpHeaders } from "http"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
@@ -34,7 +35,12 @@ export class NsisUpdater extends BaseUpdater {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
         if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider)) {
-          await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
+          const options: DownloadOptions = {
+            ...downloadOptions,
+            headers: downloadUpdateOptions.updateInfoAndProvider.provider.createRequestOptions(fileInfo.url, downloadOptions.headers).headers || {}
+          }
+
+          await this.httpExecutor.download(fileInfo.url, destinationFile, options)
         }
 
         const signatureVerificationStatus = await this.verifySignature(destinationFile)
@@ -144,8 +150,10 @@ export class NsisUpdater extends BaseUpdater {
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+        const headers: OutgoingHttpHeaders = downloadUpdateOptions.updateInfoAndProvider.provider.createRequestOptions(url, downloadUpdateOptions.requestHeaders).headers || {}
+
         const data = await this.httpExecutor.downloadToBuffer(url, {
-          headers: downloadUpdateOptions.requestHeaders,
+          headers,
           cancellationToken: downloadUpdateOptions.cancellationToken,
         })
 
@@ -169,6 +177,7 @@ export class NsisUpdater extends BaseUpdater {
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: downloadUpdateOptions.requestHeaders,
+        provider,
       })
         .download(blockMapDataList[0], blockMapDataList[1])
       return false
@@ -196,6 +205,7 @@ export class NsisUpdater extends BaseUpdater {
         newFile: packagePath,
         requestHeaders: this.requestHeaders,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+        provider
       })
         .download()
     }

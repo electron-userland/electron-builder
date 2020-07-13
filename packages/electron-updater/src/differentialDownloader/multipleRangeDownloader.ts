@@ -55,8 +55,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         copyData(task, out, options.oldFileFd, reject, () => w(index))
       }
       else {
-        const requestOptions = differentialDownloader.createRequestOptions()
-        requestOptions.headers!!.Range = `bytes=${task.start}-${task.end - 1}`
+        const requestOptions = differentialDownloader.createRequestOptions({range: `bytes=${task.start}-${task.end - 1}`})
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
           if (!checkIsRangesSupported(response, reject)) {
             return
@@ -76,8 +75,8 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     return
   }
 
-  const requestOptions = differentialDownloader.createRequestOptions()
-  requestOptions.headers!!.Range = ranges.substring(0, ranges.length - 2)
+  const requestOptions = differentialDownloader.createRequestOptions({range: ranges.substring(0, ranges.length - 2)})
+
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     if (!checkIsRangesSupported(response, reject)) {
       return

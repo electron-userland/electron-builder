@@ -1,4 +1,4 @@
-import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+import { AllPublishOptions, DownloadOptions, newError, safeStringifyJson } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import { createReadStream } from "fs"
 import { createServer, IncomingMessage, ServerResponse } from "http"
@@ -52,7 +52,9 @@ export class MacUpdater extends AppUpdater {
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: (destinationFile, downloadOptions) => {
-        return this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
+        const options: DownloadOptions = {...downloadOptions, headers: downloadUpdateOptions.updateInfoAndProvider.provider.createRequestOptions(zipFileInfo.url, downloadOptions.headers).headers || {}}
+
+        return this.httpExecutor.download(zipFileInfo.url, destinationFile, options)
       },
       done: async event => {
         const downloadedFile = event.downloadedFile

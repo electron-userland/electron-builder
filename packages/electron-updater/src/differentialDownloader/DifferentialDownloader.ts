@@ -3,7 +3,7 @@ import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, open } from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { Logger } from "../main"
+import { Logger, Provider } from "../main"
 import { copyData } from "./DataSplitter"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
@@ -16,6 +16,8 @@ export interface DifferentialDownloaderOptions {
   readonly newFile: string
 
   readonly requestHeaders: OutgoingHttpHeaders | null
+
+  readonly provider: Provider<any>
 
   readonly isUseMultipleRangeRequest?: boolean
 }
@@ -30,16 +32,21 @@ export abstract class DifferentialDownloader {
     this.logger = options.logger
   }
 
-  createRequestOptions(): RequestOptions {
-    const result = {
+  createRequestOptions(headers?: OutgoingHttpHeaders): RequestOptions {
+    const result: any = {
       headers: {
         ...this.options.requestHeaders,
         accept: "*/*",
+        ...headers
       },
     }
+
     configureRequestUrl(this.options.newUrl, result)
     // user-agent, cache-control and other common options
     configureRequestOptions(result)
+
+    result.headers = this.options.provider.createRequestOptions(this.options.newUrl, result.headers).headers
+
     return result
   }
 
@@ -169,9 +176,6 @@ export abstract class DifferentialDownloader {
       let actualUrl: string | null = null
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      const requestOptions = this.createRequestOptions();
-      (requestOptions as any).redirect = "manual"
-
       w = (index: number): void => {
         if (index >= tasks.length) {
           if (this.fileMetadataBuffer != null) {
@@ -188,7 +192,8 @@ export abstract class DifferentialDownloader {
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!!.range = range
+        const requestOptions = this.createRequestOptions({range});
+        (requestOptions as any).redirect = "manual"
 
         const debug = this.logger.debug
         if (debug != null) {

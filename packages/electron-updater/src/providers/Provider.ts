@@ -1,8 +1,8 @@
-import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl } from "builder-util-runtime"
+import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl, HttpError } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { URL } from "url"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, Logger, newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 
@@ -11,13 +11,14 @@ export interface ProviderRuntimeOptions {
   platform: ProviderPlatform
 
   executor: HttpExecutor<any>
+  logger: Logger
 }
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
   protected readonly executor: HttpExecutor<any>
 
-  protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
+  protected constructor(protected readonly runtimeOptions: ProviderRuntimeOptions) {
     this.executor = runtimeOptions.executor
   }
 
@@ -60,11 +61,11 @@ export abstract class Provider<T extends UpdateInfo> {
   /**
    * Method to perform API request only to resolve update info, but not to download update.
    */
-  protected httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
+  httpRequest(url: URL, headers?: OutgoingHttpHeaders | null, cancellationToken?: CancellationToken): Promise<string | null> {
     return this.executor.request(this.createRequestOptions(url, headers), cancellationToken)
   }
 
-  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
+  createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
     const result: RequestOptions = {}
     if (this.requestHeaders == null) {
       if (headers != null) {
@@ -80,7 +81,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
-export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
@@ -155,4 +156,34 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
     }
   }
   return result
+}
+
+export async function getGenericLatestVersion(provider: Provider<UpdateInfo>, channel: string, baseUrl: URL): Promise<UpdateInfo> {
+  const channelFile = getChannelFilename(channel)
+  const channelUrl = newUrlFromBase(channelFile, baseUrl, false)
+
+  for (let attemptNumber = 0; ; attemptNumber++) {
+    try {
+      return parseUpdateInfo(await provider.httpRequest(channelUrl), channelFile, channelUrl)
+    }
+    catch (e) {
+      if (e instanceof HttpError && e.statusCode === 404) {
+        throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+      }
+      else if (e.code === "ECONNREFUSED") {
+        if (attemptNumber < 3) {
+          await new Promise((resolve, reject) => {
+            try {
+              setTimeout(resolve, 1000 * attemptNumber)
+            }
+            catch (e) {
+              reject(e)
+            }
+          })
+          continue
+        }
+      }
+      throw e
+    }
+  }
 }

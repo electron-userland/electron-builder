@@ -49,6 +49,7 @@ export class AppImageUpdater extends BaseUpdater {
             newFile: updateFile,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             requestHeaders: downloadUpdateOptions.requestHeaders,
+            provider
           })
             .download()
         }

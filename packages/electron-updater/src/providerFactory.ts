@@ -1,10 +1,11 @@
-import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration } from "builder-util-runtime"
+import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration, S3Options } from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
 import { BintrayProvider } from "./providers/BintrayProvider"
 import { GenericProvider } from "./providers/GenericProvider"
 import { GitHubProvider } from "./providers/GitHubProvider"
 import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
 import { Provider, ProviderRuntimeOptions } from "./providers/Provider"
+import { S3Provider } from "./providers/S3Provider"
 
 export function isUrlProbablySupportMultiRangeRequests(url: string): boolean {
   return !url.includes("s3.amazonaws.com")
@@ -30,6 +31,16 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
     }
 
     case "s3":
+      return new S3Provider({
+        bucket: (data as S3Options).bucket,
+        region: (data as S3Options).region,
+        endpoint: (data as S3Options).endpoint,
+        channel: (data as S3Options).channel || null,
+        path: (data as S3Options).path,
+        awsAccessKeyId: process.env.AUTOUPDATER_AWS_ACCESS_KEY_ID,
+        awsSecretAccessKey: process.env.AUTOUPDATER_AWS_SECRET_ACCESS_KEY,
+      }, updater, runtimeOptions)
+
     case "spaces":
       return new GenericProvider({
         provider: "generic",

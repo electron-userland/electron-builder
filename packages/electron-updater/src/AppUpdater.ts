@@ -363,6 +363,7 @@ export abstract class AppUpdater extends EventEmitter {
       isUseMultipleRangeRequest: true,
       platform: this._testOnlyOptions == null ? process.platform as ProviderPlatform : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
+      logger: this.logger || console
     }
   }
 

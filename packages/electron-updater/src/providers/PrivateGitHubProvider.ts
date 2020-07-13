@@ -17,7 +17,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     super(options, "api.github.com", runtimeOptions)
   }
 
-  protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
+  createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
     const result = super.createRequestOptions(url, headers);
     (result as any).redirect = "manual"
     return result
