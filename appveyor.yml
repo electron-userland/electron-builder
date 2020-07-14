@@ -12,10 +12,10 @@ environment:
 install:
   - ps: Install-Product node 12 x64
   - set YARN_CHECKSUM_BEHAVIOR=ignore
-  - node .yarn/releases/yarn-sources.js install
+  - node .yarn/releases/yarn-2.1.1.js install
 
 build: off
 
 test_script:
-  - node .yarn/releases/yarn-sources.js pretest
-  - node .yarn/releases/yarn-sources.js node ./test/out/helpers/runTests.js
+  - node .yarn/releases/yarn-2.1.1.js pretest
+  - node .yarn/releases/yarn-2.1.1.js node ./test/out/helpers/runTests.js

@@ -15,10 +15,10 @@
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.0.0",
-    "fs-extra": "^9.0.0",
+    "chalk": "^4.1.0",
+    "fs-extra": "^9.0.1",
     "lazy-val": "^1.0.4",
-    "mime": "^2.4.5"
+    "mime": "^2.4.6"
   },
   "typings": "./out/publisher.d.ts"
 }

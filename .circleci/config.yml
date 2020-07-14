@@ -8,22 +8,22 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.1.1.js" }}
       - restore_cache:
           keys:
             - v-8.2.5-electron
       - run:
-          command: YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-sources.js install
+          command: YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-2.1.1.js install
       - run:
-          command: node .yarn/releases/yarn-sources.js pretest
+          command: node .yarn/releases/yarn-2.1.1.js pretest
       - run:
           command: cp .pnp.js .yarn/.pnp.js
       - save_cache:
-          key: install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
+          key: install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.1.1.js" }}
           paths:
             - .yarn
       - run:
-          command: node .yarn/releases/yarn-sources.js node ./test/out/helpers/downloadElectron.js
+          command: node .yarn/releases/yarn-2.1.1.js node ./test/out/helpers/downloadElectron.js
       - save_cache:
           key: v-8.2.5-electron
           paths:
@@ -40,7 +40,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-sources.js" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.1.1.js" }}
       - restore_cache:
           keys:
             - v-8.2.5-electron
@@ -55,8 +55,8 @@ jobs:
       - run:
           # do not use yarn test because lint is done in the build job
           command: |
-            node .yarn/releases/yarn-sources.js compile
-            node .yarn/releases/yarn-sources.js node ./test/out/helpers/runTests.js
+            node .yarn/releases/yarn-2.1.1.js compile
+            node .yarn/releases/yarn-2.1.1.js node ./test/out/helpers/runTests.js
       - store_test_results:
           path: /tmp/test-reports
 
