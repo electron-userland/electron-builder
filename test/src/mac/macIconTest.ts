@@ -3,6 +3,7 @@ import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
+import { remove } from "fs-extra"
 
 async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
@@ -99,7 +100,7 @@ test.ifMac.ifAll("default png icon", () => {
       fs.unlink(path.join(projectDir, "build", "icon.icns")),
       fs.unlink(path.join(projectDir, "build", "icon.ico")),
       fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
-        .then(() => fs.rmdir(path.join(projectDir, "build", "icons"), {recursive: true}))
+        .then(() => remove(path.join(projectDir, "build", "icons")))
     ]),
     packed: () => assertIcon(platformPackager!!),
   })()

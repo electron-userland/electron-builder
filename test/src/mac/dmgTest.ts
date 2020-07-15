@@ -5,6 +5,7 @@ import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
 import * as path from "path"
 import { promises as fs } from "fs"
+import { remove } from "fs-extra"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
@@ -37,7 +38,7 @@ test.ifMac("no build directory", app({
     return false
   },
 }, {
-  projectDirCreated: projectDir => fs.rmdir(path.join(projectDir, "build"), {recursive: true}),
+  projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
 test.ifMac("background color", app({
