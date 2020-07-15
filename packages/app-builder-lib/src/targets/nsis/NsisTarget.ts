@@ -549,6 +549,35 @@ export class NsisTarget extends Target {
 
     const nsisPath = await NSIS_PATH()
     const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
+
+    // Fix for an issue caused by virus scanners, locking the file during write
+    // https://github.com/electron-userland/electron-builder/issues/5005
+    let ensureNotBusy = new Promise ( resolve => {
+      let fs = require ('fs')
+      let outFile = commands['OutFile'].replace(/\"/g, "")
+      
+      var isBusy = async(wasBusyBefore) => {
+        fs.open(outFile, 'r+', async (err, fd) => {
+          if (err && err.code === 'EBUSY') {
+            if (!wasBusyBefore)
+              _builderUtil().log.info( {}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock ...")
+
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            isBusy(true)
+          } else {
+            if (fd !== undefined)
+              fs.close(fd)
+  
+            resolve()
+          }
+        })
+      }
+  
+      isBusy()
+    })
+
+    await ensureNotBusy
+
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
       env: {...process.env, NSISDIR: nsisPath},
