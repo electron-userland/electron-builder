@@ -5255,7 +5255,7 @@
           "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
         },
         "rfc3161TimeStampServer": {
-          "default": "http://timestamp.comodoca.com/rfc3161",
+          "default": "http://timestamp.digicert.com",
           "description": "The URL of the RFC 3161 time stamp server.",
           "type": [
             "null",
