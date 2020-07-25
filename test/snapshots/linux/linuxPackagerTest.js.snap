@@ -3,7 +3,7 @@
 exports[`AppImage - default icon, custom executable and custom desktop 1`] = `
 "[Desktop Entry]
 Name=Test App ßW
-Exec=AppRun
+Exec=AppRun %U
 Terminal=true
 Type=Application
 Icon=Foo

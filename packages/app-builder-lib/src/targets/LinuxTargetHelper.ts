@@ -101,8 +101,9 @@ export class LinuxTargetHelper {
         exec += " "
         exec += executableArgs.join(" ")
       }
-      exec += " %U"
     }
+
+    exec += " %U"
 
     const desktopMeta: any = {
       Name: appInfo.productName,
