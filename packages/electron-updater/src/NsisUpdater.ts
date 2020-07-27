@@ -27,10 +27,6 @@ export class NsisUpdater extends BaseUpdater {
       downloadUpdateOptions,
       fileInfo,
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
-        if (hasQuotes(destinationFile) || (packageFile != null && hasQuotes(packageFile))) {
-          throw newError(`destinationFile or packageFile contains illegal chars`, "ERR_UPDATER_ILLEGAL_FILE_NAME")
-        }
-
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
         if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider)) {
@@ -233,8 +229,4 @@ async function _spawn(exe: string, args: Array<string>): Promise<any> {
       reject(error)
     }
   })
-}
-
-function hasQuotes(name: string): boolean {
-  return name.includes("'") || name.includes('"') || name.includes('`')
 }
