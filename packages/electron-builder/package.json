@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "22.7.0",
+  "version": "22.8.1",
   "main": "out/index.js",
   "files": [
     "out"
@@ -58,7 +58,7 @@
     "read-config-file": "6.0.0",
     "sanitize-filename": "^1.6.3",
     "update-notifier": "^4.1.0",
-    "yargs": "^15.3.1"
+    "yargs": "^15.4.1"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.1",
