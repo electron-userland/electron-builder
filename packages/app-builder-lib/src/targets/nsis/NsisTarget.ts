@@ -8,6 +8,7 @@ import { hashFile } from "../../util/hash"
 import _debug from "debug"
 import { readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
+import * as fs from "fs"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
@@ -550,33 +551,11 @@ export class NsisTarget extends Target {
     const nsisPath = await NSIS_PATH()
     const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
 
-    // Fix for an issue caused by virus scanners, locking the file during write
-    // https://github.com/electron-userland/electron-builder/issues/5005
-    let ensureNotBusy = new Promise ( resolve => {
-      let fs = require ('fs')
-      let outFile = commands['OutFile'].replace(/\"/g, "")
-      
-      var isBusy = async(wasBusyBefore) => {
-        fs.open(outFile, 'r+', async (err, fd) => {
-          if (err && err.code === 'EBUSY') {
-            if (!wasBusyBefore)
-              _builderUtil().log.info( {}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock ...")
-
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            isBusy(true)
-          } else {
-            if (fd !== undefined)
-              fs.close(fd)
-  
-            resolve()
-          }
-        })
-      }
-  
-      isBusy()
-    })
-
-    await ensureNotBusy
+    // if (process.platform === "win32") {
+      // fix for an issue caused by virus scanners, locking the file during write
+      // https://github.com/electron-userland/electron-builder/issues/5005
+      await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
+    // }
 
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
@@ -723,6 +702,43 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
+}
+
+async function ensureNotBusy(outFile: string) {
+  function isBusy(wasBusyBefore: boolean): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      fs.open(outFile, "r+", (error, fd) => {
+        try {
+          if (error != null && error.code === "EBUSY") {
+            if (!wasBusyBefore) {
+              log.info({}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
+            }
+            resolve(false)
+          }
+          else if (fd == null) {
+            resolve(true)
+          }
+          else {
+            fs.close(fd, () => resolve(true))
+          }
+        }
+        catch (error) {
+          reject(error)
+        }
+      })
+    })
+      .then(result => {
+        if (result) {
+          return true
+        }
+        else {
+          return new Promise((resolve) => setTimeout(resolve, 2000))
+            .then(() => isBusy(true))
+        }
+      })
+  }
+
+  await isBusy(false)
 }
 
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {
