@@ -116,7 +116,7 @@ export class GitHubPublisher extends HttpPublisher {
       // https://github.com/electron-userland/electron-builder/issues/2074
       // if release created < 2 hours — allow to upload
       const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
-      if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
+      if (!isEnvTrue(process.env.EP_GH_IGNORE_TIME) && publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
         this.releaseLogFields = {
           reason: "existing release published more than 2 hours ago",
