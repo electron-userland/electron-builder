@@ -56,7 +56,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   if (platform !== process.platform) {
     common.npm_config_force = "true"
   }
-  if (platform === "win32") {
+  if (platform === "win32" || platform === "darwin") {
     common.npm_config_target_libc = "unknown"
   }
 
