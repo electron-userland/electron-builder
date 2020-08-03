@@ -236,6 +236,10 @@ async function _spawn(exe: string, args: Array<string>): Promise<any> {
 }
 
 function isInvalid(name: string): boolean {
-  return name.includes("'") || name.includes('"') || name.includes('`') || name.includes('#') || name.includes('|') || name.includes('*') || name.includes('<') ||
-  name.includes('>') || name.includes('?')
+  const disallowedChars = ["'", '"', '`', '#', '|', '*', '<', '>', '?']
+  if(disallowedChars.some(char => name.includes(char))) { 
+    return true 
+  } else {
+		return false
+  }
 }
