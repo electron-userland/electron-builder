@@ -2284,6 +2284,11 @@
             "string"
           ]
         },
+        "strictVerify": {
+          "default": true,
+          "description": "Whether to require electron-osx-sign to strictly verify the package to be signed.",
+          "type": "boolean"
+        },
         "target": {
           "anyOf": [
             {
@@ -2830,6 +2835,11 @@
             "null",
             "string"
           ]
+        },
+        "strictVerify": {
+          "default": true,
+          "description": "Whether to require electron-osx-sign to strictly verify the package to be signed.",
+          "type": "boolean"
         },
         "target": {
           "anyOf": [

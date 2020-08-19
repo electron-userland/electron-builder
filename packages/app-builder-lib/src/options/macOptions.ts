@@ -154,6 +154,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default false
    */
   readonly gatekeeperAssess?: boolean
+
+  /**
+   * Whether to let electron-osx-sign verify the contents or not.
+   * @default true
+   */
+  readonly strictVerify?: boolean
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
