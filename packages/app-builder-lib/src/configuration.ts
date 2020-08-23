@@ -246,7 +246,7 @@ export interface MetadataDirectories {
   /**
    * The path to build resources.
    *
-   * Please note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**\/*", "build/icon.*"]`
+   * Please note — build resources are not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**\/*", "build/icon.*"]`
    * @default build
    */
   readonly buildResources?: string | null
