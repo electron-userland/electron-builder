@@ -177,9 +177,24 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
-        return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          // https://github.com/electron-userland/electron-builder/issues/2010
-          file.includes("/node_modules/puppeteer/.local-chromium")
+        const filter = options.ignore || false;
+        let matcher, shouldFilter = false;
+        if (filter) {
+            if (Array.isArray(filter)) {
+                for (const item of filter) {
+                  matcher = new RegExp(item);
+                  shouldFilter = matcher.test(file);
+                  if (shouldFilter) {
+                    break;
+                  }
+                }
+            } else {
+              matcher = new RegExp(filter);
+              shouldFilter = matcher.test(file);
+            }
+        }
+        return shouldFilter || file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) || // https://github.com/electron-userland/electron-builder/issues/2010
+        file.includes("/node_modules/puppeteer/.local-chromium");
       },
       identity: identity!,
       type,

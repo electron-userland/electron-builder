@@ -154,6 +154,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default false
    */
   readonly gatekeeperAssess?: boolean
+
+  /**
+   * Filter to tell electron-osx-sign to filter out certain files.
+   * @default true
+   */
+  readonly ignore?: Array<string> | string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
