@@ -4,6 +4,7 @@ chooseInstallationOptions:
   de: Installationsoption wählen
   ru: Выберите опции установки
   sk: Vyberte možnosti inštalácie
+  cs: Vyberte možnosti instalace
   fr: Choisis les options d'installation
   hu_HU: Telepítési opciók kiválasztása
   pt_BR: Escolha uma opção de instalação
@@ -24,6 +25,7 @@ chooseUninstallationOptions:
   de: Deinstallationsoption wählen
   ru: Выберите опции удаления
   sk: Vyberte možnosti odinštalovania
+  cs: Vyberte možnosti odinstalace
   fr: Choisis les options de désinstallation
   hu_HU: Eltávolítási opciók kiválasztása
   pt_BR: Escolha uma opção de desinstalação
@@ -44,6 +46,7 @@ whichInstallationShouldBeRemoved:
   de: Welche Installation soll entfernt werden?
   ru: Какую из установленных программ следует удалить?
   sk: Ktorá inštalácia by mala byt odstránená?
+  cs: Která instalace by měla má být odstraněná?
   fr: Quelle installation doit être supprimée ?
   hu_HU: Melyik telepítést távolítsuk el?
   pt_BR: Qual instalação deve ser removida?
@@ -64,6 +67,7 @@ whoShouldThisApplicationBeInstalledFor:
   de: Für wen soll diese Anwendung installiert werden?
   ru: Для кого следует установить это приложение?
   sk: Pre koho sa ma táto aplikacia inštalovať?
+  cs: Pro koho se má tato aplikace instalovat?
   fr: Pour qui cette application doit-elle être installée ?
   hu_HU: Kinek legyen ez az alkalmazás telepítve?
   pt_BR: Para quem esta aplicação deve ser instalada?
@@ -84,6 +88,7 @@ selectUserMode:
   de: Bitte wählen Sie, ob Sie die Anwendung nur für sich oder für alle Benutzer installieren möchten.
   ru: Выбери, хочешь ли ты сделать эту программу доступной для всех пользователей или только для себя
   sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
+  cs: Prosím vyberte, zda se má tento software instalovat jen proVás nebo pro všechny uživatele
   fr: "Choisis pour qui ce logiciel doit être accessible : pour tous les utilisateurs ou juste pour toi ?"
   hu_HU: Válaszd ki, hogy a szoftver elérhető legyen-e minden felhasználó számára, vagy csak neked
   pt_BR: Por favor, selecione se este software deve estar disponível apenas para você ou para todos usuários
@@ -104,6 +109,7 @@ whichInstallationRemove:
   de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
   ru: Эта программа установлена для всего компьютера (для всех пользователей) и для отдельного пользователя.\nКакую из установленных программ ты хочешь удалить?
   sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť?
+  cs: Tento software je nainstalovaný pro Vás a současně pro všechny uživatele.\nKterou instalace si přejete odstranit?
   fr: Ce logiciel est installé à la fois par machine (tous les utilisateurs) et par utilisateur.\nQuelle installation veux-tu supprimer ?
   hu_HU: Ez a szoftver számítógépenként (minden felhasználó) és felhasználónként is telepítve van.\nMelyik telepítést szeretnéd eltávolítani?
   pt_BR: Este software é instalado por máquina (todos os usuários) e por usuário. Qual instalação você deseja remover?
@@ -124,6 +130,7 @@ freshInstallForAll:
   de: Neuinstallation für alle Benutzer durchführen. (Administratorrechte benötigt)
   ru: Новая установка для всех пользователей. (потребуются права администратора)
   sk: Nová inštalácia pre všetkých uživateľov. (will prompt for admin credentials)
+  cs: Nová instalace pro všechny uživatele. (bude vyžadovat přihlášení administrátora)
   fr: Nouvelle installation pour tous les utilisateurs. (demandera les identifiants administrateur)
   hu_HU: Új telepítés minden felhasználó számára. (Az adminisztrátor hitelesítő adataira lesz szükség.)
   pt_BR: Instalação limpa para todos os usuários. (irá solicitar credenciais de administrador)
@@ -143,6 +150,7 @@ freshInstallForCurrent:
   en: Fresh install for current user only.
   de: Neuinstallation nur für den aktuellen Benutzer durchführen.
   ru: Новая установка только для текущего пользователя.
+  cs: Nová instalace pro aktuálního uživatele.
   fr: Nouvelle installation uniquement pour l'utilisateur actuel.
   hu_HU: Új telepítés csak a jelenlegi felhasználó számára.
   pt_BR: Instalação limpa somente para o usuário atual.
@@ -163,6 +171,7 @@ onlyForMe:
   de: Nur für &mich
   ru: Только для &меня
   sk: Iba pre mňa
+  cs: Pouze pro &mě
   fr: Juste pour moi
   hu_HU: Csak az én számomra
   pt_BR: Apenas para &mim
@@ -183,6 +192,7 @@ forAll:
   de: Für alle Benutzer dieses Computers (&alle Benutzer)
   ru: Для &всех пользователей данного компьютера
   sk: Pre každého kto použiva tento počitač (všetci uživatelia)
+  cs: Pro každého, kdo používá tento počítač (všichni uživatelé)
   fr: Pour tous ceux qui utilisent cet ordinateur (tous les utilisateurs)
   hu_HU: Bárki számára, aki ezt a számítógépet használja (minden felhasználó)
   pt_BR: Para todos que usam esta máquina (&todos os usuários)
@@ -203,6 +213,7 @@ loginWithAdminAccount:
   de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden...
   ru: Чтобы продолжить, тебе нужно войти в учетную запись, которая входит в группу администраторов...
   sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
+  cs: Pro pokračování se musíte přihlásit s účtem, který patří do skupiny administrátorů...
   fr: Tu dois te connecter avec un compte ayant des droits d'administrateur pour continuer...
   hu_HU: A folytatáshoz adminisztrátori jogokkal rendelkező fiókkal kell bejelentkezned...
   pt_BR: Você precisa realizar o login com uma conta que é membro do grupo de administração para continuar...
@@ -222,6 +233,7 @@ perUserInstallExists:
   en: There is already a per-user installation.
   de: Es existiert bereits eine Installtion für den ausgewählten Benutzer.
   ru: Уже есть установленная программа для отдельного пользователя.
+  cs: Již existuje instalace pro uživatele.
   fr: Il y a déjà une installation par utilisateur.
   hu_HU: Már van egy felhasználónkénti telepítés.
   pt_BR: Já existe uma instalação por usuário.
@@ -241,6 +253,7 @@ perUserInstall:
   en: There is a per-user installation.
   de: Benutzerinstallation bereits vorhanden.
   ru: Есть установленная программа для отдельного пользователя.
+  cs: Instalace pro uživatele.
   fr: Il y a une installation par utilisateur.
   hu_HU: Van felhasználónkénti telepítés.
   pt_BR: Existe uma instalação por usuário.
@@ -260,6 +273,7 @@ perMachineInstallExists:
   en: There is already a per-machine installation.
   de: Es existiert bereits eine Installation für diesen Computer.
   ru: Уже есть установленная программа для всего компьютера.
+  cs: Již existuje instalace pro tento počítač.
   fr: Il y a déjà une installation par machine.
   hu_HU: Már van egy számítógépenkénti telepítés.
   pt_BR: Já existe uma instalação por máquina.
@@ -279,6 +293,7 @@ perMachineInstall:
   en: There is a per-machine installation.
   de: Es existiert eine Installation für diesen Computer.
   ru: Есть установленная программа для всего компьютера.
+  cs: Instalace pro tento počítač.
   fr: Il y a une installation par machine.
   hu_HU: Van számítógépenkénti telepítés.
   pt_BR: Existe uma instalação por máquina.
@@ -298,6 +313,7 @@ reinstallUpgrade:
   en: Will reinstall/upgrade.
   de: Die Anwendung wird aktualisiert.
   ru: Приложение будет переустановлено/обновлено.
+  cs: Bude přeinstalováno/aktualizováno.
   fr: Va réinstaller/mettre à jour.
   hu_HU: Újratelepít/frissít.
   pt_BR: Irá reinstalar/atualizar.
@@ -317,6 +333,7 @@ uninstall:
   en: Will uninstall.
   de: Die Anwendung wird deinstalliert.
   ru: Приложение будет удалено.
+  cs: Odinstaluje se.
   fr: Va désinstaller.
   hu_HU: Eltávolít.
   pt_BR: Irá desinstalar.
