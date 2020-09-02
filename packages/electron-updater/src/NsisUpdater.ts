@@ -11,7 +11,7 @@ import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
-import { inflateSync } from "zlib"
+import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -30,6 +30,7 @@ export class NsisUpdater extends BaseUpdater {
         if (isInvalid(destinationFile) || (packageFile != null && isInvalid(packageFile))) {
           throw newError(`destinationFile or packageFile contains illegal chars`, "ERR_UPDATER_ILLEGAL_FILE_NAME")
         }
+
 
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
@@ -154,7 +155,7 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         try {
-          return JSON.parse(inflateSync(data).toString())
+          return JSON.parse(gunzipSync(data).toString())
         }
         catch (e) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)

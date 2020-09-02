@@ -70,6 +70,11 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly plugs?: Array<string | PlugDescriptor> | PlugDescriptor | null
 
   /**
+   * The list of [slots](https://snapcraft.io/docs/reference/interfaces).
+   */
+  readonly slots?: Array<string> | null
+
+  /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
    * Defaults to `["desktop-gtk2""]`.
    *
@@ -87,6 +92,18 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * @default false
    */
   readonly autoStart?: boolean
+
+  /**
+   * Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more.
+   */
+  readonly layout?: {[key: string]: {[key: string]: string}} | null
+
+  /**
+   * Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.
+   *
+   * The defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29).
+   */
+  readonly appPartStage?: Array<string> | null
 }
 
 export interface PlugDescriptor {

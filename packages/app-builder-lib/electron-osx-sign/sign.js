@@ -206,7 +206,12 @@ function signApplicationAsync (opts) {
             continue
           }
           debuglog('Signing... ' + filePath)
-          await execFileAsync('codesign', args.concat('--entitlements', opts['entitlements-inherit'], filePath))
+          let entitlementsFile = opts['entitlements-inherit']
+          if (filePath.includes('Library/LoginItems')) {
+            entitlementsFile = opts['entitlements-loginhelper']
+          }
+
+          await execFileAsync('codesign', args.concat('--entitlements', entitlementsFile, filePath))
         }
         debuglog('Signing... ' + opts.app)
         await execFileAsync('codesign', args.concat('--entitlements', opts.entitlements, opts.app))
@@ -334,6 +339,12 @@ const signAsync = module.exports.signAsync = function (opts) {
             opts['entitlements-inherit'] = filePath
           }
         }
+      }
+      if (!opts['entitlements-loginhelper']) {
+        filePath = opts.entitlements
+        debugwarn('No `entitlements-loginhelper` passed in arguments:', '\n',
+          '* Sandbox entitlements file for login helper is default to:', filePath)
+        opts['entitlements-loginhelper'] = filePath
       }
     })
     .then(async function () {

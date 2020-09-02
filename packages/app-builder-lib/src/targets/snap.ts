@@ -62,6 +62,10 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
+    if (options.slots != null) {
+      appDescriptor.slots = options.slots
+    }
+
     const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
@@ -71,6 +75,12 @@ export default class SnapTarget extends Target {
     }
     if (options.confinement != null) {
       snap.confinement = options.confinement
+    }
+    if (options.appPartStage != null) {
+      snap.parts.app.stage = options.appPartStage
+    }
+    if (options.layout != null) {
+      snap.layout = options.layout
     }
     deepAssign(snap, {
       name: snapName,

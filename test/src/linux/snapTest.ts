@@ -132,6 +132,23 @@ test.ifDevOrLinuxCi("plugs option", async () => {
   }
 })
 
+test.ifDevOrLinuxCi("slots option", app({
+  targets: Platform.LINUX.createTarget("snap"),
+  config: {
+    extraMetadata: {
+      name: "sep",
+    },
+    productName: "Sep",
+    snap: {
+      slots: [ "foo", "bar" ],
+    }
+  },
+  effectiveOptionComputed: async ({snap}) => {
+    expect(snap).toMatchSnapshot()
+    return true
+  },
+}))
+
 test.ifDevOrLinuxCi("custom env", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
