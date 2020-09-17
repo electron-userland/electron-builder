@@ -57,8 +57,8 @@
     "lazy-val": "^1.0.4",
     "read-config-file": "6.0.0",
     "sanitize-filename": "^1.6.3",
-    "update-notifier": "^4.1.0",
-    "yargs": "^15.4.1"
+    "update-notifier": "^4.1.1",
+    "yargs": "^16.0.3"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.1",

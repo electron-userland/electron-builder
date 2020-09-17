@@ -29,6 +29,6 @@
   "typings": "./out/util.d.ts",
   "devDependencies": {
     "@types/js-yaml": "^3.12.5",
-    "@types/source-map-support": "^0.5.2"
+    "@types/source-map-support": "^0.5.3"
   }
 }

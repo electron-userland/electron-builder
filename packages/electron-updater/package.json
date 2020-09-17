@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "4.3.4",
+  "version": "4.3.5",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
@@ -12,7 +12,7 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.3.1",
+    "@types/semver": "^7.3.4",
     "builder-util-runtime": "workspace:*",
     "fs-extra": "^9.0.1",
     "js-yaml": "^3.14.0",

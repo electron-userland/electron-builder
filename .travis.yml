@@ -1,4 +1,4 @@
-osx_image: xcode11.3
+osx_image: xcode12
 language: node_js
 
 env:
@@ -28,11 +28,11 @@ cache:
     - /tmp/jest-electron-builder-tests
 
 install:
-  - YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-2.1.1.js install
+  - YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-2.2.2.cjs install
 
 script:
-  - node .yarn/releases/yarn-2.1.1.js pretest
-  - node .yarn/releases/yarn-2.1.1.js node ./test/out/helpers/runTests.js
+  - node .yarn/releases/yarn-2.2.2.cjs pretest
+  - node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/runTests.js
 
 branches:
   except:

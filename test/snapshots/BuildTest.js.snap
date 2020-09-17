@@ -423,7 +423,7 @@ Object {
         "bl": Object {
           "files": Object {
             "BufferList.js": Object {
-              "size": 9187,
+              "size": 9520,
             },
             "LICENSE.md": Object {
               "size": 1216,
@@ -1117,6 +1117,17 @@ Object {
         },
         "node-abi": Object {
           "files": Object {
+            ".github": Object {
+              "files": Object {
+                "workflows": Object {
+                  "files": Object {
+                    "update-abi.yml": Object {
+                      "size": 1309,
+                    },
+                  },
+                },
+              },
+            },
             "CODE_OF_CONDUCT.md": Object {
               "size": 3194,
             },
@@ -1126,8 +1137,11 @@ Object {
             "LICENSE": Object {
               "size": 1069,
             },
+            "abi_registry.json": Object {
+              "size": 1450,
+            },
             "index.js": Object {
-              "size": 5320,
+              "size": 5712,
             },
             "node_modules": Object {
               "files": Object {
@@ -1158,7 +1172,14 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 525,
+              "size": 547,
+            },
+            "scripts": Object {
+              "files": Object {
+                "update-abi-registry.js": Object {
+                  "size": 2912,
+                },
+              },
             },
           },
         },
