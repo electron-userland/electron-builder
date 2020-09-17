@@ -192,6 +192,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
       "gatekeeper-assess": options.gatekeeperAssess === true,
+      // https://github.com/electron-userland/electron-builder/issues/1480
+      "strict-verify": options.strictVerify,
       hardenedRuntime: isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false,
     }
 
