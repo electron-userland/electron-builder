@@ -233,7 +233,7 @@ export class NsisTarget extends Target {
       defines.UNPACK_DIR_NAME = portableOptions.unpackDirName || (await executeAppBuilder(["ksuid"]))
 
       if (portableOptions.splashImage != null) {
-        defines.SPLASH_IMAGE = portableOptions.splashImage
+        defines.SPLASH_IMAGE = path.resolve(packager.projectDir, portableOptions.splashImage)
       }
     }
     else {
