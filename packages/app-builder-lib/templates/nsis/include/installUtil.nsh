@@ -179,13 +179,9 @@ Function uninstallOldVersion
     ifErrors 0 ExecErrorHandler
       # this also failed...
       DetailPrint `Aborting, uninstall was not successful. Not able to launch uninstaller!`
-      SetErrorLevel 5
-      Abort "Cannot uninstall"
   ExecErrorHandler:
   ${if} $R0 != 0
     DetailPrint `Aborting, uninstall was not successful. Uninstaller error code: $R0.`
-    SetErrorLevel 5
-    Abort "Cannot uninstall"
   ${endif}
   Done:
 FunctionEnd
