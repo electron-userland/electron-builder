@@ -104,6 +104,11 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * The defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29).
    */
   readonly appPartStage?: Array<string> | null
+
+  /**
+   * An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).
+   */
+  readonly title?: string | null
 }
 
 export interface PlugDescriptor {

@@ -85,6 +85,7 @@ export default class SnapTarget extends Target {
     deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
+      title: options.title || appInfo.productName,
       summary: options.summary || appInfo.productName,
       description: this.helper.getDescription(options),
       architectures: [toLinuxArchString(arch, "snap")],
