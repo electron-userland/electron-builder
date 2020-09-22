@@ -19,7 +19,7 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun", {
+    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun %U", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
     }))
   }
