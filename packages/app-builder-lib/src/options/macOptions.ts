@@ -43,6 +43,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly entitlementsInherit?: string | null
 
+  /**
+   * Path to login helper entitlement file.
+   * When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.
+   * Defaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.
+   */
   readonly entitlementsLoginHelper?: string | null
 
   /**
@@ -160,6 +165,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly strictVerify?: Array<string> | string | boolean
+
+  /**
+   * Regex or an array of regex's that signal skipping signing a file.
+   */
+  readonly signIgnore?: Array<string> | string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

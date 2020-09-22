@@ -49,7 +49,7 @@
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
-    "debug": "^4.2.0",
+    "debug": "^4.3.0",
     "ejs": "^3.1.5",
     "electron-publish": "workspace:*",
     "fs-extra": "^9.0.1",

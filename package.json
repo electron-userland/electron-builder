@@ -35,8 +35,8 @@
     "@babel/core": "^7.11.6",
     "@babel/plugin-transform-modules-commonjs": "^7.10.4",
     "@babel/preset-env": "^7.11.5",
-    "@typescript-eslint/eslint-plugin": "^4.1.1",
-    "@typescript-eslint/parser": "^4.1.1",
+    "@typescript-eslint/eslint-plugin": "^4.2.0",
+    "@typescript-eslint/parser": "^4.2.0",
     "babel-core": "^6.26.3",
     "babel-preset-jest": "^26.3.0",
     "bluebird-lst": "^1.0.9",
@@ -48,7 +48,7 @@
     "jsdoc-to-markdown": "^6.0.1",
     "ts-babel": "6.1.7",
     "ts-jsdoc": "^3.1.1",
-    "typescript": "~4.0.2",
+    "typescript": "~4.0.3",
     "typescript-json-schema": "^0.43.0"
   },
   "eslintIgnore": [

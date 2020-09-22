@@ -172,14 +172,32 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
+    let filter = options.signIgnore
+    if (Array.isArray(filter)) {
+      if (filter.length == 0) {
+        filter = null
+      }
+    }
+    else if (filter != null) {
+      filter = filter.length === 0 ? null : [filter]
+    }
+
+    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
+        if (filterRe != null) {
+          for (const regExp of filterRe) {
+            if (regExp.test(file)) {
+              return true
+            }
+          }
+        }
         return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          // https://github.com/electron-userland/electron-builder/issues/2010
-          file.includes("/node_modules/puppeteer/.local-chromium")
+          file.includes("/node_modules/puppeteer/.local-chromium") /* https://github.com/electron-userland/electron-builder/issues/2010 */
       },
       identity: identity!,
       type,

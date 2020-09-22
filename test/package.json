@@ -12,7 +12,7 @@
     "@types/fs-extra": "^9.0.1",
     "@types/jest": "^26.0.14",
     "@types/js-yaml": "^3.12.5",
-    "@types/node": "^14.10.3",
+    "@types/node": "^14.11.2",
     "@types/semver": "^7.3.4",
     "app-builder-lib": "workspace:*",
     "bluebird-lst": "^1.0.9",

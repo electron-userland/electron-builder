@@ -993,14 +993,14 @@
             "string"
           ]
         },
-        "role": {
-          "default": "Editor",
-          "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
-          "type": "string"
-        },
         "rank": {
           "default": "Default",
           "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
+          "type": "string"
+        },
+        "role": {
+          "default": "Editor",
+          "description": "*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.",
           "type": "string"
         }
       },
@@ -1570,6 +1570,9 @@
         "target": {
           "anyOf": [
             {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
               "items": {
                 "anyOf": [
                   {
@@ -1581,9 +1584,6 @@
                 ]
               },
               "type": "array"
-            },
-            {
-              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [
@@ -1983,7 +1983,7 @@
           ]
         },
         "entitlementsLoginHelper": {
-          "desciption": "Path to login helper entitlement file. When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inheritted entitlements cannot be inherited since the login helper is a standalone executable. Defaults to the value provided for `entitlements`.\n\nThis option only applies when signing with `entitlements` provided.",
+          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
@@ -2283,6 +2283,23 @@
             "null",
             "string"
           ]
+        },
+        "signIgnore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Regex or an array of regex's that signal skipping signing a file."
         },
         "strictVerify": {
           "anyOf": [
@@ -2548,7 +2565,7 @@
           ]
         },
         "entitlementsLoginHelper": {
-          "desciption": "Path to login helper entitlement file. When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inheritted entitlements cannot be inherited since the login helper is a standalone executable. Defaults to the value provided for `entitlements`.\n\nThis option only applies when signing with `entitlements` provided.",
+          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
@@ -2848,6 +2865,23 @@
             "null",
             "string"
           ]
+        },
+        "signIgnore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Regex or an array of regex's that signal skipping signing a file."
         },
         "strictVerify": {
           "anyOf": [
@@ -3696,22 +3730,7 @@
       "type": "object"
     },
     "OutgoingHttpHeaders": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          {
-            "type": [
-              "string",
-              "number"
-            ]
-          }
-        ]
-      },
+      "additionalProperties": false,
       "type": "object"
     },
     "PkgBackgroundOptions": {
@@ -4340,10 +4359,18 @@
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
         "appPartStage": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.\n\nThe defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29)."
         },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
@@ -4475,7 +4502,8 @@
           ]
         },
         "layout": {
-          "type": "object"
+          "type": "object",
+          "description": "Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more."
         },
         "mimeTypes": {
           "anyOf": [
@@ -4514,24 +4542,6 @@
             }
           ],
           "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
-        },
-        "slots": {
-          "anyOf": [
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces)."
         },
         "publish": {
           "anyOf": [
@@ -4594,6 +4604,20 @@
               ]
             }
           ]
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces)."
         },
         "stagePackages": {
           "anyOf": [
@@ -5344,6 +5368,9 @@
         "target": {
           "anyOf": [
             {
+              "$ref": "#/definitions/TargetConfiguration"
+            },
+            {
               "items": {
                 "anyOf": [
                   {
@@ -5355,9 +5382,6 @@
                 ]
               },
               "type": "array"
-            },
-            {
-              "$ref": "#/definitions/TargetConfiguration"
             },
             {
               "type": [

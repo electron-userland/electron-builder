@@ -8,18 +8,18 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.2.2.cjs" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
             - v-8.2.5-electron
       - run:
-          command: YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-2.2.2.cjs install
+          command: node .yarn/releases/yarn-2.2.2.cjs install
       - run:
           command: node .yarn/releases/yarn-2.2.2.cjs pretest
       - run:
           command: cp .pnp.js .yarn/.pnp.js
       - save_cache:
-          key: install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.2.2.cjs" }}
+          key: install-dep-cache-{{ checksum "yarn.lock" }}
           paths:
             - .yarn
       - run:
@@ -40,18 +40,16 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - install-dep-cache-{{ checksum "yarn.lock" }}-{{ checksum ".yarn/releases/yarn-2.2.2.cjs" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
             - v-8.2.5-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |
-            rm -rf .yarn
-            mv /home/circleci/project/.yarn .yarn
-            mv .yarn/.pnp.js .pnp.js
             mkdir -p ~/.cache
             mv /home/circleci/.cache/electron ~/.cache/electron
+            node .yarn/releases/yarn-2.2.2.cjs install
       - run:
           # do not use yarn test because lint is done in the build job
           command: |
