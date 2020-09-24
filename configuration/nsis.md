@@ -70,6 +70,15 @@ Keep in mind — if you customize NSIS script, you should always state about it 
 * File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
 * All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
 
+If you want to include additional resources for use during installation, such as scripts or additional installers, you can place them in the `build` directory and include them with `File`. For example, to include and run `extramsi.msi` during installation, place it in the `build` directory and use the following:
+
+```nsis
+!macro customInstall
+  File /oname=$PLUGINSDIR\extramsi.msi "${BUILD_RESOURCES_DIR}\extramsi.msi"
+  ExecWait '"msiexec" /i "$PLUGINSDIR\extramsi.msi" /passive'
+!macroend
+```
+
 ??? question "Is there a way to call just when the app is installed (or uninstalled) manually and not on update?"
     Use `${isUpdated}`.
     
