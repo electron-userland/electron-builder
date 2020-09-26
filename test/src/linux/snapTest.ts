@@ -132,22 +132,37 @@ test.ifDevOrLinuxCi("plugs option", async () => {
   }
 })
 
-test.ifDevOrLinuxCi("slots option", app({
-  targets: Platform.LINUX.createTarget("snap"),
-  config: {
-    extraMetadata: {
-      name: "sep",
-    },
-    productName: "Sep",
-    snap: {
-      slots: [ "foo", "bar" ],
-    }
-  },
-  effectiveOptionComputed: async ({snap}) => {
-    expect(snap).toMatchSnapshot()
-    return true
-  },
-}))
+test.ifDevOrLinuxCi("slots option", async () => {
+  for (const slots of [
+    [ "foo", "bar" ],
+    [
+      {
+        "mpris": {
+          interface: "mpris",
+          "name": "chromium"
+        },
+      },
+      "another-simple-slot-name",
+    ]
+  ]) {
+    await assertPack("test-app-one", {
+      targets: Platform.LINUX.createTarget("snap"),
+      config: {
+        extraMetadata: {
+          name: "sep",
+        },
+        productName: "Sep",
+        snap: {
+          slots
+        }
+      },
+      effectiveOptionComputed: async ({snap, args}) => {
+        expect(snap).toMatchSnapshot()
+        return true
+      },
+    })
+  }
+})
 
 test.ifDevOrLinuxCi("custom env", app({
   targets: Platform.LINUX.createTarget("snap"),
