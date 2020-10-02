@@ -5,7 +5,7 @@ name: Build on master
 
 on:
   push:
-    branches: RSV1-5202_macos_update_manager
+    branches: master
 
 jobs:
   build:
