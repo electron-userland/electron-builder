@@ -24,7 +24,7 @@ function doLoadAutoUpdater(): AppUpdater {
     _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
   }
   else if (process.platform === "darwin") {
-    _autoUpdater = new (require("./MacUpdater").MacUpdater)()
+    _autoUpdater = new (require("./PkgMacUpdater").PkgMacUpdater)()
   }
   else {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()

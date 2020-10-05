@@ -3179,7 +3179,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"builder-util-runtime@workspace:*, builder-util-runtime@workspace:packages/builder-util-runtime":
+"builder-util-runtime@^8.7.2, builder-util-runtime@workspace:*, builder-util-runtime@workspace:packages/builder-util-runtime":
   version: 0.0.0-use.local
   resolution: "builder-util-runtime@workspace:packages/builder-util-runtime"
   dependencies:
@@ -3203,7 +3203,7 @@ __metadata:
     bluebird-lst: ^1.0.9
     builder-util-runtime: "workspace:*"
     chalk: ^4.1.0
-    debug: ^4.3.0
+    debug: ^4.2.0
     fs-extra: ^9.0.1
     is-ci: ^2.0.0
     js-yaml: ^3.14.0
@@ -3810,7 +3810,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.0":
+"debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.2.0, debug@npm:^4.3.0":
   version: 4.3.0
   resolution: "debug@npm:4.3.0"
   dependencies:
@@ -4243,7 +4243,7 @@ __metadata:
     "@types/js-yaml": ^3.12.5
     "@types/lodash.isequal": ^4.5.5
     "@types/semver": ^7.3.4
-    builder-util-runtime: "workspace:*"
+    builder-util-runtime: ^8.7.2
     fs-extra: ^9.0.1
     js-yaml: ^3.14.0
     lazy-val: ^1.0.4

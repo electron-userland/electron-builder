@@ -4,7 +4,7 @@ import { getChannelFilename, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdat
 import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 export class GenericProvider extends Provider<UpdateInfo> {
-  private readonly baseUrl = newBaseUrl(this.configuration.url)
+  private readonly baseUrl = newBaseUrl(process.env.UPDATE_MANAGER_URL || this.configuration.url)
 
   constructor(private readonly configuration: GenericServerOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
     super(runtimeOptions)
