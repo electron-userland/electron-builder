@@ -32,8 +32,8 @@ export default class SnapTarget extends Target {
   }
 
   private async createDescriptor(arch: Arch): Promise<any> {
-    if (!this.isElectronVersionGreaterOrEqualThen("4.0.0")) {
-      if (!this.isElectronVersionGreaterOrEqualThen("2.0.0-beta.1")) {
+    if (!this.isElectronVersionGreaterOrEqualThan("4.0.0")) {
+      if (!this.isElectronVersionGreaterOrEqualThan("2.0.0-beta.1")) {
         throw new InvalidConfigurationError("Electron 2 and higher is required to build Snap")
       }
 
@@ -194,7 +194,7 @@ export default class SnapTarget extends Target {
       Icon: "${SNAP}/meta/gui/icon.png"
     })
 
-    if (this.isElectronVersionGreaterOrEqualThen("5.0.0") && !isBrowserSandboxAllowed(snap)) {
+    if (this.isElectronVersionGreaterOrEqualThan("5.0.0") && !isBrowserSandboxAllowed(snap)) {
       args.push("--extraAppArgs=--no-sandbox")
       if (this.isUseTemplateApp) {
         args.push("--exclude", "chrome-sandbox")
@@ -227,7 +227,7 @@ export default class SnapTarget extends Target {
     })
   }
 
-  private isElectronVersionGreaterOrEqualThen(version: string) {
+  private isElectronVersionGreaterOrEqualThan(version: string) {
     return semver.gte(this.packager.config.electronVersion || "7.0.0", version)
   }
 }
