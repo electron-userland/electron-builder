@@ -1,9 +1,9 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { remove } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { remove } from "fs-extra"
 
 test.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),

@@ -38,6 +38,6 @@ export class ElectronAppAdapter implements AppAdapter {
   }
 
   onQuit(handler: (exitCode: number) => void): void {
-    this.app.once("quit", (event, exitCode) => handler(exitCode))
+    this.app.once("quit", (_: Event, exitCode: number) => handler(exitCode))
   }
 }

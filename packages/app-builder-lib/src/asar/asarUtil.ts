@@ -10,6 +10,7 @@ import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
 import { detectUnpackedDirs } from "./unpackDetector"
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
 
 /** @internal */

@@ -129,6 +129,7 @@ class FakeTarget extends Target {
     super(name)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async build(appOutDir: string, arch: Arch) {
     // no build
   }

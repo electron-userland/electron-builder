@@ -102,6 +102,7 @@ export class NoOpTarget extends Target {
     throw new Error("NoOpTarget")
   }
 
+  // eslint-disable-next-line
   async build(appOutDir: string, arch: Arch): Promise<any> {
     // no build
   }

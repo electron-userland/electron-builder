@@ -35,7 +35,7 @@ test.ifNotWindows("no quotes for safe exec name", app({
   }
 }))
 
-test.ifNotWindows.ifNotCiMac.ifAll("deb file associations", app({
+test.ifNotWindows.ifAll("deb file associations", app({
   targets: Platform.LINUX.createTarget("deb"),
   config: {
     fileAssociations: [
@@ -48,9 +48,9 @@ test.ifNotWindows.ifNotCiMac.ifAll("deb file associations", app({
   },
 }, {
   packed: async context => {
-    const mime = await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} Jx --to-stdout ./usr/share/mime/packages/testapp.xml`, {
+    const mime = (await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' data.tar.xz | ${await getTarExecutable()} Jx --to-stdout ./usr/share/mime/packages/testapp.xml`, {
       maxBuffer: 10 * 1024 * 1024,
-    })
+    })).stdout
     expect(mime.trim()).toMatchSnapshot()
   }
 }))

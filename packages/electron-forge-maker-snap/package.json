@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-snap",
-  "version": "0.0.0-semantic-release",
+  "version": "22.8.1",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -11,6 +11,6 @@
     "*.js"
   ],
   "dependencies": {
-    "app-builder-lib": "^0.0.0-semantic-release"
+    "app-builder-lib": "workspace:*"
   }
 }

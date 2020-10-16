@@ -162,6 +162,10 @@
             "string"
           ]
         },
+        "customExtensionsPath": {
+          "description": "Relative path to custom extensions xml to be included in an `appmanifest.xml`.",
+          "type": "string"
+        },
         "displayName": {
           "description": "A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).\nDefaults to the application product name.",
           "type": [
@@ -988,6 +992,11 @@
             "null",
             "string"
           ]
+        },
+        "rank": {
+          "default": "Default",
+          "description": "*macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.",
+          "type": "string"
         },
         "role": {
           "default": "Editor",
@@ -1973,6 +1982,13 @@
             "string"
           ]
         },
+        "entitlementsLoginHelper": {
+          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "extendInfo": {
           "description": "The extra entries for `Info.plist`."
         },
@@ -2112,6 +2128,46 @@
             "string"
           ]
         },
+        "helperEHBundleId": {
+          "default": "${appBundleIdentifier}.helper.EH",
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "default": "${appBundleIdentifier}.helper.NP",
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperRendererBundleId": {
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "icon": {
           "default": "build/icon.icns",
           "description": "The path to application icon.",
@@ -2227,6 +2283,41 @@
             "null",
             "string"
           ]
+        },
+        "signIgnore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Regex or an array of regex's that signal skipping signing a file."
+        },
+        "strictVerify": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to let electron-osx-sign verify the contents or not."
         },
         "target": {
           "anyOf": [
@@ -2473,6 +2564,13 @@
             "string"
           ]
         },
+        "entitlementsLoginHelper": {
+          "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "extendInfo": {
           "description": "The extra entries for `Info.plist`."
         },
@@ -2612,6 +2710,46 @@
             "string"
           ]
         },
+        "helperEHBundleId": {
+          "default": "${appBundleIdentifier}.helper.EH",
+          "description": "The bundle identifier to use in the EH helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperGPUBundleId": {
+          "default": "${appBundleIdentifier}.helper.GPU",
+          "description": "The bundle identifier to use in the GPU helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperNPBundleId": {
+          "default": "${appBundleIdentifier}.helper.NP",
+          "description": "The bundle identifier to use in the NP helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperPluginBundleId": {
+          "default": "${appBundleIdentifier}.helper.Plugin",
+          "description": "The bundle identifier to use in the Plugin helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "helperRendererBundleId": {
+          "default": "${appBundleIdentifier}.helper.Renderer",
+          "description": "The bundle identifier to use in the Renderer helper's plist.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "icon": {
           "default": "build/icon.icns",
           "description": "The path to application icon.",
@@ -2728,6 +2866,41 @@
             "string"
           ]
         },
+        "signIgnore": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "Regex or an array of regex's that signal skipping signing a file."
+        },
+        "strictVerify": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            }
+          ],
+          "default": true,
+          "description": "Whether to let electron-osx-sign verify the contents or not."
+        },
         "target": {
           "anyOf": [
             {
@@ -2814,7 +2987,7 @@
         },
         "buildResources": {
           "default": "build",
-          "description": "The path to build resources.\n\nPlease note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
+          "description": "The path to build resources.\n\nPlease note — build resources are not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `\"files\": [\"**\\/*\", \"build/icon.*\"]`",
           "type": [
             "null",
             "string"
@@ -3557,22 +3730,7 @@
       "type": "object"
     },
     "OutgoingHttpHeaders": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          {
-            "type": [
-              "string",
-              "number"
-            ]
-          }
-        ]
-      },
+      "additionalProperties": false,
       "type": "object"
     },
     "PkgBackgroundOptions": {
@@ -3725,6 +3883,20 @@
             "string"
           ]
         },
+        "mustClose": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Identifies applications that must be closed before the package is installed.\\n\\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
+        },
         "overwriteAction": {
           "anyOf": [
             {
@@ -3831,20 +4003,6 @@
             "null",
             "string"
           ]
-        },
-        "mustClose": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Identifies applications that must be closed before the package is installed.\n\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
         }
       },
       "type": "object"
@@ -3942,13 +4100,6 @@
             }
           ]
         },
-        "splashImage": {
-          "describe": "The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
         "requestExecutionLevel": {
           "default": "user",
           "description": "The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.",
@@ -3958,6 +4109,13 @@
             "user"
           ],
           "type": "string"
+        },
+        "splashImage": {
+          "description": "The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "unicode": {
           "default": true,
@@ -4200,6 +4358,20 @@
           ],
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
+        "appPartStage": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.\n\nThe defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29)."
+        },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
           "type": [
@@ -4329,6 +4501,10 @@
             "string"
           ]
         },
+        "layout": {
+          "type": "object",
+          "description": "Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more."
+        },
         "mimeTypes": {
           "anyOf": [
             {
@@ -4365,7 +4541,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
@@ -4428,6 +4604,20 @@
               ]
             }
           ]
+        },
+        "slots": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces)."
         },
         "stagePackages": {
           "anyOf": [
@@ -5125,7 +5315,7 @@
           "description": "The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed.\nCannot be specified per target, allowed only in the `win`."
         },
         "rfc3161TimeStampServer": {
-          "default": "http://timestamp.comodoca.com/rfc3161",
+          "default": "http://timestamp.digicert.com",
           "description": "The URL of the RFC 3161 time stamp server.",
           "type": [
             "null",
@@ -5302,6 +5492,20 @@
           "type": "null"
         }
       ]
+    },
+    "appxManifestCreated": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Appx manifest created on disk - not packed into .appx package yet."
     },
     "artifactBuildCompleted": {
       "anyOf": [
@@ -5599,7 +5803,8 @@
       ]
     },
     "forceCodeSigning": {
-      "description": "Whether to fail if app will be not code signed.",
+      "default": false,
+      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
       "type": "boolean"
     },
     "framework": {
@@ -5888,11 +6093,6 @@
           ]
         }
       ]
-    },
-    "readonly": {
-      "default": false,
-      "description": "Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).",
-      "type": "boolean"
     },
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",

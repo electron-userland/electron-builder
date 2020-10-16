@@ -9,10 +9,12 @@ win7Required:
   ko: Windows 7 이상이 필요합니다
   ru: Требуется Windows 7 и выше
   sk: Iba Windows 7 a vyššie je podporovaný
+  cs: Jsou podporovány pouze Windows 7 a vyšší
   hu: Windows 7 vagy újabb szükséges
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
+  zh_TW: 需要 Windows 7 或以上系統
   tr_TR: Windows 7 ve üstü gereklidir
   sv_SE: Windows 7 eller högre krävs
   no: Windows 7 og over er nødvendig
@@ -29,10 +31,12 @@ x64WinRequired:
   ko: 64 비트 버전의 Windows가 필요합니다
   ru: Требуется Windows 64-bit
   sk: Potrebujete 64-bit Windows
+  cs: Potřebujete 64-bit Windows
   hu: 64-bit Windows szükséges
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
+  zh_TW: 需要 64 位 Windows 系統
   tr_TR: 64 bit Windows gerekli
   sv_SE: 64-bitars Windows krävs
   no: 64-biters Windows er nødvendig
@@ -49,10 +53,12 @@ appRunning:
   ko: "${PRODUCT_NAME}이(가) 실행 중입니다. \nOK을 클릭하면 종료됩니다."
   ru: "Приложение ${PRODUCT_NAME} уже запущено.\nНажмите OK для закрытия."
   sk: "${PRODUCT_NAME} práve beží.\nUkončite ho kliknutím na OK."
+  cs: "${PRODUCT_NAME} právě běží.\nUkončíte jej kliknutím na OK."
   hu: "${PRODUCT_NAME} éppen fut. \nKattiontson az «OK»-ra a bezárásához."
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
+  zh_TW: "${PRODUCT_NAME} 正在運行.\n點擊“確定”關閉."
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
   sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
   no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
@@ -69,10 +75,12 @@ installing:
   ko: 설치하고 있습니다. 잠시 기다려주십시오...
   ru: Установка, пожалуйста, подождите...
   sk: Inštalujem, prosím počkajte...
+  cs: Instalování, prosím počkejte...
   hu: Telepítés, kérem várjon...
   pl: Zaczekaj na ukończenie instalacji...
   pt_BR: Instalando, por favor aguarde...
   zh_CN: 正在安装, 请稍候...
+  zh_TW: 正在安裝, 請稍候...
   tr_TR: Yükleniyor, lütfen bekleyin...
   sv_SE: Installerar, vänligen vänta...
   no: Installerer, vennligst vent...
@@ -89,10 +97,12 @@ areYouSureToUninstall:
   ko: ${PRODUCT_NAME}을(를) 제거 하시겠습니까?
   ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
   sk: Ste si istý že chcete odinštalovať ${PRODUCT_NAME}?
+  cs: Jste si jistí, že chcete odinstalovat ${PRODUCT_NAME}?
   hu: Biztos benne, hogy szeretné eltávolítani a ${PRODUCT_NAME} alkalmazást?
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
+  zh_TW: 確定卸載 ${PRODUCT_NAME} 嗎？
   tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
   sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
   no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?

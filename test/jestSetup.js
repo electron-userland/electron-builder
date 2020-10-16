@@ -1,7 +1,6 @@
 "use strict"
 
-require('source-map-support').install()
-const isCi = require("is-ci")
+const isCi = require("ci-info").isCI
 
 const isWindows = process.platform === "win32"
 
@@ -21,6 +20,7 @@ const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 
 test.ifNotWindows = isWindows ? skip : test
+test.ifNotMac = isMac ? skip : test
 test.ifNotWindows.ifNotCiMac = isCi && isMac ? skip : test
 
 test.ifWindows = isWindows ? test : skip
@@ -30,7 +30,7 @@ skip.ifLinux = skip
 skip.ifWindows = skip
 
 skip.ifNotWindows = skip
-skip.ifNotWindows.ifNotCiMac = skip
+skip.ifNotMac = skip
 
 skip.ifCi = skip
 skip.ifNotCi = skip

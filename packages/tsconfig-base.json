@@ -1,5 +1,5 @@
 {
-  "extends": "../node_modules/ts-babel/tsconfig-base.json",
+  "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "declaration": true,

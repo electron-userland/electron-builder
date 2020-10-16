@@ -56,7 +56,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   if (platform !== process.platform) {
     common.npm_config_force = "true"
   }
-  if (platform === "win32") {
+  if (platform === "win32" || platform === "darwin") {
     common.npm_config_target_libc = "unknown"
   }
 
@@ -81,19 +81,24 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
 
   log.info({platform, arch, appDir}, `installing production dependencies`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const execArgs = ["install", "--production"]
-
-  if (!isRunningYarn(execPath)) {
+  const execArgs = ["install"]
+  const npmUserAgent = process.env["npm_config_user_agent"]
+  const isYarn2 = npmUserAgent != null && npmUserAgent.startsWith("yarn/2.")
+  if (!isYarn2) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
+    execArgs.push("--production")
+  }
+
+  if (!isRunningYarn(execPath)) {
     execArgs.push("--cache-min", "999999999")
   }
 
   if (execPath == null) {
     execPath = getPackageToolPath()
   }
-  else {
+  else if (!isYarn2) {
     execArgs.unshift(execPath)
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }

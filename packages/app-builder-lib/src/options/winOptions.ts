@@ -56,7 +56,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly additionalCertificateFile?: string | null
   /**
    * The URL of the RFC 3161 time stamp server.
-   * @default http://timestamp.comodoca.com/rfc3161
+   * @default http://timestamp.digicert.com
    */
   readonly rfc3161TimeStampServer?: string | null
   /**

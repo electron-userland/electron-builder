@@ -5,27 +5,23 @@
 'use strict'
 
 const path = require('path')
-const fs = require('fs-extra')
+const fs = require("fs-extra")
 const os = require('os')
-const Promise = require('bluebird-lst')
 const { executeAppBuilderAsJson } = require("../out/util/appBuilder")
 
 const util = require('./util')
 const debuglog = util.debuglog
 const debugwarn = util.debugwarn
 const getAppContentsPath = util.getAppContentsPath
-const flatList = util.flatList
 const copyFileAsync = util.copyFileAsync
 const execFileAsync = util.execFileAsync
-const lstatAsync = util.lstatAsync
-const readdirAsync = util.readdirAsync
 
 /**
  * @constructor
  * @param {string} filePath - Path to provisioning profile.
  * @param {Object} message - Decoded message in provisioning profile.
  */
-var ProvisioningProfile = module.exports.ProvisioningProfile = function (filePath, message) {
+let ProvisioningProfile = module.exports.ProvisioningProfile = function (filePath, message) {
   this.filePath = filePath
   this.message = message
 }
@@ -58,18 +54,18 @@ Object.defineProperty(ProvisioningProfile.prototype, 'type', {
  * @param {string} keychain - Keychain to use when unlocking provisioning profile.
  * @returns {Promise} Promise.
  */
-var getProvisioningProfileAsync = module.exports.getProvisioningProfileAsync = function (filePath, keychain = null) {
-  var securityArgs = [
+function getProvisioningProfileAsync(filePath, keychain) {
+  const securityArgs = [
     'cms',
     '-D', // Decode a CMS message
     '-i', filePath // Use infile as source of data
-  ];
+  ]
 
-  if (keychain) {
-    securityArgs.push('-k', keychain);
+  if (keychain != null) {
+    securityArgs.push('-k', keychain)
   }
 
-  return execFileAsync('security', securityArgs)
+  return util.execFileAsync('security', securityArgs)
     .then(async function (result) {
       // make filename unique so it doesn't create issues with parallel method calls
       const timestamp = process.hrtime.bigint
@@ -81,7 +77,7 @@ var getProvisioningProfileAsync = module.exports.getProvisioningProfileAsync = f
       await fs.outputFile(tempFile, result)
       const plistContent = await executeAppBuilderAsJson(["decode-plist", "-f", tempFile])
       await fs.unlink(tempFile)
-      var provisioningProfile = new ProvisioningProfile(filePath, plistContent[0])
+      const provisioningProfile = new ProvisioningProfile(filePath, plistContent[0])
       debuglog('Provisioning profile:', '\n',
         '> Name:', provisioningProfile.name, '\n',
         '> Platforms:', provisioningProfile.platforms, '\n',
@@ -98,35 +94,25 @@ var getProvisioningProfileAsync = module.exports.getProvisioningProfileAsync = f
  * @param {Object} opts - Options.
  * @returns {Promise} Promise.
  */
-var findProvisioningProfilesAsync = module.exports.findProvisioningProfilesAsync = function (opts) {
-  return Promise.map([
-    process.cwd() // Current working directory
-  ], function (dirPath) {
-    return readdirAsync(dirPath)
-      .map(function (name) {
-        var filePath = path.join(dirPath, name)
-        return lstatAsync(filePath)
-          .then(function (stat) {
-            if (stat.isFile()) {
-              switch (path.extname(filePath)) {
-                case '.provisionprofile':
-                  return filePath
-              }
-            }
-            return undefined
-          })
-      })
-  })
-    .then(flatList)
-    .map(function (filePath) {
+async function findProvisioningProfilesAsync(opts) {
+  const dirPath = process.cwd()
+  const dirContent = await Promise.all((await fs.readdir(dirPath))
+    .filter(it => it.endsWith(".provisionprofile"))
+    .map(async function (name) {
+      const filePath = path.join(dirPath, name)
+      const stat = await fs.lstat(filePath)
+      return stat.isFile() ? filePath : undefined
+    }))
+  return util.flatList(await Promise.all(util.flatList(dirContent).map(filePath => {
       return getProvisioningProfileAsync(filePath)
-        .then(function (provisioningProfile) {
-          if (provisioningProfile.platforms.indexOf(opts.platform) >= 0 && provisioningProfile.type === opts.type) return provisioningProfile
+        .then((provisioningProfile) => {
+          if (provisioningProfile.platforms.indexOf(opts.platform) >= 0 && provisioningProfile.type === opts.type) {
+            return provisioningProfile
+          }
           debugwarn('Provisioning profile above ignored, not for ' + opts.platform + ' ' + opts.type + '.')
           return undefined
         })
-    })
-    .then(flatList)
+    })))
 }
 
 /**
@@ -136,23 +122,24 @@ var findProvisioningProfilesAsync = module.exports.findProvisioningProfilesAsync
  * @returns {Promise} Promise.
  */
 module.exports.preEmbedProvisioningProfile = function (opts) {
-  function embedProvisioningProfile () {
-    if (opts['provisioning-profile']) {
-      debuglog('Looking for existing provisioning profile...')
-      var embeddedFilePath = path.join(getAppContentsPath(opts), 'embedded.provisionprofile')
-      return lstatAsync(embeddedFilePath)
-        .then(function (stat) {
-          debuglog('Found embedded provisioning profile:', '\n',
-            '* Please manually remove the existing file if not wanted.', '\n',
-            '* Current file at:', embeddedFilePath)
-        })
-        .catch(function (err) {
-          if (err.code === 'ENOENT') {
-            // File does not exist
-            debuglog('Embedding provisioning profile...')
-            return copyFileAsync(opts['provisioning-profile'].filePath, embeddedFilePath)
-          } else throw err
-        })
+  async function embedProvisioningProfile () {
+    if (!opts['provisioning-profile']) {
+      return
+    }
+
+    debuglog('Looking for existing provisioning profile...')
+    let embeddedFilePath = path.join(getAppContentsPath(opts), 'embedded.provisionprofile')
+    try {
+      await fs.lstat(embeddedFilePath)
+      debuglog('Found embedded provisioning profile:', '\n',
+        '* Please manually remove the existing file if not wanted.', '\n',
+        '* Current file at:', embeddedFilePath)
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        // File does not exist
+        debuglog('Embedding provisioning profile...')
+        return copyFileAsync(opts['provisioning-profile'].filePath, embeddedFilePath)
+      } else throw err
     }
   }
 

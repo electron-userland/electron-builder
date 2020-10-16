@@ -284,6 +284,13 @@ export class Packager {
     }
   }
 
+  async callAppxManifestCreated(path: string): Promise<void> {
+    const handler = resolveFunction(this.config.appxManifestCreated, "appxManifestCreated")
+    if (handler != null) {
+      await Promise.resolve(handler(path))
+    }
+  }
+
   async build(): Promise<BuildResult> {
     let configPath: string | null = null
     let configFromOptions = this.options.config

@@ -20,15 +20,7 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    const args = ["AppRun"]
-
-    if (this.isElectronVersionGreaterOrEqualThan("5.0.0")) {
-      args.push("--no-sandbox")
-    }
-
-    const exec = args.join(" ")
-
-    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, exec, {
+    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun --no-sandbox %U", {
       "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
     }))
   }
@@ -98,9 +90,5 @@ export default class AppImageTarget extends Target {
       isWriteUpdateInfo: true,
       updateInfo: await executeAppBuilderAsJson(args),
     })
-  }
-
-  private isElectronVersionGreaterOrEqualThan(version: string) {
-    return semver.gte(this.packager.config.electronVersion || "7.0.0", version)
   }
 }

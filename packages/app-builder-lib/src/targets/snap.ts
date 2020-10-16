@@ -12,7 +12,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { createStageDirPath } from "./targetUtil"
 
-const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]
+const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
   readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -62,6 +62,10 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
+    if (options.slots != null) {
+      appDescriptor.slots = options.slots
+    }
+
     const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
@@ -71,6 +75,12 @@ export default class SnapTarget extends Target {
     }
     if (options.confinement != null) {
       snap.confinement = options.confinement
+    }
+    if (options.appPartStage != null) {
+      snap.parts.app.stage = options.appPartStage
+    }
+    if (options.layout != null) {
+      snap.layout = options.layout
     }
     deepAssign(snap, {
       name: snapName,
@@ -179,7 +189,7 @@ export default class SnapTarget extends Target {
     // snapcraft.yaml inside a snap directory
     const snapMetaDir = path.join(stageDir, this.isUseTemplateApp ? "meta" : "snap")
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
-    await this.helper.writeDesktopEntry(this.options, packager.executableName, desktopFile, {
+    await this.helper.writeDesktopEntry(this.options, packager.executableName + " %U", desktopFile, {
       // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png"
     })
@@ -195,7 +205,6 @@ export default class SnapTarget extends Target {
       return
     }
 
-    console.log(JSON.stringify(snap, null, 2))
     await outputFile(path.join(snapMetaDir, this.isUseTemplateApp ? "snap.yaml" : "snapcraft.yaml"), serializeToYaml(snap))
 
     const hooksDir = await packager.getResource(options.hooks, "snap-hooks")
@@ -248,7 +257,7 @@ function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any; } | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any } | null } | null {
   if (raw == null) {
     return null
   }

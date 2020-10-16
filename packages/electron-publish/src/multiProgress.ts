@@ -14,7 +14,7 @@ export class MultiProgress {
   createBar(format: string, options: any): ProgressBar {
     options.stream = this.stream
 
-    // tslint:disable:no-this-assignment
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const manager = this
     class MultiProgressBar extends ProgressBar {
       private index = -1

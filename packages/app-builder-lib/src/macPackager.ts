@@ -53,6 +53,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return this.info.framework.macOsDefaultTargets
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
     return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
   }
@@ -67,10 +68,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         case DIR_TARGET:
           break
 
-        case "dmg":
-          const { DmgTarget } = require("dmg-builder")
+        case "dmg": {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const {DmgTarget} = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
+        }
 
         case "zip":
           // https://github.com/electron-userland/electron-builder/issues/2313
@@ -88,14 +91,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private hasMasTarget(targets: Array<Target>) {
-    return targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
-  }
-
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
-    const hasMas = this.hasMasTarget(targets)
+    const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
     const prepackaged = this.packagerOptions.prepackaged
 
     if (!hasMas || targets.length > 1) {
@@ -173,14 +172,32 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
+    let filter = options.signIgnore
+    if (Array.isArray(filter)) {
+      if (filter.length == 0) {
+        filter = null
+      }
+    }
+    else if (filter != null) {
+      filter = filter.length === 0 ? null : [filter]
+    }
+
+    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
+        if (filterRe != null) {
+          for (const regExp of filterRe) {
+            if (regExp.test(file)) {
+              return true
+            }
+          }
+        }
         return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          // https://github.com/electron-userland/electron-builder/issues/2010
-          file.includes("/node_modules/puppeteer/.local-chromium")
+          file.includes("/node_modules/puppeteer/.local-chromium") /* https://github.com/electron-userland/electron-builder/issues/2010 */
       },
       identity: identity!,
       type,
@@ -193,7 +210,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
       "gatekeeper-assess": options.gatekeeperAssess === true,
-      hardenedRuntime: options.hardenedRuntime !== false,
+      // https://github.com/electron-userland/electron-builder/issues/1480
+      "strict-verify": options.strictVerify,
+      hardenedRuntime: isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false,
     }
 
     await this.adjustSignOptions(signOptions, masOptions)
@@ -253,6 +272,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (customSignOptions.provisioningProfile != null) {
       signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
+    signOptions['entitlements-loginhelper'] = customSignOptions.entitlementsLoginHelper
   }
 
   //noinspection JSMethodCanBeStatic
@@ -327,16 +347,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const appFileName = `${this.appInfo.productFilename}.app`
 
-    const hasMas = this.hasMasTarget(packContext.targets)
-    // No need to sign on mas targets since we sign the folder on pack()
-    if (!hasMas) {
-      await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
-        if (file === appFileName) {
-          return this.sign(path.join(packContext.appOutDir, file), null, null)
-        }
-        return null
-      })
-    }
+    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+      if (file === appFileName) {
+        return this.sign(path.join(packContext.appOutDir, file), null, null)
+      }
+      return null
+    })
 
     if (!isAsar) {
       return

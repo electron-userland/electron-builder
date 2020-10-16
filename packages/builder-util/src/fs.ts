@@ -306,10 +306,12 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
     .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const USE_HARD_LINKS = (file: string) => true
 
 export interface Link {
-  readonly link: string,
+  readonly link: string
   readonly file: string
 }

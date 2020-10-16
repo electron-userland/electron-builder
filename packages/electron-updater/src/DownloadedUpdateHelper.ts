@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import isEqual from "lodash.isequal"
 import { Logger, ResolvedUpdateFileInfo } from "./main"
-import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
+import { pathExists, readJson, emptyDir, outputJson, unlink, pathExistsSync } from "fs-extra"
 import * as path from "path"
 
 /** @private **/
@@ -18,15 +18,15 @@ export class DownloadedUpdateHelper {
   }
 
   private _downloadedFileInfo: CachedUpdateInfo | null = null
-  get downloadedFileInfo() {
+  get downloadedFileInfo(): CachedUpdateInfo | null {
     return this._downloadedFileInfo
   }
 
-  get file() {
+  get file(): string | null {
     return this._file
   }
 
-  get packageFile() {
+  get packageFile(): string | null {
     return this._packageFile
   }
 
@@ -48,7 +48,7 @@ export class DownloadedUpdateHelper {
 
     // update has already been downloaded from some previous app launch
     const cachedUpdateFile = await this.getValidCachedUpdateFile(fileInfo, logger)
-    if (cachedUpdateFile == null) {
+    if (cachedUpdateFile === null) {
       return null
     }
     logger.info(`Update has already been downloaded to ${updateFile}).`)
@@ -56,7 +56,7 @@ export class DownloadedUpdateHelper {
     return cachedUpdateFile
   }
 
-  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean) {
+  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean): Promise<void> {
     this._file = downloadedFile
     this._packageFile = packageFile
     this.versionInfo = versionInfo
@@ -72,7 +72,7 @@ export class DownloadedUpdateHelper {
     }
   }
 
-  async clear() {
+  async clear(): Promise<void> {
     this._file = null
     this._packageFile = null
     this.versionInfo = null
@@ -90,23 +90,36 @@ export class DownloadedUpdateHelper {
     }
   }
 
+  /**
+   * Returns "update-info.json" which is created in the update cache directory's "pending" subfolder after the first update is downloaded.  If the update file does not exist then the cache is cleared and recreated.  If the update file exists then its properties are validated.
+   * @param fileInfo
+   * @param logger
+   */
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
-    let cachedInfo: CachedUpdateInfo
-    const updateInfoFile = this.getUpdateInfoFile()
-    try {
-      cachedInfo = await readJson(updateInfoFile)
+    const updateInfoFilePath: string = this.getUpdateInfoFile()
+
+    const doesUpdateInfoFileExist = await pathExistsSync(updateInfoFilePath);
+    if(!doesUpdateInfoFileExist) {
+      return null;
     }
-    catch (e) {
+
+
+    let cachedInfo: CachedUpdateInfo
+    try {
+      cachedInfo = await readJson(updateInfoFilePath)
+    }
+    catch (error) {
       let message = `No cached update info available`
-      if (e.code !== "ENOENT") {
+      if (error.code !== "ENOENT") {
         await this.cleanCacheDirForPendingUpdate()
-        message += ` (error on read: ${e.message})`
+        message += ` (error on read: ${error.message})`
       }
       logger.info(message)
       return null
     }
 
-    if (cachedInfo.fileName == null) {
+    const isCachedInfoFileNameValid = cachedInfo?.fileName !== null ?? false
+    if (!isCachedInfoFileNameValid) {
       logger.warn(`Cached update info is corrupted: no fileName, directory for cached update will be cleaned`)
       await this.cleanCacheDirForPendingUpdate()
       return null
@@ -135,7 +148,7 @@ export class DownloadedUpdateHelper {
     return updateFile
   }
 
-  private getUpdateInfoFile() {
+  private getUpdateInfoFile(): string {
     return path.join(this.cacheDirForPendingUpdate, "update-info.json")
   }
 }
@@ -146,7 +159,7 @@ interface CachedUpdateInfo {
   readonly isAdminRightsRequired: boolean
 }
 
-function hashFile(file: string, algorithm: string = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {
+function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
@@ -163,7 +176,7 @@ function hashFile(file: string, algorithm: string = "sha512", encoding: "base64"
   })
 }
 
-export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger) {
+export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {
   // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
   let nameCounter = 0
   let result = path.join(cacheDir, name)
