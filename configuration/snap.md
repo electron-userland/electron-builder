@@ -1,6 +1,7 @@
 The top-level [snap](configuration.md#Configuration-snap) key contains set of options instructing electron-builder on how it should build [Snap](http://snapcraft.io).
 
 <!-- do not edit. start of generated block -->
+* <code id="SnapOptions-title">title</code> String - An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).
 * <code id="SnapOptions-confinement">confinement</code> = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
 * <code id="SnapOptions-environment">environment</code> Object&lt;String, any&gt; - The custom environment. Defaults to `{"TMPDIR": "$XDG_RUNTIME_DIR"}`. If you set custom, it will be merged with default.
 * <code id="SnapOptions-summary">summary</code> String - A sentence summarising the snap. Defaults to the `productName`. Max len. 78 characters, describing the snap in short and simple terms.
