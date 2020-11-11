@@ -1523,31 +1523,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron-builder/monorepo@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@electron-builder/monorepo@workspace:."
-  dependencies:
-    "@babel/core": ^7.11.6
-    "@babel/plugin-transform-modules-commonjs": ^7.10.4
-    "@babel/preset-env": ^7.11.5
-    "@typescript-eslint/eslint-plugin": ^4.2.0
-    "@typescript-eslint/parser": ^4.2.0
-    babel-core: ^6.26.3
-    babel-preset-jest: ^26.3.0
-    bluebird-lst: ^1.0.9
-    electron-builder-tslint-config: ^1.1.0
-    eslint: ^7.9.0
-    fs-extra: ^9.0.1
-    globby: ^11.0.1
-    jest-cli: ^26.4.2
-    jsdoc-to-markdown: ^6.0.1
-    ts-babel: 6.1.7
-    ts-jsdoc: ^3.1.1
-    typescript: ~4.0.3
-    typescript-json-schema: ^0.43.0
-  languageName: unknown
-  linkType: soft
-
 "@electron-builder/test@workspace:test":
   version: 0.0.0-use.local
   resolution: "@electron-builder/test@workspace:test"
@@ -3203,7 +3178,7 @@ __metadata:
     bluebird-lst: ^1.0.9
     builder-util-runtime: "workspace:*"
     chalk: ^4.1.0
-    debug: ^4.3.0
+    debug: ^4.2.0
     fs-extra: ^9.0.1
     is-ci: ^2.0.0
     js-yaml: ^3.14.0
@@ -3810,7 +3785,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.3.0":
+"debug@npm:^4.0.1, debug@npm:^4.1.0, debug@npm:^4.1.1, debug@npm:^4.2.0, debug@npm:^4.3.0":
   version: 4.3.0
   resolution: "debug@npm:4.3.0"
   dependencies:
@@ -4128,6 +4103,31 @@ __metadata:
   checksum: 463e8740cc5c5fa944deed9b8626928a9016106e6cf78cd53430cc6698fe0f5816c6123c185ad6c45381f74cffadd3f1be194c6dfc4bda6dd8ff75fdf72d96df
   languageName: node
   linkType: hard
+
+"electron-builder-elevation-helper@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "electron-builder-elevation-helper@workspace:."
+  dependencies:
+    "@babel/core": ^7.11.6
+    "@babel/plugin-transform-modules-commonjs": ^7.10.4
+    "@babel/preset-env": ^7.11.5
+    "@typescript-eslint/eslint-plugin": ^4.2.0
+    "@typescript-eslint/parser": ^4.2.0
+    babel-core: ^6.26.3
+    babel-preset-jest: ^26.3.0
+    bluebird-lst: ^1.0.9
+    electron-builder-tslint-config: ^1.1.0
+    eslint: ^7.9.0
+    fs-extra: ^9.0.1
+    globby: ^11.0.1
+    jest-cli: ^26.4.2
+    jsdoc-to-markdown: ^6.0.1
+    ts-babel: 6.1.7
+    ts-jsdoc: ^3.1.1
+    typescript: ~4.0.3
+    typescript-json-schema: ^0.43.0
+  languageName: unknown
+  linkType: soft
 
 "electron-builder-squirrel-windows@workspace:*, electron-builder-squirrel-windows@workspace:packages/electron-builder-squirrel-windows":
   version: 0.0.0-use.local
