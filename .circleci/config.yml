@@ -11,7 +11,7 @@ jobs:
             - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-8.2.5-electron
+            - v-11.0.0-electron
       - run:
           command: node .yarn/releases/yarn-2.2.2.cjs install
       - run:
@@ -25,7 +25,7 @@ jobs:
       - run:
           command: node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/downloadElectron.js
       - save_cache:
-          key: v-8.2.5-electron
+          key: v-11.0.0-electron
           paths:
             - ~/.cache/electron
 
@@ -43,7 +43,7 @@ jobs:
             - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-8.2.5-electron
+            - v-11.0.0-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |

@@ -185,10 +185,6 @@ export class Packager {
 
     function processTargets(platform: Platform, types: Array<string>) {
       function commonArch(currentIfNotSpecified: boolean): Array<Arch> {
-        if (platform === Platform.MAC) {
-          return currentIfNotSpecified ? [Arch.x64] : []
-        }
-
         const result = Array<Arch>()
         return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
       }

@@ -100,7 +100,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets))
-        .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
+        .then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
     }
 
     for (const target of targets) {

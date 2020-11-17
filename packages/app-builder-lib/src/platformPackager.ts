@@ -487,7 +487,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
     const archName = arch == null ? null : getArtifactArchName(arch, ext)
-    return this.expandMacro(pattern, this.platform === Platform.MAC ? null : archName, {
+    return this.expandMacro(pattern, archName, {
       ext
     })
   }
