@@ -410,13 +410,13 @@ Object {
               "size": 1081,
             },
             "base64js.min.js": Object {
-              "size": 2372,
+              "size": 2192,
             },
             "index.js": Object {
-              "size": 3944,
+              "size": 3932,
             },
             "package.json": Object {
-              "size": 511,
+              "size": 814,
             },
           },
         },
@@ -439,16 +439,16 @@ Object {
         "buffer": Object {
           "files": Object {
             "AUTHORS.md": Object {
-              "size": 2328,
+              "size": 2672,
             },
             "LICENSE": Object {
               "size": 1106,
             },
             "index.js": Object {
-              "size": 49395,
+              "size": 50097,
             },
             "package.json": Object {
-              "size": 1030,
+              "size": 1306,
             },
           },
         },
@@ -808,10 +808,10 @@ Object {
               "size": 1465,
             },
             "index.js": Object {
-              "size": 2064,
+              "size": 2154,
             },
             "package.json": Object {
-              "size": 500,
+              "size": 799,
             },
           },
         },
@@ -1138,10 +1138,10 @@ Object {
               "size": 1069,
             },
             "abi_registry.json": Object {
-              "size": 1450,
+              "size": 1620,
             },
             "index.js": Object {
-              "size": 5712,
+              "size": 6099,
             },
             "node_modules": Object {
               "files": Object {
@@ -1177,7 +1177,7 @@ Object {
             "scripts": Object {
               "files": Object {
                 "update-abi-registry.js": Object {
-                  "size": 2912,
+                  "size": 3105,
                 },
               },
             },
@@ -1649,7 +1649,7 @@ Object {
               "size": 1078,
             },
             "index.js": Object {
-              "size": 9523,
+              "size": 9587,
             },
             "node_modules": Object {
               "files": Object {
