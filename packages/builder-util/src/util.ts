@@ -183,7 +183,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
         clearTimeout(timeout)
       }
       finally {
-        resolve()
+        resolve(undefined)
       }
     }, error => {
       try {

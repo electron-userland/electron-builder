@@ -1,6 +1,6 @@
 {
   "name": "dmg-builder",
-  "version": "22.8.1",
+  "version": "22.10.0",
   "main": "out/dmgUtil.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -18,11 +18,11 @@
     "dmg-license": "^1.0.8",
     "fs-extra": "^9.0.1",
     "iconv-lite": "^0.6.2",
-    "js-yaml": "^3.14.0",
+    "js-yaml": "^3.14.1",
     "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.1",
+    "@types/fs-extra": "^9.0.5",
     "@types/js-yaml": "^3.12.5",
     "temp-file": "^3.3.7"
   },

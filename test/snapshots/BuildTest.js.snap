@@ -837,7 +837,7 @@ Object {
               "size": 765,
             },
             "ini.js": Object {
-              "size": 5061,
+              "size": 4976,
             },
             "package.json": Object {
               "size": 541,
@@ -1750,6 +1750,62 @@ Object {
             },
             "align.js": Object {
               "size": 1428,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "ansi-regex": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 253,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 420,
+                    },
+                  },
+                },
+                "is-fullwidth-code-point": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 1393,
+                    },
+                    "license": Object {
+                      "size": 1119,
+                    },
+                    "package.json": Object {
+                      "size": 481,
+                    },
+                  },
+                },
+                "string-width": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 649,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 554,
+                    },
+                  },
+                },
+                "strip-ansi": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 150,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 446,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 517,
