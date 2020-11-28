@@ -161,7 +161,7 @@ export default class AppXTarget extends Target {
     }
 
     const certInfo = await this.packager.lazyCertInfo.value
-    const publisher = certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn
+    const publisher = this.options.publisher || (certInfo == null ? null : certInfo.bloodyMicrosoftSubjectDn)
     if (publisher == null) {
       throw new Error("Internal error: cannot compute subject using certificate info")
     }
