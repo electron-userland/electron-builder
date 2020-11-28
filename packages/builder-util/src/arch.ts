@@ -13,7 +13,7 @@ export function toLinuxArchString(arch: Arch, targetName: string): string {
     case Arch.armv7l:
       return targetName === "snap" || targetName === "deb" ? "armhf" : "armv7l"
     case Arch.arm64:
-      return "arm64"
+      return targetName === "pacman" ? "aarch64" : "arm64"
 
     default:
       throw new Error(`Unsupported arch ${arch}`)
@@ -66,6 +66,11 @@ export function getArtifactArchName(arch: Arch, ext: string): string {
   else if (arch === Arch.armv7l) {
     if (ext === "snap") {
       archName = "armhf"
+    }
+  }
+  else if (arch === Arch.arm64) {
+    if (ext === "pacman" || ext === "rpm") {
+      archName = "aarch64"
     }
   }
   return archName
