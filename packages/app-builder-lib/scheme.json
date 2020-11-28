@@ -4670,6 +4670,13 @@
             "string"
           ]
         },
+        "title": {
+          "description": "An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
           "type": "boolean"
