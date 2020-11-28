@@ -133,8 +133,7 @@ export class DownloadedUpdateHelper {
 
     const updateFile = path.join(this.cacheDirForPendingUpdate, cachedInfo.fileName)
     if (!(await pathExists(updateFile))) {
-      logger.info("Cached update file doesn't exist, directory for cached update will be cleaned")
-      await this.cleanCacheDirForPendingUpdate()
+      logger.info("Cached update file doesn't exist")
       return null
     }
 
