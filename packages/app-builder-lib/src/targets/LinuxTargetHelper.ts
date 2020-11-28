@@ -61,6 +61,11 @@ export class LinuxTargetHelper {
       sources.push(icnsPath)
     }
 
+    // if no explicit sources are defined, default to buildResources directory
+    if (sources.length < 1) {
+      sources.push('./')
+    }
+
     // need to put here and not as default because need to resolve image size
     const result = await packager.resolveIcon(sources, asArray(packager.getDefaultFrameworkIcon()), "set")
     this.maxIconPath = result[result.length - 1].file
