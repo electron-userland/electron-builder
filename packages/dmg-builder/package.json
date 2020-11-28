@@ -15,6 +15,7 @@
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
+    "dmg-license": "^1.0.8",
     "fs-extra": "^9.0.1",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^3.14.0",
