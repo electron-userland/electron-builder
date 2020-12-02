@@ -1,4 +1,5 @@
 import { exec, log } from "builder-util"
+import { safeLoad } from 'js-yaml'
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
 import { outputFile, readFile, readJson } from "fs-extra"
@@ -9,6 +10,8 @@ import { dmgLicenseFromJSON } from 'dmg-license'
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
 const DEFAULT_REGION_CODE = 0
 
+// License Specifications
+// https://github.com/argv-minus-one/dmg-license/blob/HEAD/docs/License%20Specifications.md
 type LicenseConfig = {
   '$schema': string
   body: any[]
@@ -26,7 +29,7 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   packager.debugLogger.add("dmg.licenseButtons", licenseButtonFiles)
 
   const jsonFile: LicenseConfig = {
-    '$schema': 'https://github.com/argv-minus-one/dmg-license/raw/master/schema.json',
+    "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
     // defaultLang: '',
     body: [],
     labels: []
@@ -40,7 +43,8 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   }
 
   for (const button of licenseButtonFiles) {
-    const label = await readJson(button.file)
+    const filepath = button.file
+    const label = filepath.endsWith(".yml") ? safeLoad(await readFile(filepath, "utf-8")) : await readJson(filepath)
     if (label.description) {
       // to support original button file format
       label.message = label.description

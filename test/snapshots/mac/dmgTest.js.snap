@@ -2472,7 +2472,7 @@ Object {
 }
 `;
 
-exports[`license rtf 1`] = `
+exports[`license ja 1`] = `
 Object {
   "mac": Array [
     Object {
@@ -2496,7 +2496,7 @@ Object {
 }
 `;
 
-exports[`license rtf 2`] = `
+exports[`license ja 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -2532,7 +2532,7 @@ Object {
 }
 `;
 
-exports[`license ru 1`] = `
+exports[`license rtf 1`] = `
 Object {
   "mac": Array [
     Object {
@@ -2556,7 +2556,7 @@ Object {
 }
 `;
 
-exports[`license ru 2`] = `
+exports[`license rtf 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
