@@ -281,6 +281,10 @@ test.ifAll.ifMac("license buttons config", app({
   ...packagerOptions,
   effectiveOptionComputed: async it => {
     if ("licenseData" in it) {
+      // Clean `file` path from the data because the path is dynamic at runtime
+      it.licenseData.body.forEach((license: any) => {
+        delete license.file
+      });
       expect(it.licenseData).toMatchSnapshot()
     }
     return false

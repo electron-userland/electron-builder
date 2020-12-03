@@ -294,19 +294,15 @@ Object {
   "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
   "body": Array [
     Object {
-      "file": "/private/var/folders/nz/vv4_9tw56nv9k3tkvyszvwg80000gn/T/et-77328f5ad524736cbbdac635d38ac177/t-MWibSb/test-project-s/build/license_en.txt",
       "lang": "en-US",
     },
     Object {
-      "file": "/private/var/folders/nz/vv4_9tw56nv9k3tkvyszvwg80000gn/T/et-77328f5ad524736cbbdac635d38ac177/t-MWibSb/test-project-s/build/license_fr.txt",
       "lang": "fr-FR",
     },
     Object {
-      "file": "/private/var/folders/nz/vv4_9tw56nv9k3tkvyszvwg80000gn/T/et-77328f5ad524736cbbdac635d38ac177/t-MWibSb/test-project-s/build/license_ja.txt",
       "lang": "ja-JP",
     },
     Object {
-      "file": "/private/var/folders/nz/vv4_9tw56nv9k3tkvyszvwg80000gn/T/et-77328f5ad524736cbbdac635d38ac177/t-MWibSb/test-project-s/build/license_ko.txt",
       "lang": "ko-KR",
     },
   ],
