@@ -3203,7 +3203,7 @@ __metadata:
     bluebird-lst: ^1.0.9
     builder-util-runtime: "workspace:*"
     chalk: ^4.1.0
-    debug: ^4.3.0
+    debug: ^4.2.0
     fs-extra: ^9.0.1
     is-ci: ^2.0.0
     js-yaml: ^3.14.0
@@ -3819,6 +3819,18 @@ __metadata:
     supports-color:
       optional: true
   checksum: 847d2760d1493cfaef53fb67d8943c6afaba30472d7527450c19919d230dde04f2275dd8dd5c2874c7103787c190d3b5d3dbc2ee7596a12d853a2ce35c4b8b1b
+  languageName: node
+  linkType: hard
+
+"debug@npm:^4.2.0":
+  version: 4.3.1
+  resolution: "debug@npm:4.3.1"
+  dependencies:
+    ms: 2.1.2
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 0d41ba5177510e8b388dfd7df143ab0f9312e4abdaba312595461511dac88e9ef8101939d33b4e6d37e10341af6a5301082e4d7d6f3deb4d57bc05fc7d296fad
   languageName: node
   linkType: hard
 

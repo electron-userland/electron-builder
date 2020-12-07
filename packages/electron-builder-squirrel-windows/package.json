@@ -1,15 +1,18 @@
 {
-  "name": "electron-builder-squirrel-windows",
+  "name": "@AurorNZ/electron-builder-squirrel-windows",
   "version": "22.8.1",
   "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
+  "repository": "https://github.com/AurorNZ/electron-builder",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "out"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "archiver": "^5.0.2",

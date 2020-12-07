@@ -19,6 +19,7 @@
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/Library/Caches/electron:/root/.cache/electron  -v ~/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine /bin/bash -c \"yarn && TEST_FILES=HoistedNodeModuleTest node ./test/out/helpers/runTests.js\"",
     "docker-images": "docker/build.sh",
     "release": "BABEL_ENV=production yarn compile && ./scripts/publish-packages.sh && conventional-changelog-cli conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release-squirrel-windows": "BABEL_ENV=production ts-babel \"packages/electron-builder-squirrel-windows\" && ./scripts/publish-packages.sh",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",

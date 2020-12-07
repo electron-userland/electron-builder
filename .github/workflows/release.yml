@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  pull_request:
+  push:
+    branches: master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Yarn cache
+        uses: actions/cache@v2
+        with:
+          path: .yarn
+          key: ${{ runner.OS }}-yarn-cache-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-yarn-cache-
+
+      - name: yarn install
+        run: yarn install --immutable-cache
+
+      - name: yarn build
+        run: yarn release-squirrel-windows
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          BABEL_ENV: production
