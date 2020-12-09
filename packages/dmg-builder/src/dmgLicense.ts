@@ -1,4 +1,5 @@
 import { exec, log } from "builder-util"
+import { safeLoad } from 'js-yaml'
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
 import { outputFile, readFile, readJson } from "fs-extra"
@@ -9,7 +10,15 @@ import { dmgLicenseFromJSON } from 'dmg-license'
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
 const DEFAULT_REGION_CODE = 0
 
-export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: string): Promise<Object | null> {
+// License Specifications
+// https://github.com/argv-minus-one/dmg-license/blob/HEAD/docs/License%20Specifications.md
+type LicenseConfig = {
+  '$schema': string
+  body: any[]
+  labels: any[]
+}
+
+export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: string): Promise<LicenseConfig | null> {
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return null
@@ -19,11 +28,11 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
   packager.debugLogger.add("dmg.licenseButtons", licenseButtonFiles)
 
-  const jsonFile = {
-    '$schema': 'https://github.com/argv-minus-one/dmg-license/raw/master/schema.json',
+  const jsonFile: LicenseConfig = {
+    "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
     // defaultLang: '',
-    body: [] as any,
-    labels: [] as any
+    body: [],
+    labels: []
   }
 
   for (const file of licenseFiles) {
@@ -34,7 +43,8 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   }
 
   for (const button of licenseButtonFiles) {
-    let label = await readJson(button.file)
+    const filepath = button.file
+    const label = filepath.endsWith(".yml") ? safeLoad(await readFile(filepath, "utf-8")) : await readJson(filepath)
     if (label.description) {
       // to support original button file format
       label.message = label.description
