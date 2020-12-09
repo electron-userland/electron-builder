@@ -12,134 +12,178 @@ from .utils import *
 libc = cdll.LoadLibrary('/usr/lib/libc.dylib')
 
 # Constants
-FSOPT_NOFOLLOW         = 0x00000001
-FSOPT_NOINMEMUPDATE    = 0x00000002
-FSOPT_REPORT_FULLSIZE  = 0x00000004
-FSOPT_PACK_INVAL_ATTRS = 0x00000008
+FSOPT_NOFOLLOW          = 0x00000001
+FSOPT_NOINMEMUPDATE     = 0x00000002
+FSOPT_REPORT_FULLSIZE   = 0x00000004
+FSOPT_PACK_INVAL_ATTRS  = 0x00000008
+FSOPT_ATTR_CMN_EXTENDED = 0x00000020
+FSOPT_RETURN_REALDEV    = 0x00000200
 
 VOL_CAPABILITIES_FORMAT     = 0
 VOL_CAPABILITIES_INTERFACES = 1
 
-VOL_CAP_FMT_PERSISTENTOBJECTIDS       = 0x00000001
-VOL_CAP_FMT_SYMBOLICLINKS             = 0x00000002
-VOL_CAP_FMT_HARDLINKS                 = 0x00000004
-VOL_CAP_FMT_JOURNAL                   = 0x00000008
-VOL_CAP_FMT_JOURNAL_ACTIVE            = 0x00000010
-VOL_CAP_FMT_NO_ROOT_TIMES             = 0x00000020
-VOL_CAP_FMT_SPARSE_FILES              = 0x00000040
-VOL_CAP_FMT_ZERO_RUNS                 = 0x00000080
-VOL_CAP_FMT_CASE_SENSITIVE            = 0x00000100
-VOL_CAP_FMT_CASE_PRESERVING           = 0x00000200
-VOL_CAP_FMT_FAST_STATFS               = 0x00000400
-VOL_CAP_FMT_2TB_FILESIZE              = 0x00000800
-VOL_CAP_FMT_OPENDENYMODES             = 0x00001000
-VOL_CAP_FMT_HIDDEN_FILES              = 0x00002000
-VOL_CAP_FMT_PATH_FROM_ID              = 0x00004000
-VOL_CAP_FMT_NO_VOLUME_SIZES           = 0x00008000
-VOL_CAP_FMT_DECMPFS_COMPRESSION       = 0x00010000
-VOL_CAP_FMT_64BIT_OBJECT_IDS          = 0x00020000
+VOL_CAP_FMT_PERSISTENTOBJECTIDS = 0x00000001
+VOL_CAP_FMT_SYMBOLICLINKS       = 0x00000002
+VOL_CAP_FMT_HARDLINKS           = 0x00000004
+VOL_CAP_FMT_JOURNAL             = 0x00000008
+VOL_CAP_FMT_JOURNAL_ACTIVE      = 0x00000010
+VOL_CAP_FMT_NO_ROOT_TIMES       = 0x00000020
+VOL_CAP_FMT_SPARSE_FILES        = 0x00000040
+VOL_CAP_FMT_ZERO_RUNS           = 0x00000080
+VOL_CAP_FMT_CASE_SENSITIVE      = 0x00000100
+VOL_CAP_FMT_CASE_PRESERVING     = 0x00000200
+VOL_CAP_FMT_FAST_STATFS         = 0x00000400
+VOL_CAP_FMT_2TB_FILESIZE        = 0x00000800
+VOL_CAP_FMT_OPENDENYMODES       = 0x00001000
+VOL_CAP_FMT_HIDDEN_FILES        = 0x00002000
+VOL_CAP_FMT_PATH_FROM_ID        = 0x00004000
+VOL_CAP_FMT_NO_VOLUME_SIZES     = 0x00008000
+VOL_CAP_FMT_DECMPFS_COMPRESSION = 0x00010000
+VOL_CAP_FMT_64BIT_OBJECT_IDS    = 0x00020000
 
-VOL_CAP_INT_SEARCHFS                  = 0x00000001
-VOL_CAP_INT_ATTRLIST                  = 0x00000002
-VOL_CAP_INT_NFSEXPORT                 = 0x00000004
-VOL_CAP_INT_READDIRATTR               = 0x00000008
-VOL_CAP_INT_EXCHANGEDATA              = 0x00000010
-VOL_CAP_INT_COPYFILE                  = 0x00000020
-VOL_CAP_INT_ALLOCATE                  = 0x00000040
-VOL_CAP_INT_VOL_RENAME                = 0x00000080
-VOL_CAP_INT_ADVLOCK                   = 0x00000100
-VOL_CAP_INT_FLOCK                     = 0x00000200
-VOL_CAP_INT_EXTENDED_SECURITY         = 0x00000400
-VOL_CAP_INT_USERACCESS                = 0x00000800
-VOL_CAP_INT_MANLOCK                   = 0x00001000
-VOL_CAP_INT_NAMEDSTREAMS              = 0x00002000
-VOL_CAP_INT_EXTENDED_ATTR             = 0x00004000
+VOL_CAP_INT_SEARCHFS          = 0x00000001
+VOL_CAP_INT_ATTRLIST          = 0x00000002
+VOL_CAP_INT_NFSEXPORT         = 0x00000004
+VOL_CAP_INT_READDIRATTR       = 0x00000008
+VOL_CAP_INT_EXCHANGEDATA      = 0x00000010
+VOL_CAP_INT_COPYFILE          = 0x00000020
+VOL_CAP_INT_ALLOCATE          = 0x00000040
+VOL_CAP_INT_VOL_RENAME        = 0x00000080
+VOL_CAP_INT_ADVLOCK           = 0x00000100
+VOL_CAP_INT_FLOCK             = 0x00000200
+VOL_CAP_INT_EXTENDED_SECURITY = 0x00000400
+VOL_CAP_INT_USERACCESS        = 0x00000800
+VOL_CAP_INT_MANLOCK           = 0x00001000
+VOL_CAP_INT_NAMEDSTREAMS      = 0x00002000
+VOL_CAP_INT_EXTENDED_ATTR     = 0x00004000
+VOL_CAP_INT_CLONE             = 0x00010000
+VOL_CAP_INT_SNAPSHOT          = 0x00020000
+VOL_CAP_INT_RENAME_SWAP       = 0x00040000
+VOL_CAP_INT_RENAME_EXCL       = 0x00080000
+VOL_CAP_INT_RENAME_OPENFAIL   = 0x00100000
 
-ATTR_CMN_NAME                         = 0x00000001
-ATTR_CMN_DEVID                        = 0x00000002
-ATTR_CMN_FSID                         = 0x00000004
-ATTR_CMN_OBJTYPE                      = 0x00000008
-ATTR_CMN_OBJTAG                       = 0x00000010
-ATTR_CMN_OBJID                        = 0x00000020
-ATTR_CMN_OBJPERMANENTID               = 0x00000040
-ATTR_CMN_PAROBJID                     = 0x00000080
-ATTR_CMN_SCRIPT                       = 0x00000100
-ATTR_CMN_CRTIME                       = 0x00000200
-ATTR_CMN_MODTIME                      = 0x00000400
-ATTR_CMN_CHGTIME                      = 0x00000800
-ATTR_CMN_ACCTIME                      = 0x00001000
-ATTR_CMN_BKUPTIME                     = 0x00002000
-ATTR_CMN_FNDRINFO                     = 0x00004000
-ATTR_CMN_OWNERID                      = 0x00008000
-ATTR_CMN_GRPID                        = 0x00010000
-ATTR_CMN_ACCESSMASK                   = 0x00020000
-ATTR_CMN_FLAGS                        = 0x00040000
-ATTR_CMN_USERACCESS                   = 0x00200000
-ATTR_CMN_EXTENDED_SECURITY            = 0x00400000
-ATTR_CMN_UUID                         = 0x00800000
-ATTR_CMN_GRPUUID                      = 0x01000000
-ATTR_CMN_FILEID                       = 0x02000000
-ATTR_CMN_PARENTID                     = 0x04000000
-ATTR_CMN_FULLPATH                     = 0x08000000
-ATTR_CMN_ADDEDTIME                    = 0x10000000
-ATTR_CMN_RETURNED_ATTRS               = 0x80000000
-ATTR_CMN_ALL_ATTRS                    = 0x9fe7ffff
+ATTR_CMN_NAME               = 0x00000001
+ATTR_CMN_DEVID              = 0x00000002
+ATTR_CMN_FSID               = 0x00000004
+ATTR_CMN_OBJTYPE            = 0x00000008
+ATTR_CMN_OBJTAG             = 0x00000010
+ATTR_CMN_OBJID              = 0x00000020
+ATTR_CMN_OBJPERMANENTID     = 0x00000040
+ATTR_CMN_PAROBJID           = 0x00000080
+ATTR_CMN_SCRIPT             = 0x00000100
+ATTR_CMN_CRTIME             = 0x00000200
+ATTR_CMN_MODTIME            = 0x00000400
+ATTR_CMN_CHGTIME            = 0x00000800
+ATTR_CMN_ACCTIME            = 0x00001000
+ATTR_CMN_BKUPTIME           = 0x00002000
+ATTR_CMN_FNDRINFO           = 0x00004000
+ATTR_CMN_OWNERID            = 0x00008000
+ATTR_CMN_GRPID              = 0x00010000
+ATTR_CMN_ACCESSMASK         = 0x00020000
+ATTR_CMN_FLAGS              = 0x00040000
+ATTR_CMN_GEN_COUNT          = 0x00080000
+ATTR_CMN_DOCUMENT_ID        = 0x00100000
+ATTR_CMN_USERACCESS         = 0x00200000
+ATTR_CMN_EXTENDED_SECURITY  = 0x00400000
+ATTR_CMN_UUID               = 0x00800000
+ATTR_CMN_GRPUUID            = 0x01000000
+ATTR_CMN_FILEID             = 0x02000000
+ATTR_CMN_PARENTID           = 0x04000000
+ATTR_CMN_FULLPATH           = 0x08000000
+ATTR_CMN_ADDEDTIME          = 0x10000000
+ATTR_CMN_ERROR              = 0x20000000
+ATTR_CMN_DATA_PROTECT_FLAGS = 0x40000000
+ATTR_CMN_RETURNED_ATTRS     = 0x80000000
+ATTR_CMN_ALL_ATTRS          = 0xffffffff
 
-ATTR_VOL_FSTYPE				          = 0x00000001
-ATTR_VOL_SIGNATURE			          = 0x00000002
-ATTR_VOL_SIZE				          = 0x00000004
-ATTR_VOL_SPACEFREE			          = 0x00000008
-ATTR_VOL_SPACEAVAIL			          = 0x00000010
-ATTR_VOL_MINALLOCATION			      = 0x00000020
-ATTR_VOL_ALLOCATIONCLUMP		      = 0x00000040
-ATTR_VOL_IOBLOCKSIZE			      = 0x00000080
-ATTR_VOL_OBJCOUNT			          = 0x00000100
-ATTR_VOL_FILECOUNT			          = 0x00000200
-ATTR_VOL_DIRCOUNT			          = 0x00000400
-ATTR_VOL_MAXOBJCOUNT			      = 0x00000800
-ATTR_VOL_MOUNTPOINT			          = 0x00001000
-ATTR_VOL_NAME				          = 0x00002000
-ATTR_VOL_MOUNTFLAGS			          = 0x00004000
-ATTR_VOL_MOUNTEDDEVICE			      = 0x00008000
-ATTR_VOL_ENCODINGSUSED			      = 0x00010000
-ATTR_VOL_CAPABILITIES			      = 0x00020000
-ATTR_VOL_UUID				          = 0x00040000
-ATTR_VOL_ATTRIBUTES			          = 0x40000000
-ATTR_VOL_INFO				          = 0x80000000
-ATTR_VOL_ALL_ATTRS                    = 0xc007ffff
+ATTR_CMN_VALIDMASK          = 0xffffffff
+ATTR_CMN_SETMASK            = 0x51c7ff00
+ATTR_CMN_VOLSETMASK         = 0x00006700
 
-ATTR_DIR_LINKCOUNT			          = 0x00000001
-ATTR_DIR_ENTRYCOUNT			          = 0x00000002
-ATTR_DIR_MOUNTSTATUS			      = 0x00000004
-DIR_MNTSTATUS_MNTPOINT		          = 0x00000001
-DIR_MNTSTATUS_TRIGGER			      = 0x00000002
-ATTR_DIR_ALL_ATTRS                    = 0x00000007
+ATTR_VOL_FSTYPE		 = 0x00000001
+ATTR_VOL_SIGNATURE	 = 0x00000002
+ATTR_VOL_SIZE		 = 0x00000004
+ATTR_VOL_SPACEFREE	 = 0x00000008
+ATTR_VOL_SPACEAVAIL	 = 0x00000010
+ATTR_VOL_MINALLOCATION	 = 0x00000020
+ATTR_VOL_ALLOCATIONCLUMP = 0x00000040
+ATTR_VOL_IOBLOCKSIZE	 = 0x00000080
+ATTR_VOL_OBJCOUNT	 = 0x00000100
+ATTR_VOL_FILECOUNT	 = 0x00000200
+ATTR_VOL_DIRCOUNT	 = 0x00000400
+ATTR_VOL_MAXOBJCOUNT	 = 0x00000800
+ATTR_VOL_MOUNTPOINT	 = 0x00001000
+ATTR_VOL_NAME		 = 0x00002000
+ATTR_VOL_MOUNTFLAGS	 = 0x00004000
+ATTR_VOL_MOUNTEDDEVICE	 = 0x00008000
+ATTR_VOL_ENCODINGSUSED	 = 0x00010000
+ATTR_VOL_CAPABILITIES	 = 0x00020000
+ATTR_VOL_UUID		 = 0x00040000
+ATTR_VOL_QUOTA_SIZE      = 0x10000000
+ATTR_VOL_RESERVED_SIZE   = 0x20000000
+ATTR_VOL_ATTRIBUTES	 = 0x40000000
+ATTR_VOL_INFO		 = 0x80000000
+ATTR_VOL_ALL_ATTRS       = 0xf007ffff
 
-ATTR_FILE_LINKCOUNT			          = 0x00000001
-ATTR_FILE_TOTALSIZE			          = 0x00000002
-ATTR_FILE_ALLOCSIZE			          = 0x00000004
-ATTR_FILE_IOBLOCKSIZE			      = 0x00000008
-ATTR_FILE_DEVTYPE			          = 0x00000020
-ATTR_FILE_DATALENGTH			      = 0x00000200
-ATTR_FILE_DATAALLOCSIZE			      = 0x00000400
-ATTR_FILE_RSRCLENGTH			      = 0x00001000
-ATTR_FILE_RSRCALLOCSIZE			      = 0x00002000
+ATTR_DIR_LINKCOUNT     = 0x00000001
+ATTR_DIR_ENTRYCOUNT    = 0x00000002
+ATTR_DIR_MOUNTSTATUS   = 0x00000004
+DIR_MNTSTATUS_MNTPOINT   = 0x00000001
+DIR_MNTSTATUS_TRIGGER    = 0x00000002
+ATTR_DIR_ALLOCSIZE     = 0x00000008
+ATTR_DIR_IOBLOCKSIZE   = 0x00000010
+ATTR_DIR_DATALENGTH    = 0x00000020
+ATTR_DIR_ALL_ATTRS     = 0x0000003f
 
-ATTR_FILE_ALL_ATTRS                   = 0x0000362f
+ATTR_DIR_VALIDMASK     = 0x0000003f
+ATTR_DIR_SETMASK       = 0x00000000
 
-ATTR_FORK_TOTALSIZE			          = 0x00000001
-ATTR_FORK_ALLOCSIZE			          = 0x00000002
-ATTR_FORK_ALL_ATTRS                   = 0x00000003
+ATTR_FILE_LINKCOUNT	= 0x00000001
+ATTR_FILE_TOTALSIZE	= 0x00000002
+ATTR_FILE_ALLOCSIZE	= 0x00000004
+ATTR_FILE_IOBLOCKSIZE	= 0x00000008
+ATTR_FILE_DEVTYPE	= 0x00000020
+ATTR_FILE_FORKCOUNT     = 0x00000080
+ATTR_FILE_FORKLIST      = 0x00000100
+ATTR_FILE_DATALENGTH	= 0x00000200
+ATTR_FILE_DATAALLOCSIZE	= 0x00000400
+ATTR_FILE_RSRCLENGTH	= 0x00001000
+ATTR_FILE_RSRCALLOCSIZE	= 0x00002000
+ATTR_FILE_ALL_ATTRS     = 0x000037ff
+
+ATTR_FILE_VALIDMASK     = 0x000037ff
+ATTR_FILE_SETMASK       = 0x00000020
+
+# These are deprecated
+ATTR_FORK_TOTALSIZE = 0x00000001
+ATTR_FORK_ALLOCSIZE = 0x00000002
+ATTR_FORK_ALL_ATTRS = 0x00000003
+
+# These go in the fork attribute field
+ATTR_CMNEXT_RELPATH            = 0x00000004
+ATTR_CMNEXT_PRIVATESIZE        = 0x00000008
+ATTR_CMNEXT_LINKID             = 0x0000010
+ATTR_CMNEXT_NOFIRMLINKPATH     = 0x00000020
+ATTR_CMNEXT_REALDEVID          = 0x00000040
+ATTR_CMNEXT_REALFSID           = 0x00000080
+ATTR_CMNEXT_CLONEID            = 0x00000100
+ATTR_CMNEXT_EXT_FLAGS          = 0x00000200
+ATTR_CMNEXT_RECURSIVE_GENCOUNT = 0x00000400
+ATTR_CMNEXT_ALL_ATTRS          = 0x000007fc
+
+ATTR_CMNEXT_VALIDMASK = 0x000007fc
+ATTR_CMNEXT_SETMASK   = 0x00000000
+
+ATTR_FORK_VALIDMASK  = 0x00000003
+ATTR_FORK_SETMASK    = 0x00000000
 
 # These can't be used
-ATTR_FILE_FORKCOUNT			          = 0x00000080
-ATTR_FILE_FORKLIST			          = 0x00000100
-ATTR_CMN_NAMEDATTRCOUNT			      = 0x00080000
-ATTR_CMN_NAMEDATTRLIST			      = 0x00100000
-ATTR_FILE_DATAEXTENTS			      = 0x00000800
-ATTR_FILE_RSRCEXTENTS			      = 0x00004000
-ATTR_FILE_CLUMPSIZE			          = 0x00000010
-ATTR_FILE_FILETYPE			          = 0x00000040
+ATTR_CMN_NAMEDATTRCOUNT	= 0x00080000
+ATTR_CMN_NAMEDATTRLIST	= 0x00100000
+ATTR_FILE_CLUMPSIZE	= 0x00000010
+ATTR_FILE_FILETYPE	= 0x00000040
+ATTR_FILE_DATAEXTENTS	= 0x00000800
+ATTR_FILE_RSRCEXTENTS	= 0x00004000
 
 class attrlist(Structure):
     _fields_ = [('bitmapcount', c_ushort),
@@ -232,7 +276,7 @@ class FinderInfo(Union):
                 ('folderInfo', FolderInfo)]
 
 extentrecord = diskextent * 8
-        
+
 vol_capabilities_set_t = c_uint * 4
 
 class vol_capabilities_attr_t(Structure):
@@ -302,6 +346,7 @@ uuid_t = c_byte*16
 
 NAME_MAX = 255
 PATH_MAX = 1024
+FSTYPE_MAX = 16
 
 class struct_statfs(Structure):
     _fields_ = [('f_bsize', uint32_t),
@@ -316,10 +361,11 @@ class struct_statfs(Structure):
                 ('f_type', uint32_t),
                 ('f_flags', uint32_t),
                 ('f_fssubtype', uint32_t),
-                ('f_fstypename', c_char * 16),
+                ('f_fstypename', c_char * FSTYPE_MAX),
                 ('f_mntonname', c_char * PATH_MAX),
                 ('f_mntfromname', c_char * PATH_MAX),
-                ('f_reserved', uint32_t * 8)]
+                ('f_flags_ext', uint32_t),
+                ('f_reserved', uint32_t * 7)]
 
 # Calculate the maximum number of bytes required for the attribute buffer
 _attr_info = (
@@ -330,6 +376,7 @@ _attr_info = (
     (0, ATTR_CMN_FSID, sizeof(fsid_t)),
     (0, ATTR_CMN_OBJTYPE, sizeof(fsobj_type_t)),
     (0, ATTR_CMN_OBJTAG, sizeof(fsobj_tag_t)),
+    (0, ATTR_CMN_OBJID, sizeof(fsobj_id_t)),
     (0, ATTR_CMN_OBJPERMANENTID, sizeof(fsobj_id_t)),
     (0, ATTR_CMN_PAROBJID, sizeof(fsobj_id_t)),
     (0, ATTR_CMN_SCRIPT, sizeof(text_encoding_t)),
@@ -345,6 +392,8 @@ _attr_info = (
     (0, ATTR_CMN_NAMEDATTRCOUNT, None),
     (0, ATTR_CMN_NAMEDATTRLIST, None),
     (0, ATTR_CMN_FLAGS, sizeof(uint32_t)),
+    (0, ATTR_CMN_GEN_COUNT, sizeof(uint32_t)),
+    (0, ATTR_CMN_DOCUMENT_ID, sizeof(uint32_t)),
     (0, ATTR_CMN_USERACCESS, sizeof(uint32_t)),
     (0, ATTR_CMN_EXTENDED_SECURITY, sizeof(attrreference_t) + sizeof(kauth_filesec)),
     (0, ATTR_CMN_UUID, sizeof(guid_t)),
@@ -353,6 +402,7 @@ _attr_info = (
     (0, ATTR_CMN_PARENTID, sizeof(uint64_t)),
     (0, ATTR_CMN_FULLPATH, sizeof(attrreference_t) + PATH_MAX),
     (0, ATTR_CMN_ADDEDTIME, sizeof(timespec)),
+    (0, ATTR_CMN_DATA_PROTECT_FLAGS, sizeof(uint32_t)),
 
     # Volume attributes
     (1, ATTR_VOL_FSTYPE, sizeof(uint32_t)),
@@ -374,12 +424,17 @@ _attr_info = (
     (1, ATTR_VOL_ENCODINGSUSED, sizeof(c_ulonglong)),
     (1, ATTR_VOL_CAPABILITIES, sizeof(vol_capabilities_attr_t)),
     (1, ATTR_VOL_UUID, sizeof(uuid_t)),
+    (1, ATTR_VOL_QUOTA_SIZE, sizeof(off_t)),
+    (1, ATTR_VOL_RESERVED_SIZE, sizeof(off_t)),
     (1, ATTR_VOL_ATTRIBUTES, sizeof(vol_attributes_attr_t)),
 
     # Directory attributes
     (2, ATTR_DIR_LINKCOUNT, sizeof(uint32_t)),
     (2, ATTR_DIR_ENTRYCOUNT, sizeof(uint32_t)),
     (2, ATTR_DIR_MOUNTSTATUS, sizeof(uint32_t)),
+    (2, ATTR_DIR_ALLOCSIZE, sizeof(off_t)),
+    (2, ATTR_DIR_IOBLOCKSIZE, sizeof(uint32_t)),
+    (2, ATTR_DIR_DATALENGTH, sizeof(off_t)),
 
     # File attributes
     (3, ATTR_FILE_LINKCOUNT, sizeof(uint32_t)),
@@ -400,9 +455,19 @@ _attr_info = (
 
     # Fork attributes
     (4, ATTR_FORK_TOTALSIZE, sizeof(off_t)),
-    (4, ATTR_FORK_ALLOCSIZE, sizeof(off_t))
+    (4, ATTR_FORK_ALLOCSIZE, sizeof(off_t)),
+
+    # Extended common attributes
+    (4, ATTR_CMNEXT_RELPATH, sizeof(attrreference_t) + PATH_MAX),
+    (4, ATTR_CMNEXT_PRIVATESIZE, sizeof(off_t)),
+    (4, ATTR_CMNEXT_LINKID, sizeof(uint64_t)),
+    (4, ATTR_CMNEXT_NOFIRMLINKPATH, sizeof(attrreference_t) + PATH_MAX),
+    (4, ATTR_CMNEXT_REALDEVID, sizeof(dev_t)),
+    (4, ATTR_CMNEXT_REALFSID, sizeof(fsid_t)),
+    (4, ATTR_CMNEXT_CLONEID, sizeof(uint64_t)),
+    (4, ATTR_CMNEXT_EXT_FLAGS, sizeof(uint64_t)),
     )
-    
+
 def _attrbuf_size(attrs):
     size = 4
     for entry in _attr_info:
@@ -421,11 +486,19 @@ _fgetattrlist = libc.fgetattrlist
 _fgetattrlist.argtypes = [c_int, POINTER(attrlist), c_void_p, c_ulong, c_ulong]
 _fgetattrlist.restype = c_int
 
-_statfs = libc['statfs$INODE64']
+try:
+    _statfs = libc['statfs$INODE64']
+except (KeyError, AttributeError):
+    _statfs = libc['statfs']
+
 _statfs.argtypes = [c_char_p, POINTER(struct_statfs)]
 _statfs.restype = c_int
 
-_fstatfs = libc['fstatfs$INODE64']
+try:
+    _fstatfs = libc['fstatfs$INODE64']
+except (KeyError, AttributeError):
+    _fstatfs = libc['fstatfs']
+
 _fstatfs.argtypes = [c_int, POINTER(struct_statfs)]
 _fstatfs.restype = c_int
 
@@ -533,6 +606,14 @@ def _decode_attrlist_result(buf, attrs, options):
         a = uint32_t.from_buffer(buf, offset)
         offset += sizeof(uint32_t)
         result.append(a.value)
+    if attrs[0] & ATTR_CMN_GEN_COUNT:
+        a = uint32_t.from_buffer(buf, offset)
+        offset += sizeof(uint32_t)
+        result.append(a.value)
+    if attrs[0] & ATTR_CMN_DOCUMENT_ID:
+        a = uint32_t.from_buffer(buf, offset)
+        offset += sizeof(uint32_t)
+        result.append(a.value)
     if attrs[0] & ATTR_CMN_USERACCESS:
         a = uint32_t.from_buffer(buf, offset)
         offset += sizeof(uint32_t)
@@ -577,6 +658,10 @@ def _decode_attrlist_result(buf, attrs, options):
         a = timespec.from_buffer(buf, offset)
         offset += sizeof(timespec)
         result.append(_datetime_from_timespec(a))
+    if attrs[0] & ATTR_CMN_DATA_PROTECT_FLAGS:
+        a = uint32_t.from_buffer(buf, offset)
+        offset += sizeof(uint32_t)
+        result.append(a.value)
 
     # Volume attributes
     if attrs[1] & ATTR_VOL_FSTYPE:
@@ -660,6 +745,14 @@ def _decode_attrlist_result(buf, attrs, options):
     if attrs[1] & ATTR_VOL_UUID:
         result.append(uuid.UUID(bytes=buf[offset:offset+16]))
         offset += sizeof(uuid_t)
+    if attrs[1] & ATTR_VOL_QUOTA_SIZE:
+        a = off_t.from_buffer(buf, offset)
+        offset += sizeof(off_t)
+        result.append(a.value)
+    if attrs[1] & ATTR_VOL_RESERVED_SIZE:
+        a = off_t.from_buffer(buf, offset)
+        offset += sizeof(off_t)
+        result.append(a.value)
     if attrs[1] & ATTR_VOL_ATTRIBUTES:
         a = vol_attributes_attr_t.from_buffer(buf, offset)
         offset += sizeof(vol_attributes_attr_t)
@@ -677,6 +770,18 @@ def _decode_attrlist_result(buf, attrs, options):
     if attrs[2] & ATTR_DIR_MOUNTSTATUS:
         a = uint32_t.from_buffer(buf, offset)
         offset += sizeof(uint32_t)
+        result.append(a.value)
+    if attrs[2] & ATTR_DIR_ALLOCSIZE:
+        a = off_t.from_buffer(buf, offset)
+        offset += sizeof(off_t)
+        result.append(a.value)
+    if attrs[2] & ATTR_DIR_IOBLOCKSIZE:
+        a = uint32_t.from_buffer(buf, offset)
+        offset += sizeof(uint32_t)
+        result.append(a.value)
+    if attrs[2] & ATTR_DIR_DATALENGTH:
+        a = off_t.from_buffer(buf, offset)
+        offset += sizeof(off_t)
         result.append(a.value)
 
     # File attributes
@@ -746,7 +851,45 @@ def _decode_attrlist_result(buf, attrs, options):
         a = off_t.from_buffer(buf, offset)
         offset += sizeof(off_t)
         result.append(a.value)
-        
+
+    # Extended common attributes
+    if attrs[4] & ATTR_CMNEXT_RELPATH:
+        a = attrreference_t.from_buffer(buf, offset)
+        ofs = offset + a.attr_dataoffset
+        path = _decode_utf8_nul(buf[ofs:ofs+a.attr_length])
+        offset += sizeof (attrreference_t)
+        result.append(path)
+    if attrs[4] & ATTR_CMNEXT_PRIVATESIZE:
+        a = off_t.from_buffer(buf, offset)
+        offset += sizeof(off_t)
+        result.append(a.value)
+    if attrs[4] & ATTR_CMNEXT_LINKID:
+        a = uint64_t.from_buffer(buf, offset)
+        offset += sizeof(uint64_t)
+        result.append(a.value)
+    if attrs[4] & ATTR_CMNEXT_NOFIRMLINKPATH:
+        a = attrreference_t.from_buffer(buf, offset)
+        ofs = offset + a.attr_dataoffset
+        path = _decode_utf8_nul(buf[ofs:ofs+a.attr_length])
+        offset += sizeof (attrreference_t)
+        result.append(path)
+    if attrs[4] & ATTR_CMNEXT_REALDEVID:
+        a = dev_t.from_buffer(buf, offset)
+        offset += sizeof(dev_t)
+        result.append(a.value)
+    if attrs[4] & ATTR_CMNEXT_REALFSID:
+        a = fsid_t.from_buffer(buf, offset)
+        offset += sizeof(fsid_t)
+        result.append(a.value)
+    if attrs[4] & ATTR_CMNEXT_CLONEID:
+        a = uint64_t.from_buffer(buf, offset)
+        offset += sizeof(uint64_t)
+        result.append(a.value)
+    if attrs[4] & ATTR_CMNEXT_EXT_FLAGS:
+        a = uint64_t.from_buffer(buf, offset)
+        offset += sizeof(uint64_t)
+        result.append(a.value)
+
     return result
 
 # Sadly, ctypes.get_errno() seems not to work
@@ -755,7 +898,7 @@ __error.restype = POINTER(c_int)
 
 def _get_errno():
     return __error().contents.value
-                
+
 def getattrlist(path, attrs, options):
     if not isinstance(path, bytes):
         path = path.encode('utf-8')
