@@ -471,11 +471,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (pattern == null) {
       // tslint:disable-next-line:no-invalid-template-strings
       pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
-    }
-    else if (this.platform !== Platform.MAC) {
+    } else {
       // https://github.com/electron-userland/electron-builder/issues/3510
       // always respect arch in user custom artifact pattern
-      skipArchIfX64 = false
+      skipArchIfX64 = this.platform === Platform.MAC
     }
     return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
