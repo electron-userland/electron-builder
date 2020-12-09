@@ -1,4 +1,4 @@
-import { asArray, isEmptyOrSpaces, log } from "builder-util"
+import { asArray, isEmptyOrSpaces, log, exists } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import { LinuxTargetSpecificOptions } from ".."
@@ -52,17 +52,21 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<IconInfo>> {
     const packager = this.packager
-    const iconDir = packager.platformSpecificBuildOptions.icon
-    const sources = iconDir == null ? [] : [iconDir]
+    const { platformSpecificBuildOptions, config } = packager
 
-    const commonConfiguration = packager.config
-    const icnsPath = (commonConfiguration.mac || {}).icon || commonConfiguration.icon
-    if (icnsPath != null) {
-      sources.push(icnsPath)
-    }
+    const sources = [
+        platformSpecificBuildOptions.icon,
+        config.mac?.icon ?? config.icon
+      ].filter(str => !!str) as string[]
+    
+    // If no explicit sources are defined, fallback to buildResources directory, then default framework icon
+    const fallbackSources = [
+        config.directories?.buildResources,
+        ...asArray(packager.getDefaultFrameworkIcon())
+      ].filter(async filepath => filepath && await exists(filepath)) as string[]
 
     // need to put here and not as default because need to resolve image size
-    const result = await packager.resolveIcon(sources, asArray(packager.getDefaultFrameworkIcon()), "set")
+    const result = await packager.resolveIcon(sources, fallbackSources, "set")
     this.maxIconPath = result[result.length - 1].file
     return result
   }

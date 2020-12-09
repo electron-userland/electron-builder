@@ -4341,6 +4341,19 @@
       ],
       "type": "object"
     },
+    "SlotDescriptor": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "typeof": "function"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "type": "object"
+    },
     "SnapOptions": {
       "additionalProperties": false,
       "properties": {
@@ -4608,8 +4621,18 @@
         "slots": {
           "anyOf": [
             {
+              "$ref": "#/definitions/PlugDescriptor"
+            },
+            {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SlotDescriptor"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -4617,7 +4640,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces)."
+          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces).\n\nAdditional attributes can be specified using object instead of just name of slot:\n```\n[\n  {\n    \"mpris\": {\n      \"name\": \"chromium\"\n    },\n  }\n]\n\nIn case you want your application to be a compliant MPris player, you will need to definie\nThe mpris slot with \"chromium\" name.\nThis electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),\nand we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement."
         },
         "stagePackages": {
           "anyOf": [
@@ -4642,6 +4665,13 @@
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "title": {
+          "description": "An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).",
           "type": [
             "null",
             "string"

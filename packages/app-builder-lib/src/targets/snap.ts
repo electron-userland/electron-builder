@@ -47,6 +47,9 @@ export default class SnapTarget extends Target {
     const plugs = normalizePlugConfiguration(this.options.plugs)
 
     const plugNames = this.replaceDefault(plugs == null ? null : Object.getOwnPropertyNames(plugs), defaultPlugs)
+
+    const slots = normalizePlugConfiguration(this.options.slots)
+
     const buildPackages = asArray(options.buildPackages)
     const defaultStagePackages = getDefaultStagePackages()
     const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
@@ -60,10 +63,6 @@ export default class SnapTarget extends Target {
       command: "command.sh",
       plugs: plugNames,
       adapter: "none",
-    }
-
-    if (options.slots != null) {
-      appDescriptor.slots = options.slots
     }
 
     const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
@@ -82,9 +81,24 @@ export default class SnapTarget extends Target {
     if (options.layout != null) {
       snap.layout = options.layout
     }
+    if (slots != null) {
+      appDescriptor.slots = Object.getOwnPropertyNames(slots)
+      for (const slotName of appDescriptor.slots) {
+        const slotOptions = slots[slotName]
+        if (slotOptions == null) {
+          continue
+        }
+        if (!snap.slots) {
+          snap.slots = {}
+        }
+        snap.slots[slotName] = slotOptions
+      }
+    }
+    
     deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
+      title: options.title || appInfo.productName,
       summary: options.summary || appInfo.productName,
       description: this.helper.getDescription(options),
       architectures: [toLinuxArchString(arch, "snap")],

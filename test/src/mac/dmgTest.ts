@@ -254,14 +254,14 @@ test.ifAll.ifMac("multi language license", app(packagerOptions, {
     return Promise.all([
       // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
       fs.writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo"),
-      fs.writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+      fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは"),
     ])
   },
 }))
 
-test.ifAll.ifMac("license ru", app(packagerOptions, {
+test.ifAll.ifMac("license ja", app(packagerOptions, {
   projectDirCreated: projectDir => {
-    return fs.writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет".repeat(12))
+    return fs.writeFile(path.join(projectDir, "build", "license_ja.txt"), "こんにちは".repeat(12))
   },
 }))
 
@@ -281,6 +281,10 @@ test.ifAll.ifMac("license buttons config", app({
   ...packagerOptions,
   effectiveOptionComputed: async it => {
     if ("licenseData" in it) {
+      // Clean `file` path from the data because the path is dynamic at runtime
+      it.licenseData.body.forEach((license: any) => {
+        delete license.file
+      });
       expect(it.licenseData).toMatchSnapshot()
     }
     return false

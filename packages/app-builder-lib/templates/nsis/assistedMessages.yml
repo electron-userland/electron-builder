@@ -46,7 +46,7 @@ whichInstallationShouldBeRemoved:
   de: Welche Installation soll entfernt werden?
   ru: Какую из установленных программ следует удалить?
   sk: Ktorá inštalácia by mala byt odstránená?
-  cs: Která instalace by měla má být odstraněná?
+  cs: Která instalace by měla být odstraněna?
   fr: Quelle installation doit être supprimée ?
   hu_HU: Melyik telepítést távolítsuk el?
   pt_BR: Qual instalação deve ser removida?
@@ -88,7 +88,7 @@ selectUserMode:
   de: Bitte wählen Sie, ob Sie die Anwendung nur für sich oder für alle Benutzer installieren möchten.
   ru: Выбери, хочешь ли ты сделать эту программу доступной для всех пользователей или только для себя
   sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
-  cs: Prosím vyberte, zda se má tento software instalovat jen proVás nebo pro všechny uživatele
+  cs: Prosím vyberte, zda se má tento software instalovat jen pro Vás, nebo pro všechny uživatele
   fr: "Choisis pour qui ce logiciel doit être accessible : pour tous les utilisateurs ou juste pour toi ?"
   hu_HU: Válaszd ki, hogy a szoftver elérhető legyen-e minden felhasználó számára, vagy csak neked
   pt_BR: Por favor, selecione se este software deve estar disponível apenas para você ou para todos usuários
@@ -109,7 +109,7 @@ whichInstallationRemove:
   de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
   ru: Эта программа установлена для всего компьютера (для всех пользователей) и для отдельного пользователя.\nКакую из установленных программ ты хочешь удалить?
   sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť?
-  cs: Tento software je nainstalovaný pro Vás a současně pro všechny uživatele.\nKterou instalace si přejete odstranit?
+  cs: Tento software je nainstalovaný pro Vás a současně pro všechny uživatele.\nKterou instalaci si přejete odstranit?
   fr: Ce logiciel est installé à la fois par machine (tous les utilisateurs) et par utilisateur.\nQuelle installation veux-tu supprimer ?
   hu_HU: Ez a szoftver számítógépenként (minden felhasználó) és felhasználónként is telepítve van.\nMelyik telepítést szeretnéd eltávolítani?
   pt_BR: Este software é instalado por máquina (todos os usuários) e por usuário. Qual instalação você deseja remover?
@@ -129,8 +129,8 @@ freshInstallForAll:
   en: Fresh install for all users. (will prompt for admin credentials)
   de: Neuinstallation für alle Benutzer durchführen. (Administratorrechte benötigt)
   ru: Новая установка для всех пользователей. (потребуются права администратора)
-  sk: Nová inštalácia pre všetkých uživateľov. (will prompt for admin credentials)
-  cs: Nová instalace pro všechny uživatele. (bude vyžadovat přihlášení administrátora)
+  sk: Nová inštalácia pre všetkých uživateľov. (Bude potrebovať prihlásenie administrátora)
+  cs: Nová instalace pro všechny uživatele. (Bude vyžadovat přihlášení administrátora)
   fr: Nouvelle installation pour tous les utilisateurs. (demandera les identifiants administrateur)
   hu_HU: Új telepítés minden felhasználó számára. (Az adminisztrátor hitelesítő adataira lesz szükség.)
   pt_BR: Instalação limpa para todos os usuários. (irá solicitar credenciais de administrador)
@@ -213,7 +213,7 @@ loginWithAdminAccount:
   de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden...
   ru: Чтобы продолжить, тебе нужно войти в учетную запись, которая входит в группу администраторов...
   sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
-  cs: Pro pokračování se musíte přihlásit s účtem, který patří do skupiny administrátorů...
+  cs: Pro pokračování se musíte přihlásit účtem, který patří do skupiny administrátorů...
   fr: Tu dois te connecter avec un compte ayant des droits d'administrateur pour continuer...
   hu_HU: A folytatáshoz adminisztrátori jogokkal rendelkező fiókkal kell bejelentkezned...
   pt_BR: Você precisa realizar o login com uma conta que é membro do grupo de administração para continuar...

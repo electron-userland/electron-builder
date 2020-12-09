@@ -71,8 +71,24 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * The list of [slots](https://snapcraft.io/docs/reference/interfaces).
+   * 
+   * Additional attributes can be specified using object instead of just name of slot:
+   * ```
+   *[
+   *  {
+   *    "mpris": {
+   *      "name": "chromium"
+   *    },
+   *  }
+   *]
+  *
+   * In case you want your application to be a compliant MPris player, you will need to definie
+   * The mpris slot with "chromium" name.
+   * This electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),
+   * and we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement.
+   * 
    */
-  readonly slots?: Array<string> | null
+  readonly slots?: Array<string | SlotDescriptor> | PlugDescriptor | null
 
   /**
    * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
@@ -104,8 +120,17 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * The defaults can be found in [snap.ts](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/snap/snapcraft.yaml#L29).
    */
   readonly appPartStage?: Array<string> | null
+
+  /**
+   * An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).
+   */
+  readonly title?: string | null
 }
 
 export interface PlugDescriptor {
+  [key: string]: {[key: string]: any} | null
+}
+
+export interface SlotDescriptor {
   [key: string]: {[key: string]: any} | null
 }
