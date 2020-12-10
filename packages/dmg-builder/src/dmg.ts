@@ -191,8 +191,33 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
   ])
   imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
   imageArgs.push(tempDmg)
-  await spawn("hdiutil", imageArgs)
-  return tempDmg
+  /*
+   * Short explanation of the following lines:
+   *   For some reason hdiutil randomly fails with a non-zero exit code.
+   *   The following loop simply retries up to ten times until it works with a 500ms wait in between
+   *   each try.
+   *   This is a workaround and does not in any way solve the real problem. 
+   */
+
+  let error = null;
+  for (let i = 0; i < 10; i++) {
+    if (i === 0) {
+      log.debug(null, "hdiutil create, first try");
+    } else {
+      log.debug(null, `hdiutil create, retry ${i}/10`);
+    }
+    try {
+      await spawn("hdiutil", imageArgs);
+      return tempDmg;
+    } catch (err) {
+      log.debug({ error: err }, "hdiutil create failed");
+      error = err;
+      // I don't know the root cause of why hdiutil fails so let's give it a while to settle
+      await new Promise(resolve => setTimeout(resolve, 500));
+      continue;
+    }
+  }
+  throw error;
 }
 
 function addLogLevel(args: Array<string>): Array<string> {
