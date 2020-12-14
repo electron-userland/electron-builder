@@ -146,7 +146,7 @@ BMK_URL_ST_ABSOLUTE = 0x0001
 BMK_URL_ST_RELATIVE = 0x0002
 
 # Bookmark keys
-#                           = 0x1003
+kBookmarkURL                = 0x1003   # A URL
 kBookmarkPath               = 0x1004   # Array of path components
 kBookmarkCNIDPath           = 0x1005   # Array of CNIDs
 kBookmarkFileProperties     = 0x1010   # (CFURL rp flags,
@@ -180,10 +180,17 @@ kBookmarkUID                = 0xc012   # UID that created bookmark
 kBookmarkWasFileReference   = 0xd001   # True if the URL was a file reference
 kBookmarkCreationOptions    = 0xd010
 kBookmarkURLLengths         = 0xe003   # See below
-#                           = 0xf017   # Localized name?
-#                           = 0xf022
-kBookmarkSecurityExtension  = 0xf080
-#                           = 0xf081
+kBookmarkDisplayName        = 0xf017
+kBookmarkIconData           = 0xf020
+kBookmarkIconRef            = 0xf021
+kBookmarkTypeBindingData    = 0xf022
+kBookmarkCreationTime       = 0xf030
+kBookmarkSandboxRwExtension = 0xf080
+kBookmarkSandboxRoExtension = 0xf081
+kBookmarkAliasData          = 0xfe00
+
+# Alias for backwards compatibility
+kBookmarkSecurityExtension  = kBookmarkSandboxRwExtension
 
 # kBookmarkURLLengths is an array that is set if the URL encoded by the
 # bookmark had a base URL; in that case, each entry is the length of the
@@ -322,7 +329,7 @@ class Bookmark (object):
 
         magic,size,dummy,hdrsize = struct.unpack(b'<4sIII', data[0:16])
 
-        if magic != b'book':
+        if magic not in (b'book', b'alis'):
             raise ValueError('Not a bookmark file (bad magic) %r' % magic)
 
         if hdrsize < 16:

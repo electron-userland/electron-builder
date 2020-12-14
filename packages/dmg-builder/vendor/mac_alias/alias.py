@@ -27,6 +27,15 @@ ALIAS_KIND_FOLDER = 1
 
 ALIAS_HFS_VOLUME_SIGNATURE = b'H+'
 
+ALIAS_FILESYSTEM_UDF     = 'UDF (CD/DVD)'
+ALIAS_FILESYSTEM_FAT32   = 'FAT32'
+ALIAS_FILESYSTEM_EXFAT   = 'exFAT'
+ALIAS_FILESYSTEM_HFSX    = 'HFSX'
+ALIAS_FILESYSTEM_HFSPLUS = 'HFS+'
+ALIAS_FILESYSTEM_FTP     = 'FTP'
+ALIAS_FILESYSTEM_NTFS    = 'NTFS'
+ALIAS_FILESYSTEM_UNKNOWN = 'unknown'
+
 ALIAS_FIXED_DISK = 0
 ALIAS_NETWORK_DISK = 1
 ALIAS_400KB_FLOPPY_DISK = 2
@@ -35,6 +44,21 @@ ALIAS_1_44MB_FLOPPY_DISK = 4
 ALIAS_EJECTABLE_DISK = 5
 
 ALIAS_NO_CNID = 0xffffffff
+
+ALIAS_FSTYPE_MAP = {
+    # Version 2 aliases
+    b'HX': ALIAS_FILESYSTEM_HFSX,
+    b'H+': ALIAS_FILESYSTEM_HFSPLUS,
+
+    # Version 3 aliases
+    b'BDcu':   ALIAS_FILESYSTEM_UDF,
+    b'BDIS':   ALIAS_FILESYSTEM_FAT32,
+    b'BDxF':   ALIAS_FILESYSTEM_EXFAT,
+    b'HX\0\0': ALIAS_FILESYSTEM_HFSX,
+    b'H+\0\0': ALIAS_FILESYSTEM_HFSPLUS,
+    b'KG\0\0': ALIAS_FILESYSTEM_FTP,
+    b'NTcu':   ALIAS_FILESYSTEM_NTFS,
+}
 
 def encode_utf8(s):
     if isinstance(s, bytes):
@@ -69,7 +93,9 @@ class VolumeInfo (object):
         #: The creation date of the target's volume
         self.creation_date = creation_date
 
-        #: The filesystem type (a two character code, e.g. ``b'H+'`` for HFS+)
+        #: The filesystem type
+        #: (for v2 aliases, this is a 2-character code; for v3 aliases, a
+        #: 4-character code).
         self.fs_type = fs_type
 
         #: The type of disk; should be one of
@@ -109,6 +135,10 @@ class VolumeInfo (object):
 
         #: Network mount information (for automatic remounting)
         self.network_mount_info = network_mount_info
+
+    @property
+    def filesystem_type(self):
+        return ALIAS_FSTYPE_MAP.get(self.fs_type, ALIAS_FILESYSTEM_UNKNOWN)
 
     def __repr__(self):
         args = ['name', 'creation_date', 'fs_type', 'disk_type',
@@ -226,7 +256,7 @@ class Alias (object):
         #: Application specific information (four byte byte-string)
         self.appinfo = appinfo
 
-        #: Version (we support only version 2)
+        #: Version (we support versions 2 and 3)
         self.version = version
 
         #: A :class:`VolumeInfo` object describing the target's volume
@@ -245,13 +275,25 @@ class Alias (object):
         if recsize < 150:
             raise ValueError('Incorrect alias length')
 
-        if version != 2:
+        if version not in (2, 3):
             raise ValueError('Unsupported alias version %u' % version)
 
-        kind, volname, voldate, fstype, disktype, \
-        folder_cnid, filename, cnid, crdate, creator_code, type_code, \
-        levels_from, levels_to, volattrs, volfsid, reserved = \
-              struct.unpack(b'>h28pI2shI64pII4s4shhI2s10s', b.read(142))
+        if version == 2:
+            kind, volname, voldate, fstype, disktype, \
+            folder_cnid, filename, cnid, crdate, creator_code, type_code, \
+            levels_from, levels_to, volattrs, volfsid, reserved = \
+                struct.unpack(b'>h28pI2shI64pII4s4shhI2s10s', b.read(142))
+        else:
+            kind, voldate_hr, fstype, disktype, folder_cnid, cnid, crdate_hr, \
+            volattrs, reserved = \
+                struct.unpack(b'>hQ4shIIQI14s', b.read(46))
+
+            volname = b''
+            filename = b''
+            creator_code = None
+            type_code = None
+            voldate = voldate_hr / 65536.0
+            crdate = crdate_hr / 65536.0
 
         voldate = mac_epoch + datetime.timedelta(seconds=voldate)
         crdate = mac_epoch + datetime.timedelta(seconds=crdate)
@@ -259,10 +301,10 @@ class Alias (object):
         alias = Alias()
         alias.appinfo = appinfo
 
-        alias.volume = VolumeInfo (volname.replace('/',':'),
+        alias.volume = VolumeInfo (volname.decode().replace('/',':'),
                                    voldate, fstype, disktype,
                                    volattrs, volfsid)
-        alias.target = TargetInfo (kind, filename.replace('/',':'),
+        alias.target = TargetInfo (kind, filename.decode().replace('/',':'),
                                    folder_cnid, cnid,
                                    crdate, creator_code, type_code)
         alias.target.levels_from = levels_from
@@ -277,9 +319,9 @@ class Alias (object):
                 b.read(1)
 
             if tag == TAG_CARBON_FOLDER_NAME:
-                alias.target.folder_name = value.replace('/',':')
+                alias.target.folder_name = value.decode().replace('/',':')
             elif tag == TAG_CNID_PATH:
-                alias.target.cnid_path = struct.unpack(b'>%uI' % (length // 4),
+                alias.target.cnid_path = struct.unpack('>%uI' % (length // 4),
                                                            value)
             elif tag == TAG_CARBON_PATH:
                 alias.target.carbon_path = value
@@ -314,9 +356,9 @@ class Alias (object):
                 alias.target.creation_date \
                     = mac_epoch + datetime.timedelta(seconds=seconds)
             elif tag == TAG_POSIX_PATH:
-                alias.target.posix_path = value
+                alias.target.posix_path = value.decode()
             elif tag == TAG_POSIX_PATH_TO_MOUNTPOINT:
-                alias.volume.posix_path = value
+                alias.volume.posix_path = value.decode()
             elif tag == TAG_RECURSIVE_ALIAS_OF_DISK_IMAGE:
                 alias.volume.disk_image_alias = Alias.from_bytes(value)
             elif tag == TAG_USER_HOME_LENGTH_PREFIX:
@@ -441,24 +483,37 @@ class Alias (object):
         voldate = (self.volume.creation_date - mac_epoch).total_seconds()
         crdate = (self.target.creation_date - mac_epoch).total_seconds()
 
-        # NOTE: crdate should be in local time, but that's system dependent
-        #       (so doing so is ridiculous, and nothing could rely on it).
-        b.write(struct.pack(b'>h28pI2shI64pII4s4shhI2s10s',
-                            self.target.kind,
-                            carbon_volname, int(voldate),
-                            self.volume.fs_type,
-                            self.volume.disk_type,
-                            self.target.folder_cnid,
-                            carbon_filename,
-                            self.target.cnid,
-                            int(crdate),
-                            self.target.creator_code,
-                            self.target.type_code,
-                            self.target.levels_from,
-                            self.target.levels_to,
-                            self.volume.attribute_flags,
-                            self.volume.fs_id,
-                            b'\0'*10))
+        if self.version == 2:
+            # NOTE: crdate should be in local time, but that's system dependent
+            #       (so doing so is ridiculous, and nothing could rely on it).
+            b.write(struct.pack(b'>h28pI2shI64pII4s4shhI2s10s',
+                                self.target.kind,
+                                carbon_volname, int(voldate),
+                                self.volume.fs_type,
+                                self.volume.disk_type,
+                                self.target.folder_cnid,
+                                carbon_filename,
+                                self.target.cnid,
+                                int(crdate),
+                                self.target.creator_code,
+                                self.target.type_code,
+                                self.target.levels_from,
+                                self.target.levels_to,
+                                self.volume.attribute_flags,
+                                self.volume.fs_id,
+                                b'\0'*10))
+        else:
+            b.write(struct.pack(b'>hQ4shIIQI14s',
+                                self.target.kind,
+                                int(voldate * 65536),
+                                self.volume.fs_type,
+                                self.volume.disk_type,
+                                self.target.folder_cnid,
+                                self.target.cnid,
+                                int(crdate * 65536),
+                                self.volume.attribute_flags,
+                                self.volume.fs_id,
+                                b'\0'*14))
 
         # Excuse the odd order; we're copying Finder
         if self.target.folder_name:
@@ -472,12 +527,12 @@ class Alias (object):
 
         b.write(struct.pack(b'>hhQhhQ',
                 TAG_HIGH_RES_VOLUME_CREATION_DATE,
-                8, long(voldate * 65536),
+                8, int(voldate * 65536),
                 TAG_HIGH_RES_CREATION_DATE,
-                8, long(crdate * 65536)))
+                8, int(crdate * 65536)))
 
         if self.target.cnid_path:
-            cnid_path = struct.pack(b'>%uI' % len(self.target.cnid_path),
+            cnid_path = struct.pack('>%uI' % len(self.target.cnid_path),
                                     *self.target.cnid_path)
             b.write(struct.pack(b'>hh', TAG_CNID_PATH,
                                  len(cnid_path)))
