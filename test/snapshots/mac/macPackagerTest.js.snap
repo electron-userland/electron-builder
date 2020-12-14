@@ -100,6 +100,7 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.12.0",
+  "LSRequiresNativeExecution": true,
   "LSUIElement": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
@@ -130,6 +131,21 @@ exports[`two-package 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-arm64.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac.dmg",
       "updateInfo": Object {
@@ -155,15 +171,35 @@ Object {
             "url": "TestApp-1.1.0-mac.zip",
           },
           Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-arm64.zip",
+          },
+          Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.dmg",
+          },
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
         ],
         "path": "TestApp-1.1.0-mac.zip",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "arm64",
+      "file": "TestApp-1.1.0-mac-arm64.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
       },
     },
     Object {
@@ -190,6 +226,7 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -216,6 +253,53 @@ Object {
 `;
 
 exports[`two-package 3`] = `
+Array [
+  "TestApp.icns",
+  "app-update.yml",
+  "app.asar",
+  "bn.lproj",
+  "en.lproj",
+]
+`;
+
+exports[`two-package 4`] = `
+Object {
+  "CFBundleDisplayName": "TestApp",
+  "CFBundleExecutable": "TestApp",
+  "CFBundleIconFile": "TestApp.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "TestApp",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`two-package 5`] = `
 Array [
   "TestApp.icns",
   "app-update.yml",

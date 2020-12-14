@@ -837,10 +837,10 @@ Object {
               "size": 765,
             },
             "ini.js": Object {
-              "size": 4767,
+              "size": 5061,
             },
             "package.json": Object {
-              "size": 458,
+              "size": 541,
             },
           },
         },
@@ -944,13 +944,13 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 3023,
+              "size": 3024,
             },
             "license.md": Object {
-              "size": 1077,
+              "size": 1079,
             },
             "package.json": Object {
-              "size": 470,
+              "size": 497,
             },
           },
         },

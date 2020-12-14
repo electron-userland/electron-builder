@@ -3,7 +3,7 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
@@ -23,7 +23,7 @@ export class DmgTarget extends Target {
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
     // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg", null, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + ".${ext}")
+    const artifactName = packager.expandArtifactNamePattern(this.options, "dmg", arch, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}", true)
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "DMG",
@@ -31,7 +31,7 @@ export class DmgTarget extends Target {
       arch,
     })
 
-    const volumeName = sanitizeFileName(this.computeVolumeName(this.options.title))
+    const volumeName = sanitizeFileName(this.computeVolumeName(arch, this.options.title))
 
     const tempDmg = await createStageDmg(await packager.getTempFile(".dmg"), appPath, volumeName)
 
@@ -115,15 +115,17 @@ export class DmgTarget extends Target {
     await exec("codesign", args)
   }
 
-  computeVolumeName(custom?: string | null): string {
+  computeVolumeName(arch: Arch, custom?: string | null): string {
     const appInfo = this.packager.appInfo
     const shortVersion = this.packager.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
+    const archString = getArchSuffix(arch)
 
     if (custom == null) {
-      return `${appInfo.productFilename} ${shortVersion}`
+      return `${appInfo.productFilename} ${shortVersion}${archString}`
     }
 
     return custom
+      .replace(/\${arch}/g, archString)
       .replace(/\${shortVersion}/g, shortVersion)
       .replace(/\${version}/g, appInfo.version)
       .replace(/\${name}/g, appInfo.name)

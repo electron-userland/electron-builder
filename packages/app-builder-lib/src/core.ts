@@ -37,9 +37,6 @@ export class Platform {
     }
 
     const archToType = new Map()
-    if (this === Platform.MAC) {
-      archs = [Arch.x64]
-    }
 
     for (const arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
       archToType.set(arch, type == null ? [] : (Array.isArray(type) ? type : [type]))

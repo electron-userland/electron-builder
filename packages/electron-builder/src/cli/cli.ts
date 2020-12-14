@@ -1,9 +1,8 @@
 #! /usr/bin/env node
 
-import { exec, InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log } from "builder-util"
 import chalk from "chalk"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { getGypEnv } from "app-builder-lib/out/util/yarn"
 import { pathExists, readJson } from "fs-extra"
 import isCi from "is-ci"
 import * as path from "path"
@@ -14,6 +13,7 @@ import { build, configureBuildCommand, createYargs } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
 import { start } from "./start"
+import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 
 // tslint:disable:no-unused-expression
 createYargs()
@@ -83,9 +83,6 @@ function checkIsOutdated() {
 
 async function rebuildAppNativeCode(args: any) {
   const projectDir = process.cwd()
-  log.info({platform: args.platform, arch: args.arch}, "executing node-gyp rebuild")
   // this script must be used only for electron
-  await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-    env: getGypEnv({version: await getElectronVersion(projectDir), useCustomDist: true}, args.platform, args.arch, true),
-  })
+  return nodeGypRebuild(args.platform, args.arch, {version: await getElectronVersion(projectDir), useCustomDist: true})
 }

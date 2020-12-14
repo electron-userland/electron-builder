@@ -112,6 +112,13 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   })
 }
 
+export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
+  log.info({platform, arch}, "executing node-gyp rebuild")
+  // this script must be used only for electron
+  const nodeGyp = `node-gyp${process.platform === "win32" ? ".cmd" : ""}`
+  await spawn(nodeGyp, ["rebuild"], { env: getGypEnv(frameworkInfo, platform, arch, true) })
+}
+
 function getPackageToolPath() {
   if (process.env.FORCE_YARN === "true") {
     return process.platform === "win32" ? "yarn.cmd" : "yarn"
