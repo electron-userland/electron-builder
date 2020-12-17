@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
 import { signAsync, SignOptions } from "../electron-osx-sign"
 import { mkdirs, readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -116,7 +116,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = path.join(outDir, targetName)
+      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch)}`)
       if (prepackaged == null) {
         await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
         await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions)
