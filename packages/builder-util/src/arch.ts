@@ -1,8 +1,8 @@
 export enum Arch {
-  ia32, x64, armv7l, arm64
+  ia32, x64, armv7l, arm64, universal
 }
 
-export type ArchType = "x64" | "ia32" | "armv7l" | "arm64"
+export type ArchType = "x64" | "ia32" | "armv7l" | "arm64" | "universal"
 
 export function toLinuxArchString(arch: Arch, targetName: string): string {
   switch (arch) {
@@ -38,7 +38,8 @@ export function archFromString(name: string): Arch {
       return Arch.arm64
     case "armv7l":
       return Arch.armv7l
-
+    case "universal":
+      return Arch.universal
     default:
       throw new Error(`Unsupported arch ${name}`)
   }

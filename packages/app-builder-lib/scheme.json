@@ -4960,6 +4960,7 @@
                   "arm64",
                   "armv7l",
                   "ia32",
+                  "universal",
                   "x64"
                 ],
                 "type": "string"
@@ -4971,6 +4972,7 @@
                 "arm64",
                 "armv7l",
                 "ia32",
+                "universal",
                 "x64"
               ],
               "type": "string"
