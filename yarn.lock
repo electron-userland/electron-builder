@@ -4311,6 +4311,9 @@ __metadata:
     js-yaml: ^3.14.1
     sanitize-filename: ^1.6.3
     temp-file: ^3.3.7
+  dependenciesMeta:
+    dmg-license:
+      optional: true
   languageName: unknown
   linkType: soft
 
