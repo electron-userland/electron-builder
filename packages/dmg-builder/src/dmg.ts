@@ -3,7 +3,7 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, retry } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
@@ -189,35 +189,15 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
     "-anyowners", "-nospotlight",
     "-format", "UDRW",
   ])
+  if (log.isDebugEnabled) {
+    imageArgs.push("-debug")
+  }
   imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
   imageArgs.push(tempDmg)
-  /*
-   * Short explanation of the following lines:
-   *   For some reason hdiutil randomly fails with a non-zero exit code.
-   *   The following loop simply retries up to ten times until it works with a 500ms wait in between
-   *   each try.
-   *   This is a workaround and does not in any way solve the real problem. 
-   */
-
-  let error = null;
-  for (let i = 0; i < 10; i++) {
-    if (i === 0) {
-      log.debug(null, "hdiutil create, first try");
-    } else {
-      log.debug(null, `hdiutil create, retry ${i}/10`);
-    }
-    try {
-      await spawn("hdiutil", imageArgs);
-      return tempDmg;
-    } catch (err) {
-      log.debug({ error: err }, "hdiutil create failed");
-      error = err;
-      // I don't know the root cause of why hdiutil fails so let's give it a while to settle
-      await new Promise(resolve => setTimeout(resolve, 500));
-      continue;
-    }
-  }
-  throw error;
+  // The reason for retrying up to ten times is that hdiutil create in some cases fail to unmount due to "resource busy".
+  // https://github.com/electron-userland/electron-builder/issues/5431
+  await retry(() => spawn("hdiutil", imageArgs), 5, 1000)
+  return tempDmg;
 }
 
 function addLogLevel(args: Array<string>): Array<string> {

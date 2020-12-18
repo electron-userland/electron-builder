@@ -381,7 +381,7 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
   }
 }
 
-async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
   try {
     return await task()
   }
