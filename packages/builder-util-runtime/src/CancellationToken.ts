@@ -41,7 +41,7 @@ export class CancellationToken extends EventEmitter {
     }
   }
 
-  createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error: Error) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
+  createPromise<R>(callback: (resolve: (thenableOrResult: R | PromiseLike<R>) => void, reject: (error: Error) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
     if (this.cancelled) {
       return Promise.reject<R>(new CancellationError())
     }

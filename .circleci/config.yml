@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:12.18.4
+      - image: circleci/node:14.15.1
     steps:
       - checkout
       - restore_cache:
@@ -11,11 +11,11 @@ jobs:
             - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-8.2.5-electron
+            - v-11.0.0-electron
       - run:
-          command: node .yarn/releases/yarn-2.2.2.cjs install
+          command: node .yarn/releases/yarn-2.4.0.cjs install
       - run:
-          command: node .yarn/releases/yarn-2.2.2.cjs pretest
+          command: node .yarn/releases/yarn-2.4.0.cjs pretest
       - run:
           command: cp .pnp.js .yarn/.pnp.js
       - save_cache:
@@ -23,9 +23,9 @@ jobs:
           paths:
             - .yarn
       - run:
-          command: node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/downloadElectron.js
+          command: node .yarn/releases/yarn-2.4.0.cjs node ./test/out/helpers/downloadElectron.js
       - save_cache:
-          key: v-8.2.5-electron
+          key: v-11.0.0-electron
           paths:
             - ~/.cache/electron
 
@@ -43,18 +43,18 @@ jobs:
             - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-8.2.5-electron
+            - v-11.0.0-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |
             mkdir -p ~/.cache
             mv /home/circleci/.cache/electron ~/.cache/electron
-            node .yarn/releases/yarn-2.2.2.cjs install
+            node .yarn/releases/yarn-2.4.0.cjs install
       - run:
           # do not use yarn test because lint is done in the build job
           command: |
-            node .yarn/releases/yarn-2.2.2.cjs compile
-            node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/runTests.js
+            node .yarn/releases/yarn-2.4.0.cjs compile
+            node .yarn/releases/yarn-2.4.0.cjs node ./test/out/helpers/runTests.js
       - store_test_results:
           path: /tmp/test-reports
 

@@ -139,7 +139,7 @@ export abstract class DifferentialDownloader {
             return
           }
 
-          resolve()
+          resolve(undefined)
         })
       })
 

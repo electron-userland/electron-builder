@@ -100,7 +100,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets))
-        .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
+        .then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
     }
 
     for (const target of targets) {
@@ -197,7 +197,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           }
         }
         return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          file.includes("/node_modules/puppeteer/.local-chromium") /* https://github.com/electron-userland/electron-builder/issues/2010 */
+          file.includes("/node_modules/puppeteer/.local-chromium") ||  file.includes("/node_modules/playwright-firefox/.local-browsers") || file.includes("/node_modules/playwright/.local-browsers") 
+          
+          /* Those are browser automating modules, browser (chromium, nightly) cannot be signed
+          https://github.com/electron-userland/electron-builder/issues/2010 
+          https://github.com/electron-userland/electron-builder/issues/5383
+          */
       },
       identity: identity!,
       type,

@@ -1,6 +1,6 @@
 {
   "name": "electron-builder-squirrel-windows",
-  "version": "22.8.1",
+  "version": "22.10.0",
   "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -12,15 +12,15 @@
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*",
-    "archiver": "^5.0.2",
+    "archiver": "^5.1.0",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "fs-extra": "^9.0.1",
     "sanitize-filename": "^1.6.3"
   },
   "devDependencies": {
-    "@types/archiver": "^3.1.0",
-    "@types/fs-extra": "^9.0.1"
+    "@types/archiver": "^5.1.0",
+    "@types/fs-extra": "^9.0.5"
   },
   "optionalDependencies": {
     "7zip-bin": "~5.0.3"

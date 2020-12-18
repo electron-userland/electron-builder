@@ -32,6 +32,7 @@ export class MacUpdater extends AppUpdater {
     this.updateInfoForPendingUpdateDownloadedEvent = null
 
     const files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
+      .filter(file => (process.arch == 'arm64') === (file.url.pathname.includes('arm64')));
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")

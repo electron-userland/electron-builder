@@ -448,7 +448,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit(UPDATE_DOWNLOADED, event)
   }
 
-  protected async abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
+  protected abstract doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.

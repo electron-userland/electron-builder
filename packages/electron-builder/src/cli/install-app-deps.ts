@@ -49,18 +49,18 @@ export async function installAppDeps(args: any) {
   const projectDir = process.cwd()
   const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
-  const results = await Promise.all<string>([
+  const [appDir, version] = await Promise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
     getElectronVersion(projectDir, config, packageMetadata),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
-  await installOrRebuild(config, results[0], {
-    frameworkInfo: {version: results[1], useCustomDist: true},
+  await installOrRebuild(config, appDir, {
+    frameworkInfo: {version, useCustomDist: true},
     platform: args.platform,
     arch: args.arch,
-    productionDeps: createLazyProductionDeps(results[0], null),
-  }, results[0] !== projectDir)
+    productionDeps: createLazyProductionDeps(appDir, null),
+  }, appDir !== projectDir)
 }
 
 function main() {
