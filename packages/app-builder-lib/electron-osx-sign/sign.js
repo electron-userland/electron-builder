@@ -5,7 +5,7 @@
 'use strict'
 
 const path = require('path')
-
+const fs = require('fs')
 const semver = require('semver')
 
 const util = require('./util')

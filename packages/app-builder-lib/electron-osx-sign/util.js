@@ -132,7 +132,7 @@ var detectElectronPlatformAsync = module.exports.detectElectronPlatformAsync = f
   })
 }
 
-const isBinaryFile = require("isbinaryfile").isBinaryFile;
+const isBinaryFile = require("istextorbinary").isBinary;
 
 /**
  * This function returns a promise resolving the file path if file binary.
@@ -140,11 +140,8 @@ const isBinaryFile = require("isbinaryfile").isBinaryFile;
  * @param {string} filePath - Path to file.
  * @returns {Promise} Promise resolving file path or undefined.
  */
-const getFilePathIfBinaryAsync = module.exports.getFilePathIfBinaryAsync = function (filePath) {
-  return isBinaryFile(filePath)
-    .then(function (isBinary) {
-      return isBinary ? filePath : undefined
-    })
+const getFilePathIfBinarySync = module.exports.getFilePathIfBinarySync = function (filePath) {
+  return isBinaryFile(filePath, fs.readFileSync(filePath)) ? filePath : undefined
 }
 
 /**
@@ -215,10 +212,7 @@ module.exports.walkAsync = async function (dirPath) {
             await fs.unlink(filePath)
             return
           default:
-            if (path.extname(filePath).indexOf(' ') >= 0) {
-              // Still consider the file as binary if extension seems invalid
-              return getFilePathIfBinaryAsync(filePath)
-            }
+            return getFilePathIfBinarySync(filePath)
         }
       } else if (stat.isDirectory() && !stat.isSymbolicLink()) {
         const result = await _walkAsync(filePath)

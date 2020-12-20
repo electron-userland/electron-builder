@@ -2712,7 +2712,7 @@ __metadata:
     fs-extra: ^9.0.1
     hosted-git-info: ^3.0.7
     is-ci: ^2.0.0
-    isbinaryfile: ^4.0.6
+    istextorbinary: ^5.12.0
     js-yaml: ^3.14.1
     lazy-val: ^1.0.4
     minimatch: ^3.0.4
@@ -3246,6 +3246,13 @@ __metadata:
     buffers: ~0.1.1
     chainsaw: ~0.1.0
   checksum: a1000731bc1728455346b15a4e96d0944fbecaac1e7584178c89b28859a239918726a2e6a652e6f3c2ccdd4596dd818c4b7a8d06ef84b3598ce776a5f23e7562
+  languageName: node
+  linkType: hard
+
+"binaryextensions@npm:^4.15.0":
+  version: 4.15.0
+  resolution: "binaryextensions@npm:4.15.0"
+  checksum: c594a31c1699460a9786cd3fa57cef73eab9635dc6eba586738ea7f012dcc92d10d00f4ce60c42d2de21b0931b4fdb6b560d8095e515f69e3ebe757f8dd60be1
   languageName: node
   linkType: hard
 
@@ -4394,6 +4401,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"editions@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "editions@npm:6.1.0"
+  dependencies:
+    errlop: ^4.0.0
+    version-range: ^1.0.0
+  checksum: 9d9b9520da8e3fc7ea1aae75642504cf26cb5634e9c74a85d0ee03fc9f29cb7987824903c18d1cbec958507cbbe079077b2e72c3037342d7a598536b39a8292a
+  languageName: node
+  linkType: hard
+
 "ejs@npm:^3.1.5":
   version: 3.1.5
   resolution: "ejs@npm:3.1.5"
@@ -4578,6 +4595,13 @@ __metadata:
   version: 2.2.0
   resolution: "env-paths@npm:2.2.0"
   checksum: 09de4fd1c068d5965aa8aede852a764b7fb6fa8f1299ba7789bc29c22840ab1985e0c9c55bc6bf40b4276834b8adfa1baf82ec9bc58445d9e75800dc32d78a4f
+  languageName: node
+  linkType: hard
+
+"errlop@npm:^4.0.0":
+  version: 4.1.0
+  resolution: "errlop@npm:4.1.0"
+  checksum: 358fa5d7502b3e2337aec03a0fd81c9fb07d6e8b762872b766abc768d8961794efb1f4ab396974ead2a09ce8538cb972c3326c8ed307b5bc99ae5d0af0da1c1c
   languageName: node
   linkType: hard
 
@@ -6086,13 +6110,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isbinaryfile@npm:^4.0.6":
-  version: 4.0.6
-  resolution: "isbinaryfile@npm:4.0.6"
-  checksum: 23d94f36fbf9898c7095d29aa1e4f4b1afad77fac6e1e987f32e89036fa45d7365f3a55990de7d99b76ca591b683640efa594f1fa19b03e3d712c4f2a690efa0
-  languageName: node
-  linkType: hard
-
 "isexe@npm:^2.0.0":
   version: 2.0.0
   resolution: "isexe@npm:2.0.0"
@@ -6171,6 +6188,17 @@ __metadata:
     html-escaper: ^2.0.0
     istanbul-lib-report: ^3.0.0
   checksum: d4ed416e13fe0fc709566439086660ddab58dce9d6a655053c5315715aac8225bc7e9fcae553c2c3d8cc66cd4b59498a50b92d543a4820c5be0e5ee30178cdf0
+  languageName: node
+  linkType: hard
+
+"istextorbinary@npm:^5.12.0":
+  version: 5.12.0
+  resolution: "istextorbinary@npm:5.12.0"
+  dependencies:
+    binaryextensions: ^4.15.0
+    editions: ^6.1.0
+    textextensions: ^5.11.0
+  checksum: c30ebde873fe5f9496b4f6bbf871bf864ee848448fa4d2dc41b03408b5aa89c276f6431945f080e4a02fb7b4b53b3f3aa26d8e9d83b171f94e237071e2f4f1eb
   languageName: node
   linkType: hard
 
@@ -9527,6 +9555,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"textextensions@npm:^5.11.0":
+  version: 5.12.0
+  resolution: "textextensions@npm:5.12.0"
+  checksum: fca9fed6c8a0d338f6300e368070883ef73004c013bbb056d56f7f00f19133016d6ccfe094b1126b66fc942c32c81f53531a4122f7a6abeab870079b8c1e857f
+  languageName: node
+  linkType: hard
+
 "throat@npm:^5.0.0":
   version: 5.0.0
   resolution: "throat@npm:5.0.0"
@@ -10083,6 +10118,22 @@ typescript@~4.1.3:
     core-util-is: 1.0.2
     extsprintf: ^1.2.0
   checksum: 38ea80312cb42e5e8b4ac562d108d675b2354a79f8f125d363671f692657461b9181fd26f4fc9acdca433f8afee099cb78058806e1303e6b15b8fb022affba94
+  languageName: node
+  linkType: hard
+
+"version-compare@npm:^1.0.0":
+  version: 1.1.0
+  resolution: "version-compare@npm:1.1.0"
+  checksum: ef8802dbbf9c3ff1ce201189018aa26fc53d6615d68d3976959e5236a09057f4d6bb0f792ad76e98eb96099ee1dc21a6cca3e109f20ff1a84465be5a77826ac6
+  languageName: node
+  linkType: hard
+
+"version-range@npm:^1.0.0":
+  version: 1.1.0
+  resolution: "version-range@npm:1.1.0"
+  dependencies:
+    version-compare: ^1.0.0
+  checksum: 7a18b8eeaf9c4984c7d8938ebcf02973e840e4c07b8d3ce9f3ab993bff53466612c321a6fe8330484988b852ad469a0722252a91fbedb445cd15c40e74eaba5a
   languageName: node
   linkType: hard
 
