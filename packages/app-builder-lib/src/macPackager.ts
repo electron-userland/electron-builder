@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
 import { signAsync, SignOptions } from "../electron-osx-sign"
 import { mkdirs, readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -116,13 +116,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = path.join(outDir, targetName)
+      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch)}`)
       if (prepackaged == null) {
         await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
-        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions)
+        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, arch)
       }
       else {
-        await this.sign(prepackaged, targetOutDir, masBuildOptions)
+        await this.sign(prepackaged, targetOutDir, masBuildOptions, arch)
       }
     }
 
@@ -131,7 +131,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null): Promise<void> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, arch: Arch | null): Promise<void> {
     if (!isSignAllowed()) {
       return
     }
@@ -238,10 +238,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
 
       // mas uploaded to AppStore, so, use "-" instead of space for name
-      const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
+      const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-      await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg"))
+      await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch))
     }
   }
 
@@ -354,7 +354,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
       if (file === appFileName) {
-        return this.sign(path.join(packContext.appOutDir, file), null, null)
+        return this.sign(path.join(packContext.appOutDir, file), null, null, null)
       }
       return null
     })
@@ -366,7 +366,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
     await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
       if (file.endsWith(".app")) {
-        return this.sign(path.join(outResourcesDir, file), null, null)
+        return this.sign(path.join(outResourcesDir, file), null, null, null)
       }
       else {
         return null
