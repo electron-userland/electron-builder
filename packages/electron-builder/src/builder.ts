@@ -19,6 +19,7 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   ia32?: boolean
   armv7l?: boolean
   arm64?: boolean
+  universal?: boolean
 
   dir?: boolean
 }
@@ -45,6 +46,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       }
       if (args.ia32) {
         result.push(Arch.ia32)
+      }
+      if (args.universal) {
+        result.push(Arch.universal)
       }
 
       return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
@@ -120,6 +124,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.x64
   delete result.armv7l
   delete result.arm64
+  delete result.universal
 
   let config = result.config
 
@@ -198,7 +203,7 @@ export function coerceTypes(host: any): any {
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
   for (const platform of platforms) {
-    const archs = (arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)])
+    const archs = (arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)])
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 
@@ -257,6 +262,11 @@ export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
     .option("arm64", {
       group: buildGroup,
       description: "Build for arm64",
+      type: "boolean",
+    })
+    .option("universal", {
+      group: buildGroup,
+      description: "Build for universal",
       type: "boolean",
     })
     .option("dir", {

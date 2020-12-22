@@ -506,29 +506,22 @@ Object {
             "LICENSE": Object {
               "size": 1107,
             },
-            "dist": Object {
-              "files": Object {
-                "debug.js": Object {
-                  "size": 27572,
-                },
-              },
-            },
             "package.json": Object {
-              "size": 947,
+              "size": 879,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "size": 5831,
+                  "size": 6010,
                 },
                 "common.js": Object {
-                  "size": 5930,
+                  "size": 6029,
                 },
                 "index.js": Object {
                   "size": 314,
                 },
                 "node.js": Object {
-                  "size": 4475,
+                  "size": 4685,
                 },
               },
             },
@@ -893,12 +886,12 @@ Object {
             "lib": Object {
               "files": Object {
                 "keytar.js": Object {
-                  "size": 1558,
+                  "size": 1038,
                 },
               },
             },
             "package.json": Object {
-              "size": 792,
+              "size": 804,
             },
           },
         },
@@ -944,158 +937,13 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 3024,
+              "size": 3023,
             },
             "license.md": Object {
-              "size": 1079,
+              "size": 1077,
             },
             "package.json": Object {
-              "size": 497,
-            },
-          },
-        },
-        "nan": Object {
-          "files": Object {
-            "LICENSE.md": Object {
-              "size": 1216,
-            },
-            "doc": Object {
-              "files": Object {
-                "asyncworker.md": Object {
-                  "size": 5348,
-                },
-                "buffers.md": Object {
-                  "size": 2121,
-                },
-                "callback.md": Object {
-                  "size": 2633,
-                },
-                "converters.md": Object {
-                  "size": 1950,
-                },
-                "errors.md": Object {
-                  "size": 7404,
-                },
-                "json.md": Object {
-                  "size": 1944,
-                },
-                "maybe_types.md": Object {
-                  "size": 22401,
-                },
-                "methods.md": Object {
-                  "size": 27472,
-                },
-                "new.md": Object {
-                  "size": 4859,
-                },
-                "node_misc.md": Object {
-                  "size": 5704,
-                },
-                "object_wrappers.md": Object {
-                  "size": 8226,
-                },
-                "persistent.md": Object {
-                  "size": 10889,
-                },
-                "scopes.md": Object {
-                  "size": 2362,
-                },
-                "script.md": Object {
-                  "size": 1287,
-                },
-                "string_bytes.md": Object {
-                  "size": 1900,
-                },
-                "v8_internals.md": Object {
-                  "size": 7388,
-                },
-                "v8_misc.md": Object {
-                  "size": 2914,
-                },
-              },
-            },
-            "include_dirs.js": Object {
-              "size": 55,
-            },
-            "nan.h": Object {
-              "size": 87913,
-            },
-            "nan_callbacks.h": Object {
-              "size": 3089,
-            },
-            "nan_callbacks_12_inl.h": Object {
-              "size": 17536,
-            },
-            "nan_callbacks_pre_12_inl.h": Object {
-              "size": 17085,
-            },
-            "nan_converters.h": Object {
-              "size": 2109,
-            },
-            "nan_converters_43_inl.h": Object {
-              "size": 2748,
-            },
-            "nan_converters_pre_43_inl.h": Object {
-              "size": 1254,
-            },
-            "nan_define_own_property_helper.h": Object {
-              "size": 1027,
-            },
-            "nan_implementation_12_inl.h": Object {
-              "size": 15054,
-            },
-            "nan_implementation_pre_12_inl.h": Object {
-              "size": 7943,
-            },
-            "nan_json.h": Object {
-              "size": 5772,
-            },
-            "nan_maybe_43_inl.h": Object {
-              "size": 12375,
-            },
-            "nan_maybe_pre_43_inl.h": Object {
-              "size": 7161,
-            },
-            "nan_new.h": Object {
-              "size": 8786,
-            },
-            "nan_object_wrap.h": Object {
-              "size": 4128,
-            },
-            "nan_persistent_12_inl.h": Object {
-              "size": 3873,
-            },
-            "nan_persistent_pre_12_inl.h": Object {
-              "size": 6157,
-            },
-            "nan_private.h": Object {
-              "size": 2477,
-            },
-            "nan_string_bytes.h": Object {
-              "size": 8102,
-            },
-            "nan_typedarray_contents.h": Object {
-              "size": 3089,
-            },
-            "nan_weak.h": Object {
-              "size": 15354,
-            },
-            "package.json": Object {
-              "size": 507,
-            },
-            "tools": Object {
-              "files": Object {
-                "1to2.js": Object {
-                  "executable": true,
-                  "size": 14363,
-                },
-                "README.md": Object {
-                  "size": 456,
-                },
-                "package.json": Object {
-                  "size": 292,
-                },
-              },
+              "size": 470,
             },
           },
         },
@@ -1183,6 +1031,274 @@ Object {
             },
           },
         },
+        "node-addon-api": Object {
+          "files": Object {
+            ".clang-format": Object {
+              "size": 3187,
+            },
+            ".editorconfig": Object {
+              "size": 130,
+            },
+            ".github": Object {
+              "files": Object {
+                "workflows": Object {
+                  "files": Object {
+                    "ci.yml": Object {
+                      "size": 1707,
+                    },
+                    "linter.yml": Object {
+                      "size": 571,
+                    },
+                    "stale.yml": Object {
+                      "size": 529,
+                    },
+                  },
+                },
+              },
+            },
+            "CODE_OF_CONDUCT.md": Object {
+              "size": 159,
+            },
+            "CONTRIBUTING.md": Object {
+              "size": 3212,
+            },
+            "LICENSE.md": Object {
+              "size": 1245,
+            },
+            "benchmark": Object {
+              "files": Object {
+                "README.md": Object {
+                  "size": 1526,
+                },
+                "function_args.js": Object {
+                  "size": 2138,
+                },
+                "index.js": Object {
+                  "size": 971,
+                },
+                "property_descriptor.js": Object {
+                  "size": 1051,
+                },
+              },
+            },
+            "common.gypi": Object {
+              "size": 762,
+            },
+            "doc": Object {
+              "files": Object {
+                "addon.md": Object {
+                  "size": 5982,
+                },
+                "array.md": Object {
+                  "size": 2696,
+                },
+                "array_buffer.md": Object {
+                  "size": 4590,
+                },
+                "async_context.md": Object {
+                  "size": 2595,
+                },
+                "async_operations.md": Object {
+                  "size": 1369,
+                },
+                "async_worker.md": Object {
+                  "size": 14637,
+                },
+                "async_worker_variants.md": Object {
+                  "size": 20584,
+                },
+                "bigint.md": Object {
+                  "size": 2720,
+                },
+                "boolean.md": Object {
+                  "size": 1597,
+                },
+                "buffer.md": Object {
+                  "size": 4400,
+                },
+                "callback_scope.md": Object {
+                  "size": 1327,
+                },
+                "callbackinfo.md": Object {
+                  "size": 2547,
+                },
+                "checker-tool.md": Object {
+                  "size": 1024,
+                },
+                "class_property_descriptor.md": Object {
+                  "size": 3342,
+                },
+                "cmake-js.md": Object {
+                  "size": 3038,
+                },
+                "conversion-tool.md": Object {
+                  "size": 643,
+                },
+                "creating_a_release.md": Object {
+                  "size": 2228,
+                },
+                "dataview.md": Object {
+                  "size": 6743,
+                },
+                "date.md": Object {
+                  "size": 1581,
+                },
+                "env.md": Object {
+                  "size": 3871,
+                },
+                "error.md": Object {
+                  "size": 3265,
+                },
+                "error_handling.md": Object {
+                  "size": 7199,
+                },
+                "escapable_handle_scope.md": Object {
+                  "size": 2626,
+                },
+                "external.md": Object {
+                  "size": 2403,
+                },
+                "function.md": Object {
+                  "size": 12965,
+                },
+                "function_reference.md": Object {
+                  "size": 8076,
+                },
+                "generator.md": Object {
+                  "size": 578,
+                },
+                "handle_scope.md": Object {
+                  "size": 1887,
+                },
+                "hierarchy.md": Object {
+                  "size": 3811,
+                },
+                "instance_wrap.md": Object {
+                  "size": 15183,
+                },
+                "memory_management.md": Object {
+                  "size": 1117,
+                },
+                "name.md": Object {
+                  "size": 657,
+                },
+                "node-gyp.md": Object {
+                  "size": 2990,
+                },
+                "number.md": Object {
+                  "size": 3648,
+                },
+                "object.md": Object {
+                  "size": 7784,
+                },
+                "object_lifetime_management.md": Object {
+                  "size": 3899,
+                },
+                "object_reference.md": Object {
+                  "size": 3414,
+                },
+                "object_wrap.md": Object {
+                  "size": 21120,
+                },
+                "prebuild_tools.md": Object {
+                  "size": 869,
+                },
+                "promises.md": Object {
+                  "size": 2121,
+                },
+                "property_descriptor.md": Object {
+                  "size": 9700,
+                },
+                "range_error.md": Object {
+                  "size": 1684,
+                },
+                "reference.md": Object {
+                  "size": 2971,
+                },
+                "setup.md": Object {
+                  "size": 2230,
+                },
+                "string.md": Object {
+                  "size": 2562,
+                },
+                "symbol.md": Object {
+                  "size": 1491,
+                },
+                "threadsafe.md": Object {
+                  "size": 6933,
+                },
+                "threadsafe_function.md": Object {
+                  "size": 10110,
+                },
+                "type_error.md": Object {
+                  "size": 1669,
+                },
+                "typed_array.md": Object {
+                  "size": 1487,
+                },
+                "typed_array_of.md": Object {
+                  "size": 3919,
+                },
+                "typed_threadsafe_function.md": Object {
+                  "size": 10817,
+                },
+                "value.md": Object {
+                  "size": 7662,
+                },
+                "version_management.md": Object {
+                  "size": 1154,
+                },
+              },
+            },
+            "except.gypi": Object {
+              "size": 381,
+            },
+            "index.js": Object {
+              "size": 296,
+            },
+            "napi-inl.deprecated.h": Object {
+              "size": 7251,
+            },
+            "napi-inl.h": Object {
+              "size": 185902,
+            },
+            "napi.h": Object {
+              "size": 109629,
+            },
+            "node_api.gyp": Object {
+              "size": 132,
+            },
+            "noexcept.gypi": Object {
+              "size": 386,
+            },
+            "nothing.c": Object {
+              "size": 0,
+            },
+            "package-support.json": Object {
+              "size": 467,
+            },
+            "package.json": Object {
+              "size": 644,
+            },
+            "tools": Object {
+              "files": Object {
+                "README.md": Object {
+                  "size": 3217,
+                },
+                "check-napi.js": Object {
+                  "size": 3210,
+                },
+                "clang-format.js": Object {
+                  "size": 1517,
+                },
+                "conversion.js": Object {
+                  "executable": true,
+                  "size": 15275,
+                },
+              },
+            },
+          },
+        },
         "noop-logger": Object {
           "files": Object {
             "History.md": Object {
@@ -1258,7 +1374,7 @@ Object {
         "prebuild-install": Object {
           "files": Object {
             "CONTRIBUTING.md": Object {
-              "size": 220,
+              "size": 218,
             },
             "LICENSE": Object {
               "size": 1079,
@@ -1268,62 +1384,34 @@ Object {
             },
             "bin.js": Object {
               "executable": true,
-              "size": 2572,
+              "size": 2466,
             },
             "download.js": Object {
-              "size": 3651,
+              "size": 3659,
             },
             "error.js": Object {
               "size": 355,
             },
             "help.txt": Object {
-              "size": 867,
+              "size": 1079,
             },
             "index.js": Object {
               "size": 41,
             },
             "log.js": Object {
-              "size": 232,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "mkdirp": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 1141,
-                    },
-                    "bin": Object {
-                      "files": Object {
-                        "cmd.js": Object {
-                          "executable": true,
-                          "size": 731,
-                        },
-                        "usage.txt": Object {
-                          "size": 315,
-                        },
-                      },
-                    },
-                    "index.js": Object {
-                      "size": 2644,
-                    },
-                    "package.json": Object {
-                      "size": 548,
-                    },
-                  },
-                },
-              },
+              "size": 674,
             },
             "package.json": Object {
-              "size": 1109,
+              "size": 1125,
             },
             "proxy.js": Object {
               "size": 1189,
             },
             "rc.js": Object {
-              "size": 2488,
+              "size": 1915,
             },
             "util.js": Object {
-              "size": 3045,
+              "size": 3546,
             },
           },
         },

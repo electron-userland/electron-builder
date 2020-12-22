@@ -427,12 +427,6 @@ export class Packager {
           break
         }
 
-        await this.installAppDependencies(platform, arch)
-
-        if (this.cancellationToken.cancelled) {
-          break
-        }
-
         // support os and arch macro in output value
         const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!!.directories!!.output!!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
@@ -477,7 +471,7 @@ export class Packager {
     }
   }
 
-  private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
+  public async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
     if (this.options.prepackaged != null || this.framework.isNpmRebuildRequired !== true) {
       return
     }
