@@ -158,8 +158,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>, sign: boolean = true) {
     if (this.packagerOptions.prepackaged != null) {
+      return
+    }
+
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
+
+    await this.info.installAppDependencies(this.platform, arch);
+
+    if (this.info.cancellationToken.cancelled) {
       return
     }
 
@@ -241,11 +251,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework)
-    await this.signApp(packContext, isAsar)
+    if (sign) {
+      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets);
+    }
+  }
 
-    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
+  protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions);
+    const isAsar = asarOptions != null;
+    const packContext = {
+      appOutDir,
+      outDir,
+      arch,
+      targets,
+      packager: this,
+      electronPlatformName: platformName
+    };
+    await this.signApp(packContext, isAsar);
+    const afterSign = resolveFunction(this.config.afterSign, "afterSign");
     if (afterSign != null) {
-      await Promise.resolve(afterSign(packContext))
+      await Promise.resolve(afterSign(packContext));
     }
   }
 

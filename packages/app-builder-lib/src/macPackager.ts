@@ -18,6 +18,7 @@ import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
+import { promisify } from "util"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -87,6 +88,42 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         default:
           mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
           break
+      }
+    }
+  }
+
+  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: MacConfiguration, targets: Array<Target>): Promise<any> {
+    switch (arch) {
+      default: {
+        return super.doPack(outDir, appOutDir, this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets);
+      }
+      case Arch.universal: {
+        const x64Arch = Arch.x64;
+        const x64AppOutDir = appOutDir + '-' + Arch[x64Arch];
+        await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false);
+        const arm64Arch = Arch.arm64;
+        const arm64AppOutPath = appOutDir + '-' + Arch[arm64Arch];
+        await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false);
+        const framework = this.info.framework
+        log.info({
+          platform: platformName,
+          arch: Arch[arch],
+          [`${framework.name}`]: framework.version,
+          appOutDir: log.filePath(appOutDir),
+        }, `packaging`)
+        const appFile = `${this.appInfo.productFilename}.app`;
+        const { makeUniversalApp } = require('@electron/universal');
+        await makeUniversalApp({
+          x64AppPath: path.join(x64AppOutDir, appFile),
+          arm64AppPath: path.join(arm64AppOutPath, appFile),
+          outAppPath: path.join(appOutDir, appFile),
+          force: true
+        });
+        const rmdir = promisify(require('fs').rmdir);
+        await rmdir(x64AppOutDir, { recursive: true });
+        await rmdir(arm64AppOutPath, { recursive: true });
+        await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets);
+        break;
       }
     }
   }

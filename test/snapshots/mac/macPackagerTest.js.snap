@@ -146,6 +146,21 @@ Object {
       },
     },
     Object {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-universal.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac.dmg",
       "updateInfo": Object {
@@ -177,6 +192,12 @@ Object {
             "url": "TestApp-1.1.0-mac-arm64.zip",
           },
           Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.zip",
+          },
+          Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.dmg",
@@ -185,6 +206,11 @@ Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.dmg",
+          },
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.dmg",
           },
         ],
         "path": "TestApp-1.1.0-mac.zip",
@@ -196,6 +222,15 @@ Object {
     Object {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "arch": "universal",
+      "file": "TestApp-1.1.0-mac-universal.zip",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
