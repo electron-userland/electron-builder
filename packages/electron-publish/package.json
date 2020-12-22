@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "22.10.0",
+  "version": "22.10.3",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "chalk": "^4.1.0",
     "fs-extra": "^9.0.1",
     "lazy-val": "^1.0.4",
-    "mime": "^2.4.6"
+    "mime": "^2.4.7"
   },
   "typings": "./out/publisher.d.ts"
 }
