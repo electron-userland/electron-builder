@@ -5,7 +5,7 @@
 'use strict'
 
 const path = require('path')
-
+const fs = require('fs')
 const semver = require('semver')
 
 const util = require('./util')
@@ -117,19 +117,9 @@ async function verifySignApplicationAsync (opts) {
  * @returns {Promise} Promise.
  */
 function signApplicationAsync (opts) {
-  return walkAsync(getAppContentsPath(opts))
+  const appContentsPath = getAppContentsPath(opts)
+  return walkAsync(appContentsPath)
     .then(async function (childPaths) {
-      /**
-       * Sort the child paths by how deep they are in the file tree.  Some arcane apple
-       * logic expects the deeper files to be signed first otherwise strange errors get
-       * thrown our way
-       */
-      childPaths = childPaths.sort((a, b) => {
-        const aDepth = a.split(path.sep).length
-        const bDepth = b.split(path.sep).length
-        return bDepth - aDepth
-      })
-
       function ignoreFilePath (opts, filePath) {
         if (opts.ignore) {
           return opts.ignore.some(function (ignore) {
@@ -142,7 +132,25 @@ function signApplicationAsync (opts) {
         return false
       }
 
-      if (opts.binaries) childPaths = childPaths.concat(opts.binaries)
+      if (opts.binaries) {
+        // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
+        const userDefinedBinaries = opts.binaries.map(function (destination) { return fs.existsSync(destination) ? destination : path.resolve(appContentsPath, destination)})
+        // Insert at front to prioritize signing. We still sort by depth next
+        childPaths = userDefinedBinaries.concat(childPaths)
+        debuglog('Signing addtional user-defined binaries: ' + JSON.stringify(userDefinedBinaries, null, 1))
+      }
+
+      /**
+       * Sort the child paths by how deep they are in the file tree.  Some arcane apple
+       * logic expects the deeper files to be signed first otherwise strange errors get
+       * thrown our way
+       */
+      childPaths = childPaths.sort((a, b) => {
+        const aDepth = a.split(path.sep).length
+        const bDepth = b.split(path.sep).length
+        return bDepth - aDepth
+      })
+
 
       const args = [
         '--sign', opts.identity.hash || opts.identity.name,

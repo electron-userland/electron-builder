@@ -37,3 +37,5 @@ interface FlatOptions extends BaseSignOptions {
 export function flat(opts: FlatOptions, callback: (error: Error) => void): void;
 
 export function flatAsync(opts: FlatOptions): Promise<any>;
+
+export function getFilePathIfBinarySync(filePath: string): string | undefined

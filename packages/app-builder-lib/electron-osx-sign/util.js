@@ -132,19 +132,33 @@ var detectElectronPlatformAsync = module.exports.detectElectronPlatformAsync = f
   })
 }
 
-const isBinaryFile = require("isbinaryfile").isBinaryFile;
+const isBinaryFile = require("istextorbinary").isBinary;
 
 /**
- * This function returns a promise resolving the file path if file binary.
+ * This function returns a promise resolving the file path if file binary. We check filepath extension first to reduce overhead of reading the file to a buffer for it to scan start/mid/end encoding of the file
  * @function
  * @param {string} filePath - Path to file.
  * @returns {Promise} Promise resolving file path or undefined.
  */
-const getFilePathIfBinaryAsync = module.exports.getFilePathIfBinaryAsync = function (filePath) {
-  return isBinaryFile(filePath)
-    .then(function (isBinary) {
-      return isBinary ? filePath : undefined
-    })
+const getFilePathIfBinarySync = module.exports.getFilePathIfBinarySync = function (filePath) {
+  const forceAllowedExts = [
+    '.dylib', // Dynamic library
+    '.node' // Native node addon
+  ]
+  const name = path.basename(filePath)
+  const ext = path.extname(filePath)
+
+  // Sometimes .node is the base name, not as a file extension
+  // https://github.com/electron/electron-osx-sign/pull/169
+  if (forceAllowedExts.includes(ext) || forceAllowedExts.includes(name)) {
+    return filePath
+  }
+  // Still consider the file as binary if extension is empty or seems invalid
+  // https://github.com/electron-userland/electron-builder/issues/5465
+  if ((ext === '' || ext.indexOf(' ') >= 0) && name[0] !== '.') {
+    return (isBinaryFile(filePath, null) || isBinaryFile(null, fs.readFileSync(filePath))) ? filePath : undefined
+  }
+  return undefined
 }
 
 /**
@@ -201,24 +215,17 @@ module.exports.walkAsync = async function (dirPath) {
       let filePath = path.join(dirPath, name)
       const stat = await fs.lstat(filePath)
       if (stat.isFile()) {
-        switch (path.extname(filePath)) {
-          case '': // Binary
-            if (path.basename(filePath)[0] !== '.') {
-              return getFilePathIfBinaryAsync(filePath)
-            } // Else reject hidden file
-            break
-          case '.dylib': // Dynamic library
-          case '.node': // Native node addon
-            return filePath
-          case '.cstemp': // Temporary file generated from past codesign
-            debuglog('Removing... ' + filePath)
-            await fs.unlink(filePath)
-            return
-          default:
-            if (path.extname(filePath).indexOf(' ') >= 0) {
-              // Still consider the file as binary if extension seems invalid
-              return getFilePathIfBinaryAsync(filePath)
-            }
+        const forceRemoveExts = [
+          '.cstemp' // Temporary file generated from past codesign
+        ]
+        if (forceRemoveExts.includes(path.extname(filePath))) {
+          debuglog('Removing... ' + filePath)
+          await fs.unlink(filePath)
+          return
+        }
+        const binaryPath = getFilePathIfBinarySync(filePath)
+        if (binaryPath) {
+          return binaryPath
         }
       } else if (stat.isDirectory() && !stat.isSymbolicLink()) {
         const result = await _walkAsync(filePath)
