@@ -2389,6 +2389,20 @@
           ],
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
+        },
+        "defaultArch": {
+          "anyOf": [
+            {
+              "enum": [
+                "arm64",
+                "universal",
+                "x64"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "x64",
+          "description": "The default arch to skip in target names."
         }
       },
       "type": "object"

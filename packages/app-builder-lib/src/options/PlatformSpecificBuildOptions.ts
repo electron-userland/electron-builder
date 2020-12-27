@@ -115,6 +115,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   /** @private */
   cscKeyPassword?: string | null
+
+  readonly defaultArch?: string
 }
 
 export interface ReleaseInfo {

@@ -1,4 +1,4 @@
-import { Arch } from "builder-util"
+import { Arch, defaultArchFromString } from "builder-util"
 import * as path from "path"
 import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
@@ -19,13 +19,14 @@ export class ArchiveTarget extends Target {
     const format = this.name
 
     let defaultPattern: string
+    const defaultArch: Arch = defaultArchFromString(packager.platformSpecificBuildOptions.defaultArch);
     if (packager.platform === Platform.LINUX) {
       // tslint:disable-next-line:no-invalid-template-strings
-      defaultPattern = "${name}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + ".${ext}"
+      defaultPattern = "${name}-${version}" + (arch === defaultArch ? "" : "-${arch}") + ".${ext}"
     }
     else {
       // tslint:disable-next-line:no-invalid-template-strings
-      defaultPattern = "${productName}-${version}" + (arch === Arch.x64 ? "" : "-${arch}") + "-${os}.${ext}"
+      defaultPattern = "${productName}-${version}" + (arch === defaultArch ? "" : "-${arch}") + "-${os}.${ext}"
     }
 
     const artifactName = packager.expandArtifactNamePattern(this.options, format, arch, defaultPattern, false)
@@ -70,7 +71,7 @@ export class ArchiveTarget extends Target {
       updateInfo,
       file: artifactPath,
       // tslint:disable-next-line:no-invalid-template-strings
-      safeArtifactName: packager.computeSafeArtifactName(artifactName, format, arch, false, defaultPattern.replace("${productName}", "${name}")),
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, format, arch, false, packager.platformSpecificBuildOptions.defaultArch, defaultPattern.replace("${productName}", "${name}")),
       target: this,
       arch,
       packager,

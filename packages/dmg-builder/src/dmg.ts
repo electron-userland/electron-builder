@@ -23,7 +23,7 @@ export class DmgTarget extends Target {
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
     // tslint:disable-next-line:no-invalid-template-strings
-    const artifactName = packager.expandArtifactNamePattern(this.options, "dmg", arch, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}", true)
+    const artifactName = packager.expandArtifactNamePattern(this.options, "dmg", arch, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}", true, packager.platformSpecificBuildOptions.defaultArch)
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: "DMG",
@@ -118,7 +118,7 @@ export class DmgTarget extends Target {
   computeVolumeName(arch: Arch, custom?: string | null): string {
     const appInfo = this.packager.appInfo
     const shortVersion = this.packager.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
-    const archString = getArchSuffix(arch)
+    const archString = getArchSuffix(arch, this.packager.platformSpecificBuildOptions.defaultArch)
 
     if (custom == null) {
       return `${appInfo.productFilename} ${shortVersion}${archString}`
