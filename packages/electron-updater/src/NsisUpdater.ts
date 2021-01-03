@@ -4,9 +4,10 @@ import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, newUrlFromBase, ResolvedUpdateFileInfo } from "./main"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
@@ -41,7 +42,7 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(packageInfo!!, packageFile!!, provider)) {
+          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!!, packageFile!!, provider)) {
             try {
               await this.httpExecutor.download(new URL(packageInfo!!.path), packageFile!!, {
                 headers: downloadUpdateOptions.requestHeaders,
@@ -157,15 +158,22 @@ export class NsisUpdater extends BaseUpdater {
         }
       }
 
-      const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+      const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
         oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
         requestHeaders: downloadUpdateOptions.requestHeaders,
-      })
+        cancellationToken: downloadUpdateOptions.cancellationToken,
+      }
+
+      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      }
+
+      const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions)
         .download(blockMapDataList[0], blockMapDataList[1])
       return false
     }
@@ -179,20 +187,27 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private async differentialDownloadWebPackage(packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadWebPackage(downloadUpdateOptions: DownloadUpdateOptions, packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
     if (packageInfo.blockMapSize == null) {
       return true
     }
 
     try {
-      await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, {
+      const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: new URL(packageInfo.path),
         oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
         requestHeaders: this.requestHeaders,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
-      })
+        cancellationToken: downloadUpdateOptions.cancellationToken,
+      }
+
+      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      }
+
+      await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions)
         .download()
     }
     catch (e) {

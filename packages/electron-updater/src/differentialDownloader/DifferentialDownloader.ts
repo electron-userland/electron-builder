@@ -3,11 +3,13 @@ import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, open } from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
+import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../main"
 import { copyData } from "./DataSplitter"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
+import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform"
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string
@@ -18,6 +20,9 @@ export interface DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 
   readonly isUseMultipleRangeRequest?: boolean
+
+  readonly cancellationToken: CancellationToken
+  onProgress?(progress: ProgressInfo): void
 }
 
 export abstract class DifferentialDownloader {
@@ -74,10 +79,10 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
-    return this.downloadFile(operations)
+    return this.downloadFile(operations, downloadSize)
   }
 
-  private downloadFile(tasks: Array<Operation>): Promise<any> {
+  private downloadFile(tasks: Array<Operation>, downloadSize: number): Promise<any> {
     const fdList: Array<OpenedFile> = []
     const closeFiles = (): Promise<Array<void>> => {
       return Promise.all(fdList.map(openedFile => {
@@ -87,7 +92,7 @@ export abstract class DifferentialDownloader {
           })
       }))
     }
-    return this.doDownloadFile(tasks, fdList)
+    return this.doDownloadFile(tasks, fdList, downloadSize)
       .then(closeFiles)
       .catch(e => {
         // then must be after catch here (since then always throws error)
@@ -113,7 +118,7 @@ export abstract class DifferentialDownloader {
       })
   }
 
-  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
+  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>, downloadSize: number): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
     fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
     const newFileFd = await open(this.options.newFile, "w")
@@ -121,6 +126,29 @@ export abstract class DifferentialDownloader {
     const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
     await new Promise((resolve, reject) => {
       const streams: Array<any> = []
+
+      // Create our download info transformer if we have one
+      let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
+      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) { // TODO: Does not support multiple ranges (someone feel free to PR this!)
+        const expectedByteCounts: Array<number> = []
+        let grandTotalBytes = 0
+
+        for (const task of tasks) {
+          if (task.kind === OperationKind.DOWNLOAD) {
+            expectedByteCounts.push(task.end - task.start)
+            grandTotalBytes += task.end - task.start
+          }
+        }
+
+        const progressDifferentialDownloadInfo: ProgressDifferentialDownloadInfo = {
+          expectedByteCounts: expectedByteCounts,
+          grandTotal: grandTotalBytes
+        }
+
+        downloadInfoTransform = new ProgressDifferentialDownloadCallbackTransform(progressDifferentialDownloadInfo, this.options.cancellationToken, this.options.onProgress)
+        streams.push(downloadInfoTransform)
+      }
+
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
       // to simply debug, do manual validation to allow file to be fully written
       digestTransform.isValidateOnEnd = false
@@ -183,6 +211,11 @@ export abstract class DifferentialDownloader {
 
         const operation = tasks[index++]
         if (operation.kind === OperationKind.COPY) {
+          // We are copying, let's not send status updates to the UI
+          if (downloadInfoTransform) {
+            downloadInfoTransform.beginFileCopy()
+          }
+
           copyData(operation, firstStream, oldFileFd, reject, () => w(index))
           return
         }
@@ -195,6 +228,11 @@ export abstract class DifferentialDownloader {
           debug(`download range: ${range}`)
         }
 
+        // We are starting to download
+        if (downloadInfoTransform) {
+          downloadInfoTransform.beginRangeDownload()
+        }
+
         const request = this.httpExecutor.createRequest(requestOptions, response => {
           // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
           if (response.statusCode >= 400) {
@@ -205,6 +243,11 @@ export abstract class DifferentialDownloader {
             end: false
           })
           response.once("end", () => {
+            // Pass on that we are downloading a segment
+            if (downloadInfoTransform) {
+              downloadInfoTransform.endRangeDownload()
+            }
+
             if (++downloadOperationCount === 100) {
               downloadOperationCount = 0
               setTimeout(() => w(index), 1000)

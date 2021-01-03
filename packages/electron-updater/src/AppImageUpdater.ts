@@ -5,7 +5,9 @@ import { unlinkSync } from "fs"
 import * as path from "path"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
+import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
 
 export class AppImageUpdater extends BaseUpdater {
@@ -42,14 +44,21 @@ export class AppImageUpdater extends BaseUpdater {
 
         let isDownloadFull = false
         try {
-          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+          const downloadOptions: DifferentialDownloaderOptions = {
             newUrl: fileInfo.url,
             oldFile,
             logger: this._logger,
             newFile: updateFile,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             requestHeaders: downloadUpdateOptions.requestHeaders,
-          })
+            cancellationToken: downloadUpdateOptions.cancellationToken,
+          }
+
+          if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+            downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+          }
+
+          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions)
             .download()
         }
         catch (e) {
