@@ -35,7 +35,7 @@ export class MacUpdater extends AppUpdater {
 
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
     if (files.some(isArm64)) {
-      files = files.filter(file => process.arch == "arm64" === isArm64(file));
+      files = files.filter(file => (process.arch === "arm64") === isArm64(file));
     }
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
