@@ -33,9 +33,9 @@ export class MacUpdater extends AppUpdater {
 
     let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info);
 
+    // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
     if (files.some(isArm64)) {
-      // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
       files = files.filter(file => (process.arch === "arm64") === isArm64(file));
     }
 
