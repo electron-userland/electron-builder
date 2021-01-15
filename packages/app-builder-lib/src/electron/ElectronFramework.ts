@@ -143,14 +143,15 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
 }
 
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {
-  const packager = prepareOptions.packager
-  const out = prepareOptions.appOutDir
+  const { packager, appOutDir, platformName } = prepareOptions
 
-  let dist: string | null | undefined = packager.config.electronDist
+  const electronDist = packager.config.electronDist
+  let dist: string | undefined | null = (typeof electronDist === 'function') ? electronDist(prepareOptions) : electronDist
   if (dist != null) {
-    const zipFile = `electron-v${options.version}-${prepareOptions.platformName}-${options.arch}.zip`
-    const resolvedDist = path.resolve(packager.projectDir, dist)
+    const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
+    const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
     if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
+      log.debug({ resolvedDist, zipFile }, "Resolved electronDist")
       options.cache = resolvedDist
       dist = null
     }
@@ -161,15 +162,15 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
       return
     }
-
-    await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", out, "--distMacOsAppName", distMacOsAppName])
+    log.info({ zipPath: options.cache }, "Unpacking electron zip")
+    await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
   }
   else {
     isFullCleanup = true
     const source = packager.getElectronSrcDir(dist)
-    const destination = packager.getElectronDestinationDir(out)
+    const destination = packager.getElectronDestinationDir(appOutDir)
     log.info({source, destination}, "copying Electron")
-    await emptyDir(out)
+    await emptyDir(appOutDir)
     await copyDir(source, destination, {
       isUseHardLink: DO_NOT_USE_HARD_LINKS,
     })

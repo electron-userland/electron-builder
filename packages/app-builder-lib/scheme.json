@@ -5711,8 +5711,15 @@
       "type": "boolean"
     },
     "electronDist": {
-      "description": "The path to custom Electron build (e.g. `~/electron/out/R`).",
-      "type": "string"
+      "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory",
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": "string"
+        }
+      ]
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",

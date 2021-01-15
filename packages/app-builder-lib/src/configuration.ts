@@ -1,6 +1,7 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
 import { ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
@@ -129,9 +130,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly electronCompile?: boolean
 
   /**
-   * The path to custom Electron build (e.g. `~/electron/out/R`).
+   * Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
    */
-  readonly electronDist?: string
+  readonly electronDist?: string | ((options: PrepareApplicationStageDirectoryOptions) => string)
 
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
