@@ -5,7 +5,7 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
-import { UpdateDownloadedEvent } from "./main"
+import { ResolvedUpdateFileInfo, UpdateDownloadedEvent } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 
@@ -31,8 +31,14 @@ export class MacUpdater extends AppUpdater {
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     this.updateInfoForPendingUpdateDownloadedEvent = null
 
-    const files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
-      .filter(file => (process.arch == 'arm64') === (file.url.pathname.includes('arm64')));
+    let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info);
+
+    // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
+    const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
+    if (files.some(isArm64)) {
+      files = files.filter(file => (process.arch === "arm64") === isArm64(file));
+    }
+
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
