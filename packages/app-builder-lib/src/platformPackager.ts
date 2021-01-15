@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, isEnvTrue } from "builder-util"
-import { getArtifactArchName } from "builder-util/out/arch"
+import { defaultArchFromString, getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir } from "fs-extra"
@@ -100,7 +100,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
@@ -483,11 +483,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // tslint:disable-next-line:no-invalid-template-strings
-  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
-    return computeSafeArtifactNameIfNeeded(suggestedName, () => this.computeArtifactName(safePattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch))
+  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipDefaultArch: boolean = true, defaultArch?: string, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
+    return computeSafeArtifactNameIfNeeded(suggestedName, () => this.computeArtifactName(safePattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch))
   }
 
-  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
+  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipDefaultArch: boolean = true, defaultArch?: string): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName
@@ -499,9 +499,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     } else {
       // https://github.com/electron-userland/electron-builder/issues/3510
       // always respect arch in user custom artifact pattern
-      skipArchIfX64 = this.platform === Platform.MAC
+      skipDefaultArch = this.platform === Platform.MAC
     }
-    return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
+    return this.computeArtifactName(pattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
   }
 
   expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {

@@ -17,7 +17,7 @@ if (process.env.JEST_WORKER_ID == null) {
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export { log, debug } from "./log"
-export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
+export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString, defaultArchFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 

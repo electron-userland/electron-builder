@@ -99,10 +99,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
       case Arch.universal: {
         const x64Arch = Arch.x64;
-        const x64AppOutDir = appOutDir + '-' + Arch[x64Arch];
+        const x64AppOutDir = appOutDir + '--' + Arch[x64Arch];
         await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false);
         const arm64Arch = Arch.arm64;
-        const arm64AppOutPath = appOutDir + '-' + Arch[arm64Arch];
+        const arm64AppOutPath = appOutDir + '--' + Arch[arm64Arch];
         await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false);
         const framework = this.info.framework
         log.info({
@@ -278,7 +278,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg", arch)
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
-      await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch))
+      await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
     }
   }
 

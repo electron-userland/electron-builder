@@ -24,8 +24,8 @@ export function getArchCliNames(): Array<string> {
   return [Arch[Arch.ia32], Arch[Arch.x64], Arch[Arch.armv7l], Arch[Arch.arm64]]
 }
 
-export function getArchSuffix(arch: Arch): string {
-  return arch === Arch.x64 ? "" : `-${Arch[arch]}`
+export function getArchSuffix(arch: Arch, defaultArch?: string): string {
+  return arch === defaultArchFromString(defaultArch) ? "" : `-${Arch[arch]}`
 }
 
 export function archFromString(name: string): Arch {
@@ -43,6 +43,10 @@ export function archFromString(name: string): Arch {
     default:
       throw new Error(`Unsupported arch ${name}`)
   }
+}
+
+export function defaultArchFromString(name?: string): Arch {
+  return name ? archFromString(name) : Arch.x64;
 }
 
 export function getArtifactArchName(arch: Arch, ext: string): string {
