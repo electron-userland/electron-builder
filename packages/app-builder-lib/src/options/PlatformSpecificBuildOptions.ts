@@ -41,6 +41,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly artifactName?: string | null
 
   /**
+   * The executable name. Defaults to `productName`.
+   */
+  readonly executableName?: string | null
+
+  /**
    * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
    * @default normal
    */

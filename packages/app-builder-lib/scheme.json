@@ -1341,7 +1341,7 @@
           "description": "The executable parameters. Pass to executableName"
         },
         "executableName": {
-          "description": "The executable name. Defaults to `productName`.\nCannot be specified per target, allowed only in the `linux`.",
+          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"
@@ -1824,6 +1824,13 @@
         },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"
@@ -5024,6 +5031,13 @@
         },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"

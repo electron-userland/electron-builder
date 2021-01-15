@@ -29,6 +29,7 @@ export class AppInfo {
   readonly buildVersion: string
 
   readonly productName: string
+  readonly sanitizedProductName: string
   readonly productFilename: string
 
   constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
@@ -55,7 +56,10 @@ export class AppInfo {
     }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
-    this.productFilename = sanitizeFileName(this.productName)
+    this.sanitizedProductName = sanitizeFileName(this.productName)
+    this.productFilename = platformSpecificOptions?.executableName != null
+      ? sanitizeFileName(platformSpecificOptions.executableName)
+      : this.sanitizedProductName
   }
 
   get channel(): string | null {
@@ -118,7 +122,7 @@ export class AppInfo {
   get linuxPackageName(): string {
     const name = this.name
     // https://github.com/electron-userland/electron-builder/issues/2963
-    return name.startsWith("@") ? this.productFilename : name
+    return name.startsWith("@") ? this.sanitizedProductName : name
   }
 
   get sanitizedName(): string {

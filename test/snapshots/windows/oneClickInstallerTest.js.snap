@@ -36,6 +36,48 @@ Object {
 }
 `;
 
+exports[`custom exec name 1`] = `
+Object {
+  "APP_32_NAME": undefined,
+  "APP_64_NAME": "TestApp-1.1.0-x64.nsis.7z",
+  "APP_ARM64_NAME": undefined,
+  "APP_FILENAME": "TestApp",
+  "APP_ID": "org.electron-builder.testApp",
+  "APP_PACKAGE_NAME": "TestApp",
+  "APP_PRODUCT_FILENAME": "Boo",
+  "COMPANY_NAME": "Foo Bar",
+  "ONE_CLICK": null,
+  "PRODUCT_FILENAME": "Boo",
+  "PRODUCT_NAME": "foo",
+  "SHORTCUT_NAME": "foo",
+  "UNINSTALL_DISPLAY_NAME": "foo 1.1.0",
+}
+`;
+
+exports[`custom exec name 2`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "foo Setup 1.1.0.exe",
+      "safeArtifactName": "foo-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "foo Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "foo-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
 exports[`custom guid 1`] = `
 Object {
   "win": Array [

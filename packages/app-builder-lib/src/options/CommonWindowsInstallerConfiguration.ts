@@ -73,7 +73,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
     isPerMachine: options.perMachine === true,
     isAssisted: options.oneClick === false,
 
-    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.productFilename : packager.expandMacro(options.shortcutName!!),
+    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.sanitizedProductName : packager.expandMacro(options.shortcutName!!),
     isCreateDesktopShortcut: convertToDesktopShortcutCreationPolicy(options.createDesktopShortcut),
     isCreateStartMenuShortcut: options.createStartMenuShortcut !== false,
     menuCategory,

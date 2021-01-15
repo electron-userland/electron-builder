@@ -178,7 +178,7 @@ export default class FpmTarget extends Target {
 
     use(options.fpm, it => args.push(...it as any))
 
-    args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
+    args.push(`${appOutDir}/=${installPrefix}/${appInfo.sanitizedProductName}`)
     for (const icon of (await this.helper.icons)) {
       const extWithDot = path.extname(icon.file)
       const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`

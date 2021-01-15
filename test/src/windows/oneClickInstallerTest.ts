@@ -7,6 +7,24 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
+function pickSnapshotDefines(defines: any) {
+  return {
+    "APP_32_NAME": defines.APP_32_NAME,
+    "APP_64_NAME": defines.APP_64_NAME,
+    "APP_ARM64_NAME": defines.APP_ARM64_NAME,
+    "APP_FILENAME": defines.APP_FILENAME,
+    "APP_ID": defines.APP_ID,
+    "APP_PACKAGE_NAME": defines.APP_PACKAGE_NAME,
+    "APP_PRODUCT_FILENAME": defines.APP_PRODUCT_FILENAME,
+    "COMPANY_NAME": defines.COMPANY_NAME,
+    "ONE_CLICK": defines.ONE_CLICK,
+    "PRODUCT_FILENAME": defines.PRODUCT_FILENAME,
+    "PRODUCT_NAME": defines.PRODUCT_NAME,
+    "SHORTCUT_NAME": defines.SHORTCUT_NAME,
+    "UNINSTALL_DISPLAY_NAME": defines.UNINSTALL_DISPLAY_NAME,
+  };
+}
+
 test("one-click", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
   config: {
@@ -232,4 +250,18 @@ test.ifDevOrLinuxCi("file associations per user", app({
       }
     ],
   },
+}))
+
+test.ifWindows("custom exec name", app({
+  targets: nsisTarget,
+  config: {
+    productName: "foo",
+    win: {
+      executableName: "Boo",
+    },
+  },
+  effectiveOptionComputed: async it => {
+    expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
+    return false
+  }
 }))

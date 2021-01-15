@@ -94,10 +94,9 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const appInfo = packager.appInfo
 
-    const productFilename = appInfo.productFilename
     const executableArgs = targetSpecificOptions.executableArgs
     if (exec == null) {
-      exec = `${installPrefix}/${productFilename}/${packager.executableName}`
+      exec = `${installPrefix}/${appInfo.sanitizedProductName}/${packager.executableName}`
       if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
         exec = `"${exec}"`
       }

@@ -22,12 +22,6 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly vendor?: string | null
 
   /**
-   * The executable name. Defaults to `productName`.
-   * Cannot be specified per target, allowed only in the `linux`.
-   */
-  readonly executableName?: string | null
-
-  /**
    * The path to icon set directory or one png file, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
