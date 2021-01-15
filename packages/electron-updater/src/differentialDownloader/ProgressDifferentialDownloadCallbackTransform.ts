@@ -14,7 +14,7 @@ export interface ProgressInfo {
 }
 
 export interface ProgressDifferentialDownloadInfo {
-  expectedByteCounts: Array<number>,
+  expectedByteCounts: Array<number>
   grandTotal: number
 }
 
