@@ -95,7 +95,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: MacConfiguration, targets: Array<Target>): Promise<any> {
     switch (arch) {
       default: {
-        return super.doPack(outDir, appOutDir, this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets);
+        return super.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets);
       }
       case Arch.universal: {
         const x64Arch = Arch.x64;
