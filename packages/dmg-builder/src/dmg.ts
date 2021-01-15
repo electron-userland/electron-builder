@@ -3,7 +3,7 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
-import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, spawn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, retry } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
@@ -191,10 +191,15 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
     "-anyowners", "-nospotlight",
     "-format", "UDRW",
   ])
+  if (log.isDebugEnabled) {
+    imageArgs.push("-debug")
+  }
   imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
   imageArgs.push(tempDmg)
-  await spawn("hdiutil", imageArgs)
-  return tempDmg
+  // The reason for retrying up to ten times is that hdiutil create in some cases fail to unmount due to "resource busy".
+  // https://github.com/electron-userland/electron-builder/issues/5431
+  await retry(() => spawn("hdiutil", imageArgs), 5, 1000)
+  return tempDmg;
 }
 
 function addLogLevel(args: Array<string>): Array<string> {
