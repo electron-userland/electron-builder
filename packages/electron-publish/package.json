@@ -18,7 +18,7 @@
     "chalk": "^4.1.0",
     "fs-extra": "^9.0.1",
     "lazy-val": "^1.0.4",
-    "mime": "^2.4.7"
+    "mime": "^2.4.6"
   },
   "typings": "./out/publisher.d.ts"
 }

@@ -45,7 +45,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^15.0.12",
+    "@types/yargs": "^15.0.11",
     "app-builder-lib": "workspace:*",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
