@@ -79,10 +79,10 @@ export abstract class DifferentialDownloader {
 
     logger.info(`Full: ${formatBytes(newSize)}, To download: ${formatBytes(downloadSize)} (${Math.round(downloadSize / (newSize / 100))}%)`)
 
-    return this.downloadFile(operations, downloadSize)
+    return this.downloadFile(operations)
   }
 
-  private downloadFile(tasks: Array<Operation>, downloadSize: number): Promise<any> {
+  private downloadFile(tasks: Array<Operation>): Promise<any> {
     const fdList: Array<OpenedFile> = []
     const closeFiles = (): Promise<Array<void>> => {
       return Promise.all(fdList.map(openedFile => {
@@ -92,7 +92,7 @@ export abstract class DifferentialDownloader {
           })
       }))
     }
-    return this.doDownloadFile(tasks, fdList, downloadSize)
+    return this.doDownloadFile(tasks, fdList)
       .then(closeFiles)
       .catch(e => {
         // then must be after catch here (since then always throws error)
@@ -118,7 +118,7 @@ export abstract class DifferentialDownloader {
       })
   }
 
-  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>, downloadSize: number): Promise<any> {
+  private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
     fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
     const newFileFd = await open(this.options.newFile, "w")
