@@ -4,30 +4,52 @@
   !endif
 
   Var /GLOBAL packageArch
-
-  !ifdef APP_64
-  	!ifdef APP_ARM64
-      StrCpy $packageArch "ARM64"
-	  !else
-      StrCpy $packageArch "64"
-	  !endif
-
-    !insertmacro compute_files_for_current_arch
-  !else
-    !insertmacro ia32_app_files
-  !endif
+  
+  !insertmacro identify_package
+  !insertmacro compute_files_for_current_arch
 
   !ifdef COMPRESS
     SetCompress "${COMPRESS}"
   !endif
 
-  !ifdef ZIP_COMPRESSION
-    nsisunz::Unzip "$PLUGINSDIR\app-$packageArch.zip" "$INSTDIR"
-  !else
-    !insertmacro extractUsing7za "$PLUGINSDIR\app-$packageArch.7z"
-  !endif
+  !insertmacro decompress
+  !insertmacro custom_files_post_decompression
+!macroend
 
-  # after decompression
+!macro identify_package 
+  !ifdef APP_32
+    StrCpy $packageArch "32"
+  !endif
+  !ifdef APP_64
+    ${if} ${RunningX64}
+    ${OrIf} ${IsNativeARM64}
+      StrCpy $packageArch "64"
+    ${endif}
+  !endif
+  !ifdef APP_ARM64
+    ${if} ${IsNativeARM64}
+      StrCpy $packageArch "ARM64"
+    ${endif}
+  !endif
+!macroend
+
+!macro compute_files_for_current_arch
+  ${if} $packageArch == "ARM64"
+    !ifdef APP_ARM64
+      !insertmacro arm64_app_files
+    !endif
+  ${elseif} $packageArch == "64"
+    !ifdef APP_64
+      !insertmacro x64_app_files
+    !endif
+  ${else}
+    !ifdef APP_32
+      !insertmacro ia32_app_files
+    !endif
+  ${endIf}
+!macroend
+
+!macro custom_files_post_decompression
   ${if} $packageArch == "ARM64"
     !ifmacrodef customFiles_arm64
       !insertmacro customFiles_arm64
@@ -43,36 +65,6 @@
   ${endIf}
 !macroend
 
-!macro compute_files_for_current_arch
-  !ifdef APP_32
-    !ifdef APP_ARM64
-      ${if} ${IsNativeARM64}
-        !insertmacro arm64_app_files
-      ${elseif} ${RunningX64}
-        !insertmacro x64_app_files
-      ${else}
-        !insertmacro ia32_app_files
-      ${endIf}
-    !else
-      ${if} ${RunningX64}
-        !insertmacro x64_app_files
-      ${else}
-        !insertmacro ia32_app_files
-      ${endIf}
-    !endif
-  !else
-    !ifdef APP_ARM64
-      ${if} ${IsNativeARM64}
-        !insertmacro arm64_app_files
-      ${else}
-        !insertmacro x64_app_files
-      ${endIf}
-    !else
-      !insertmacro x64_app_files
-    !endif
-  !endif
-!macroend
-
 !macro arm64_app_files
   File /oname=$PLUGINSDIR\app-arm64.${COMPRESSION_METHOD} "${APP_ARM64}"
 !macroend
@@ -82,10 +74,13 @@
 !macroend
 
 !macro ia32_app_files
-  StrCpy $packageArch "32"
   File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
 !macroend
 
-!macro extractUsing7za FILE
-  Nsis7z::Extract "${FILE}"
+!macro decompress
+  !ifdef ZIP_COMPRESSION
+    nsisunz::Unzip "$PLUGINSDIR\app-$packageArch.zip" "$INSTDIR"
+  !else
+    Nsis7z::Extract "$PLUGINSDIR\app-$packageArch.7z"
+  !endif
 !macroend
