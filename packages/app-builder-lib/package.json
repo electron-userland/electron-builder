@@ -94,7 +94,7 @@
     "@types/js-yaml": "^3.12.6",
     "@types/normalize-package-data": "^2.4.0",
     "@types/semver": "^7.3.4",
-    "dmg-builder": "workspace:*",
+    "dmg-builder": "../dmg-builder",
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",

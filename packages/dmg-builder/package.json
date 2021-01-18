@@ -28,5 +28,6 @@
     "@types/js-yaml": "^3.12.6",
     "temp-file": "^3.3.7"
   },
-  "typings": "./out/dmg.d.ts"
+  "typings": "./out/dmg.d.ts",
+  "preferUnplugged": true
 }
