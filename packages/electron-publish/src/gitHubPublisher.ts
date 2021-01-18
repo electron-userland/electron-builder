@@ -77,6 +77,7 @@ export class GitHubPublisher extends HttpPublisher {
       this.releaseType = "prerelease"
     }
     else {
+      // noinspection PointlessBooleanExpressionJS
       this.releaseType = (options as any).draft === false ? "release" : "draft"
     }
   }
@@ -115,7 +116,7 @@ export class GitHubPublisher extends HttpPublisher {
       // https://github.com/electron-userland/electron-builder/issues/2074
       // if release created < 2 hours — allow to upload
       const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
-      if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
+      if (!isEnvTrue(process.env.EP_GH_IGNORE_TIME) && publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
         this.releaseLogFields = {
           reason: "existing release published more than 2 hours ago",
@@ -247,7 +248,7 @@ export class GitHubPublisher extends HttpPublisher {
     log.warn({releaseId: release.id}, "cannot delete release")
   }
 
-  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
+  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
     // host can contains port, but node http doesn't support host as url does
     const baseUrl = parseUrl(`https://${this.info.host || "api.github.com"}`)
     return parseJson(httpExecutor.request(configureRequestOptions({

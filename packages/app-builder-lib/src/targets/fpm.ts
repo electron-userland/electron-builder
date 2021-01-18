@@ -185,6 +185,11 @@ export default class FpmTarget extends Target {
       args.push(`${icon.file}=/usr/share/icons/hicolor/${sizeName}/apps/${packager.executableName}${extWithDot}`)
     }
 
+    const mimeTypeFilePath = await this.helper.mimeTypeFiles
+    if (mimeTypeFilePath != null) {
+      args.push(`${mimeTypeFilePath}=/usr/share/mime/packages/${packager.executableName}.xml`)
+    }
+
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
     args.push(`${desktopFilePath}=/usr/share/applications/${packager.executableName}.desktop`)
 
@@ -207,6 +212,7 @@ export default class FpmTarget extends Target {
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
       })
     }
+
     await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, {env})
 
     await packager.dispatchArtifactCreated(artifactPath, this, arch)

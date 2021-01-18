@@ -30,3 +30,7 @@ export function isMacOsHighSierra(): boolean {
 export async function isMacOsSierra() {
   return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
 }
+
+export function isMacOsCatalina() {
+  return process.platform === "darwin" && semver.gte(osRelease(), "19.0.0")
+}

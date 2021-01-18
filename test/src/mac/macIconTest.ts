@@ -1,9 +1,9 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { promises as fs } from "fs"
-import { remove } from "fs-extra"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
+import { remove } from "fs-extra"
 
 async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()

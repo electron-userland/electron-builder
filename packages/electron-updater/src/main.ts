@@ -8,6 +8,9 @@ export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo }
 export { CancellationToken } from "builder-util-runtime"
 export { Provider } from "./providers/Provider"
+export { AppImageUpdater } from "./AppImageUpdater"
+export { MacUpdater } from "./MacUpdater"
+export { NsisUpdater } from "./NsisUpdater"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
@@ -15,7 +18,7 @@ let _autoUpdater: any
 // required for jsdoc
 export declare const autoUpdater: AppUpdater
 
-function _load_autoUpdater(): AppUpdater {
+function doLoadAutoUpdater(): AppUpdater {
   // tslint:disable:prefer-conditional-expression
   if (process.platform === "win32") {
     _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
@@ -32,7 +35,7 @@ function _load_autoUpdater(): AppUpdater {
 Object.defineProperty(exports, "autoUpdater", {
   enumerable: true,
   get: () => {
-    return _autoUpdater || _load_autoUpdater()
+    return _autoUpdater || doLoadAutoUpdater()
   }
 })
 
@@ -43,7 +46,7 @@ export interface ResolvedUpdateFileInfo {
   packageInfo?: PackageFileInfo
 }
 
-export function getChannelFilename(channel: string) {
+export function getChannelFilename(channel: string): string {
   return `${channel}.yml`
 }
 
@@ -72,19 +75,19 @@ export class UpdaterSignal {
   /**
    * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
    */
-  login(handler: LoginHandler) {
+  login(handler: LoginHandler): void {
     addHandler(this.emitter, "login", handler)
   }
 
-  progress(handler: (info: ProgressInfo) => void) {
+  progress(handler: (info: ProgressInfo) => void): void {
     addHandler(this.emitter, DOWNLOAD_PROGRESS, handler)
   }
 
-  updateDownloaded(handler: (info: UpdateDownloadedEvent) => void) {
+  updateDownloaded(handler: (info: UpdateDownloadedEvent) => void): void {
     addHandler(this.emitter, UPDATE_DOWNLOADED, handler)
   }
 
-  updateCancelled(handler: (info: UpdateInfo) => void) {
+  updateCancelled(handler: (info: UpdateInfo) => void): void {
     addHandler(this.emitter, "update-cancelled", handler)
   }
 }
@@ -95,11 +98,11 @@ export interface UpdateDownloadedEvent extends UpdateInfo {
 
 const isLogEvent = false
 
-function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...args: Array<any>) => void) {
+function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...args: Array<any>) => void): void {
   if (isLogEvent) {
     emitter.on(event, (...args: Array<any>) => {
       console.log("%s %s", event, args)
-      handler.apply(null, args)
+      handler(...args)
     })
   }
   else {
@@ -117,9 +120,11 @@ export interface Logger {
   debug?(message: string): void
 }
 
+export type ElevationHelper = (path: string, args: Array<string>) => boolean
+
 // if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
 /** @internal */
-export function newBaseUrl(url: string) {
+export function newBaseUrl(url: string): URL {
   const result = new URL(url)
   if (!result.pathname.endsWith("/")) {
     result.pathname += "/"
@@ -129,7 +134,7 @@ export function newBaseUrl(url: string) {
 
 // addRandomQueryToAvoidCaching is false by default because in most cases URL already contains version number,
 // so, it makes sense only for Generic Provider for channel files
-export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching: boolean = false): URL {
+export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching = false): URL {
   const result = new URL(pathname, baseUrl)
   // search is not propagated (search is an empty string if not specified)
   const search = baseUrl.search

@@ -1,0 +1,135 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom buildResources and output dirs: linux 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`custom buildResources and output dirs: mac 1`] = `
+Object {
+  "mac": Array [],
+}
+`;
+
+exports[`custom buildResources and output dirs: win 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`do not exclude build entirely (respect files) 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`electronDist as path to local folder with electron builds zipped  1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`override targets in the config - only arch 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "beta.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "beta-TestApp.exe",
+          },
+        ],
+        "path": "beta-TestApp.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0-beta.1",
+      },
+    },
+    Object {
+      "arch": "ia32",
+      "file": "beta-TestApp.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "beta-TestApp.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`override targets in the config - only arch 2`] = `
+Object {
+  "channel": "beta",
+  "provider": "generic",
+  "updaterCacheDirName": "testapp-updater",
+  "url": "https://develar.s3.amazonaws.com/test",
+}
+`;
+
+exports[`override targets in the config 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`overriding the publish channel 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`overriding the publish channel 2`] = `
+Array [
+  Object {
+    "bucket": "my-s3-bucket",
+    "channel": "beta",
+    "provider": "s3",
+  },
+]
+`;
+
+exports[`prepackaged 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`retrieve latest electron version 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`retrieve latest electron-nightly version 1`] = `
+Object {
+  "linux": Array [],
+}
+`;

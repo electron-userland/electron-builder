@@ -30,11 +30,14 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
       // hoisted node_modules
       // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
       // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      const index = file.indexOf(NODE_MODULES_PATTERN)
+      let index = file.indexOf(NODE_MODULES_PATTERN)
+      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
+        index = file.length - 13
+      }
       if (index < 0) {
         throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
       }
-      return dest + file.substring(index + 1 /* leading slash */)
+      return dest + file.substring(index)
     }
   }
 }
@@ -187,13 +190,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   for (const info of deps) {
     const source = info.dir
-    let destination: string
-    if (source.length > mainMatcher.from.length && source.startsWith(mainMatcher.from) && source[mainMatcher.from.length] === path.sep) {
-      destination = getDestinationPath(source, {src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any})
-    }
-    else {
-      destination = mainMatcher.to + path.sep + "node_modules"
-    }
+    const destination = getDestinationPath(source, {src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any})
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work

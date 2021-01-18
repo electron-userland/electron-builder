@@ -10,6 +10,8 @@ export const installPrefix = "/opt"
 export class LinuxTargetHelper {
   private readonly iconPromise = new Lazy(() => this.computeDesktopIcons())
 
+  private readonly mimeTypeFilesPromise = new Lazy(() => this.computeMimeTypeFiles())
+
   maxIconPath: string | null = null
 
   constructor(private packager: LinuxPackager) {
@@ -17,6 +19,34 @@ export class LinuxTargetHelper {
 
   get icons(): Promise<Array<IconInfo>> {
     return this.iconPromise.value
+  }
+
+  get mimeTypeFiles(): Promise<string | null> {
+    return this.mimeTypeFilesPromise.value
+  }
+
+  private async computeMimeTypeFiles(): Promise<string | null> {
+    const items: Array<string> = []
+    for (const fileAssociation of this.packager.fileAssociations) {
+      if (!fileAssociation.mimeType) {
+        continue
+      }
+
+      const data = `<mime-type type="${fileAssociation.mimeType}">
+  <glob pattern="*.${fileAssociation.ext}"/>
+    ${fileAssociation.description ? `<comment>${fileAssociation.description}</comment>` : ""}
+  <icon name="x-office-document" />
+</mime-type>`
+      items.push(data)
+    }
+
+    if (items.length === 0) {
+      return null
+    }
+
+    const file = await this.packager.getTempFile(".xml")
+    await outputFile(file, '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>")
+    return file
   }
 
   // must be name without spaces and other special characters, but not product name used
@@ -41,14 +71,14 @@ export class LinuxTargetHelper {
     return options.description || this.packager.appInfo.description
   }
 
-  async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
+  async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string }): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`)
     await outputFile(file, data)
     return file
   }
 
-  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
+  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string }): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
@@ -61,11 +91,15 @@ export class LinuxTargetHelper {
     const appInfo = packager.appInfo
 
     const productFilename = appInfo.productFilename
-
+    const executableArgs = targetSpecificOptions.executableArgs
     if (exec == null) {
       exec = `${installPrefix}/${productFilename}/${packager.executableName}`
       if (!/^[/0-9A-Za-z._-]+$/.test(exec)) {
         exec = `"${exec}"`
+      }
+      if (executableArgs) {
+        exec += " "
+        exec += executableArgs.join(" ")
       }
       exec += " %U"
     }

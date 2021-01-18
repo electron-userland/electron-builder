@@ -15,27 +15,27 @@ const checkOptions: AssertPackOptions = {
 test.ifAll.ifMac("mac", app({
   targets: Platform.MAC.createTarget(),
   config: {
-    protonNodeVersion: "current",
+    framework: "proton",
   },
 }, checkOptions))
 
 test.ifAll.ifLinuxOrDevMac("linux", app({
   targets: Platform.LINUX.createTarget("appimage"),
   config: {
-    protonNodeVersion: "current",
+    framework: "proton",
   },
 }, checkOptions))
 
 test.ifAll.ifDevOrWinCi("win", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
   config: {
-    protonNodeVersion: "current",
+    framework: "proton",
   },
 }, checkOptions))
 
 test.ifAll.ifDevOrWinCi("win ia32", app({
   targets: Platform.WINDOWS.createTarget("nsis", Arch.ia32),
   config: {
-    protonNodeVersion: "current",
+    framework: "proton",
   },
 }, checkOptions))

@@ -1,11 +1,9 @@
-import BluebirdPromise from "bluebird-lst"
 import chalk from "chalk"
-import depCheck, { DepCheckResult } from "depcheck"
+import depCheck, { Results } from "depcheck"
 import { readJson } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
-
-const printErrorAndExit = require("../../../packages/builder-util/out/promise").printErrorAndExit
+import { printErrorAndExit } from "builder-util/out/promise"
 
 const knownUnusedDevDependencies = new Set<string>([
 ])
@@ -24,22 +22,24 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   const packageName = path.basename(projectDir)
   // console.log(`Checking ${projectDir}`)
 
-  const result = await new Promise<DepCheckResult>(resolve => {
+  const result = await new Promise<Results>(resolve => {
     depCheck(projectDir, {
       ignoreDirs: [
         "src", "test", "docs", "typings", "docker", "certs", "templates", "vendor",
       ],
+      // ignore d.ts
+      parsers: {
+        "*.js": (depCheck as any).parser.es6,
+      },
     }, resolve)
   })
 
-  // console.log(result)
-
   let unusedDependencies: any
   if (packageName === "electron-builder") {
-    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder").filter(it => it !== "bluebird-lst")
+    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder" && it !== "bluebird-lst" && it !== "@types/yargs")
   }
   else {
-    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver")
+    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver" && it !== "@types/fs-extra")
   }
 
   if (unusedDependencies.length > 0) {
@@ -47,7 +47,10 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     return false
   }
 
-  const unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
+  let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
+  if (packageName === "dmg-builder") {
+    unusedDevDependencies = unusedDevDependencies.filter(it => it !== "temp-file")
+  }
   if (unusedDevDependencies.length > 0) {
     console.error(`${chalk.bold(packageName)} Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
     return false
@@ -61,6 +64,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   for (const name of Object.keys(result.missing)) {
     if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
+      (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/"))) ||
       (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))) {
       delete (result.missing as any)[name]
     }
@@ -72,7 +76,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   const packageData = await readJson(path.join(projectDir, "package.json"))
-  for (const name of Object.keys(devPackageData.devDependencies)) {
+  for (const name of (devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies))) {
     if (packageData.dependencies != null && packageData.dependencies[name] != null) {
       continue
     }
@@ -96,7 +100,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 async function main(): Promise<void> {
   const packages = (await fs.readdir(packageDir)).filter(it => !it.includes(".")).sort()
   const devPackageData = await readJson(path.join(rootDir, "package.json"))
-  if ((await BluebirdPromise.map(packages, it => check(path.join(packageDir, it), devPackageData))).includes(false)) {
+  if ((await Promise.all(packages.map(it => check(path.join(packageDir, it), devPackageData)))).includes(false)) {
     process.exitCode = 1
   }
 }

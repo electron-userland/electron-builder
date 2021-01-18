@@ -94,7 +94,7 @@ function getRtfUnicodeEscapedString(text: string) {
       result += text[i]
     }
     else {
-      result += `\\u${text.codePointAt(i)}`
+      result += `\\u${text.codePointAt(i)}?`
     }
   }
   return result

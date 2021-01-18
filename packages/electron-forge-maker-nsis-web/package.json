@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-nsis-web",
-  "version": "19.30.3",
+  "version": "22.8.1",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -11,6 +11,6 @@
     "*.js"
   ],
   "dependencies": {
-    "app-builder-lib": "^19.30.3"
+    "app-builder-lib": "workspace:*"
   }
 }

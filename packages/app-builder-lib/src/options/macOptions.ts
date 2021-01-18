@@ -44,6 +44,13 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly entitlementsInherit?: string | null
 
   /**
+   * Path to login helper entitlement file.
+   * When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.
+   * Defaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.
+   */
+  readonly entitlementsLoginHelper?: string | null
+
+  /**
    * The path to the provisioning profile to use when signing, absolute or relative to the app root.
    */
   readonly provisioningProfile?: string | null
@@ -69,6 +76,36 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default ${appBundleIdentifier}.helper
    */
   readonly helperBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the Renderer helper's plist.
+   * @default ${appBundleIdentifier}.helper.Renderer
+   */
+  readonly helperRendererBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the Plugin helper's plist.
+   * @default ${appBundleIdentifier}.helper.Plugin
+   */
+  readonly helperPluginBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the GPU helper's plist.
+   * @default ${appBundleIdentifier}.helper.GPU
+   */
+  readonly helperGPUBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the EH helper's plist.
+   * @default ${appBundleIdentifier}.helper.EH
+   */
+  readonly helperEHBundleId?: string | null
+
+  /**
+   * The bundle identifier to use in the NP helper's plist.
+   * @default ${appBundleIdentifier}.helper.NP
+   */
+  readonly helperNPBundleId?: string | null
 
   /**
    * Whether to sign app for development or for distribution.
@@ -122,6 +159,17 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default false
    */
   readonly gatekeeperAssess?: boolean
+
+  /**
+   * Whether to let electron-osx-sign verify the contents or not.
+   * @default true
+   */
+  readonly strictVerify?: Array<string> | string | boolean
+
+  /**
+   * Regex or an array of regex's that signal skipping signing a file.
+   */
+  readonly signIgnore?: Array<string> | string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
@@ -141,7 +189,7 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The path to DMG icon (volume icon), which will be shown when mounted, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
-  readonly icon?: string | null
+  icon?: string | null
 
   /**
    * The size of all the icons inside the DMG.
@@ -172,10 +220,13 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
    * @default UDZO
    */
-  readonly format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
+  format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
-   * The DMG windows position and size.
+   * The DMG window position and size. With y co-ordinates running from bottom to top.
+   *
+   * The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `"x": 0, "y": 100000` as the x, y co-ordinates.
+   * It is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
    */
   window?: DmgWindow
 
@@ -190,6 +241,12 @@ export interface DmgOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly sign?: boolean
+
+  /**
+   * @private
+   * @default true
+   */
+  writeUpdateInfo?: boolean
 }
 
 export interface DmgWindow {
@@ -200,7 +257,7 @@ export interface DmgWindow {
   x?: number
 
   /**
-   * The Y position relative to top of the screen.
+   * The Y position relative to bottom of the screen.
    * @default 100
    */
   y?: number

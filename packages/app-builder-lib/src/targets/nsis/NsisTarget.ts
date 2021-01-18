@@ -3,15 +3,16 @@ import BluebirdPromise from "bluebird-lst"
 import { executeAppBuilder, Arch, asArray, AsyncTaskManager, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, exec } from "builder-util"
 import { PackageFileInfo, UUID, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
 import { getBinFromUrl } from "../../binDownload"
-import { statOrNull, walk } from "builder-util/out/fs"
+import { statOrNull, walk, exists } from "builder-util/out/fs"
 import { hashFile } from "../../util/hash"
 import _debug from "debug"
 import { readFile, stat, unlink } from "fs-extra"
-import { Lazy } from "lazy-val"
 import * as path from "path"
+import * as fs from "fs"
 import { Target } from "../../core"
 import { DesktopShortcutCreationPolicy, getEffectiveOptions } from "../../options/CommonWindowsInstallerConfiguration"
 import { computeSafeArtifactNameIfNeeded, normalizeExt } from "../../platformPackager"
+import { isMacOsCatalina } from "../../util/macosVersion"
 import { time } from "../../util/timer"
 import { execWine } from "../../wine"
 import { WinPackager } from "../../winPackager"
@@ -22,7 +23,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir, UninstallerReader } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -30,7 +31,7 @@ const debug = _debug("electron-builder:nsis")
 const ELECTRON_BUILDER_NS_UUID = UUID.parse("50e065bc-3134-11e6-9bab-38c9862bdaf3")
 
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = new Lazy(() => getBinFromUrl("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
+const nsisResourcePathPromise = () => getBinFromUrl("nsis-resources", "3.4.1", "Dqd6g+2buwwvoG1Vyf6BHR1b+25QMmPcwZx40atOT57gH27rkjOei1L0JTldxZu4NFoEmW4kJgZ3DlSWVON3+Q==")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -192,7 +193,7 @@ export class NsisTarget extends Target {
     let estimatedSize = 0
     if (this.isPortable && options.useZip) {
       for (const [arch, dir] of this.archs.entries()) {
-        defines[arch === Arch.x64 ? "APP_DIR_64" : "APP_DIR_32"] = dir
+        defines[arch === Arch.x64 ? "APP_DIR_64" : (arch === Arch.arm64 ? "APP_DIR_ARM64" : "APP_DIR_32")] = dir
       }
     }
     else if (USE_NSIS_BUILT_IN_COMPRESSOR && this.archs.size === 1) {
@@ -202,7 +203,7 @@ export class NsisTarget extends Target {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
         const fileInfo = await this.packageHelper.packArch(arch, this)
         const file = fileInfo.path
-        const defineKey = arch === Arch.x64 ? "APP_64" : "APP_32"
+        const defineKey = arch === Arch.x64 ? "APP_64" : (arch === Arch.arm64 ? "APP_ARM64" : "APP_32")
         defines[defineKey] = file
         defines[`${defineKey}_NAME`] = path.basename(file)
         // nsis expect a hexadecimal string
@@ -230,6 +231,10 @@ export class NsisTarget extends Target {
       const portableOptions = options as PortableOptions
       defines.REQUEST_EXECUTION_LEVEL = portableOptions.requestExecutionLevel || "user"
       defines.UNPACK_DIR_NAME = portableOptions.unpackDirName || (await executeAppBuilder(["ksuid"]))
+
+      if (portableOptions.splashImage != null) {
+        defines.SPLASH_IMAGE = path.resolve(packager.projectDir, portableOptions.splashImage)
+      }
     }
     else {
       await this.configureDefines(oneClick, defines)
@@ -260,8 +265,21 @@ export class NsisTarget extends Target {
       return
     }
 
+    // prepare short-version variants of defines and commands, to make an uninstaller that doesn't differ much from the previous one
+    const definesUninstaller: any = { ...defines }
+    const commandsUninstaller: any = { ...commands}
+    if (appInfo.shortVersion != null) {
+      definesUninstaller.VERSION = appInfo.shortVersion
+      commandsUninstaller.VIProductVersion = appInfo.shortVersionWindows
+      commandsUninstaller.VIAddVersionKey = this.computeVersionKey(true)
+    }
+
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath, sharedHeader)
+    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader)
+
+    // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
+    defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
+
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await Promise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? Promise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
@@ -315,12 +333,34 @@ export class NsisTarget extends Target {
 
     // https://github.com/electron-userland/electron-builder/issues/2103
     // it is more safe and reliable to write uninstaller to our out dir
-    const uninstallerPath = path.join(this.outDir, `.__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
+    const uninstallerPath = path.join(this.outDir, `__uninstaller-${this.name}-${this.packager.appInfo.sanitizedName}.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
-    await execWine(installerPath)
+
+    // http://forums.winamp.com/showthread.php?p=3078545
+    if (isMacOsCatalina()) {
+      try {
+        UninstallerReader.exec(installerPath, uninstallerPath)
+      }
+      catch (error) {
+        log.warn("packager.vm is used: " + error.message)
+
+        const vm = await packager.vm.value
+        await vm.exec(installerPath, [])
+        // Parallels VM can exit after command execution, but NSIS continue to be running
+        let i = 0
+        while (!(await exists(uninstallerPath)) && i++ < 100) {
+          // noinspection JSUnusedLocalSymbols
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          await new Promise((resolve, _reject) => setTimeout(resolve, 300))
+        }
+      }
+    }
+    else {
+      await execWine(installerPath)
+    }
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
@@ -329,7 +369,7 @@ export class NsisTarget extends Target {
     return script
   }
 
-  private computeVersionKey() {
+  private computeVersionKey(short: boolean = false) {
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const localeId = this.options.language || "1033"
@@ -341,6 +381,10 @@ export class NsisTarget extends Target {
       `/LANG=${localeId} FileDescription "${appInfo.description}"`,
       `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
+    if (short) {
+      versionKey[1] = `/LANG=${localeId} ProductVersion "${appInfo.shortVersion}"`
+      versionKey[4] = `/LANG=${localeId} FileVersion "${appInfo.shortVersion}"`
+    }
     use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
     use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${it}"`))
     return versionKey
@@ -504,8 +548,15 @@ export class NsisTarget extends Target {
       this.packager.debugLogger.add("nsis.script", script)
     }
 
-    const nsisPath = await NSIS_PATH.value
+    const nsisPath = await NSIS_PATH()
     const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
+
+    // if (process.platform === "win32") {
+      // fix for an issue caused by virus scanners, locking the file during write
+      // https://github.com/electron-userland/electron-builder/issues/5005
+      await ensureNotBusy(commands["OutFile"].replace(/"/g, ""))
+    // }
+
     await spawnAndWrite(command, args, script, {
       // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
       env: {...process.env, NSISDIR: nsisPath},
@@ -531,7 +582,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise.value, "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise(), "plugins", pluginArch))
     })
 
     taskManager.add(async () => {
@@ -651,6 +702,43 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
     }
     scriptGenerator.macro(`customFiles_${Arch[arch]}`, macro)
   }
+}
+
+async function ensureNotBusy(outFile: string) {
+  function isBusy(wasBusyBefore: boolean): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      fs.open(outFile, "r+", (error, fd) => {
+        try {
+          if (error != null && error.code === "EBUSY") {
+            if (!wasBusyBefore) {
+              log.info({}, "output file is locked for writing (maybe by virus scanner) => waiting for unlock...")
+            }
+            resolve(false)
+          }
+          else if (fd == null) {
+            resolve(true)
+          }
+          else {
+            fs.close(fd, () => resolve(true))
+          }
+        }
+        catch (error) {
+          reject(error)
+        }
+      })
+    })
+      .then(result => {
+        if (result) {
+          return true
+        }
+        else {
+          return new Promise((resolve) => setTimeout(resolve, 2000))
+            .then(() => isBusy(true))
+        }
+      })
+  }
+
+  await isBusy(false)
 }
 
 async function createPackageFileInfo(file: string): Promise<PackageFileInfo> {

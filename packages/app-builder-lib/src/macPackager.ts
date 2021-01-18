@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use } from "builder-util"
-import { signAsync, SignOptions } from "electron-osx-sign"
+import { signAsync, SignOptions } from "../electron-osx-sign"
 import { mkdirs, readdir } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -53,6 +53,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return this.info.framework.macOsDefaultTargets
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
     return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
   }
@@ -67,10 +68,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         case DIR_TARGET:
           break
 
-        case "dmg":
-          const { DmgTarget } = require("dmg-builder")
+        case "dmg": {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const {DmgTarget} = require("dmg-builder")
           mapper(name, outDir => new DmgTarget(this, outDir))
           break
+        }
 
         case "zip":
           // https://github.com/electron-userland/electron-builder/issues/2313
@@ -106,9 +109,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         continue
       }
 
-      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (this.config as any).mas)
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, this.config.mas)
       if (targetName === "mas-dev") {
-        deepAssign(masBuildOptions, (this.config as any)[targetName], {
+        deepAssign(masBuildOptions, this.config.masDev, {
           type: "development",
         })
       }
@@ -134,8 +137,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const isMas = masOptions != null
-    const macOptions = this.platformSpecificBuildOptions
-    const qualifier = (isMas ? masOptions!.identity : null) || macOptions.identity
+    const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
+    const qualifier = options.identity
 
     if (!isMas && qualifier === null) {
       if (this.forceCodeSigning) {
@@ -146,7 +149,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
-    const explicitType = isMas ? masOptions!.type : macOptions.type
+    const explicitType = options.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
     const certificateType = getCertificateType(isMas, isDevelopment)
@@ -169,14 +172,32 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       throw new InvalidConfigurationError("macOS High Sierra 10.13.6 is required to sign")
     }
 
+    let filter = options.signIgnore
+    if (Array.isArray(filter)) {
+      if (filter.length == 0) {
+        filter = null
+      }
+    }
+    else if (filter != null) {
+      filter = filter.length === 0 ? null : [filter]
+    }
+
+    const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
+
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
+        if (filterRe != null) {
+          for (const regExp of filterRe) {
+            if (regExp.test(file)) {
+              return true
+            }
+          }
+        }
         return file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length) ||
-          // https://github.com/electron-userland/electron-builder/issues/2010
-          file.includes("/node_modules/puppeteer/.local-chromium")
+          file.includes("/node_modules/puppeteer/.local-chromium") /* https://github.com/electron-userland/electron-builder/issues/2010 */
       },
       identity: identity!,
       type,
@@ -184,12 +205,14 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       version: this.config.electronVersion,
       app: appPath,
       keychain: keychainFile || undefined,
-      binaries: (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
-      requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
+      binaries: options.binaries || undefined,
+      requirements: isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
-      "gatekeeper-assess": macOptions.gatekeeperAssess === true,
-      hardenedRuntime: macOptions.hardenedRuntime !== false,
+      "gatekeeper-assess": options.gatekeeperAssess === true,
+      // https://github.com/electron-userland/electron-builder/issues/1480
+      "strict-verify": options.strictVerify,
+      hardenedRuntime: isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false,
     }
 
     await this.adjustSignOptions(signOptions, masOptions)
@@ -249,6 +272,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (customSignOptions.provisioningProfile != null) {
       signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
     }
+    signOptions['entitlements-loginhelper'] = customSignOptions.entitlementsLoginHelper
   }
 
   //noinspection JSMethodCanBeStatic

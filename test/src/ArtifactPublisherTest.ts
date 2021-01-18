@@ -4,8 +4,8 @@ import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"
 import { BintrayPublisher } from "app-builder-lib/out/publish/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
-import isCi from "is-ci"
-import { join } from "path"
+import { isCI as isCi } from "ci-info"
+import * as path from "path"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -29,7 +29,7 @@ function versionNumber() {
 
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
-const iconPath = join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
+const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),

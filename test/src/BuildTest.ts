@@ -6,18 +6,18 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { promises as fs, readFileSync } from "fs"
 import { outputJson } from "fs-extra"
 import * as path from "path"
+import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 test("cli", async () => {
   // because these methods are internal
   const { configureBuildCommand, normalizeOptions } = require("electron-builder/out/builder")
-  const yargs = require("yargs")
-  yargs.parserConfiguration({"camel-case-expansion": false})
+  const yargs = createYargs()
   configureBuildCommand(yargs)
 
   function parse(input: string): any {
-    const options = normalizeOptions(yargs.parse(input.split(" ")))
+    const options = normalizeOptions(yargs.parse(input))
     checkBuildRequestOptions(options)
     return options
   }
@@ -312,7 +312,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
       "edge-cs": "1.2.1",
       // no prebuilt for electron 3
       // "lzma-native": "3.0.10",
-      keytar: "4.11.0",
+      keytar: "5.6.0",
     }
   }),
   packed: context => {

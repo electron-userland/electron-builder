@@ -10,9 +10,7 @@ import { app, copyTestAsset, createMacTargetTest, getFixtureDir, parseFileList }
 
 test.ifMac.ifAll("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
-test.ifNotWindows.ifAll("only zip", createMacTargetTest(["zip"], {
-  electronVersion: "4.0.0-beta.7"
-}, false /* no need to test sign */))
+test.ifNotWindows.ifAll("only zip", createMacTargetTest(["zip"], undefined, false /* no need to test sign */))
 
 test.ifNotWindows.ifAll("tar.gz", createMacTargetTest(["tar.gz"]))
 
@@ -23,7 +21,6 @@ it("pkg", createMacTargetTest(["pkg"]))
 test.ifAll.ifMac("empty installLocation", app({
   targets: Platform.MAC.createTarget("pkg"),
   config: {
-    electronVersion: "4.0.0-beta.7",
     pkg: {
       installLocation: "",
     }
@@ -74,22 +71,22 @@ test.ifAll.ifMac("pkg extended configuration", app({
     const info = parseXml(await fs.readFile(packageInfoFile, "utf8"))
 
     const relocateElement = info.elementOrNull("relocate")
-    if (relocateElement) {
+    if (relocateElement != null) {
       expect(relocateElement.elements).toBeNull()
     }
 
     const upgradeBundleElement = info.elementOrNull("upgrade-bundle")
-    if (upgradeBundleElement) {
+    if (upgradeBundleElement != null) {
       expect(upgradeBundleElement.elements).toBeNull()
     }
 
     const updateBundleElement = info.elementOrNull("update-bundle")
-    if (updateBundleElement) {
+    if (updateBundleElement != null) {
       expect(updateBundleElement.elements).toHaveLength(1)
     }
 
     const strictIdentifierElement = info.elementOrNull("strict-identifier")
-    if (strictIdentifierElement) {
+    if (strictIdentifierElement != null) {
       expect(strictIdentifierElement.elements).toBeNull()
     }
   }

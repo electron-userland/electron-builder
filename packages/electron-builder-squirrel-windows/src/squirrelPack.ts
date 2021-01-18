@@ -1,13 +1,12 @@
 import { path7za } from "7zip-bin"
-import { Arch, debug, exec, log, spawn } from "builder-util"
+import { Arch, debug, exec, log, spawn, isEmptyOrSpaces } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
-
-const archiver = require("archiver")
+import archiver from "archiver"
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")
@@ -69,6 +68,10 @@ export class SquirrelBuilder {
       Promise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
         .then(() => ensureDir(outputDirectory))
     ])
+
+    if (isEmptyOrSpaces(options.description)) {
+      options.description = options.productName
+    }
 
     if (options.remoteReleases) {
       await syncReleases(outputDirectory, options)

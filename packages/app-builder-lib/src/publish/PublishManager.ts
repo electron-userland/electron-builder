@@ -281,9 +281,10 @@ export function createPublisher(context: PublishContext, version: string, publis
     case "snapStore":
       return new SnapStorePublisher(context, publishConfig as SnapStoreOptions)
 
-    default:
+    default: {
       const clazz = requireProviderClass(provider, packager)
       return clazz == null ? null : new clazz(context, publishConfig)
+    }
   }
 }
 
@@ -307,7 +308,7 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
     case "spaces":
       return SpacesPublisher
 
-    default:
+    default: {
       const name = `electron-publisher-${provider}`
       let module: any = null
       try {
@@ -321,6 +322,7 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
         module = require(name)
       }
       return module.default || module
+    }
   }
 }
 
@@ -390,7 +392,7 @@ async function resolvePublishConfigurations(publishers: any, platformPackager: P
     }
 
     if (serviceName != null) {
-      log.debug(null, `Detect ${serviceName} as publish provider`)
+      log.debug(null, `detect ${serviceName} as publish provider`)
       return [(await getResolvedPublishConfig(platformPackager, packager, {provider: serviceName}, arch, errorIfCannot))!]
     }
   }

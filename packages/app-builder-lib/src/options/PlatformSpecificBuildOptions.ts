@@ -1,7 +1,6 @@
 import { AsarIntegrityOptions } from "../asar/integrity"
-import { CompressionLevel, TargetConfiguration, TargetSpecificOptions } from "../core"
+import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { FileAssociation } from "./FileAssociation"
-import { Publish } from "builder-util-runtime"
 
 export interface FileSet {
   /**

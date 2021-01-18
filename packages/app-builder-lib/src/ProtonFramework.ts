@@ -16,7 +16,7 @@ export class ProtonFramework extends LibUiFramework {
     super(version, distMacOsAppName, isUseLaunchUi)
   }
 
-  getDefaultIcon(platform: Platform) {
+  getDefaultIcon(platform: Platform): string {
     if (platform === Platform.WINDOWS) {
       return getTemplatePath("icons/proton-native/proton-native.ico")
     }
@@ -33,6 +33,7 @@ export class ProtonFramework extends LibUiFramework {
     const babelOptions: any = {ast: false, sourceMaps: "inline"}
     if (process.env.TEST_SET_BABEL_PRESET === "true") {
       babel = require("@babel/core")
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       babel = testOnlyBabel(babel, babelOptions, this.version)
     }
     else {
@@ -47,7 +48,7 @@ export class ProtonFramework extends LibUiFramework {
     }
 
     log.info({options: safeStringifyJson(babelOptions, new Set<string>(["presets"]))}, "transpile source code using Babel")
-    return file => {
+    return (file): Promise<any> | null => {
       if (!(file.endsWith(".js") || file.endsWith(".jsx")) || file.includes(NODE_MODULES_PATTERN)) {
         return null
       }
@@ -66,7 +67,7 @@ export class ProtonFramework extends LibUiFramework {
   }
 }
 
-function testOnlyBabel(babel: any, babelOptions: any, nodeVersion: string) {
+function testOnlyBabel(babel: any, babelOptions: any, nodeVersion: string): any {
   // out test dir can be located outside of electron-builder node_modules and babel cannot resolve string names of preset
   babelOptions.presets = [
     [require("@babel/preset-env").default, {targets: {node: nodeVersion}}],

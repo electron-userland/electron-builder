@@ -4,7 +4,7 @@ import { copyDir } from "builder-util/out/fs"
 import { outputFile } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
-import Mode, { Permissions } from "stat-mode"
+import { Mode, RWX } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
 
@@ -152,7 +152,8 @@ async function doExtraResourcesTest(platform: Platform) {
 
 test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platform.LINUX))
 
-test.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
+// Squirrel.Windows is not supported on macOS anymore (32-bit)
+test.ifNotMac.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", async () => {
   await doExtraResourcesTest(Platform.MAC)
@@ -250,13 +251,13 @@ test.ifNotWindows("postpone symlink", async () => {
 async function allCan(file: string, execute: boolean) {
   const mode = new Mode(await fs.stat(file))
 
-  function checkExecute(value: Permissions) {
+  function checkExecute(value: RWX) {
     if (value.execute !== execute) {
       throw new Error(`${file} is ${execute ? "not " : ""}executable`)
     }
   }
 
-  function checkRead(value: Permissions) {
+  function checkRead(value: RWX) {
     if (!value.read) {
       throw new Error(`${file} is not readable`)
     }

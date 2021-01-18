@@ -3,27 +3,29 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:10.16.0
+      - image: circleci/node:12.18.4
     steps:
       - checkout
       - restore_cache:
           keys:
-            - deps-{{ checksum "yarn.lock" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-5.0.5-electron
+            - v-8.2.5-electron
       - run:
-          command: yarn --frozen-lockfile
+          command: node .yarn/releases/yarn-2.2.2.cjs install
       - run:
-          command: yarn pretest
+          command: node .yarn/releases/yarn-2.2.2.cjs pretest
+      - run:
+          command: cp .pnp.js .yarn/.pnp.js
       - save_cache:
-          key: deps-{{ checksum "yarn.lock" }}
+          key: install-dep-cache-{{ checksum "yarn.lock" }}
           paths:
-            - node_modules
+            - .yarn
       - run:
-          command: node ./test/out/helpers/downloadElectron.js
+          command: node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/downloadElectron.js
       - save_cache:
-          key: v-5.0.5-electron
+          key: v-8.2.5-electron
           paths:
             - ~/.cache/electron
 
@@ -32,29 +34,29 @@ jobs:
     docker:
       - image: electronuserland/builder:wine-mono
         environment:
-          JEST_JUNIT_OUTPUT: ./test-reports/test.xml
+          JEST_JUNIT_OUTPUT_DIR: /tmp/test-reports/test.xml
           TZ: Europe/Berlin
     steps:
       - checkout
       - restore_cache:
           keys:
-            - deps-{{ checksum "yarn.lock" }}
+            - install-dep-cache-{{ checksum "yarn.lock" }}
       - restore_cache:
           keys:
-            - v-5.0.5-electron
+            - v-8.2.5-electron
       # because in the build job we use circleci docker image and circleci restores cache to original user home
       - run:
           command: |
-            mv /home/circleci/project/node_modules node_modules
             mkdir -p ~/.cache
             mv /home/circleci/.cache/electron ~/.cache/electron
+            node .yarn/releases/yarn-2.2.2.cjs install
       - run:
           # do not use yarn test because lint is done in the build job
           command: |
-            yarn compile
-            node ./test/out/helpers/runTests.js
+            node .yarn/releases/yarn-2.2.2.cjs compile
+            node .yarn/releases/yarn-2.2.2.cjs node ./test/out/helpers/runTests.js
       - store_test_results:
-          path: test-reports
+          path: /tmp/test-reports
 
 workflows:
   version: 2

@@ -1,10 +1,16 @@
-import { addValue, Arch, archFromString, deepAssign, InvalidConfigurationError } from "builder-util"
+import { addValue, Arch, archFromString, deepAssign } from "builder-util"
 import chalk from "chalk"
 import { build as _build, Configuration, DIR_TARGET, Packager, PackagerOptions, Platform } from "app-builder-lib"
 import { PublishOptions } from "electron-publish"
 import yargs from "yargs"
 
-/** @internal */
+export function createYargs() {
+  return yargs
+    .parserConfiguration({
+      "camel-case-expansion": false,
+    })
+}
+
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
@@ -17,12 +23,8 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   dir?: boolean
 }
 
-/** @internal */
+/** @private */
 export function normalizeOptions(args: CliOptions): BuildOptions {
-  if ((args as any).extraMetadata != null) {
-    throw new InvalidConfigurationError("Please specify extraMetadata under config field")
-  }
-
   if (args.targets != null) {
     return args
   }
@@ -95,7 +97,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     processTargets(Platform.current(), [])
   }
 
-  const result = {...args}
+  const result: any = {...args}
   result.targets = targets
 
   delete result.dir
@@ -142,13 +144,23 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     result.config = newConfig
   }
 
+  // AJV cannot coerce "null" string to null if string is also allowed (because null string is a valid value)
   if (config != null && typeof config !== "string") {
     if (config.extraMetadata != null) {
       coerceTypes(config.extraMetadata)
     }
+
+    // ability to disable code sign using -c.mac.identity=null
     if (config.mac != null) {
-      // ability to disable code sign using -c.mac.identity=null
       coerceValue(config.mac, "identity")
+    }
+
+    // fix Boolean type by coerceTypes
+    if (config.nsis != null) {
+      coerceTypes(config.nsis)
+    }
+    if (config.nsisWeb != null) {
+      coerceTypes(config.nsisWeb)
     }
   }
 
@@ -208,7 +220,6 @@ export function build(rawOptions?: CliOptions): Promise<Array<string>> {
 
 /**
  * @private
- * @internal
  */
 export function configureBuildCommand(yargs: yargs.Argv): yargs.Argv {
   const publishGroup = "Publishing:"

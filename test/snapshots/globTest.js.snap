@@ -1,0 +1,272 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`asarUnpack and files ignore 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`asarUnpack and files ignore 2`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "offset": "0",
+      "size": 378,
+    },
+    "index.js": Object {
+      "offset": "378",
+      "size": 619,
+    },
+    "package.json": Object {
+      "offset": "997",
+      "size": 224,
+    },
+    "path": Object {
+      "files": Object {
+        "app.asar": Object {
+          "offset": "1221",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`asarUnpack node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`asarUnpack node_modules 2`] = `
+Object {
+  "files": Object {
+    "ci-info": Object {
+      "files": Object {
+        "LICENSE": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "index.js": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "package.json": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+        "vendors.json": Object {
+          "size": "@size",
+          "unpacked": true,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`failed peer dep 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`link 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`link 2`] = `
+Object {
+  "link": "index.js",
+}
+`;
+
+exports[`outside link 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`outside link 2`] = `
+Object {
+  "offset": "5281",
+  "size": 4,
+}
+`;
+
+exports[`unpackDir 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`unpackDir 2`] = `
+Object {
+  "files": Object {
+    "assets": Object {
+      "files": Object {
+        "file": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+        "file-symlink": Object {
+          "link": "assets/file",
+        },
+      },
+    },
+    "b2": Object {
+      "files": Object {
+        "file": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+      },
+    },
+    "do-not-unpack-dir": Object {
+      "files": Object {
+        "dir-2": Object {
+          "files": Object {
+            "dir-3": Object {
+              "files": Object {
+                "dir-3": Object {
+                  "files": Object {
+                    "file-in-asar": Object {
+                      "offset": "1937",
+                      "size": 2,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "file.json": Object {
+          "size": 2,
+          "unpacked": true,
+        },
+        "must-be-not-unpacked": Object {
+          "offset": "1935",
+          "size": 2,
+        },
+      },
+    },
+    "index.html": Object {
+      "offset": "0",
+      "size": 378,
+    },
+    "index.js": Object {
+      "offset": "378",
+      "size": 619,
+    },
+    "package.json": Object {
+      "offset": "997",
+      "size": 224,
+    },
+    "path": Object {
+      "files": Object {
+        "app.asar": Object {
+          "offset": "1221",
+          "size": 714,
+        },
+      },
+    },
+  },
+}
+`;
+
+exports[`unpackDir one 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`unpackDir one 2`] = `
+Object {
+  "files": Object {
+    "app": Object {
+      "files": Object {
+        "package.json": Object {
+          "files": Object {
+            "readme.md": Object {
+              "offset": "5363",
+              "size": 32,
+            },
+          },
+        },
+        "readme.md": Object {
+          "offset": "5285",
+          "size": 78,
+        },
+      },
+    },
+    "assets": Object {
+      "files": Object {
+        "file": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+        "file-symlink": Object {
+          "link": "assets/file",
+        },
+      },
+    },
+    "b2": Object {
+      "files": Object {
+        "file": Object {
+          "size": 4,
+          "unpacked": true,
+        },
+      },
+    },
+    "do-not-unpack-dir": Object {
+      "files": Object {
+        "dir-2": Object {
+          "files": Object {
+            "dir-3": Object {
+              "files": Object {
+                "dir-3": Object {
+                  "files": Object {
+                    "file-in-asar": Object {
+                      "offset": "5283",
+                      "size": 2,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "file.json": Object {
+          "size": 2,
+          "unpacked": true,
+        },
+        "must-be-not-unpacked": Object {
+          "offset": "5281",
+          "size": 2,
+        },
+      },
+    },
+    "index.html": Object {
+      "offset": "0",
+      "size": 841,
+    },
+    "index.js": Object {
+      "offset": "841",
+      "size": 4184,
+    },
+    "package.json": Object {
+      "offset": "5025",
+      "size": 256,
+    },
+  },
+}
+`;

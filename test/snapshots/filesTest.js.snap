@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`expand not defined env 1`] = `"ERR_ELECTRON_BUILDER_ENV_NOT_DEFINED"`;
+
+exports[`extraResources - two-package 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extraResources on Linux 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extraResources on Windows 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+  ],
+}
+`;
+
+exports[`extraResources on Windows 2`] = `
+Array [
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/Update.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/app.asar",
+  "lib/net45/resources/platformSpecificR",
+  "lib/net45/swiftshader/libEGL.dll",
+  "lib/net45/swiftshader/libGLESv2.dll",
+  "lib/net45/resources/bar/hello.txt",
+  "lib/net45/resources/bar/x64.txt",
+  "lib/net45/resources/dir-relative/f.txt",
+  "lib/net45/resources/foo/nameWithoutDot",
+  "lib/net45/resources/win/x64.txt",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/.rels",
+]
+`;
+
+exports[`extraResources on macOS 1`] = `
+Object {
+  "mac": Array [],
+}
+`;
+
+exports[`files 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`files 2`] = `
+Array [
+  "index.html",
+  "index.js",
+  "package.json",
+  "test.h",
+  "dist/electron/foo.js",
+  "app/readme.md",
+  "app/package.json/readme.md",
+]
+`;
+
+exports[`files.from asar 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`map resources 1`] = `
+Object {
+  "linux": Array [],
+}
+`;

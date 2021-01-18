@@ -256,6 +256,7 @@
       <w>mkdocs</w>
       <w>mkdtemp</w>
       <w>mksnapshot</w>
+      <w>mozilla</w>
       <w>mpass</w>
       <w>msiinstallperuser</w>
       <w>multilib</w>
@@ -266,9 +267,11 @@
       <w>napi</w>
       <w>netlify</w>
       <w>nevershow</w>
+      <w>nightlies</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
+      <w>noproxy</w>
       <w>noupdate</w>
       <w>npmignore</w>
       <w>npmrc</w>
@@ -307,9 +310,11 @@
       <w>progexe</w>
       <w>proguard</w>
       <w>promisify</w>
+      <w>provisionprofile</w>
       <w>psexec</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>
+      <w>pythonioencoding</w>
       <w>pythonpath</w>
       <w>rcedit</w>
       <w>readpass</w>
@@ -410,6 +415,7 @@
       <w>yaml</w>
       <w>yargs</w>
       <w>yarnclean</w>
+      <w>yarnrc</w>
       <w>yauzl</w>
       <w>zenity</w>
       <w>zisofs</w>

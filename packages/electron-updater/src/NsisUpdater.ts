@@ -11,8 +11,7 @@ import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
-
-let pako: any = null
+import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -104,8 +103,9 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = () => {
-      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args))
-        .catch(e => this.dispatchError(e))
+      if (!options.elevationHelper || !options.elevationHelper(options.installerPath, args))
+        _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args))
+          .catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -130,14 +130,14 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>) {
+  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>): Promise<boolean> {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
 
       const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.currentVersion.version)}.blockmap`, fileInfo.url)
+      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`, fileInfo.url)
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
@@ -150,12 +150,8 @@ export class NsisUpdater extends BaseUpdater {
           throw new Error(`Blockmap "${url.href}" is empty`)
         }
 
-        if (pako == null) {
-          pako = require("pako")
-        }
-
         try {
-          return JSON.parse(pako.inflate(data, {to: "string"}))
+          return JSON.parse(gunzipSync(data).toString())
         }
         catch (e) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
@@ -214,7 +210,7 @@ export class NsisUpdater extends BaseUpdater {
  *   - node 8: Throws the error
  *   - node 10: Emit the error(Need to listen with on)
  */
-async function _spawn(exe: string, args: Array<string>) {
+async function _spawn(exe: string, args: Array<string>): Promise<any> {
   return new Promise((resolve, reject) => {
     try {
       const process = spawn(exe, args, {

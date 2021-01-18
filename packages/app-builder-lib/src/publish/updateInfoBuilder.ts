@@ -168,9 +168,13 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
   const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!)
   const files = [{url, sha512}]
   const result: UpdateInfo = {
+    // @ts-ignore
     version,
+    // @ts-ignore
     files,
+    // @ts-ignore
     path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
+    // @ts-ignore
     sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     ...releaseInfo as UpdateInfo,
   }

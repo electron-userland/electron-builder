@@ -198,7 +198,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    delete info.downloadedFile
+    delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
   await validateDownload(updater)
@@ -215,7 +215,7 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
-    delete info.downloadedFile
+    delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
   const updateCheckResult = await validateDownload(updater)

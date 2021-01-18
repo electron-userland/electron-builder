@@ -176,10 +176,12 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   if (isElectronCompile) {
     patterns.push("!.cache{,/**/*}")
   }
+  patterns.push("!.yarn{,/**/*}")
 
   // https://github.com/electron-userland/electron-builder/issues/1969
   // exclude ony for app root, use .yarnclean to clean node_modules
   patterns.push("!.editorconfig")
+  patterns.push("!.yarnrc.yml")
 
   const debugLogger = packager.debugLogger
   if (debugLogger.isEnabled) {

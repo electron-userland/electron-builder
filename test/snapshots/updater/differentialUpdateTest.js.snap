@@ -1,0 +1,598 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppImage 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-linux.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage 2`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-x86_64.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-linux.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.1.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "TestApp-1.0.1-x86_64.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage 4`] = `
+Array [
+  "TestApp-1.0.1-x86_64.AppImage",
+]
+`;
+
+exports[`AppImage ia32 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "ia32",
+      "file": "Test App ßW-1.0.0-i386.AppImage",
+      "safeArtifactName": "TestApp-1.0.0-i386.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-linux-ia32.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-i386.AppImage",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-i386.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage ia32 2`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "ia32",
+      "file": "Test App ßW 1.0.1 i386.AppImage",
+      "safeArtifactName": "TestApp-1.0.1-i386.AppImage",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-linux-ia32.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW 1.0.1 i386.AppImage",
+          },
+        ],
+        "path": "Test App ßW 1.0.1 i386.AppImage",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+  ],
+}
+`;
+
+exports[`AppImage ia32 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "blockMapSize": "@blockMapSize",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "TestApp-1.0.1-i386.AppImage",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`AppImage ia32 4`] = `
+Array [
+  "TestApp-1.0.1-i386.AppImage",
+]
+`;
+
+exports[`dmg 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0.dmg",
+      "safeArtifactName": "TestApp-1.0.0.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.0.dmg.blockmap",
+      "safeArtifactName": "TestApp-1.0.0.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-mac.zip",
+          },
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0.dmg",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.0-mac.zip",
+      "safeArtifactName": "TestApp-1.0.0-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`dmg 3`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1.dmg",
+      "safeArtifactName": "TestApp-1.0.1.dmg",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.1.dmg.blockmap",
+      "safeArtifactName": "TestApp-1.0.1.dmg.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-mac.zip",
+          },
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1.dmg",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.0.1-mac.zip",
+      "safeArtifactName": "TestApp-1.0.1-mac.zip",
+      "updateInfo": Object {
+        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`dmg 4`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`nsis 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.0.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.0.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`nsis 2`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW Setup 1.0.1.exe",
+          },
+        ],
+        "path": "Test App ßW Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.0.1.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.0.1.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`nsis 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`nsis 4`] = `
+Array [
+  "Test App ßW Setup 1.0.1.exe",
+]
+`;
+
+exports[`web installer 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.0.exe",
+          },
+        ],
+        "packages": Object {
+          "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.0.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.0.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "path": "TestApp-1.0.0-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer 2`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "url": "Test App ßW Web Setup 1.0.1.exe",
+          },
+        ],
+        "packages": Object {
+          "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+        "path": "Test App ßW Web Setup 1.0.1.exe",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+      "updateInfo": Object {
+        "packages": Object {
+          "x64": Object {
+            "blockMapSize": "@blockMapSize",
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "path": "TestApp-1.0.1-x64.nsis.7z",
+            "sha512": "@sha512",
+            "size": "@size",
+          },
+        },
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+    },
+  ],
+}
+`;
+
+exports[`web installer 3`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+    },
+  ],
+  "packages": Object {
+    "x64": Object {
+      "blockMapSize": "@blockMapSize",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
+      "path": "TestApp-1.0.1-x64.nsis.7z",
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  },
+  "path": "Test App ßW Web Setup 1.0.1.exe",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`web installer 4`] = `
+Array [
+  "Test App ßW Web Setup 1.0.1.exe",
+  "package-1.0.1.7z",
+]
+`;

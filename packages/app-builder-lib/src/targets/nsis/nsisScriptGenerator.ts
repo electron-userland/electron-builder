@@ -33,7 +33,7 @@ export class NsisScriptGenerator {
   flags(flags: Array<string>) {
     for (const flagName of flags) {
       const variableName = getVarNameForFlag(flagName)
-        .replace(/[\-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
+        .replace(/[-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
       this.lines.push(`!macro _${variableName} _a _b _t _f
   $\{StdUtils.TestParameter} $R9 "${flagName}"
   StrCmp "$R9" "true" \`$\{_t}\` \`$\{_f}\`

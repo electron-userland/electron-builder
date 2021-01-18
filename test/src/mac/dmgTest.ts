@@ -3,14 +3,24 @@ import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
-import { remove } from "fs-extra"
 import * as path from "path"
 import { promises as fs } from "fs"
+import { remove } from "fs-extra"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
+const dmgTarget = Platform.MAC.createTarget("dmg")
+
+test.ifMac("dmg", app({
+  targets: dmgTarget,
+  config: {
+    productName: "DefaultDmg",
+    publish: null,
+  },
+}))
+
 test.ifMac("no build directory", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "NoBuildDirectory",
@@ -31,6 +41,28 @@ test.ifMac("no build directory", app({
   projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
+test.ifMac("background color", app({
+  targets: dmgTarget,
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "BackgroundColor",
+    publish: null,
+    dmg: {
+      backgroundColor: "orange",
+      // speed-up test
+      writeUpdateInfo: false,
+    },
+  },
+  effectiveOptionComputed: async it => {
+    if (!("volumePath" in it)) {
+      return false
+    }
+    delete it.specification.icon
+    expect(it.specification).toMatchSnapshot()
+    return false
+  },
+}))
+
 test.ifMac("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
@@ -43,6 +75,8 @@ test.ifMac("custom background - new way", () => {
       dmg: {
         background: customBackground,
         icon: "foo.icns",
+        // speed-up test
+        writeUpdateInfo: false,
       },
     },
     effectiveOptionComputed: async it => {
@@ -133,7 +167,7 @@ test.ifMac.ifAll("no Applications link", () => {
 })
 
 test.ifMac("unset dmg icon", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -155,7 +189,7 @@ test.ifMac("unset dmg icon", app({
 
 // test also "only dmg"
 test.ifMac("no background", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -175,7 +209,7 @@ test.ifMac("no background", app({
 
 // test also darkModeSupport
 test.ifAll.ifMac("bundleShortVersion", app({
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
@@ -209,7 +243,7 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
 })
 
 const packagerOptions = {
-  targets: Platform.MAC.createTarget("dmg"),
+  targets: dmgTarget,
   config: {
     publish: null,
   }

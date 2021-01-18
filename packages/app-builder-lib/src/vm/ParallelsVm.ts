@@ -77,6 +77,7 @@ export class ParallelsVmManager extends VmManager {
 
     if (!this.isExitHookAdded) {
       this.isExitHookAdded = true
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       require("async-exit-hook")((callback: (() => void) | null) => {
         const stopArgs = ["suspend", vmId]
         if (callback == null) {

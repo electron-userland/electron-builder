@@ -53,12 +53,14 @@ test.ifMac("one-package", app({
           ext: "boo",
           name: "Boo",
           role: "Shell",
+          rank: "Owner",
           isPackage: true,
         },
         {
           ext: "bar",
           name: "Bar",
           role: "Shell",
+          rank: "Default",
           // If I specify `fileAssociations.icon` as `build/foo.icns` will it know to use `build/foo.ico` for Windows?
           icon: "someFoo.ico"
         },

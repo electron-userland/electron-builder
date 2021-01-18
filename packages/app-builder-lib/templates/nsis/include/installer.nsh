@@ -18,13 +18,26 @@
       ${if} $packageFile == ""
         !ifdef APP_64_NAME
           !ifdef APP_32_NAME
-            ${if} ${RunningX64}
-              StrCpy $packageFile "${APP_64_NAME}"
-              StrCpy $1 "${APP_64_HASH}"
-            ${else}
-              StrCpy $packageFile "${APP_32_NAME}"
-              StrCpy $1 "${APP_32_HASH}"
-            ${endif}
+            !ifdef APP_ARM64_NAME
+              ${if} ${IsNativeARM64}
+                StrCpy $packageFile "${APP_ARM64_NAME}"
+                StrCpy $1 "${APP_ARM64_HASH}"
+              ${elseif} ${IsNativeAMD64}
+                StrCpy $packageFile "${APP_64_NAME}"
+                StrCpy $1 "${APP_64_HASH}"
+              ${else}
+                StrCpy $packageFile "${APP_32_NAME}"
+                StrCpy $1 "${APP_32_HASH}"
+              ${endif}
+            !else
+              ${if} ${RunningX64}
+                StrCpy $packageFile "${APP_64_NAME}"
+                StrCpy $1 "${APP_64_HASH}"
+              ${else}
+                StrCpy $packageFile "${APP_32_NAME}"
+                StrCpy $1 "${APP_32_HASH}"
+              ${endif}
+            !endif
           !else
             StrCpy $packageFile "${APP_64_NAME}"
             StrCpy $1 "${APP_64_HASH}"
@@ -40,7 +53,7 @@
         StrCpy $isPackageFileExplicitlySpecified "true"
       ${endIf}
 
-      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
+      # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitely want to use this file and it is user responsibility to check
       # 1. auto-updater uses --package-file and validates checksum
       # 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
       ${if} ${FileExists} "$packageFile"
@@ -88,20 +101,20 @@
 !macroend
 
 !macro registryAddInstallInfo
-	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
-	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
+  WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
+  WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
   WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" ShortcutName "${SHORTCUT_NAME}"
   !ifdef MENU_FILENAME
     WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory "${MENU_FILENAME}"
   !endif
 
-	${if} $installMode == "all"
-		StrCpy $0 "/allusers"
-		StrCpy $1 ""
-	${else}
-		StrCpy $0 "/currentuser"
-		StrCpy $1 ""
-	${endIf}
+  ${if} $installMode == "all"
+    StrCpy $0 "/allusers"
+    StrCpy $1 ""
+  ${else}
+    StrCpy $0 "/currentuser"
+    StrCpy $1 ""
+  ${endIf}
 
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
   # https://github.com/electron-userland/electron-builder/issues/750
@@ -109,18 +122,19 @@
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" QuietUninstallString '"$2" $0 /S'
 
-	WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
-	!ifdef UNINSTALLER_ICON
-	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\uninstallerIcon.ico"
-	!else
-	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
-	!endif
+  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
+  !ifdef UNINSTALLER_ICON
+    WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\uninstallerIcon.ico"
+  !else
+    WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+  !endif
 
   !ifdef COMPANY_NAME
-	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
-	!endif
-	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoModify 1
-	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
+    WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
+  !endif
+
+  WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoModify 1
+  WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
 
   # allow user to define ESTIMATED_SIZE to avoid GetSize call
   !ifdef ESTIMATED_SIZE
@@ -129,7 +143,8 @@
     ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
     IntFmt $0 "0x%08X" $0
   !endif
-	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
+
+  WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 
 !macro cleanupOldMenuDirectory
