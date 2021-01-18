@@ -2775,7 +2775,7 @@ __metadata:
     builder-util-runtime: "workspace:*"
     chromium-pickle-js: ^0.2.0
     debug: ^4.3.2
-    dmg-builder: ../dmg-builder
+    dmg-builder: "workspace:*"
     ejs: ^3.1.5
     electron-builder-squirrel-windows: "workspace:*"
     electron-publish: "workspace:*"
@@ -4443,24 +4443,6 @@ __metadata:
     test-value: ^3.0.0
     walk-back: ^4.0.0
   checksum: a02b9ef16eabbee439f84a3e43d8d85719c51f1a2ba7314f855a69b9d02619b60c6908c3fdaa25400bee50e6c554fcc9659cec92cb7134cff92b57be6c75ca0c
-  languageName: node
-  linkType: hard
-
-"dmg-builder@file:../dmg-builder::locator=app-builder-lib%40workspace%3Apackages%2Fapp-builder-lib":
-  version: 22.10.3
-  resolution: "dmg-builder@file:../dmg-builder#../dmg-builder::hash=952416&locator=app-builder-lib%40workspace%3Apackages%2Fapp-builder-lib"
-  dependencies:
-    app-builder-lib: "workspace:*"
-    builder-util: "workspace:*"
-    dmg-license: ^1.0.8
-    fs-extra: ^9.0.1
-    iconv-lite: ^0.6.2
-    js-yaml: ^3.14.1
-    sanitize-filename: ^1.6.3
-  dependenciesMeta:
-    dmg-license:
-      optional: true
-  checksum: e622405d21fcd582576047b614eea8a20388f24e49ca806a538d2a5d1b423629c3001e7a3f2388673bc33b3df782e1c5782d317dd81b0e98358bc57eced4a60a
   languageName: node
   linkType: hard
 

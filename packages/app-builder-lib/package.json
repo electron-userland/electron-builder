@@ -51,7 +51,9 @@
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
     "debug": "^4.3.2",
+    "dmg-builder": "workspace:*",
     "ejs": "^3.1.5",
+    "electron-builder-squirrel-windows": "workspace:*",
     "electron-publish": "workspace:*",
     "fs-extra": "^9.0.1",
     "hosted-git-info": "^3.0.7",
@@ -93,11 +95,9 @@
     "@types/is-ci": "^2.0.0",
     "@types/js-yaml": "^3.12.6",
     "@types/normalize-package-data": "^2.4.0",
-    "@types/semver": "^7.3.4",
-    "dmg-builder": "../dmg-builder",
-    "electron-builder-squirrel-windows": "workspace:*"
+    "@types/semver": "^7.3.4"
   },
-  "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
+  "//": "electron-builder-squirrel-windows and dmg-builder added as deps (as otherwise `require` doesn't work using Yarn 2)",
   "typings": "./out/index.d.ts",
   "preferUnplugged": true
 }
