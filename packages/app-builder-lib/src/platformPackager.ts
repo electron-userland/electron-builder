@@ -158,7 +158,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>, sign: boolean = true) {
+  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>, sign: boolean = true, disableAsarIntegrity: boolean = false) {
     if (this.packagerOptions.prepackaged != null) {
       return
     }
@@ -226,7 +226,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
-        asarIntegrity: asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null),
+        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null),
         platformName,
       })
     }
