@@ -197,12 +197,12 @@ export class AsarPackager {
         }
 
         // https://github.com/yarnpkg/yarn/pull/3539
-        const readStream = createReadStream(file)
-        readStream.on("error", reject)
-        readStream.once("end", () => w(index + 1))
-        readStream.pipe(writeStream, {
-          end: false
-        })
+        readFile(file)
+          .then(it => {
+            writeStream.write(it, () => w(index + 1))
+          })
+          .catch(e => reject(`Cannot read file ${file}: ${e.stack || e}`))
+        }
       }
 
       writeStream.write(headerBuf, () => w(0))
