@@ -196,7 +196,6 @@ export class AsarPackager {
           return
         }
 
-        // https://github.com/yarnpkg/yarn/pull/3539
         readFile(file)
           .then(it => {
             writeStream.write(it, () => w(index + 1))
