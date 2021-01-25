@@ -589,6 +589,13 @@
             "string"
           ]
         },
+        "packageName": {
+          "description": "The name of the package.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "priority": {
           "description": "The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.",
           "type": [
@@ -1731,6 +1738,13 @@
         },
         "packageCategory": {
           "description": "The package category.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "packageName": {
+          "description": "The name of the package.",
           "type": [
             "null",
             "string"

@@ -86,6 +86,11 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
    */
   readonly packageCategory?: string | null
 
+  /**
+   * The name of the package.
+   */
+  readonly packageName?: string | null
+
   readonly vendor?: string | null
   readonly maintainer?: string | null
 

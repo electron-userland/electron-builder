@@ -16,6 +16,7 @@ import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
+  name: string
   maintainer: string | undefined
   vendor: string
   url: string
@@ -83,6 +84,7 @@ export default class FpmTarget extends Target {
     }
 
     return {
+      name: options.packageName ?? this.packager.appInfo.linuxPackageName,
       maintainer: author!!,
       url: projectUrl!!,
       vendor: options.vendor || author!!,
@@ -124,7 +126,6 @@ export default class FpmTarget extends Target {
     const synopsis = options.synopsis
     const args = [
       "--architecture", toLinuxArchString(arch, target),
-      "--name", appInfo.linuxPackageName,
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
       "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
