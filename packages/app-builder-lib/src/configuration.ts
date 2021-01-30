@@ -145,11 +145,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   electronVersion?: string | null
 
   /**
-   * The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
+   * The name of a built-in configuration preset (currently, only `react-cra` is supported) or any number of paths to config files (relative to project dir).
+   *
+   * The latter allows to mixin a config from multiple other configs, as if you `Object.assign` them, but properly combine `files` glob patterns.
    *
    * If `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
    */
-  extends?: string | null
+  extends?: Array<string> | string | null
 
   /**
    * Inject properties to `package.json`.

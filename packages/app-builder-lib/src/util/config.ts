@@ -68,17 +68,35 @@ export async function getConfig(
     }
   }
 
-  const configs: Configuration[] = [config]
-  if (config.extends === "react-cra") {
-    configs.unshift(await reactCra(projectDir))
-    log.info({ preset: config.extends }, "loaded parent configuration")
-  } else if (config.extends != null) {
-    const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, config.extends)
-    log.info({ file: parentConfigAndEffectiveFile.configFile }, "loaded parent configuration")
-    configs.unshift(parentConfigAndEffectiveFile.result)
+  const parentConfigs = await loadParentConfigsRecursively(config.extends, async configExtend => {
+    if (configExtend === "react-cra") {
+      const result = await reactCra(projectDir)
+      log.info({ preset: configExtend }, "loaded parent configuration")
+      return result
+    } else {
+      const { configFile, result } = await loadParentConfig<Configuration>(configRequest, configExtend)
+      log.info({ file: configFile }, "loaded parent configuration")
+      return result
+    }
+  })
+
+  return doMergeConfigs([...parentConfigs, config])
+}
+
+function asArray(value: string[] | string | undefined | null): string[] {
+  return Array.isArray(value) ? value : typeof value === "string" ? [value] : []
+}
+
+async function loadParentConfigsRecursively(configExtends: Configuration["extends"], loader: (configExtend: string) => Promise<Configuration>): Promise<Configuration[]> {
+  const configs = []
+
+  for (const configExtend of asArray(configExtends)) {
+    const result = await loader(configExtend)
+    const parentConfigs = await loadParentConfigsRecursively(result.extends, loader)
+    configs.push(...parentConfigs, result)
   }
 
-  return doMergeConfigs(configs)
+  return configs
 }
 
 // normalize for easy merge
@@ -145,12 +163,8 @@ function isSimilarFileSet(value: FileSet, other: FileSet): boolean {
 
 type Filter = FileSet["filter"]
 
-function normalizeFilter(filter: Filter): string[] {
-  return Array.isArray(filter) ? filter : typeof filter === "string" ? [filter] : []
-}
-
 function mergeFilters(value: Filter, other: Filter): string[] {
-  return normalizeFilter(value).concat(normalizeFilter(other))
+  return asArray(value).concat(asArray(other))
 }
 
 function mergeFileSets(lists: FileSet[][]): FileSet[] {
