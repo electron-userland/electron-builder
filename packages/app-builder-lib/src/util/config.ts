@@ -173,20 +173,25 @@ function mergeFileSets(lists: FileSet[][]): FileSet[] {
 }
 
 export function doMergeConfigs(configuration: Configuration, parentConfiguration: Configuration | null) {
-  normalizeFiles(configuration, "files")
-  normalizeFiles(configuration, "extraFiles")
-  normalizeFiles(configuration, "extraResources")
-
-  if (parentConfiguration == null) {
-    return deepAssign(getDefaultConfig(), configuration)
+  const configs = [configuration]
+  if (parentConfiguration != null) {
+    configs.unshift(parentConfiguration)
   }
 
-  normalizeFiles(parentConfiguration, "files")
-  normalizeFiles(parentConfiguration, "extraFiles")
-  normalizeFiles(parentConfiguration, "extraResources")
+  for (const config of configs) {
+    normalizeFiles(config, "files")
+    normalizeFiles(config, "extraFiles")
+    normalizeFiles(config, "extraResources")
+  }
 
-  const result = deepAssign(getDefaultConfig(), parentConfiguration, configuration)
-  result.files = mergeFileSets([(configuration.files ?? []) as FileSet[], (parentConfiguration.files ?? []) as FileSet[]])
+  const result = deepAssign(getDefaultConfig(), ...configs)
+
+  // `deepAssign` prioritises latter configs, while `mergeFilesSets` prioritises
+  // former configs, so we have to reverse the order, because latter configs
+  // must have higher priority.
+  configs = configs.slice().reverse()
+
+  result.files = mergeFileSets(configs.map(config => (config.files ?? []) as FileSet[]))
   return result
 }
 
