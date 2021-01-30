@@ -158,16 +158,13 @@ function mergeFilters(value: Filter, other: Filter): string[] {
 function mergeFileSets(list: FileSet[], parentList: FileSet[]): FileSet[] {
   const result = list.slice()
 
-  itemLoop: for (const item of parentList) {
-    for (const existingItem of list) {
-      if (isSimilarFileSet(existingItem, item)) {
-        existingItem.filter = mergeFilters(item.filter, existingItem.filter)
-        continue itemLoop
-      }
+  for (const item of parentList) {
+    const existingItem = list.find(i => isSimilarFileSet(i, item))
+    if (existingItem) {
+      existingItem.filter = mergeFilters(item.filter, existingItem.filter)
+    } else {
+      result.push(item)
     }
-
-    // existing item not found, simply add
-    result.push(item)
   }
 
   return result
