@@ -141,13 +141,7 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
   configuration[name] = value.filter(it => it != null)
 }
 
-function mergeFiles(configuration: Configuration, parentConfiguration: Configuration, name: "files" | "extraFiles" | "extraResources"): FileSet[] {
-  const list = configuration[name] as Array<FileSet> | null
-  const parentList = parentConfiguration[name] as Array<FileSet> | null
-  if (list == null || parentList == null) {
-    return []
-  }
-
+function mergeFileSets(list: FileSet[], parentList: FileSet[]): FileSet[] {
   const result = list.slice()
 
   itemLoop: for (const item of parentList) {
@@ -186,7 +180,7 @@ export function doMergeConfigs(configuration: Configuration, parentConfiguration
   normalizeFiles(parentConfiguration, "extraResources")
 
   const result = deepAssign(getDefaultConfig(), parentConfiguration, configuration)
-  result.files = mergeFiles(configuration, parentConfiguration, "files")
+  result.files = mergeFileSets((configuration.files ?? []) as FileSet[], (parentConfiguration.files ?? []) as FileSet[])
   return result
 }
 
