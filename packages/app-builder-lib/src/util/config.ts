@@ -155,15 +155,17 @@ function mergeFilters(value: Filter, other: Filter): string[] {
   return normalizeFilter(value).concat(normalizeFilter(other))
 }
 
-function mergeFileSets(list: FileSet[], parentList: FileSet[]): FileSet[] {
-  const result = list.slice()
+function mergeFileSets(lists: FileSet[][]): FileSet[] {
+  const result = []
 
-  for (const item of parentList) {
-    const existingItem = list.find(i => isSimilarFileSet(i, item))
-    if (existingItem) {
-      existingItem.filter = mergeFilters(item.filter, existingItem.filter)
-    } else {
-      result.push(item)
+  for (const list of lists) {
+    for (const item of list) {
+      const existingItem = result.find(i => isSimilarFileSet(i, item))
+      if (existingItem) {
+        existingItem.filter = mergeFilters(item.filter, existingItem.filter)
+      } else {
+        result.push(item)
+      }
     }
   }
 
@@ -184,7 +186,7 @@ export function doMergeConfigs(configuration: Configuration, parentConfiguration
   normalizeFiles(parentConfiguration, "extraResources")
 
   const result = deepAssign(getDefaultConfig(), parentConfiguration, configuration)
-  result.files = mergeFileSets((configuration.files ?? []) as FileSet[], (parentConfiguration.files ?? []) as FileSet[])
+  result.files = mergeFileSets([(configuration.files ?? []) as FileSet[], (parentConfiguration.files ?? []) as FileSet[]])
   return result
 }
 
