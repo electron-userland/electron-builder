@@ -145,20 +145,23 @@ function isSimilarFileSet(value: FileSet, other: FileSet): boolean {
   return value.from === other.from && value.to === other.to
 }
 
+type Filter = FileSet["filter"]
+
+function normalizeFilter(filter: Filter): string[] {
+  return Array.isArray(filter) ? filter : typeof filter === "string" ? [filter] : []
+}
+
+function mergeFilters(value: Filter, other: Filter): string[] {
+  return normalizeFilter(value).concat(normalizeFilter(other))
+}
+
 function mergeFileSets(list: FileSet[], parentList: FileSet[]): FileSet[] {
   const result = list.slice()
 
   itemLoop: for (const item of parentList) {
     for (const existingItem of list) {
       if (isSimilarFileSet(existingItem, item)) {
-        if (item.filter != null) {
-          if (existingItem.filter == null) {
-            existingItem.filter = item.filter.slice()
-          } else {
-            existingItem.filter = (item.filter as Array<string>).concat(existingItem.filter)
-          }
-        }
-
+        existingItem.filter = mergeFilters(item.filter, existingItem.filter)
         continue itemLoop
       }
     }
