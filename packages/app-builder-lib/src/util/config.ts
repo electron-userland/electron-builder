@@ -151,7 +151,7 @@ function mergeFiles(configuration: Configuration, parentConfiguration: Configura
   const result = list.slice()
   mergedConfiguration[name] = result
 
-  itemLoop: for (const item of parentConfiguration.files as Array<FileSet>) {
+  itemLoop: for (const item of parentList) {
     for (const existingItem of list) {
       if (existingItem.from === item.from && existingItem.to === item.to) {
         if (item.filter != null) {
