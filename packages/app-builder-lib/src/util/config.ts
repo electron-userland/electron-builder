@@ -141,12 +141,16 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
   configuration[name] = value.filter(it => it != null)
 }
 
+function isSimilarFileSet(value: FileSet, other: FileSet): boolean {
+  return value.from === other.from && value.to === other.to
+}
+
 function mergeFileSets(list: FileSet[], parentList: FileSet[]): FileSet[] {
   const result = list.slice()
 
   itemLoop: for (const item of parentList) {
     for (const existingItem of list) {
-      if (existingItem.from === item.from && existingItem.to === item.to) {
+      if (isSimilarFileSet(existingItem, item)) {
         if (item.filter != null) {
           if (existingItem.filter == null) {
             existingItem.filter = item.filter.slice()
