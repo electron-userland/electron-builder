@@ -68,19 +68,17 @@ export async function getConfig(
     }
   }
 
-  let parentConfig: Configuration | null
+  const configs: Configuration[] = [config]
   if (config.extends === "react-cra") {
-    parentConfig = await reactCra(projectDir)
+    configs.unshift(await reactCra(projectDir))
     log.info({ preset: config.extends }, "loaded parent configuration")
   } else if (config.extends != null) {
     const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, config.extends)
     log.info({ file: parentConfigAndEffectiveFile.configFile }, "loaded parent configuration")
-    parentConfig = parentConfigAndEffectiveFile.result
-  } else {
-    parentConfig = null
+    configs.unshift(parentConfigAndEffectiveFile.result)
   }
 
-  return doMergeConfigs(config, parentConfig)
+  return doMergeConfigs(configs)
 }
 
 // normalize for easy merge
@@ -172,12 +170,11 @@ function mergeFileSets(lists: FileSet[][]): FileSet[] {
   return result
 }
 
-export function doMergeConfigs(configuration: Configuration, parentConfiguration: Configuration | null) {
-  const configs = [configuration]
-  if (parentConfiguration != null) {
-    configs.unshift(parentConfiguration)
-  }
-
+/**
+ * `doMergeConfigs` takes configs in the order you would pass them to
+ * Object.assign as sources.
+ */
+export function doMergeConfigs(configs: Configuration[]): Configuration {
   for (const config of configs) {
     normalizeFiles(config, "files")
     normalizeFiles(config, "extraFiles")

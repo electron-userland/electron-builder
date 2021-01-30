@@ -51,9 +51,16 @@ test("cli", async () => {
 })
 
 test("merge configurations", () => {
-  const result = doMergeConfigs(
+  const result = doMergeConfigs([
     {
-      files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*", "!docs", "!private"],
+      files: [
+        {
+          from: "dist/renderer",
+        },
+        {
+          from: "dist/renderer-dll",
+        },
+      ],
     },
     {
       files: [
@@ -64,15 +71,23 @@ test("merge configurations", () => {
         {
           from: "dist/main",
         },
+      ],
+    },
+    {
+      files: ["**/*", "!webpack", "!.*", "!config/jsdoc.json", "!package.*"],
+    },
+    {
+      files: [
         {
-          from: "dist/renderer",
-        },
-        {
-          from: "dist/renderer-dll",
+          from: ".",
+          filter: ["!docs"],
         },
       ],
-    }
-  )
+    },
+    {
+      files: ["!private"],
+    },
+  ])
 
   // console.log("data: " + JSON.stringify(result, null, 2))
   expect(result).toMatchObject({
