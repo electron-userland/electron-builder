@@ -96,6 +96,6 @@ export abstract class HttpPublisher extends Publisher {
 }
 
 export function getCiTag() {
-  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG
+  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG || process.env.BITBUCKET_TAG
   return tag != null && tag.length > 0 ? tag : null
 }
