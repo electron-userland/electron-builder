@@ -34,34 +34,34 @@ export class Logger {
     return debug.enabled
   }
 
-  info(messageOrFields: Fields | null | string, message?: string) {
-    this.doLog(message, messageOrFields, "info")
+  info(messageOrFields: Fields | null | string, message?: string, logName?: string) {
+    this.doLog(message, messageOrFields, "info", logName)
   }
 
-  error(messageOrFields: Fields | null | string, message?: string) {
-    this.doLog(message, messageOrFields, "error")
+  error(messageOrFields: Fields | null | string, message?: string, logName?: string) {
+    this.doLog(message, messageOrFields, "error", logName)
   }
 
-  warn(messageOrFields: Fields | null | string, message?: string): void {
-    this.doLog(message, messageOrFields, "warn")
+  warn(messageOrFields: Fields | null | string, message?: string, logName?: string) {
+    this.doLog(message, messageOrFields, "warn", logName)
   }
 
-  debug(fields: Fields | null, message: string) {
+  debug(fields: Fields | null, message: string, logName?: string) {
     if (debug.enabled) {
-      this._doLog(message, fields, "debug")
+      this._doLog(message, fields, "debug", logName)
     }
   }
 
-  private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel) {
+  private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel, logName: string | undefined) {
     if (message === undefined) {
-      this._doLog(messageOrFields as string, null, level)
+      this._doLog(messageOrFields as string, null, level, logName)
     }
     else {
-      this._doLog(message, messageOrFields as Fields | null, level)
+      this._doLog(message, messageOrFields as Fields | null, level, logName)
     }
   }
 
-  private _doLog(message: string | Error, fields: Fields | null, level: LogLevel) {
+  private _doLog(message: string | Error, fields: Fields | null, level: LogLevel, logName: string | undefined) {
     // noinspection SuspiciousInstanceOfGuard
     if (message instanceof Error) {
       message = message.stack || message.toString()
@@ -73,24 +73,26 @@ export class Logger {
     const levelIndicator = level === "error" ? "⨯" : "•"
     const color = LEVEL_TO_COLOR[level]
     this.stream.write(`${" ".repeat(PADDING)}${color(levelIndicator)} `)
-    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */))
+    this.stream.write(Logger.createMessage(this.messageTransformer(message, level), fields, level, color, PADDING + 2 /* level indicator and space */, logName))
     this.stream.write("\n")
   }
 
-  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0): string {
+  static createMessage(message: string, fields: Fields | null, level: LogLevel, color: (it: string) => string, messagePadding = 0, logName?: string): string {
     if (fields == null) {
       return message
     }
 
-    const fieldPadding = " ".repeat(Math.max(2, 16 - message.length))
-    let text = (level === "error" ? color(message) : message) + fieldPadding
+    const printLogName = logName || message
+
+    const fieldPadding = " ".repeat(Math.max(2, 16 - printLogName.length))
+    let text = (level === "error" ? color(printLogName) : printLogName) + fieldPadding
     const fieldNames = Object.keys(fields)
     let counter = 0
     for (const name of fieldNames) {
       let fieldValue = fields[name]
       let valuePadding: string | null = null
       if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
-        valuePadding = " ".repeat(messagePadding + message.length + fieldPadding.length + 2)
+        valuePadding = " ".repeat(messagePadding + printLogName.length + fieldPadding.length + 2)
         fieldValue = "\n" + valuePadding + fieldValue.replace(/\n/g, `\n${valuePadding}`)
       }
       else if (Array.isArray(fieldValue)) {

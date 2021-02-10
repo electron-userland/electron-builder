@@ -250,6 +250,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           log.warn({error: message, attempt: i + 1}, `cannot sign`)
           continue
         }
+        e.logName = 'sign error'
         throw e
       }
     }

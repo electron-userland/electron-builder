@@ -50,9 +50,10 @@ function wrap(task: (args: any) => Promise<any>) {
         process.on("exit", () => process.exitCode = 1)
         if (error instanceof InvalidConfigurationError) {
           log.error(null, error.message)
-        }
-        else if (!(error instanceof ExecError) || !error.alreadyLogged) {
+        } else if (error instanceof ExecError && !error.alreadyLogged) {
           log.error({stackTrace: error.stack}, error.message)
+        } else {
+          log.error({stackTrace: error.stack}, error.message, error.logName)
         }
       })
   }
