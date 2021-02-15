@@ -6,18 +6,28 @@
     "test"
   ],
   "license": "MIT",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "yarn pretest"
+    }
+  },
+  "lint-staged": {
+    "**/package.json": "yarn lint-deps",
+    "test/src/helpers/checkDeps.ts": "yarn lint-deps"
+  },
   "scripts": {
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "ts-babel \"packages/*\" && tsc --build test",
     "//compile2": "tsc --build packages/electron-builder packages/electron-updater packages/electron-builder-squirrel-windows",
     "lint": "eslint packages --ext .ts",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
-    "pretest": "yarn compile && yarn lint && node ./test/out/helpers/checkDeps.js",
+    "pretest": "yarn compile && yarn lint && yarn lint-deps",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=isCi",
     "test-all": "yarn pretest && node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -e UPDATE_SNAPSHOT=${UPDATE_SNAPSHOT:-false} -e TEST_FILES=\"${TEST_FILES:-HoistedNodeModuleTest}\" -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine /bin/bash -c \"yarn && yarn test-all\"",
-    "test-update": "UPDATE_SNAPSHOT=true yarn test",
+    "test-update": "UPDATE_SNAPSHOT=true yarn test-all",
     "docker-images": "docker/build.sh",
     "release": "BABEL_ENV=production yarn compile && ./scripts/publish-packages.sh && conventional-changelog-cli conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
@@ -33,24 +43,26 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "@babel/core": "^7.12.10",
-    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
-    "@babel/preset-env": "^7.12.10",
-    "@typescript-eslint/eslint-plugin": "^4.9.1",
-    "@typescript-eslint/parser": "^4.9.1",
+    "@babel/core": "^7.12.16",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.13",
+    "@babel/preset-env": "^7.12.16",
+    "@typescript-eslint/eslint-plugin": "^4.15.0",
+    "@typescript-eslint/parser": "^4.15.0",
     "babel-core": "^6.26.3",
     "babel-preset-jest": "^26.6.2",
     "bluebird-lst": "^1.0.9",
     "electron-builder-tslint-config": "^1.1.0",
-    "eslint": "^7.15.0",
-    "fs-extra": "^9.0.1",
-    "globby": "^11.0.1",
+    "eslint": "^7.20.0",
+    "fs-extra": "^9.1.0",
+    "globby": "^11.0.2",
+    "husky": "4.3.8",
     "jest-cli": "^26.6.3",
     "jsdoc-to-markdown": "^6.0.1",
+    "lint-staged": "^10.5.4",
     "ts-babel": "6.1.7",
     "ts-jsdoc": "^3.1.1",
-    "typescript": "~4.1.3",
-    "typescript-json-schema": "^0.43.0"
+    "typescript": "~4.1.5",
+    "typescript-json-schema": "^0.49.0"
   },
   "eslintIgnore": [
     "*.d.ts",

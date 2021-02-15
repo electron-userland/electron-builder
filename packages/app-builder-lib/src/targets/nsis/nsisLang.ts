@@ -2,7 +2,7 @@ import { asArray } from "builder-util"
 import { bundledLanguages, langIdToName, lcid, toLangWithRegion } from "../../util/langs"
 import _debug from "debug"
 import { outputFile, readFile } from "fs-extra"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager"
 import { NsisOptions } from "./nsisOptions"
@@ -75,7 +75,7 @@ async function writeCustomLangFile(data: string, packager: PlatformPackager<any>
 }
 
 export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, scriptGenerator: NsisScriptGenerator, langConfigurator: LangConfigurator) {
-  const data = safeLoad(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
+  const data = load(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
   const instructions = computeCustomMessageTranslations(data, langConfigurator).join("\n")
   debug(instructions)
   scriptGenerator.include(await writeCustomLangFile(instructions, packager))

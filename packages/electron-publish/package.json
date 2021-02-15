@@ -11,14 +11,14 @@
     "out"
   ],
   "dependencies": {
-    "@types/fs-extra": "^9.0.5",
+    "@types/fs-extra": "^9.0.7",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.0",
-    "fs-extra": "^9.0.1",
+    "fs-extra": "^9.1.0",
     "lazy-val": "^1.0.4",
-    "mime": "^2.4.6"
+    "mime": "^2.5.0"
   },
   "typings": "./out/publisher.d.ts"
 }

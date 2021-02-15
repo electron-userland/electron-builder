@@ -2,6 +2,36 @@ You decided to contribute to this project? Great, thanks a lot for pushing it.
 
 This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. By participating, you are expected to uphold this code. Please file issue to report unacceptable behavior.
 
+## To setup a local dev environment
+
+For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to electron-builder for your other projects to leverage and test with.
+
+Env setup from scratch (line by line for an easy copy-paste)
+```
+yarn global add yalc
+
+git clone https://github.com/electron-builder/electron-builder.git
+
+pushd ./electron-builder
+yarn compile
+find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
+popd
+```
+
+You must link yalc's local "packages" to your project via the one-liner below (run from your project folder)
+```
+yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
+```
+
+The magical script for whenever you make changes to electron-builder! Rebuilds electron-builder, and then patches the npm modules in your project (such as electron-quick-start).
+Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder, otherwise adjust path as necessary.
+```
+pushd ../electron-builder
+yarn compile
+find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
+popd
+```
+
 ## Pull Requests
 To check that your contributions match the project coding style make sure `yarn test` passes.
 

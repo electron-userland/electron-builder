@@ -1,7 +1,7 @@
 import { Arch, deepAssign, executeAppBuilder, InvalidConfigurationError, log, replaceDefault as _replaceDefault, serializeToYaml, toLinuxArchString } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { outputFile, readFile } from "fs-extra"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import * as path from "path"
 import * as semver from "semver"
 import { SnapOptions } from ".."
@@ -65,7 +65,7 @@ export default class SnapTarget extends Target {
       adapter: "none",
     }
 
-    const snap: any = safeLoad(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
+    const snap: any = load(await readFile(path.join(getTemplatePath("snap"), "snapcraft.yaml"), "utf-8"))
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }

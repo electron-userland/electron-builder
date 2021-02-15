@@ -14,15 +14,15 @@
   "dependencies": {
     "@types/semver": "^7.3.4",
     "builder-util-runtime": "workspace:*",
-    "fs-extra": "^9.0.1",
-    "js-yaml": "^3.14.1",
+    "fs-extra": "^9.1.0",
+    "js-yaml": "^4.0.0",
     "lazy-val": "^1.0.4",
     "lodash.isequal": "^4.5.0",
     "semver": "^7.3.4"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.5",
-    "@types/js-yaml": "^3.12.5",
+    "@types/fs-extra": "^9.0.7",
+    "@types/js-yaml": "^3.12.6",
     "@types/lodash.isequal": "^4.5.5"
   },
   "typings": "./out/main.d.ts",

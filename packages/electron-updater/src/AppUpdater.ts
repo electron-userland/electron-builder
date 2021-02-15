@@ -4,7 +4,7 @@ import { Notification } from "electron"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
@@ -466,7 +466,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath
     }
-    return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
+    return load(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
 
   private computeRequestHeaders(provider: Provider<any>): OutgoingHttpHeaders {
