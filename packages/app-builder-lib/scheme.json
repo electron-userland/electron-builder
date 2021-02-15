@@ -1304,9 +1304,6 @@
             "string"
           ]
         },
-        "defaultArch": {
-          "type": "string"
-        },
         "description": {
           "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
           "type": [
@@ -1832,6 +1829,13 @@
             "string"
           ]
         },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "asar": {
           "anyOf": [
             {
@@ -1945,9 +1949,6 @@
           "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
           "type": "boolean"
         },
-        "defaultArch": {
-          "type": "string"
-        },
         "detectUpdateChannel": {
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
@@ -1990,13 +1991,6 @@
         },
         "entitlementsLoginHelper": {
           "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"
@@ -2402,6 +2396,20 @@
           ],
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
+        },
+        "defaultArch": {
+          "anyOf": [
+            {
+              "enum": [
+                "arm64",
+                "universal",
+                "x64"
+              ],
+              "type": "string"
+            }
+          ],
+          "default": "x64",
+          "description": "The default arch to skip in target names."
         }
       },
       "type": "object"
@@ -2537,9 +2545,6 @@
           "description": "Whether a dark mode is supported. If your app does have a dark mode, you can make your app follow the system-wide dark mode setting.",
           "type": "boolean"
         },
-        "defaultArch": {
-          "type": "string"
-        },
         "detectUpdateChannel": {
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
@@ -2582,13 +2587,6 @@
         },
         "entitlementsLoginHelper": {
           "description": "Path to login helper entitlement file.\nWhen using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable.\nDefaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"
@@ -4538,14 +4536,7 @@
           ]
         },
         "layout": {
-          "anyOf": [
-            {
-              "typeof": "function"
-            },
-            {
-              "type": "null"
-            }
-          ],
+          "type": "object",
           "description": "Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more."
         },
         "mimeTypes": {
@@ -4584,7 +4575,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n  {\n    \"browser-sandbox\": {\n      \"interface\": \"browser-support\",\n      \"allow-sandbox\": true\n    },\n  },\n  \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
@@ -4670,7 +4661,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces).\n\nAdditional attributes can be specified using object instead of just name of slot:\n```\n[\n {\n   \"mpris\": {\n     \"name\": \"chromium\"\n   },\n }\n]\n\nIn case you want your application to be a compliant MPris player, you will need to definie\nThe mpris slot with \"chromium\" name.\nThis electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),\nand we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement."
+          "description": "The list of [slots](https://snapcraft.io/docs/reference/interfaces).\n\nAdditional attributes can be specified using object instead of just name of slot:\n```\n[\n  {\n    \"mpris\": {\n      \"name\": \"chromium\"\n    },\n  }\n]\n\nIn case you want your application to be a compliant MPris player, you will need to definie\nThe mpris slot with \"chromium\" name.\nThis electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),\nand we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement."
         },
         "stagePackages": {
           "anyOf": [
@@ -5045,6 +5036,13 @@
             "string"
           ]
         },
+        "executableName": {
+          "description": "The executable name. Defaults to `productName`.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "asar": {
           "anyOf": [
             {
@@ -5134,9 +5132,6 @@
             "string"
           ]
         },
-        "defaultArch": {
-          "type": "string"
-        },
         "detectUpdateChannel": {
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
@@ -5144,13 +5139,6 @@
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "executableName": {
-          "description": "The executable name. Defaults to `productName`.",
           "type": [
             "null",
             "string"
@@ -5720,9 +5708,6 @@
       ],
       "description": "Debian package options."
     },
-    "defaultArch": {
-      "type": "string"
-    },
     "detectUpdateChannel": {
       "default": true,
       "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
@@ -5754,6 +5739,7 @@
       "type": "boolean"
     },
     "electronDist": {
+      "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory",
       "anyOf": [
         {
           "typeof": "function"
@@ -5761,8 +5747,7 @@
         {
           "type": "string"
         }
-      ],
-      "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
+      ]
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
@@ -5777,13 +5762,6 @@
     },
     "electronVersion": {
       "description": "The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.",
-      "type": [
-        "null",
-        "string"
-      ]
-    },
-    "executableName": {
-      "description": "The executable name. Defaults to `productName`.",
       "type": [
         "null",
         "string"

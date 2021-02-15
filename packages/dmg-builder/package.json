@@ -24,8 +24,8 @@
     "dmg-license": "^1.0.8"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.6",
-    "@types/js-yaml": "^3.12.6",
+    "@types/fs-extra": "^9.0.5",
+    "@types/js-yaml": "^3.12.5",
     "temp-file": "^3.3.7"
   },
   "typings": "./out/dmg.d.ts"

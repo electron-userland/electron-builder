@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*",
-    "archiver": "^5.2.0",
+    "archiver": "^5.1.0",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "fs-extra": "^9.0.1",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/archiver": "^5.1.0",
-    "@types/fs-extra": "^9.0.6"
+    "@types/fs-extra": "^9.0.5"
   },
   "optionalDependencies": {
     "7zip-bin": "~5.0.3"
