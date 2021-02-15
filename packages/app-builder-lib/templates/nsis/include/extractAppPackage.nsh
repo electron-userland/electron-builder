@@ -81,6 +81,10 @@
   !ifdef ZIP_COMPRESSION
     nsisunz::Unzip "$PLUGINSDIR\app-$packageArch.zip" "$INSTDIR"
   !else
-    Nsis7z::Extract "$PLUGINSDIR\app-$packageArch.7z"
+    !insertmacro extractUsing7za "$PLUGINSDIR\app-$packageArch.7z"
   !endif
+!macroend
+
+!macro extractUsing7za FILE
+    Nsis7z::Extract "${FILE}"
 !macroend
