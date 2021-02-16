@@ -26,8 +26,6 @@ export abstract class AppUpdater extends EventEmitter {
 
   /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
-   *
-   * Applicable only on Windows and Linux.
    */
   autoInstallOnAppQuit: boolean = true
 
