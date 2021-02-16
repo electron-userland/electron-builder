@@ -110,7 +110,6 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
   const checksumToOffset = new Map<string, number>()
   const checksumToSize = new Map<string, number>()
   let offset = fileOffset
-  const debugLog = logger.debug
   for (let i = 0; i < file.checksums.length; i++) {
     const checksum = file.checksums[i]
     const size = file.sizes[i]
@@ -120,9 +119,9 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
       checksumToOffset.set(checksum, offset)
       checksumToSize.set(checksum, size)
     }
-    else if (debugLog != null) {
+    else if (logger.debug != null) {
       const sizeExplanation = existing === size ? "(same size)" : `(size: ${existing}, this size: ${size})`
-      debugLog(`${checksum} duplicated in blockmap ${sizeExplanation}, it doesn't lead to broken differential downloader, just corresponding block will be skipped)`)
+      logger.debug(`${checksum} duplicated in blockmap ${sizeExplanation}, it doesn't lead to broken differential downloader, just corresponding block will be skipped)`)
     }
     offset += size
   }
