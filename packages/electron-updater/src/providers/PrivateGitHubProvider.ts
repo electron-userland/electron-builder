@@ -1,6 +1,6 @@
 import { CancellationToken, GithubOptions, HttpError, newError, UpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater"
 import { URL } from "url"
@@ -37,7 +37,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const url = new URL(asset.url)
     let result: any
     try {
-      result = safeLoad((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!!)
+      result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!!)
     }
     catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {

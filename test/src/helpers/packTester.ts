@@ -12,7 +12,7 @@ import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPa
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import { promises as fs } from "fs"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import * as path from "path"
 import { promisify } from "util"
 import pathSorter from "path-sort"
@@ -196,7 +196,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
       const file = result.file
       if (file != null) {
         if (file.endsWith(".yml")) {
-          result.fileContent = removeUnstableProperties(safeLoad(await fs.readFile(file, "utf-8")))
+          result.fileContent = removeUnstableProperties(load(await fs.readFile(file, "utf-8")))
         }
         result.file = path.basename(file)
       }

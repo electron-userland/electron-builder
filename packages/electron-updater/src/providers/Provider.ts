@@ -1,6 +1,6 @@
 import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import { URL } from "url"
 import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
 
@@ -104,7 +104,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
 
   let result: UpdateInfo
   try {
-    result = safeLoad(rawData) as UpdateInfo
+    result = load(rawData) as UpdateInfo
   }
   catch (e) {
     throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`, "ERR_UPDATER_INVALID_UPDATE_INFO")

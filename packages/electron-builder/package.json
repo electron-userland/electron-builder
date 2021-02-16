@@ -45,23 +45,23 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^15.0.12",
+    "@types/yargs": "^15.0.13",
     "app-builder-lib": "workspace:*",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.0",
     "dmg-builder": "workspace:*",
-    "fs-extra": "^9.0.1",
+    "fs-extra": "^9.1.0",
     "is-ci": "^2.0.0",
     "lazy-val": "^1.0.4",
     "read-config-file": "6.0.0",
     "sanitize-filename": "^1.6.3",
-    "update-notifier": "^5.0.1",
+    "update-notifier": "^5.1.0",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.6",
+    "@types/fs-extra": "^9.0.7",
     "@types/is-ci": "^2.0.0"
   },
   "typings": "./out/index.d.ts",

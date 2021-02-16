@@ -5,7 +5,7 @@ import chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { safeDump } from "js-yaml"
+import { dump } from "js-yaml"
 import * as path from "path"
 import sourceMapSupport from "source-map-support"
 import { debug, log } from "./log"
@@ -29,7 +29,7 @@ export { deepAssign } from "./deepAssign"
 export const debug7z = _debug("electron-builder:7z")
 
 export function serializeToYaml(object: any, skipInvalid = false, noRefs = false) {
-  return safeDump(object, {
+  return dump(object, {
     lineWidth: 8000,
     skipInvalid,
     noRefs,

@@ -36,10 +36,10 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   let unusedDependencies: any
   if (packageName === "electron-builder") {
-    unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder" && it !== "bluebird-lst" && it !== "@types/yargs")
+    unusedDependencies = result.dependencies.filter(it => !["dmg-builder", "bluebird-lst", "@types/yargs"].includes(it))
   }
   else {
-    unusedDependencies = result.dependencies.filter(it => it !== "bluebird-lst" && it !== "@types/debug" && it !== "@types/semver" && it !== "@types/fs-extra")
+    unusedDependencies = result.dependencies.filter(it => !["bluebird-lst", "@types/debug", "@types/semver", "@types/fs-extra"].includes(it))
   }
 
   if (unusedDependencies.length > 0) {
@@ -64,7 +64,6 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   for (const name of Object.keys(result.missing)) {
     if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
-      (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/"))) ||
       (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))) {
       delete (result.missing as any)[name]
     }
