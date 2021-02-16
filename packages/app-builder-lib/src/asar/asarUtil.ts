@@ -209,8 +209,10 @@ export class AsarPackager {
           const readStream = createReadStream(file)
           readStream.on("error", reject)
           readStream.once("end", () => w(index + 1))
-          readStream.pipe(writeStream, {
-            end: false
+          readStream.on("open", () => {
+            readStream.pipe(writeStream, {
+              end: false
+            })
           })
         }
       }
