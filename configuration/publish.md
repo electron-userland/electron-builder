@@ -143,7 +143,7 @@ Inherited from `PublishConfiguration`:
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
 
-A GitHub token is required for publishing. If you are using [GitHub Actions](https://docs.github.com/en/actions/reference/authentication-in-a-workflow), you can use `{{secrets.GITHUB_TOKEN}}` created by the workflow. Otherwise, a GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) can be used. You can generate a GitHub personal access token by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
+A GitHub token is required for publishing. If you are using [GitHub Actions](https://docs.github.com/en/actions/reference/authentication-in-a-workflow), you should use the repo scoped `{{secrets.GITHUB_TOKEN}}` created by the workflow. Otherwise, a GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) can be used. You can generate a GitHub personal access token by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
 Define `GH_TOKEN` or `GITHUB_TOKEN` environment variable.
 
 * **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
