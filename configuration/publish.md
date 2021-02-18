@@ -5,9 +5,9 @@ The [publish](configuration.md#Configuration-publish) key contains a set of opti
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
 `electron-builder` makes publishing dead simple.
 
-If `GH_TOKEN` is defined — defaults to `[{provider: "github"}]`.
+If `GH_TOKEN` or `GITHUB_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
-If `BT_TOKEN` is defined and `GH_TOKEN` is not — defaults to `[{provider: "bintray"}]`.
+If `BT_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — defaults to `[{provider: "bintray"}]`.
 
 !!! info "Snap store"
     `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
@@ -143,8 +143,8 @@ Inherited from `PublishConfiguration`:
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
 
-GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
-Define `GH_TOKEN` environment variable.
+A GitHub token is required for publishing. If you are using [GitHub Actions](https://docs.github.com/en/actions/reference/authentication-in-a-workflow), you should use the repo scoped `{{secrets.GITHUB_TOKEN}}` created by the workflow. Otherwise, a GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) can be used. You can generate a GitHub personal access token by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
+Define `GH_TOKEN` or `GITHUB_TOKEN` environment variable.
 
 * **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
 * <code id="GithubOptions-repo">repo</code> String - The repository name. [Detected automatically](#github-repository-and-bintray-package).
@@ -153,7 +153,7 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-host">host</code> = `github.com` String - The host (including the port if need).
 * <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
 * <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
-* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
+* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` or `GITHUB_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
     
     Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
