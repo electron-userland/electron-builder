@@ -222,11 +222,8 @@ export abstract class DifferentialDownloader {
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
         requestOptions.headers!!.range = range
-
-        const debug = this.logger.debug
-        if (debug != null) {
-          debug(`download range: ${range}`)
-        }
+        
+        this.logger?.debug?.(`download range: ${range}`)
 
         // We are starting to download
         if (downloadInfoTransform) {
