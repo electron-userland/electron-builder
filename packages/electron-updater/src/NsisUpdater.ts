@@ -14,6 +14,7 @@ import { newUrlFromBase } from "./util"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 import { gunzipSync } from "zlib"
+import escapeRegExp from "lodash.escaperegexp"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
