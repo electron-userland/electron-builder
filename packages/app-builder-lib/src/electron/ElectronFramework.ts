@@ -151,7 +151,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
     const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
     if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
-      log.debug({ resolvedDist, zipFile }, "Resolved electronDist")
+      log.info({ resolvedDist, zipFile }, "Resolved electronDist")
       options.cache = resolvedDist
       dist = null
     }
@@ -162,7 +162,6 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
       return
     }
-    log.info({ zipPath: options.cache }, "Unpacking electron zip")
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
   }
   else {
