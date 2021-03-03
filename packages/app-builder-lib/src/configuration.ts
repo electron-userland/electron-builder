@@ -232,6 +232,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageScripts?: boolean
+  
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
 }
 
 export interface AfterPackContext {

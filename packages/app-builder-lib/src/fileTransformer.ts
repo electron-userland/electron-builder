@@ -28,10 +28,11 @@ export function hasDep(name: string, info: Packager) {
 export function createTransformer(srcDir: string, configuration: Configuration, extraMetadata: any, extraTransformer: FileTransformer | null): FileTransformer {
   const mainPackageJson = path.join(srcDir, "package.json")
   const isRemovePackageScripts = configuration.removePackageScripts !== false
+  const isRemovePackageKeywords = configuration.removePackageKeywords !== false
   const packageJson = path.sep + "package.json"
   return file => {
     if (file === mainPackageJson) {
-      return modifyMainPackageJson(file, extraMetadata, isRemovePackageScripts)
+      return modifyMainPackageJson(file, extraMetadata, isRemovePackageScripts, isRemovePackageKeywords)
     }
 
     if (file.endsWith(packageJson) && file.includes(NODE_MODULES_PATTERN)) {
@@ -39,6 +40,7 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
         .then(it => cleanupPackageJson(JSON.parse(it), {
           isMain: false,
           isRemovePackageScripts,
+          isRemovePackageKeywords
         }))
         .catch(e => log.warn(e))
     }
@@ -64,10 +66,11 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "tags"])
+const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "build", "jspm", "ava", "xo", "nyc", "eslintConfig", "contributors", "bundleDependencies", "tags"])
 
 interface CleanupPackageFileOptions {
   readonly isRemovePackageScripts: boolean
+  readonly isRemovePackageKeywords: boolean
   readonly isMain: boolean
 }
 
@@ -82,6 +85,7 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
       if (prop[0] === "_" ||
         ignoredPackageMetadataProperties.has(prop) ||
         (options.isRemovePackageScripts && prop === "scripts") ||
+        (options.isRemovePackageKeywords && prop === "keywords") ||
         (options.isMain && prop === "devDependencies") ||
         (!options.isMain && prop === "bugs") ||
         (isRemoveBabel && prop === "babel")) {
@@ -101,7 +105,7 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
   return null
 }
 
-async function modifyMainPackageJson(file: string, extraMetadata: any, isRemovePackageScripts: boolean) {
+async function modifyMainPackageJson(file: string, extraMetadata: any, isRemovePackageScripts: boolean, isRemovePackageKeywords: boolean) {
   const mainPackageData = JSON.parse(await readFile(file, "utf-8"))
   if (extraMetadata != null) {
     deepAssign(mainPackageData, extraMetadata)
@@ -111,6 +115,7 @@ async function modifyMainPackageJson(file: string, extraMetadata: any, isRemoveP
   const serializedDataIfChanged = cleanupPackageJson(mainPackageData, {
     isMain: true,
     isRemovePackageScripts,
+    isRemovePackageKeywords
   })
   if (serializedDataIfChanged != null) {
     return serializedDataIfChanged

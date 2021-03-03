@@ -6211,6 +6211,11 @@
       "description": "Whether to remove `scripts` field from `package.json` files.",
       "type": "boolean"
     },
+	"removePackageKeywords": {
+	  "default": true,
+	  "description": "Whether to remove `keywords` field from `package.json` files.",
+	  "type": "boolean"
+	},
     "rpm": {
       "anyOf": [
         {
