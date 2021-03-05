@@ -82,6 +82,11 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
 
+      if (!this.autoInstallOnAppQuit) {
+        this._logger.info("Update will not be installed on quit because autoInstallOnAppQuit is set to false.")
+        return
+      }
+
       if (exitCode !== 0) {
         this._logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
         return
