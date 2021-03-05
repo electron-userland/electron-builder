@@ -89,9 +89,10 @@ export class Logger {
     for (const name of fieldNames) {
       let fieldValue = fields[name]
       let valuePadding: string | null = null
+      // Remove unnecessary line breaks
       if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
         valuePadding = " ".repeat(messagePadding + message.length + fieldPadding.length + 2)
-        fieldValue = "\n" + valuePadding + fieldValue.replace(/\n/g, `\n${valuePadding}`)
+        fieldValue = fieldValue.replace(/\n\s*\n/g, `\n${valuePadding}`)
       }
       else if (Array.isArray(fieldValue)) {
         fieldValue = JSON.stringify(fieldValue)

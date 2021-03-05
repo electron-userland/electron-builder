@@ -52,7 +52,7 @@ function wrap(task: (args: any) => Promise<any>) {
           log.error(null, error.message)
         }
         else if (!(error instanceof ExecError) || !error.alreadyLogged) {
-          log.error({stackTrace: error.stack}, error.message)
+          log.error( { failedTask: task.name, stackTrace: error.stack }, error.message)
         }
       })
   }

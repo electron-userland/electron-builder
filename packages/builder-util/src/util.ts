@@ -240,7 +240,7 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
       }
     }
     else {
-      reject(new ExecError(command, code, formatOut(out, "Output"), formatOut(errorOut, "Error output")))
+      reject(new ExecError(command, code, out, errorOut))
     }
   })
 }
