@@ -7,14 +7,12 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, blockmapFiles } from "./main"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
-import { newUrlFromBase } from "./util"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 import { gunzipSync } from "zlib"
-import escapeRegExp from "lodash.escaperegexp"
 
 export class NsisUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
@@ -139,13 +137,8 @@ export class NsisUpdater extends BaseUpdater {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-
-      const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(
-        `${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`,
-        fileInfo.url
-      )
-      this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
+      const blockmapFileUrls = blockmapFiles(fileInfo, downloadUpdateOptions.updateInfoAndProvider.info, this.app);
+      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
@@ -178,8 +171,9 @@ export class NsisUpdater extends BaseUpdater {
         downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
       }
 
-      const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
+      const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)));
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions)
+        .download(blockMapDataList[0], blockMapDataList[1])
       return false
     } catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)

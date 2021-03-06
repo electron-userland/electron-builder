@@ -1,5 +1,6 @@
 import { URL } from "url"
-import { newUrlFromBase } from "electron-updater/out/util"
+import { newUrlFromBase, blockmapFiles } from "electron-updater"
+import { TestAppAdapter } from "./helpers/TestAppAdapter"
 
 test("newUrlFromBase", () => {
   const fileUrl = new URL("https://AWS_S3_HOST/bucket-yashraj/electron%20Setup%2011.0.3.exe")
@@ -11,4 +12,26 @@ test("add no cache", () => {
   const baseUrl = new URL("https://gitlab.com/artifacts/master/raw/dist?job=build_electron_win")
   const newBlockMapUrl = newUrlFromBase("latest.yml", baseUrl, true)
   expect(newBlockMapUrl.href).toBe("https://gitlab.com/artifacts/master/raw/latest.yml?job=build_electron_win")
+})
+
+test("create blockmap urls", () => {
+  const oldVersion = "1.1.9-2+ed8ccd"
+  const newVersion = "1.1.9-3+be4a1f"
+  const baseUrlString = `https://gitlab.com/artifacts/master/raw/electron%20Setup%20${newVersion}.exe`
+  const baseUrl = new URL(baseUrlString)
+
+  const fileInfo = {url: baseUrl, info: {url: baseUrlString, sha512: ''}};
+  const updateInfo = {
+    version: newVersion,
+    files: [fileInfo.info],
+    path: baseUrlString,
+    sha512: '',
+    releaseDate: 'Today',
+  }
+  const app = new TestAppAdapter(oldVersion, '')
+
+  const blockMapUrls = blockmapFiles(fileInfo, updateInfo, app);
+
+  expect(blockMapUrls[0].href).toBe('https://gitlab.com/artifacts/master/raw/electron%20Setup%201.1.9-2+ed8ccd.exe.blockmap');
+  expect(blockMapUrls[1].href).toBe('https://gitlab.com/artifacts/master/raw/electron%20Setup%201.1.9-3+be4a1f.exe.blockmap');
 })
