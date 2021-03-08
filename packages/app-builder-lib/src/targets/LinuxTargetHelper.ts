@@ -4,6 +4,7 @@ import { Lazy } from "lazy-val"
 import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
 import { IconInfo } from "../platformPackager"
+import { join } from "path";
 
 export const installPrefix = "/opt"
 
@@ -60,10 +61,11 @@ export class LinuxTargetHelper {
       ].filter(str => !!str) as string[]
     
     // If no explicit sources are defined, fallback to buildResources directory, then default framework icon
-    const fallbackSources = [
-        config.directories?.buildResources,
-        ...asArray(packager.getDefaultFrameworkIcon())
-      ].filter(async filepath => filepath && await exists(filepath)) as string[]
+    let fallbackSources = [...asArray(packager.getDefaultFrameworkIcon())]
+    const buildResources = config.directories?.buildResources
+    if (buildResources && await exists(join(buildResources, 'icons'))) {
+      fallbackSources = [buildResources, ...fallbackSources]
+    }
 
     // need to put here and not as default because need to resolve image size
     const result = await packager.resolveIcon(sources, fallbackSources, "set")
