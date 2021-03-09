@@ -44,7 +44,7 @@ export interface FileAssociation {
    */
   readonly isPackage?: boolean
 
-    /**
+  /**
    * *macOS-only* The app’s rank with respect to the type. The value can be `Owner`, `Default`, `Alternate`, or `None`. Corresponds to `LSHandlerRank`.
    * @default Default
    */

@@ -9,7 +9,7 @@ export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
   return session.fromPartition(NET_SESSION_NAME, {
-    cache: false
+    cache: false,
   })
 }
 
@@ -28,31 +28,33 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       }
       configureRequestUrl(url, requestOptions)
       configureRequestOptions(requestOptions)
-      this.doDownload(requestOptions, {
-        destination,
-        options,
-        onCancel,
-        callback: error => {
-          if (error == null) {
-            resolve(destination)
-          }
-          else {
-            reject(error)
-          }
+      this.doDownload(
+        requestOptions,
+        {
+          destination,
+          options,
+          onCancel,
+          callback: error => {
+            if (error == null) {
+              resolve(destination)
+            } else {
+              reject(error)
+            }
+          },
+          responseHandler: null,
         },
-        responseHandler: null,
-      }, 0)
+        0,
+      )
     })
   }
 
   createRequest(options: any, callback: (response: any) => void): any {
-
     // fix (node 7+) for making electron updater work when using AWS private buckets, check if headers contain Host property
-    if (options.headers && options.headers.Host){
+    if (options.headers && options.headers.Host) {
       // set host value from headers.Host
       options.host = options.headers.Host
       // remove header property 'Host', if not removed causes net::ERR_INVALID_ARGUMENT exception
-      delete options.headers.Host;
+      delete options.headers.Host
     }
 
     // differential downloader can call this method very often, so, better to cache session
@@ -79,8 +81,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
 
       if (redirectCount > this.maxRedirects) {
         reject(this.createMaxRedirectError())
-      }
-      else {
+      } else {
         handler(HttpExecutor.prepareRedirectUrlOptions(redirectUrl, options))
       }
     })

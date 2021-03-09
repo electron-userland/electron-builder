@@ -17,8 +17,7 @@ export abstract class BaseUpdater extends AppUpdater {
       setImmediate(() => {
         this.app.quit()
       })
-    }
-    else {
+    } else {
       this.quitAndInstallCalled = false
     }
   }
@@ -29,7 +28,7 @@ export abstract class BaseUpdater extends AppUpdater {
       done: async event => {
         this.dispatchUpdateDownloaded(event)
         this.addQuitHandler()
-      }
+      },
     })
   }
 
@@ -62,8 +61,7 @@ export abstract class BaseUpdater extends AppUpdater {
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
       })
-    }
-    catch (e) {
+    } catch (e) {
       this.dispatchError(e)
       return false
     }

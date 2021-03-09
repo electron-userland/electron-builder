@@ -6,8 +6,7 @@ export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
 
-  constructor(private readonly cancellationToken: CancellationToken) {
-  }
+  constructor(private readonly cancellationToken: CancellationToken) {}
 
   add(task: () => Promise<any>) {
     if (this.cancellationToken == null || !this.cancellationToken.cancelled) {
@@ -17,25 +16,26 @@ export class AsyncTaskManager {
 
   addTask(promise: Promise<any>) {
     if (this.cancellationToken.cancelled) {
-      log.debug({reason: "cancelled", stack: new Error().stack}, "async task not added")
+      log.debug({ reason: "cancelled", stack: new Error().stack }, "async task not added")
       if ("cancel" in promise) {
-        (promise as any).cancel()
+        ;(promise as any).cancel()
       }
       return
     }
 
-    this.tasks.push(promise
-      .catch(it => {
-        log.debug({error: it.message || it.toString()}, "async task error")
+    this.tasks.push(
+      promise.catch(it => {
+        log.debug({ error: it.message || it.toString() }, "async task error")
         this.errors.push(it)
         return Promise.resolve(null)
-      }))
+      }),
+    )
   }
 
   cancelTasks() {
     for (const task of this.tasks) {
       if ("cancel" in task) {
-        (task as any).cancel()
+        ;(task as any).cancel()
       }
     }
     this.tasks.length = 0
@@ -67,8 +67,7 @@ export class AsyncTaskManager {
       checkErrors()
       if (tasks.length === 0) {
         break
-      }
-      else {
+      } else {
         if (this.cancellationToken.cancelled) {
           this.cancelTasks()
           return []
@@ -85,8 +84,7 @@ export class AsyncTaskManager {
 function throwError(errors: Array<Error>) {
   if (errors.length === 1) {
     throw errors[0]
-  }
-  else if (errors.length > 1) {
+  } else if (errors.length > 1) {
     throw new NestedError(errors, "Cannot cleanup: ")
   }
 }

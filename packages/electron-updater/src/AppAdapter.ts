@@ -34,11 +34,9 @@ export function getAppCacheDir() {
   let result: string
   if (process.platform === "win32") {
     result = process.env.LOCALAPPDATA || path.join(homedir, "AppData", "Local")
-  }
-  else if (process.platform === "darwin") {
+  } else if (process.platform === "darwin") {
     result = path.join(homedir, "Library", "Application Support", "Caches")
-  }
-  else {
+  } else {
     result = process.env.XDG_CACHE_HOME || path.join(homedir, ".cache")
   }
   return result

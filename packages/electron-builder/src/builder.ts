@@ -5,14 +5,12 @@ import { PublishOptions } from "electron-publish"
 import yargs from "yargs"
 
 export function createYargs() {
-  return yargs
-    .parserConfiguration({
-      "camel-case-expansion": false,
-    })
+  return yargs.parserConfiguration({
+    "camel-case-expansion": false,
+  })
 }
 
-export interface BuildOptions extends PackagerOptions, PublishOptions {
-}
+export interface BuildOptions extends PackagerOptions, PublishOptions {}
 
 export interface CliOptions extends PackagerOptions, PublishOptions {
   x64?: boolean
@@ -72,8 +70,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       const suffixPos = type.lastIndexOf(":")
       if (suffixPos > 0) {
         addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-      }
-      else {
+      } else {
         for (const arch of commonArch(true)) {
           addValue(archToType, arch, type)
         }
@@ -97,7 +94,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     processTargets(Platform.current(), [])
   }
 
-  const result: any = {...args}
+  const result: any = { ...args }
   result.targets = targets
 
   delete result.dir
@@ -135,8 +132,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     for (const configItem of config) {
       if (typeof configItem === "object") {
         deepAssign(newConfig, configItem)
-      }
-      else if (typeof configItem === "string") {
+      } else if (typeof configItem === "string") {
         newConfig.extends = configItem
       }
     }
@@ -177,17 +173,13 @@ function coerceValue(host: any, key: string): void {
   const value = host[key]
   if (value === "true") {
     host[key] = true
-  }
-  else if (value === "false") {
+  } else if (value === "false") {
     host[key] = false
-  }
-  else if (value === "null") {
+  } else if (value === "null") {
     host[key] = null
-  }
-  else if (key === "version" && typeof value === "number") {
+  } else if (key === "version" && typeof value === "number") {
     host[key] = value.toString()
-  }
-  else if (value != null && typeof value === "object") {
+  } else if (value != null && typeof value === "object") {
     coerceTypes(value)
   }
 }
@@ -203,7 +195,7 @@ export function coerceTypes(host: any): any {
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
   for (const platform of platforms) {
-    const archs = (arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)])
+    const archs = arch === "all" ? (platform === Platform.MAC ? [Arch.x64, Arch.arm64, Arch.universal] : [Arch.x64, Arch.ia32]) : [archFromString(arch == null ? process.arch : arch)]
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 

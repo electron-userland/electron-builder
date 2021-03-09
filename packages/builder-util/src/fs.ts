@@ -6,21 +6,21 @@ import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
 
 export const MAX_FILE_REQUESTS = 8
-export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}
+export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
 
 export type AfterCopyFileTransformer = (file: string) => Promise<void>
 
 export class CopyFileTransformer {
-  constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {
-  }
+  constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {}
 }
 
 export type FileTransformer = (file: string) => Promise<null | string | Buffer | CopyFileTransformer> | null | string | Buffer | CopyFileTransformer
 export type Filter = (file: string, stat: Stats) => boolean
 
 export function unlinkIfExists(file: string) {
-  return unlink(file)
-    .catch(() => {/* ignore */})
+  return unlink(file).catch(() => {
+    /* ignore */
+  })
 }
 
 export async function statOrNull(file: string): Promise<Stats | null> {
@@ -31,8 +31,7 @@ export async function exists(file: string): Promise<boolean> {
   try {
     await access(file)
     return true
-  }
-  catch (e) {
+  } catch (e) {
     return false
   }
 }
@@ -59,8 +58,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
     if (isIncludeDir) {
       if (addDirToResult) {
         result.push(dirPath)
-      }
-      else {
+      } else {
         addDirToResult = true
       }
     }
@@ -72,14 +70,15 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 
     const dirs: Array<string> = []
     // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
-    const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
-      if (name === ".DS_Store" || name === ".gitkeep") {
-        return null
-      }
+    const sortedFilePaths = await BluebirdPromise.map(
+      childNames,
+      name => {
+        if (name === ".DS_Store" || name === ".gitkeep") {
+          return null
+        }
 
-      const filePath = dirPath + path.sep + name
-      return lstat(filePath)
-        .then(stat => {
+        const filePath = dirPath + path.sep + name
+        return lstat(filePath).then(stat => {
           if (filter != null && !filter(filePath, stat)) {
             return null
           }
@@ -87,36 +86,33 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
           const consumerResult = consumer == null ? null : consumer.consume(filePath, stat, dirPath, childNames)
           if (consumerResult === false) {
             return null
-          }
-          else if (consumerResult == null || !("then" in consumerResult)) {
+          } else if (consumerResult == null || !("then" in consumerResult)) {
             if (stat.isDirectory()) {
               dirs.push(name)
               return null
-            }
-            else {
+            } else {
               return filePath
             }
-          }
-          else {
-            return (consumerResult as Promise<any>)
-              .then((it): any => {
-                if (it != null && Array.isArray(it)) {
-                  nodeModuleContent = it
-                  return null
-                }
+          } else {
+            return (consumerResult as Promise<any>).then((it): any => {
+              if (it != null && Array.isArray(it)) {
+                nodeModuleContent = it
+                return null
+              }
 
-                // asarUtil can return modified stat (symlink handling)
-                if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
-                  dirs.push(name)
-                  return null
-                }
-                else {
-                  return filePath
-                }
-              })
+              // asarUtil can return modified stat (symlink handling)
+              if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
+                dirs.push(name)
+                return null
+              } else {
+                return filePath
+              }
+            })
           }
         })
-    }, CONCURRENCY)
+      },
+      CONCURRENCY,
+    )
 
     for (const child of sortedFilePaths) {
       if (child != null) {
@@ -140,8 +136,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (require("is-ci") || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
-  return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve())
-    .then(() => copyOrLinkFile(src, dest, null, false))
+  return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
 }
 
 /**
@@ -171,8 +166,8 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
     if (originalModeNumber !== stats.mode) {
       if (log.isDebugEnabled) {
-        const oldMode = new Mode({mode: originalModeNumber})
-        log.debug({file: dest, oldMode, mode}, "permissions fixed from")
+        const oldMode = new Mode({ mode: originalModeNumber })
+        log.debug({ file: dest, oldMode, mode }, "permissions fixed from")
       }
 
       // https://helgeklein.com/blog/2009/05/hard-links-and-permissions-acls/
@@ -180,25 +175,23 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
       // That means if you change the permissions/owner/attributes on one hard link, you will immediately see the changes on all other hard links.
       if (isUseHardLink) {
         isUseHardLink = false
-        log.debug({dest}, "copied, but not linked, because file permissions need to be fixed")
+        log.debug({ dest }, "copied, but not linked, because file permissions need to be fixed")
       }
     }
   }
 
   if (isUseHardLink) {
-    return link(src, dest)
-      .catch(e => {
-        if (e.code === "EXDEV") {
-          const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
-          if (isLog && log.isDebugEnabled) {
-            log.debug({error: e.message}, "cannot copy using hard link")
-          }
-          return doCopyFile(src, dest, stats)
+    return link(src, dest).catch(e => {
+      if (e.code === "EXDEV") {
+        const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
+        if (isLog && log.isDebugEnabled) {
+          log.debug({ error: e.message }, "cannot copy using hard link")
         }
-        else {
-          throw e
-        }
-      })
+        return doCopyFile(src, dest, stats)
+      } else {
+        throw e
+      }
+    })
   }
   return doCopyFile(src, dest, stats)
 }
@@ -209,8 +202,7 @@ function doCopyFile(src: string, dest: string, stats: Stats | null | undefined):
     return promise
   }
 
-  return promise
-    .then(() => chmod(dest, stats.mode))
+  return promise.then(() => chmod(dest, stats.mode))
 }
 
 export class FileCopier {
@@ -219,8 +211,7 @@ export class FileCopier {
   constructor(private readonly isUseHardLinkFunction?: ((file: string) => boolean) | null, private readonly transformer?: FileTransformer | null) {
     if (isUseHardLinkFunction === USE_HARD_LINKS) {
       this.isUseHardLink = true
-    }
-    else {
+    } else {
       this.isUseHardLink = _isUseHardLink && isUseHardLinkFunction !== DO_NOT_USE_HARD_LINKS
     }
   }
@@ -237,8 +228,7 @@ export class FileCopier {
         if (data != null) {
           if (data instanceof CopyFileTransformer) {
             afterCopyTransformer = data.afterCopyTransformer
-          }
-          else {
+          } else {
             await writeFile(dest, data)
             return
           }
@@ -246,17 +236,24 @@ export class FileCopier {
       }
     }
 
-    const isUseHardLink = afterCopyTransformer == null && ((!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
-    await copyOrLinkFile(src, dest, stat, isUseHardLink, isUseHardLink ? () => {
-      // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
-      if (this.isUseHardLink) {
-        this.isUseHardLink = false
-        return true
-      }
-      else {
-        return false
-      }
-    } : null)
+    const isUseHardLink = afterCopyTransformer == null && (!this.isUseHardLink || this.isUseHardLinkFunction == null ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
+    await copyOrLinkFile(
+      src,
+      dest,
+      stat,
+      isUseHardLink,
+      isUseHardLink
+        ? () => {
+            // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
+            if (this.isUseHardLink) {
+              this.isUseHardLink = false
+              return true
+            } else {
+              return false
+            }
+          }
+        : null,
+    )
 
     if (afterCopyTransformer != null) {
       await afterCopyTransformer(dest)
@@ -278,7 +275,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
   const fileCopier = new FileCopier(options.isUseHardLink, options.transformer)
 
   if (log.isDebugEnabled) {
-    log.debug({src, destination}, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
+    log.debug({ src, destination }, `copying${fileCopier.isUseHardLink ? " using hard links" : ""}`)
   }
 
   const createdSourceDirs = new Set<string>()
@@ -297,13 +294,11 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
       const destFile = file.replace(src, destination)
       if (stat.isFile()) {
         await fileCopier.copy(file, destFile, stat)
+      } else {
+        links.push({ file: destFile, link: await readlink(file) })
       }
-      else {
-        links.push({file: destFile, link: await readlink(file)})
-      }
-    }
-  })
-    .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
+    },
+  }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

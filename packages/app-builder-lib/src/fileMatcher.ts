@@ -9,10 +9,11 @@ import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
 
 // https://github.com/electron-userland/electron-builder/issues/733
-const minimatchOptions = {dot: true}
+const minimatchOptions = { dot: true }
 
 // noinspection SpellCheckingInspection
-export const excludedNames = ".git,.hg,.svn,CVS,RCS,SCCS," +
+export const excludedNames =
+  ".git,.hg,.svn,CVS,RCS,SCCS," +
   "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
   ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
   ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
@@ -30,8 +31,7 @@ function ensureNoEndSlash(file: string): string {
 
   if (file.endsWith(path.sep)) {
     return file.substring(0, file.length - 1)
-  }
-  else {
+  } else {
     return file
   }
 }
@@ -115,16 +115,26 @@ export class FileMatcher {
 }
 
 /** @internal */
-export function getMainFileMatchers(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, platformPackager: PlatformPackager<any>, outDir: string, isElectronCompile: boolean): Array<FileMatcher> {
+export function getMainFileMatchers(
+  appDir: string,
+  destination: string,
+  macroExpander: (pattern: string) => string,
+  platformSpecificBuildOptions: PlatformSpecificBuildOptions,
+  platformPackager: PlatformPackager<any>,
+  outDir: string,
+  isElectronCompile: boolean,
+): Array<FileMatcher> {
   const packager = platformPackager.info
   const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
 
-  let matchers = packager.isPrepackedAppAsar ? null : getFileMatchers(packager.config, "files", destination, {
-    macroExpander,
-    customBuildOptions: platformSpecificBuildOptions,
-    globalOutDir: outDir,
-    defaultSrc: appDir,
-  })
+  let matchers = packager.isPrepackedAppAsar
+    ? null
+    : getFileMatchers(packager.config, "files", destination, {
+        macroExpander,
+        customBuildOptions: platformSpecificBuildOptions,
+        globalOutDir: outDir,
+        defaultSrc: appDir,
+      })
   if (matchers == null) {
     matchers = [new FileMatcher(appDir, destination, macroExpander)]
   }
@@ -142,8 +152,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   // electron-webpack - we need to copy only package.json and node_modules from root dir (and these files are added by default), so, explicit empty array is specified
   if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
     customFirstPatterns.push("**/*")
-  }
-  else if (!patterns.includes("package.json")) {
+  } else if (!patterns.includes("package.json")) {
     patterns.push("package.json")
   }
 
@@ -200,8 +209,7 @@ export function getNodeModuleFileMatcher(appDir: string, destination: string, ma
   function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
     if (patterns == null) {
       return
-    }
-    else if (!Array.isArray(patterns)) {
+    } else if (!Array.isArray(patterns)) {
       if (typeof patterns === "string" && patterns.startsWith("!")) {
         matcher.addPattern(patterns)
         return
@@ -215,9 +223,8 @@ export function getNodeModuleFileMatcher(appDir: string, destination: string, ma
         if (pattern.startsWith("!")) {
           matcher.addPattern(pattern)
         }
-      }
-      else {
-        const fileSet = (pattern as FileSet)
+      } else {
+        const fileSet = pattern as FileSet
         if (fileSet.from == null || fileSet.from === ".") {
           for (const p of asArray(fileSet.filter)) {
             matcher.addPattern(p)
@@ -259,8 +266,7 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
   function addPatterns(patterns: Array<string | FileSet> | string | null | undefined | FileSet) {
     if (patterns == null) {
       return
-    }
-    else if (!Array.isArray(patterns)) {
+    } else if (!Array.isArray(patterns)) {
       if (typeof patterns === "string") {
         defaultMatcher.addPattern(patterns)
         return
@@ -272,11 +278,9 @@ export function getFileMatchers(config: Configuration, name: "files" | "extraFil
       if (typeof pattern === "string") {
         // use normalize to transform ./foo to foo
         defaultMatcher.addPattern(pattern)
-      }
-      else if (name === "asarUnpack") {
+      } else if (name === "asarUnpack") {
         throw new Error(`Advanced file copying not supported for "${name}"`)
-      }
-      else {
+      } else {
         const from = pattern.from == null ? options.defaultSrc : path.resolve(options.defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
         fileMatchers.push(new FileMatcher(from, to, options.macroExpander, pattern.filter))
@@ -312,7 +316,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
   return BluebirdPromise.map(matchers, async (matcher: FileMatcher) => {
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      log.warn({from: matcher.from}, `file source doesn't exist`)
+      log.warn({ from: matcher.from }, `file source doesn't exist`)
       return
     }
 
@@ -330,7 +334,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
     if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
       matcher.prependPattern("**/*")
     }
-    log.debug({matcher}, "copying files using pattern")
-    return await copyDir(matcher.from, matcher.to, {filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null})
+    log.debug({ matcher }, "copying files using pattern")
+    return await copyDir(matcher.from, matcher.to, { filter: matcher.createFilter(), transformer, isUseHardLink: isUseHardLink ? USE_HARD_LINKS : null })
   })
 }

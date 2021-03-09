@@ -21,8 +21,7 @@ export async function computeLicensePage(packager: WinPackager, options: NsisOpt
 
         `!insertmacro MUI_PAGE_LICENSE "${path.join(nsisTemplatesDir, "empty-license.txt")}"`,
       ]
-    }
-    else {
+    } else {
       licensePage = [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
     }
 

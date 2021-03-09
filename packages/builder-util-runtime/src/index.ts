@@ -16,17 +16,15 @@ export const CURRENT_APP_PACKAGE_FILE_NAME = "package.7z"
 export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   if (v == null) {
     return []
-  }
-  else if (Array.isArray(v)) {
+  } else if (Array.isArray(v)) {
     return v
-  }
-  else {
+  } else {
     return [v]
   }
 }
 
 export function newError(message: string, code: string) {
-  const error = new Error(message);
-  (error as NodeJS.ErrnoException).code = code
+  const error = new Error(message)
+  ;(error as NodeJS.ErrnoException).code = code
   return error
 }
