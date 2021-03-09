@@ -7,8 +7,8 @@ import { promises as fs, readFileSync } from "fs"
 import { outputJson } from "fs-extra"
 import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
-import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
-import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath  } from "../helpers/packTester"
+import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 test("cli", async () => {
   // because these methods are internal
@@ -224,7 +224,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi("win smart unpack", () => {
+test.skip.ifNotMac.ifDevOrWinCi("win smart unpack", () => {
   // test onNodeModuleFile hook
   const nodeModuleFiles: Array<string> = []
   let p = ""
@@ -291,7 +291,7 @@ async function verifySmartUnpack(resourceDir: string) {
 }
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
+test.skip.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   targets: linuxDirTarget,
   config: {
     // https://github.com/electron-userland/electron-builder/issues/3273

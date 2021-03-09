@@ -28,11 +28,12 @@ async function runTests() {
     ])
   }
 
-  const testFiles = process.env.TEST_FILES
+  const testFiles = process.env.TEST_FILES as string | undefined
 
-  const testPatterns: Array<string> = []
-  if (testFiles != null && testFiles.length !== 0) {
-    testPatterns.push(...testFiles.split(","))
+  const testPatterns: string[] = []
+  if (testFiles?.length) {
+    testFiles?.split(",").forEach(glob => testPatterns.push(glob));
+    console.log(`Test files for travisCI node: ${testPatterns.join(", ")}`)
   }
   else if (process.env.CIRCLE_NODE_INDEX != null && process.env.CIRCLE_NODE_INDEX.length !== 0) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
@@ -139,7 +140,7 @@ async function runTests() {
   }
 
   if (testPatterns.length > 0) {
-    jestOptions.testPathPattern = testPatterns
+    jestOptions.testPathPattern = [...new Set(testPatterns)]
       .map(it => it.endsWith(".ts") || it.endsWith("*") ? it : `${it}\\.ts$`)
   }
   if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {

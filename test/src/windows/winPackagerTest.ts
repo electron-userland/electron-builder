@@ -5,7 +5,7 @@ import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 import { remove } from "fs-extra"
 
-test.ifWinCi("beta version", app({
+test.skip.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
   config: {
     extraMetadata: {
@@ -18,7 +18,7 @@ test.ifNotCiMac("win zip", app({
   targets: Platform.WINDOWS.createTarget(["zip"]),
 }))
 
-test.ifNotCiMac.ifAll("zip artifactName", app({
+test.skip.ifNotCiMac.ifAll("zip artifactName", app({
   linux: ["appimage"],
   win: ["zip"],
   config: {

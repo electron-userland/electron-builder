@@ -5,8 +5,8 @@ import { outputFile } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { Mode, RWX } from "stat-mode"
-import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
+import { app, appThrows, assertPack, checkDirContents, linuxDirTarget, modifyPackageJson } from "../helpers/packTester"
 
 test.ifDevOrLinuxCi("expand not defined env", appThrows({
   targets: linuxDirTarget,

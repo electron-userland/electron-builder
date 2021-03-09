@@ -3,8 +3,8 @@ import { readAsar } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { promises as fs } from "fs"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "./helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
+import { app, assertPack, modifyPackageJson, PackedContext, removeUnstableProperties, verifyAsarFileTree } from "../helpers/packTester"
 
 async function createFiles(appDir: string) {
   await Promise.all([

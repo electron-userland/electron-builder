@@ -74,7 +74,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   })
 }
 
-test("Bintray upload", async () => {
+test.skip("Bintray upload", async () => {
   const version = "42.0.0"
   const tmpDir = new TmpDir("artifact-publisher-test")
   const artifactPath = await tmpDir.getTempFile({suffix: " test-space.icns"})

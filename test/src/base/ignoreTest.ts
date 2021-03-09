@@ -1,8 +1,8 @@
 import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
+import { app, checkDirContents, modifyPackageJson } from "../helpers/packTester"
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),

@@ -60,7 +60,7 @@ export interface UpdateCheckResult {
   readonly versionInfo: UpdateInfo
 }
 
-export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
+export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "update-not-available" | "error"
 
 export const DOWNLOAD_PROGRESS: UpdaterEvents = "download-progress"
 export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"

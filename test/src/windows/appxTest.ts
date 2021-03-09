@@ -10,7 +10,7 @@ const protectedCscLink = "MIIJWQIBAzCCCR8GCSqGSIb3DQEHAaCCCRAEggkMMIIJCDCCA78GCS
 
 const it = process.platform === "darwin" ? test.ifAll.ifDevOrWinCi : test
 
-it.ifDevOrWinCi("AppX", app({
+it.skip.ifDevOrWinCi("AppX", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
 }, {
   projectDirCreated: async projectDir => {
@@ -42,7 +42,7 @@ it2.ifNotCi("certificateSubjectName", app({
 }))
 
 // todo - check manifest
-it("languages and not signed (windows store only)", app({
+it.skip.ifDevOrWinCi("languages and not signed (windows store only)", app({
   targets: Platform.WINDOWS.createTarget(["appx"], Arch.ia32, Arch.x64),
   config: {
     cscLink: protectedCscLink,

@@ -3,7 +3,7 @@ import { app } from "../helpers/packTester"
 
 // tests are heavy, to distribute tests across CircleCI machines evenly, these tests were moved from oneClickInstallerTest
 
-test.ifNotCiMac("web installer", app({
+test.skip.ifNotCiMac("web installer", app({
   targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
   config: {
     publish: {

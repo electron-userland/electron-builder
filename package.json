@@ -14,6 +14,7 @@
   },
   "lint-staged": {
     "packages/**/*.ts": "yarn lint",
+    "test/**/*.ts": "yarn lint",
     "**/package.json": "yarn lint-deps",
     "test/src/helpers/checkDeps.ts": "yarn lint-deps"
   },

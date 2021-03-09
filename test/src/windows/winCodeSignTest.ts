@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test("sign nested asar unpacked executables", appThrows({
+test.skip("sign nested asar unpacked executables", appThrows({
   targets: Platform.WINDOWS.createTarget(DIR_TARGET),
   config: {
     publish: "never",
@@ -44,6 +44,8 @@ function testCustomSign(sign: any) {
   })
 }
 
+test.ifAll.ifNotCiMac("certificateFile/password - sign as async/await", testCustomSign(async () => { return }))
+test.ifAll.ifNotCiMac("certificateFile/password - sign as Promise", testCustomSign(() => Promise.resolve()))
 test.ifAll.ifNotCiMac("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
 test.ifAll.ifNotCiMac("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
 

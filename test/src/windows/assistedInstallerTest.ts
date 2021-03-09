@@ -6,7 +6,7 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
-test.ifNotCiMac("assisted", app({
+test.skip.ifNotCiMac("assisted", app({
   targets: nsisTarget,
   config: {
     nsis: {

@@ -1,10 +1,10 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
 import { promises as fs } from "fs"
 import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"
-import { getElectronCacheDir } from "./helpers/testConfig"
-import { expectUpdateMetadata } from "./helpers/winHelper"
+import { assertThat } from "../helpers/fileAssert"
+import { app, assertPack, linuxDirTarget, modifyPackageJson } from "../helpers/packTester"
+import { getElectronCacheDir } from "../helpers/testConfig"
+import { expectUpdateMetadata } from "../helpers/winHelper"
 
 function createBuildResourcesTest(packagerOptions: PackagerOptions) {
   return app({
@@ -31,7 +31,7 @@ function createBuildResourcesTest(packagerOptions: PackagerOptions) {
 }
 
 test.ifAll.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest({mac: ["dir"]}))
-test.ifAll.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest({win: ["nsis"]}))
+test.skip.ifNotMac.ifDevOrWinCi("custom buildResources and output dirs: win", createBuildResourcesTest({win: ["nsis"]}))
 test.ifAll.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest({linux: ["appimage"]}))
 
 test.ifAll.ifLinuxOrDevMac("prepackaged", app({

@@ -3,7 +3,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-test.ifAll.ifNotCiMac("Squirrel.Windows", app({
+test.skip.ifAll.ifNotCiMac("Squirrel.Windows", app({
   targets: Platform.WINDOWS.createTarget(["squirrel"]),
   config: {
     win: {
@@ -12,7 +12,7 @@ test.ifAll.ifNotCiMac("Squirrel.Windows", app({
   }
 }, {signedWin: true}))
 
-test.ifAll.ifNotCiMac("artifactName", app({
+test.skip.ifAll.ifNotCiMac("artifactName", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "zip"]),
   config: {
     win: {

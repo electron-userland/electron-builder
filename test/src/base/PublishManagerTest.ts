@@ -2,8 +2,8 @@ import { createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions } from "builder-util-runtime"
-import { assertThat } from "./helpers/fileAssert"
-import { app, checkDirContents } from "./helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
+import { app, checkDirContents } from "../helpers/packTester"
 
 test.ifNotWindows.ifDevOrLinuxCi("generic, github and spaces", app({
   targets: Platform.MAC.createTarget("zip"),

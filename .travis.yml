@@ -1,4 +1,4 @@
-osx_image: xcode12.2
+osx_image: xcode12.3
 language: node_js
 
 env:
@@ -7,16 +7,20 @@ env:
 
 matrix:
   include:
-    - os: osx
-      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macPackagerTest,protonTest
+    - os: linux
+      env: TEST_FILES=src/base/*,differentialUpdateTest
       node_js: "14"
 
     - os: osx
-      env: TEST_FILES=CodeSignTest,macArchiveTest,macIconTest
+      env: TEST_FILES=src/linux/*,src/mac/*
       node_js: "14"
 
     - os: osx
-      env: TEST_FILES=masTest,dmgTest
+      env: TEST_FILES=src/mac2/*,macUpdaterTest
+      node_js: "14"
+
+    - os: windows
+      env: TEST_FILES=src/windows/*,assistedInstallerTest,differentialUpdateTest
       node_js: "14"
 
 cache:
