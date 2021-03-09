@@ -56,12 +56,14 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }
-    await executor(
-      {
-        ...taskConfiguration,
-        computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin),
-      },
-      packager
+    await Promise.resolve(
+      executor(
+        {
+          ...taskConfiguration,
+          computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin),
+        },
+        packager
+      )
     )
     isNest = true
     if (taskConfiguration.resultOutputPath != null) {

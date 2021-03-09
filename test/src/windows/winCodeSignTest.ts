@@ -51,6 +51,16 @@ function testCustomSign(sign: any) {
   })
 }
 
+test.ifAll.ifNotCiMac(
+  "certificateFile/password - sign as async/await",
+  testCustomSign(async () => {
+    return
+  })
+)
+test.ifAll.ifNotCiMac(
+  "certificateFile/password - sign as Promise",
+  testCustomSign(() => Promise.resolve())
+)
 test.ifAll.ifNotCiMac("certificateFile/password - sign as function", testCustomSign(require("../helpers/customWindowsSign").default))
 test.ifAll.ifNotCiMac("certificateFile/password - sign as path", testCustomSign(path.join(__dirname, "../helpers/customWindowsSign")))
 
