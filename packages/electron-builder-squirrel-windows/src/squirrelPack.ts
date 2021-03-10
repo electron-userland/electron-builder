@@ -13,8 +13,7 @@ export function convertVersion(version: string): string {
   const mainVersion = parts.shift()
   if (parts.length > 0) {
     return [mainVersion, parts.join("-").replace(/\./g, "")].join("-")
-  }
-  else {
+  } else {
     return mainVersion!
   }
 }
@@ -53,20 +52,17 @@ export interface OutFileNames {
 }
 
 export class SquirrelBuilder {
-  constructor(private readonly options: SquirrelOptions, private readonly outputDirectory: string, private readonly packager: WinPackager) {
-  }
+  constructor(private readonly options: SquirrelOptions, private readonly outputDirectory: string, private readonly packager: WinPackager) {}
 
   async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch) {
     const packager = this.packager
-    const dirToArchive = await packager.info.tempDirManager.createTempDir({prefix: "squirrel-windows"})
+    const dirToArchive = await packager.info.tempDirManager.createTempDir({ prefix: "squirrel-windows" })
     const outputDirectory = this.outputDirectory
     const options = this.options
     const appUpdate = path.join(dirToArchive, "Update.exe")
     await Promise.all([
-      copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
-        .then(() => packager.sign(appUpdate)),
-      Promise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
-        .then(() => ensureDir(outputDirectory))
+      copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate).then(() => packager.sign(appUpdate)),
+      Promise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))]).then(() => ensureDir(outputDirectory)),
     ])
 
     if (isEmptyOrSpaces(options.description)) {
@@ -88,8 +84,7 @@ export class SquirrelBuilder {
     ])
 
     // releasify can be called only after pack nupkg and nupkg must be in the final output directory (where other old version nupkg can be located)
-    await this.releasify(nupkgPath, outFileNames.packageFile)
-      .then(it => writeFile(path.join(dirToArchive, "RELEASES"), it))
+    await this.releasify(nupkgPath, outFileNames.packageFile).then(it => writeFile(path.join(dirToArchive, "RELEASES"), it))
 
     const embeddedArchiveFile = await this.createEmbeddedArchiveFile(nupkgPath, dirToArchive)
 
@@ -105,10 +100,7 @@ export class SquirrelBuilder {
   }
 
   private async releasify(nupkgPath: string, packageName: string) {
-    const args = [
-      "--releasify", nupkgPath,
-      "--releaseDir", this.outputDirectory
-    ]
+    const args = ["--releasify", nupkgPath, "--releaseDir", this.outputDirectory]
     const out = (await execSw(this.options, args)).trim()
     if (debug.enabled) {
       debug(`Squirrel output: ${out}`)
@@ -127,23 +119,30 @@ export class SquirrelBuilder {
 
   private async createEmbeddedArchiveFile(nupkgPath: string, dirToArchive: string) {
     const embeddedArchiveFile = await this.packager.getTempFile("setup.zip")
-    await exec(path7za, compute7zCompressArgs("zip", {
-      isRegularFile: true,
-      compression: this.packager.compression,
-    }).concat(embeddedArchiveFile, "."), {
-      cwd: dirToArchive,
-    })
-    await exec(path7za, compute7zCompressArgs("zip", {
-      isRegularFile: true,
-      compression: "store" /* nupkg is already compressed */,
-    }).concat(embeddedArchiveFile, nupkgPath))
+    await exec(
+      path7za,
+      compute7zCompressArgs("zip", {
+        isRegularFile: true,
+        compression: this.packager.compression,
+      }).concat(embeddedArchiveFile, "."),
+      {
+        cwd: dirToArchive,
+      },
+    )
+    await exec(
+      path7za,
+      compute7zCompressArgs("zip", {
+        isRegularFile: true,
+        compression: "store" /* nupkg is already compressed */,
+      }).concat(embeddedArchiveFile, nupkgPath),
+    )
     return embeddedArchiveFile
   }
 }
 
 async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packager: WinPackager) {
   // SW now doesn't support 0-level nupkg compressed files. It means that we are forced to use level 1 if store level requested.
-  const archive = archiver("zip", {zlib: {level: Math.max(1, (options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel))}})
+  const archive = archiver("zip", { zlib: { level: Math.max(1, options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel) } })
   const archiveOut = createWriteStream(outFile)
   const archivePromise = new Promise((resolve, reject) => {
     archive.on("error", reject)
@@ -168,17 +167,21 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   </metadata>
 </package>`
   debug(`Created NuSpec file:\n${nuspecContent}`)
-  archive.append(nuspecContent.replace(/\n/, "\r\n"), {name: `${options.name}.nuspec`})
+  archive.append(nuspecContent.replace(/\n/, "\r\n"), { name: `${options.name}.nuspec` })
 
   //noinspection SpellCheckingInspection
-  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+  archive.append(
+    `<?xml version="1.0" encoding="utf-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/${options.name}.nuspec" Id="Re0" />
   <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/1.psmdcp" Id="Re1" />
-</Relationships>`.replace(/\n/, "\r\n"), {name: ".rels", prefix: "_rels"})
+</Relationships>`.replace(/\n/, "\r\n"),
+    { name: ".rels", prefix: "_rels" },
+  )
 
   //noinspection SpellCheckingInspection
-  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+  archive.append(
+    `<?xml version="1.0" encoding="utf-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />
   <Default Extension="nuspec" ContentType="application/octet" />
@@ -194,9 +197,12 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <Default Extension="shasum" ContentType="text/plain" />
   <Default Extension="mp3" ContentType="audio/mpeg" />
   <Default Extension="node" ContentType="application/octet" />
-</Types>`.replace(/\n/, "\r\n"), {name: "[Content_Types].xml"})
+</Types>`.replace(/\n/, "\r\n"),
+    { name: "[Content_Types].xml" },
+  )
 
-  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+  archive.append(
+    `<?xml version="1.0" encoding="utf-8"?>
 <coreProperties xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
   <dc:creator>${author}</dc:creator>
@@ -206,9 +212,11 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <keywords/>
   <dc:title>${options.productName}</dc:title>
   <lastModifiedBy>NuGet, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=null;Microsoft Windows NT 6.2.9200.0;.NET Framework 4</lastModifiedBy>
-</coreProperties>`.replace(/\n/, "\r\n"), {name: "1.psmdcp", prefix: "package/services/metadata/core-properties"})
+</coreProperties>`.replace(/\n/, "\r\n"),
+    { name: "1.psmdcp", prefix: "package/services/metadata/core-properties" },
+  )
 
-  archive.file(updateFile, {name: "Update.exe", prefix: "lib/net45"})
+  archive.file(updateFile, { name: "Update.exe", prefix: "lib/net45" })
   await encodedZip(archive, directory, "lib/net45", options.vendorPath, packager)
   await archivePromise
 }
@@ -218,15 +226,12 @@ function execSw(options: SquirrelOptions, args: Array<string>) {
     env: {
       ...process.env,
       SZA_PATH: path7za,
-    }
+    },
   })
 }
 
 async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {
-  const args = [
-    "--createMsi", nupkgPath,
-    "--bootstrapperExe", setupPath
-  ]
+  const args = ["--createMsi", nupkgPath, "--bootstrapperExe", setupPath]
   await execSw(options, args)
   //noinspection SpellCheckingInspection
   await exec(path.join(options.vendorPath, "candle.exe"), ["-nologo", "-ext", "WixNetFxExtension", "-out", "Setup.wixobj", "Setup.wxs"], {
@@ -238,11 +243,7 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
   })
 
   //noinspection SpellCheckingInspection
-  await Promise.all([
-    unlink(path.join(outputDirectory, "Setup.wxs")),
-    unlink(path.join(outputDirectory, "Setup.wixobj")),
-    unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),
-  ])
+  await Promise.all([unlink(path.join(outputDirectory, "Setup.wxs")), unlink(path.join(outputDirectory, "Setup.wixobj")), unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString()))])
 }
 
 async function encodedZip(archive: any, dir: string, prefix: string, vendorPath: string, packager: WinPackager) {
@@ -274,7 +275,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
           stats: await stat(tempFile),
         })
       }
-    }
+    },
   })
   archive.finalize()
 }

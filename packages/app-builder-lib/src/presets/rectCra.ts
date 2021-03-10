@@ -12,10 +12,11 @@ export async function reactCra(projectDir: string): Promise<Configuration> {
 
   return {
     directories: {
-      buildResources: "assets"
+      buildResources: "assets",
     },
     files: ["build/**/*"],
     extraMetadata: {
-      main: "build/electron.js"
-    }
-  }}
+      main: "build/electron.js",
+    },
+  }
+}

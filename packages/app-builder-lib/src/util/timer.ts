@@ -7,8 +7,7 @@ export interface Timer {
 export class DevTimer implements Timer {
   private start = process.hrtime()
 
-  constructor(private readonly label: string) {
-  }
+  constructor(private readonly label: string) {}
 
   endAndGet(): string {
     const end = process.hrtime(this.start)

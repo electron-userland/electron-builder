@@ -72,29 +72,33 @@ async function doBuild(data: BuildTask): Promise<void> {
   }
 
   // _build method expects final effective configuration - packager.options.config is ignored
-  await packager._build({
-    ...info.configuration,
-    publish: null,
-    beforeBuild: null,
-    afterPack: null,
-    afterSign: null,
-    afterAllArtifactBuild: null,
-    onNodeModuleFile: null,
-    directories: {
-      output: projectOutDir,
-      buildResources: projectDir + path.sep + info.buildResourceDirName
+  await packager._build(
+    {
+      ...info.configuration,
+      publish: null,
+      beforeBuild: null,
+      afterPack: null,
+      afterSign: null,
+      afterAllArtifactBuild: null,
+      onNodeModuleFile: null,
+      directories: {
+        output: projectOutDir,
+        buildResources: projectDir + path.sep + info.buildResourceDirName,
+      },
     },
-  }, info.metadata, info.devMetadata, info.repositoryInfo)
+    info.metadata,
+    info.devMetadata,
+    info.repositoryInfo,
+  )
 
   // writeJson must be not used because it adds unwanted \n as last file symbol
   await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
 }
 
-doBuild(JSON.parse(process.argv[2]))
-  .catch(error => {
-    process.exitCode = 0
-    return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
-  })
+doBuild(JSON.parse(process.argv[2])).catch(error => {
+  process.exitCode = 0
+  return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
+})
 
 interface TargetInfo {
   name: string

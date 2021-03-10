@@ -16,6 +16,6 @@ export function buildForge(forgeOptions: ForgeOptions, options: PackagerOptions)
         output: path.resolve(appDir, "..", "make"),
       },
     },
-    ...options
+    ...options,
   })
 }

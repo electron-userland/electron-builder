@@ -75,11 +75,10 @@ export class AsarFilesystem {
     node.size = size
     if (unpacked) {
       node.unpacked = true
-    }
-    else {
+    } else {
       // electron expects string
       node.offset = this.offset.toString()
-      if (process.platform !== "win32" && (stat.mode & 0o100)) {
+      if (process.platform !== "win32" && stat.mode & 0o100) {
         node.executable = true
       }
       this.offset += node.size
@@ -131,8 +130,7 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
     if ((await read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
-  }
-  finally {
+  } finally {
     await close(fd)
   }
 
@@ -161,8 +159,7 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
   try {
     const offset = 8 + filesystem.headerSize + parseInt(info.offset!!, 10)
     await read(fd, buffer, 0, size, offset)
-  }
-  finally {
+  } finally {
     await close(fd)
   }
   return buffer

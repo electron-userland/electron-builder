@@ -2,7 +2,8 @@ import { Transform } from "stream"
 import { CancellationToken } from "builder-util-runtime"
 
 enum OperationKind {
-  COPY, DOWNLOAD
+  COPY,
+  DOWNLOAD,
 }
 
 export interface ProgressInfo {
@@ -48,9 +49,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
     this.delta += chunk.length
 
     const now = Date.now()
-    if (now >= this.nextUpdate
-      && this.transferred !== this.expectedBytes /* will be emitted by endRangeDownload() */
-      && this.transferred !== this.progressDifferentialDownloadInfo.grandTotal /* will be emitted on _flush */) {
+    if (now >= this.nextUpdate && this.transferred !== this.expectedBytes /* will be emitted by endRangeDownload() */ && this.transferred !== this.progressDifferentialDownloadInfo.grandTotal /* will be emitted on _flush */) {
       this.nextUpdate = now + 1000
 
       this.onProgress({
@@ -58,7 +57,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
         delta: this.delta,
         transferred: this.transferred,
         percent: (this.transferred / this.progressDifferentialDownloadInfo.grandTotal) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000))
+        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000)),
       })
       this.delta = 0
     }
@@ -84,7 +83,7 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
         delta: this.delta,
         transferred: this.transferred,
         percent: (this.transferred / this.progressDifferentialDownloadInfo.grandTotal) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000))
+        bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000)),
       })
     }
   }
@@ -101,11 +100,10 @@ export class ProgressDifferentialDownloadCallbackTransform extends Transform {
       delta: this.delta,
       transferred: this.transferred,
       percent: 100,
-      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000))
+      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000)),
     })
     this.delta = 0
     this.transferred = 0
-
 
     callback(null)
   }

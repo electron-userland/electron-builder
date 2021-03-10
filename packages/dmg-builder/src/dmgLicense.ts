@@ -1,15 +1,15 @@
 import { log } from "builder-util"
-import { load } from 'js-yaml'
+import { load } from "js-yaml"
 import { PlatformPackager } from "app-builder-lib"
 import { getLicenseFiles } from "app-builder-lib/out/util/license"
 import { readFile, readJson } from "fs-extra"
 import { getLicenseButtonsFile } from "./licenseButtons"
-import { dmgLicenseFromJSON } from 'dmg-license'
+import { dmgLicenseFromJSON } from "dmg-license"
 
 // License Specifications
 // https://github.com/argv-minus-one/dmg-license/blob/HEAD/docs/License%20Specifications.md
 type LicenseConfig = {
-  '$schema': string
+  $schema: string
   body: any[]
   labels: any[]
 }
@@ -25,16 +25,16 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   packager.debugLogger.add("dmg.licenseButtons", licenseButtonFiles)
 
   const jsonFile: LicenseConfig = {
-    "$schema": "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
+    $schema: "https://github.com/argv-minus-one/dmg-license/raw/master/schema.json",
     // defaultLang: '',
     body: [],
-    labels: []
+    labels: [],
   }
 
   for (const file of licenseFiles) {
     jsonFile.body.push({
       file: file.file,
-      lang: file.langWithRegion.replace('_', '-')
+      lang: file.langWithRegion.replace("_", "-"),
     })
   }
 
@@ -46,16 +46,18 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
       label.message = label.description
       delete label.description
     }
-    jsonFile.labels.push(Object.assign(
-      {
-        lang: button.langWithRegion.replace('_', '-')
-      },
-      label
-    ))
+    jsonFile.labels.push(
+      Object.assign(
+        {
+          lang: button.langWithRegion.replace("_", "-"),
+        },
+        label,
+      ),
+    )
   }
 
   await dmgLicenseFromJSON(dmgPath, jsonFile, {
-    onNonFatalError: log.warn.bind(log)
+    onNonFatalError: log.warn.bind(log),
   })
 
   return jsonFile

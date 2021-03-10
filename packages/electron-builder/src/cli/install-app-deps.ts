@@ -37,9 +37,8 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
 /** @internal */
 export async function installAppDeps(args: any) {
   try {
-    log.info({version: PACKAGE_VERSION}, "electron-builder")
-  }
-  catch (e) {
+    log.info({ version: PACKAGE_VERSION }, "electron-builder")
+  } catch (e) {
     // error in dev mode without babel
     if (!(e instanceof ReferenceError)) {
       throw e
@@ -50,17 +49,25 @@ export async function installAppDeps(args: any) {
   const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
   const config = await getConfig(projectDir, null, null, packageMetadata)
   const [appDir, version] = await Promise.all<string>([
-    computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
+    computeDefaultAppDirectory(
+      projectDir,
+      use(config.directories, it => it!.app),
+    ),
     getElectronVersion(projectDir, config, packageMetadata),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
-  await installOrRebuild(config, appDir, {
-    frameworkInfo: {version, useCustomDist: true},
-    platform: args.platform,
-    arch: args.arch,
-    productionDeps: createLazyProductionDeps(appDir, null),
-  }, appDir !== projectDir)
+  await installOrRebuild(
+    config,
+    appDir,
+    {
+      frameworkInfo: { version, useCustomDist: true },
+      platform: args.platform,
+      arch: args.arch,
+      productionDeps: createLazyProductionDeps(appDir, null),
+    },
+    appDir !== projectDir,
+  )
 }
 
 function main() {
@@ -69,6 +76,5 @@ function main() {
 
 if (require.main === module) {
   log.warn("please use as subcommand: electron-builder install-app-deps")
-  main()
-    .catch(printErrorAndExit)
+  main().catch(printErrorAndExit)
 }

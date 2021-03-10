@@ -18,8 +18,7 @@ export class SnapStorePublisher extends Publisher {
     let channels = this.options.channels
     if (channels == null) {
       channels = ["edge"]
-    }
-    else {
+    } else {
       if (typeof channels === "string") {
         channels = channels.split(",")
       }
