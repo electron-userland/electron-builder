@@ -4,6 +4,7 @@ language: node_js
 env:
   global:
     - FORCE_COLOR=1
+    - YARN_GPG=no
 
 matrix:
   include:
