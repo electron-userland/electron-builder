@@ -14,7 +14,7 @@
     "7zip-bin": "~5.0.3",
     "@types/debug": "^4.1.5",
     "@types/fs-extra": "^9.0.7",
-    "app-builder-bin": "3.5.12",
+    "app-builder-bin": "3.5.13",
     "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.0",
