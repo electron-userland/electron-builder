@@ -15,15 +15,15 @@ export function getBinFromUrl(name: string, version: string, checksum: string): 
   let url: string
   if (process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL) {
     url = process.env.ELECTRON_BUILDER_BINARIES_DOWNLOAD_OVERRIDE_URL + "/" + dirName + ".7z"
-  }
-  else {
-
-    const baseUrl = process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
+  } else {
+    const baseUrl =
+      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_MIRROR ||
       process.env.npm_config_electron_builder_binaries_mirror ||
       process.env.npm_package_config_electron_builder_binaries_mirror ||
       process.env.ELECTRON_BUILDER_BINARIES_MIRROR ||
       "https://github.com/electron-userland/electron-builder-binaries/releases/download/"
-    const middleUrl = process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
+    const middleUrl =
+      process.env.NPM_CONFIG_ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
       process.env.npm_config_electron_builder_binaries_custom_dir ||
       process.env.npm_package_config_electron_builder_binaries_custom_dir ||
       process.env.ELECTRON_BUILDER_BINARIES_CUSTOM_DIR ||
@@ -37,8 +37,8 @@ export function getBinFromUrl(name: string, version: string, checksum: string): 
 
 export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
-  const cacheName = process.env.ELECTRON_BUILDER_CACHE + name;
-  let promise = versionToPromise.get(cacheName);// if rejected, we will try to download again
+  const cacheName = process.env.ELECTRON_BUILDER_CACHE + name
+  let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {
     return promise

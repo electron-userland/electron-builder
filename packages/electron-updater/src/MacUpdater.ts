@@ -27,12 +27,12 @@ export class MacUpdater extends AppUpdater {
   }
 
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
-    let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info);
+    let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
 
     // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
     if (files.some(isArm64)) {
-      files = files.filter(file => (process.arch === "arm64") === isArm64(file));
+      files = files.filter(file => (process.arch === "arm64") === isArm64(file))
     }
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
@@ -72,7 +72,7 @@ export class MacUpdater extends AppUpdater {
             this._logger.info(`${requestUrl} requested`)
             if (requestUrl === "/") {
               const data = Buffer.from(`{ "url": "${getServerUrl()}${fileUrl}" }`)
-              response.writeHead(200, {"Content-Type": "application/json", "Content-Length": data.length})
+              response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
               response.end(data)
               return
             }
@@ -90,8 +90,7 @@ export class MacUpdater extends AppUpdater {
             response.on("finish", () => {
               try {
                 setImmediate(() => server.close())
-              }
-              finally {
+              } finally {
                 if (!errorOccurred) {
                   this.nativeUpdater.removeListener("error", reject)
                   resolve([])
@@ -103,8 +102,7 @@ export class MacUpdater extends AppUpdater {
             readStream.on("error", error => {
               try {
                 response.end()
-              }
-              catch (e) {
+              } catch (e) {
                 this._logger.warn(`cannot end response: ${e}`)
               }
               errorOccurred = true
@@ -121,7 +119,7 @@ export class MacUpdater extends AppUpdater {
           server.listen(0, "127.0.0.1", () => {
             this.nativeUpdater.setFeedURL({
               url: getServerUrl(),
-              headers: {"Cache-Control": "no-cache"},
+              headers: { "Cache-Control": "no-cache" },
             })
 
             this.nativeUpdater.once("error", reject)
@@ -135,7 +133,7 @@ export class MacUpdater extends AppUpdater {
             }
           })
         })
-      }
+      },
     })
   }
 

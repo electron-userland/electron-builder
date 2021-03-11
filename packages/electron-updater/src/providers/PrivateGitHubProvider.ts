@@ -18,8 +18,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   protected createRequestOptions(url: URL, headers?: OutgoingHttpHeaders | null): RequestOptions {
-    const result = super.createRequestOptions(url, headers);
-    (result as any).redirect = "manual"
+    const result = super.createRequestOptions(url, headers)
+    ;(result as any).redirect = "manual"
     return result
   }
 
@@ -38,15 +38,14 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     let result: any
     try {
       result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!!)
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw newError(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
       throw e
     }
 
-    (result as PrivateGitHubUpdateInfo).assets = releaseInfo.assets
+    ;(result as PrivateGitHubUpdateInfo).assets = releaseInfo.assets
     return result
   }
 
@@ -71,15 +70,13 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
     const url = newUrlFromBase(basePath, this.baseUrl)
     try {
-      const version = (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
+      const version = JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!)
       if (allowPrerelease) {
         return version.find((v: any) => v.prerelease) || version[0]
-      }
-      else {
+      } else {
         return version
       }
-    }
-    catch (e) {
+    } catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

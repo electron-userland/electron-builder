@@ -63,9 +63,11 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
         throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
       }
       menuCategory = sanitizeFileName(companyName)
-    }
-    else {
-      menuCategory = (options.menuCategory as string).split(/[/\\]/).map(it => sanitizeFileName(it)).join("\\")
+    } else {
+      menuCategory = (options.menuCategory as string)
+        .split(/[/\\]/)
+        .map(it => sanitizeFileName(it))
+        .join("\\")
     }
   }
 
@@ -83,15 +85,15 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
 function convertToDesktopShortcutCreationPolicy(value: boolean | undefined | string): DesktopShortcutCreationPolicy {
   if (value === false) {
     return DesktopShortcutCreationPolicy.NEVER
-  }
-  else if (value === "always") {
+  } else if (value === "always") {
     return DesktopShortcutCreationPolicy.ALWAYS
-  }
-  else {
+  } else {
     return DesktopShortcutCreationPolicy.FRESH_INSTALL
   }
 }
 
 export enum DesktopShortcutCreationPolicy {
-  FRESH_INSTALL, ALWAYS, NEVER
+  FRESH_INSTALL,
+  ALWAYS,
+  NEVER,
 }

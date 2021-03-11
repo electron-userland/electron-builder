@@ -19,12 +19,11 @@ export class ArchiveTarget extends Target {
     const format = this.name
 
     let defaultPattern: string
-    const defaultArch: Arch = defaultArchFromString(packager.platformSpecificBuildOptions.defaultArch);
+    const defaultArch: Arch = defaultArchFromString(packager.platformSpecificBuildOptions.defaultArch)
     if (packager.platform === Platform.LINUX) {
       // tslint:disable-next-line:no-invalid-template-strings
       defaultPattern = "${name}-${version}" + (arch === defaultArch ? "" : "-${arch}") + ".${ext}"
-    }
-    else {
+    } else {
       // tslint:disable-next-line:no-invalid-template-strings
       defaultPattern = "${productName}-${version}" + (arch === defaultArch ? "" : "-${arch}") + "-${os}.${ext}"
     }
@@ -40,8 +39,7 @@ export class ArchiveTarget extends Target {
     let updateInfo: any = null
     if (format.startsWith("tar.")) {
       await tar(packager.compression, format, artifactPath, appOutDir, isMac, packager.info.tempDirManager)
-    }
-    else {
+    } else {
       let withoutDir = !isMac
       let dirToArchive = appOutDir
       if (isMac) {
@@ -49,8 +47,7 @@ export class ArchiveTarget extends Target {
         const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions))
         if (fileMatchers == null) {
           dirToArchive = appOutDir
-        }
-        else {
+        } else {
           await copyFiles(fileMatchers, null, true)
           withoutDir = true
         }

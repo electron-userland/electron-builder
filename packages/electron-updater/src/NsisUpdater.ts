@@ -30,7 +30,7 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        if (isWebInstaller || await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider)) {
+        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -49,12 +49,10 @@ export class NsisUpdater extends BaseUpdater {
                 cancellationToken: downloadUpdateOptions.cancellationToken,
                 sha512: packageInfo!!.sha512,
               })
-            }
-            catch (e) {
+            } catch (e) {
               try {
                 await unlink(packageFile!!)
-              }
-              catch (ignored) {
+              } catch (ignored) {
                 // ignore
               }
 
@@ -76,8 +74,7 @@ export class NsisUpdater extends BaseUpdater {
       if (publisherName == null) {
         return null
       }
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code === "ENOENT") {
         // no app-update.yml
         return null
@@ -104,8 +101,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args))
-        .catch(e => this.dispatchError(e))
+      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -114,19 +110,17 @@ export class NsisUpdater extends BaseUpdater {
       return true
     }
 
-    _spawn(options.installerPath, args)
-      .catch((e: Error) => {
-        // https://github.com/electron-userland/electron-builder/issues/1129
-        // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-        const errorCode = (e as NodeJS.ErrnoException).code
-        this._logger.info(`Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES"`)
-        if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
-          callUsingElevation()
-        }
-        else {
-          this.dispatchError(e)
-        }
-      })
+    _spawn(options.installerPath, args).catch((e: Error) => {
+      // https://github.com/electron-userland/electron-builder/issues/1129
+      // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
+      const errorCode = (e as NodeJS.ErrnoException).code
+      this._logger.info(`Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES"`)
+      if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
+        callUsingElevation()
+      } else {
+        this.dispatchError(e)
+      }
+    })
     return true
   }
 
@@ -152,8 +146,7 @@ export class NsisUpdater extends BaseUpdater {
 
         try {
           return JSON.parse(gunzipSync(data).toString())
-        }
-        catch (e) {
+        } catch (e) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
         }
       }
@@ -173,11 +166,9 @@ export class NsisUpdater extends BaseUpdater {
       }
 
       const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
-      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions)
-        .download(blockMapDataList[0], blockMapDataList[1])
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
       return false
-    }
-    catch (e) {
+    } catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
@@ -207,10 +198,8 @@ export class NsisUpdater extends BaseUpdater {
         downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
       }
 
-      await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions)
-        .download()
-    }
-    catch (e) {
+      await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
+    } catch (e) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"
@@ -239,8 +228,7 @@ async function _spawn(exe: string, args: Array<string>): Promise<any> {
       if (process.pid !== undefined) {
         resolve(true)
       }
-    }
-    catch (error) {
+    } catch (error) {
       reject(error)
     }
   })

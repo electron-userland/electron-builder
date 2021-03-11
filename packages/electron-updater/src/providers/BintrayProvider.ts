@@ -33,8 +33,7 @@ export class BintrayProvider extends Provider<UpdateInfo> {
 
       const channelFileUrl = new URL(`https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${channelFile.name}`)
       return parseUpdateInfo(await this.httpRequest(channelFileUrl), channelFilename, channelFileUrl)
-    }
-    catch (e) {
+    } catch (e) {
       if ("statusCode" in e && e.statusCode === 404) {
         throw newError(`No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
       }
