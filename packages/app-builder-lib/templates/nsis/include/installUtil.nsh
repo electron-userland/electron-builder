@@ -105,6 +105,36 @@ Var /GLOBAL isTryToKeepShortcuts
   ${endif}
 !macroend
 
+Function handleUninstallResult
+  Var /GLOBAL rootKey_uninstallResult
+  Exch $rootKey_uninstallResult
+
+  ${if} "$rootKey_uninstallResult" == "SHELL_CONTEXT"
+    !ifmacrodef customUnInstallCheck
+      !insertmacro customUnInstallCheck
+      Return
+    !endif
+  ${elseif} "$rootKey_uninstallResult" == "HKEY_CURRENT_USER"
+    !ifmacrodef customUnInstallCheckCurrentUser
+      !insertmacro customUnInstallCheckCurrentUser
+      Return
+    !endif
+  ${endif}
+
+  IfErrors 0 +3
+  DetailPrint `Uninstall was not successful. Not able to launch uninstaller!`
+  Return
+
+  ${if} $R0 != 0
+    DetailPrint `Uninstall was not successful. Uninstaller error code: $R0.`
+  ${endif}
+FunctionEnd
+
+!macro handleUninstallResult ROOT_KEY
+  Push "${ROOT_KEY}"
+  Call handleUninstallResult
+!macroend
+
 # http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
 Function uninstallOldVersion
   Var /GLOBAL uninstallerFileName
@@ -116,12 +146,16 @@ Function uninstallOldVersion
   ClearErrors
   Exch $rootKey
 
+  Push 0
+  Pop $R0
+
   !insertmacro readReg $uninstallString "$rootKey" "${UNINSTALL_REGISTRY_KEY}" UninstallString
   ${if} $uninstallString == ""
     !ifdef UNINSTALL_REGISTRY_KEY_2
       !insertmacro readReg $uninstallString "$rootKey" "${UNINSTALL_REGISTRY_KEY_2}" UninstallString
     !endif
     ${if} $uninstallString == ""
+      ClearErrors
       Goto Done
     ${endif}
   ${endif}
@@ -140,6 +174,7 @@ Function uninstallOldVersion
 
   ${if} $installationDir == ""
   ${andIf} $uninstallerFileName == ""
+    ClearErrors
     Goto Done
   ${endif}
 
@@ -172,17 +207,10 @@ Function uninstallOldVersion
   !insertmacro copyFile "$uninstallerFileName" "$uninstallerFileNameTemp"
 
   ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
-  ifErrors 0 ExecErrorHandler
+  ifErrors 0 Done
     # the execution failed - might have been caused by some group policy restrictions
     # we try to execute the uninstaller in place
     ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
-    ifErrors 0 ExecErrorHandler
-      # this also failed...
-      DetailPrint `Aborting, uninstall was not successful. Not able to launch uninstaller!`
-  ExecErrorHandler:
-  ${if} $R0 != 0
-    DetailPrint `Aborting, uninstall was not successful. Uninstaller error code: $R0.`
-  ${endif}
   Done:
 FunctionEnd
 
