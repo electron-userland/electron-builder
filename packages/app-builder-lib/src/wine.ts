@@ -11,10 +11,7 @@ export function execWine(file: string, file64: string | null = null, appArgs: Ar
     return exec(file, appArgs, options)
   }
 
-  const commandArgs = [
-    "wine",
-    "--ia32", file,
-  ]
+  const commandArgs = ["wine", "--ia32", file]
   if (file64 != null) {
     commandArgs.push("--x64", file64)
   }

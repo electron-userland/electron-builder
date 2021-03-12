@@ -10,7 +10,7 @@ const macOsVersion = new Lazy<string>(async () => {
   if (!matches) {
     throw new Error("Couldn't find the macOS version")
   }
-  log.debug({version: matches[1]}, "macOS version")
+  log.debug({ version: matches[1] }, "macOS version")
   return clean(matches[1])
 })
 
@@ -28,7 +28,7 @@ export function isMacOsHighSierra(): boolean {
 }
 
 export async function isMacOsSierra() {
-  return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
+  return process.platform === "darwin" && (await isOsVersionGreaterThanOrEqualTo("10.12.0"))
 }
 
 export function isMacOsCatalina() {

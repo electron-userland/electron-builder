@@ -38,7 +38,7 @@ export class ProgressCallbackTransform extends Transform {
         delta: this.delta,
         transferred: this.transferred,
         percent: (this.transferred / this.total) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000))
+        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000)),
       })
       this.delta = 0
     }
@@ -57,7 +57,7 @@ export class ProgressCallbackTransform extends Transform {
       delta: this.delta,
       transferred: this.total,
       percent: 100,
-      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000))
+      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000)),
     })
     this.delta = 0
 

@@ -27,10 +27,9 @@ export async function getElectronVersionFromInstalled(projectDir: string) {
   for (const name of electronPackages) {
     try {
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code !== "ENOENT") {
-        log.warn({name, error: e}, `cannot read electron version package.json`)
+        log.warn({ name, error: e }, `cannot read electron version package.json`)
       }
     }
   }
@@ -40,11 +39,10 @@ export async function getElectronVersionFromInstalled(projectDir: string) {
 export async function getElectronPackage(projectDir: string) {
   for (const name of electronPackages) {
     try {
-      return (await readJson(path.join(projectDir, "node_modules", name, "package.json")))
-    }
-    catch (e) {
+      return await readJson(path.join(projectDir, "node_modules", name, "package.json"))
+    } catch (e) {
       if (e.code !== "ENOENT") {
-        log.warn({name, error: e}, `cannot find electron in package.json`)
+        log.warn({ name, error: e }, `cannot find electron in package.json`)
       }
     }
   }
@@ -70,24 +68,27 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     })
     const feed = parseXml(feedXml!!)
     const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    const v = latestRelease.element("link").attribute("href").match(/\/tag\/v?([^/]+)$/)!![1]
+    const v = latestRelease
+      .element("link")
+      .attribute("href")
+      .match(/\/tag\/v?([^/]+)$/)!![1]
     return v.startsWith("v") ? v.substring(1) : v
-  }
-  else if (dependency?.version === "latest") {
-    log.warn("Electron version is set to \"latest\", but it is recommended to set it to some more restricted version range.")
+  } else if (dependency?.version === "latest") {
+    log.warn('Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')
     try {
-      const releaseInfo = JSON.parse((await httpExecutor.request({
-        hostname: "github.com",
-        path: `/electron/${dependency.name === "electron-nightly" ? "nightlies" : "electron"}/releases/latest`,
-        headers: {
-          accept: "application/json",
-        },
-      }))!!)
-      const version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-      log.info({version}, `resolve ${dependency.name}@${dependency.version}`)
+      const releaseInfo = JSON.parse(
+        (await httpExecutor.request({
+          hostname: "github.com",
+          path: `/electron/${dependency.name === "electron-nightly" ? "nightlies" : "electron"}/releases/latest`,
+          headers: {
+            accept: "application/json",
+          },
+        }))!!,
+      )
+      const version = releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+      log.info({ version }, `resolve ${dependency.name}@${dependency.version}`)
       return version
-    }
-    catch (e) {
+    } catch (e) {
       log.warn(e)
     }
 
@@ -97,7 +98,9 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   const version = dependency?.version
   if (version == null || !/^\d/.test(version)) {
     const versionMessage = version == null ? "" : ` and version ("${version}") is not fixed in project`
-    throw new InvalidConfigurationError(`Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`)
+    throw new InvalidConfigurationError(
+      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`,
+    )
   }
 
   return semver.coerce(version)!!.toString()
@@ -117,7 +120,7 @@ function findFromPackageMetadata(packageData: any): NameAndVersion | null {
       dep = dependencies == null ? null : dependencies[name]
     }
     if (dep != null) {
-      return {name, version: dep}
+      return { name, version: dep }
     }
   }
   return null

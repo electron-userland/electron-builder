@@ -4,6 +4,7 @@ import { Lazy } from "lazy-val"
 import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
 import { IconInfo } from "../platformPackager"
+import { join } from "path"
 
 export const installPrefix = "/opt"
 
@@ -14,8 +15,7 @@ export class LinuxTargetHelper {
 
   maxIconPath: string | null = null
 
-  constructor(private packager: LinuxPackager) {
-  }
+  constructor(private packager: LinuxPackager) {}
 
   get icons(): Promise<Array<IconInfo>> {
     return this.iconPromise.value
@@ -54,16 +54,14 @@ export class LinuxTargetHelper {
     const packager = this.packager
     const { platformSpecificBuildOptions, config } = packager
 
-    const sources = [
-        platformSpecificBuildOptions.icon,
-        config.mac?.icon ?? config.icon
-      ].filter(str => !!str) as string[]
-    
+    const sources = [platformSpecificBuildOptions.icon, config.mac?.icon ?? config.icon].filter(str => !!str) as string[]
+
     // If no explicit sources are defined, fallback to buildResources directory, then default framework icon
-    const fallbackSources = [
-        config.directories?.buildResources,
-        ...asArray(packager.getDefaultFrameworkIcon())
-      ].filter(async filepath => filepath && await exists(filepath)) as string[]
+    let fallbackSources = [...asArray(packager.getDefaultFrameworkIcon())]
+    const buildResources = config.directories?.buildResources
+    if (buildResources && (await exists(join(buildResources, "icons")))) {
+      fallbackSources = [buildResources, ...fallbackSources]
+    }
 
     // need to put here and not as default because need to resolve image size
     const result = await packager.resolveIcon(sources, fallbackSources, "set")
@@ -77,7 +75,7 @@ export class LinuxTargetHelper {
 
   async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string }): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
-    const file = destination || await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`)
+    const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
     await outputFile(file, data)
     return file
   }
@@ -155,12 +153,15 @@ export class LinuxTargetHelper {
       if (category == null) {
         // https://github.com/develar/onshape-desktop-shell/issues/48
         if (macCategory != null) {
-          log.warn({macCategory}, "cannot map macOS category to Linux. If possible mapping is known for you, please file issue to add it.")
+          log.warn({ macCategory }, "cannot map macOS category to Linux. If possible mapping is known for you, please file issue to add it.")
         }
-        log.warn({
-          reason: "linux.category is not set and cannot map from macOS",
-          docs: "https://www.electron.build/configuration/linux",
-        }, "application Linux category is set to default \"Utility\"")
+        log.warn(
+          {
+            reason: "linux.category is not set and cannot map from macOS",
+            docs: "https://www.electron.build/configuration/linux",
+          },
+          'application Linux category is set to default "Utility"',
+        )
         category = "Utility"
       }
     }

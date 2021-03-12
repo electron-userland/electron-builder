@@ -66,14 +66,13 @@ export abstract class DifferentialDownloader {
       const length = operation.end - operation.start
       if (operation.kind === OperationKind.DOWNLOAD) {
         downloadSize += length
-      }
-      else {
+      } else {
         copySize += length
       }
     }
 
     const newSize = this.blockAwareFileInfo.size
-    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length)) !== newSize) {
+    if (downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) !== newSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }
 
@@ -85,12 +84,13 @@ export abstract class DifferentialDownloader {
   private downloadFile(tasks: Array<Operation>): Promise<any> {
     const fdList: Array<OpenedFile> = []
     const closeFiles = (): Promise<Array<void>> => {
-      return Promise.all(fdList.map(openedFile => {
-        return close(openedFile.descriptor)
-          .catch(e => {
+      return Promise.all(
+        fdList.map(openedFile => {
+          return close(openedFile.descriptor).catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
-      }))
+        }),
+      )
     }
     return this.doDownloadFile(tasks, fdList)
       .then(closeFiles)
@@ -101,12 +101,10 @@ export abstract class DifferentialDownloader {
             // closeFiles never throw error, but just to be sure
             try {
               this.logger.error(`cannot close files: ${closeFilesError}`)
-            }
-            catch (errorOnLog) {
+            } catch (errorOnLog) {
               try {
                 console.error(errorOnLog)
-              }
-              catch (ignored) {
+              } catch (ignored) {
                 // ok, give up and ignore error
               }
             }
@@ -120,16 +118,17 @@ export abstract class DifferentialDownloader {
 
   private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
-    fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
+    fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
     const newFileFd = await open(this.options.newFile, "w")
-    fdList.push({descriptor: newFileFd, path: this.options.newFile})
-    const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
+    fdList.push({ descriptor: newFileFd, path: this.options.newFile })
+    const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
     await new Promise((resolve, reject) => {
       const streams: Array<any> = []
 
       // Create our download info transformer if we have one
       let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
-      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) { // TODO: Does not support multiple ranges (someone feel free to PR this!)
+      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) {
+        // TODO: Does not support multiple ranges (someone feel free to PR this!)
         const expectedByteCounts: Array<number> = []
         let grandTotalBytes = 0
 
@@ -142,7 +141,7 @@ export abstract class DifferentialDownloader {
 
         const progressDifferentialDownloadInfo: ProgressDifferentialDownloadInfo = {
           expectedByteCounts: expectedByteCounts,
-          grandTotal: grandTotalBytes
+          grandTotal: grandTotalBytes,
         }
 
         downloadInfoTransform = new ProgressDifferentialDownloadCallbackTransform(progressDifferentialDownloadInfo, this.options.cancellationToken, this.options.onProgress)
@@ -156,13 +155,12 @@ export abstract class DifferentialDownloader {
 
       // noinspection JSArrowFunctionCanBeReplacedWithShorthand
       fileOut.on("finish", () => {
-        (fileOut.close as any)(() => {
+        ;(fileOut.close as any)(() => {
           // remove from fd list because closed successfully
           fdList.splice(1, 1)
           try {
             digestTransform.validate()
-          }
-          catch (e) {
+          } catch (e) {
             reject(e)
             return
           }
@@ -178,8 +176,7 @@ export abstract class DifferentialDownloader {
         stream.on("error", reject)
         if (lastStream == null) {
           lastStream = stream
-        }
-        else {
+        } else {
           lastStream = lastStream.pipe(stream)
         }
       }
@@ -197,8 +194,8 @@ export abstract class DifferentialDownloader {
       let actualUrl: string | null = null
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      const requestOptions = this.createRequestOptions();
-      (requestOptions as any).redirect = "manual"
+      const requestOptions = this.createRequestOptions()
+      ;(requestOptions as any).redirect = "manual"
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -222,7 +219,7 @@ export abstract class DifferentialDownloader {
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
         requestOptions.headers!!.range = range
-        
+
         this.logger?.debug?.(`download range: ${range}`)
 
         // We are starting to download
@@ -237,7 +234,7 @@ export abstract class DifferentialDownloader {
           }
 
           response.pipe(firstStream, {
-            end: false
+            end: false,
           })
           response.once("end", () => {
             // Pass on that we are downloading a segment
@@ -248,8 +245,7 @@ export abstract class DifferentialDownloader {
             if (++downloadOperationCount === 100) {
               downloadOperationCount = 0
               setTimeout(() => w(index), 1000)
-            }
-            else {
+            } else {
               w(index)
             }
           })
@@ -269,7 +265,7 @@ export abstract class DifferentialDownloader {
   }
 
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
-    const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
+    const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
     const requestOptions = this.createRequestOptions()
     requestOptions.headers!!.range = `bytes=${start}-${endInclusive}`
     let position = 0

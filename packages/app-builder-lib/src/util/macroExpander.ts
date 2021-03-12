@@ -4,7 +4,7 @@ import { AppInfo } from "../appInfo"
 export function expandMacro(pattern: string, arch: string | null | undefined, appInfo: AppInfo, extra: any = {}, isProductNameSanitized = true): string {
   if (arch == null) {
     pattern = pattern
-    // tslint:disable-next-line:no-invalid-template-strings
+      // tslint:disable-next-line:no-invalid-template-strings
       .replace("-${arch}", "")
       // tslint:disable-next-line:no-invalid-template-strings
       .replace(" ${arch}", "")
@@ -57,8 +57,7 @@ export function expandMacro(pattern: string, arch: string | null | undefined, ap
         const value = extra[p1]
         if (value == null) {
           throw new InvalidConfigurationError(`cannot expand pattern "${pattern}": macro ${p1} is not defined`, "ERR_ELECTRON_BUILDER_MACRO_NOT_DEFINED")
-        }
-        else {
+        } else {
           return value
         }
       }

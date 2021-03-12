@@ -80,10 +80,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected getCscPassword(): string {
     const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
-      log.info({reason: "CSC_KEY_PASSWORD is not defined"}, "empty password will be used for code signing")
+      log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
       return ""
-    }
-    else {
+    } else {
       return password!.trim()
     }
   }
@@ -105,7 +104,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
     return this.info.callArtifactBuildCompleted({
-      file, safeArtifactName, target, arch,
+      file,
+      safeArtifactName,
+      target,
+      arch,
       packager: this,
     })
   }
@@ -145,13 +147,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-    const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
+    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
   createGetFileMatchersOptions(outDir: string, arch: Arch, customBuildOptions: PlatformSpecificBuildOptions): GetFileMatchersOptions {
     return {
-      macroExpander: it => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"}),
+      macroExpander: it => this.expandMacro(it, arch == null ? null : Arch[arch], { "/*": "{,/**/*}" }),
       customBuildOptions,
       globalOutDir: outDir,
       defaultSrc: this.projectDir,
@@ -167,19 +169,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    await this.info.installAppDependencies(this.platform, arch);
+    await this.info.installAppDependencies(this.platform, arch)
 
     if (this.info.cancellationToken.cancelled) {
       return
     }
 
     const framework = this.info.framework
-    log.info({
-      platform: platformName,
-      arch: Arch[arch],
-      [`${framework.name}`]: framework.version,
-      appOutDir: log.filePath(appOutDir),
-    }, `packaging`)
+    log.info(
+      {
+        platform: platformName,
+        arch: Arch[arch],
+        [`${framework.name}`]: framework.version,
+        appOutDir: log.filePath(appOutDir),
+      },
+      `packaging`,
+    )
 
     await framework.prepareApplicationStageDirectory({
       packager: this,
@@ -207,13 +212,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     computeParsedPatterns(extraFileMatchers)
 
     const packContext: AfterPackContext = {
-      appOutDir, outDir, arch, targets,
+      appOutDir,
+      outDir,
+      arch,
+      targets,
       packager: this,
       electronPlatformName: platformName,
     }
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : (isElectronBased(framework) ? path.join(appOutDir, "resources") : appOutDir)
+    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : isElectronBased(framework) ? path.join(appOutDir, "resources") : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
@@ -226,7 +234,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
-        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null),
+        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? { externalAllowed: true } : null),
         platformName,
       })
     }
@@ -252,25 +260,25 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const isAsar = asarOptions != null
     await this.sanityCheckPackage(appOutDir, isAsar, framework)
     if (sign) {
-      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets);
+      await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
   }
 
   protected async doSignAfterPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
-    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions);
-    const isAsar = asarOptions != null;
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
+    const isAsar = asarOptions != null
     const packContext = {
       appOutDir,
       outDir,
       arch,
       targets,
       packager: this,
-      electronPlatformName: platformName
-    };
-    await this.signApp(packContext, isAsar);
-    const afterSign = resolveFunction(this.config.afterSign, "afterSign");
+      electronPlatformName: platformName,
+    }
+    await this.signApp(packContext, isAsar)
+    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
     if (afterSign != null) {
-      await Promise.resolve(afterSign(packContext));
+      await Promise.resolve(afterSign(packContext))
     }
   }
 
@@ -279,7 +287,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, defaultDestination: string, packContext: AfterPackContext, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
+  private copyAppFiles(
+    taskManager: AsyncTaskManager,
+    asarOptions: AsarOptions | null,
+    resourcePath: string,
+    defaultDestination: string,
+    packContext: AfterPackContext,
+    platformSpecificBuildOptions: DC,
+    excludePatterns: Array<Minimatch>,
+    macroExpander: (it: string) => string,
+  ) {
     const appDir = this.info.appDir
     const config = this.config
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
@@ -292,27 +309,32 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const framework = this.info.framework
-    const transformer = createTransformer(appDir, config, isElectronCompile ? {
-      originalMain: this.info.metadata.main,
-      main: ELECTRON_COMPILE_SHIM_FILENAME,
-      ...config.extraMetadata
-    } : config.extraMetadata, framework.createTransformer == null ? null : framework.createTransformer())
+    const transformer = createTransformer(
+      appDir,
+      config,
+      isElectronCompile
+        ? {
+            originalMain: this.info.metadata.main,
+            main: ELECTRON_COMPILE_SHIM_FILENAME,
+            ...config.extraMetadata,
+          }
+        : config.extraMetadata,
+      framework.createTransformer == null ? null : framework.createTransformer(),
+    )
 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
-      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile)
-        .then(async result => {
-          if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
-            const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
-            result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))
-          }
-          return result.filter(it => it.files.length > 0)
-        })
+      return computeFileSets(matchers, this.info.isPrepackedAppAsar ? null : transformer, this, isElectronCompile).then(async result => {
+        if (!this.info.isPrepackedAppAsar && !this.info.areNodeModulesHandledExternally) {
+          const moduleFileMatcher = getNodeModuleFileMatcher(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this.info)
+          result = result.concat(await computeNodeModuleFileSets(this, moduleFileMatcher))
+        }
+        return result.filter(it => it.files.length > 0)
+      })
     }
 
     if (this.info.isPrepackedAppAsar) {
       taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info, transformer)))
-    }
-    else if (asarOptions == null) {
+    } else if (asarOptions == null) {
       // for ASAR all asar unpacked files will be extra transformed (e.g. sign of EXE and DLL) later,
       // for prepackaged asar extra transformation not supported yet,
       // so, extra transform if asar is disabled
@@ -328,8 +350,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info, combinedTransformer)))
-    }
-    else {
+    } else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", defaultDestination, {
         macroExpander,
         customBuildOptions: platformSpecificBuildOptions,
@@ -337,15 +358,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         defaultSrc: appDir,
       })
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      taskManager.addTask(_computeFileSets(mainMatchers)
-        .then(async fileSets => {
+      taskManager.addTask(
+        _computeFileSets(mainMatchers).then(async fileSets => {
           for (const fileSet of fileSets) {
             await transformFiles(transformer, fileSet)
           }
 
-          await new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter())
-            .pack(fileSets, this)
-        }))
+          await new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)
+        }),
+      )
     }
   }
 
@@ -381,9 +402,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
       //noinspection ES6MissingAwait
       if (appAsarStat == null || !appAsarStat.isFile()) {
-        log.warn({
-          solution: "enable asar and use asarUnpack to unpack files that must be externally available",
-        }, "asar usage is disabled — this is strongly not recommended")
+        log.warn(
+          {
+            solution: "enable asar and use asarUnpack to unpack files that must be externally available",
+          },
+          "asar usage is disabled — this is strongly not recommended",
+        )
       }
       return null
     }
@@ -411,11 +435,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getResourcesDir(appOutDir: string): string {
     if (this.platform === Platform.MAC) {
       return this.getMacOsResourcesDir(appOutDir)
-    }
-    else if (isElectronBased(this.info.framework)) {
+    } else if (isElectronBased(this.info.framework)) {
       return path.join(appOutDir, "resources")
-    }
-    else {
+    } else {
       return appOutDir
     }
   }
@@ -445,17 +467,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return pathPart.endsWith(".asar")
       })
       const asarPath = path.join(...pathSplit.slice(0, partWithAsarIndex + 1))
-      let mainPath = pathSplit.length > (partWithAsarIndex + 1) ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
+      let mainPath = pathSplit.length > partWithAsarIndex + 1 ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
       await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
-    }
-    else {
+    } else {
       const fullPath = path.join(resourcesDir, "app", relativeFile)
       const outStat = await statOrNull(fullPath)
       if (outStat == null) {
         throw new Error(`${messagePrefix} "${fullPath}" does not exist. Seems like a wrong configuration.`)
-      }
-      else {
+      } else {
         //noinspection ES6MissingAwait
         if (!outStat.isFile()) {
           throw new Error(`${messagePrefix} "${fullPath}" is not a file. Seems like a wrong configuration.`)
@@ -468,8 +488,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const outStat = await statOrNull(appOutDir)
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
-    }
-    else {
+    } else {
       //noinspection ES6MissingAwait
       if (!outStat.isDirectory()) {
         throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
@@ -512,12 +531,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private computeArtifactName(pattern: any, ext: string, arch: Arch | null | undefined): string {
     const archName = arch == null ? null : getArtifactArchName(arch, ext)
     return this.expandMacro(pattern, archName, {
-      ext
+      ext,
     })
   }
 
   expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
-    return doExpandMacro(pattern, arch, this.appInfo, {os: this.platform.buildConfigurationKey, ...extra}, isProductNameSanitized)
+    return doExpandMacro(pattern, arch, this.appInfo, { os: this.platform.buildConfigurationKey, ...extra }, isProductNameSanitized)
   }
 
   generateName2(ext: string | null, classifier: string | null | undefined, deployment: boolean): string {
@@ -527,7 +546,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   getTempFile(suffix: string): Promise<string> {
-    return this.info.tempDirManager.getTempFile({suffix})
+    return this.info.tempDirManager.getTempFile({ suffix })
   }
 
   get fileAssociations(): Array<FileAssociation> {
@@ -543,17 +562,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           return path.join(resourcesDir, name)
         }
       }
-    }
-    else if (custom != null && !isEmptyOrSpaces(custom)) {
+    } else if (custom != null && !isEmptyOrSpaces(custom)) {
       const resourceList = await this.resourceList
       if (resourceList.includes(custom)) {
         return path.join(resourcesDir, custom)
       }
 
       let p = path.resolve(resourcesDir, custom)
-      if (await statOrNull(p) == null) {
+      if ((await statOrNull(p)) == null) {
         p = path.resolve(this.projectDir, custom)
-        if (await statOrNull(p) == null) {
+        if ((await statOrNull(p)) == null) {
           throw new InvalidConfigurationError(`cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`)
         }
       }
@@ -575,10 +593,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return framework.getDefaultIcon(this.platform)
       }
 
-      log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
+      log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(framework.name)} icon is used`)
       return this.getDefaultFrameworkIcon()
-    }
-    else {
+    } else {
       return result[0].file
     }
   }
@@ -590,13 +607,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
-    const args = [
-      "icon",
-      "--format", outputFormat,
-      "--root", this.buildResourcesDir,
-      "--root", this.projectDir,
-      "--out", path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`),
-    ]
+    const args = ["icon", "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir, "--out", path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`)]
     for (const source of sources) {
       args.push("--input", source)
     }
@@ -611,7 +622,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (result.isFallback) {
-      log.warn({reason: "application icon is not set"}, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
+      log.warn({ reason: "application icon is not set" }, `default ${capitalizeFirstLetter(this.info.framework.name)} icon is used`)
     }
 
     return result.icons || []
@@ -671,8 +682,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
 
   try {
     p = require.resolve(p)
-  }
-  catch (e) {
+  } catch (e) {
     debug(e)
     p = path.resolve(p)
   }
@@ -682,8 +692,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
   const namedExport = m[name]
   if (namedExport == null) {
     return m.default || m
-  }
-  else {
+  } else {
     return namedExport
   }
 }

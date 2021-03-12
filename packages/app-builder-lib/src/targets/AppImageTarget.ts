@@ -13,15 +13,17 @@ import { createStageDir } from "./targetUtil"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
+  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   private readonly desktopEntry: Lazy<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun --no-sandbox %U", {
-      "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-    }))
+    this.desktopEntry = new Lazy<string>(() =>
+      helper.computeDesktopEntry(this.options, "AppRun --no-sandbox %U", {
+        "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
+      }),
+    )
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -53,17 +55,22 @@ export default class AppImageTarget extends Target {
       await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
+    if (this.packager.packagerOptions.effectiveOptionComputed != null && (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: await this.desktopEntry.value }))) {
       return
     }
 
     const args = [
       "appimage",
-      "--stage", stageDir.dir,
-      "--arch", Arch[arch],
-      "--output", artifactPath,
-      "--app", appOutDir,
-      "--configuration", (JSON.stringify({
+      "--stage",
+      stageDir.dir,
+      "--arch",
+      Arch[arch],
+      "--output",
+      artifactPath,
+      "--app",
+      appOutDir,
+      "--configuration",
+      JSON.stringify({
         productName: this.packager.appInfo.productName,
         productFilename: this.packager.appInfo.productFilename,
         desktopEntry: c[0],
@@ -71,7 +78,7 @@ export default class AppImageTarget extends Target {
         icons: c[1],
         fileAssociations: this.packager.fileAssociations,
         ...options,
-      })),
+      }),
     ]
     objectToArgs(args, {
       license,

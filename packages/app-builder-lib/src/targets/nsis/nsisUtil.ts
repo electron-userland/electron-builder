@@ -28,23 +28,20 @@ export class AppPackageHelper {
   /** @private */
   refCount = 0
 
-  constructor(private readonly elevateHelper: CopyElevateHelper) {
-  }
+  constructor(private readonly elevateHelper: CopyElevateHelper) {}
 
   async packArch(arch: Arch, target: NsisTarget): Promise<PackageFileInfo> {
     let infoPromise = this.archToFileInfo.get(arch)
     if (infoPromise == null) {
       const appOutDir = target.archs.get(arch)!
-      infoPromise = this.elevateHelper.copy(appOutDir, target)
-        .then(() => target.buildAppPackage(appOutDir, arch))
+      infoPromise = this.elevateHelper.copy(appOutDir, target).then(() => target.buildAppPackage(appOutDir, arch))
       this.archToFileInfo.set(arch, infoPromise)
     }
 
     const info = await infoPromise
     if (target.isWebInstaller) {
       this.infoToIsDelete.set(info, false)
-    }
-    else if (!this.infoToIsDelete.has(info)) {
+    } else if (!this.infoToIsDelete.has(info)) {
       this.infoToIsDelete.set(info, true)
     }
     return info
@@ -89,15 +86,14 @@ export class CopyElevateHelper {
       return promise
     }
 
-    promise = NSIS_PATH()
-      .then(it => {
-        const outFile = path.join(appOutDir, "resources", "elevate.exe")
-        const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
-        if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
-          return promise.then(() => target.packager.sign(outFile))
-        }
-        return promise
-      })
+    promise = NSIS_PATH().then(it => {
+      const outFile = path.join(appOutDir, "resources", "elevate.exe")
+      const promise = copyFile(path.join(it, "elevate.exe"), outFile, false)
+      if (target.packager.platformSpecificBuildOptions.signAndEditExecutable !== false) {
+        return promise.then(() => target.packager.sign(outFile))
+      }
+      return promise
+    })
     this.copied.set(appOutDir, promise)
     return promise
   }
@@ -168,14 +164,14 @@ export class UninstallerReader {
     const buffer = fs.readFileSync(installerPath)
     const reader = new BinaryReader(buffer)
     // IMAGE_DOS_HEADER
-    if (!reader.match([ 0x4D, 0x5A ])) {
+    if (!reader.match([0x4d, 0x5a])) {
       throw new Error("Invalid 'MZ' signature.")
     }
     reader.skip(58)
     // e_lfanew
     reader.skip(reader.uint32() - reader.position)
     // IMAGE_FILE_HEADER
-    if (!reader.match([ 0x50, 0x45, 0x00, 0x00 ])) {
+    if (!reader.match([0x50, 0x45, 0x00, 0x00])) {
       throw new Error("Invalid 'PE' signature.")
     }
     reader.skip(2)
@@ -211,7 +207,7 @@ export class UninstallerReader {
     const executable = buffer.subarray(0, nsisOffset)
     const nsisSize = buffer.length - nsisOffset
     const nsisReader = new BinaryReader(buffer.subarray(nsisOffset, nsisOffset + nsisSize))
-    const nsisSignature = [ 0xEF, 0xBE, 0xAD, 0xDE, 0x4E, 0x75, 0x6C, 0x6C, 0x73, 0x6F, 0x66, 0x74, 0x49, 0x6E, 0x73, 0x74 ]
+    const nsisSignature = [0xef, 0xbe, 0xad, 0xde, 0x4e, 0x75, 0x6c, 0x6c, 0x73, 0x6f, 0x66, 0x74, 0x49, 0x6e, 0x73, 0x74]
     nsisReader.uint32() // ?
     if (!nsisReader.match(nsisSignature)) {
       throw new Error("Invalid signature.")
@@ -225,8 +221,8 @@ export class UninstallerReader {
     while (true) {
       let size = nsisReader.uint32()
       const compressed = (size & 0x80000000) !== 0
-      size = size & 0x7FFFFFFF
-      if (size === 0 || (nsisReader.position + size) > nsisReader.length || nsisReader.position >= nsisReader.length) {
+      size = size & 0x7fffffff
+      if (size === 0 || nsisReader.position + size > nsisReader.length || nsisReader.position >= nsisReader.length) {
         break
       }
       let buffer = nsisReader.bytes(size)

@@ -68,7 +68,7 @@ export class XElement {
 const NAME_REG_EXP = new RegExp(/^[A-Za-z_][:A-Za-z0-9_-]*$/i)
 
 function isValidName(name: string) {
-  return (NAME_REG_EXP.test(name))
+  return NAME_REG_EXP.test(name)
 }
 
 function isNameEquals(element: XElement, name: string, ignoreCase: boolean) {
@@ -87,8 +87,7 @@ export function parseXml(data: string): XElement {
 
     if (rootElement === null) {
       rootElement = element
-    }
-    else {
+    } else {
       const parent = elements[elements.length - 1]
       if (parent.elements == null) {
         parent.elements = []

@@ -1,5 +1,9 @@
 export enum Arch {
-  ia32, x64, armv7l, arm64, universal
+  ia32,
+  x64,
+  armv7l,
+  arm64,
+  universal,
 }
 
 export type ArchType = "x64" | "ia32" | "armv7l" | "arm64" | "universal"
@@ -46,7 +50,7 @@ export function archFromString(name: string): Arch {
 }
 
 export function defaultArchFromString(name?: string): Arch {
-  return name ? archFromString(name) : Arch.x64;
+  return name ? archFromString(name) : Arch.x64
 }
 
 export function getArtifactArchName(arch: Arch, ext: string): string {
@@ -55,25 +59,20 @@ export function getArtifactArchName(arch: Arch, ext: string): string {
   if (arch === Arch.x64) {
     if (isAppImage || ext === "rpm") {
       archName = "x86_64"
-    }
-    else if (ext === "deb" || ext === "snap") {
+    } else if (ext === "deb" || ext === "snap") {
       archName = "amd64"
     }
-  }
-  else if (arch === Arch.ia32) {
+  } else if (arch === Arch.ia32) {
     if (ext === "deb" || isAppImage || ext === "snap") {
       archName = "i386"
-    }
-    else if (ext === "pacman" || ext === "rpm") {
+    } else if (ext === "pacman" || ext === "rpm") {
       archName = "i686"
     }
-  }
-  else if (arch === Arch.armv7l) {
+  } else if (arch === Arch.armv7l) {
     if (ext === "snap") {
       archName = "armhf"
     }
-  }
-  else if (arch === Arch.arm64) {
+  } else if (arch === Arch.arm64) {
     if (ext === "pacman" || ext === "rpm") {
       archName = "aarch64"
     }

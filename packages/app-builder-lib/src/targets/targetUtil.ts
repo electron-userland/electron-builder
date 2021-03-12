@@ -5,8 +5,7 @@ import { Arch, debug } from "builder-util"
 import { PlatformPackager } from "../platformPackager"
 
 export class StageDir {
-  constructor(readonly dir: string) {
-  }
+  constructor(readonly dir: string) {}
 
   getTempFile(name: string) {
     return this.dir + path.sep + name

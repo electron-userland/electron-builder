@@ -15,7 +15,7 @@ import { createStageDirPath } from "./targetUtil"
 const defaultPlugs = ["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]
 
 export default class SnapTarget extends Target {
-  readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
+  readonly options: SnapOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
   public isUseTemplateApp = false
 
@@ -54,10 +54,7 @@ export default class SnapTarget extends Target {
     const defaultStagePackages = getDefaultStagePackages()
     const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
 
-    this.isUseTemplateApp = this.options.useTemplateApp !== false &&
-      (arch === Arch.x64 || arch === Arch.armv7l) &&
-      buildPackages.length === 0 &&
-      isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
+    this.isUseTemplateApp = this.options.useTemplateApp !== false && (arch === Arch.x64 || arch === Arch.armv7l) && buildPackages.length === 0 && isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
 
     const appDescriptor: any = {
       command: "command.sh",
@@ -94,7 +91,7 @@ export default class SnapTarget extends Target {
         snap.slots[slotName] = slotOptions
       }
     }
-    
+
     deepAssign(snap, {
       name: snapName,
       version: appInfo.version,
@@ -103,12 +100,12 @@ export default class SnapTarget extends Target {
       description: this.helper.getDescription(options),
       architectures: [toLinuxArchString(arch, "snap")],
       apps: {
-        [snapName]: appDescriptor
+        [snapName]: appDescriptor,
       },
       parts: {
         app: {
           "stage-packages": stagePackages,
-        }
+        },
       },
     })
 
@@ -119,8 +116,7 @@ export default class SnapTarget extends Target {
     if (options.confinement === "classic") {
       delete appDescriptor.plugs
       delete snap.plugs
-    }
-    else {
+    } else {
       const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
         // https://github.com/electron-userland/electron-builder/issues/4007
@@ -129,12 +125,7 @@ export default class SnapTarget extends Target {
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
-        LD_LIBRARY_PATH: [
-          "$SNAP_LIBRARY_PATH",
-          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
-          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
-          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet
-        ].join(":"),
+        LD_LIBRARY_PATH: ["$SNAP_LIBRARY_PATH", "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet, "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib", "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet].join(":"),
         ...options.environment,
       }
 
@@ -183,14 +174,7 @@ export default class SnapTarget extends Target {
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
-    const args = [
-      "snap",
-      "--app", appOutDir,
-      "--stage", stageDir,
-      "--arch", snapArch,
-      "--output", artifactPath,
-      "--executable", this.packager.executableName,
-    ]
+    const args = ["snap", "--app", appOutDir, "--stage", stageDir, "--arch", snapArch, "--output", artifactPath, "--executable", this.packager.executableName]
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
@@ -205,7 +189,7 @@ export default class SnapTarget extends Target {
     const desktopFile = path.join(snapMetaDir, "gui", `${snap.name}.desktop`)
     await this.helper.writeDesktopEntry(this.options, packager.executableName + " %U", desktopFile, {
       // tslint:disable:no-invalid-template-strings
-      Icon: "${SNAP}/meta/gui/icon.png"
+      Icon: "${SNAP}/meta/gui/icon.png",
     })
 
     if (this.isElectronVersionGreaterOrEqualThan("5.0.0") && !isBrowserSandboxAllowed(snap)) {
@@ -215,7 +199,7 @@ export default class SnapTarget extends Target {
       }
     }
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile, args})) {
+    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
       return
     }
 
@@ -237,7 +221,7 @@ export default class SnapTarget extends Target {
       target: this,
       arch,
       packager,
-      publishConfig: options.publish == null ? {provider: "snapStore"} : null,
+      publishConfig: options.publish == null ? { provider: "snapStore" } : null,
     })
   }
 
@@ -271,17 +255,16 @@ function isArrayEqualRegardlessOfSort(a: Array<string>, b: Array<string>) {
   return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: {[name: string]: any } | null } | null {
+function normalizePlugConfiguration(raw: Array<string | PlugDescriptor> | PlugDescriptor | null | undefined): { [key: string]: { [name: string]: any } | null } | null {
   if (raw == null) {
     return null
   }
 
   const result: any = {}
-  for (const item of (Array.isArray(raw) ? raw : [raw])) {
+  for (const item of Array.isArray(raw) ? raw : [raw]) {
     if (typeof item === "string") {
       result[item] = null
-    }
-    else {
+    } else {
       Object.assign(result, item)
     }
   }

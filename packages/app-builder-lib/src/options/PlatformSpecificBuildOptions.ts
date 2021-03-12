@@ -159,7 +159,7 @@ export interface Protocol {
 
   /**
    * The schemes. e.g. `["irc", "ircs"]`.
-  */
+   */
   readonly schemes: Array<string>
 
   /**

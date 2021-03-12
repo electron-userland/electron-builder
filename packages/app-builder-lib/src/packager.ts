@@ -51,11 +51,9 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
   const isUseLaunchUi = configuration.launchUiVersion !== false
   if (framework === "proton" || framework === "proton-native") {
     return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
-  }
-  else if (framework === "libui") {
+  } else if (framework === "libui") {
     return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
-  }
-  else {
+  } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
 }
@@ -206,8 +204,7 @@ export class Packager {
         const suffixPos = type.lastIndexOf(":")
         if (suffixPos > 0) {
           addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        }
-        else {
+        } else {
           for (const arch of commonArch(true)) {
             addValue(archToType, arch, type)
           }
@@ -229,13 +226,12 @@ export class Packager {
     this._appDir = this.projectDir
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
+      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
     }
 
     try {
-      log.info({version: PACKAGE_VERSION, os: require("os").release()}, "electron-builder")
-    }
-    catch (e) {
+      log.info({ version: PACKAGE_VERSION, os: require("os").release() }, "electron-builder")
+    } catch (e) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
         throw e
@@ -253,11 +249,14 @@ export class Packager {
   }
 
   async callArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
-    log.info(logFields || {
-      target: event.targetPresentableName,
-      arch: event.arch == null ? null : Arch[event.arch],
-      file: log.filePath(event.file),
-    }, "building")
+    log.info(
+      logFields || {
+        target: event.targetPresentableName,
+        arch: event.arch == null ? null : Arch[event.arch],
+        file: log.filePath(event.file),
+      },
+      "building",
+    )
     const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
     if (handler != null) {
       await Promise.resolve(handler(event))
@@ -294,8 +293,7 @@ export class Packager {
       // it is a path to config file
       configPath = configFromOptions
       configFromOptions = null
-    }
-    else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
+    } else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
       configPath = configFromOptions.extends
       delete configFromOptions.extends
     }
@@ -308,7 +306,7 @@ export class Packager {
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
     if (log.isDebugEnabled) {
-      log.debug({config: getSafeEffectiveConfig(configuration)}, "effective config")
+      log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
     }
 
     this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!!.app)
@@ -319,14 +317,13 @@ export class Packager {
     // tslint:disable:prefer-conditional-expression
     if (this.devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
       this._metadata = this.devMetadata
-    }
-    else {
+    } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      log.debug({devPackageFile, appPackageFile}, "two package.json structure is used")
+      log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
@@ -347,13 +344,16 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     this._framework = await createFrameworkInfo(this.config, this)
 
-    const commonOutDirWithoutPossibleOsMacro = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
-      os: "",
-    }))
+    const commonOutDirWithoutPossibleOsMacro = path.resolve(
+      this.projectDir,
+      expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
+        os: "",
+      }),
+    )
 
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
-      log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
+      log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
     }
 
@@ -375,7 +375,7 @@ export class Packager {
       this.toDispose.length = 0
       for (const disposer of toDispose) {
         await disposer().catch(e => {
-          log.warn({error: e}, "cannot dispose")
+          log.warn({ error: e }, "cannot dispose")
         })
       }
     })
@@ -476,14 +476,14 @@ export class Packager {
       return
     }
 
-    const frameworkInfo = {version: this.framework.version, useCustomDist: true}
+    const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
     if (config.nodeGypRebuild === true) {
       await nodeGypRebuild(platform.nodeName, Arch[arch], frameworkInfo)
     }
 
     if (config.npmRebuild === false) {
-      log.info({reason: "npmRebuild is set to false"}, "skipped dependencies rebuild")
+      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
@@ -493,7 +493,7 @@ export class Packager {
         appDir: this.appDir,
         electronVersion: this.config.electronVersion!,
         platform,
-        arch: Arch[arch]
+        arch: Arch[arch],
       })
 
       // If beforeBuild resolves to false, it means that handling node_modules is done outside of electron-builder.
@@ -504,9 +504,8 @@ export class Packager {
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({reason: "platform is different and buildDependenciesFromSource is set to true"}, "skipped dependencies rebuild")
-    }
-    else {
+      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+    } else {
       await installOrRebuild(config, this.appDir, {
         frameworkInfo,
         platform: platform.nodeName,
@@ -548,11 +547,15 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     return Promise.resolve()
   }
 
-  return Promise.all(Array.from(ourDirs).sort().map(dir => {
-    return mkdirs(dir)
-      .then(() => chmod(dir, 0o755) /* set explicitly */)
-      .then(() => createdOutDirs.add(dir))
-  }))
+  return Promise.all(
+    Array.from(ourDirs)
+      .sort()
+      .map(dir => {
+        return mkdirs(dir)
+          .then(() => chmod(dir, 0o755) /* set explicitly */)
+          .then(() => createdOutDirs.add(dir))
+      }),
+  )
 }
 
 export interface BuildResult {
