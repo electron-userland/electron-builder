@@ -57,16 +57,14 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   const appOutDir = options.appOutDir
   if (packager.platform === Platform.LINUX) {
     if (!isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
-      const linuxPackager = (packager as LinuxPackager)
+      const linuxPackager = packager as LinuxPackager
       const executable = path.join(appOutDir, linuxPackager.executableName)
       await rename(path.join(appOutDir, "electron"), executable)
     }
-  }
-  else if (packager.platform === Platform.WINDOWS) {
+  } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, "electron.exe"), executable)
-  }
-  else {
+  } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
 
     const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
@@ -77,17 +75,21 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
     // noinspection SpellCheckingInspection
     const langFileExt = ".lproj"
     const resourcesDir = packager.getResourcesDir(appOutDir)
-    await BluebirdPromise.map(readdir(resourcesDir), file => {
-      if (!file.endsWith(langFileExt)) {
-        return
-      }
+    await BluebirdPromise.map(
+      readdir(resourcesDir),
+      file => {
+        if (!file.endsWith(langFileExt)) {
+          return
+        }
 
-      const language = file.substring(0, file.length - langFileExt.length)
-      if (!wantedLanguages.includes(language)) {
-        return remove(path.join(resourcesDir, file))
-      }
-      return
-    }, CONCURRENCY)
+        const language = file.substring(0, file.length - langFileExt.length)
+        if (!wantedLanguages.includes(language)) {
+          return remove(path.join(resourcesDir, file))
+        }
+        return
+      },
+      CONCURRENCY,
+    )
   }
 }
 
@@ -101,14 +103,12 @@ class ElectronFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = true
 
-  constructor(readonly name: string, readonly version: string, readonly distMacOsAppName: string) {
-  }
+  constructor(readonly name: string, readonly version: string, readonly distMacOsAppName: string) {}
 
   getDefaultIcon(platform: Platform) {
     if (platform === Platform.LINUX) {
       return path.join(getTemplatePath("icons"), "electron-linux")
-    }
-    else {
+    } else {
       // default icon is embedded into app skeleton
       return null
     }
@@ -132,8 +132,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
       if (version == null) {
         throw new Error(`Cannot compute electron version for prepacked asar`)
       }
-    }
-    else {
+    } else {
       version = await computeElectronVersion(packager.projectDir, new Lazy(() => Promise.resolve(packager.metadata)))
     }
     configuration.electronVersion = version
@@ -146,7 +145,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
   const { packager, appOutDir, platformName } = prepareOptions
 
   const electronDist = packager.config.electronDist
-  let dist: string | undefined | null = (typeof electronDist === 'function') ? electronDist(prepareOptions) : electronDist
+  let dist: string | undefined | null = typeof electronDist === "function" ? electronDist(prepareOptions) : electronDist
   if (dist != null) {
     const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
     const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
@@ -163,12 +162,11 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       return
     }
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
-  }
-  else {
+  } else {
     isFullCleanup = true
     const source = packager.getElectronSrcDir(dist)
     const destination = packager.getElectronDestinationDir(appOutDir)
-    log.info({source, destination}, "copying Electron")
+    log.info({ source, destination }, "copying Electron")
     await emptyDir(appOutDir)
     await copyDir(source, destination, {
       isUseHardLink: DO_NOT_USE_HARD_LINKS,
@@ -186,6 +184,10 @@ function cleanupAfterUnpack(prepareOptions: PrepareApplicationStageDirectoryOpti
   return Promise.all([
     isFullCleanup ? unlinkIfExists(path.join(resourcesPath, "default_app.asar")) : Promise.resolve(),
     isFullCleanup ? unlinkIfExists(path.join(out, "version")) : Promise.resolve(),
-    isMac ? Promise.resolve() : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {/* ignore */}),
+    isMac
+      ? Promise.resolve()
+      : rename(path.join(out, "LICENSE"), path.join(out, "LICENSE.electron.txt")).catch(() => {
+          /* ignore */
+        }),
   ])
 }

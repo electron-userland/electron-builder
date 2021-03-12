@@ -1,5 +1,5 @@
 import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
-import { UpdateCheckResult, UpdaterEvents } from "electron-updater"
+import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -25,7 +25,7 @@ test("check updates - no versions at all", async () => {
   await assertThat(updater.checkForUpdates()).throws()
 })
 
-async function testUpdateFromBintray(expectedEvents: UpdaterEvents[], version?: string) {
+async function testUpdateFromBintray(version?: string) {
   const updater = await createNsisUpdater(version)
   updater.allowDowngrade = true
   updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
@@ -35,6 +35,7 @@ async function testUpdateFromBintray(expectedEvents: UpdaterEvents[], version?: 
   })
 
   const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
   for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
@@ -43,45 +44,61 @@ async function testUpdateFromBintray(expectedEvents: UpdaterEvents[], version?: 
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
-  return { actualEvents, updateCheckResult }
+  await checkDownloadPromise(updateCheckResult)
+
+  expect(actualEvents).toEqual(expectedEvents)
 }
-
-const updatingEvents: UpdaterEvents[] = ["checking-for-update", "update-available", "update-downloaded"]
-const unavailableEvents: UpdaterEvents[] = ["checking-for-update", "update-not-available"]
-
-test("file url (bintray)", async () => {
-  const { actualEvents, updateCheckResult } = await testUpdateFromBintray(updatingEvents)
-  await checkDownloadPromise(updateCheckResult)
-  expect(actualEvents).toEqual(updatingEvents) 
-})
-
-test("downgrade (allowed)", async () => {
-  const { actualEvents, updateCheckResult } = await testUpdateFromBintray(updatingEvents, "2.0.0-beta.1")
-  await checkDownloadPromise(updateCheckResult)
-  expect(actualEvents).toEqual(updatingEvents) 
-})
+test("file url (bintray)", () => testUpdateFromBintray(undefined))
 
 test("downgrade (disallowed, bintray)", async () => {
-  const { actualEvents, updateCheckResult } = await testUpdateFromBintray(unavailableEvents, "2.0.0")
+  const updater = await createNsisUpdater("2.0.0")
+  updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
+    provider: "bintray",
+    owner: "actperepo",
+    package: "TestApp",
+  })
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-not-available"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
+  // noinspection JSIgnoredPromiseFromCall
   expect(updateCheckResult.downloadPromise).toBeUndefined()
-  expect(actualEvents).toEqual(unavailableEvents)
+
+  expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("downgrade (disallowed, beta)", async () => {
-  const { actualEvents, updateCheckResult } = await testUpdateFromBintray(unavailableEvents, "1.5.2-beta.4")
-  expect(updateCheckResult.downloadPromise).toBeUndefined()
-  expect(actualEvents).toEqual(unavailableEvents) 
-})
-
-test("github", async () => {
-  const updater = await createNsisUpdater()
+test.skip("downgrade (disallowed, beta)", async () => {
+  const updater = await createNsisUpdater("1.5.2-beta.4")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
   })
-  await validateDownload(updater)
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-not-available"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
+  // noinspection JSIgnoredPromiseFromCall
+  expect(updateCheckResult.downloadPromise).toBeUndefined()
+
+  expect(actualEvents).toEqual(expectedEvents)
 })
+
+test("downgrade (allowed)", () => testUpdateFromBintray("2.0.0-beta.1"))
 
 test("file url generic", async () => {
   const updater = await createNsisUpdater()

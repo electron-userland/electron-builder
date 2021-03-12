@@ -29,18 +29,19 @@ function mergePublish(config: Configuration, configFromOptions: Configuration) {
   const listOnDisk = config.publish as Array<any>
   if (listOnDisk.length === 0) {
     config.publish = publish
-  }
-  else {
+  } else {
     // apply to first
     Object.assign(listOnDisk[0], publish)
   }
 }
 
-export async function getConfig(projectDir: string,
-                                configPath: string | null,
-                                configFromOptions: Configuration | null | undefined,
-                                packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
-  const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata}
+export async function getConfig(
+  projectDir: string,
+  configPath: string | null,
+  configFromOptions: Configuration | null | undefined,
+  packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))),
+): Promise<Configuration> {
+  const configRequest: ReadConfigRequest = { packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata }
   const configAndEffectiveFile = await _getConfig<Configuration>(configRequest, configPath)
   const config = configAndEffectiveFile == null ? {} : configAndEffectiveFile.result
   if (configFromOptions != null) {
@@ -48,22 +49,20 @@ export async function getConfig(projectDir: string,
   }
 
   if (configAndEffectiveFile != null) {
-    log.info({file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile}, "loaded configuration")
+    log.info({ file: configAndEffectiveFile.configFile == null ? 'package.json ("build" field)' : configAndEffectiveFile.configFile }, "loaded configuration")
   }
 
   if (config.extends == null && config.extends !== null) {
-    const metadata = await packageMetadata.value || {}
+    const metadata = (await packageMetadata.value) || {}
     const devDependencies = metadata.devDependencies
     const dependencies = metadata.dependencies
     if ((dependencies != null && "react-scripts" in dependencies) || (devDependencies != null && "react-scripts" in devDependencies)) {
       config.extends = "react-cra"
-    }
-    else if (devDependencies != null && "electron-webpack" in devDependencies) {
+    } else if (devDependencies != null && "electron-webpack" in devDependencies) {
       let file = "electron-webpack/out/electron-builder.js"
       try {
         file = require.resolve(file)
-      }
-      catch (ignore) {
+      } catch (ignore) {
         file = require.resolve("electron-webpack/electron-builder.yml")
       }
       config.extends = `file:${file}`
@@ -73,14 +72,12 @@ export async function getConfig(projectDir: string,
   let parentConfig: Configuration | null
   if (config.extends === "react-cra") {
     parentConfig = await reactCra(projectDir)
-    log.info({preset: config.extends}, "loaded parent configuration")
-  }
-  else if (config.extends != null) {
+    log.info({ preset: config.extends }, "loaded parent configuration")
+  } else if (config.extends != null) {
     const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, config.extends)
-    log.info({file: parentConfigAndEffectiveFile.configFile}, "loaded parent configuration")
+    log.info({ file: parentConfigAndEffectiveFile.configFile }, "loaded parent configuration")
     parentConfig = parentConfigAndEffectiveFile.result
-  }
-  else {
+  } else {
     parentConfig = null
   }
 
@@ -112,9 +109,8 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
         if (prevItem.from == null && prevItem.to == null) {
           if (prevItem.filter == null) {
             prevItem.filter = [item]
-          }
-          else {
-            (prevItem.filter as Array<string>).push(item)
+          } else {
+            ;(prevItem.filter as Array<string>).push(item)
           }
           value[i] = null as any
           continue itemLoop
@@ -125,8 +121,7 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
         filter: [item],
       }
       value[i] = item
-    }
-    else if (Array.isArray(item)) {
+    } else if (Array.isArray(item)) {
       throw new Error(`${name} configuration is invalid, nested array not expected for index ${i}: ` + item)
     }
 
@@ -163,8 +158,7 @@ function mergeFiles(configuration: Configuration, parentConfiguration: Configura
         if (item.filter != null) {
           if (existingItem.filter == null) {
             existingItem.filter = item.filter.slice()
-          }
-          else {
+          } else {
             existingItem.filter = (item.filter as Array<string>).concat(existingItem.filter)
           }
         }
@@ -261,12 +255,10 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     const stat = await statOrNull(absolutePath)
     if (stat == null) {
       throw new InvalidConfigurationError(`Application directory ${userAppDir} doesn't exist`)
-    }
-    else if (!stat.isDirectory()) {
+    } else if (!stat.isDirectory()) {
       throw new InvalidConfigurationError(`Application directory ${userAppDir} is not a directory`)
-    }
-    else if (projectDir === absolutePath) {
-      log.warn({appDirectory: userAppDir}, `Specified application directory equals to project dir — superfluous or wrong configuration`)
+    } else if (projectDir === absolutePath) {
+      log.warn({ appDirectory: userAppDir }, `Specified application directory equals to project dir — superfluous or wrong configuration`)
     }
     return absolutePath
   }

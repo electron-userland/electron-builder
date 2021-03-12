@@ -20,12 +20,11 @@ export class RemoteBuilder {
   private readonly toBuild = new Map<Arch, Array<TargetInfo>>()
   private buildStarted = false
 
-  constructor(readonly packager: PlatformPackager<any>) {
-  }
+  constructor(readonly packager: PlatformPackager<any>) {}
 
   scheduleBuild(target: Target, arch: Arch, unpackedDirectory: string) {
     if (!isEnvTrue(process.env._REMOTE_BUILD) && this.packager.config.remoteBuild === false) {
-      throw new InvalidConfigurationError("Target is not supported on your OS and using of Electron Build Service is disabled (\"remoteBuild\" option)")
+      throw new InvalidConfigurationError('Target is not supported on your OS and using of Electron Build Service is disabled ("remoteBuild" option)')
     }
 
     let list = this.toBuild.get(arch)
@@ -57,7 +56,7 @@ export class RemoteBuilder {
   // noinspection JSMethodCanBeStatic
   private async _build(targets: Array<TargetInfo>, packager: PlatformPackager<any>): Promise<void> {
     if (log.isDebugEnabled) {
-      log.debug({remoteTargets: JSON.stringify(targets, null, 2)}, "remote building")
+      log.debug({ remoteTargets: JSON.stringify(targets, null, 2) }, "remote building")
     }
 
     const projectInfoManager = new ProjectInfoManager(packager.info)
@@ -80,7 +79,7 @@ export class RemoteBuilder {
         arch: targets[0].arch,
       }
 
-      const linuxPackager = (packager as LinuxPackager)
+      const linuxPackager = packager as LinuxPackager
       buildRequest.executableName = linuxPackager.executableName
     }
 
@@ -93,16 +92,20 @@ export class RemoteBuilder {
 
     const buildResourcesDir = packager.buildResourcesDir
     if (buildResourcesDir === packager.projectDir) {
-      throw new InvalidConfigurationError(`Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`)
+      throw new InvalidConfigurationError(
+        `Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`,
+      )
     }
 
     args.push("--build-resource-dir", buildResourcesDir)
 
     const result: any = await executeAppBuilderAsJson(args)
     if (result.error != null) {
-      throw new InvalidConfigurationError(`Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`, "REMOTE_BUILDER_ERROR")
-    }
-    else if (result.files != null) {
+      throw new InvalidConfigurationError(
+        `Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`,
+        "REMOTE_BUILDER_ERROR",
+      )
+    } else if (result.files != null) {
       for (const artifact of result.files) {
         const localFile = path.join(outDir, artifact.file)
         const artifactCreatedEvent = this.artifactInfoToArtifactCreatedEvent(artifact, localFile, outDir)

@@ -16,12 +16,18 @@ export function executeTasksUsingMultipleRangeRequests(differentialDownloader: D
     }
 
     const nextOffset = taskOffset + 1000
-    doExecuteTasks(differentialDownloader, {
-      tasks,
-      start: taskOffset,
-      end: Math.min(tasks.length, nextOffset),
-      oldFileFd,
-    }, out, () => w(nextOffset), reject)
+    doExecuteTasks(
+      differentialDownloader,
+      {
+        tasks,
+        start: taskOffset,
+        end: Math.min(tasks.length, nextOffset),
+        oldFileFd,
+      },
+      out,
+      () => w(nextOffset),
+      reject,
+    )
   }
   return w
 }
@@ -53,8 +59,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
       if (task.kind === OperationKind.COPY) {
         copyData(task, out, options.oldFileFd, reject, () => w(index))
-      }
-      else {
+      } else {
         const requestOptions = differentialDownloader.createRequestOptions()
         requestOptions.headers!!.Range = `bytes=${task.start}-${task.end - 1}`
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
@@ -63,7 +68,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
           }
 
           response.pipe(out, {
-            end: false
+            end: false,
           })
           response.once("end", () => w(index))
         })
@@ -94,7 +99,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
     dicer.on("error", reject)
     response.pipe(dicer)
 
-    response.on('end', () => {
+    response.on("end", () => {
       setTimeout(() => {
         request.abort()
         reject(new Error("Response ends without calling any handlers"))

@@ -8,12 +8,14 @@ import { serializeString } from "./dmgUtil"
 import { getDefaultButtons } from "./licenseDefaultButtons"
 
 export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Promise<Array<LicenseButtonsFile>> {
-  return getLicenseAssets((await packager.resourceList)
-    .filter(it => {
+  return getLicenseAssets(
+    (await packager.resourceList).filter(it => {
       const name = it.toLowerCase()
       // noinspection SpellCheckingInspection
       return name.startsWith("licensebuttons_") && (name.endsWith(".json") || name.endsWith(".yml"))
-    }), packager)
+    }),
+    packager,
+  )
 }
 
 export interface LicenseButtonsFile {
@@ -33,7 +35,8 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
 
     try {
       const fileData = load(await readFile(item.file, "utf-8")) as any
-      const buttonsStr = labelToHex(fileData.lang, item.lang, item.langWithRegion) +
+      const buttonsStr =
+        labelToHex(fileData.lang, item.lang, item.langWithRegion) +
         labelToHex(fileData.agree, item.lang, item.langWithRegion) +
         labelToHex(fileData.disagree, item.lang, item.langWithRegion) +
         labelToHex(fileData.print, item.lang, item.langWithRegion) +
@@ -45,12 +48,11 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
       data += `\n};`
 
       if (log.isDebugEnabled) {
-        log.debug({lang: item.langName, data}, `overwriting license buttons`)
+        log.debug({ lang: item.langName, data }, `overwriting license buttons`)
       }
       return data
-    }
-    catch (e) {
-      log.debug({error: e}, "cannot overwrite license buttons")
+    } catch (e) {
+      log.debug({ error: e }, "cannot overwrite license buttons")
       return data
     }
   }
@@ -60,12 +62,12 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
 
 function labelToHex(label: string, lang: string, langWithRegion: string) {
   const lbl = hexEncode(label, lang, langWithRegion).toString().toUpperCase()
-  const len = numberToHex((lbl.length / 2))
+  const len = numberToHex(lbl.length / 2)
   return len + lbl
 }
 
 function numberToHex(nb: number) {
-  return ("0" + (nb.toString(16))).slice(-2)
+  return ("0" + nb.toString(16)).slice(-2)
 }
 
 function hexEncode(str: string, lang: string, langWithRegion: string) {
@@ -79,9 +81,8 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
         hex = "3F" //?
       }
       result += hex
-    }
-    catch (e) {
-      log.debug({error: e, char: str[i]}, "cannot convert")
+    } catch (e) {
+      log.debug({ error: e, char: str[i] }, "cannot convert")
       result += "3F" //?
     }
   }
@@ -145,11 +146,9 @@ function getMacHexCode(str: string, i: number, macCodePages: any) {
   const code = str.charCodeAt(i)
   if (code < 128) {
     return code.toString(16)
-  }
-  else if (code < 256) {
+  } else if (code < 256) {
     return iconv.encode(str[i], "macroman").toString("hex")
-  }
-  else {
+  } else {
     for (let i = 0; i < macCodePages.length; i++) {
       const result = iconv.encode(str[i], macCodePages[i]).toString("hex")
       if (result !== undefined) {

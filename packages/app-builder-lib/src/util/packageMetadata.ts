@@ -24,14 +24,11 @@ async function authors(file: string, data: any) {
   let authorData
   try {
     authorData = await readFile(path.resolve(path.dirname(file), "AUTHORS"), "utf8")
-  }
-  catch (ignored) {
+  } catch (ignored) {
     return
   }
 
-  data.contributors = authorData
-    .split(/\r?\n/g)
-    .map(it => it.replace(/^\s*#.*$/, "").trim())
+  data.contributors = authorData.split(/\r?\n/g).map(it => it.replace(/^\s*#.*$/, "").trim())
 }
 
 /** @internal */
@@ -54,10 +51,10 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   checkNotEmpty("name", metadata.name)
 
   if (isEmptyOrSpaces(metadata.description)) {
-    log.warn({appPackageFile}, `description is missed in the package.json`)
+    log.warn({ appPackageFile }, `description is missed in the package.json`)
   }
   if (metadata.author == null) {
-    log.warn({appPackageFile}, `author is missed in the package.json`)
+    log.warn({ appPackageFile }, `author is missed in the package.json`)
   }
   checkNotEmpty("version", metadata.version)
 
@@ -72,7 +69,9 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
 
   const devDependencies = (metadata as any).devDependencies
   if (devDependencies != null && "electron-rebuild" in devDependencies) {
-    log.info('electron-rebuild not required if you use electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`')
+    log.info(
+      'electron-rebuild not required if you use electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`',
+    )
   }
 
   if (errors.length > 0) {
@@ -115,8 +114,7 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
   }
   for (const name of deps) {
     if (name in dependencies) {
-      errors.push(`Package "${name}" is only allowed in "devDependencies". `
-        + `Please remove it from the "dependencies" section in your package.json.`)
+      errors.push(`Package "${name}" is only allowed in "devDependencies". ` + `Please remove it from the "dependencies" section in your package.json.`)
     }
   }
 }

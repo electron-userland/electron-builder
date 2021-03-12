@@ -9,13 +9,13 @@ import { getLinuxToolsPath } from "./tools"
 
 /** @internal */
 export async function tar(compression: CompressionLevel | any | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
-  const tarFile = await tempDirManager.getTempFile({suffix: ".tar"})
+  const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs = debug7zArgs("a")
   tarArgs.push(tarFile)
   tarArgs.push(path.basename(dirToArchive))
 
   await Promise.all([
-    exec(path7za, tarArgs, {cwd: path.dirname(dirToArchive)}),
+    exec(path7za, tarArgs, { cwd: path.dirname(dirToArchive) }),
     // remove file before - 7z doesn't overwrite file, but update
     unlinkIfExists(outFile),
   ])
@@ -36,15 +36,20 @@ export async function tar(compression: CompressionLevel | any | any, format: str
     return
   }
 
-  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : (format === "tar.bz2" ? "bzip2" : "gzip"), {
+  const args = compute7zCompressArgs(format === "tar.xz" ? "xz" : format === "tar.bz2" ? "bzip2" : "gzip", {
     isRegularFile: true,
     method: "DEFAULT",
     compression,
   })
   args.push(outFile, tarFile)
-  await exec(path7za, args, {
-    cwd: path.dirname(dirToArchive),
-  }, debug7z.enabled)
+  await exec(
+    path7za,
+    args,
+    {
+      cwd: path.dirname(dirToArchive),
+    },
+    debug7z.enabled,
+  )
 }
 
 export interface ArchiveOptions {
@@ -94,7 +99,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
 
     if (!isLevelSet) {
       // https://github.com/electron-userland/electron-builder/pull/3032
-      args.push("-mx=" + ((!isZip || options.compression === "maximum") ? "9" : "7"))
+      args.push("-mx=" + (!isZip || options.compression === "maximum" ? "9" : "7"))
     }
   }
 
@@ -128,8 +133,7 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
     if (options.method !== "DEFAULT") {
       args.push(`-mm=${options.method}`)
     }
-  }
-  else if (isZip || storeOnly) {
+  } else if (isZip || storeOnly) {
     args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
@@ -157,15 +161,18 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   try {
-    await exec(path7za, args, {
-      cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
-    }, debug7z.enabled)
-  }
-  catch (e) {
+    await exec(
+      path7za,
+      args,
+      {
+        cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
+      },
+      debug7z.enabled,
+    )
+  } catch (e) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
       throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
-    }
-    else {
+    } else {
       throw e
     }
   }

@@ -36,16 +36,16 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
 
     if (file.endsWith(packageJson) && file.includes(NODE_MODULES_PATTERN)) {
       return readFile(file, "utf-8")
-        .then(it => cleanupPackageJson(JSON.parse(it), {
-          isMain: false,
-          isRemovePackageScripts,
-        }))
+        .then(it =>
+          cleanupPackageJson(JSON.parse(it), {
+            isMain: false,
+            isRemovePackageScripts,
+          }),
+        )
         .catch(e => log.warn(e))
-    }
-    else if (extraTransformer != null) {
+    } else if (extraTransformer != null) {
       return extraTransformer(file)
-    }
-    else {
+    } else {
       return null
     }
   }
@@ -79,12 +79,14 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
     let changed = false
     for (const prop of Object.getOwnPropertyNames(data)) {
       // removing devDependencies from package.json breaks levelup in electron, so, remove it only from main package.json
-      if (prop[0] === "_" ||
+      if (
+        prop[0] === "_" ||
         ignoredPackageMetadataProperties.has(prop) ||
         (options.isRemovePackageScripts && prop === "scripts") ||
         (options.isMain && prop === "devDependencies") ||
         (!options.isMain && prop === "bugs") ||
-        (isRemoveBabel && prop === "babel")) {
+        (isRemoveBabel && prop === "babel")
+      ) {
         delete data[prop]
         changed = true
       }
@@ -93,8 +95,7 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
     if (changed) {
       return JSON.stringify(data, null, 2)
     }
-  }
-  catch (e) {
+  } catch (e) {
     debug(e)
   }
 
@@ -114,8 +115,7 @@ async function modifyMainPackageJson(file: string, extraMetadata: any, isRemoveP
   })
   if (serializedDataIfChanged != null) {
     return serializedDataIfChanged
-  }
-  else if (extraMetadata != null) {
+  } else if (extraMetadata != null) {
     return JSON.stringify(mainPackageData, null, 2)
   }
   return null

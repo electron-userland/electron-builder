@@ -21,11 +21,9 @@ function doLoadAutoUpdater(): AppUpdater {
   // tslint:disable:prefer-conditional-expression
   if (process.platform === "win32") {
     _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
-  }
-  else if (process.platform === "darwin") {
+  } else if (process.platform === "darwin") {
     _autoUpdater = new (require("./MacUpdater").MacUpdater)()
-  }
-  else {
+  } else {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
   }
   return _autoUpdater
@@ -35,7 +33,7 @@ Object.defineProperty(exports, "autoUpdater", {
   enumerable: true,
   get: () => {
     return _autoUpdater || doLoadAutoUpdater()
-  }
+  },
 })
 
 export interface ResolvedUpdateFileInfo {
@@ -68,8 +66,7 @@ export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
 
 export class UpdaterSignal {
-  constructor(private emitter: EventEmitter) {
-  }
+  constructor(private emitter: EventEmitter) {}
 
   /**
    * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
@@ -103,8 +100,7 @@ function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...ar
       console.log("%s %s", event, args)
       handler(...args)
     })
-  }
-  else {
+  } else {
     emitter.on(event, handler)
   }
 }
@@ -137,8 +133,7 @@ export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToA
   const search = baseUrl.search
   if (search != null && search.length !== 0) {
     result.search = search
-  }
-  else if (addRandomQueryToAvoidCaching) {
+  } else if (addRandomQueryToAvoidCaching) {
     result.search = `noCache=${Date.now().toString(32)}`
   }
   return result

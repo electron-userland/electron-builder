@@ -33,21 +33,19 @@ export class BuildCacheManager {
     this.cacheInfo = await orNullIfFileNotExist(readJson(this.cacheInfoFile))
     const oldDigest = this.cacheInfo == null ? null : this.cacheInfo.executableDigest
     if (oldDigest !== digest) {
-      log.debug({oldDigest, newDigest: digest}, "no valid cached executable found")
+      log.debug({ oldDigest, newDigest: digest }, "no valid cached executable found")
       return false
     }
 
-    log.debug({cacheFile: this.cacheFile, file: this.executableFile}, `copying cached executable`)
+    log.debug({ cacheFile: this.cacheFile, file: this.executableFile }, `copying cached executable`)
     try {
       await copyFile(this.cacheFile, this.executableFile, false)
       return true
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-        log.debug({error: e.code}, "copy cached executable failed")
-      }
-      else {
-        log.warn({error: e.stack || e}, `cannot copy cached executable`)
+        log.debug({ error: e.code }, "copy cached executable failed")
+      } else {
+        log.warn({ error: e.stack || e }, `cannot copy cached executable`)
       }
     }
     return false
@@ -59,18 +57,16 @@ export class BuildCacheManager {
     }
 
     if (this.cacheInfo == null) {
-      this.cacheInfo = {executableDigest: this.newDigest}
-    }
-    else {
+      this.cacheInfo = { executableDigest: this.newDigest }
+    } else {
       this.cacheInfo.executableDigest = this.newDigest
     }
 
     try {
       await ensureDir(this.cacheDir)
       await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
-    }
-    catch (e) {
-      log.warn({error: e.stack || e}, `cannot save build cache`)
+    } catch (e) {
+      log.warn({ error: e.stack || e }, `cannot save build cache`)
     }
   }
 }

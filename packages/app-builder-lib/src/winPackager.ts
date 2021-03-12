@@ -34,9 +34,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           // https://github.com/electron-userland/electron-builder/pull/2397
           if (platformSpecificBuildOptions.sign == null) {
             throw e
-          }
-          else {
-            log.debug({error: e}, "getCertificateFromStoreInfo error")
+          } else {
+            log.debug({ error: e }, "getCertificateFromStoreInfo error")
             return null
           }
         })
@@ -56,34 +55,34 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return Promise.resolve(null)
     }
 
-    return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-      // before then
-      .catch(e => {
-        if (e instanceof InvalidConfigurationError) {
-          throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
-        }
-        else {
-          throw e
-        }
-      })
-      .then(path => {
-        return {
-          file: path!!,
-          password: this.getCscPassword(),
-        }
-      })
+    return (
+      downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+        // before then
+        .catch(e => {
+          if (e instanceof InvalidConfigurationError) {
+            throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
+          } else {
+            throw e
+          }
+        })
+        .then(path => {
+          return {
+            file: path!!,
+            password: this.getCscPassword(),
+          }
+        })
+    )
   })
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
-  readonly vm = new Lazy<VmManager>(() => process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger))
+  readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
     const publisherName = (this.platformSpecificBuildOptions as WindowsConfiguration).publisherName
     if (publisherName === null) {
       return null
-    }
-    else if (publisherName != null) {
+    } else if (publisherName != null) {
       return asArray(publisherName)
     }
 
@@ -152,19 +151,16 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
       if (name === "nsis" || name === "portable") {
         mapper(name, outDir => new NsisTarget(this, outDir, name, getHelper()))
-      }
-      else if (name === "nsis-web") {
+      } else if (name === "nsis-web") {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
-      }
-      else {
+      } else {
         const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
           switch (name) {
             case "squirrel":
               try {
                 return require("electron-builder-squirrel-windows").default
-              }
-              catch (e) {
+              } catch (e) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
@@ -179,7 +175,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           }
         })()
 
-        mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name))
+        mapper(name, outDir => (targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name)))
       }
     }
   }
@@ -200,8 +196,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (cscInfo == null) {
       if (this.platformSpecificBuildOptions.sign != null) {
         await sign(signOptions, this)
-      }
-      else if (this.forceCodeSigning) {
+      } else if (this.forceCodeSigning) {
         throw new InvalidConfigurationError(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
       }
       return
@@ -212,20 +207,25 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     if ("file" in cscInfo) {
-      log.info({
-        file: log.filePath(file),
-        certificateFile: (cscInfo as FileCodeSigningInfo).file,
-      }, logMessagePrefix)
-    }
-    else {
+      log.info(
+        {
+          file: log.filePath(file),
+          certificateFile: (cscInfo as FileCodeSigningInfo).file,
+        },
+        logMessagePrefix,
+      )
+    } else {
       const info = cscInfo as CertificateFromStoreInfo
-      log.info({
-        file: log.filePath(file),
-        subject: info.subject,
-        thumbprint: info.thumbprint,
-        store: info.store,
-        user: info.isLocalMachineStore ? "local machine" : "current user",
-      }, logMessagePrefix)
+      log.info(
+        {
+          file: log.filePath(file),
+          subject: info.subject,
+          thumbprint: info.thumbprint,
+          store: info.store,
+          user: info.isLocalMachineStore ? "local machine" : "current user",
+        },
+        logMessagePrefix,
+      )
     }
 
     await this.doSign({
@@ -242,12 +242,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       try {
         await sign(options, this)
         break
-      }
-      catch (e) {
+      } catch (e) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
-          log.warn({error: message, attempt: i + 1}, `cannot sign`)
+          log.warn({ error: message, attempt: i + 1 }, `cannot sign`)
           continue
         }
         throw e
@@ -262,18 +261,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const args = [
       file,
-      "--set-version-string", "FileDescription", appInfo.productName,
-      "--set-version-string", "ProductName", appInfo.productName,
-      "--set-version-string", "LegalCopyright", appInfo.copyright,
-      "--set-file-version", appInfo.shortVersion || appInfo.buildVersion,
-      "--set-product-version", appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
+      "--set-version-string",
+      "FileDescription",
+      appInfo.productName,
+      "--set-version-string",
+      "ProductName",
+      appInfo.productName,
+      "--set-version-string",
+      "LegalCopyright",
+      appInfo.copyright,
+      "--set-file-version",
+      appInfo.shortVersion || appInfo.buildVersion,
+      "--set-product-version",
+      appInfo.shortVersionWindows || appInfo.getVersionInWeirdWindowsForm(),
     ]
 
     if (internalName != null) {
-      args.push(
-        "--set-version-string", "InternalName", internalName,
-        "--set-version-string", "OriginalFilename", "",
-      )
+      args.push("--set-version-string", "InternalName", internalName, "--set-version-string", "OriginalFilename", "")
     }
 
     if (requestedExecutionLevel != null && requestedExecutionLevel !== "asInvoker") {
@@ -357,8 +361,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
       if (file === exeFileName) {
         return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
-      }
-      else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      } else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
@@ -371,6 +374,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
     // noinspection JSUnusedLocalSymbols
     const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
-    await BluebirdPromise.map(fileToSign, file => this.sign(file), {concurrency: 4})
+    await BluebirdPromise.map(fileToSign, file => this.sign(file), { concurrency: 4 })
   }
 }
