@@ -1,17 +1,17 @@
 import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { safeStringifyJson } from "builder-util-runtime"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
 import * as path from "path"
-import sourceMapSupport from "source-map-support"
 import { debug, log } from "./log"
+import { install as installSourceMap } from "source-map-support"
 
 if (process.env.JEST_WORKER_ID == null) {
-  sourceMapSupport.install()
+  installSourceMap()
 }
 
 export { safeStringifyJson } from "builder-util-runtime"

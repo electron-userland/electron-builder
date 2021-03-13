@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.7",
-    "@types/js-yaml": "^3.12.6",
+    "@types/js-yaml": "^4.0.0",
     "@types/lodash.isequal": "^4.5.5"
   },
   "typings": "./out/main.d.ts",

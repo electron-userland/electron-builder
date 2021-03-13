@@ -1,10 +1,10 @@
+import { sanitizeFileName } from "app-builder-lib/out/util/sanitizeFileName"
 import { exec, log, spawn, TmpDir } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsCodeSign"
 import { ensureDir } from "fs-extra"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 
 /** @internal */
 export async function createSelfSignedCert(publisher: string) {

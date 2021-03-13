@@ -1,8 +1,8 @@
 import { asArray, isEmptyOrSpaces, log, exists } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
-import { LinuxTargetSpecificOptions } from ".."
 import { LinuxPackager } from "../linuxPackager"
+import { LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { IconInfo } from "../platformPackager"
 import { join } from "path"
 

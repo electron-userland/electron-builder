@@ -1,8 +1,9 @@
 import { BintrayOptions, CancellationToken, newError, UpdateInfo } from "builder-util-runtime"
 import { BintrayClient } from "builder-util-runtime/out/bintray"
 import { URL } from "url"
-import { getChannelFilename, newBaseUrl, Provider, ResolvedUpdateFileInfo } from "../main"
-import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, newBaseUrl } from "../util"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 export class BintrayProvider extends Provider<UpdateInfo> {
   private client: BintrayClient

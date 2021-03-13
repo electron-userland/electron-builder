@@ -8,12 +8,12 @@ For local development, you can use [yalc](https://github.com/whitecolor/yalc) in
 
 Env setup from scratch (line by line for an easy copy-paste)
 ```
-yarn global add yalc
+pnpm i yalc -g
 
 git clone https://github.com/electron-builder/electron-builder.git
 
 pushd ./electron-builder
-yarn compile
+pnpm compile
 find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
 popd
 ```
@@ -27,17 +27,17 @@ The magical script for whenever you make changes to electron-builder! Rebuilds e
 Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder, otherwise adjust path as necessary.
 ```
 pushd ../electron-builder
-yarn compile
+pnpm compile
 find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
 popd
 ```
 
 ## Pull Requests
-To check that your contributions match the project coding style make sure `yarn test` passes.
+To check that your contributions match the project coding style make sure `pnpm test` passes.
 
-[yarn](https://yarnpkg.com) is required because NPM is not reliable.
+[pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not so good as PNPM.
 
-To build project: `yarn && yarn compile`
+To build project: `pnpm i && pnpm compile`
 
 If you get strange compilation errors, try to remove all `node_modules` in the project (especially under `packages/*`).
 
@@ -83,7 +83,7 @@ TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-
 
 where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `assisted` is the test name and `/oneClickInstallerTest\.\w+$` is the path to test file.
 
-Do not forget to execute `yarn compile` before run.
+Do not forget to execute `pnpm compile` before run.
 
 ## Issues
 

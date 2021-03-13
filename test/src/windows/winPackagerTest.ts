@@ -3,7 +3,7 @@ import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
-import { remove } from "fs-extra"
+import { promises as fsPromises } from "fs"
 
 test.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
@@ -71,7 +71,7 @@ test.ifAll("win icon from icns", () => {
   }, {
     projectDirCreated: projectDir => Promise.all([
       fs.unlink(path.join(projectDir, "build", "icon.ico")),
-      remove(path.join(projectDir, "build", "icons")),
+      fsPromises.rmdir(path.join(projectDir, "build", "icons"), { recursive: true }),
     ]),
     packed: async () => {
       const file = await platformPackager!!.getIconPath()

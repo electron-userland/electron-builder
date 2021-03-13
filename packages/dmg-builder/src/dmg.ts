@@ -3,15 +3,16 @@ import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCod
 import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
+import { sanitizeFileName } from "app-builder-lib/out/util/sanitizeFileName"
 import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, retry } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
 import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
+import { release as getOsRelease } from "os"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -65,7 +66,7 @@ export class DmgTarget extends Target {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
     await spawn("hdiutil", addLogLevel(args))
-    if (this.options.internetEnabled && parseInt(require("os").release().split(".")[0], 10) < 19) {
+    if (this.options.internetEnabled && parseInt(getOsRelease().split(".")[0], 10) < 19) {
       await exec("hdiutil", addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 

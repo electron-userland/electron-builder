@@ -1,5 +1,4 @@
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
-import { net, session } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
 import ClientRequest = Electron.ClientRequest
@@ -8,7 +7,7 @@ export type LoginCallback = (username: string, password: string) => void
 export const NET_SESSION_NAME = "electron-updater"
 
 export function getNetSession(): Session {
-  return session.fromPartition(NET_SESSION_NAME, {
+  return require("electron").session.fromPartition(NET_SESSION_NAME, {
     cache: false,
   })
 }
@@ -62,7 +61,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
       this.cachedSession = getNetSession()
     }
 
-    const request = net.request({
+    const request = require("electron").net.request({
       ...options,
       session: this.cachedSession,
     })

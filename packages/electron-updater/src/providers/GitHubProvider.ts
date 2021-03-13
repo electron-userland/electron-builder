@@ -2,8 +2,9 @@ import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parse
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
-import { getChannelFilename, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
-import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 const hrefRegExp = /\/tag\/v?([^/]+)$/
 

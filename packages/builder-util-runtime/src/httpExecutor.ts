@@ -1,4 +1,4 @@
-import { createHash, Hash } from "crypto"
+import { BinaryToTextEncoding, createHash, Hash } from "crypto"
 import _debug from "debug"
 import { createWriteStream } from "fs"
 import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
@@ -343,7 +343,7 @@ export class DigestTransform extends Transform {
 
   isValidateOnEnd: boolean = true
 
-  constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: "hex" | "base64" | "latin1" = "base64") {
+  constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: BinaryToTextEncoding = "base64") {
     super()
 
     this.digester = createHash(algorithm)

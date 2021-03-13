@@ -2,7 +2,8 @@ import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFil
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../main"
+import { newUrlFromBase } from "../util"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 

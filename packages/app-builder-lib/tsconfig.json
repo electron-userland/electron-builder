@@ -9,6 +9,17 @@
     "examples": "../../scripts/jsdoc/examples",
     "access": "public"
   },
+  "references": [
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    },
+    {
+      "path": "../electron-publish"
+    }
+  ],
   "include": [
     "src/**/*.ts",
     "../../typings/*.d.ts"

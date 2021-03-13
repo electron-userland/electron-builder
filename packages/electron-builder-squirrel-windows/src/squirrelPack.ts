@@ -4,9 +4,10 @@ import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { createWriteStream, ensureDir, remove, stat, unlink, writeFile } from "fs-extra"
+import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
-import archiver from "archiver"
+import * as archiver from "archiver"
+import { promises as fsPromises } from "fs"
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")
@@ -62,7 +63,9 @@ export class SquirrelBuilder {
     const appUpdate = path.join(dirToArchive, "Update.exe")
     await Promise.all([
       copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate).then(() => packager.sign(appUpdate)),
-      Promise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))]).then(() => ensureDir(outputDirectory)),
+      Promise.all([fsPromises.rmdir(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`, { recursive: true }), fsPromises.rmdir(path.join(outputDirectory, "RELEASES"), { recursive: true })]).then(() =>
+        fsPromises.mkdir(outputDirectory, { recursive: true }),
+      ),
     ])
 
     if (isEmptyOrSpaces(options.description)) {

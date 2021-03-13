@@ -4,6 +4,17 @@
     "outDir": "out",
     "rootDir": "src"
   },
+  "references": [
+    {
+      "path": "../app-builder-lib"
+    },
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    }
+  ],
   "include": [
     "src/**/*.ts"
   ]

@@ -1,5 +1,4 @@
 import { Arch, AsyncTaskManager, log } from "builder-util"
-import sanitizeFileName from "sanitize-filename"
 import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
@@ -10,6 +9,7 @@ import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
+import { sanitizeFileName } from "./util/sanitizeFileName"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
