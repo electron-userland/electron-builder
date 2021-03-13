@@ -3,7 +3,7 @@ import { BeforeBuildContext, Target } from "./core"
 import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { PkgOptions } from "./options/pkgOptions"
@@ -90,6 +90,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * AppImage options.
    */
   readonly appImage?: AppImageOptions | null
+  /**
+   * Flatpak options.
+   */
+  readonly flatpak?: FlatpakOptions | null
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null

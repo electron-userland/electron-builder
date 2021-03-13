@@ -128,3 +128,104 @@ export interface AppImageOptions extends CommonLinuxOptions, TargetSpecificOptio
    */
   readonly license?: string | null
 }
+
+export interface FlatpakOptions extends CommonLinuxOptions, TargetSpecificOptions {
+  /**
+   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). Only plain text is supported.
+   */
+  readonly license?: string | null
+
+  /**
+   * The name of the runtime that the application uses. Defaults to `org.freedesktop.Platform`.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly runtime?: string
+
+  /**
+   * The version of the runtime that the application uses. Defaults to `20.08`.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly runtimeVersion?: string
+
+  /**
+   * The name of the development runtime that the application builds with. Defaults to `org.freedesktop.Sdk`.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly sdk?: string
+
+  /**
+   * Start with the files from the specified application. This can be used to create applications that extend another application.
+   * Defaults to [org.electronjs.Electron2.BaseApp](https://github.com/flathub/org.electronjs.Electron2.BaseApp).
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly base?: string
+
+  /**
+   * Use this specific version of the application specified in base. Defaults to `20.08`.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly baseVersion?: string
+
+  /**
+   * The branch to use when exporting the application. Defaults to `master`.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly branch?: string
+
+  /**
+   * An array of arguments passed to the flatpak build-finish command. Defaults to:
+   * ```json
+   * [
+   *   // Wayland/X11 Rendering
+   *   "--socket=wayland",
+   *   "--socket=x11",
+   *   "--share=ipc",
+   *   // Open GL
+   *   "--device=dri",
+   *   // Audio output
+   *   "--socket=pulseaudio",
+   *   // Read/write home directory access
+   *   "--filesystem=home",
+   *   // Allow communication with network
+   *   "--share=network",
+   *   // System notifications with libnotify
+   *   "--talk-name=org.freedesktop.Notifications",
+   * ]
+   * ```
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly finishArgs?: string[]
+
+  /**
+   * An array of objects specifying the modules to be built in order.
+   *
+   * See [flatpak manifest documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#flatpak-manifest).
+   */
+  readonly modules?: (string | any)[]
+
+  /**
+   * Files to copy directly into the app. Should be a list of [source, dest] tuples. Source should be a relative/absolute path to a file/directory to copy into the flatpak, and dest should be the path inside the app install prefix (e.g. /share/applications/).
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly files?: [string, string][]
+
+  /**
+   * Symlinks to create in the app files. Should be a list of [target, location] symlink tuples. Target can be either a relative or absolute path inside the app install prefix, and location should be a absolute path inside the prefix to create the symlink at.
+   *
+   * See [@malept/flatpak-bundler documentation](https://github.com/malept/flatpak-bundler#build-options).
+   */
+  readonly symlinks?: [string, string][]
+
+  /**
+   * Whether to enable the Wayland specific flags (`--enable-features=UseOzonePlatform --ozone-platform=wayland`) in the wrapper script. These flags are only available starting with Electron version 12. Defaults to `false`.
+   */
+  readonly useWaylandFlags?: boolean
+}

@@ -35,6 +35,7 @@
     "Mac",
     "appx",
     "snap",
+    "flatpak",
     "portable"
   ],
   "author": "Vladimir Krivosheev",
