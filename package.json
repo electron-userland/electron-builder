@@ -56,7 +56,7 @@
     "jsdoc-to-markdown": "^7.0.0",
     "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
-    "ts-jsdoc": "^3.1.1",
+    "ts-jsdoc": "^3.2.0",
     "typescript": "~4.2.3",
     "typescript-json-schema": "^0.50.0",
     "v8-compile-cache": "^2.3.0"

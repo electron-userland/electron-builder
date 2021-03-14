@@ -15,8 +15,6 @@ runTests().catch(error => {
 })
 
 async function runTests() {
-  process.env.BABEL_JEST_SKIP = "true"
-
   await fsPromises.rmdir(APP_BUILDER_TMP_DIR, { recursive: true })
   await fsPromises.mkdir(APP_BUILDER_TMP_DIR, { recursive: true })
   if (!process.env.CIRCLECI) {
@@ -27,6 +25,7 @@ async function runTests() {
 
   const testPatterns: Array<string> = []
   if (testFiles != null && testFiles.length !== 0) {
+    console.log(`Test files: ${testFiles}`)
     testPatterns.push(...testFiles.split(","))
   } else if (process.env.CIRCLE_NODE_INDEX != null && process.env.CIRCLE_NODE_INDEX.length !== 0) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
@@ -117,8 +116,6 @@ async function runTests() {
   if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {
     jestOptions.reporters = ["default", "jest-junit"]
   }
-
-  // console.log(JSON.stringify(jestOptions, null, 2))
 
   const testResult = await require("@jest/core").runCLI(jestOptions, jestOptions.projects)
   const exitCode = testResult.results == null || testResult.results.success ? 0 : testResult.globalConfig.testFailureExitCode

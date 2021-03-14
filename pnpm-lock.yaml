@@ -15,7 +15,7 @@ importers:
       jsdoc-to-markdown: 7.0.0
       lint-staged: 10.5.4
       prettier: 2.2.1
-      ts-jsdoc: 3.1.1_typescript@4.2.3
+      ts-jsdoc: 3.2.0_typescript@4.2.3
       typescript: 4.2.3
       typescript-json-schema: 0.50.0
       v8-compile-cache: 2.3.0
@@ -33,7 +33,7 @@ importers:
       jsdoc-to-markdown: ^7.0.0
       lint-staged: ^10.5.4
       prettier: ^2.2.1
-      ts-jsdoc: ^3.1.1
+      ts-jsdoc: ^3.2.0
       typescript: ~4.2.3
       typescript-json-schema: ^0.50.0
       v8-compile-cache: ^2.3.0
@@ -3850,6 +3850,11 @@ packages:
       '0': node >=0.6.0
     resolution:
       integrity: sha1-lpGEQOMEGnpBT4xS48V06zw+HgU=
+  /extsprintf/1.4.0:
+    engines:
+      '0': node >=0.6.0
+    resolution:
+      integrity: sha1-4mifjzVvrWLMplo6kcXfX5VRaS8=
   /fast-deep-equal/3.1.3:
     resolution:
       integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
@@ -3992,15 +3997,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-y6OAwoSIf7FyjMIv94u+b5rdheZEjzR63GTyZJm5qh4Bi+2YgwLCcI/fPFZkL5PSixOt6ZNKm+w+Hfp/Bciwow==
-  /fs-extra-p/8.1.0:
-    dependencies:
-      bluebird-lst: 1.0.9
-      fs-extra: 8.1.0
-    dev: true
-    engines:
-      node: '>=8.6'
-    resolution:
-      integrity: sha512-sCLpU5kk5CvrWZvFM9dUlqPgHrE02AEt6XYzF7kDscr5COc7DHfhNfODTXt0bkVNmt5DkvU2uJSYjorxY3bRKA==
   /fs-extra/8.1.0:
     dependencies:
       graceful-fs: 4.2.6
@@ -7425,22 +7421,22 @@ packages:
     dev: false
     resolution:
       integrity: sha1-QFkjkJWS1W94pYGENLC3hInKXys=
-  /ts-jsdoc/3.1.1_typescript@4.2.3:
+  /ts-jsdoc/3.2.0_typescript@4.2.3:
     dependencies:
       bluebird-lst: 1.0.9
-      chalk: 2.4.2
+      chalk: 4.1.0
       doctrine: 3.0.0
-      fs-extra-p: 8.1.0
+      fs-extra: 9.1.0
       source-map-support: 0.5.19
       typescript: 4.2.3
     dev: true
     engines:
-      node: '>=8.9.0'
+      node: '>=12.0.0'
     hasBin: true
     peerDependencies:
       typescript: ^3.5.2
     resolution:
-      integrity: sha512-2Uijr5DWwBPINyG0Jb+s4LWYNF1FzamA1UAu9Us7WSy+H35Xe73XLiAADwdUEWeC0rMLgf6rLNeyHW4fynwPtQ==
+      integrity: sha512-YA9KGeDcXjlAz4RaMXgSsb6OILgWfQTqp8RlNQxZ390/nX8Dd7WtnX7JMVfOUEibvPsBVBbRmDpx9FnYKlTVSg==
   /ts-node/9.1.1_typescript@4.2.3:
     dependencies:
       arg: 4.1.3
@@ -7728,7 +7724,7 @@ packages:
     dependencies:
       assert-plus: 1.0.0
       core-util-is: 1.0.2
-      extsprintf: 1.3.0
+      extsprintf: 1.4.0
     engines:
       '0': node >=0.6.0
     resolution:

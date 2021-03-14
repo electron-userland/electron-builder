@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Test
 on:
   push:
 jobs:
@@ -33,12 +33,12 @@ jobs:
           path: ~/.cache/electron
           key: v-11.0.0-electron
       - run: node ./test/out/helpers/runTests.js
-  test-windows-1:
+  test-windows:
     runs-on: windows-2019
     strategy:
       matrix:
         testFiles:
-          - filesTest,globTest,installerTest,appxTest,msiTest
+          - filesTest,globTest,installerTest,appxTest,msiTest,portableTest
           - oneClickInstallerTest,ExtraBuildTest,BuildTest,extraMetadataTest,protonTest,nsisUpdaterTest
     steps:
       - uses: actions/checkout@v2
@@ -62,6 +62,8 @@ jobs:
         with:
           path: $HOMEPATH/.cache/electron
           key: v-11.0.0-windows-electron
-      - env:
-          TEST: ${{ matrix.testFiles }}
+      - name: test
         run: node ./test/out/helpers/runTests.js
+        env:
+          TEST_FILES: ${{ matrix.TEST_FILES }}
+          FORCE_COLOR: 1
