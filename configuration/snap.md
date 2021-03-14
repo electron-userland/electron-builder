@@ -8,7 +8,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 * <code id="SnapOptions-grade">grade</code> = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or `stable` (i.e. a stable release or release candidate, which can be released to all channels).
 * <code id="SnapOptions-assumes">assumes</code> Array&lt;String&gt; | String - The list of features that must be supported by the core in order for this snap to install. To learn more, see the [Snapcraft docs](https://snapcraft.io/docs/snapcraft-top-level-metadata#heading--assumes).
 * <code id="SnapOptions-buildPackages">buildPackages</code> Array&lt;String&gt; - The list of Debian packages needs to be installed for building this snap.
-* <code id="SnapOptions-stagePackages">stagePackages</code> Array&lt;String&gt; - The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`. Defaults to `["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]`.
+* <code id="SnapOptions-stagePackages">stagePackages</code> Array&lt;String&gt; - The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`. Defaults to `["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]`.
     
     If list contains `default`, it will be replaced with the default list, so, `["default", "foo"]` can be used to add a custom package `foo` in addition to the default list.
 
