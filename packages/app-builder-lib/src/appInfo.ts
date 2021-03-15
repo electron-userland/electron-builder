@@ -33,13 +33,19 @@ export class AppInfo {
   readonly productFilename: string
 
   constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
-    this.version = info.metadata.version!!
+    this.version = info.metadata.version!
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion
     }
 
-    this.buildNumber = process.env.BUILD_NUMBER || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_BUILDNUMBER || process.env.CI_PIPELINE_IID
+    this.buildNumber =
+      process.env.BUILD_NUMBER ||
+      process.env.TRAVIS_BUILD_NUMBER ||
+      process.env.APPVEYOR_BUILD_NUMBER ||
+      process.env.CIRCLE_BUILD_NUM ||
+      process.env.BUILD_BUILDNUMBER ||
+      process.env.CI_PIPELINE_IID
     if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {
@@ -55,7 +61,7 @@ export class AppInfo {
       this.shortVersionWindows = info.metadata.shortVersionWindows
     }
 
-    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
+    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.sanitizedProductName = sanitizeFileName(this.productName)
     this.productFilename = platformSpecificOptions?.executableName != null ? sanitizeFileName(platformSpecificOptions.executableName) : this.sanitizedProductName
   }
@@ -114,7 +120,7 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.info.metadata.name!!
+    return this.info.metadata.name!
   }
 
   get linuxPackageName(): string {

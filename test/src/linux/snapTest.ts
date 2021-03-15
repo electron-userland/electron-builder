@@ -5,32 +5,37 @@ if (process.env.SNAP_TEST === "false") {
   fit("Skip snapTest suite — SNAP_TEST is set to false or Windows", () => {
     console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
   })
-}
-else if (process.platform === "win32") {
+} else if (process.platform === "win32") {
   fit("Skip snapTest suite — Windows is not supported", () => {
     console.warn("[SKIP] Skip snapTest suite — Windows is not supported")
   })
 }
 
-test.ifAll.ifDevOrLinuxCi("snap", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "sep",
+test.ifAll.ifDevOrLinuxCi(
+  "snap",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
     },
-    productName: "Sep",
-  },
-}))
+  })
+)
 
-test.ifAll.ifDevOrLinuxCi("arm", app({
-  targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
-  config: {
-    extraMetadata: {
-      name: "sep",
+test.ifAll.ifDevOrLinuxCi(
+  "arm",
+  app({
+    targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
     },
-    productName: "Sep",
-  },
-}))
+  })
+)
 
 test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
@@ -47,9 +52,9 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
           confinement: "classic",
           // otherwise "parts" will be removed
           useTemplateApp: false,
-        }
+        },
       },
-      effectiveOptionComputed: async ({snap, args}) => {
+      effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
@@ -59,18 +64,21 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   }
 })
 
-test.ifAll.ifDevOrLinuxCi("classic confinement", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "cl-co-app",
+test.ifAll.ifDevOrLinuxCi(
+  "classic confinement",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "cl-co-app",
+      },
+      productName: "Snap Electron App (classic confinement)",
+      snap: {
+        confinement: "classic",
+      },
     },
-    productName: "Snap Electron App (classic confinement)",
-    snap: {
-      confinement: "classic",
-    },
-  },
-}))
+  })
+)
 
 test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
   await assertPack("test-app-one", {
@@ -84,9 +92,9 @@ test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
         buildPackages: ["foo1", "default", "foo2"],
         // otherwise "parts" will be removed
         useTemplateApp: false,
-      }
+      },
     },
-    effectiveOptionComputed: async ({snap}) => {
+    effectiveOptionComputed: async ({ snap }) => {
       delete snap.parts.app.source
       expect(snap).toMatchSnapshot()
       return true
@@ -100,7 +108,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
       {
         "browser-sandbox": {
           interface: "browser-support",
-          "allow-sandbox": true
+          "allow-sandbox": true,
         },
       },
       "another-simple-plug-name",
@@ -108,7 +116,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
     {
       "browser-sandbox": {
         interface: "browser-support",
-        "allow-sandbox": true
+        "allow-sandbox": true,
       },
       "another-simple-plug-name": null,
     },
@@ -120,9 +128,9 @@ test.ifDevOrLinuxCi("plugs option", async () => {
           plugs: p,
           // otherwise "parts" will be removed
           useTemplateApp: false,
-        }
+        },
       },
-      effectiveOptionComputed: async ({snap, args}) => {
+      effectiveOptionComputed: async ({ snap, args }) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         expect(args).not.toContain("--exclude")
@@ -134,16 +142,16 @@ test.ifDevOrLinuxCi("plugs option", async () => {
 
 test.ifDevOrLinuxCi("slots option", async () => {
   for (const slots of [
-    [ "foo", "bar" ],
+    ["foo", "bar"],
     [
       {
-        "mpris": {
+        mpris: {
           interface: "mpris",
-          "name": "chromium"
+          name: "chromium",
         },
       },
       "another-simple-slot-name",
-    ]
+    ],
   ]) {
     await assertPack("test-app-one", {
       targets: Platform.LINUX.createTarget("snap"),
@@ -153,10 +161,10 @@ test.ifDevOrLinuxCi("slots option", async () => {
         },
         productName: "Sep",
         snap: {
-          slots
-        }
+          slots,
+        },
       },
-      effectiveOptionComputed: async ({snap, args}) => {
+      effectiveOptionComputed: async ({ snap, args }) => {
         expect(snap).toMatchSnapshot()
         return true
       },
@@ -164,74 +172,86 @@ test.ifDevOrLinuxCi("slots option", async () => {
   }
 })
 
-test.ifDevOrLinuxCi("custom env", app({
-  targets: Platform.LINUX.createTarget("snap"),
-  config: {
-    extraMetadata: {
-      name: "sep",
-    },
-    productName: "Sep",
-    snap: {
-      environment: {
-        FOO: "bar",
+test.ifDevOrLinuxCi(
+  "custom env",
+  app({
+    targets: Platform.LINUX.createTarget("snap"),
+    config: {
+      extraMetadata: {
+        name: "sep",
       },
-    }
-  },
-  effectiveOptionComputed: async ({snap}) => {
-    expect(snap).toMatchSnapshot()
-    return true
-  },
-}))
-
-test.ifDevOrLinuxCi("custom after, no desktop", app({
-  targets: Platform.LINUX.createTarget("snap"),
-  config: {
-    extraMetadata: {
-      name: "sep",
+      productName: "Sep",
+      snap: {
+        environment: {
+          FOO: "bar",
+        },
+      },
     },
-    productName: "Sep",
-    snap: {
-      after: ["bar"],
-    }
-  },
-  effectiveOptionComputed: async ({ snap }) => {
-    expect(snap).toMatchSnapshot()
-    return true
-  },
-}))
-
-test.ifDevOrLinuxCi("no desktop plugs", app({
-  targets: Platform.LINUX.createTarget("snap"),
-  config: {
-    extraMetadata: {
-      name: "sep",
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      return true
     },
-    productName: "Sep",
-    snap: {
-      plugs: ["foo", "bar"]
-    }
-  },
-  effectiveOptionComputed: async ({ snap, args }) => {
-    expect(snap).toMatchSnapshot()
-    expect(args).toContain("--exclude")
-    return true
-  },
-}))
+  })
+)
 
-test.ifAll.ifDevOrLinuxCi("auto start", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "sep",
+test.ifDevOrLinuxCi(
+  "custom after, no desktop",
+  app({
+    targets: Platform.LINUX.createTarget("snap"),
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+      snap: {
+        after: ["bar"],
+      },
     },
-    productName: "Sep",
-    snap: {
-      autoStart: true
-    }
-  },
-  effectiveOptionComputed: async ({ snap, args }) => {
-    expect(snap).toMatchSnapshot()
-    expect(snap.apps.sep.autostart).toEqual("sep.desktop")
-    return true
-  },
-}))
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "no desktop plugs",
+  app({
+    targets: Platform.LINUX.createTarget("snap"),
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+      snap: {
+        plugs: ["foo", "bar"],
+      },
+    },
+    effectiveOptionComputed: async ({ snap, args }) => {
+      expect(snap).toMatchSnapshot()
+      expect(args).toContain("--exclude")
+      return true
+    },
+  })
+)
+
+test.ifAll.ifDevOrLinuxCi(
+  "auto start",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+      snap: {
+        autoStart: true,
+      },
+    },
+    effectiveOptionComputed: async ({ snap, args }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.apps.sep.autostart).toEqual("sep.desktop")
+      return true
+    },
+  })
+)

@@ -63,9 +63,10 @@ export class SquirrelBuilder {
     const appUpdate = path.join(dirToArchive, "Update.exe")
     await Promise.all([
       copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate).then(() => packager.sign(appUpdate)),
-      Promise.all([fsPromises.rmdir(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`, { recursive: true }), fsPromises.rmdir(path.join(outputDirectory, "RELEASES"), { recursive: true })]).then(() =>
-        fsPromises.mkdir(outputDirectory, { recursive: true }),
-      ),
+      Promise.all([
+        fsPromises.rmdir(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`, { recursive: true }),
+        fsPromises.rmdir(path.join(outputDirectory, "RELEASES"), { recursive: true }),
+      ]).then(() => fsPromises.mkdir(outputDirectory, { recursive: true })),
     ])
 
     if (isEmptyOrSpaces(options.description)) {
@@ -83,7 +84,10 @@ export class SquirrelBuilder {
     await Promise.all<any>([
       pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
       copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
-      copyFile(options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), path.join(dirToArchive, "background.gif")),
+      copyFile(
+        options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"),
+        path.join(dirToArchive, "background.gif")
+      ),
     ])
 
     // releasify can be called only after pack nupkg and nupkg must be in the final output directory (where other old version nupkg can be located)
@@ -130,14 +134,14 @@ export class SquirrelBuilder {
       }).concat(embeddedArchiveFile, "."),
       {
         cwd: dirToArchive,
-      },
+      }
     )
     await exec(
       path7za,
       compute7zCompressArgs("zip", {
         isRegularFile: true,
         compression: "store" /* nupkg is already compressed */,
-      }).concat(embeddedArchiveFile, nupkgPath),
+      }).concat(embeddedArchiveFile, nupkgPath)
     )
     return embeddedArchiveFile
   }
@@ -179,7 +183,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/${options.name}.nuspec" Id="Re0" />
   <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/1.psmdcp" Id="Re1" />
 </Relationships>`.replace(/\n/, "\r\n"),
-    { name: ".rels", prefix: "_rels" },
+    { name: ".rels", prefix: "_rels" }
   )
 
   //noinspection SpellCheckingInspection
@@ -201,7 +205,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <Default Extension="mp3" ContentType="audio/mpeg" />
   <Default Extension="node" ContentType="application/octet" />
 </Types>`.replace(/\n/, "\r\n"),
-    { name: "[Content_Types].xml" },
+    { name: "[Content_Types].xml" }
   )
 
   archive.append(
@@ -216,7 +220,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <dc:title>${options.productName}</dc:title>
   <lastModifiedBy>NuGet, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=null;Microsoft Windows NT 6.2.9200.0;.NET Framework 4</lastModifiedBy>
 </coreProperties>`.replace(/\n/, "\r\n"),
-    { name: "1.psmdcp", prefix: "package/services/metadata/core-properties" },
+    { name: "1.psmdcp", prefix: "package/services/metadata/core-properties" }
   )
 
   archive.file(updateFile, { name: "Update.exe", prefix: "lib/net45" })
@@ -246,7 +250,11 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
   })
 
   //noinspection SpellCheckingInspection
-  await Promise.all([unlink(path.join(outputDirectory, "Setup.wxs")), unlink(path.join(outputDirectory, "Setup.wixobj")), unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString()))])
+  await Promise.all([
+    unlink(path.join(outputDirectory, "Setup.wxs")),
+    unlink(path.join(outputDirectory, "Setup.wixobj")),
+    unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),
+  ])
 }
 
 async function encodedZip(archive: any, dir: string, prefix: string, vendorPath: string, packager: WinPackager) {

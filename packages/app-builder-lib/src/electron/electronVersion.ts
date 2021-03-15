@@ -13,7 +13,11 @@ export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
 const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile", "electron-nightly"]
 
-export async function getElectronVersion(projectDir: string, config?: Configuration, projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<string> {
+export async function getElectronVersion(
+  projectDir: string,
+  config?: Configuration,
+  projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+): Promise<string> {
   if (config == null) {
     config = await getConfig(projectDir, null, null)
   }
@@ -56,7 +60,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     return result
   }
 
-  const dependency = findFromPackageMetadata(await projectMetadata!!.value)
+  const dependency = findFromPackageMetadata(await projectMetadata!.value)
   if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
@@ -66,12 +70,12 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
         accept: "application/xml, application/atom+xml, text/xml, */*",
       },
     })
-    const feed = parseXml(feedXml!!)
+    const feed = parseXml(feedXml!)
     const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     const v = latestRelease
       .element("link")
       .attribute("href")
-      .match(/\/tag\/v?([^/]+)$/)!![1]
+      .match(/\/tag\/v?([^/]+)$/)![1]
     return v.startsWith("v") ? v.substring(1) : v
   } else if (dependency?.version === "latest") {
     log.warn('Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')
@@ -83,7 +87,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
           headers: {
             accept: "application/json",
           },
-        }))!!,
+        }))!
       )
       const version = releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
       log.info({ version }, `resolve ${dependency.name}@${dependency.version}`)
@@ -99,11 +103,11 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   if (version == null || !/^\d/.test(version)) {
     const versionMessage = version == null ? "" : ` and version ("${version}") is not fixed in project`
     throw new InvalidConfigurationError(
-      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`,
+      `Cannot compute electron version from installed node modules - none of the possible electron modules are installed${versionMessage}.\nSee https://github.com/electron-userland/electron-builder/issues/3984#issuecomment-504968246`
     )
   }
 
-  return semver.coerce(version)!!.toString()
+  return semver.coerce(version)!.toString()
 }
 
 interface NameAndVersion {

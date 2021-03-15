@@ -245,7 +245,7 @@ test.skip("test download progress", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test"
+    url: "https://develar.s3.amazonaws.com/test",
   })
   updater.autoDownload = false
 
@@ -329,7 +329,7 @@ test.skip("cancel download with progress", async () => {
   updater.signals.progress(it => progressEvents.push(it))
 
   let cancelled = false
-  updater.signals.updateCancelled(() => cancelled = true)
+  updater.signals.updateCancelled(() => (cancelled = true))
 
   const checkResult = await updater.checkForUpdates()
   checkResult.cancellationToken!!.cancel()

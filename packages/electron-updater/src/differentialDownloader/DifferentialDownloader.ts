@@ -89,7 +89,7 @@ export abstract class DifferentialDownloader {
           return close(openedFile.descriptor).catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
-        }),
+        })
       )
     }
     return this.doDownloadFile(tasks, fdList)
@@ -218,7 +218,7 @@ export abstract class DifferentialDownloader {
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!!.range = range
+        requestOptions.headers!.range = range
 
         this.logger?.debug?.(`download range: ${range}`)
 
@@ -267,7 +267,7 @@ export abstract class DifferentialDownloader {
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
     const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
     const requestOptions = this.createRequestOptions()
-    requestOptions.headers!!.range = `bytes=${start}-${endInclusive}`
+    requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
     await this.request(requestOptions, chunk => {
       chunk.copy(buffer, position)

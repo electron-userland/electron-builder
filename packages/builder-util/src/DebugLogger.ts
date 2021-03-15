@@ -28,10 +28,10 @@ export class DebugLogger {
       }
     }
 
-    if (Array.isArray(o[lastName!!])) {
-      o[lastName!!].push(value)
+    if (Array.isArray(o[lastName!])) {
+      o[lastName!].push(value)
     } else {
-      o[lastName!!] = value
+      o[lastName!] = value
     }
   }
 

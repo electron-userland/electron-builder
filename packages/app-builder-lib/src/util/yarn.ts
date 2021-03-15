@@ -7,7 +7,7 @@ import { Configuration } from "../configuration"
 import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { NodeModuleDirInfo } from "./packageDependencies"
 
-export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
+export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
@@ -146,7 +146,7 @@ export interface RebuildOptions {
 /** @internal */
 export async function rebuild(appDir: string, options: RebuildOptions) {
   const configuration: any = {
-    dependencies: await options.productionDeps!!.value,
+    dependencies: await options.productionDeps!.value,
     nodeExecPath: process.execPath,
     platform: options.platform || process.platform,
     arch: options.arch || process.arch,

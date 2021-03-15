@@ -33,7 +33,14 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // https://github.com/electron-userland/electron-builder/issues/2535
     execFile(
       "powershell.exe",
-      ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress | ForEach-Object { [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($_)) }`],
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-InputFormat",
+        "None",
+        "-Command",
+        `Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress | ForEach-Object { [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($_)) }`,
+      ],
       {
         timeout: 20 * 1000,
       },
@@ -62,7 +69,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           resolve(null)
           return
         }
-      },
+      }
     )
   })
 }
@@ -87,14 +94,18 @@ function parseOut(out: string): any {
 
 function handleError(logger: Logger, error: Error | null, stderr: string | null): void {
   if (isOldWin6()) {
-    logger.warn(`Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
+    logger.warn(
+      `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
+    )
     return
   }
 
   try {
     execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 })
   } catch (testError) {
-    logger.warn(`Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
+    logger.warn(
+      `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
+    )
     return
   }
 

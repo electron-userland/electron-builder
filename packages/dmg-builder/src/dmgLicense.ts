@@ -51,8 +51,8 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
         {
           lang: button.langWithRegion.replace("_", "-"),
         },
-        label,
-      ),
+        label
+      )
     )
   }
 

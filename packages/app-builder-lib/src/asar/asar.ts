@@ -95,11 +95,11 @@ export class AsarFilesystem {
   }
 
   getNode(p: string): Node | null {
-    const node = this.searchNodeFromDirectory(path.dirname(p), false)!!
-    return node.files!![path.basename(p)]
+    const node = this.searchNodeFromDirectory(path.dirname(p), false)!
+    return node.files![path.basename(p)]
   }
 
-  getFile(p: string, followLinks: boolean = true): Node {
+  getFile(p: string, followLinks = true): Node {
     const info = this.getNode(p)!
     // if followLinks is false we don't resolve symlinks
     return followLinks && info.link != null ? this.getFile(info.link) : info
@@ -145,7 +145,7 @@ export async function readAsarJson(archive: string, file: string): Promise<any> 
 }
 
 async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, info: Node): Promise<Buffer> {
-  const size = info.size!!
+  const size = info.size!
   const buffer = Buffer.allocUnsafe(size)
   if (size <= 0) {
     return buffer
@@ -157,7 +157,7 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
 
   const fd = await open(filesystem.src, "r")
   try {
-    const offset = 8 + filesystem.headerSize + parseInt(info.offset!!, 10)
+    const offset = 8 + filesystem.headerSize + parseInt(info.offset!, 10)
     await read(fd, buffer, 0, size, offset)
   } finally {
     await close(fd)

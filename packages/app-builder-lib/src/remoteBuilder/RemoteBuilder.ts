@@ -49,7 +49,7 @@ export class RemoteBuilder {
     this.buildStarted = true
 
     return BluebirdPromise.mapSeries(Array.from(this.toBuild.keys()), (arch: Arch) => {
-      return this._build(this.toBuild.get(arch)!!, this.packager)
+      return this._build(this.toBuild.get(arch)!, this.packager)
     })
   }
 
@@ -93,7 +93,7 @@ export class RemoteBuilder {
     const buildResourcesDir = packager.buildResourcesDir
     if (buildResourcesDir === packager.projectDir) {
       throw new InvalidConfigurationError(
-        `Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`,
+        `Build resources dir equals to project dir and so, not sent to remote build agent. It will lead to incorrect results.\nPlease set "directories.buildResources" to separate dir or leave default ("build" directory in the project root)`
       )
     }
 
@@ -103,7 +103,7 @@ export class RemoteBuilder {
     if (result.error != null) {
       throw new InvalidConfigurationError(
         `Remote builder error (if you think that it is not your application misconfiguration issue, please file issue to https://github.com/electron-userland/electron-builder/issues):\n\n${result.error}`,
-        "REMOTE_BUILDER_ERROR",
+        "REMOTE_BUILDER_ERROR"
       )
     } else if (result.files != null) {
       for (const artifact of result.files) {

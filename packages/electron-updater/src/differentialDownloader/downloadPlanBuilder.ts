@@ -34,10 +34,10 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
     throw new Error(`no file ${name} in old blockmap`)
   }
 
-  const newFile = nameToNewBlocks.get(name)!!
+  const newFile = nameToNewBlocks.get(name)!
   let changedBlockCount = 0
 
-  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name)!!, oldEntry.offset, logger)
+  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name)!, oldEntry.offset, logger)
 
   let newOffset = blockMapFile.offset
   for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
@@ -97,7 +97,7 @@ function validateAndAdd(operation: Operation, operations: Array<Operation>, chec
       throw new Error(
         `operation (block index: ${index}, checksum: ${checksum}, kind: ${OperationKind[operation.kind]}) overlaps previous operation (checksum: ${checksum}):\n` +
           `abs: ${lastOperation.start} until ${lastOperation.end} and ${operation.start} until ${operation.end}\n` +
-          `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`,
+          `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`
       )
     }
   }

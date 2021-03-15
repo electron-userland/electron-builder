@@ -25,7 +25,7 @@ export async function createNsisUpdater(version: string = "0.0.1") {
 
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
 export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options | SpacesOptions>(data: T): Promise<string> {
-  const updateConfigPath = path.join(await tmpDir.getTempDir({prefix: "test-update-config"}), "app-update.yml")
+  const updateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "test-update-config" }), "app-update.yml")
   await outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath
 }
@@ -48,12 +48,10 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
     const downloadResult = await updateCheckResult.downloadPromise
     if (updater instanceof MacUpdater) {
       expect(downloadResult).toEqual([])
+    } else {
+      await assertThat(path.join(downloadResult!![0])).isFile()
     }
-    else {
-      await assertThat(path.join((downloadResult)!![0])).isFile()
-    }
-  }
-  else {
+  } else {
     // noinspection JSIgnoredPromiseFromCall
     expect(updateCheckResult.downloadPromise).toBeUndefined()
   }
@@ -68,16 +66,15 @@ export class TestNodeHttpExecutor extends NodeHttpExecutor {
     if (options != null && options.sha512) {
       args.push("--sha512", options.sha512)
     }
-    return executeAppBuilder(args)
-      .then(() => destination)
+    return executeAppBuilder(args).then(() => destination)
   }
 }
 
 export const httpExecutor: TestNodeHttpExecutor = new TestNodeHttpExecutor()
 
 export async function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOptions) {
-  (updater as any).httpExecutor = httpExecutor;
-  (updater as any)._testOnlyOptions = {
+  ;(updater as any).httpExecutor = httpExecutor
+  ;(updater as any)._testOnlyOptions = {
     platform: "win32",
     ...options,
   }

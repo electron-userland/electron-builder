@@ -63,7 +63,7 @@ export default class AppXTarget extends Target {
           appxPath = appxPath.replace(/\//g, "\\")
         }
         return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
-      }),
+      })
     )
 
     const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)

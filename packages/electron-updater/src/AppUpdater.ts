@@ -21,25 +21,25 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Whether to automatically download an update when it is found.
    */
-  autoDownload: boolean = true
+  autoDownload = true
 
   /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
    */
-  autoInstallOnAppQuit: boolean = true
+  autoInstallOnAppQuit = true
 
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
    *
    * If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
    */
-  allowPrerelease: boolean = false
+  allowPrerelease = false
 
   /**
    * *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
    * @default false
    */
-  fullChangelog: boolean = false
+  fullChangelog = false
 
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
@@ -48,7 +48,7 @@ export abstract class AppUpdater extends EventEmitter {
    *
    * @default false
    */
-  allowDowngrade: boolean = false
+  allowDowngrade = false
 
   /**
    * The current application version.
@@ -309,7 +309,10 @@ export abstract class AppUpdater extends EventEmitter {
   private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(
+        `This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`,
+        "ERR_UPDATER_INVALID_VERSION"
+      )
     }
 
     const currentVersion = this.currentVersion
@@ -364,7 +367,9 @@ export abstract class AppUpdater extends EventEmitter {
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
-      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
+      this._logger.info(
+        `Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+      )
       this.emit("update-not-available", updateInfo)
       return {
         versionInfo: updateInfo,
@@ -389,7 +394,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(
       `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
         .map(it => it.url)
-        .join(", ")})`,
+        .join(", ")})`
     )
     this.emit("update-available", updateInfo)
   }
@@ -409,7 +414,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
         .map(it => it.url)
-        .join(", ")}`,
+        .join(", ")}`
     )
     const errorHandler = (e: Error): Error => {
       // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159
@@ -584,7 +589,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!!({
+      await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
       })

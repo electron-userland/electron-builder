@@ -20,7 +20,13 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
   })
 }
 
-function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperRendererPlist: string | null, helperPluginPlist: string | null, helperGPUPlist: string | null) {
+function getAvailableHelperSuffixes(
+  helperEHPlist: string | null,
+  helperNPPlist: string | null,
+  helperRendererPlist: string | null,
+  helperPluginPlist: string | null,
+  helperGPUPlist: string | null
+) {
   const result = [" Helper"]
   if (helperEHPlist != null) {
     result.push(" Helper EH")
@@ -82,8 +88,8 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     throw new Error("corrupted Electron dist")
   }
 
-  const appPlist = plistContent[0]!!
-  const helperPlist = plistContent[1]!!
+  const appPlist = plistContent[0]!
+  const helperPlist = plistContent[1]!
   const helperEHPlist = plistContent[2]
   const helperNPPlist = plistContent[3]
   const helperRendererPlist = plistContent[4]
@@ -96,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, plistContent[8])
   }
 
-  const buildMetadata = packager.config!!
+  const buildMetadata = packager.config!
 
   /**
    * Configure bundleIdentifier for the generic Electron Helper process
@@ -135,7 +141,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   function configureHelper(helper: any, postfix: string, userProvidedBundleIdentifier?: string | null) {
     helper.CFBundleExecutable = `${appFilename} Helper ${postfix}`
     helper.CFBundleDisplayName = `${appInfo.productName} Helper ${postfix}`
-    helper.CFBundleIdentifier = userProvidedBundleIdentifier ? filterCFBundleIdentifier(userProvidedBundleIdentifier) : filterCFBundleIdentifier(`${helperBundleIdentifier}.${postfix}`)
+    helper.CFBundleIdentifier = userProvidedBundleIdentifier
+      ? filterCFBundleIdentifier(userProvidedBundleIdentifier)
+      : filterCFBundleIdentifier(`${helperBundleIdentifier}.${postfix}`)
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 

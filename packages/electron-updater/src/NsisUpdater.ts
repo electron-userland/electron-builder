@@ -23,7 +23,7 @@ export class NsisUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
@@ -39,20 +39,23 @@ export class NsisUpdater extends BaseUpdater {
         if (signatureVerificationStatus != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
-          throw newError(`New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
+          throw newError(
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`,
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!!, packageFile!!, provider)) {
+          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
             try {
-              await this.httpExecutor.download(new URL(packageInfo!!.path), packageFile!!, {
+              await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
-                sha512: packageInfo!!.sha512,
+                sha512: packageInfo!.sha512,
               })
             } catch (e) {
               try {
-                await unlink(packageFile!!)
+                await unlink(packageFile!)
               } catch (ignored) {
                 // ignore
               }
@@ -102,7 +105,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
+      _spawn(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -125,14 +128,22 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadInstaller(
+    fileInfo: ResolvedUpdateFileInfo,
+    downloadUpdateOptions: DownloadUpdateOptions,
+    installerPath: string,
+    provider: Provider<any>
+  ): Promise<boolean> {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
 
       const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`, fileInfo.url)
+      const oldBlockMapUrl = newUrlFromBase(
+        `${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`,
+        fileInfo.url
+      )
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
@@ -154,7 +165,7 @@ export class NsisUpdater extends BaseUpdater {
 
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
-        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
@@ -179,7 +190,12 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private async differentialDownloadWebPackage(downloadUpdateOptions: DownloadUpdateOptions, packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadWebPackage(
+    downloadUpdateOptions: DownloadUpdateOptions,
+    packageInfo: PackageFileInfo,
+    packagePath: string,
+    provider: Provider<any>
+  ): Promise<boolean> {
     if (packageInfo.blockMapSize == null) {
       return true
     }
@@ -187,7 +203,7 @@ export class NsisUpdater extends BaseUpdater {
     try {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: new URL(packageInfo.path),
-        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
         requestHeaders: this.requestHeaders,

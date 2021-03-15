@@ -55,7 +55,14 @@ export class DownloadedUpdateHelper {
     return cachedUpdateFile
   }
 
-  async setDownloadedFile(downloadedFile: string, packageFile: string | null, versionInfo: UpdateInfo, fileInfo: ResolvedUpdateFileInfo, updateFileName: string, isSaveCache: boolean): Promise<void> {
+  async setDownloadedFile(
+    downloadedFile: string,
+    packageFile: string | null,
+    versionInfo: UpdateInfo,
+    fileInfo: ResolvedUpdateFileInfo,
+    updateFileName: string,
+    isSaveCache: boolean
+  ): Promise<void> {
     this._file = downloadedFile
     this._packageFile = packageFile
     this.versionInfo = versionInfo
@@ -122,7 +129,9 @@ export class DownloadedUpdateHelper {
     }
 
     if (fileInfo.info.sha512 !== cachedInfo.sha512) {
-      logger.info(`Cached update sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${cachedInfo.sha512}, expected: ${fileInfo.info.sha512}. Directory for cached update will be cleaned`)
+      logger.info(
+        `Cached update sha512 checksum doesn't match the latest available update. New update must be downloaded. Cached: ${cachedInfo.sha512}, expected: ${fileInfo.info.sha512}. Directory for cached update will be cleaned`
+      )
       await this.cleanCacheDirForPendingUpdate()
       return null
     }

@@ -12,7 +12,7 @@ import AutoUpdater = Electron.AutoUpdater
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
-  private squirrelDownloadedUpdate: boolean = false
+  private squirrelDownloadedUpdate = false
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -68,7 +68,7 @@ export class MacUpdater extends AppUpdater {
           // insecure random is ok
           const fileUrl = "/" + Date.now() + "-" + Math.floor(Math.random() * 9999) + ".zip"
           server.on("request", (request: IncomingMessage, response: ServerResponse) => {
-            const requestUrl = request.url!!
+            const requestUrl = request.url!
             this._logger.info(`${requestUrl} requested`)
             if (requestUrl === "/") {
               const data = Buffer.from(`{ "url": "${getServerUrl()}${fileUrl}" }`)

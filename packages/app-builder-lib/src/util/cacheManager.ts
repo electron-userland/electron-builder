@@ -11,7 +11,7 @@ export interface BuildCacheInfo {
 }
 
 export class BuildCacheManager {
-  static VERSION: string = "0"
+  static VERSION = "0"
 
   readonly cacheDir: string
   readonly cacheInfoFile: string

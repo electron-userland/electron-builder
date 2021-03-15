@@ -51,7 +51,7 @@ async function doBuild(data: BuildTask): Promise<void> {
   const packager = new Packager(options)
 
   const artifacts: Array<ArtifactInfo> = []
-  const relativePathOffset = projectOutDir!!.length + 1
+  const relativePathOffset = projectOutDir!.length + 1
   packager.artifactCreated(event => {
     if (event.file == null) {
       return
@@ -90,16 +90,16 @@ async function doBuild(data: BuildTask): Promise<void> {
     },
     info.metadata,
     info.devMetadata,
-    info.repositoryInfo,
+    info.repositoryInfo
   )
 
   // writeJson must be not used because it adds unwanted \n as last file symbol
-  await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
+  await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!, "__build-result.json"), JSON.stringify(artifacts))
 }
 
 doBuild(JSON.parse(process.argv[2])).catch(error => {
   process.exitCode = 0
-  return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
+  return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!, "__build-result.json"), (error.stack || error).toString())
 })
 
 interface TargetInfo {

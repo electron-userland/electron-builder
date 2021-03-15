@@ -46,7 +46,10 @@ export abstract class Publisher {
     if (this.context.progress == null || size < 512 * 1024) {
       return null
     }
-    return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, { total: size, ...progressBarOptions })
+    return this.context.progress.createBar(`${" ".repeat(PADDING + 2)}[:bar] :percent :etas | ${chalk.green(fileName)} to ${this.providerName}`, {
+      total: size,
+      ...progressBarOptions,
+    })
   }
 
   protected createReadStreamAndProgressBar(file: string, fileStat: Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {
@@ -92,14 +95,21 @@ export abstract class HttpPublisher extends Publisher {
         }
         return this.createReadStreamAndProgressBar(task.file, fileStat, progressBar, reject).pipe(request)
       },
-      task.file,
+      task.file
     )
   }
 
-  protected abstract doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
+  protected abstract doUpload(
+    fileName: string,
+    arch: Arch,
+    dataLength: number,
+    requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
+    file?: string
+  ): Promise<any>
 }
 
 export function getCiTag() {
-  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG || process.env.BITBUCKET_TAG
+  const tag =
+    process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG || process.env.BITBUCKET_TAG
   return tag != null && tag.length > 0 ? tag : null
 }

@@ -73,7 +73,7 @@ export class LibUiFramework implements Framework {
         `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"
-  `,
+  `
       ),
     ])
   }
@@ -87,7 +87,7 @@ export class LibUiFramework implements Framework {
       `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/app/${options.packager.info.metadata.main || "index.js"}"
-  `,
+  `
     )
   }
 

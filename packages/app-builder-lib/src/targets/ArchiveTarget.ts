@@ -44,7 +44,12 @@ export class ArchiveTarget extends Target {
       let dirToArchive = appOutDir
       if (isMac) {
         dirToArchive = path.dirname(appOutDir)
-        const fileMatchers = getFileMatchers(packager.config, "extraDistFiles", dirToArchive, packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions))
+        const fileMatchers = getFileMatchers(
+          packager.config,
+          "extraDistFiles",
+          dirToArchive,
+          packager.createGetFileMatchersOptions(this.outDir, arch, packager.platformSpecificBuildOptions)
+        )
         if (fileMatchers == null) {
           dirToArchive = appOutDir
         } else {
@@ -68,7 +73,14 @@ export class ArchiveTarget extends Target {
       updateInfo,
       file: artifactPath,
       // tslint:disable-next-line:no-invalid-template-strings
-      safeArtifactName: packager.computeSafeArtifactName(artifactName, format, arch, false, packager.platformSpecificBuildOptions.defaultArch, defaultPattern.replace("${productName}", "${name}")),
+      safeArtifactName: packager.computeSafeArtifactName(
+        artifactName,
+        format,
+        arch,
+        false,
+        packager.platformSpecificBuildOptions.defaultArch,
+        defaultPattern.replace("${productName}", "${name}")
+      ),
       target: this,
       arch,
       packager,

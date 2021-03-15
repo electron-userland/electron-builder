@@ -30,7 +30,7 @@ export class DmgTarget extends Target {
       arch,
       "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
       true,
-      packager.platformSpecificBuildOptions.defaultArch,
+      packager.platformSpecificBuildOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({
@@ -61,7 +61,7 @@ export class DmgTarget extends Target {
     }
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
-    const args = ["convert", tempDmg, "-ov", "-format", specification.format!!, "-o", artifactPath]
+    const args = ["convert", tempDmg, "-ov", "-format", specification.format!, "-o", artifactPath]
     if (specification.format === "UDZO") {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
@@ -258,7 +258,7 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
 
   const args = ["dmg", "--volume", volumePath]
   if (specification.icon != null) {
-    args.push("--icon", (await packager.getResource(specification.icon))!!)
+    args.push("--icon", (await packager.getResource(specification.icon))!)
   }
   if (backgroundFile != null) {
     args.push("--background", backgroundFile)
@@ -299,7 +299,7 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
 
 async function computeDmgEntries(specification: DmgOptions, volumePath: string, packager: MacPackager, asyncTaskManager: AsyncTaskManager): Promise<string> {
   let result = ""
-  for (const c of specification.contents!!) {
+  for (const c of specification.contents!) {
     if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
       log.warn({ path: c.path, reason: "actual path to app will be used instead" }, "do not specify path for application")
     }

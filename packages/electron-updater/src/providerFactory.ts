@@ -1,4 +1,13 @@
-import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration } from "builder-util-runtime"
+import {
+  AllPublishOptions,
+  BaseS3Options,
+  BintrayOptions,
+  GenericServerOptions,
+  getS3LikeProviderBaseUrl,
+  GithubOptions,
+  newError,
+  PublishConfiguration,
+} from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
 import { BintrayProvider } from "./providers/BintrayProvider"
 import { GenericProvider } from "./providers/GenericProvider"
@@ -41,7 +50,7 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
           ...runtimeOptions,
           // https://github.com/minio/minio/issues/5285#issuecomment-350428955
           isUseMultipleRangeRequest: false,
-        },
+        }
       )
 
     case "generic": {

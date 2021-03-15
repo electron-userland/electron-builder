@@ -27,7 +27,14 @@ export interface DownloadOptions {
 }
 
 export function createHttpError(response: IncomingMessage, description: any | null = null) {
-  return new HttpError(response.statusCode || -1, `${response.statusCode} ${response.statusMessage}` + (description == null ? "" : "\n" + JSON.stringify(description, null, "  ")) + "\nHeaders: " + safeStringifyJson(response.headers), description)
+  return new HttpError(
+    response.statusCode || -1,
+    `${response.statusCode} ${response.statusMessage}` +
+      (description == null ? "" : "\n" + JSON.stringify(description, null, "  ")) +
+      "\nHeaders: " +
+      safeStringifyJson(response.headers),
+    description
+  )
 }
 
 const HTTP_STATUS_CODES = new Map<number, string>([
@@ -47,7 +54,7 @@ const HTTP_STATUS_CODES = new Map<number, string>([
 ])
 
 export class HttpError extends Error {
-  constructor(readonly statusCode: number, message: string = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
+  constructor(readonly statusCode: number, message = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
     super(message)
 
     this.name = "HttpError"
@@ -75,7 +82,12 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<string> {
+  doApiRequest(
+    options: RequestOptions,
+    cancellationToken: CancellationToken,
+    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
+    redirectCount = 0
+  ): Promise<string> {
     if (debug.enabled) {
       debug(`Request: ${safeStringifyJson(options)}`)
     }
@@ -118,7 +130,7 @@ export abstract class HttpExecutor<REQUEST> {
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
+    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void
   ) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
@@ -133,8 +145,8 @@ export abstract class HttpExecutor<REQUEST> {
           `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
-`,
-        ),
+`
+        )
       )
       return
     } else if (response.statusCode === 204) {
@@ -195,7 +207,7 @@ Please double check that your authentication token is correct. Due to security r
           onCancel,
           callback: error => {
             if (error == null) {
-              resolve(result!!)
+              resolve(result!)
             } else {
               reject(error)
             }
@@ -217,7 +229,7 @@ Please double check that your authentication token is correct. Due to security r
             }
             response.on("data", (chunk: Buffer) => {
               if (position !== -1) {
-                chunk.copy(result!!, position)
+                chunk.copy(result!, position)
                 position += chunk.length
               } else if (result == null) {
                 result = chunk
@@ -238,7 +250,7 @@ Please double check that your authentication token is correct. Due to security r
             })
           },
         },
-        0,
+        0
       )
     })
   }
@@ -246,7 +258,11 @@ Please double check that your authentication token is correct. Due to security r
   protected doDownload(requestOptions: any, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
-        options.callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
+        options.callback(
+          new Error(
+            `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
+          )
+        )
         return
       }
 
@@ -341,7 +357,7 @@ export class DigestTransform extends Transform {
     return this._actual
   }
 
-  isValidateOnEnd: boolean = true
+  isValidateOnEnd = true
 
   constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: BinaryToTextEncoding = "base64") {
     super()
@@ -424,7 +440,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
     streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }
 
-  const fileOut = createWriteStream(options.destination!!)
+  const fileOut = createWriteStream(options.destination!)
   streams.push(fileOut)
 
   let lastStream = response
@@ -472,11 +488,19 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
   return JSON.stringify(
     data,
     (name, value) => {
-      if (name.endsWith("authorization") || name.endsWith("Password") || name.endsWith("PASSWORD") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
+      if (
+        name.endsWith("authorization") ||
+        name.endsWith("Password") ||
+        name.endsWith("PASSWORD") ||
+        name.endsWith("Token") ||
+        name.includes("password") ||
+        name.includes("token") ||
+        (skippedNames != null && skippedNames.has(name))
+      ) {
         return "<stripped sensitive data>"
       }
       return value
     },
-    2,
+    2
   )
 }

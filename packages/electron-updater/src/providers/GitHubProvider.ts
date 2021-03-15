@@ -45,7 +45,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       {
         accept: "application/xml, application/atom+xml, text/xml, */*",
       },
-      cancellationToken,
+      cancellationToken
     ))!
 
     const feed = parseXml(feedXml)
@@ -54,11 +54,11 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     try {
       if (this.updater.allowPrerelease) {
         // noinspection TypeScriptValidateJSTypes
-        version = latestRelease.element("link").attribute("href").match(hrefRegExp)!![1]
+        version = latestRelease.element("link").attribute("href").match(hrefRegExp)![1]
       } else {
         version = await this.getLatestVersionString(cancellationToken)
         for (const element of feed.getElements("entry")) {
-          if (element.element("link").attribute("href").match(hrefRegExp)!![1] === version) {
+          if (element.element("link").attribute("href").match(hrefRegExp)![1] === version) {
             latestRelease = element
             break
           }
@@ -77,7 +77,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
     try {
-      rawData = (await this.executor.request(requestOptions, cancellationToken))!!
+      rawData = (await this.executor.request(requestOptions, cancellationToken))!
     } catch (e) {
       if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
         throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
@@ -99,7 +99,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   private async getLatestVersionString(cancellationToken: CancellationToken): Promise<string | null> {
     const options = this.options
     // do not use API for GitHub to avoid limit, only for custom host or GitHub Enterprise
-    const url = options.host == null || options.host === "github.com" ? newUrlFromBase(`${this.basePath}/latest`, this.baseUrl) : new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
+    const url =
+      options.host == null || options.host === "github.com"
+        ? newUrlFromBase(`${this.basePath}/latest`, this.baseUrl)
+        : new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
     try {
       const rawData = await this.httpRequest(url, { Accept: "application/json" }, cancellationToken)
       if (rawData == null) {

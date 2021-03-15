@@ -1,7 +1,7 @@
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
 
-export function hashFile(file: string, algorithm: string = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {
+export function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex" = "base64", options?: any) {
   return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash.on("error", reject).setEncoding(encoding)

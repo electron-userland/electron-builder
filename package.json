@@ -19,7 +19,7 @@
     "lint": "eslint packages --ext .ts",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
     "pretest": "pnpm compile && pnpm lint && pnpm lint-deps",
-    "prettier": "prettier \"packages/**/*.{ts, js}\" --write",
+    "prettier": "prettier 'packages/**/*.{ts, js}' 'test/src/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=isCi",
     "test-all": "pnpm pretest && node ./test/out/helpers/runTests.js",
@@ -44,8 +44,8 @@
     "dmg-license": "~1.0.8"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.17.0",
-    "@typescript-eslint/parser": "^4.17.0",
+    "@typescript-eslint/eslint-plugin": "^4.18.0",
+    "@typescript-eslint/parser": "^4.18.0",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",

@@ -19,12 +19,12 @@ export function executeAppBuilderAndWriteJson(args: Array<string>, data: any, ex
   return executeAppBuilder(
     args,
     childProcess => {
-      childProcess.stdin!!.end(JSON.stringify(data))
+      childProcess.stdin!.end(JSON.stringify(data))
     },
     {
       ...extraOptions,
       stdio: ["pipe", "pipe", process.stdout],
-    },
+    }
   )
 }
 

@@ -9,29 +9,35 @@ if (process.env.SNAP_HEAVY_TEST !== "true") {
   })
 }
 
-test.ifAll("snap full", app({
-  targets: snapTarget,
-  config: {
-    extraMetadata: {
-      name: "se-wo-template",
+test.ifAll(
+  "snap full",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "se-wo-template",
+      },
+      productName: "Snap Electron App (full build)",
+      snap: {
+        useTemplateApp: false,
+      },
     },
-    productName: "Snap Electron App (full build)",
-    snap: {
-      useTemplateApp: false,
-    },
-  },
-}))
+  })
+)
 
 // very slow
-test.ifAll("snap full (armhf)", app({
-  targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
-  config: {
-    extraMetadata: {
-      name: "se-wo-template",
+test.ifAll(
+  "snap full (armhf)",
+  app({
+    targets: Platform.LINUX.createTarget("snap", Arch.armv7l),
+    config: {
+      extraMetadata: {
+        name: "se-wo-template",
+      },
+      productName: "Snap Electron App (full build)",
+      snap: {
+        useTemplateApp: false,
+      },
     },
-    productName: "Snap Electron App (full build)",
-    snap: {
-      useTemplateApp: false,
-    },
-  },
-}))
+  })
+)

@@ -131,7 +131,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
 
           reject(new Error(message))
         }
-      },
+      }
     )
   })
 }
@@ -198,10 +198,10 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
         } finally {
           reject(error)
         }
-      },
+      }
     )
 
-    childProcess.stdin!!.end(data)
+    childProcess.stdin!.end(data)
   })
 }
 
@@ -258,7 +258,7 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
-  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code: string = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
     super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
   }
@@ -324,7 +324,9 @@ export function isPullRequest() {
     return value && value !== "false"
   }
 
-  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  return (
+    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  )
 }
 
 export function isEnvTrue(value: string | null | undefined) {
@@ -335,13 +337,18 @@ export function isEnvTrue(value: string | null | undefined) {
 }
 
 export class InvalidConfigurationError extends Error {
-  constructor(message: string, code: string = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
+  constructor(message: string, code = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
     super(message)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
+export function executeAppBuilder(
+  args: Array<string>,
+  childProcessConsumer?: (childProcess: ChildProcess) => void,
+  extraOptions: SpawnOptions = {},
+  maxRetries = 0
+): Promise<string> {
   const command = appBuilderPath
   const env: any = {
     ...process.env,

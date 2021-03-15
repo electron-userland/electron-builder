@@ -9,7 +9,18 @@ import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
 export { PackagerOptions, ArtifactCreated, ArtifactBuildStarted } from "./packagerApi"
-export { TargetConfiguration, Platform, Target, DIR_TARGET, BeforeBuildContext, SourceRepositoryInfo, TargetSpecificOptions, TargetConfigType, DEFAULT_TARGET, CompressionLevel } from "./core"
+export {
+  TargetConfiguration,
+  Platform,
+  Target,
+  DIR_TARGET,
+  BeforeBuildContext,
+  SourceRepositoryInfo,
+  TargetSpecificOptions,
+  TargetConfigType,
+  DEFAULT_TARGET,
+  CompressionLevel,
+} from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { Configuration, AfterPackContext, MetadataDirectories } from "./configuration"
 export { ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
@@ -27,7 +38,14 @@ export { SnapOptions } from "./options/SnapOptions"
 export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
 export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
-export { WindowsSignOptions, CustomWindowsSignTaskConfiguration, WindowsSignTaskConfiguration, CustomWindowsSign, FileCodeSigningInfo, CertificateFromStoreInfo } from "./codeSign/windowsCodeSign"
+export {
+  WindowsSignOptions,
+  CustomWindowsSignTaskConfiguration,
+  WindowsSignTaskConfiguration,
+  CustomWindowsSign,
+  FileCodeSigningInfo,
+  CertificateFromStoreInfo,
+} from "./codeSign/windowsCodeSign"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
 export { PublishManager } from "./publish/PublishManager"
@@ -79,7 +97,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
               file: newArtifact,
               arch: null,
             },
-            packager.appInfo,
+            packager.appInfo
           )
         }
       }

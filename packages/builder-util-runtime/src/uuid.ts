@@ -34,7 +34,7 @@ export class UUID {
       throw new Error("not a UUID")
     }
 
-    this.version = check.version!!
+    this.version = check.version!
 
     if (check.format === "ascii") {
       this.ascii = uuid as string
@@ -49,7 +49,7 @@ export class UUID {
 
   toString() {
     if (this.ascii == null) {
-      this.ascii = stringify(this.binary!!)
+      this.ascii = stringify(this.binary!)
     }
     return this.ascii
   }
@@ -58,7 +58,7 @@ export class UUID {
     return `UUID v${this.version} ${this.toString()}`
   }
 
-  static check(uuid: Buffer | string, offset: number = 0) {
+  static check(uuid: Buffer | string, offset = 0) {
     if (typeof uuid === "string") {
       uuid = uuid.toLowerCase()
 

@@ -47,10 +47,10 @@ export class ProtonFramework extends LibUiFramework {
       {
         options: safeStringifyJson(
           babelOptions,
-          new Set<string>(["presets"]),
+          new Set<string>(["presets"])
         ),
       },
-      "transpile source code using Babel",
+      "transpile source code using Babel"
     )
     return (file): Promise<any> | null => {
       if (!(file.endsWith(".js") || file.endsWith(".jsx")) || file.includes(NODE_MODULES_PATTERN)) {

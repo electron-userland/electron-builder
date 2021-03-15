@@ -20,7 +20,9 @@ export class BintrayPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
+        throw new InvalidConfigurationError(
+          `Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`
+        )
       }
 
       token = token.trim()
@@ -70,11 +72,11 @@ export class BintrayPublisher extends HttpPublisher {
     }
 
     if (this.client.distribution != null) {
-      options.headers!!["X-Bintray-Debian-Distribution"] = this.client.distribution
+      options.headers!["X-Bintray-Debian-Distribution"] = this.client.distribution
     }
 
     if (this.client.component != null) {
-      options.headers!!["X-Bintray-Debian-Component"] = this.client.component
+      options.headers!["X-Bintray-Debian-Component"] = this.client.component
     }
 
     for (let attemptNumber = 0; ; attemptNumber++) {
@@ -103,6 +105,8 @@ export class BintrayPublisher extends HttpPublisher {
   }
 
   toString() {
-    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${this.version})`
+    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${
+      this.version
+    })`
   }
 }

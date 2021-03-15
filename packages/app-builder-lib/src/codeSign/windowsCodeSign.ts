@@ -61,7 +61,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
         ...taskConfiguration,
         computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin),
       },
-      packager,
+      packager
     )
     isNest = true
     if (taskConfiguration.resultOutputPath != null) {
@@ -108,10 +108,15 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   const certificateSha1 = options.certificateSha1 ? options.certificateSha1.toUpperCase() : options.certificateSha1
   // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
   // powershell can return object if the only item
-  const rawResult = await vm.exec("powershell.exe", ["Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress"])
+  const rawResult = await vm.exec("powershell.exe", [
+    "Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress",
+  ])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))
   for (const certInfo of certList) {
-    if ((certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName)) || (certificateSha1 != null && certInfo.Thumbprint.toUpperCase() !== certificateSha1)) {
+    if (
+      (certificateSubjectName != null && !certInfo.Subject.includes(certificateSubjectName)) ||
+      (certificateSha1 != null && certInfo.Thumbprint.toUpperCase() !== certificateSha1)
+    ) {
       continue
     }
 
@@ -140,7 +145,7 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
   let args: Array<string>
   let env = process.env
   let vm: VmManager
-  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!!) /* certificateSubjectName and other such options */) {
+  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */) {
     vm = await packager.vm.value
     tool = getWinSignTool(await getSignVendorPath())
     args = computeSignToolArgs(configuration, true, vm)
@@ -188,7 +193,10 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
     const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.digicert.com"
     if (isWin) {
-      args.push(options.isNest || options.hash === "sha256" ? "/tr" : "/t", options.isNest || options.hash === "sha256" ? options.options.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl)
+      args.push(
+        options.isNest || options.hash === "sha256" ? "/tr" : "/t",
+        options.isNest || options.hash === "sha256" ? options.options.rfc3161TimeStampServer || "http://timestamp.digicert.com" : timestampingServiceUrl
+      )
     } else {
       args.push("-t", timestampingServiceUrl)
     }
