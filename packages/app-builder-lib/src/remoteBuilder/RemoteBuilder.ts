@@ -49,7 +49,7 @@ export class RemoteBuilder {
     this.buildStarted = true
 
     return BluebirdPromise.mapSeries(Array.from(this.toBuild.keys()), (arch: Arch) => {
-      return this._build(this.toBuild.get(arch)!!, this.packager)
+      return this._build(this.toBuild.get(arch)!, this.packager)
     })
   }
 

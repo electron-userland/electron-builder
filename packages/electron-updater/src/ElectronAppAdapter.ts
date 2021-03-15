@@ -21,7 +21,7 @@ export class ElectronAppAdapter implements AppAdapter {
   }
 
   get appUpdateConfigPath(): string {
-    return this.isPackaged ? path.join(process.resourcesPath!!, "app-update.yml") : path.join(this.app.getAppPath(), "dev-app-update.yml")
+    return this.isPackaged ? path.join(process.resourcesPath!, "app-update.yml") : path.join(this.app.getAppPath(), "dev-app-update.yml")
   }
 
   get userDataPath(): string {

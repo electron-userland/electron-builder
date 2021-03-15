@@ -25,7 +25,7 @@ export async function executeFinally<T>(promise: Promise<T>, task: (isErrorOccur
 }
 
 export class NestedError extends Error {
-  constructor(errors: Array<Error>, message: string = "Compound error: ") {
+  constructor(errors: Array<Error>, message = "Compound error: ") {
     let m = message
     let i = 1
     for (const error of errors) {

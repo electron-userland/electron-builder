@@ -86,9 +86,9 @@ export default class FpmTarget extends Target {
 
     return {
       name: options.packageName ?? this.packager.appInfo.linuxPackageName,
-      maintainer: author!!,
-      url: projectUrl!!,
-      vendor: options.vendor || author!!,
+      maintainer: author!,
+      url: projectUrl!,
+      vendor: options.vendor || author!,
     }
   }
 

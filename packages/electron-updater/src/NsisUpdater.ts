@@ -23,7 +23,7 @@ export class NsisUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "exe")!
     return this.executeDownload({
       fileExtension: "exe",
       downloadUpdateOptions,
@@ -46,16 +46,16 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!!, packageFile!!, provider)) {
+          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
             try {
-              await this.httpExecutor.download(new URL(packageInfo!!.path), packageFile!!, {
+              await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
-                sha512: packageInfo!!.sha512,
+                sha512: packageInfo!.sha512,
               })
             } catch (e) {
               try {
-                await unlink(packageFile!!)
+                await unlink(packageFile!)
               } catch (ignored) {
                 // ignore
               }
@@ -105,7 +105,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      _spawn(path.join(process.resourcesPath!!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
+      _spawn(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -165,7 +165,7 @@ export class NsisUpdater extends BaseUpdater {
 
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
-        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
@@ -203,7 +203,7 @@ export class NsisUpdater extends BaseUpdater {
     try {
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: new URL(packageInfo.path),
-        oldFile: path.join(this.downloadedUpdateHelper!!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_PACKAGE_FILE_NAME),
         logger: this._logger,
         newFile: packagePath,
         requestHeaders: this.requestHeaders,

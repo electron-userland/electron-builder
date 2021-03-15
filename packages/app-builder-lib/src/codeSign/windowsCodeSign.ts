@@ -145,7 +145,7 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
   let args: Array<string>
   let env = process.env
   let vm: VmManager
-  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!!) /* certificateSubjectName and other such options */) {
+  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */) {
     vm = await packager.vm.value
     tool = getWinSignTool(await getSignVendorPath())
     args = computeSignToolArgs(configuration, true, vm)

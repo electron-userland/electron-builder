@@ -54,7 +54,7 @@ const HTTP_STATUS_CODES = new Map<number, string>([
 ])
 
 export class HttpError extends Error {
-  constructor(readonly statusCode: number, message: string = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
+  constructor(readonly statusCode: number, message = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
     super(message)
 
     this.name = "HttpError"
@@ -86,7 +86,7 @@ export abstract class HttpExecutor<REQUEST> {
     options: RequestOptions,
     cancellationToken: CancellationToken,
     requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
-    redirectCount: number = 0
+    redirectCount = 0
   ): Promise<string> {
     if (debug.enabled) {
       debug(`Request: ${safeStringifyJson(options)}`)
@@ -207,7 +207,7 @@ Please double check that your authentication token is correct. Due to security r
           onCancel,
           callback: error => {
             if (error == null) {
-              resolve(result!!)
+              resolve(result!)
             } else {
               reject(error)
             }
@@ -229,7 +229,7 @@ Please double check that your authentication token is correct. Due to security r
             }
             response.on("data", (chunk: Buffer) => {
               if (position !== -1) {
-                chunk.copy(result!!, position)
+                chunk.copy(result!, position)
                 position += chunk.length
               } else if (result == null) {
                 result = chunk
@@ -357,7 +357,7 @@ export class DigestTransform extends Transform {
     return this._actual
   }
 
-  isValidateOnEnd: boolean = true
+  isValidateOnEnd = true
 
   constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: BinaryToTextEncoding = "base64") {
     super()
@@ -440,7 +440,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
     streams.push(new DigestTransform(options.options.sha2, "sha256", "hex"))
   }
 
-  const fileOut = createWriteStream(options.destination!!)
+  const fileOut = createWriteStream(options.destination!)
   streams.push(fileOut)
 
   let lastStream = response

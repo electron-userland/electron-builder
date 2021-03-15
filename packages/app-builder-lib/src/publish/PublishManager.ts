@@ -213,7 +213,7 @@ export class PublishManager implements PublishContext {
     if (publisher == null) {
       publisher = createPublisher(this, appInfo.version, publishConfig, this.publishOptions, this.packager)
       this.nameToPublisher.set(providerCacheKey, publisher)
-      log.info({ publisher: publisher!!.toString() }, "publishing")
+      log.info({ publisher: publisher!.toString() }, "publishing")
     }
     return publisher
   }

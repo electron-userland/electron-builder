@@ -72,11 +72,11 @@ export class BintrayPublisher extends HttpPublisher {
     }
 
     if (this.client.distribution != null) {
-      options.headers!!["X-Bintray-Debian-Distribution"] = this.client.distribution
+      options.headers!["X-Bintray-Debian-Distribution"] = this.client.distribution
     }
 
     if (this.client.component != null) {
-      options.headers!!["X-Bintray-Debian-Component"] = this.client.component
+      options.headers!["X-Bintray-Debian-Component"] = this.client.component
     }
 
     for (let attemptNumber = 0; ; attemptNumber++) {

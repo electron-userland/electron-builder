@@ -201,7 +201,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
       }
     )
 
-    childProcess.stdin!!.end(data)
+    childProcess.stdin!.end(data)
   })
 }
 
@@ -258,7 +258,7 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
-  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code: string = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
     super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
   }
@@ -337,7 +337,7 @@ export function isEnvTrue(value: string | null | undefined) {
 }
 
 export class InvalidConfigurationError extends Error {
-  constructor(message: string, code: string = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
+  constructor(message: string, code = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
     super(message)
     ;(this as NodeJS.ErrnoException).code = code
   }

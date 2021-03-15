@@ -158,7 +158,7 @@ export class AsarPackager {
       let files = fileSets[0].files
       let metadata = fileSets[0].metadata
       let transformedFiles = fileSets[0].transformedFiles
-      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!!
+      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!
       const w = (index: number) => {
         while (true) {
           if (index >= files.length) {
@@ -169,7 +169,7 @@ export class AsarPackager {
               files = fileSets[fileSetIndex].files
               metadata = fileSets[fileSetIndex].metadata
               transformedFiles = fileSets[fileSetIndex].transformedFiles
-              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!!
+              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!
               index = 0
             }
           }

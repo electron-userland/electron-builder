@@ -68,16 +68,16 @@ export class Packager {
 
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
-    return this._metadata!!
+    return this._metadata!
   }
 
-  private _nodeModulesHandledExternally: boolean = false
+  private _nodeModulesHandledExternally = false
 
   get areNodeModulesHandledExternally(): boolean {
     return this._nodeModulesHandledExternally
   }
 
-  private _isPrepackedAppAsar: boolean = false
+  private _isPrepackedAppAsar = false
 
   get isPrepackedAppAsar(): boolean {
     return this._isPrepackedAppAsar
@@ -91,7 +91,7 @@ export class Packager {
   private _configuration: Configuration | null = null
 
   get config(): Configuration {
-    return this._configuration!!
+    return this._configuration!
   }
 
   isTwoPackageJsonProjectLayoutUsed = false
@@ -100,7 +100,7 @@ export class Packager {
 
   _appInfo: AppInfo | null = null
   get appInfo(): AppInfo {
-    return this._appInfo!!
+    return this._appInfo!
   }
 
   readonly tempDirManager = new TmpDir("packager")
@@ -153,12 +153,12 @@ export class Packager {
   }
 
   get relativeBuildResourcesDirname(): string {
-    return this.config.directories!!.buildResources!!
+    return this.config.directories!.buildResources!
   }
 
   private _framework: Framework | null = null
   get framework(): Framework {
-    return this._framework!!
+    return this._framework!
   }
 
   private readonly toDispose: Array<() => Promise<void>> = []
@@ -309,7 +309,7 @@ export class Packager {
       log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
     }
 
-    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!!.app)
+    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
 
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
@@ -346,7 +346,7 @@ export class Packager {
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,
-      expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
+      expandMacro(configuration.directories!.output!, null, this._appInfo, {
         os: "",
       })
     )
@@ -409,7 +409,7 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
-    for (const [platform, archToType] of this.options.targets!!) {
+    for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
       }
@@ -428,7 +428,7 @@ export class Packager {
         }
 
         // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!!.directories!!.output!!, Arch[arch]))
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         await packager.pack(outDir, arch, targetList, taskManager)

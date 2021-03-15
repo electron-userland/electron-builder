@@ -67,7 +67,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         })
         .then(path => {
           return {
-            file: path!!,
+            file: path!,
             password: this.getCscPassword(),
           }
         })
@@ -99,7 +99,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if ("subject" in cscInfo) {
       const bloodyMicrosoftSubjectDn = (cscInfo as CertificateFromStoreInfo).subject
       return {
-        commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!!,
+        commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
         bloodyMicrosoftSubjectDn,
       }
     }

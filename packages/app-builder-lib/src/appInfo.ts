@@ -33,7 +33,7 @@ export class AppInfo {
   readonly productFilename: string
 
   constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
-    this.version = info.metadata.version!!
+    this.version = info.metadata.version!
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion
@@ -61,7 +61,7 @@ export class AppInfo {
       this.shortVersionWindows = info.metadata.shortVersionWindows
     }
 
-    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
+    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.sanitizedProductName = sanitizeFileName(this.productName)
     this.productFilename = platformSpecificOptions?.executableName != null ? sanitizeFileName(platformSpecificOptions.executableName) : this.sanitizedProductName
   }
@@ -120,7 +120,7 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.info.metadata.name!!
+    return this.info.metadata.name!
   }
 
   get linuxPackageName(): string {

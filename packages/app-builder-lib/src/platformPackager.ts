@@ -190,8 +190,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     arch: Arch,
     platformSpecificBuildOptions: DC,
     targets: Array<Target>,
-    sign: boolean = true,
-    disableAsarIntegrity: boolean = false
+    sign = true,
+    disableAsarIntegrity = false
   ) {
     if (this.packagerOptions.prepackaged != null) {
       return
@@ -543,9 +543,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     suggestedName: string | null,
     ext: string,
     arch?: Arch | null,
-    skipDefaultArch: boolean = true,
+    skipDefaultArch = true,
     defaultArch?: string,
-    safePattern: string = "${name}-${version}-${arch}.${ext}"
+    safePattern = "${name}-${version}-${arch}.${ext}"
   ): string | null {
     return computeSafeArtifactNameIfNeeded(suggestedName, () =>
       this.computeArtifactName(safePattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
@@ -557,7 +557,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     ext: string,
     arch?: Arch | null,
     defaultPattern?: string,
-    skipDefaultArch: boolean = true,
+    skipDefaultArch = true,
     defaultArch?: string
   ): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
@@ -671,7 +671,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       "--root",
       this.projectDir,
       "--out",
-      path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`),
+      path.resolve(this.projectDir, this.config.directories!.output!, `.icon-${outputFormat}`),
     ]
     for (const source of sources) {
       args.push("--input", source)

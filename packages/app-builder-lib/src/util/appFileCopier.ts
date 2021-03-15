@@ -124,12 +124,12 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
       if (typeof transformedValue === "object" && "then" in transformedValue) {
         return (transformedValue as Promise<any>).then(it => {
           if (it != null) {
-            transformedFiles!!.set(index, it)
+            transformedFiles!.set(index, it)
           }
           return false
         })
       }
-      transformedFiles!!.set(index, transformedValue as string | Buffer)
+      transformedFiles!.set(index, transformedValue as string | Buffer)
       return false
     },
     CONCURRENCY

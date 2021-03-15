@@ -6,8 +6,8 @@ import { inflateRawSync } from "zlib"
 export class FileWithEmbeddedBlockMapDifferentialDownloader extends DifferentialDownloader {
   async download(): Promise<void> {
     const packageInfo = this.blockAwareFileInfo
-    const fileSize = packageInfo.size!!
-    const offset = fileSize - (packageInfo.blockMapSize!! + 4)
+    const fileSize = packageInfo.size!
+    const offset = fileSize - (packageInfo.blockMapSize! + 4)
     this.fileMetadataBuffer = await this.readRemoteBytes(offset, fileSize - 1)
     const newBlockMap = readBlockMap(this.fileMetadataBuffer.slice(0, this.fileMetadataBuffer.length - 4))
     await this.doDownload(await readEmbeddedBlockMapData(this.options.oldFile), newBlockMap)

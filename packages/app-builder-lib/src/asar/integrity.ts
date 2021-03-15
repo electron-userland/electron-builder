@@ -29,7 +29,7 @@ export async function computeData(resourcesPath: string, options?: AsarIntegrity
   return { checksums: result, ...options }
 }
 
-function hashFile(file: string, algorithm: string = "sha512", encoding: "hex" | "base64" | "latin1" = "base64") {
+function hashFile(file: string, algorithm = "sha512", encoding: "hex" | "base64" | "latin1" = "base64") {
   return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash.on("error", reject).setEncoding(encoding)

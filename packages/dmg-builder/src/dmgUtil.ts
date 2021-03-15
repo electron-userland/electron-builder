@@ -61,8 +61,8 @@ export function serializeString(data: string) {
   return (
     '  $"' +
     data
-      .match(/.{1,32}/g)!!
-      .map(it => it.match(/.{1,4}/g)!!.join(" "))
+      .match(/.{1,32}/g)!
+      .map(it => it.match(/.{1,4}/g)!.join(" "))
       .join('"\n  $"') +
     '"'
   )

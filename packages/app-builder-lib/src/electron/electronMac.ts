@@ -88,8 +88,8 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     throw new Error("corrupted Electron dist")
   }
 
-  const appPlist = plistContent[0]!!
-  const helperPlist = plistContent[1]!!
+  const appPlist = plistContent[0]!
+  const helperPlist = plistContent[1]!
   const helperEHPlist = plistContent[2]
   const helperNPPlist = plistContent[3]
   const helperRendererPlist = plistContent[4]
@@ -102,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, plistContent[8])
   }
 
-  const buildMetadata = packager.config!!
+  const buildMetadata = packager.config!
 
   /**
    * Configure bundleIdentifier for the generic Electron Helper process

@@ -368,7 +368,7 @@ export class NsisTarget extends Target {
     return script
   }
 
-  private computeVersionKey(short: boolean = false) {
+  private computeVersionKey(short = false) {
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const localeId = this.options.language || "1033"

@@ -121,7 +121,7 @@ export class DataSplitter extends Writable {
           }
         }
 
-        const prevTaskIndex = this.partIndex === 0 ? this.options.start : this.partIndexToTaskIndex.get(this.partIndex - 1)!! + 1 /* prev part is download, next maybe copy */
+        const prevTaskIndex = this.partIndex === 0 ? this.options.start : this.partIndexToTaskIndex.get(this.partIndex - 1)! + 1 /* prev part is download, next maybe copy */
         if (prevTaskIndex < taskIndex) {
           await this.copyExistingData(prevTaskIndex, taskIndex)
         } else if (prevTaskIndex > taskIndex) {

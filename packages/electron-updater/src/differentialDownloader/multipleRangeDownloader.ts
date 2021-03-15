@@ -67,7 +67,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
         copyData(task, out, options.oldFileFd, reject, () => w(index))
       } else {
         const requestOptions = differentialDownloader.createRequestOptions()
-        requestOptions.headers!!.Range = `bytes=${task.start}-${task.end - 1}`
+        requestOptions.headers!.Range = `bytes=${task.start}-${task.end - 1}`
         const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
           if (!checkIsRangesSupported(response, reject)) {
             return
@@ -88,7 +88,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
   }
 
   const requestOptions = differentialDownloader.createRequestOptions()
-  requestOptions.headers!!.Range = ranges.substring(0, ranges.length - 2)
+  requestOptions.headers!.Range = ranges.substring(0, ranges.length - 2)
   const request = differentialDownloader.httpExecutor.createRequest(requestOptions, response => {
     if (!checkIsRangesSupported(response, reject)) {
       return
@@ -118,7 +118,7 @@ function doExecuteTasks(differentialDownloader: DifferentialDownloader, options:
 
 export function checkIsRangesSupported(response: IncomingMessage, reject: (error: Error) => void): boolean {
   // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
-  if (response.statusCode!! >= 400) {
+  if (response.statusCode! >= 400) {
     reject(createHttpError(response))
     return false
   }
