@@ -143,7 +143,7 @@ const check = [
       return true
     }
     if (!semver.valid(data.version, loose)) {
-      throw new Error('Invalid version: "' + data.version + '"')
+      throw new Error(`Invalid version: "${data.version}"`)
     }
     data.version = semver.clean(data.version, loose)
     return true
@@ -224,7 +224,7 @@ function isValidScopedPackageName(spec: string): boolean {
 }
 
 function isCorrectlyEncodedName(spec: string): boolean {
-  return !spec.match(/[/@\s+%:]/) && spec === encodeURIComponent(spec)
+  return !/[/@\s+%:]/.test(spec) && spec === encodeURIComponent(spec)
 }
 
 function ensureValidName(name: string): void {
@@ -257,19 +257,19 @@ function unParsePerson(person: any): string {
   }
   const name = person.name || ""
   const u = person.url || person.web
-  const url = u ? " (" + u + ")" : ""
+  const url = u ? ` (${u})` : ""
   const e = person.email || person.mail
-  const email = e ? " <" + e + ">" : ""
-  return name + email + url
+  const email = e ? ` <${e}>` : ""
+  return `${name}${email}${url}`
 }
 
 function parsePerson(person: any) {
   if (typeof person !== "string") {
     return person
   }
-  const name = person.match(/^([^(<]+)/)
-  const url = person.match(/\(([^)]+)\)/)
-  const email = person.match(/<([^>]+)>/)
+  const name = /^([^(<]+)/.exec(person)
+  const url = /\(([^)]+)\)/.exec(person)
+  const email = /<([^>]+)>/.exec(person)
   const obj: any = {}
   if (name && name[0].trim()) {
     obj.name = name[0].trim()

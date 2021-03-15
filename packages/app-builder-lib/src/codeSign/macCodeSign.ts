@@ -112,7 +112,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
 
 function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env!)
+  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
 }
 
 function listUserKeychains(): Promise<Array<string>> {
@@ -323,7 +323,7 @@ export function findIdentity(certType: CertType, qualifier?: string | null, keyc
       return Promise.resolve(null)
     }
   } else {
-    identity = identity!.trim()
+    identity = identity.trim()
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }

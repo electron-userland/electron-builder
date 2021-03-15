@@ -54,7 +54,7 @@ export class GitHubPublisher extends HttpPublisher {
       }
     }
 
-    this.token = token!
+    this.token = token
 
     if (version.startsWith("v")) {
       throw new InvalidConfigurationError(`Version must not start with "v": ${version}`)
@@ -150,8 +150,8 @@ export class GitHubPublisher extends HttpPublisher {
 
     const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
     for (const asset of assets) {
-      if (asset!.name === fileName) {
-        await this.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
+      if (asset.name === fileName) {
+        await this.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset.id}`, this.token, null, "DELETE")
         return
       }
     }
@@ -166,7 +166,7 @@ export class GitHubPublisher extends HttpPublisher {
       return
     }
 
-    const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
+    const parsedUrl = parseUrl(`${release.upload_url.substring(0, release.upload_url.indexOf("{"))}?name=${fileName}`)
     return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
   }
 
@@ -197,7 +197,7 @@ export class GitHubPublisher extends HttpPublisher {
         requestProcessor
       )
       .catch(e => {
-        if ((e as any).statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+        if (e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
           return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release))
         }
 

@@ -83,7 +83,7 @@ export class LinuxTargetHelper {
     return file
   }
 
-  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string }): Promise<string> {
+  computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, extra?: { [key: string]: string }): Promise<string> {
     if (exec != null && exec.length === 0) {
       throw new Error("Specified exec is empty")
     }
@@ -175,7 +175,7 @@ export class LinuxTargetHelper {
       data += `\n${name}=${desktopMeta[name]}`
     }
     data += "\n"
-    return data
+    return Promise.resolve(data)
   }
 }
 

@@ -255,7 +255,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
-      identity: identity!,
+      identity: identity,
       type,
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion,

@@ -449,7 +449,7 @@ export class Packager {
 
   private async createHelper(platform: Platform): Promise<PlatformPackager<any>> {
     if (this.options.platformPackagerFactory != null) {
-      return this.options.platformPackagerFactory!(this, platform)
+      return this.options.platformPackagerFactory(this, platform)
     }
 
     switch (platform) {
@@ -537,7 +537,7 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
       continue
     }
 
-    const outDir = (target as Target).outDir
+    const outDir = target.outDir
     if (!createdOutDirs.has(outDir)) {
       ourDirs.add(outDir)
     }

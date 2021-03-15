@@ -64,7 +64,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
       }
       menuCategory = sanitizeFileName(companyName)
     } else {
-      menuCategory = (options.menuCategory as string)
+      menuCategory = options.menuCategory
         .split(/[/\\]/)
         .map(it => sanitizeFileName(it))
         .join("\\")
@@ -75,7 +75,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
     isPerMachine: options.perMachine === true,
     isAssisted: options.oneClick === false,
 
-    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.sanitizedProductName : packager.expandMacro(options.shortcutName!),
+    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.sanitizedProductName : packager.expandMacro(options.shortcutName),
     isCreateDesktopShortcut: convertToDesktopShortcutCreationPolicy(options.createDesktopShortcut),
     isCreateStartMenuShortcut: options.createStartMenuShortcut !== false,
     menuCategory,

@@ -96,7 +96,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       log.info({ reason: "CSC_KEY_PASSWORD is not defined" }, "empty password will be used for code signing")
       return ""
     } else {
-      return password!.trim()
+      return password.trim()
     }
   }
 
@@ -412,8 +412,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return Promise.resolve()
   }
 
-  async getIconPath(): Promise<string | null> {
-    return null
+  getIconPath(): Promise<string | null> {
+    return Promise.resolve(null)
   }
 
   private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {

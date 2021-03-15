@@ -25,9 +25,10 @@ export abstract class BaseUpdater extends AppUpdater {
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     return super.executeDownload({
       ...taskOptions,
-      done: async event => {
+      done: event => {
         this.dispatchUpdateDownloaded(event)
         this.addQuitHandler()
+        return Promise.resolve()
       },
     })
   }

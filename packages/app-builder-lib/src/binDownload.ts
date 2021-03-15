@@ -37,7 +37,7 @@ export function getBinFromUrl(name: string, version: string, checksum: string): 
 
 export function getBin(name: string, url?: string | null, checksum?: string | null): Promise<string> {
   // Old cache is ignored if cache environment variable changes
-  const cacheName = process.env.ELECTRON_BUILDER_CACHE + name
+  const cacheName = `${process.env.ELECTRON_BUILDER_CACHE}${name}`
   let promise = versionToPromise.get(cacheName) // if rejected, we will try to download again
 
   if (promise != null) {

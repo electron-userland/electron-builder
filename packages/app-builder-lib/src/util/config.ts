@@ -121,7 +121,7 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
       }
       value[i] = item
     } else if (Array.isArray(item)) {
-      throw new Error(`${name} configuration is invalid, nested array not expected for index ${i}: ` + item)
+      throw new Error(`${name} configuration is invalid, nested array not expected for index ${i}: ${item}`)
     }
 
     // make sure that merge logic is not complex - unify different presentations

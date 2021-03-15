@@ -177,7 +177,7 @@ export class PkgTarget extends Target {
       propertyListOutputFile,
     ]
 
-    use(this.options.installLocation || "/Applications", it => args.push("--install-location", it!))
+    use(this.options.installLocation || "/Applications", it => args.push("--install-location", it))
     if (options.scripts != null) {
       args.push("--scripts", path.resolve(this.packager.info.buildResourcesDir, options.scripts))
     } else if (options.scripts !== null) {

@@ -22,7 +22,7 @@ export interface DifferentialDownloaderOptions {
   readonly isUseMultipleRangeRequest?: boolean
 
   readonly cancellationToken: CancellationToken
-  onProgress?(progress: ProgressInfo): void
+  onProgress?: (progress: ProgressInfo) => void
 }
 
 export abstract class DifferentialDownloader {

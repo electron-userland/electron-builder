@@ -60,7 +60,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     return result
   }
 
-  const dependency = findFromPackageMetadata(await projectMetadata!.value)
+  const dependency = findFromPackageMetadata(await projectMetadata.value)
   if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
@@ -72,10 +72,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
     })
     const feed = parseXml(feedXml!)
     const latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    const v = latestRelease
-      .element("link")
-      .attribute("href")
-      .match(/\/tag\/v?([^/]+)$/)![1]
+    const v = /\/tag\/v?([^/]+)$/.exec(latestRelease.element("link").attribute("href"))![1]
     return v.startsWith("v") ? v.substring(1) : v
   } else if (dependency?.version === "latest") {
     log.warn('Electron version is set to "latest", but it is recommended to set it to some more restricted version range.')

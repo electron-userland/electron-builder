@@ -67,7 +67,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         })
         .then(path => {
           return {
-            file: path!,
+            file: path,
             password: this.getCscPassword(),
           }
         })
@@ -79,7 +79,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly vm = new Lazy<VmManager>(() => (process.platform === "win32" ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    const publisherName = (this.platformSpecificBuildOptions as WindowsConfiguration).publisherName
+    const publisherName = this.platformSpecificBuildOptions.publisherName
     if (publisherName === null) {
       return null
     } else if (publisherName != null) {
@@ -97,18 +97,18 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     if ("subject" in cscInfo) {
-      const bloodyMicrosoftSubjectDn = (cscInfo as CertificateFromStoreInfo).subject
+      const bloodyMicrosoftSubjectDn = cscInfo.subject
       return {
         commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
         bloodyMicrosoftSubjectDn,
       }
     }
 
-    const cscFile = (cscInfo as FileCodeSigningInfo).file
+    const cscFile = cscInfo.file
     if (cscFile == null) {
       return null
     }
-    return await getCertInfo(cscFile, (cscInfo as FileCodeSigningInfo).password || "")
+    return await getCertInfo(cscFile, cscInfo.password || "")
   })
 
   get isForceCodeSigningVerification(): boolean {
@@ -212,12 +212,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log.info(
         {
           file: log.filePath(file),
-          certificateFile: (cscInfo as FileCodeSigningInfo).file,
+          certificateFile: cscInfo.file,
         },
         logMessagePrefix
       )
     } else {
-      const info = cscInfo as CertificateFromStoreInfo
+      const info = cscInfo
       log.info(
         {
           file: log.filePath(file),
@@ -286,7 +286,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       args.push("--set-requested-execution-level", requestedExecutionLevel)
     }
 
-    use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
+    use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it))
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
     const iconPath = await this.getIconPath()
     use(iconPath, it => {

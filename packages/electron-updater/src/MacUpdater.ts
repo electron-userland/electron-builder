@@ -66,7 +66,7 @@ export class MacUpdater extends AppUpdater {
 
         return await new Promise<Array<string>>((resolve, reject) => {
           // insecure random is ok
-          const fileUrl = "/" + Date.now() + "-" + Math.floor(Math.random() * 9999) + ".zip"
+          const fileUrl = `/${Date.now()}-${Math.floor(Math.random() * 9999)}.zip`
           server.on("request", (request: IncomingMessage, response: ServerResponse) => {
             const requestUrl = request.url!
             this._logger.info(`${requestUrl} requested`)
@@ -124,7 +124,7 @@ export class MacUpdater extends AppUpdater {
 
             this.nativeUpdater.once("error", reject)
 
-            // The update has been dowloaded and is ready to be served to Squirrel
+            // The update has been downloaded and is ready to be served to Squirrel
             this.dispatchUpdateDownloaded(event)
 
             if (this.autoInstallOnAppQuit) {

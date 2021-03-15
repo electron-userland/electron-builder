@@ -5,11 +5,11 @@
  */
 
 export abstract class ProgressBar {
-  private stream: any
+  private readonly stream: any
 
   private current = 0
   total = 0
-  private width: number
+  private readonly width: number
 
   private chars: any
   private tokens: any = null
@@ -112,7 +112,7 @@ export abstract class ProgressBar {
 
     /* add head to the complete string */
     if (completeLength > 0) {
-      complete = complete.slice(0, -1) + this.chars.head
+      complete = `${complete.slice(0, -1)}${this.chars.head}`
     }
 
     /* fill in the actual progress bar */
