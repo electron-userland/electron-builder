@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import { PACKAGE_VERSION } from "app-builder-lib/out/version"
 import { log, use, getArchCliNames } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
 import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config"
@@ -10,9 +11,7 @@ import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
-import yargs from "yargs"
-
-declare const PACKAGE_VERSION: string
+import * as yargs from "yargs"
 
 /** @internal */
 export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {

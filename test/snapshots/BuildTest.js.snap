@@ -372,16 +372,20 @@ Object {
                     },
                   },
                 },
-                "safe-buffer": Object {
+                "string_decoder": Object {
                   "files": Object {
                     "LICENSE": Object {
-                      "size": 1081,
+                      "size": 2338,
                     },
-                    "index.js": Object {
-                      "size": 1529,
+                    "lib": Object {
+                      "files": Object {
+                        "string_decoder.js": Object {
+                          "size": 9465,
+                        },
+                      },
                     },
                     "package.json": Object {
-                      "size": 500,
+                      "size": 514,
                     },
                   },
                 },
@@ -449,6 +453,19 @@ Object {
             },
             "package.json": Object {
               "size": 1306,
+            },
+          },
+        },
+        "chownr": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 765,
+            },
+            "chownr.js": Object {
+              "size": 4275,
+            },
+            "package.json": Object {
+              "size": 452,
             },
           },
         },
@@ -928,6 +945,30 @@ Object {
             },
           },
         },
+        "mkdirp": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 1141,
+            },
+            "bin": Object {
+              "files": Object {
+                "cmd.js": Object {
+                  "executable": true,
+                  "size": 731,
+                },
+                "usage.txt": Object {
+                  "size": 315,
+                },
+              },
+            },
+            "index.js": Object {
+              "size": 2644,
+            },
+            "package.json": Object {
+              "size": 548,
+            },
+          },
+        },
         "mkdirp-classic": Object {
           "files": Object {
             "LICENSE": Object {
@@ -1143,34 +1184,6 @@ Object {
             "index.js": Object {
               "size": 6099,
             },
-            "node_modules": Object {
-              "files": Object {
-                "semver": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 765,
-                    },
-                    "bin": Object {
-                      "files": Object {
-                        "semver": Object {
-                          "executable": true,
-                          "size": 4418,
-                        },
-                      },
-                    },
-                    "package.json": Object {
-                      "size": 407,
-                    },
-                    "range.bnf": Object {
-                      "size": 619,
-                    },
-                    "semver.js": Object {
-                      "size": 38803,
-                    },
-                  },
-                },
-              },
-            },
             "package.json": Object {
               "size": 547,
             },
@@ -1284,34 +1297,6 @@ Object {
             },
             "log.js": Object {
               "size": 232,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "mkdirp": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 1141,
-                    },
-                    "bin": Object {
-                      "files": Object {
-                        "cmd.js": Object {
-                          "executable": true,
-                          "size": 731,
-                        },
-                        "usage.txt": Object {
-                          "size": 315,
-                        },
-                      },
-                    },
-                    "index.js": Object {
-                      "size": 2644,
-                    },
-                    "package.json": Object {
-                      "size": 548,
-                    },
-                  },
-                },
-              },
             },
             "package.json": Object {
               "size": 1109,
@@ -1470,27 +1455,6 @@ Object {
                 },
               },
             },
-            "node_modules": Object {
-              "files": Object {
-                "string_decoder": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 2338,
-                    },
-                    "lib": Object {
-                      "files": Object {
-                        "string_decoder.js": Object {
-                          "size": 9465,
-                        },
-                      },
-                    },
-                    "package.json": Object {
-                      "size": 542,
-                    },
-                  },
-                },
-              },
-            },
             "package.json": Object {
               "size": 1299,
             },
@@ -1508,10 +1472,34 @@ Object {
               "size": 1081,
             },
             "index.js": Object {
-              "size": 1670,
+              "size": 1529,
             },
             "package.json": Object {
-              "size": 774,
+              "size": 500,
+            },
+          },
+        },
+        "semver": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 765,
+            },
+            "bin": Object {
+              "files": Object {
+                "semver": Object {
+                  "executable": true,
+                  "size": 4418,
+                },
+              },
+            },
+            "package.json": Object {
+              "size": 407,
+            },
+            "range.bnf": Object {
+              "size": 619,
+            },
+            "semver.js": Object {
+              "size": 38803,
             },
           },
         },
@@ -1603,17 +1591,17 @@ Object {
                       "size": 1081,
                     },
                     "index.js": Object {
-                      "size": 1529,
+                      "size": 1670,
                     },
                     "package.json": Object {
-                      "size": 500,
+                      "size": 774,
                     },
                   },
                 },
               },
             },
             "package.json": Object {
-              "size": 514,
+              "size": 542,
             },
           },
         },
@@ -1650,23 +1638,6 @@ Object {
             },
             "index.js": Object {
               "size": 9587,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "chownr": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 765,
-                    },
-                    "chownr.js": Object {
-                      "size": 4275,
-                    },
-                    "package.json": Object {
-                      "size": 452,
-                    },
-                  },
-                },
-              },
             },
             "package.json": Object {
               "size": 590,
@@ -1705,6 +1676,23 @@ Object {
             },
             "index.js": Object {
               "size": 6884,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1670,
+                    },
+                    "package.json": Object {
+                      "size": 774,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 542,

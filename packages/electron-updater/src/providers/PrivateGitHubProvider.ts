@@ -4,8 +4,9 @@ import { load } from "js-yaml"
 import * as path from "path"
 import { AppUpdater } from "../AppUpdater"
 import { URL } from "url"
+import { getChannelFilename, newUrlFromBase } from "../util"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { getChannelFilename, newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../main"
 import { getFileList, ProviderRuntimeOptions } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {

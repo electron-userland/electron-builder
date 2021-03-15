@@ -7,6 +7,11 @@
   "include": [
     "src/**/*.ts"
   ],
+  "references": [
+    {
+      "path": "../builder-util-runtime"
+    }
+  ],
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/util",
     "access": "public"

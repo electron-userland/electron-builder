@@ -9,10 +9,11 @@ import * as path from "path"
 import { getArtifactArchName } from "builder-util/out/arch"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
+import { AfterPackContext, Configuration } from "./configuration"
+import { Platform, SourceRepositoryInfo, Target } from "./core"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
+import { Framework } from "./Framework"
 import { LibUiFramework } from "./frameworks/LibUiFramework"
-import { AfterPackContext, Configuration, Framework, Platform, SourceRepositoryInfo, Target } from "./index"
-import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
@@ -24,13 +25,12 @@ import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDepen
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
-import { WinPackager } from "./winPackager"
+import { PACKAGE_VERSION } from "./version"
+import { release as getOsRelease } from "os"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)
 }
-
-declare const PACKAGE_VERSION: string
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -230,7 +230,7 @@ export class Packager {
     }
 
     try {
-      log.info({ version: PACKAGE_VERSION, os: require("os").release() }, "electron-builder")
+      log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
     } catch (e) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
@@ -418,7 +418,7 @@ export class Packager {
         throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
       }
 
-      const packager = this.createHelper(platform)
+      const packager = await this.createHelper(platform)
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
@@ -447,24 +447,24 @@ export class Packager {
     return platformToTarget
   }
 
-  private createHelper(platform: Platform): PlatformPackager<any> {
+  private async createHelper(platform: Platform): Promise<PlatformPackager<any>> {
     if (this.options.platformPackagerFactory != null) {
       return this.options.platformPackagerFactory!(this, platform)
     }
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass: typeof MacPackager = require("./macPackager").default
+        const helperClass = (await import("./macPackager")).default
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass: typeof WinPackager = require("./winPackager").WinPackager
+        const helperClass = (await import("./winPackager")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (require("./linuxPackager").LinuxPackager)(this)
+        return new (await import("./linuxPackager")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)
@@ -472,7 +472,7 @@ export class Packager {
   }
 
   public async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.options.prepackaged != null || this.framework.isNpmRebuildRequired !== true) {
+    if (this.options.prepackaged != null || !this.framework.isNpmRebuildRequired) {
       return
     }
 

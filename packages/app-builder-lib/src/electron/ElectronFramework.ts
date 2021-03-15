@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, executeAppBuilder, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
-import { emptyDir, readdir, remove, rename } from "fs-extra"
+import { emptyDir, readdir, rename } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../configuration"
@@ -13,6 +13,7 @@ import { isSafeToUnpackElectronOnRemoteBuildServer } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
+import { promises as fsPromises } from "fs"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -84,7 +85,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
         const language = file.substring(0, file.length - langFileExt.length)
         if (!wantedLanguages.includes(language)) {
-          return remove(path.join(resourcesDir, file))
+          return fsPromises.rmdir(path.join(resourcesDir, file), { recursive: false })
         }
         return
       },

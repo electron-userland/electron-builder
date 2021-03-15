@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 
 import { InvalidConfigurationError, log } from "builder-util"
-import chalk from "chalk"
+import * as chalk from "chalk"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { pathExists, readJson } from "fs-extra"
 import isCi from "is-ci"

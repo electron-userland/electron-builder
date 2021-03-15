@@ -1,19 +1,13 @@
-import chalk from "chalk"
-import depCheck, { Results } from "depcheck"
+import * as chalk from "chalk"
+import { Results } from "depcheck"
+import * as depCheck from "depcheck"
 import { readJson } from "fs-extra"
 import { promises as fs } from "fs"
 import * as path from "path"
 import { printErrorAndExit } from "builder-util/out/promise"
 
-const knownUnusedDevDependencies = new Set<string>([
-])
-
-const knownMissedDependencies = new Set<string>([
-  "babel-core",
-  "babel-preset-env",
-  "babel-preset-stage-0",
-  "babel-preset-react",
-])
+const knownUnusedDevDependencies = new Set<string>([])
+const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
@@ -23,28 +17,18 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise<Results>(resolve => {
-    depCheck(projectDir, {
-      ignoreDirs: [
-        "src", "test", "docs", "typings", "docker", "certs", "templates", "vendor",
-      ],
-      // ignore d.ts
-      parsers: {
-        "*.js": (depCheck as any).parser.es6,
-      },
-    }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["out", "test", "docs", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
-  let unusedDependencies: any
-  if (packageName === "electron-builder") {
-    unusedDependencies = result.dependencies.filter(it => !["dmg-builder", "bluebird-lst", "@types/yargs"].includes(it))
-  }
-  else {
-    unusedDependencies = result.dependencies.filter(it => !["bluebird-lst", "@types/debug", "@types/semver", "@types/fs-extra"].includes(it))
-  }
-
+  let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
-    console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
-    return false
+    if (packageName === "electron-builder") {
+      unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder")
+    }
+    if (unusedDependencies.length > 0) {
+      console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
+      return false
+    }
   }
 
   let unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
@@ -62,9 +46,12 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     delete (result.missing as any).toml
   }
 
+  if (packageName === "electron-builder") {
+    delete (result.missing as any)["electron-publish"]
+  }
+
   for (const name of Object.keys(result.missing)) {
-    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" ||
-      (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))) {
+    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack" || (packageName === "app-builder-lib" && (name === "dmg-builder" || knownMissedDependencies.has(name) || name.startsWith("@babel/")))) {
       delete (result.missing as any)[name]
     }
   }
@@ -75,7 +62,7 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   }
 
   const packageData = await readJson(path.join(projectDir, "package.json"))
-  for (const name of (devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies))) {
+  for (const name of devPackageData.devDependencies == null ? [] : Object.keys(devPackageData.devDependencies)) {
     if (packageData.dependencies != null && packageData.dependencies[name] != null) {
       continue
     }
@@ -104,5 +91,4 @@ async function main(): Promise<void> {
   }
 }
 
-main()
-  .catch(printErrorAndExit)
+main().catch(printErrorAndExit)

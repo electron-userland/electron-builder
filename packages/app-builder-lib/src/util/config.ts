@@ -4,13 +4,12 @@ import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "read-config-file"
-import { FileSet } from ".."
 import { Configuration } from "../configuration"
+import { FileSet } from "../options/PlatformSpecificBuildOptions"
 import { reactCra } from "../presets/rectCra"
+import { PACKAGE_VERSION } from "../version"
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const validateSchema = require("@develar/schema-utils")
-
-declare const PACKAGE_VERSION: string
 
 // https://github.com/electron-userland/electron-builder/issues/1847
 function mergePublish(config: Configuration, configFromOptions: Configuration) {

@@ -1,9 +1,9 @@
 import { isEmptyOrSpaces, log } from "builder-util"
-import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { expandMacro } from "./util/macroExpander"
+import { sanitizeFileName } from "./util/sanitizeFileName"
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
 // http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/

@@ -12,7 +12,6 @@
   ],
   "dependencies": {
     "@types/fs-extra": "^9.0.7",
-    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.0",

@@ -4,6 +4,7 @@ import * as path from "path"
 import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
+import isCI from "is-ci"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
@@ -133,7 +134,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (require("is-ci") || process.env.USE_HARD_LINKS === "true")
+const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))

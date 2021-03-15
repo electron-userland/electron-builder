@@ -1,4 +1,5 @@
 import * as path from "path"
+import { homedir as getHomedir } from "os"
 
 export interface AppAdapter {
   readonly version: string
@@ -29,7 +30,7 @@ export interface AppAdapter {
 }
 
 export function getAppCacheDir() {
-  const homedir = require("os").homedir()
+  const homedir = getHomedir()
   // https://github.com/electron/electron/issues/1404#issuecomment-194391247
   let result: string
   if (process.platform === "win32") {

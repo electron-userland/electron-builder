@@ -1,7 +1,9 @@
+import { PublishOptions, UploadTask } from "electron-publish"
 import { readJson, writeFile } from "fs-extra"
 import * as path from "path"
-import { UploadTask, Arch, Packager, PackagerOptions, PublishOptions } from ".."
-import { InvalidConfigurationError } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
+import { Packager } from "../packager"
+import { PackagerOptions } from "../packagerApi"
 import SnapTarget from "../targets/snap"
 
 if (process.env.BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG == null) {

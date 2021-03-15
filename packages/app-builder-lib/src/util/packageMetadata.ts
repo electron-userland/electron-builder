@@ -2,17 +2,17 @@ import { isEmptyOrSpaces, log, InvalidConfigurationError } from "builder-util"
 import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
-import { Metadata } from ".."
-import normalizeData from "normalize-package-data"
+import { Metadata } from "../options/metadata"
+import { normalizePackageData } from "./normalizePackageData"
 
 /** @internal */
 export async function readPackageJson(file: string): Promise<any> {
   const data = await readJson(file)
   await authors(file, data)
-  normalizeData(data)
   // remove not required fields because can be used for remote build
   delete data.scripts
   delete data.readme
+  normalizePackageData(data)
   return data
 }
 
@@ -58,9 +58,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
   checkNotEmpty("version", metadata.version)
 
-  if (metadata != null) {
-    checkDependencies(metadata.dependencies, errors)
-  }
+  checkDependencies(metadata.dependencies, errors)
   if (metadata !== devMetadata) {
     if (metadata.build != null) {
       errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)

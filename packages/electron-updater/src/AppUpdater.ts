@@ -1,6 +1,5 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
-import { Notification } from "electron"
 import { EventEmitter } from "events"
 import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
@@ -256,7 +255,7 @@ export abstract class AppUpdater extends EventEmitter {
 
       downloadPromise.then(() => {
         const notificationContent = this.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
-        new Notification(notificationContent).show()
+        new (require("electron").Notification)(notificationContent).show()
       })
 
       return it
