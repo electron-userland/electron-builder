@@ -131,7 +131,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
 
           reject(new Error(message))
         }
-      },
+      }
     )
   })
 }
@@ -198,7 +198,7 @@ export function spawnAndWrite(command: string, args: Array<string>, data: string
         } finally {
           reject(error)
         }
-      },
+      }
     )
 
     childProcess.stdin!!.end(data)
@@ -324,7 +324,9 @@ export function isPullRequest() {
     return value && value !== "false"
   }
 
-  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  return (
+    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  )
 }
 
 export function isEnvTrue(value: string | null | undefined) {
@@ -341,7 +343,12 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
+export function executeAppBuilder(
+  args: Array<string>,
+  childProcessConsumer?: (childProcess: ChildProcess) => void,
+  extraOptions: SpawnOptions = {},
+  maxRetries = 0
+): Promise<string> {
   const command = appBuilderPath
   const env: any = {
     ...process.env,

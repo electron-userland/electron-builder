@@ -20,7 +20,13 @@ function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appN
   })
 }
 
-function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperRendererPlist: string | null, helperPluginPlist: string | null, helperGPUPlist: string | null) {
+function getAvailableHelperSuffixes(
+  helperEHPlist: string | null,
+  helperNPPlist: string | null,
+  helperRendererPlist: string | null,
+  helperPluginPlist: string | null,
+  helperGPUPlist: string | null
+) {
   const result = [" Helper"]
   if (helperEHPlist != null) {
     result.push(" Helper EH")
@@ -135,7 +141,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   function configureHelper(helper: any, postfix: string, userProvidedBundleIdentifier?: string | null) {
     helper.CFBundleExecutable = `${appFilename} Helper ${postfix}`
     helper.CFBundleDisplayName = `${appInfo.productName} Helper ${postfix}`
-    helper.CFBundleIdentifier = userProvidedBundleIdentifier ? filterCFBundleIdentifier(userProvidedBundleIdentifier) : filterCFBundleIdentifier(`${helperBundleIdentifier}.${postfix}`)
+    helper.CFBundleIdentifier = userProvidedBundleIdentifier
+      ? filterCFBundleIdentifier(userProvidedBundleIdentifier)
+      : filterCFBundleIdentifier(`${helperBundleIdentifier}.${postfix}`)
     helper.CFBundleVersion = appPlist.CFBundleVersion
   }
 

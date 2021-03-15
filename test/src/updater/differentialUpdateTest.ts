@@ -33,27 +33,31 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
   let outDirs: Array<string> = []
 
   async function buildApp(version: string, tmpDir: TmpDir) {
-    await assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
-      config: {
-        extraMetadata: {
-          version,
-        },
-        // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
-        compression: process.env.COMPRESSION as any || "store",
-        publish: {
-          provider: "s3",
-          bucket: "develar",
-          path: "test",
+    await assertPack(
+      "test-app-one",
+      {
+        targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+        config: {
+          extraMetadata: {
+            version,
+          },
+          // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
+          compression: (process.env.COMPRESSION as any) || "store",
+          publish: {
+            provider: "s3",
+            bucket: "develar",
+            path: "test",
+          },
         },
       },
-    }, {
-      signedWin: true,
-      packed: async context => {
-        outDirs.push(context.outDir)
-      },
-      tmpDir,
-    })
+      {
+        signedWin: true,
+        packed: async context => {
+          outDirs.push(context.outDir)
+        },
+        tmpDir,
+      }
+    )
   }
 
   if (process.env.__SKIP_BUILD == null) {
@@ -66,8 +70,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       outDirs[0] = oldDir
 
       await buildApp("1.0.1", tmpDir)
-    }
-    catch (e) {
+    } catch (e) {
       await tmpDir.cleanup()
       throw e
     }
@@ -78,13 +81,9 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     outDirs[0] = oldDir
 
     await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
-  }
-  else {
+  } else {
     nsisWebDifferentialUpdateTestFakeSnapshot()
-    outDirs = [
-      path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"),
-      path.join(process.env.TEST_APP_TMP_DIR!!, "dist"),
-    ]
+    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!!, "dist")]
   }
 
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
@@ -94,26 +93,30 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
   let outDirs: Array<string> = []
 
   async function buildApp(version: string) {
-    await assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
-      config: {
-        extraMetadata: {
-          version,
-        },
-        // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
-        compression: process.env.COMPRESSION as any || "store",
-        publish: {
-          provider: "s3",
-          bucket: "develar",
-          path: "test",
+    await assertPack(
+      "test-app-one",
+      {
+        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
+        config: {
+          extraMetadata: {
+            version,
+          },
+          // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
+          compression: (process.env.COMPRESSION as any) || "store",
+          publish: {
+            provider: "s3",
+            bucket: "develar",
+            path: "test",
+          },
         },
       },
-    }, {
-      signedWin: true,
-      packed: async context => {
-        outDirs.push(context.outDir)
+      {
+        signedWin: true,
+        packed: async context => {
+          outDirs.push(context.outDir)
+        },
       }
-    })
+    )
   }
 
   if (process.env.__SKIP_BUILD == null) {
@@ -127,8 +130,7 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
       outDirs[0] = oldDir
 
       await buildApp("1.0.1")
-    }
-    catch (e) {
+    } catch (e) {
       await tmpDir.cleanup()
       throw e
     }
@@ -140,14 +142,10 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
 
     await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
     await move(path.join(oldDir, "Test App ßW Setup 1.0.0.exe.blockmap"), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
-  }
-  else {
+  } else {
     nsisDifferentialUpdateFakeSnapshot()
 
-    outDirs = [
-      path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"),
-      path.join(process.env.TEST_APP_TMP_DIR!!, "dist"),
-    ]
+    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!!, "dist")]
   }
 
   await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, "win-unpacked", Platform.WINDOWS)
@@ -163,8 +161,7 @@ async function testLinux(arch: Arch) {
 
     process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
     await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater, `__appImage-${Arch[arch]}`, Platform.LINUX)
-  }
-  finally {
+  } finally {
     await tmpDir.cleanup()
   }
 }
@@ -183,8 +180,7 @@ test.skip("dmg", async () => {
         electronUpdaterCompatibility: ">=2.17.0",
       },
     })
-  }
-  else {
+  } else {
     // todo
   }
 
@@ -192,26 +188,30 @@ test.skip("dmg", async () => {
 })
 
 async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig: Configuration | null | undefined) {
-  await assertPack("test-app-one", {
-    targets,
-    config: {
-      extraMetadata: {
-        version,
-      },
-      ...extraConfig,
-      compression: "normal",
-      publish: {
-        provider: "s3",
-        bucket: "develar",
-        path: "test",
+  await assertPack(
+    "test-app-one",
+    {
+      targets,
+      config: {
+        extraMetadata: {
+          version,
+        },
+        ...extraConfig,
+        compression: "normal",
+        publish: {
+          provider: "s3",
+          bucket: "develar",
+          path: "test",
+        },
       },
     },
-  }, {
-    packed: async context => {
-      outDirs.push(context.outDir)
-    },
-    tmpDir,
-  })
+    {
+      packed: async context => {
+        outDirs.push(context.outDir)
+      },
+      tmpDir,
+    }
+  )
 }
 
 async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig?: Configuration | null) {
@@ -223,8 +223,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
     outDirs[0] = oldDir
 
     await buildApp("1.0.1", outDirs, targets, tmpDir, extraConfig)
-  }
-  catch (e) {
+  } catch (e) {
     await tmpDir.cleanup()
     throw e
   }
@@ -282,24 +281,30 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
   const port = 8000 + updaterClass.name.charCodeAt(0) + Math.floor(Math.random() * 10000)
 
   // noinspection SpellCheckingInspection
-  const httpServerProcess = doSpawn(path.join(await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"), [
-    `-root=${newDir}`,
-    `-port=${port}`,
-    "-gzip=false",
-    "-listdir=true",
-  ])
+  const httpServerProcess = doSpawn(
+    path.join(await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"),
+    [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"]
+  )
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock("electron", () => {
-    return {
-      autoUpdater: mockNativeUpdater,
-    }
-  }, {virtual: true})
+  jest.mock(
+    "electron",
+    () => {
+      return {
+        autoUpdater: mockNativeUpdater,
+      }
+    },
+    { virtual: true }
+  )
 
   return await new BluebirdPromise((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
-    updater._appUpdateConfigPath = path.join(oldDir, (updaterClass === MacUpdater ? `${appUpdateConfigPath}/Contents/Resources` : (`${appUpdateConfigPath}/resources`)), "app-update.yml")
+    updater._appUpdateConfigPath = path.join(
+      oldDir,
+      updaterClass === MacUpdater ? `${appUpdateConfigPath}/Contents/Resources` : `${appUpdateConfigPath}/resources`,
+      "app-update.yml"
+    )
     const doTest = async () => {
       await tuneTestUpdater(updater, {
         platform: platform.nodeName as any,
@@ -331,8 +336,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     doTest()
       .then(() => resolve())
       .catch(reject)
+  }).finally(() => {
+    httpServerProcess.kill()
   })
-    .finally(() => {
-      httpServerProcess.kill()
-    })
 }

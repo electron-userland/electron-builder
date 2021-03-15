@@ -8,7 +8,14 @@ import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
 
 /** @internal */
-export async function tar(compression: CompressionLevel | any | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
+export async function tar(
+  compression: CompressionLevel | any | any,
+  format: string,
+  outFile: string,
+  dirToArchive: string,
+  isMacApp: boolean,
+  tempDirManager: TmpDir
+): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs = debug7zArgs("a")
   tarArgs.push(tarFile)
@@ -48,7 +55,7 @@ export async function tar(compression: CompressionLevel | any | any, format: str
     {
       cwd: path.dirname(dirToArchive),
     },
-    debug7z.enabled,
+    debug7z.enabled
   )
 }
 
@@ -167,7 +174,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       {
         cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
       },
-      debug7z.enabled,
+      debug7z.enabled
     )
   } catch (e) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {

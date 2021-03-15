@@ -45,7 +45,10 @@ export class LinuxTargetHelper {
     }
 
     const file = await this.packager.getTempFile(".xml")
-    await outputFile(file, '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>")
+    await outputFile(
+      file,
+      '<?xml version="1.0" encoding="utf-8"?>\n<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n' + items.join("\n") + "\n</mime-info>"
+    )
     return file
   }
 
@@ -160,7 +163,7 @@ export class LinuxTargetHelper {
             reason: "linux.category is not set and cannot map from macOS",
             docs: "https://www.electron.build/configuration/linux",
           },
-          'application Linux category is set to default "Utility"',
+          'application Linux category is set to default "Utility"'
         )
         category = "Utility"
       }

@@ -24,7 +24,7 @@ export function executeAppBuilderAndWriteJson(args: Array<string>, data: any, ex
     {
       ...extraOptions,
       stdio: ["pipe", "pipe", process.stdout],
-    },
+    }
   )
 }
 

@@ -112,7 +112,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
           }
         })
       },
-      CONCURRENCY,
+      CONCURRENCY
     )
 
     for (const child of sortedFilePaths) {
@@ -253,7 +253,7 @@ export class FileCopier {
               return false
             }
           }
-        : null,
+        : null
     )
 
     if (afterCopyTransformer != null) {

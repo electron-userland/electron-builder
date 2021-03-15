@@ -5,7 +5,13 @@ import { copyData, DataSplitter, PartListDataTask } from "./DataSplitter"
 import { DifferentialDownloader } from "./DifferentialDownloader"
 import { Operation, OperationKind } from "./downloadPlanBuilder"
 
-export function executeTasksUsingMultipleRangeRequests(differentialDownloader: DifferentialDownloader, tasks: Array<Operation>, out: Writable, oldFileFd: number, reject: (error: Error) => void): (taskOffset: number) => void {
+export function executeTasksUsingMultipleRangeRequests(
+  differentialDownloader: DifferentialDownloader,
+  tasks: Array<Operation>,
+  out: Writable,
+  oldFileFd: number,
+  reject: (error: Error) => void
+): (taskOffset: number) => void {
   const w = (taskOffset: number): void => {
     if (taskOffset >= tasks.length) {
       if (differentialDownloader.fileMetadataBuffer != null) {
@@ -26,7 +32,7 @@ export function executeTasksUsingMultipleRangeRequests(differentialDownloader: D
       },
       out,
       () => w(nextOffset),
-      reject,
+      reject
     )
   }
   return w

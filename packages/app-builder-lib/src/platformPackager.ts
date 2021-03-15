@@ -14,7 +14,20 @@ import { computeData } from "./asar/integrity"
 import { copyFiles, FileMatcher, getFileMatchers, GetFileMatchersOptions, getMainFileMatchers, getNodeModuleFileMatcher } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Framework, isElectronBased } from "./Framework"
-import { AfterPackContext, AsarOptions, CompressionLevel, Configuration, ElectronPlatformName, FileAssociation, Packager, PackagerOptions, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "./index"
+import {
+  AfterPackContext,
+  AsarOptions,
+  CompressionLevel,
+  Configuration,
+  ElectronPlatformName,
+  FileAssociation,
+  Packager,
+  PackagerOptions,
+  Platform,
+  PlatformSpecificBuildOptions,
+  Target,
+  TargetSpecificOptions,
+} from "./index"
 import { executeAppBuilderAsJson } from "./util/appBuilder"
 import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMPILE_SHIM_FILENAME, transformFiles } from "./util/appFileCopier"
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
@@ -99,7 +112,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+    return (
+      this.packagerOptions.prepackaged ||
+      path.join(
+        outDir,
+        `${this.platform.buildConfigurationKey}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`
+      )
+    )
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null): Promise<void> {
@@ -147,7 +166,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
-    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
+    const base = isResources
+      ? this.getResourcesDir(appOutDir)
+      : this.platform === Platform.MAC
+      ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
+      : appOutDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -160,7 +183,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>, sign: boolean = true, disableAsarIntegrity: boolean = false) {
+  protected async doPack(
+    outDir: string,
+    appOutDir: string,
+    platformName: ElectronPlatformName,
+    arch: Arch,
+    platformSpecificBuildOptions: DC,
+    targets: Array<Target>,
+    sign: boolean = true,
+    disableAsarIntegrity: boolean = false
+  ) {
     if (this.packagerOptions.prepackaged != null) {
       return
     }
@@ -183,7 +215,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         [`${framework.name}`]: framework.version,
         appOutDir: log.filePath(appOutDir),
       },
-      `packaging`,
+      `packaging`
     )
 
     await framework.prepareApplicationStageDirectory({
@@ -221,7 +253,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources") : isElectronBased(framework) ? path.join(appOutDir, "resources") : appOutDir
+    const resourcesPath =
+      this.platform === Platform.MAC
+        ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources")
+        : isElectronBased(framework)
+        ? path.join(appOutDir, "resources")
+        : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
@@ -295,7 +332,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     packContext: AfterPackContext,
     platformSpecificBuildOptions: DC,
     excludePatterns: Array<Minimatch>,
-    macroExpander: (it: string) => string,
+    macroExpander: (it: string) => string
   ) {
     const appDir = this.info.appDir
     const config = this.config
@@ -319,7 +356,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             ...config.extraMetadata,
           }
         : config.extraMetadata,
-      framework.createTransformer == null ? null : framework.createTransformer(),
+      framework.createTransformer == null ? null : framework.createTransformer()
     )
 
     const _computeFileSets = (matchers: Array<FileMatcher>) => {
@@ -365,7 +402,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           }
 
           await new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)
-        }),
+        })
       )
     }
   }
@@ -406,7 +443,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           {
             solution: "enable asar and use asarUnpack to unpack files that must be externally available",
           },
-          "asar usage is disabled — this is strongly not recommended",
+          "asar usage is disabled — this is strongly not recommended"
         )
       }
       return null
@@ -502,11 +539,27 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // tslint:disable-next-line:no-invalid-template-strings
-  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipDefaultArch: boolean = true, defaultArch?: string, safePattern: string = "${name}-${version}-${arch}.${ext}"): string | null {
-    return computeSafeArtifactNameIfNeeded(suggestedName, () => this.computeArtifactName(safePattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch))
+  computeSafeArtifactName(
+    suggestedName: string | null,
+    ext: string,
+    arch?: Arch | null,
+    skipDefaultArch: boolean = true,
+    defaultArch?: string,
+    safePattern: string = "${name}-${version}-${arch}.${ext}"
+  ): string | null {
+    return computeSafeArtifactNameIfNeeded(suggestedName, () =>
+      this.computeArtifactName(safePattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
+    )
   }
 
-  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipDefaultArch: boolean = true, defaultArch?: string): string {
+  expandArtifactNamePattern(
+    targetSpecificOptions: TargetSpecificOptions | null | undefined,
+    ext: string,
+    arch?: Arch | null,
+    defaultPattern?: string,
+    skipDefaultArch: boolean = true,
+    defaultArch?: string
+  ): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName
@@ -572,7 +625,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if ((await statOrNull(p)) == null) {
         p = path.resolve(this.projectDir, custom)
         if ((await statOrNull(p)) == null) {
-          throw new InvalidConfigurationError(`cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`)
+          throw new InvalidConfigurationError(
+            `cannot find specified resource "${custom}", nor relative to "${resourcesDir}", neither relative to project dir ("${this.projectDir}")`
+          )
         }
       }
       return p
@@ -607,7 +662,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
-    const args = ["icon", "--format", outputFormat, "--root", this.buildResourcesDir, "--root", this.projectDir, "--out", path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`)]
+    const args = [
+      "icon",
+      "--format",
+      outputFormat,
+      "--root",
+      this.buildResourcesDir,
+      "--root",
+      this.projectDir,
+      "--out",
+      path.resolve(this.projectDir, this.config.directories!!.output!!, `.icon-${outputFormat}`),
+    ]
     for (const source of sources) {
       args.push("--input", source)
     }

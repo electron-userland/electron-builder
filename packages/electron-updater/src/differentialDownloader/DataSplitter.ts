@@ -49,7 +49,7 @@ export class DataSplitter extends Writable {
     private readonly partIndexToTaskIndex: Map<number, number>,
     boundary: string,
     private readonly partIndexToLength: Array<number>,
-    private readonly finishHandler: () => any,
+    private readonly finishHandler: () => any
   ) {
     super()
 

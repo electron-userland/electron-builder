@@ -14,7 +14,7 @@ export async function getLicenseButtonsFile(packager: PlatformPackager<any>): Pr
       // noinspection SpellCheckingInspection
       return name.startsWith("licensebuttons_") && (name.endsWith(".json") || name.endsWith(".yml"))
     }),
-    packager,
+    packager
   )
 }
 

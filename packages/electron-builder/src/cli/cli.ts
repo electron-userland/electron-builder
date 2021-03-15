@@ -32,13 +32,13 @@ createYargs()
           description: "The publisher name",
         })
         .demandOption("publisher"),
-    wrap(argv => createSelfSignedCert(argv.publisher)),
+    wrap(argv => createSelfSignedCert(argv.publisher))
   )
   .command(
     "start",
     "Run application in a development mode using electron-webpack",
     yargs => yargs,
-    wrap(() => start()),
+    wrap(() => start())
   )
   .help()
   .epilog(`See ${chalk.underline("https://electron.build")} for more documentation.`)
@@ -79,7 +79,9 @@ function checkIsOutdated() {
       const notifier = updateNotifier({ pkg: it })
       if (notifier.update != null) {
         notifier.notify({
-          message: `Update available ${chalk.dim(notifier.update.current)}${chalk.reset(" → ")}${chalk.green(notifier.update.latest)} \nRun ${chalk.cyan(`${packageManager} upgrade electron-builder`)} to update`,
+          message: `Update available ${chalk.dim(notifier.update.current)}${chalk.reset(" → ")}${chalk.green(notifier.update.latest)} \nRun ${chalk.cyan(
+            `${packageManager} upgrade electron-builder`
+          )} to update`,
         })
       }
     })

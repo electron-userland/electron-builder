@@ -23,7 +23,11 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPac
     })
 }
 
-export async function getNotLocalizedLicenseFile(custom: string | null | undefined, packager: PlatformPackager<any>, supportedExtension: Array<string> = ["rtf", "txt", "html"]): Promise<string | null> {
+export async function getNotLocalizedLicenseFile(
+  custom: string | null | undefined,
+  packager: PlatformPackager<any>,
+  supportedExtension: Array<string> = ["rtf", "txt", "html"]
+): Promise<string | null> {
   const possibleFiles: Array<string> = []
   for (const name of ["license", "eula"]) {
     for (const ext of supportedExtension) {
@@ -43,7 +47,7 @@ export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<
       const name = it.toLowerCase()
       return (name.startsWith("license_") || name.startsWith("eula_")) && (name.endsWith(".rtf") || name.endsWith(".txt"))
     }),
-    packager,
+    packager
   )
 }
 

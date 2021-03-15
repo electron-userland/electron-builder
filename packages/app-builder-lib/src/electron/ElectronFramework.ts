@@ -89,7 +89,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
         }
         return
       },
-      CONCURRENCY,
+      CONCURRENCY
     )
   }
 }

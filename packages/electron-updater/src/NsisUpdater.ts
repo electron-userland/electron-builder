@@ -39,7 +39,10 @@ export class NsisUpdater extends BaseUpdater {
         if (signatureVerificationStatus != null) {
           await removeTempDirIfAny()
           // noinspection ThrowInsideFinallyBlockJS
-          throw newError(`New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`, "ERR_UPDATER_INVALID_SIGNATURE")
+          throw newError(
+            `New version ${downloadUpdateOptions.updateInfoAndProvider.info.version} is not signed by the application owner: ${signatureVerificationStatus}`,
+            "ERR_UPDATER_INVALID_SIGNATURE"
+          )
         }
 
         if (isWebInstaller) {
@@ -125,14 +128,22 @@ export class NsisUpdater extends BaseUpdater {
     return true
   }
 
-  private async differentialDownloadInstaller(fileInfo: ResolvedUpdateFileInfo, downloadUpdateOptions: DownloadUpdateOptions, installerPath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadInstaller(
+    fileInfo: ResolvedUpdateFileInfo,
+    downloadUpdateOptions: DownloadUpdateOptions,
+    installerPath: string,
+    provider: Provider<any>
+  ): Promise<boolean> {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
 
       const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`, fileInfo.url)
+      const oldBlockMapUrl = newUrlFromBase(
+        `${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`,
+        fileInfo.url
+      )
       this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
@@ -179,7 +190,12 @@ export class NsisUpdater extends BaseUpdater {
     }
   }
 
-  private async differentialDownloadWebPackage(downloadUpdateOptions: DownloadUpdateOptions, packageInfo: PackageFileInfo, packagePath: string, provider: Provider<any>): Promise<boolean> {
+  private async differentialDownloadWebPackage(
+    downloadUpdateOptions: DownloadUpdateOptions,
+    packageInfo: PackageFileInfo,
+    packagePath: string,
+    provider: Provider<any>
+  ): Promise<boolean> {
     if (packageInfo.blockMapSize == null) {
       return true
     }

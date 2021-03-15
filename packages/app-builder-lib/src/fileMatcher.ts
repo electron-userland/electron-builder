@@ -122,7 +122,7 @@ export function getMainFileMatchers(
   platformSpecificBuildOptions: PlatformSpecificBuildOptions,
   platformPackager: PlatformPackager<any>,
   outDir: string,
-  isElectronCompile: boolean,
+  isElectronCompile: boolean
 ): Array<FileMatcher> {
   const packager = platformPackager.info
   const buildResourceDir = path.resolve(packager.projectDir, packager.buildResourcesDir)
@@ -201,7 +201,13 @@ export function getMainFileMatchers(
 }
 
 /** @internal */
-export function getNodeModuleFileMatcher(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: Packager): FileMatcher {
+export function getNodeModuleFileMatcher(
+  appDir: string,
+  destination: string,
+  macroExpander: (pattern: string) => string,
+  platformSpecificBuildOptions: PlatformSpecificBuildOptions,
+  packager: Packager
+): FileMatcher {
   // https://github.com/electron-userland/electron-builder/pull/2948#issuecomment-392241632
   // grab only excludes
   const matcher = new FileMatcher(appDir, destination, macroExpander)
@@ -259,7 +265,12 @@ export interface GetFileMatchersOptions {
 }
 
 /** @internal */
-export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles", defaultDestination: string, options: GetFileMatchersOptions): Array<FileMatcher> | null {
+export function getFileMatchers(
+  config: Configuration,
+  name: "files" | "extraFiles" | "extraResources" | "asarUnpack" | "extraDistFiles",
+  defaultDestination: string,
+  options: GetFileMatchersOptions
+): Array<FileMatcher> | null {
   const defaultMatcher = new FileMatcher(options.defaultSrc, defaultDestination, options.macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 

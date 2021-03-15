@@ -255,7 +255,7 @@ export class Packager {
         arch: event.arch == null ? null : Arch[event.arch],
         file: log.filePath(event.file),
       },
-      "building",
+      "building"
     )
     const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
     if (handler != null) {
@@ -348,7 +348,7 @@ export class Packager {
       this.projectDir,
       expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
         os: "",
-      }),
+      })
     )
 
     if (!isCI && (process.stdout as any).isTTY) {
@@ -554,7 +554,7 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
         return mkdirs(dir)
           .then(() => chmod(dir, 0o755) /* set explicitly */)
           .then(() => createdOutDirs.add(dir))
-      }),
+      })
   )
 }
 

@@ -53,7 +53,11 @@ export default class SnapTarget extends Target {
     const defaultStagePackages = getDefaultStagePackages()
     const stagePackages = this.replaceDefault(options.stagePackages, defaultStagePackages)
 
-    this.isUseTemplateApp = this.options.useTemplateApp !== false && (arch === Arch.x64 || arch === Arch.armv7l) && buildPackages.length === 0 && isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
+    this.isUseTemplateApp =
+      this.options.useTemplateApp !== false &&
+      (arch === Arch.x64 || arch === Arch.armv7l) &&
+      buildPackages.length === 0 &&
+      isArrayEqualRegardlessOfSort(stagePackages, defaultStagePackages)
 
     const appDescriptor: any = {
       command: "command.sh",
@@ -124,7 +128,12 @@ export default class SnapTarget extends Target {
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
-        LD_LIBRARY_PATH: ["$SNAP_LIBRARY_PATH", "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet, "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib", "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet].join(":"),
+        LD_LIBRARY_PATH: [
+          "$SNAP_LIBRARY_PATH",
+          "$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
+          "$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib",
+          "$SNAP/lib/" + archTriplet + ":$SNAP/usr/lib/" + archTriplet,
+        ].join(":"),
         ...options.environment,
       }
 

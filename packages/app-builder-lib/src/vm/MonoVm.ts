@@ -14,7 +14,7 @@ export class MonoVmManager extends VmManager {
       {
         ...options,
       },
-      isLogOutIfDebug,
+      isLogOutIfDebug
     )
   }
 

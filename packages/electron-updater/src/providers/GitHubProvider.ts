@@ -45,7 +45,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       {
         accept: "application/xml, application/atom+xml, text/xml, */*",
       },
-      cancellationToken,
+      cancellationToken
     ))!
 
     const feed = parseXml(feedXml)
@@ -99,7 +99,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   private async getLatestVersionString(cancellationToken: CancellationToken): Promise<string | null> {
     const options = this.options
     // do not use API for GitHub to avoid limit, only for custom host or GitHub Enterprise
-    const url = options.host == null || options.host === "github.com" ? newUrlFromBase(`${this.basePath}/latest`, this.baseUrl) : new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
+    const url =
+      options.host == null || options.host === "github.com"
+        ? newUrlFromBase(`${this.basePath}/latest`, this.baseUrl)
+        : new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
     try {
       const rawData = await this.httpRequest(url, { Accept: "application/json" }, cancellationToken)
       if (rawData == null) {

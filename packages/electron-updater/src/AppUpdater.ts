@@ -309,7 +309,10 @@ export abstract class AppUpdater extends EventEmitter {
   private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(
+        `This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`,
+        "ERR_UPDATER_INVALID_VERSION"
+      )
     }
 
     const currentVersion = this.currentVersion
@@ -364,7 +367,9 @@ export abstract class AppUpdater extends EventEmitter {
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
-      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
+      this._logger.info(
+        `Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+      )
       this.emit("update-not-available", updateInfo)
       return {
         versionInfo: updateInfo,
@@ -389,7 +394,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(
       `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
         .map(it => it.url)
-        .join(", ")})`,
+        .join(", ")})`
     )
     this.emit("update-available", updateInfo)
   }
@@ -409,7 +414,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
         .map(it => it.url)
-        .join(", ")}`,
+        .join(", ")}`
     )
     const errorHandler = (e: Error): Error => {
       // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159

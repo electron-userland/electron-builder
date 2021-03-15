@@ -1,6 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, InvalidConfigurationError, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, serializeToYaml } from "builder-util"
-import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
+import {
+  BintrayOptions,
+  CancellationToken,
+  GenericServerOptions,
+  getS3LikeProviderBaseUrl,
+  GithubOptions,
+  githubUrl,
+  PublishConfiguration,
+  PublishProvider,
+} from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, PublishContext, Publisher, PublishOptions, UploadTask } from "electron-publish"
 import { BintrayPublisher } from "./BintrayPublisher"
@@ -30,7 +39,11 @@ const debug = _debug("electron-builder:publish")
 function checkOptions(publishPolicy: any) {
   if (publishPolicy != null && publishPolicy !== "onTag" && publishPolicy !== "onTagOrDraft" && publishPolicy !== "always" && publishPolicy !== "never") {
     if (typeof publishPolicy === "string") {
-      throw new InvalidConfigurationError(`Expected one of "onTag", "onTagOrDraft", "always", "never", but got ${JSON.stringify(publishPolicy)}.\nPlease note that publish configuration should be specified under "config"`)
+      throw new InvalidConfigurationError(
+        `Expected one of "onTag", "onTagOrDraft", "always", "never", but got ${JSON.stringify(
+          publishPolicy
+        )}.\nPlease note that publish configuration should be specified under "config"`
+      )
     }
   }
 }
@@ -79,7 +92,7 @@ export class PublishManager implements PublishContext {
           reason: "current build is a part of pull request",
           solution: `set env PUBLISH_FOR_PULL_REQUEST to true to force code signing\n${publishForPrWarning}`,
         },
-        "publishing will be skipped",
+        "publishing will be skipped"
       )
     }
 
@@ -140,7 +153,7 @@ export class PublishManager implements PublishContext {
           reason: "publisher is null",
           publishConfig: safeStringifyJson(publishConfig),
         },
-        "not published",
+        "not published"
       )
       return
     }
@@ -182,7 +195,13 @@ export class PublishManager implements PublishContext {
       }
     }
 
-    if (event.isWriteUpdateInfo && target != null && eventFile != null && !this.cancellationToken.cancelled && (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))) {
+    if (
+      event.isWriteUpdateInfo &&
+      target != null &&
+      eventFile != null &&
+      !this.cancellationToken.cancelled &&
+      (platformPackager.platform !== Platform.WINDOWS || isSuitableWindowsTarget(target))
+    ) {
       this.taskManager.addTask(createUpdateInfoTasks(event, publishConfigs).then(it => this.updateFileWriteTask.push(...it)))
     }
   }
@@ -239,7 +258,11 @@ export async function getAppUpdatePublishConfiguration(packager: PlatformPackage
   return publishConfig
 }
 
-export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null, arch: Arch | null): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigsForUpdateInfo(
+  packager: PlatformPackager<any>,
+  publishConfigs: Array<PublishConfiguration> | null,
+  arch: Arch | null
+): Promise<Array<PublishConfiguration> | null> {
   if (publishConfigs === null) {
     return null
   }
@@ -349,7 +372,12 @@ export function computeDownloadUrl(publishConfiguration: PublishConfiguration, f
   return `${baseUrl}/${encodeURI(fileName)}`
 }
 
-export async function getPublishConfigs(platformPackager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigs(
+  platformPackager: PlatformPackager<any>,
+  targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined,
+  arch: Arch | null,
+  errorIfCannot: boolean
+): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)
@@ -378,7 +406,13 @@ export async function getPublishConfigs(platformPackager: PlatformPackager<any>,
   return await resolvePublishConfigurations(publishers, platformPackager, platformPackager.info, arch, errorIfCannot)
 }
 
-async function resolvePublishConfigurations(publishers: any, platformPackager: PlatformPackager<any> | null, packager: Packager, arch: Arch | null, errorIfCannot: boolean): Promise<Array<PublishConfiguration> | null> {
+async function resolvePublishConfigurations(
+  publishers: any,
+  platformPackager: PlatformPackager<any> | null,
+  packager: Packager,
+  arch: Arch | null,
+  errorIfCannot: boolean
+): Promise<Array<PublishConfiguration> | null> {
   if (publishers == null) {
     let serviceName: PublishProvider | null = null
     if (!isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.GITHUB_TOKEN)) {
@@ -398,7 +432,9 @@ async function resolvePublishConfigurations(publishers: any, platformPackager: P
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot)) as Promise<Array<PublishConfiguration>>)
+  return await (BluebirdPromise.map(asArray(publishers), it =>
+    getResolvedPublishConfig(platformPackager, packager, typeof it === "string" ? { provider: it } : it, arch, errorIfCannot)
+  ) as Promise<Array<PublishConfiguration>>)
 }
 
 function isSuitableWindowsTarget(target: Target) {
@@ -431,13 +467,16 @@ async function getResolvedPublishConfig(
   packager: Packager,
   options: PublishConfiguration,
   arch: Arch | null,
-  errorIfCannot: boolean,
+  errorIfCannot: boolean
 ): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
   options = { ...options }
   expandPublishConfig(options, platformPackager, packager, arch)
 
   let channelFromAppVersion: string | null = null
-  if ((options as GenericServerOptions).channel == null && isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)) {
+  if (
+    (options as GenericServerOptions).channel == null &&
+    isDetectUpdateChannel(platformPackager == null ? null : platformPackager.platformSpecificBuildOptions, packager.config)
+  ) {
     channelFromAppVersion = packager.appInfo.channel
   }
 

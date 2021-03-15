@@ -89,7 +89,7 @@ export abstract class DifferentialDownloader {
           return close(openedFile.descriptor).catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
-        }),
+        })
       )
     }
     return this.doDownloadFile(tasks, fdList)

@@ -90,7 +90,7 @@ async function doBuild(data: BuildTask): Promise<void> {
     },
     info.metadata,
     info.devMetadata,
-    info.repositoryInfo,
+    info.repositoryInfo
   )
 
   // writeJson must be not used because it adds unwanted \n as last file symbol

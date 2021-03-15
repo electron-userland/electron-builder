@@ -40,7 +40,7 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
           cleanupPackageJson(JSON.parse(it), {
             isMain: false,
             isRemovePackageScripts,
-          }),
+          })
         )
         .catch(e => log.warn(e))
     } else if (extraTransformer != null) {

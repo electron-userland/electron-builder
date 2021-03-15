@@ -91,7 +91,10 @@ class RemoteTarget extends Target {
   }
 
   constructor(private readonly target: Target, private readonly remoteBuilder: RemoteBuilder) {
-    super(target.name, true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */)
+    super(
+      target.name,
+      true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */
+    )
   }
 
   async finishBuild() {

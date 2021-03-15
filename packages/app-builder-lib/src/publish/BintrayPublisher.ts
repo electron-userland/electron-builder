@@ -20,7 +20,9 @@ export class BintrayPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
+        throw new InvalidConfigurationError(
+          `Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`
+        )
       }
 
       token = token.trim()
@@ -103,6 +105,8 @@ export class BintrayPublisher extends HttpPublisher {
   }
 
   toString() {
-    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${this.version})`
+    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${
+      this.version
+    })`
   }
 }

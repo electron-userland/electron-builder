@@ -91,7 +91,14 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: ElectronPlatformName, arch: Arch, platformSpecificBuildOptions: MacConfiguration, targets: Array<Target>): Promise<any> {
+  protected async doPack(
+    outDir: string,
+    appOutDir: string,
+    platformName: ElectronPlatformName,
+    arch: Arch,
+    platformSpecificBuildOptions: MacConfiguration,
+    targets: Array<Target>
+  ): Promise<any> {
     switch (arch) {
       default: {
         return super.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
@@ -111,7 +118,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
             [`${framework.name}`]: framework.version,
             appOutDir: log.filePath(appOutDir),
           },
-          `packaging`,
+          `packaging`
         )
         const appFile = `${this.appInfo.productFilename}.app`
         const { makeUniversalApp } = require("@electron/universal")
@@ -138,9 +145,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged ? Promise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)).then(() =>
-        this.packageInDistributableFormat(appPath, arch, targets, taskManager),
-      )
+      nonMasPromise = (prepackaged
+        ? Promise.resolve()
+        : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+      ).then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
     }
 
     for (const target of targets) {
@@ -271,7 +279,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         identityHash: identity.hash,
         provisioningProfile: signOptions["provisioning-profile"] || "none",
       },
-      "signing",
+      "signing"
     )
     await this.doSign(signOptions)
 

@@ -132,7 +132,7 @@ export class GitHubPublisher extends HttpPublisher {
           reason: "release doesn't exist",
           ...logFields,
         },
-        `creating GitHub release`,
+        `creating GitHub release`
       )
       return this.createRelease()
     }
@@ -170,7 +170,14 @@ export class GitHubPublisher extends HttpPublisher {
     return await this.doUploadFile(0, parsedUrl, fileName, dataLength, requestProcessor, release)
   }
 
-  private doUploadFile(attemptNumber: number, parsedUrl: UrlWithStringQuery, fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, release: any): Promise<any> {
+  private doUploadFile(
+    attemptNumber: number,
+    parsedUrl: UrlWithStringQuery,
+    fileName: string,
+    dataLength: number,
+    requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
+    release: any
+  ): Promise<any> {
     return httpExecutor
       .doApiRequest(
         configureRequestOptions(
@@ -184,10 +191,10 @@ export class GitHubPublisher extends HttpPublisher {
               "Content-Length": dataLength,
             },
           },
-          this.token,
+          this.token
         ),
         this.context.cancellationToken,
-        requestProcessor,
+        requestProcessor
       )
       .catch(e => {
         if ((e as any).statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
@@ -262,11 +269,11 @@ export class GitHubPublisher extends HttpPublisher {
             headers: { accept: "application/vnd.github.v3+json" },
           },
           token,
-          method,
+          method
         ),
         this.context.cancellationToken,
-        data,
-      ),
+        data
+      )
     )
   }
 

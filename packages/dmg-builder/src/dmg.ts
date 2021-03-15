@@ -30,7 +30,7 @@ export class DmgTarget extends Target {
       arch,
       "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + "-${arch}.${ext}",
       true,
-      packager.platformSpecificBuildOptions.defaultArch,
+      packager.platformSpecificBuildOptions.defaultArch
     )
     const artifactPath = path.join(this.outDir, artifactName)
     await packager.info.callArtifactBuildStarted({

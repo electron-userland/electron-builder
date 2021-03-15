@@ -132,11 +132,16 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
       transformedFiles!!.set(index, transformedValue as string | Buffer)
       return false
     },
-    CONCURRENCY,
+    CONCURRENCY
   )
 }
 
-export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+export async function computeFileSets(
+  matchers: Array<FileMatcher>,
+  transformer: FileTransformer | null,
+  platformPackager: PlatformPackager<any>,
+  isElectronCompile: boolean
+): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
   const packager = platformPackager.info
 
@@ -200,7 +205,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     const files = await copier.collectNodeModules(
       source,
       info.deps.map(it => it.name),
-      nodeModuleExcludedExts,
+      nodeModuleExcludedExts
     )
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
   }
@@ -230,7 +235,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
       }
       return compilerHost.compile(file).then(() => null)
     },
-    CONCURRENCY,
+    CONCURRENCY
   )
 
   await compilerHost.saveConfiguration()
@@ -257,7 +262,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
     `
 'use strict';
 require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
-`,
+`
   )
   return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }
 }

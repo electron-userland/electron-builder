@@ -67,7 +67,13 @@ export function parseDn(seq: string): Map<string, string> {
         nextNonSpace = j
       }
 
-      if (nextNonSpace >= seq.length || seq[nextNonSpace] === "," || seq[nextNonSpace] === ";" || (key === null && seq[nextNonSpace] === "=") || (key !== null && seq[nextNonSpace] === "+")) {
+      if (
+        nextNonSpace >= seq.length ||
+        seq[nextNonSpace] === "," ||
+        seq[nextNonSpace] === ";" ||
+        (key === null && seq[nextNonSpace] === "=") ||
+        (key !== null && seq[nextNonSpace] === "+")
+      ) {
         i = nextNonSpace - 1
         continue
       }

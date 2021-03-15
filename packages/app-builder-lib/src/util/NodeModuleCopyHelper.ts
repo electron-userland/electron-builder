@@ -7,8 +7,30 @@ import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
 
-const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
-const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "Readme.md", "Readme", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples", ".bin"])
+const excludedFiles = new Set(
+  [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
+    excludedNames.split(",")
+  )
+)
+const topLevelExcludedFiles = new Set([
+  "test.js",
+  "karma.conf.js",
+  ".coveralls.yml",
+  "README.md",
+  "readme.markdown",
+  "README",
+  "readme.md",
+  "Readme.md",
+  "Readme",
+  "readme",
+  "test",
+  "__tests__",
+  "tests",
+  "powered-test",
+  "example",
+  "examples",
+  ".bin",
+])
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
@@ -104,7 +126,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
               }
             })
           },
-          CONCURRENCY,
+          CONCURRENCY
         )
 
         for (const child of sortedFilePaths) {

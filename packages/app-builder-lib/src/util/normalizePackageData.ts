@@ -228,7 +228,12 @@ function isCorrectlyEncodedName(spec: string): boolean {
 }
 
 function ensureValidName(name: string): void {
-  if (name.charAt(0) === "." || !(isValidScopedPackageName(name) || isCorrectlyEncodedName(name)) || name.toLowerCase() === "node_modules" || name.toLowerCase() === "favicon.ico") {
+  if (
+    name.charAt(0) === "." ||
+    !(isValidScopedPackageName(name) || isCorrectlyEncodedName(name)) ||
+    name.toLowerCase() === "node_modules" ||
+    name.toLowerCase() === "favicon.ico"
+  ) {
     throw new Error("Invalid name: " + JSON.stringify(name))
   }
 }

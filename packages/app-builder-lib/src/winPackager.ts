@@ -197,7 +197,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (this.platformSpecificBuildOptions.sign != null) {
         await sign(signOptions, this)
       } else if (this.forceCodeSigning) {
-        throw new InvalidConfigurationError(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
+        throw new InvalidConfigurationError(
+          `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
+        )
       }
       return
     }
@@ -212,7 +214,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           file: log.filePath(file),
           certificateFile: (cscInfo as FileCodeSigningInfo).file,
         },
-        logMessagePrefix,
+        logMessagePrefix
       )
     } else {
       const info = cscInfo as CertificateFromStoreInfo
@@ -224,7 +226,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           store: info.store,
           user: info.isLocalMachineStore ? "local machine" : "current user",
         },
-        logMessagePrefix,
+        logMessagePrefix
       )
     }
 
@@ -360,7 +362,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
       if (file === exeFileName) {
-        return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
+        return this.signAndEditResources(
+          path.join(packContext.appOutDir, exeFileName),
+          packContext.arch,
+          packContext.outDir,
+          path.basename(exeFileName, ".exe"),
+          this.platformSpecificBuildOptions.requestedExecutionLevel
+        )
       } else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
         return this.sign(path.join(packContext.appOutDir, file))
       }

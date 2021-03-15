@@ -39,7 +39,9 @@ export function isSignAllowed(isPrintWarn = true): boolean {
     } else {
       if (isPrintWarn) {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        log.warn("Current build is a part of pull request, code signing will be skipped." + "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." + `\n${buildForPrWarning}`)
+        log.warn(
+          "Current build is a part of pull request, code signing will be skipped." + "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." + `\n${buildForPrWarning}`
+        )
       }
       return false
     }
@@ -47,7 +49,13 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainFile: string | null | undefined, isForceCodeSigning: boolean) {
+export async function reportError(
+  isMas: boolean,
+  certificateType: CertType,
+  qualifier: string | null | undefined,
+  keychainFile: string | null | undefined,
+  isForceCodeSigning: boolean
+) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""
@@ -92,7 +100,10 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const cacheDir = getCacheDirectory()
   const tmpKeychainPath = path.join(cacheDir, getTempName("electron-builder-root-certs"))
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
-  const results = await Promise.all<any>([listUserKeychains(), copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath))])
+  const results = await Promise.all<any>([
+    listUserKeychains(),
+    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
+  ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
     await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
@@ -112,7 +123,7 @@ function listUserKeychains(): Promise<Array<string>> {
         const r = it.trim()
         return r.substring(1, r.length - 1)
       })
-      .filter(it => it.length > 0),
+      .filter(it => it.length > 0)
   )
 }
 
@@ -227,13 +238,15 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
               }
             }
             return false
-          }),
+          })
       ),
       exec("security", addKeychain(["find-identity", "-v", "-p", "codesigning"])).then(it => it.trim().split("\n")),
     ]).then(it => {
       const array = it[0]
         .concat(it[1])
-        .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
+        .filter(
+          it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.")
+        )
         // remove 1)
         .map(it => it.substring(it.indexOf(")") + 1).trim())
       return Array.from(new Set(array))

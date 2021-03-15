@@ -151,7 +151,7 @@ export class NsisTarget extends Target {
         file: installerPath,
         arch: null,
       },
-      logFields,
+      logFields
     )
 
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
@@ -275,7 +275,9 @@ export class NsisTarget extends Target {
     }
 
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
-    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader)
+    const script = isPortable
+      ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8")
+      : await this.computeScriptAndSignUninstaller(definesUninstaller, commandsUninstaller, installerPath, sharedHeader)
 
     // copy outfile name into main options, as the computeScriptAndSignUninstaller function was kind enough to add important data to temporary defines.
     defines.UNINSTALLER_OUT_FILE = definesUninstaller.UNINSTALLER_OUT_FILE
@@ -542,7 +544,11 @@ export class NsisTarget extends Target {
     }
 
     const nsisPath = await NSIS_PATH()
-    const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux", process.platform === "win32" ? "makensis.exe" : "makensis")
+    const command = path.join(
+      nsisPath,
+      process.platform === "darwin" ? "mac" : process.platform === "win32" ? "Bin" : "linux",
+      process.platform === "win32" ? "makensis.exe" : "makensis"
+    )
 
     // if (process.platform === "win32") {
     // fix for an issue caused by virus scanners, locking the file during write

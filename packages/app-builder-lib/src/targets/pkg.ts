@@ -95,7 +95,9 @@ export class PkgTarget extends Target {
 
     const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
     distInfo =
-      distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
+      distInfo.substring(0, insertIndex) +
+      `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` +
+      distInfo.substring(insertIndex)
 
     if (options.background != null) {
       const background = await this.packager.getResource(options.background.file)
@@ -104,7 +106,8 @@ export class PkgTarget extends Target {
         // noinspection SpellCheckingInspection
         const scaling = options.background.scaling || "tofit"
         distInfo = distInfo.substring(0, insertIndex) + `    <background file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
-        distInfo = distInfo.substring(0, insertIndex) + `    <background-darkAqua file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
+        distInfo =
+          distInfo.substring(0, insertIndex) + `    <background-darkAqua file="${background}" alignment="${alignment}" scaling="${scaling}"/>\n` + distInfo.substring(insertIndex)
       }
     }
 
@@ -135,7 +138,9 @@ export class PkgTarget extends Target {
     await exec("pkgbuild", ["--analyze", "--root", rootPath, propertyListOutputFile])
 
     // process the template plist
-    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter((it: any) => it.RootRelativeBundlePath !== "Electron.dSYM")
+    const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter(
+      (it: any) => it.RootRelativeBundlePath !== "Electron.dSYM"
+    )
     if (plistInfo.length > 0) {
       const packageInfo = plistInfo[0]
 

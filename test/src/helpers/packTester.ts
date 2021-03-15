@@ -48,7 +48,7 @@ export interface AssertPackOptions {
 }
 
 export interface PackedContext {
-  readonly projectDir: string,
+  readonly projectDir: string
   readonly outDir: string
 
   readonly getResources: (platform: Platform, arch?: Arch) => string
@@ -78,8 +78,8 @@ export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPac
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   let configuration = packagerOptions.config as Configuration
   if (configuration == null) {
-    configuration = {};
-    (packagerOptions as any).config = configuration
+    configuration = {}
+    ;(packagerOptions as any).config = configuration
   }
 
   if (checkOptions.signed) {
@@ -88,9 +88,8 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
-  }
-  else if ((configuration as Configuration).cscLink == null) {
-    packagerOptions = deepAssign({}, packagerOptions, {config: {mac: {identity: null}}})
+  } else if ((configuration as Configuration).cscLink == null) {
+    packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
@@ -99,10 +98,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = checkOptions.tmpDir || new TmpDir(`pack-tester: ${fixtureName}`)
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.createTempDir({prefix: "test-project"}) : path.resolve(customTmpDir)
+  const dir = customTmpDir == null ? await tmpDir.createTempDir({ prefix: "test-project" }) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
     await emptyDir(dir)
-    log.info({customTmpDir}, "custom temp dir used")
+    log.info({ customTmpDir }, "custom temp dir used")
   }
 
   await copyDir(projectDir, dir, {
@@ -115,42 +114,48 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   })
   projectDir = dir
 
-  await executeFinally((async () => {
-    if (projectDirCreated != null) {
-      await projectDirCreated(projectDir, tmpDir)
-    }
-
-    if (checkOptions.isInstallDepsBefore) {
-      // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-      await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production"], {
-        cwd: projectDir,
-      })
-    }
-
-    if (packagerOptions.projectDir != null) {
-      packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
-    }
-
-    const {packager, outDir} = await packAndCheck({
-      projectDir,
-      ...packagerOptions
-    }, checkOptions)
-
-    if (checkOptions.packed != null) {
-      const base = function (platform: Platform, arch?: Arch): string {
-        return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
+  await executeFinally(
+    (async () => {
+      if (projectDirCreated != null) {
+        await projectDirCreated(projectDir, tmpDir)
       }
 
-      await checkOptions.packed({
-        projectDir,
-        outDir,
-        getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
-        getContent: platform => base(platform),
-        packager,
-        tmpDir,
-      })
-    }
-  })(), (): any => tmpDir === checkOptions.tmpDir ? null : tmpDir.cleanup())
+      if (checkOptions.isInstallDepsBefore) {
+        // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
+        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production"], {
+          cwd: projectDir,
+        })
+      }
+
+      if (packagerOptions.projectDir != null) {
+        packagerOptions.projectDir = path.resolve(projectDir, packagerOptions.projectDir)
+      }
+
+      const { packager, outDir } = await packAndCheck(
+        {
+          projectDir,
+          ...packagerOptions,
+        },
+        checkOptions
+      )
+
+      if (checkOptions.packed != null) {
+        const base = function (platform: Platform, arch?: Arch): string {
+          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
+        }
+
+        await checkOptions.packed({
+          projectDir,
+          outDir,
+          getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
+          getContent: platform => base(platform),
+          packager,
+          tmpDir,
+        })
+      }
+    })(),
+    (): any => (tmpDir === checkOptions.tmpDir ? null : tmpDir.cleanup())
+  )
 }
 
 const fileCopier = new FileCopier()
@@ -166,7 +171,7 @@ export function getFixtureDir() {
 async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-  const publishManager = new PublishManager(packager, {publish: "publish" in checkOptions ? checkOptions.publish : "never"})
+  const publishManager = new PublishManager(packager, { publish: "publish" in checkOptions ? checkOptions.publish : "never" })
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
@@ -178,11 +183,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
     addValue(artifacts, event.packager.platform, event)
   })
 
-  const {outDir, platformToTargets} = await packager.build()
+  const { outDir, platformToTargets } = await packager.build()
   await publishManager.awaitTasks()
 
   if (packagerOptions.platformPackagerFactory != null) {
-    return {packager, outDir}
+    return { packager, outDir }
   }
 
   function sortKey(a: ArtifactCreated) {
@@ -191,72 +196,76 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   const objectToCompare: any = {}
   for (const platform of packagerOptions.targets!!.keys()) {
-    objectToCompare[platform.buildConfigurationKey] = await Promise.all((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b), 'en')).map(async it => {
-      const result: any = {...it}
-      const file = result.file
-      if (file != null) {
-        if (file.endsWith(".yml")) {
-          result.fileContent = removeUnstableProperties(load(await fs.readFile(file, "utf-8")))
-        }
-        result.file = path.basename(file)
-      }
-      const updateInfo = result.updateInfo
-      if (updateInfo != null) {
-        result.updateInfo = removeUnstableProperties(updateInfo)
-      }
-      else if (updateInfo === null) {
-        delete result.updateInfo
-      }
+    objectToCompare[platform.buildConfigurationKey] = await Promise.all(
+      (artifacts.get(platform) || [])
+        .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "en"))
+        .map(async it => {
+          const result: any = { ...it }
+          const file = result.file
+          if (file != null) {
+            if (file.endsWith(".yml")) {
+              result.fileContent = removeUnstableProperties(load(await fs.readFile(file, "utf-8")))
+            }
+            result.file = path.basename(file)
+          }
+          const updateInfo = result.updateInfo
+          if (updateInfo != null) {
+            result.updateInfo = removeUnstableProperties(updateInfo)
+          } else if (updateInfo === null) {
+            delete result.updateInfo
+          }
 
-      // reduce snapshot - avoid noise
-      if (result.safeArtifactName == null) {
-        delete result.safeArtifactName
-      }
-      if (result.updateInfo == null) {
-        delete result.updateInfo
-      }
-      if (result.arch == null) {
-        delete result.arch
-      }
-      else {
-        result.arch = Arch[result.arch]
-      }
+          // reduce snapshot - avoid noise
+          if (result.safeArtifactName == null) {
+            delete result.safeArtifactName
+          }
+          if (result.updateInfo == null) {
+            delete result.updateInfo
+          }
+          if (result.arch == null) {
+            delete result.arch
+          } else {
+            result.arch = Arch[result.arch]
+          }
 
-      if (Buffer.isBuffer(result.fileContent)) {
-        delete result.fileContent
-      }
+          if (Buffer.isBuffer(result.fileContent)) {
+            delete result.fileContent
+          }
 
-      delete result.isWriteUpdateInfo
-      delete result.packager
-      delete result.target
-      delete result.publishConfig
-      return result
-    }))
+          delete result.isWriteUpdateInfo
+          delete result.packager
+          delete result.target
+          delete result.publishConfig
+          return result
+        })
+    )
   }
 
   expect(objectToCompare).toMatchSnapshot()
 
   c: for (const [platform, archToType] of packagerOptions.targets!!) {
-    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, {platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: []} as any, platform)) {
+    for (const [arch, targets] of computeArchToTargetNamesMap(
+      archToType,
+      { platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
+      platform
+    )) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
 
       const nameToTarget = platformToTargets.get(platform)!!
       if (platform === Platform.MAC) {
-        const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : (nameToTarget.has("mas") ? "mas" : "mac"), `${packager.appInfo.productFilename}.app`)
+        const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
-      }
-      else if (platform === Platform.LINUX) {
+      } else if (platform === Platform.LINUX) {
         await checkLinuxResult(outDir, packager, arch, nameToTarget)
-      }
-      else if (platform === Platform.WINDOWS) {
+      } else if (platform === Platform.WINDOWS) {
         await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!!, nameToTarget)
       }
     }
   }
 
-  return {packager, outDir}
+  return { packager, outDir }
 }
 
 async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
@@ -265,15 +274,19 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
   }
 
   const appInfo = packager.appInfo
-  const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
+  const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "i386" : arch === Arch.x64 ? "amd64" : "armv7l"}.deb`
   expect(await getContents(packageFile)).toMatchSnapshot()
   if (arch === Arch.ia32) {
     expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
-  const control = parseDebControl((await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
-      maxBuffer: 10 * 1024 * 1024,
-    })).stdout)
+  const control = parseDebControl(
+    (
+      await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+        maxBuffer: 10 * 1024 * 1024,
+      })
+    ).stdout
+  )
 
   delete control.Version
   delete control.Size
@@ -308,7 +321,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", path.join(packedAppDir, "Contents", "Info.plist")]))[0]
 
   expect(info).toMatchObject({
-    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
+    CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
@@ -375,8 +388,14 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
-  const files = pathSorter(fileDescriptors.map(it => toSystemIndependentPath(it.path))
-    .filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")))
+  const files = pathSorter(
+    fileDescriptors
+      .map(it => toSystemIndependentPath(it.path))
+      .filter(
+        it =>
+          (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
+      )
+  )
 
   expect(files).toMatchSnapshot()
 
@@ -416,7 +435,7 @@ async function getContents(packageFile: string) {
     env: {
       ...process.env,
       SZA_PATH: path7za,
-    }
+    },
   })
 
   const contents = parseFileList(result.stdout, true)
@@ -426,7 +445,7 @@ async function getContents(packageFile: string) {
 export function parseFileList(data: string, fromDpkg: boolean): Array<string> {
   return data
     .split("\n")
-    .map(it => it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : (it.startsWith("./") ? it.substring(2) : (it === "." ? null : it)))
+    .map(it => (it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : it.startsWith("./") ? it.substring(2) : it === "." ? null : it))
     .filter(it => it != null && it.length > 0) as Array<string>
 }
 
@@ -447,48 +466,50 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
 
 export function platform(platform: Platform): PackagerOptions {
   return {
-    targets: platform.createTarget()
+    targets: platform.createTarget(),
   }
 }
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   if (process.env.CSC_KEY_PASSWORD == null) {
-    log.warn({reason: "CSC_KEY_PASSWORD is not defined"}, "macOS code signing is not tested")
-  }
-  else {
+    log.warn({ reason: "CSC_KEY_PASSWORD is not defined" }, "macOS code signing is not tested")
+  } else {
     if (packagerOptions.config == null) {
-      (packagerOptions as any).config = {}
+      ;(packagerOptions as any).config = {}
     }
-    (packagerOptions.config as any).cscLink = CSC_LINK
+    ;(packagerOptions.config as any).cscLink = CSC_LINK
   }
   return packagerOptions
 }
 
 export function createMacTargetTest(target: Array<MacOsTargetName>, config?: Configuration, isSigned = true) {
-  return app({
-    targets: Platform.MAC.createTarget(),
-    config: {
-      extraMetadata: {
-        repository: "foo/bar",
-      } as any,
-      mac: {
-        target,
+  return app(
+    {
+      targets: Platform.MAC.createTarget(),
+      config: {
+        extraMetadata: {
+          repository: "foo/bar",
+        } as any,
+        mac: {
+          target,
+        },
+        publish: null,
+        ...config,
       },
-      publish: null,
-      ...config
     },
-  }, {
-    signed: isSigned,
-    packed: async context => {
-      if (!target.includes("tar.gz")) {
-        return
-      }
+    {
+      signed: isSigned,
+      packed: async context => {
+        if (!target.includes("tar.gz")) {
+          return
+        }
 
-      const tempDir = await context.tmpDir.createTempDir({prefix: "mac-target-test"})
-      await exec("tar", ["xf", path.join(context.outDir, "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
-      await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
+        const tempDir = await context.tmpDir.createTempDir({ prefix: "mac-target-test" })
+        await exec("tar", ["xf", path.join(context.outDir, "Test App ßW-1.1.0-mac.tar.gz")], { cwd: tempDir })
+        await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
+      },
     }
-  })
+  )
 }
 
 export async function checkDirContents(dir: string) {
@@ -496,13 +517,15 @@ export async function checkDirContents(dir: string) {
 }
 
 export function removeUnstableProperties(data: any) {
-  return JSON.parse(JSON.stringify(data, (name, value) => {
-    if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
-      // to ensure that some property exists
-      return `@${name}`
-    }
-    return value
-  }))
+  return JSON.parse(
+    JSON.stringify(data, (name, value) => {
+      if (name.includes("size") || name.includes("Size") || name.startsWith("sha") || name === "releaseDate") {
+        // to ensure that some property exists
+        return `@${name}`
+      }
+      return value
+    })
+  )
 }
 
 export async function verifyAsarFileTree(resourceDir: string) {

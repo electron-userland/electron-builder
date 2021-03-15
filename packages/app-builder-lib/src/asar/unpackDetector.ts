@@ -114,7 +114,7 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
           }
         })
       },
-      CONCURRENCY,
+      CONCURRENCY
     )
   }
 }

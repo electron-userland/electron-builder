@@ -21,7 +21,7 @@ async function getReleaseInfo(packager: PlatformPackager<any>) {
       `release-notes-${packager.platform.buildConfigurationKey}.md`,
       `release-notes-${packager.platform.name}.md`,
       `release-notes-${packager.platform.nodeName}.md`,
-      "release-notes.md",
+      "release-notes.md"
     )
     const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
     // to avoid undefined in the file, check for null
@@ -220,7 +220,7 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
             provider: publishConfig.provider,
             reason: "publishAutoUpdate is set to false",
           },
-          "auto update metadata file not published",
+          "auto update metadata file not published"
         )
         return
       }
@@ -240,12 +240,20 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
         publishConfig,
       })
     },
-    { concurrency: 4 },
+    { concurrency: 4 }
   )
 }
 
 // backward compatibility - write json file
-async function writeOldMacInfo(publishConfig: PublishConfiguration, outDir: string, dir: string, channel: string, createdFiles: Set<string>, version: string, packager: PlatformPackager<any>) {
+async function writeOldMacInfo(
+  publishConfig: PublishConfiguration,
+  outDir: string,
+  dir: string,
+  channel: string,
+  createdFiles: Set<string>,
+  version: string,
+  packager: PlatformPackager<any>
+) {
   const isGitHub = publishConfig.provider === "github"
   const updateInfoFile = isGitHub && outDir === dir ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
   if (!createdFiles.has(updateInfoFile)) {
@@ -257,7 +265,7 @@ async function writeOldMacInfo(publishConfig: PublishConfiguration, outDir: stri
         releaseDate: new Date().toISOString(),
         url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
       },
-      { spaces: 2 },
+      { spaces: 2 }
     )
 
     packager.info.dispatchArtifactCreated({

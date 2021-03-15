@@ -28,7 +28,7 @@ export class AsyncTaskManager {
         log.debug({ error: it.message || it.toString() }, "async task error")
         this.errors.push(it)
         return Promise.resolve(null)
-      }),
+      })
     )
   }
 

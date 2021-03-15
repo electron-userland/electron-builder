@@ -61,7 +61,9 @@ export class ParallelsVmManager extends VmManager {
   async exec(file: string, args: Array<string>, options?: ExecFileOptions): Promise<string> {
     await this.ensureThatVmStarted()
     // it is important to use "--current-user" to execute command under logged in user - to access certs.
-    return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), options).catch(error => this.handleExecuteError(error))
+    return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), options).catch(error =>
+      this.handleExecuteError(error)
+    )
   }
 
   async spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {

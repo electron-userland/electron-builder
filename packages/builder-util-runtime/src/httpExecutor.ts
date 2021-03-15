@@ -27,7 +27,14 @@ export interface DownloadOptions {
 }
 
 export function createHttpError(response: IncomingMessage, description: any | null = null) {
-  return new HttpError(response.statusCode || -1, `${response.statusCode} ${response.statusMessage}` + (description == null ? "" : "\n" + JSON.stringify(description, null, "  ")) + "\nHeaders: " + safeStringifyJson(response.headers), description)
+  return new HttpError(
+    response.statusCode || -1,
+    `${response.statusCode} ${response.statusMessage}` +
+      (description == null ? "" : "\n" + JSON.stringify(description, null, "  ")) +
+      "\nHeaders: " +
+      safeStringifyJson(response.headers),
+    description
+  )
 }
 
 const HTTP_STATUS_CODES = new Map<number, string>([
@@ -75,7 +82,12 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<string> {
+  doApiRequest(
+    options: RequestOptions,
+    cancellationToken: CancellationToken,
+    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
+    redirectCount: number = 0
+  ): Promise<string> {
     if (debug.enabled) {
       debug(`Request: ${safeStringifyJson(options)}`)
     }
@@ -118,7 +130,7 @@ export abstract class HttpExecutor<REQUEST> {
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
+    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void
   ) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
@@ -133,8 +145,8 @@ export abstract class HttpExecutor<REQUEST> {
           `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
-`,
-        ),
+`
+        )
       )
       return
     } else if (response.statusCode === 204) {
@@ -238,7 +250,7 @@ Please double check that your authentication token is correct. Due to security r
             })
           },
         },
-        0,
+        0
       )
     })
   }
@@ -246,7 +258,11 @@ Please double check that your authentication token is correct. Due to security r
   protected doDownload(requestOptions: any, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
-        options.callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
+        options.callback(
+          new Error(
+            `Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`
+          )
+        )
         return
       }
 
@@ -472,11 +488,19 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
   return JSON.stringify(
     data,
     (name, value) => {
-      if (name.endsWith("authorization") || name.endsWith("Password") || name.endsWith("PASSWORD") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
+      if (
+        name.endsWith("authorization") ||
+        name.endsWith("Password") ||
+        name.endsWith("PASSWORD") ||
+        name.endsWith("Token") ||
+        name.includes("password") ||
+        name.includes("token") ||
+        (skippedNames != null && skippedNames.has(name))
+      ) {
         return "<stripped sensitive data>"
       }
       return value
     },
-    2,
+    2
   )
 }
