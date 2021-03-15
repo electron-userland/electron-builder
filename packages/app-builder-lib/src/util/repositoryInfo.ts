@@ -19,11 +19,11 @@ async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null
   const i = conf.indexOf('[remote "origin"]')
   if (i !== -1) {
     let u = conf[i + 1]
-    if (!u.match(/^\s*url =/)) {
+    if (!/^\s*url =/.exec(u)) {
       u = conf[i + 2]
     }
 
-    if (u.match(/^\s*url =/)) {
+    if (/^\s*url =/.exec(u)) {
       return u.replace(/^\s*url = /, "")
     }
   }

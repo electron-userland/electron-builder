@@ -134,7 +134,7 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
     await close(fd)
   }
 
-  const headerPickle = createFromBuffer(headerBuf!)
+  const headerPickle = createFromBuffer(headerBuf)
   const header = headerPickle.createIterator().readString()
   return new AsarFilesystem(archive, JSON.parse(header), size)
 }

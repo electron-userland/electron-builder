@@ -37,7 +37,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const distOptions = await this.computeEffectiveDistOptions()
-    const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
+    const squirrelBuilder = new SquirrelBuilder(distOptions, installerOutDir, packager)
     await squirrelBuilder.buildInstaller({ setupFile, packageFile }, appOutDir, this.outDir, arch)
 
     await packager.info.callArtifactBuildCompleted({

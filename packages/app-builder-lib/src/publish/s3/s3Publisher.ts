@@ -39,7 +39,7 @@ export default class S3Publisher extends BaseS3Publisher {
   }
 
   protected getBucketName(): string {
-    return this.info.bucket!
+    return this.info.bucket
   }
 
   protected configureS3Options(args: Array<string>): void {

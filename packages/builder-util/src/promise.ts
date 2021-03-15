@@ -30,7 +30,7 @@ export class NestedError extends Error {
     let i = 1
     for (const error of errors) {
       const prefix = `Error #${i++} `
-      m += "\n\n" + prefix + "-".repeat(80) + "\n" + error!.stack
+      m += `\n\n${prefix}${"-".repeat(80)}\n${error.stack}`
     }
     super(m)
   }

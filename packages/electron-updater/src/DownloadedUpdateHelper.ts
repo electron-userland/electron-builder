@@ -4,7 +4,7 @@ import { createReadStream } from "fs"
 // @ts-ignore
 import * as isEqual from "lodash.isequal"
 import { Logger, ResolvedUpdateFileInfo } from "./main"
-import { pathExists, readJson, emptyDir, outputJson, unlink, pathExistsSync } from "fs-extra"
+import { pathExists, readJson, emptyDir, outputJson, unlink } from "fs-extra"
 import * as path from "path"
 
 /** @private **/
@@ -103,7 +103,7 @@ export class DownloadedUpdateHelper {
   private async getValidCachedUpdateFile(fileInfo: ResolvedUpdateFileInfo, logger: Logger): Promise<string | null> {
     const updateInfoFilePath: string = this.getUpdateInfoFile()
 
-    const doesUpdateInfoFileExist = await pathExistsSync(updateInfoFilePath)
+    const doesUpdateInfoFileExist = await pathExists(updateInfoFilePath)
     if (!doesUpdateInfoFileExist) {
       return null
     }

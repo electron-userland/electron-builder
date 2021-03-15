@@ -102,7 +102,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.linux
   delete result.win
 
-  const r = result as any
+  const r = result
   delete r.m
   delete r.o
   delete r.l

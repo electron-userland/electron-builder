@@ -106,7 +106,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 
   const outDir = event.target!.outDir
   const version = packager.appInfo.version
-  const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
+  const sha2 = new Lazy<string>(() => hashFile(event.file, "sha256", "hex"))
   const isMac = packager.platform === Platform.MAC
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
@@ -170,8 +170,8 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo): Promise<UpdateInfo> {
   const customUpdateInfo = event.updateInfo
-  const url = path.basename(event.file!)
-  const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file!))
+  const url = path.basename(event.file)
+  const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file))
   const files = [{ url, sha512 }]
   const result: UpdateInfo = {
     // @ts-ignore

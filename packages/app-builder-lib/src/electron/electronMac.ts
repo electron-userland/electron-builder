@@ -102,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, plistContent[8])
   }
 
-  const buildMetadata = packager.config!
+  const buildMetadata = packager.config
 
   /**
    * Configure bundleIdentifier for the generic Electron Helper process

@@ -14,7 +14,7 @@ export class NsisScriptGenerator {
   }
 
   macro(name: string, lines: Array<string> | NsisScriptGenerator) {
-    this.lines.push(`!macro ${name}`, `  ${(Array.isArray(lines) ? lines : (lines as NsisScriptGenerator).lines).join("\n  ")}`, `!macroend\n`)
+    this.lines.push(`!macro ${name}`, `  ${(Array.isArray(lines) ? lines : lines.lines).join("\n  ")}`, `!macroend\n`)
   }
 
   file(outputName: string | null, file: string) {

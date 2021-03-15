@@ -23,7 +23,7 @@ export interface DownloadOptions {
   readonly cancellationToken: CancellationToken
 
   // noinspection JSUnusedLocalSymbols
-  onProgress?(progress: ProgressInfo): void
+  onProgress?: (progress: ProgressInfo) => void
 }
 
 export function createHttpError(response: IncomingMessage, description: any | null = null) {

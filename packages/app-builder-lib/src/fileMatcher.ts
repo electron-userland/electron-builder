@@ -230,7 +230,7 @@ export function getNodeModuleFileMatcher(
           matcher.addPattern(pattern)
         }
       } else {
-        const fileSet = pattern as FileSet
+        const fileSet = pattern
         if (fileSet.from == null || fileSet.from === ".") {
           for (const p of asArray(fileSet.filter)) {
             matcher.addPattern(p)

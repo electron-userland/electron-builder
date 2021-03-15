@@ -246,15 +246,14 @@ export abstract class AppUpdater extends EventEmitter {
     return this.checkForUpdates().then(it => {
       const downloadPromise = it.downloadPromise
       if (downloadPromise == null) {
-        const debug = this._logger.debug
-        if (debug != null) {
-          debug("checkForUpdatesAndNotify called, downloadPromise is null")
+        if (this._logger.debug != null) {
+          this._logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         }
         return it
       }
 
-      downloadPromise.then(() => {
-        const notificationContent = this.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+      void downloadPromise.then(() => {
+        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
         new (require("electron").Notification)(notificationContent).show()
       })
 
@@ -262,7 +261,7 @@ export abstract class AppUpdater extends EventEmitter {
     })
   }
 
-  private formatDownloadNotification(version: string, appName: string, downloadNotification?: DownloadNotification): DownloadNotification {
+  private static formatDownloadNotification(version: string, appName: string, downloadNotification?: DownloadNotification): DownloadNotification {
     if (downloadNotification == null) {
       downloadNotification = {
         title: "A new update is ready to install",

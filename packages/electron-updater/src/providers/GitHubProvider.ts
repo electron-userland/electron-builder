@@ -49,16 +49,18 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     ))!
 
     const feed = parseXml(feedXml)
+    // noinspection TypeScriptValidateJSTypes
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     let version: string | null
     try {
       if (this.updater.allowPrerelease) {
         // noinspection TypeScriptValidateJSTypes
-        version = latestRelease.element("link").attribute("href").match(hrefRegExp)![1]
+        version = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
       } else {
         version = await this.getLatestVersionString(cancellationToken)
         for (const element of feed.getElements("entry")) {
-          if (element.element("link").attribute("href").match(hrefRegExp)![1] === version) {
+          // noinspection TypeScriptValidateJSTypes
+          if (hrefRegExp.exec(element.element("link").attribute("href"))![1] === version) {
             latestRelease = element
             break
           }
@@ -148,10 +150,7 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
     // noinspection TypeScriptValidateJSTypes
-    const versionRelease = release
-      .element("link")
-      .attribute("href")
-      .match(/\/tag\/v?([^/]+)$/)![1]
+    const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
     if (semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
         version: versionRelease,

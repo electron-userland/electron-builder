@@ -64,8 +64,9 @@ export class NsisTarget extends Target {
     }
   }
 
-  async build(appOutDir: string, arch: Arch) {
+  build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
+    return Promise.resolve()
   }
 
   get isBuildDifferentialAware() {
@@ -219,7 +220,7 @@ export class NsisTarget extends Target {
 
         const archiveInfo = (await exec(path7za, ["l", file])).trim()
         // after adding blockmap data will be "Warnings: 1" in the end of output
-        const match = archiveInfo.match(/(\d+)\s+\d+\s+\d+\s+files/)
+        const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
         if (match == null) {
           log.warn({ output: archiveInfo }, "cannot compute size of app package")
         } else {
@@ -345,7 +346,7 @@ export class NsisTarget extends Target {
       try {
         UninstallerReader.exec(installerPath, uninstallerPath)
       } catch (error) {
-        log.warn("packager.vm is used: " + error.message)
+        log.warn(`packager.vm is used: ${error.message}`)
 
         const vm = await packager.vm.value
         await vm.exec(installerPath, [])

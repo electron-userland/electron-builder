@@ -10,7 +10,7 @@ export function getLicenseAssets(fileNames: Array<string>, packager: PlatformPac
       return aW === bW ? a.localeCompare(b) : aW - bW
     })
     .map(file => {
-      let lang = file.match(/_([^.]+)\./)![1]
+      let lang = /_([^.]+)\./.exec(file)![1]
       let langWithRegion
       if (lang.includes("_")) {
         langWithRegion = lang

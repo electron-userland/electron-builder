@@ -70,7 +70,7 @@ async function doBuild(data: BuildTask): Promise<void> {
   packager.stageDirPathCustomizer = (target, packager, arch) => {
     // snap creates a lot of files and so, we cannot use tmpfs to avoid out of memory error
     const parentDir = target.name === "snap" && !(target as SnapTarget).isUseTemplateApp ? projectOutDir : projectDir
-    return parentDir + path.sep + `__${target.name}-${Arch[arch]}`
+    return `${parentDir}${path.sep}__${target.name}-${Arch[arch]}`
   }
 
   // _build method expects final effective configuration - packager.options.config is ignored
@@ -85,7 +85,7 @@ async function doBuild(data: BuildTask): Promise<void> {
       onNodeModuleFile: null,
       directories: {
         output: projectOutDir,
-        buildResources: projectDir + path.sep + info.buildResourceDirName,
+        buildResources: `${projectDir}${path.sep}${info.buildResourceDirName}`,
       },
     },
     info.metadata,
