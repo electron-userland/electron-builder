@@ -309,21 +309,25 @@ importers:
       fs-extra: 9.1.0
       js-yaml: 4.0.0
       lazy-val: 1.0.4
+      lodash.escaperegexp: 4.1.2
       lodash.isequal: 4.5.0
       semver: 7.3.4
     devDependencies:
       '@types/fs-extra': 9.0.8
       '@types/js-yaml': 4.0.0
+      '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
     specifiers:
       '@types/fs-extra': ^9.0.7
       '@types/js-yaml': ^4.0.0
+      '@types/lodash.escaperegexp': ^4.1.6
       '@types/lodash.isequal': ^4.5.5
       '@types/semver': ^7.3.4
       builder-util-runtime: workspace:*
       fs-extra: ^9.1.0
       js-yaml: ^4.0.0
       lazy-val: ^1.0.4
+      lodash.escaperegexp: ^4.1.2
       lodash.isequal: ^4.5.0
       semver: ^7.3.4
   test:
@@ -1903,6 +1907,12 @@ packages:
     dev: true
     resolution:
       integrity: sha512-cxWFQVseBm6O9Gbw1IWb8r6OS4OhSt3hPZLkFApLjM8TEXROBuQGLAH2i2gZpcXdLBIrpXuTDhH7Vbm1iXmNGA==
+  /@types/lodash.escaperegexp/4.1.6:
+    dependencies:
+      '@types/lodash': 4.14.168
+    dev: true
+    resolution:
+      integrity: sha512-uENiqxLlqh6RzeE1cC6Z2gHqakToN9vKlTVCFkSVjAfeMeh2fY0916tHwJHeeKs28qB/hGYvKuampGYH5QDVCw==
   /@types/lodash.isequal/4.5.5:
     dependencies:
       '@types/lodash': 4.14.168
@@ -5536,6 +5546,10 @@ packages:
     dev: false
     resolution:
       integrity: sha1-nMtOUF1Ia5FlE0V3KIWi3yf9AXw=
+  /lodash.escaperegexp/4.1.2:
+    dev: false
+    resolution:
+      integrity: sha1-ZHYsSGGAglGKw99Mz11YhtriA0c=
   /lodash.flatten/4.4.0:
     dev: false
     resolution:
