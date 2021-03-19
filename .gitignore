@@ -27,4 +27,3 @@ electron-builder-*.d.ts
 /docs/
 
 tsconfig.tsbuildinfo
-.husky
