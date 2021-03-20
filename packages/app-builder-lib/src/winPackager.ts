@@ -326,7 +326,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (process.platform === "win32" || process.platform === "darwin") {
       await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
     }
-    else if (process.platform !== "darwin" && this.info.framework.name === "electron") {
+    else if (this.info.framework.name === "electron") {
       const vendorPath = await getSignVendorPath()
       await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
    }
