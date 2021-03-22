@@ -17,6 +17,22 @@ import { promises as fsPromises } from "fs"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
+/**
+ * Electron distributables branding options.
+ * @see [Electron BRANDING.json](https://github.com/electron/electron/blob/master/shell/app/BRANDING.json).
+ */
+export interface ElectronBrandingOptions {
+  projectName?: string
+  productName?: string
+}
+
+export function createBrandingOpts(opts: Configuration): Required<ElectronBrandingOptions> {
+  return {
+    projectName: opts.electronBranding?.projectName || "electron",
+    productName: opts.electronBranding?.productName || "Electron",
+  }
+}
+
 export interface ElectronDownloadOptions {
   // https://github.com/electron-userland/electron-builder/issues/3077
   // must be optional
@@ -56,15 +72,16 @@ function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName,
 async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   const packager = options.packager
   const appOutDir = options.appOutDir
+  const electronBranding = createBrandingOpts(packager.config)
   if (packager.platform === Platform.LINUX) {
     if (!isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
       const linuxPackager = packager as LinuxPackager
       const executable = path.join(appOutDir, linuxPackager.executableName)
-      await rename(path.join(appOutDir, "electron"), executable)
+      await rename(path.join(appOutDir, electronBranding.projectName), executable)
     }
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, "electron.exe"), executable)
+    await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
   } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
 
@@ -139,7 +156,8 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
     configuration.electronVersion = version
   }
 
-  return new ElectronFramework("electron", version, "Electron.app")
+  const branding = createBrandingOpts(configuration)
+  return new ElectronFramework(branding.projectName, version, `${branding.productName}.app`)
 }
 
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {

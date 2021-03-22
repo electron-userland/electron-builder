@@ -23,7 +23,7 @@ export {
 } from "./core"
 export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { Configuration, AfterPackContext, MetadataDirectories } from "./configuration"
-export { ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
+export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
 export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow } from "./options/macOptions"

@@ -1,6 +1,6 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
@@ -138,6 +138,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
    */
   readonly electronDownload?: ElectronDownloadOptions
+
+  /**
+   * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.
+   */
+  readonly electronBranding?: ElectronBrandingOptions
 
   /**
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.

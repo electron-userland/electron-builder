@@ -31,6 +31,7 @@ export {
   MetadataDirectories,
   Protocol,
   ReleaseInfo,
+  ElectronBrandingOptions,
   ElectronDownloadOptions,
   SnapOptions,
   CommonWindowsInstallerConfiguration,
