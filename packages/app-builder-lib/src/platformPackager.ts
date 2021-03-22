@@ -560,18 +560,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     skipDefaultArch = true,
     defaultArch?: string
   ): string {
-    const pattern = this.artifactNamePattern(targetSpecificOptions, defaultPattern)
-    return this.computeArtifactName(pattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
+    const { pattern, isUserForced } = this.artifactPatternConfig(targetSpecificOptions, defaultPattern)
+    return this.computeArtifactName(pattern, ext, !isUserForced && skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
   }
 
-  artifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, defaultPattern: string | undefined) {
-    return (
-      targetSpecificOptions?.artifactName ||
-      this.platformSpecificBuildOptions.artifactName ||
-      this.config.artifactName ||
-      defaultPattern ||
-      "${productName}-${version}-${arch}.${ext}"
-    )
+  artifactPatternConfig(targetSpecificOptions: TargetSpecificOptions | null | undefined, defaultPattern: string | undefined) {
+    const userSpecifiedPattern = targetSpecificOptions?.artifactName || this.platformSpecificBuildOptions.artifactName || this.config.artifactName
+    return {
+      isUserForced: !!userSpecifiedPattern,
+      pattern: userSpecifiedPattern || defaultPattern || "${productName}-${version}-${arch}.${ext}",
+    }
   }
 
   expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {
