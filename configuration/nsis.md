@@ -37,7 +37,7 @@ Two options are available — [include](#NsisOptions-include) and [script](#Nsis
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
-2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`.
+2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `preInstall`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`.
     
     !!! example
         ```nsis
@@ -52,6 +52,10 @@ Keep in mind — if you customize NSIS script, you should always state about it 
         
         !macro customInit
           !system "echo '' > ${BUILD_RESOURCES_DIR}/customInit"
+        !macroend
+
+        !macro preInstall
+          !system "echo '' > ${BUILD_RESOURCES_DIR}/preInstall"
         !macroend
         
         !macro customInstall
