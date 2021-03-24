@@ -199,8 +199,16 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const explicitType = options.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
-    const certificateType = getCertificateType(isMas, isDevelopment)
-    let identity = await findIdentity(certificateType, qualifier, keychainFile)
+    const certificateTypes = getCertificateTypes(isMas, isDevelopment)
+
+    let identity = null;
+    for (let certificateType of certificateTypes) {
+      identity = await findIdentity(certificateType, qualifier, keychainFile);
+      if (identity != null) {
+        break;
+      }
+    }
+
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
         identity = await findIdentity("Mac Developer", qualifier, keychainFile)
@@ -210,7 +218,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
 
       if (identity == null) {
-        await reportError(isMas, certificateType, qualifier, keychainFile, this.forceCodeSigning)
+        await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
         return
       }
     }
@@ -426,9 +434,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 }
 
-function getCertificateType(isMas: boolean, isDevelopment: boolean): CertType {
+function getCertificateTypes(isMas: boolean, isDevelopment: boolean): CertType[] {
   if (isDevelopment) {
-    return "Mac Developer"
+    return ["Mac Developer", "Apple Development"]
   }
-  return isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"
+  return isMas ? ["3rd Party Mac Developer Application"] : ["Developer ID Application"]
 }
