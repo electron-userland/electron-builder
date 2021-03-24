@@ -201,11 +201,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const isDevelopment = type === "development"
     const certificateTypes = getCertificateTypes(isMas, isDevelopment)
 
-    let identity = null;
-    for (let certificateType of certificateTypes) {
-      identity = await findIdentity(certificateType, qualifier, keychainFile);
+    let identity = null
+    for (const certificateType of certificateTypes) {
+      identity = await findIdentity(certificateType, qualifier, keychainFile)
       if (identity != null) {
-        break;
+        break
       }
     }
 
