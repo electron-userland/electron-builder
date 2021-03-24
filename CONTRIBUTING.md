@@ -10,9 +10,10 @@ Env setup from scratch (line by line for an easy copy-paste)
 ```
 pnpm i yalc -g
 
-git clone https://github.com/electron-builder/electron-builder.git
+git clone https://github.com/electron-userland/electron-builder.git
 
 pushd ./electron-builder
+pnpm install
 pnpm compile
 find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
 popd
