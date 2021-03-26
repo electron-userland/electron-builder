@@ -29,7 +29,7 @@ export class DebugLogger {
     }
 
     if (Array.isArray(o[lastName!])) {
-      o[lastName!].push(value)
+      o[lastName!] = [...o[lastName!], value]
     } else {
       o[lastName!] = value
     }
