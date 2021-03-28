@@ -127,9 +127,8 @@ const flatpakBuilderDefaults: Omit<FlatpakManifest, "id" | "command"> = {
   base: "org.electronjs.Electron2.BaseApp",
   baseVersion: "20.08",
   finishArgs: [
-    // Wayland
+    // Wayland/X11 Rendering
     "--socket=wayland",
-    // X11
     "--socket=x11",
     "--share=ipc",
     // Open GL
@@ -149,6 +148,8 @@ function getElectronWrapperScript(executableName: string, useWaylandFlags: boole
   return useWaylandFlags
     ? `#!/bin/sh
 
+export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
+
 if [ "\${XDG_SESSION_TYPE}" == "wayland" ]; then
     zypak-wrapper "${executableName}" --enable-features=UseOzonePlatform --ozone-platform=wayland "$@"
 else
@@ -156,6 +157,8 @@ else
 fi
 `
     : `#!/bin/sh
+
+export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
 
 zypak-wrapper "${executableName}" "$@"
 `
