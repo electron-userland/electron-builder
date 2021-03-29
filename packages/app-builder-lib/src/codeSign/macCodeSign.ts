@@ -20,6 +20,7 @@ export type CertType =
   | "3rd Party Mac Developer Installer"
   | "Mac Developer"
   | "Apple Development"
+  | "Apple Distribution"
 
 export interface CodeSigningInfo {
   keychainFile?: string | null
