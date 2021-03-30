@@ -201,6 +201,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * Appx manifest created on disk - not packed into .appx package yet.
    */
+  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
+  /**
+   * MSI project created on disk - not packed into .msi package yet.
+   */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
   /**
    * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
