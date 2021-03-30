@@ -8,9 +8,9 @@ import { DifferentialDownloaderOptions } from "./differentialDownloader/Differen
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { blockmapFiles } from "./util"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
-import { newUrlFromBase } from "./util"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 import { gunzipSync } from "zlib"
@@ -138,13 +138,8 @@ export class NsisUpdater extends BaseUpdater {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-
-      const newBlockMapUrl = newUrlFromBase(`${fileInfo.url.pathname}.blockmap`, fileInfo.url)
-      const oldBlockMapUrl = newUrlFromBase(
-        `${fileInfo.url.pathname.replace(new RegExp(downloadUpdateOptions.updateInfoAndProvider.info.version, "g"), this.app.version)}.blockmap`,
-        fileInfo.url
-      )
-      this._logger.info(`Download block maps (old: "${oldBlockMapUrl.href}", new: ${newBlockMapUrl.href})`)
+      const blockmapFileUrls = blockmapFiles(fileInfo.url, downloadUpdateOptions.updateInfoAndProvider.info.version, this.app.version)
+      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
         const data = await this.httpExecutor.downloadToBuffer(url, {
@@ -177,7 +172,7 @@ export class NsisUpdater extends BaseUpdater {
         downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
       }
 
-      const blockMapDataList = await Promise.all([downloadBlockMap(oldBlockMapUrl), downloadBlockMap(newBlockMapUrl)])
+      const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
       return false
     } catch (e) {
