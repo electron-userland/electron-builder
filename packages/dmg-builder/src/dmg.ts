@@ -197,7 +197,15 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
   if (log.isDebugEnabled) {
     imageArgs.push("-debug")
   }
-  imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
+
+  let filesystem = ["HFS+", "-fsargs", "-c c=64,a=16,e=16"]
+  if (process.arch === "arm64") {
+    // Apple Silicon `hdiutil` dropped support for HFS+, so we force the latest type
+    // https://github.com/electron-userland/electron-builder/issues/4606
+    filesystem = ["APFS"]
+    log.warn(null, "Detected arm64 process, HFS+ is unavailable. Creating dmg with APFS - supports Mac OSX 10.12+")
+  }
+  imageArgs.push("-fs", ...filesystem)
   imageArgs.push(tempDmg)
   // The reason for retrying up to ten times is that hdiutil create in some cases fail to unmount due to "resource busy".
   // https://github.com/electron-userland/electron-builder/issues/5431
