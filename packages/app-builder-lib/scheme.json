@@ -897,6 +897,18 @@
       },
       "type": "object"
     },
+    "ElectronBrandingOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "projectName": {
+          "type": "string"
+        },
+        "productName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ElectronDownloadOptions": {
       "additionalProperties": false,
       "properties": {
@@ -5777,6 +5789,10 @@
         }
       ],
       "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
+    },
+    "electronBranding": {
+      "$ref": "#/definitions/ElectronBrandingOptions",
+      "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
