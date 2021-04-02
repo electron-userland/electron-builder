@@ -13,7 +13,14 @@ import { downloadCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
-export type CertType = "Developer ID Application" | "Developer ID Installer" | "3rd Party Mac Developer Application" | "3rd Party Mac Developer Installer" | "Mac Developer"
+export type CertType =
+  | "Developer ID Application"
+  | "Developer ID Installer"
+  | "3rd Party Mac Developer Application"
+  | "3rd Party Mac Developer Installer"
+  | "Mac Developer"
+  | "Apple Development"
+  | "Apple Distribution"
 
 export interface CodeSigningInfo {
   keychainFile?: string | null
@@ -51,7 +58,7 @@ export function isSignAllowed(isPrintWarn = true): boolean {
 
 export async function reportError(
   isMas: boolean,
-  certificateType: CertType,
+  certificateTypes: CertType[],
   qualifier: string | null | undefined,
   keychainFile: string | null | undefined,
   isForceCodeSigning: boolean
@@ -60,7 +67,7 @@ export async function reportError(
   if (qualifier == null) {
     logFields.reason = ""
     if (isAutoDiscoveryCodeSignIdentity()) {
-      logFields.reason += `cannot find valid "${certificateType}" identity${isMas ? "" : ` or custom non-Apple code signing certificate`}`
+      logFields.reason += `cannot find valid "${certificateTypes.join(", ")}" identity${isMas ? "" : ` or custom non-Apple code signing certificate`}`
     }
     logFields.reason += ", see https://electron.build/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {
