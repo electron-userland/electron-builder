@@ -10,11 +10,11 @@ module.exports = {
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
   ],
   parserOptions: {
-    project: ["./packages/*/tsconfig.json", "./test/tsconfig.json"]
+    project: ["./packages/*/tsconfig.json", "./test/tsconfig.json"],
   },
   rules: {
     semi: "off",
-    "prettier/prettier": process.env.CI ? "error" : "warn",
+    "prettier/prettier": "warn",
     "@typescript-eslint/member-delimiter-style": [
       "error",
       {
