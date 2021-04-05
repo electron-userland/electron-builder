@@ -68,19 +68,35 @@ export async function getConfig(
     }
   }
 
-  let parentConfig: Configuration | null
-  if (config.extends === "react-cra") {
-    parentConfig = await reactCra(projectDir)
-    log.info({ preset: config.extends }, "loaded parent configuration")
-  } else if (config.extends != null) {
-    const parentConfigAndEffectiveFile = await loadParentConfig<Configuration>(configRequest, config.extends)
-    log.info({ file: parentConfigAndEffectiveFile.configFile }, "loaded parent configuration")
-    parentConfig = parentConfigAndEffectiveFile.result
-  } else {
-    parentConfig = null
+  const parentConfigs = await loadParentConfigsRecursively(config.extends, async configExtend => {
+    if (configExtend === "react-cra") {
+      const result = await reactCra(projectDir)
+      log.info({ preset: configExtend }, "loaded parent configuration")
+      return result
+    } else {
+      const { configFile, result } = await loadParentConfig<Configuration>(configRequest, configExtend)
+      log.info({ file: configFile }, "loaded parent configuration")
+      return result
+    }
+  })
+
+  return doMergeConfigs([...parentConfigs, config])
+}
+
+function asArray(value: string[] | string | undefined | null): string[] {
+  return Array.isArray(value) ? value : typeof value === "string" ? [value] : []
+}
+
+async function loadParentConfigsRecursively(configExtends: Configuration["extends"], loader: (configExtend: string) => Promise<Configuration>): Promise<Configuration[]> {
+  const configs = []
+
+  for (const configExtend of asArray(configExtends)) {
+    const result = await loader(configExtend)
+    const parentConfigs = await loadParentConfigsRecursively(result.extends, loader)
+    configs.push(...parentConfigs, result)
   }
 
-  return doMergeConfigs(config, parentConfig)
+  return configs
 }
 
 // normalize for easy merge
@@ -141,51 +157,52 @@ function normalizeFiles(configuration: Configuration, name: "files" | "extraFile
   configuration[name] = value.filter(it => it != null)
 }
 
-function mergeFiles(configuration: Configuration, parentConfiguration: Configuration, mergedConfiguration: Configuration, name: "files" | "extraFiles" | "extraResources") {
-  const list = configuration[name] as Array<FileSet> | null
-  const parentList = parentConfiguration[name] as Array<FileSet> | null
-  if (list == null || parentList == null) {
-    return
-  }
-
-  const result = list.slice()
-  mergedConfiguration[name] = result
-
-  itemLoop: for (const item of parentConfiguration.files as Array<FileSet>) {
-    for (const existingItem of list) {
-      if (existingItem.from === item.from && existingItem.to === item.to) {
-        if (item.filter != null) {
-          if (existingItem.filter == null) {
-            existingItem.filter = item.filter.slice()
-          } else {
-            existingItem.filter = (item.filter as Array<string>).concat(existingItem.filter)
-          }
-        }
-
-        continue itemLoop
-      }
-    }
-
-    // existing item not found, simply add
-    result.push(item)
-  }
+function isSimilarFileSet(value: FileSet, other: FileSet): boolean {
+  return value.from === other.from && value.to === other.to
 }
 
-export function doMergeConfigs(configuration: Configuration, parentConfiguration: Configuration | null) {
-  normalizeFiles(configuration, "files")
-  normalizeFiles(configuration, "extraFiles")
-  normalizeFiles(configuration, "extraResources")
+type Filter = FileSet["filter"]
 
-  if (parentConfiguration == null) {
-    return deepAssign(getDefaultConfig(), configuration)
+function mergeFilters(value: Filter, other: Filter): string[] {
+  return asArray(value).concat(asArray(other))
+}
+
+function mergeFileSets(lists: FileSet[][]): FileSet[] {
+  const result = []
+
+  for (const list of lists) {
+    for (const item of list) {
+      const existingItem = result.find(i => isSimilarFileSet(i, item))
+      if (existingItem) {
+        existingItem.filter = mergeFilters(item.filter, existingItem.filter)
+      } else {
+        result.push(item)
+      }
+    }
   }
 
-  normalizeFiles(parentConfiguration, "files")
-  normalizeFiles(parentConfiguration, "extraFiles")
-  normalizeFiles(parentConfiguration, "extraResources")
+  return result
+}
 
-  const result = deepAssign(getDefaultConfig(), parentConfiguration, configuration)
-  mergeFiles(configuration, parentConfiguration, result, "files")
+/**
+ * `doMergeConfigs` takes configs in the order you would pass them to
+ * Object.assign as sources.
+ */
+export function doMergeConfigs(configs: Configuration[]): Configuration {
+  for (const config of configs) {
+    normalizeFiles(config, "files")
+    normalizeFiles(config, "extraFiles")
+    normalizeFiles(config, "extraResources")
+  }
+
+  const result = deepAssign(getDefaultConfig(), ...configs)
+
+  // `deepAssign` prioritises latter configs, while `mergeFilesSets` prioritises
+  // former configs, so we have to reverse the order, because latter configs
+  // must have higher priority.
+  configs = configs.slice().reverse()
+
+  result.files = mergeFileSets(configs.map(config => (config.files ?? []) as FileSet[]))
   return result
 }
 

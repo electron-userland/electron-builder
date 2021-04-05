@@ -293,7 +293,7 @@ export class Packager {
       // it is a path to config file
       configPath = configFromOptions
       configFromOptions = null
-    } else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
+    } else if (configFromOptions != null && typeof configFromOptions.extends === "string" && configFromOptions.extends.includes(".")) {
       configPath = configFromOptions.extends
       delete configFromOptions.extends
     }
