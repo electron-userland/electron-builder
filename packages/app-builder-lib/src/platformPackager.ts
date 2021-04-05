@@ -560,20 +560,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     skipDefaultArch = true,
     defaultArch?: string
   ): string {
-    let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
-    if (pattern == null) {
-      pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName
-    }
+    const { pattern, isUserForced } = this.artifactPatternConfig(targetSpecificOptions, defaultPattern)
+    return this.computeArtifactName(pattern, ext, !isUserForced && skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
+  }
 
-    if (pattern == null) {
-      // tslint:disable-next-line:no-invalid-template-strings
-      pattern = defaultPattern || "${productName}-${version}-${arch}.${ext}"
-    } else {
-      // https://github.com/electron-userland/electron-builder/issues/3510
-      // always respect arch in user custom artifact pattern
-      skipDefaultArch = this.platform === Platform.MAC
+  artifactPatternConfig(targetSpecificOptions: TargetSpecificOptions | null | undefined, defaultPattern: string | undefined) {
+    const userSpecifiedPattern = targetSpecificOptions?.artifactName || this.platformSpecificBuildOptions.artifactName || this.config.artifactName
+    return {
+      isUserForced: !!userSpecifiedPattern,
+      pattern: userSpecifiedPattern || defaultPattern || "${productName}-${version}-${arch}.${ext}",
     }
-    return this.computeArtifactName(pattern, ext, skipDefaultArch && arch === defaultArchFromString(defaultArch) ? null : arch)
   }
 
   expandArtifactBeautyNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null): string {
