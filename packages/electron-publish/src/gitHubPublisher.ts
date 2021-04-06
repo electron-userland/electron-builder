@@ -185,6 +185,7 @@ export class GitHubPublisher extends HttpPublisher {
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             method: "POST",
+            timeout: 120 * 1000,
             headers: {
               accept: "application/vnd.github.v3+json",
               "Content-Type": mime.getType(fileName) || "application/octet-stream",
