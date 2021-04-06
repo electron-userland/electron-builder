@@ -19,6 +19,10 @@ export default class FlatpakTarget extends Target {
     super(name)
   }
 
+  get appId(): string {
+    return filterFlatpakAppIdentifier(this.packager.appInfo.id)
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const { packager, options } = this
     const artifactName = packager.expandArtifactNamePattern(options, "flatpak", arch, undefined, false)
@@ -62,15 +66,15 @@ export default class FlatpakTarget extends Target {
   }
 
   private async createDesktopFile(stageDir: StageDir) {
-    const appIdentifier = this.packager.appInfo.id
-    const desktopFile = stageDir.getTempFile(path.join("share", "applications", `${this.packager.appInfo.id}.desktop`))
+    const appIdentifier = this.appId
+    const desktopFile = stageDir.getTempFile(path.join("share", "applications", `${appIdentifier}.desktop`))
     await this.helper.writeDesktopEntry(this.options, "electron-wrapper %U", desktopFile, { Icon: appIdentifier })
   }
 
   private async copyLicenseFile(stageDir: StageDir) {
     const licenseSrc = await getNotLocalizedLicenseFile(this.options.license, this.packager, ["txt", "html"])
     if (licenseSrc) {
-      const licenseDst = stageDir.getTempFile(path.join("share", "doc", this.packager.appInfo.id, "copyright"))
+      const licenseDst = stageDir.getTempFile(path.join("share", "doc", this.appId, "copyright"))
       await copyFile(licenseSrc, licenseDst)
     }
   }
@@ -80,7 +84,7 @@ export default class FlatpakTarget extends Target {
     const copyIcons = icons.map(async icon => {
       const extWithDot = path.extname(icon.file)
       const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`
-      const iconDst = stageDir.getTempFile(path.join("share", "icons", "hicolor", sizeName, "apps", `${this.packager.appInfo.id}${extWithDot}`))
+      const iconDst = stageDir.getTempFile(path.join("share", "icons", "hicolor", sizeName, "apps", `${this.appId}${extWithDot}`))
 
       return copyFile(icon.file, iconDst)
     })
@@ -89,7 +93,7 @@ export default class FlatpakTarget extends Target {
   }
 
   private getFlatpakBuilderOptions(appOutDir: string, stageDir: string, artifactName: string, arch: Arch): { manifest: FlatpakManifest; buildOptions: FlatpakBundlerBuildOptions } {
-    const appIdentifier = this.packager.appInfo.id
+    const appIdentifier = this.appId
     const { executableName } = this.packager
     const flatpakArch = toLinuxArchString(arch, "flatpak")
 
@@ -162,4 +166,10 @@ export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
 
 zypak-wrapper "${executableName}" "$@"
 `
+}
+
+function filterFlatpakAppIdentifier(identifier: string) {
+  // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), underscore (_), and period (.)
+  // Flatpak documentation: https://docs.flatpak.org/en/latest/conventions.html#application-ids
+  return identifier.replace(/-/g, "_").replace(/[^a-zA-Z0-9._]/g, "")
 }
