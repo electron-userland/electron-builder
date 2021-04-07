@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test(
+test.ifNotCiMac(
   "sign nested asar unpacked executables",
   appThrows(
     {

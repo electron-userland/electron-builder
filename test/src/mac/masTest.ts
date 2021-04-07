@@ -14,7 +14,7 @@ if (process.platform !== "darwin") {
   })
 }
 
-test.ifNotCi("mas", createMacTargetTest(["mas"]))
+test("mas", createMacTargetTest(["mas"]))
 test.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
