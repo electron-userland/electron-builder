@@ -207,6 +207,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
   /**
+   * MSI project created on disk - not packed into .msi package yet.
+   */
+  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
+  /**
    * Appx manifest created on disk - not packed into .appx package yet.
    */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null

@@ -70,6 +70,8 @@ export default class MsiTarget extends Target {
       objectFiles.push(ASSISTED_UI_FILE_NAME.replace(".wxs", ".wixobj"))
     }
 
+    await packager.info.callMsiProjectCreated(projectFile)
+
     // noinspection SpellCheckingInspection
     const vendorPath = await getBinFromUrl("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
 
