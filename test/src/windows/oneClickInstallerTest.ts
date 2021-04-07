@@ -31,6 +31,9 @@ test(
     {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
+        win: {
+          publisherName: 'test publisher'
+        },
         publish: {
           provider: "bintray",
           owner: "actperepo",

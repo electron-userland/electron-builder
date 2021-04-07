@@ -14,7 +14,7 @@ test("parseDn", () => {
 
 const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-test(
+test.ifNotCiMac(
   "sign nested asar unpacked executables",
   appThrows(
     {
@@ -30,7 +30,7 @@ test(
         await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
       },
     },
-    error => expect(error.message).toContain("Unrecognized file type")
+    error => expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
   )
 )
 

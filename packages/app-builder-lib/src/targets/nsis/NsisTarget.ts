@@ -121,7 +121,7 @@ export class NsisTarget extends Target {
     try {
       const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern)
       const builds = new Set([this.archs])
-      if (pattern.includes('${arch}')) {
+      if (pattern.includes("${arch}")) {
         ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map<Arch, string>().set(arch, appOutDir)))
       }
       await Promise.all([...builds].map(archs => this.buildInstaller(archs)))

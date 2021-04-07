@@ -7,7 +7,7 @@ jobs:
     container:
       image: electronuserland/builder:14-03.21@sha256:38761d41757f3cdaf6cd57587a2dbf54449fa4f49b3569808ac7bc9f097fa6cc
     env:
-      TEST_FILES: HoistedNodeModuleTest,configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,PublishManagerTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
+      TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js

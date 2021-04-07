@@ -8,15 +8,15 @@ env:
 matrix:
   include:
     - os: osx
-      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,macPackagerTest,protonTest
-      node_js: "14"
-
-    - os: osx
-      env: TEST_FILES=CodeSignTest,macArchiveTest,macIconTest
-      node_js: "14"
-
-    - os: osx
       env: TEST_FILES=masTest,dmgTest
+      node_js: "14"
+    
+      - os: osx
+      env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux,windows,protonTest,PublishManagerTest,HoistedNodeModuleTest
+      node_js: "14"
+
+    - os: osx
+      env: TEST_FILES=CodeSignTest,macArchiveTest,macIconTest,macPackagerTest,winPackagerTest
       node_js: "14"
 
 before_install:

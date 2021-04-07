@@ -67,15 +67,15 @@ Object {
       },
     },
     Object {
-      "arch": "ia32",
-      "file": "beta-TestApp.exe",
+      "file": "beta-TestApp.exe.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "beta-TestApp.exe.blockmap",
+      "arch": "ia32",
+      "file": "beta-TestApp.exe",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
