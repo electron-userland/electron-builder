@@ -55,7 +55,7 @@ test.ifNotWindows.ifDevOrLinuxCi(
   })
 )
 
-test.ifAll(
+test.ifMac(
   "mac artifactName ",
   app(
     {

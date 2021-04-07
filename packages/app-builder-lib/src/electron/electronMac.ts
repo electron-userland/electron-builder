@@ -247,7 +247,12 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
 
-  await moveHelpers(getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist), frameworksPath, appFilename, electronBranding.productName)
+  await moveHelpers(
+    getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist),
+    frameworksPath,
+    appFilename,
+    electronBranding.productName
+  )
 
   if (helperLoginPlist != null) {
     const prefix = electronBranding.productName
