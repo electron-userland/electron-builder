@@ -5,6 +5,7 @@ import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import { RemoteBuilder } from "./remoteBuilder/RemoteBuilder"
 import AppImageTarget from "./targets/AppImageTarget"
+import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
@@ -22,7 +23,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   }
 
   get defaultTarget(): Array<string> {
-    return ["snap", "appimage"]
+    return ["snap", "appimage", "flatpak"]
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
@@ -41,12 +42,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
             return require("./targets/AppImageTarget").default
           case "snap":
             return require("./targets/snap").default
+          case "flatpak":
+            return require("./targets/FlatpakTarget").default
           case "deb":
           case "rpm":
           case "sh":
