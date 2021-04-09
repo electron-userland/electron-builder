@@ -65,5 +65,5 @@ jobs:
       - name: test
         run: node ./test/out/helpers/runTests.js
         env:
-          TEST_FILES: ${{ matrix.TEST_FILES }}
+          TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
