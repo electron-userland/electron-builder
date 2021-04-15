@@ -122,14 +122,15 @@ export class MacUpdater extends AppUpdater {
               headers: { "Cache-Control": "no-cache" },
             })
 
-            this.nativeUpdater.once("error", reject)
-
             // The update has been downloaded and is ready to be served to Squirrel
             this.dispatchUpdateDownloaded(event)
 
             if (this.autoInstallOnAppQuit) {
+              this.nativeUpdater.once("error", reject)
               // This will trigger fetching and installing the file on Squirrel side
               this.nativeUpdater.checkForUpdates()
+            } else {
+              resolve([])
             }
           })
         })
