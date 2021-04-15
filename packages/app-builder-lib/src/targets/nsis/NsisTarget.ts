@@ -251,7 +251,7 @@ export class NsisTarget extends Target {
       if (typeof unpackDirName === 'string') {
         defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
       } else if (unpackDirName !== false) {
-        defines.UNPACK_DIR_NAME =  executeAppBuilder(["ksuid"])
+        defines.UNPACK_DIR_NAME = await executeAppBuilder(["ksuid"])
       }
 
       if (splashImage != null) {
