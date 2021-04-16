@@ -50,6 +50,9 @@
     !insertmacro customFinishPage
   !else
     !ifndef HIDE_RUN_AFTER_FINISH
+      # runAfterFinish is set to true
+      !insertmacro skipPageIfUpdated
+      
       Function StartApp
         ${if} ${isUpdated}
           StrCpy $1 "--updated"
