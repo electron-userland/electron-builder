@@ -61,8 +61,10 @@
 
       !define MUI_FINISHPAGE_RUN
       !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
+      !insertmacro MUI_PAGE_FINISH
+    !else
+      !insertmacro StartApp
     !endif
-    !insertmacro MUI_PAGE_FINISH
   !endif
 !else
   !insertmacro MUI_UNPAGE_WELCOME
