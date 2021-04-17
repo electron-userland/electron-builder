@@ -28,7 +28,7 @@ export async function createSelfSignedCert(publisher: string) {
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
     log.info({ file: pfx, certLocation }, `importing. Operation will be succeed only if runned from root. Otherwise import file manually.`)
-    await spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", ""])
+    await spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", certLocation])
   } finally {
     await tmpDir.cleanup()
   }
