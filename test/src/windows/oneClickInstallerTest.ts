@@ -32,7 +32,7 @@ test(
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
       config: {
         win: {
-          publisherName: 'test publisher'
+          publisherName: "Foo, Inc",
         },
         publish: {
           provider: "bintray",

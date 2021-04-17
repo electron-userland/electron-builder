@@ -104,7 +104,7 @@ test.ifAll.ifLinuxOrDevMac(
   )
 )
 
-test.ifAll.ifDevOrLinuxCi(
+test.ifAll.ifNotWindows(
   "override targets in the config",
   app(
     {
