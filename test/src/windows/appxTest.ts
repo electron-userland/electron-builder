@@ -25,7 +25,9 @@ it.ifDevOrWinCi(
           copyTestAsset(`appx-assets/${name}`, path.join(targetDir, name))
         )
       },
-      signedWin: true,
+      // Skipping due to issue with extracting publisher name
+      // https://github.com/develar/app-builder/issues/35
+      signedWin: false,
     }
   )
 )
