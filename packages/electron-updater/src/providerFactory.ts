@@ -1,4 +1,13 @@
-import { AllPublishOptions, BaseS3Options, BintrayOptions, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, newError, PublishConfiguration } from "builder-util-runtime"
+import {
+  AllPublishOptions,
+  BaseS3Options,
+  BintrayOptions,
+  GenericServerOptions,
+  getS3LikeProviderBaseUrl,
+  GithubOptions,
+  newError,
+  PublishConfiguration,
+} from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
 import { BintrayProvider } from "./providers/BintrayProvider"
 import { GenericProvider } from "./providers/GenericProvider"
@@ -23,23 +32,26 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
       const token = (githubOptions.private ? process.env.GH_TOKEN || process.env.GITHUB_TOKEN : null) || githubOptions.token
       if (token == null) {
         return new GitHubProvider(githubOptions, updater, runtimeOptions)
-      }
-      else {
+      } else {
         return new PrivateGitHubProvider(githubOptions, updater, token, runtimeOptions)
       }
     }
 
     case "s3":
     case "spaces":
-      return new GenericProvider({
-        provider: "generic",
-        url: getS3LikeProviderBaseUrl(data),
-        channel: (data as BaseS3Options).channel || null
-      }, updater, {
-        ...runtimeOptions,
-        // https://github.com/minio/minio/issues/5285#issuecomment-350428955
-        isUseMultipleRangeRequest: false,
-      })
+      return new GenericProvider(
+        {
+          provider: "generic",
+          url: getS3LikeProviderBaseUrl(data),
+          channel: (data as BaseS3Options).channel || null,
+        },
+        updater,
+        {
+          ...runtimeOptions,
+          // https://github.com/minio/minio/issues/5285#issuecomment-350428955
+          isUseMultipleRangeRequest: false,
+        }
+      )
 
     case "generic": {
       const options = data as GenericServerOptions

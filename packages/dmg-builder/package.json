@@ -15,17 +15,17 @@
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
+    "builder-util-runtime": "workspace:*",
     "fs-extra": "^9.1.0",
     "iconv-lite": "^0.6.2",
-    "js-yaml": "^4.0.0",
-    "sanitize-filename": "^1.6.3"
+    "js-yaml": "^4.0.0"
   },
   "optionalDependencies": {
     "dmg-license": "^1.0.8"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.7",
-    "@types/js-yaml": "^3.12.6",
+    "@types/js-yaml": "^4.0.0",
     "temp-file": "^3.3.7"
   },
   "typings": "./out/dmg.d.ts"

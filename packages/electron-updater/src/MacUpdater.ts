@@ -12,7 +12,7 @@ import AutoUpdater = Electron.AutoUpdater
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
-  private squirrelDownloadedUpdate: boolean = false
+  private squirrelDownloadedUpdate = false
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -27,12 +27,12 @@ export class MacUpdater extends AppUpdater {
   }
 
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
-    let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info);
+    let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
 
     // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
     if (files.some(isArm64)) {
-      files = files.filter(file => (process.arch === "arm64") === isArm64(file));
+      files = files.filter(file => (process.arch === "arm64") === isArm64(file))
     }
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
@@ -66,13 +66,13 @@ export class MacUpdater extends AppUpdater {
 
         return await new Promise<Array<string>>((resolve, reject) => {
           // insecure random is ok
-          const fileUrl = "/" + Date.now() + "-" + Math.floor(Math.random() * 9999) + ".zip"
+          const fileUrl = `/${Date.now()}-${Math.floor(Math.random() * 9999)}.zip`
           server.on("request", (request: IncomingMessage, response: ServerResponse) => {
-            const requestUrl = request.url!!
+            const requestUrl = request.url!
             this._logger.info(`${requestUrl} requested`)
             if (requestUrl === "/") {
               const data = Buffer.from(`{ "url": "${getServerUrl()}${fileUrl}" }`)
-              response.writeHead(200, {"Content-Type": "application/json", "Content-Length": data.length})
+              response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
               response.end(data)
               return
             }
@@ -90,8 +90,7 @@ export class MacUpdater extends AppUpdater {
             response.on("finish", () => {
               try {
                 setImmediate(() => server.close())
-              }
-              finally {
+              } finally {
                 if (!errorOccurred) {
                   this.nativeUpdater.removeListener("error", reject)
                   resolve([])
@@ -103,8 +102,7 @@ export class MacUpdater extends AppUpdater {
             readStream.on("error", error => {
               try {
                 response.end()
-              }
-              catch (e) {
+              } catch (e) {
                 this._logger.warn(`cannot end response: ${e}`)
               }
               errorOccurred = true
@@ -121,12 +119,12 @@ export class MacUpdater extends AppUpdater {
           server.listen(0, "127.0.0.1", () => {
             this.nativeUpdater.setFeedURL({
               url: getServerUrl(),
-              headers: {"Cache-Control": "no-cache"},
+              headers: { "Cache-Control": "no-cache" },
             })
 
             this.nativeUpdater.once("error", reject)
 
-            // The update has been dowloaded and is ready to be served to Squirrel
+            // The update has been downloaded and is ready to be served to Squirrel
             this.dispatchUpdateDownloaded(event)
 
             if (this.autoInstallOnAppQuit) {
@@ -135,7 +133,7 @@ export class MacUpdater extends AppUpdater {
             }
           })
         })
-      }
+      },
     })
   }
 

@@ -29,8 +29,7 @@ export class TestAppAdapter extends ElectronAppAdapter {
 }
 
 class MockApp {
-  constructor(private readonly version: string) {
-  }
+  constructor(private readonly version: string) {}
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
   getVersion() {

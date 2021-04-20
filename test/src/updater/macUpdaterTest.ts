@@ -10,10 +10,9 @@ class TestNativeUpdater extends EventEmitter {
   // noinspection JSMethodCanBeStatic
   checkForUpdates() {
     console.log("TestNativeUpdater.checkForUpdates")
-    this.download()
-      .catch(error => {
-        this.emit("error", error)
-      })
+    this.download().catch(error => {
+      this.emit("error", error)
+    })
   }
 
   private async download() {
@@ -30,11 +29,15 @@ class TestNativeUpdater extends EventEmitter {
 
 test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   const mockNativeUpdater = new TestNativeUpdater()
-  jest.mock("electron", () => {
-    return {
-      autoUpdater: mockNativeUpdater,
-    }
-  }, {virtual: true})
+  jest.mock(
+    "electron",
+    () => {
+      return {
+        autoUpdater: mockNativeUpdater,
+      }
+    },
+    { virtual: true }
+  )
 
   const updater = new MacUpdater(undefined, await createTestAppAdapter())
   const options: GithubOptions = {
@@ -48,8 +51,8 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
     // console.log(JSON.stringify(data))
   })
 
-  await tuneTestUpdater(updater);
-  (updater as any)._testOnlyOptions.platform = process.platform
+  await tuneTestUpdater(updater)
+  ;(updater as any)._testOnlyOptions.platform = process.platform
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()

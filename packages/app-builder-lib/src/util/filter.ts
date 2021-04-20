@@ -22,7 +22,7 @@ export function hasMagic(pattern: Minimatch) {
 
 // sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
 function ensureEndSlash(s: string) {
-  return s.length === 0 || s.endsWith(path.sep) ? s : (s + path.sep)
+  return s.length === 0 || s.endsWith(path.sep) ? s : s + path.sep
 }
 
 function getRelativePath(file: string, srcWithEndSlash: string) {
@@ -30,8 +30,7 @@ function getRelativePath(file: string, srcWithEndSlash: string) {
     const index = file.indexOf(NODE_MODULES_PATTERN)
     if (index < 0) {
       throw new Error(`${file} must be under ${srcWithEndSlash}`)
-    }
-    else {
+    } else {
       return file.substring(index + 1 /* leading slash */)
     }
   }

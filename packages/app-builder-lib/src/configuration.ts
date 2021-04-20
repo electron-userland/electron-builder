@@ -212,7 +212,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
-  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
+  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
 
   /**
    * Whether to build using Electron Build Service if target not supported on current OS.

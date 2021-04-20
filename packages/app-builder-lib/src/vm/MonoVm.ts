@@ -8,9 +8,14 @@ export class MonoVmManager extends VmManager {
   }
 
   exec(file: string, args: Array<string>, options?: ExecFileOptions, isLogOutIfDebug = true): Promise<string> {
-    return exec("mono", [file].concat(args), {
-      ...options,
-    }, isLogOutIfDebug)
+    return exec(
+      "mono",
+      [file].concat(args),
+      {
+        ...options,
+      },
+      isLogOutIfDebug
+    )
   }
 
   spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {

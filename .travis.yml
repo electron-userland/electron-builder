@@ -19,20 +19,24 @@ matrix:
       env: TEST_FILES=masTest,dmgTest
       node_js: "14"
 
+before_install:
+  - curl -L https://unpkg.com/@pnpm/self-installer | node
+  - pnpm config set store-dir ~/.pnpm-store
+
 cache:
-  yarn: true
+  npm: false
   directories:
-    - .yarn
+    - "~/.pnpm-store"
     - $HOME/Library/Caches/electron
     - $HOME/Library/Caches/electron-builder
     - /tmp/jest-electron-builder-tests
 
 install:
-  - YARN_CHECKSUM_BEHAVIOR=ignore node .yarn/releases/yarn-2.4.0.cjs install
+  - pnpm install --frozen-lockfile
 
 script:
-  - node .yarn/releases/yarn-2.4.0.cjs pretest
-  - node .yarn/releases/yarn-2.4.0.cjs node ./test/out/helpers/runTests.js
+  - pnpm compile
+  - node ./test/out/helpers/runTests.js
 
 branches:
   except:

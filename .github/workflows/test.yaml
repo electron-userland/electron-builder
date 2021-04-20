@@ -1,0 +1,69 @@
+name: Test
+on:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    container:
+      image: electronuserland/builder:14-03.21@sha256:38761d41757f3cdaf6cd57587a2dbf54449fa4f49b3569808ac7bc9f097fa6cc
+    env:
+      TEST_FILES: HoistedNodeModuleTest,configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,PublishManagerTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Cache .pnpm-store
+        uses: actions/cache@v1
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - name: Install pnpm
+        run: |
+          npm i -g pnpm
+          pnpm config set store-dir ~/.pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm compile
+      - run: pnpm lint
+      - run: pnpm lint-deps
+      - name: Cache ~/.cache/electron
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/electron
+          key: v-11.0.0-electron
+      - run: node ./test/out/helpers/runTests.js
+  test-windows:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        testFiles:
+          - filesTest,globTest,installerTest,appxTest,msiTest,portableTest
+          - oneClickInstallerTest,ExtraBuildTest,BuildTest,extraMetadataTest,protonTest,nsisUpdaterTest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Cache .pnpm-store
+        uses: actions/cache@v1
+        with:
+          path: $HOMEPATH/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+      - name: Install pnpm
+        run: |
+          npm i -g pnpm
+          pnpm config set store-dir $HOMEPATH/.pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm compile
+      - name: Cache ~/.cache/electron
+        uses: actions/cache@v1
+        with:
+          path: $HOMEPATH/.cache/electron
+          key: v-11.0.0-windows-electron
+      - name: test
+        run: node ./test/out/helpers/runTests.js
+        env:
+          TEST_FILES: ${{ matrix.TEST_FILES }}
+          FORCE_COLOR: 1

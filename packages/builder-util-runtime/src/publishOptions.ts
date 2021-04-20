@@ -104,7 +104,7 @@ export interface GithubOptions extends PublishConfiguration {
 }
 
 /** @private */
-export function githubUrl(options: GithubOptions, defaultHost: string = "github.com") {
+export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
   return `${options.protocol || "https"}://${options.host || defaultHost}`
 }
 
@@ -223,10 +223,10 @@ export interface SpacesOptions extends BaseS3Options {
 export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   const provider = configuration.provider
   if (provider === "s3") {
-    return s3Url((configuration as S3Options))
+    return s3Url(configuration as S3Options)
   }
   if (provider === "spaces") {
-    return spacesUrl((configuration as SpacesOptions))
+    return spacesUrl(configuration as SpacesOptions)
   }
   throw new Error(`Not supported provider: ${provider}`)
 }
@@ -235,8 +235,7 @@ function s3Url(options: S3Options) {
   let url: string
   if (options.endpoint != null) {
     url = `${options.endpoint}/${options.bucket}`
-  }
-  else if (options.bucket.includes(".")) {
+  } else if (options.bucket.includes(".")) {
     if (options.region == null) {
       throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
     }
@@ -244,15 +243,12 @@ function s3Url(options: S3Options) {
     // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
     if (options.region === "us-east-1") {
       url = `https://s3.amazonaws.com/${options.bucket}`
-    }
-    else {
+    } else {
       url = `https://s3-${options.region}.amazonaws.com/${options.bucket}`
     }
-  }
-  else if (options.region === "cn-north-1") {
+  } else if (options.region === "cn-north-1") {
     url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
-  }
-  else {
+  } else {
     url = `https://${options.bucket}.s3.amazonaws.com`
   }
   return appendPath(url, options.path)

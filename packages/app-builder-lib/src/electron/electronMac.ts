@@ -16,13 +16,17 @@ function doRename(basePath: string, oldName: string, newName: string) {
 function moveHelpers(helperSuffixes: Array<string>, frameworksPath: string, appName: string, prefix: string): Promise<any> {
   return BluebirdPromise.map(helperSuffixes, suffix => {
     const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
-    return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)
-      .then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
+    return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix).then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
   })
 }
 
-function getAvailableHelperSuffixes(helperEHPlist: string | null, helperNPPlist: string | null, helperRendererPlist: string | null, helperPluginPlist: string | null, helperGPUPlist: string | null) {
-
+function getAvailableHelperSuffixes(
+  helperEHPlist: string | null,
+  helperNPPlist: string | null,
+  helperRendererPlist: string | null,
+  helperPluginPlist: string | null,
+  helperGPUPlist: string | null
+) {
   const result = [" Helper"]
   if (helperEHPlist != null) {
     result.push(" Helper EH")
@@ -60,14 +64,32 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   const helperGPUPlistFilename = path.join(frameworksPath, "Electron Helper (GPU).app", "Contents", "Info.plist")
   const helperLoginPlistFilename = path.join(loginItemPath, "Electron Login Helper.app", "Contents", "Info.plist")
 
-  const plistContent: Array<any> = await executeAppBuilderAsJson(["decode-plist", "-f", appPlistFilename, "-f", helperPlistFilename, "-f", helperEHPlistFilename, "-f", helperNPPlistFilename, "-f", helperRendererPlistFilename, "-f", helperPluginPlistFilename, "-f", helperGPUPlistFilename, "-f", helperLoginPlistFilename])
+  const plistContent: Array<any> = await executeAppBuilderAsJson([
+    "decode-plist",
+    "-f",
+    appPlistFilename,
+    "-f",
+    helperPlistFilename,
+    "-f",
+    helperEHPlistFilename,
+    "-f",
+    helperNPPlistFilename,
+    "-f",
+    helperRendererPlistFilename,
+    "-f",
+    helperPluginPlistFilename,
+    "-f",
+    helperGPUPlistFilename,
+    "-f",
+    helperLoginPlistFilename,
+  ])
 
   if (plistContent[0] == null) {
     throw new Error("corrupted Electron dist")
   }
 
-  const appPlist = plistContent[0]!!
-  const helperPlist = plistContent[1]!!
+  const appPlist = plistContent[0]!
+  const helperPlist = plistContent[1]!
   const helperEHPlist = plistContent[2]
   const helperNPPlist = plistContent[3]
   const helperRendererPlist = plistContent[4]
@@ -80,7 +102,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     Object.assign(appPlist, plistContent[8])
   }
 
-  const buildMetadata = packager.config!!
+  const buildMetadata = packager.config
 
   /**
    * Configure bundleIdentifier for the generic Electron Helper process
@@ -158,7 +180,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
       return {
         CFBundleURLName: protocol.name,
         CFBundleTypeRole: protocol.role || "Editor",
-        CFBundleURLSchemes: schemes.slice()
+        CFBundleURLSchemes: schemes.slice(),
       }
     })
   }
@@ -179,7 +201,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
         CFBundleTypeName: fileAssociation.name || extensions[0],
         CFBundleTypeRole: fileAssociation.role || "Editor",
         LSHandlerRank: fileAssociation.rank || "Default",
-        CFBundleTypeIconFile: iconFile
+        CFBundleTypeIconFile: iconFile,
       } as any
 
       if (fileAssociation.isPackage) {
@@ -229,8 +251,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     const prefix = "Electron"
     const suffix = " Login Helper"
     const executableBasePath = path.join(loginItemPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
-    await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix)
-      .then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
+    await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix).then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
   }
 
   const appPath = path.join(appOutDir, `${appFilename}.app`)
@@ -264,7 +285,7 @@ function configureLocalhostAts(appPlist: any) {
       NSIncludesSubdomains: false,
       NSTemporaryExceptionAllowsInsecureHTTPLoads: true,
       NSTemporaryExceptionMinimumTLSVersion: "1.0",
-      NSTemporaryExceptionRequiresForwardSecrecy: false
+      NSTemporaryExceptionRequiresForwardSecrecy: false,
     }
     exceptionDomains.localhost = allowHttp
     exceptionDomains["127.0.0.1"] = allowHttp

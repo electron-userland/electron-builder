@@ -38,9 +38,8 @@ const publishContext: PublishContext = {
 
 test("GitHub unauthorized", async () => {
   try {
-    await new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber())._release.value
-  }
-  catch (e) {
+    await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token" }, versionNumber())._release.value
+  } catch (e) {
     expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
     return
   }
@@ -52,8 +51,7 @@ function isApiRateError(e: Error): boolean {
   if (e.name === "HttpError") {
     const description = (e as HttpError).description
     return description.message != null && description.message.includes("API rate limit exceeded")
-  }
-  else {
+  } else {
     return false
   }
 }
@@ -62,12 +60,10 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   test.skip(name, async () => {
     try {
       await testFunction()
-    }
-    catch (e) {
+    } catch (e) {
       if (isApiRateError(e)) {
         console.warn(e.description.message)
-      }
-      else {
+      } else {
         throw e
       }
     }
@@ -77,45 +73,46 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 test("Bintray upload", async () => {
   const version = "42.0.0"
   const tmpDir = new TmpDir("artifact-publisher-test")
-  const artifactPath = await tmpDir.getTempFile({suffix: " test-space.icns"})
+  const artifactPath = await tmpDir.getTempFile({ suffix: " test-space.icns" })
   await copyFile(iconPath, artifactPath)
 
   //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher(publishContext, {provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
+  const publisher = new BintrayPublisher(
+    publishContext,
+    { provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15" },
+    version
+  )
   try {
     // force delete old version to ensure that test doesn't depend on previous runs
     await publisher.deleteRelease(true)
-    await publisher.upload({file: artifactPath, arch: Arch.x64})
-    await publisher.upload({file: artifactPath, arch: Arch.x64})
-  }
-  finally {
+    await publisher.upload({ file: artifactPath, arch: Arch.x64 })
+    await publisher.upload({ file: artifactPath, arch: Arch.x64 })
+  } finally {
     try {
       await publisher.deleteRelease(false)
-    }
-    finally {
+    } finally {
       await tmpDir.cleanup()
     }
   }
 })
 
 testAndIgnoreApiRate("GitHub upload", async () => {
-  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token}, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token }, versionNumber())
   try {
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
     // test overwrite
-    await publisher.upload({file: iconPath, arch: Arch.x64})
-  }
-  finally {
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  } finally {
     await publisher.deleteRelease()
   }
 })
 
 if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null) {
   test("S3 upload", async () => {
-    const publisher = createPublisher(publishContext, "0.0.1", {provider: "s3", bucket: "electron-builder-test"} as S3Options, {}, {} as any)!!
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    const publisher = createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)!!
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
     // test overwrite
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
   })
 }
 
@@ -127,34 +124,32 @@ if (process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null) {
       region: "nyc3",
     }
     const publisher = createPublisher(publishContext, "0.0.1", configuration, {}, {} as any)!!
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
     // test overwrite
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
   })
 }
 
 testAndIgnoreApiRate("prerelease", async () => {
-  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease"}, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease" }, versionNumber())
   try {
-    await publisher.upload({file: iconPath, arch: Arch.x64})
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
     const r = await publisher.getRelease()
     expect(r).toMatchObject({
       prerelease: true,
       draft: false,
     })
-  }
-  finally {
+  } finally {
     await publisher.deleteRelease()
   }
 })
 
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
-  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "builder-gh-test", repo: "darpa", token}, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "builder-gh-test", repo: "darpa", token }, versionNumber())
   try {
-    await publisher.upload({file: iconPath, arch: Arch.x64})
-  }
-  finally {
+    await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  } finally {
     await publisher.deleteRelease()
   }
 })

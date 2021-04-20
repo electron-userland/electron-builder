@@ -27,8 +27,7 @@ export class MultiProgress {
         if (this.index === -1) {
           this.index = manager.totalLines
           manager.allocateLines(1)
-        }
-        else {
+        } else {
           manager.moveCursor(this.index)
         }
 

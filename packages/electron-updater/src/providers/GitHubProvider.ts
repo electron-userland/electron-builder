@@ -2,8 +2,9 @@ import { CancellationToken, GithubOptions, githubUrl, HttpError, newError, parse
 import * as semver from "semver"
 import { URL } from "url"
 import { AppUpdater } from "../AppUpdater"
-import { getChannelFilename, newBaseUrl, newUrlFromBase, Provider, ResolvedUpdateFileInfo } from "../main"
-import { parseUpdateInfo, ProviderRuntimeOptions, resolveFiles } from "./Provider"
+import { ResolvedUpdateFileInfo } from "../main"
+import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
+import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
 const hrefRegExp = /\/tag\/v?([^/]+)$/
 
@@ -39,29 +40,33 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     const cancellationToken = new CancellationToken()
 
-    const feedXml: string = (await this.httpRequest(newUrlFromBase(`${this.basePath}.atom`, this.baseUrl), {
-      accept: "application/xml, application/atom+xml, text/xml, */*",
-    }, cancellationToken))!
+    const feedXml: string = (await this.httpRequest(
+      newUrlFromBase(`${this.basePath}.atom`, this.baseUrl),
+      {
+        accept: "application/xml, application/atom+xml, text/xml, */*",
+      },
+      cancellationToken
+    ))!
 
     const feed = parseXml(feedXml)
+    // noinspection TypeScriptValidateJSTypes
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
     let version: string | null
     try {
       if (this.updater.allowPrerelease) {
         // noinspection TypeScriptValidateJSTypes
-        version = latestRelease.element("link").attribute("href").match(hrefRegExp)!![1]
-      }
-      else {
+        version = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+      } else {
         version = await this.getLatestVersionString(cancellationToken)
         for (const element of feed.getElements("entry")) {
-          if (element.element("link").attribute("href").match(hrefRegExp)!![1] === version) {
+          // noinspection TypeScriptValidateJSTypes
+          if (hrefRegExp.exec(element.element("link").attribute("href"))![1] === version) {
             latestRelease = element
             break
           }
         }
       }
-    }
-    catch (e) {
+    } catch (e) {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
@@ -74,9 +79,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
     try {
-      rawData = (await this.executor.request(requestOptions, cancellationToken))!!
-    }
-    catch (e) {
+      rawData = (await this.executor.request(requestOptions, cancellationToken))!
+    } catch (e) {
       if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
         throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
@@ -97,19 +101,19 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   private async getLatestVersionString(cancellationToken: CancellationToken): Promise<string | null> {
     const options = this.options
     // do not use API for GitHub to avoid limit, only for custom host or GitHub Enterprise
-    const url = (options.host == null || options.host === "github.com") ?
-      newUrlFromBase(`${this.basePath}/latest`, this.baseUrl) :
-      new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
+    const url =
+      options.host == null || options.host === "github.com"
+        ? newUrlFromBase(`${this.basePath}/latest`, this.baseUrl)
+        : new URL(`${this.computeGithubBasePath(`/repos/${options.owner}/${options.repo}/releases`)}/latest`, this.baseApiUrl)
     try {
-      const rawData = await this.httpRequest(url, {Accept: "application/json"}, cancellationToken)
+      const rawData = await this.httpRequest(url, { Accept: "application/json" }, cancellationToken)
       if (rawData == null) {
         return null
       }
 
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
-      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-    }
-    catch (e) {
+      return releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+    } catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }
@@ -146,14 +150,13 @@ export function computeReleaseNotes(currentVersion: semver.SemVer, isFullChangel
   const releaseNotes: Array<ReleaseNoteInfo> = []
   for (const release of feed.getElements("entry")) {
     // noinspection TypeScriptValidateJSTypes
-    const versionRelease = release.element("link").attribute("href").match(/\/tag\/v?([^/]+)$/)![1]
+    const versionRelease = /\/tag\/v?([^/]+)$/.exec(release.element("link").attribute("href"))![1]
     if (semver.lt(currentVersion, versionRelease)) {
       releaseNotes.push({
         version: versionRelease,
-        note: getNoteValue(release)
+        note: getNoteValue(release),
       })
     }
   }
-  return releaseNotes
-    .sort((a, b) => semver.rcompare(a.version, b.version))
+  return releaseNotes.sort((a, b) => semver.rcompare(a.version, b.version))
 }

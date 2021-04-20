@@ -21,8 +21,7 @@ export class LibUiFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = false
 
-  constructor(readonly version: string, readonly distMacOsAppName: string, protected readonly isUseLaunchUi: boolean) {
-  }
+  constructor(readonly version: string, readonly distMacOsAppName: string, protected readonly isUseLaunchUi: boolean) {}
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await emptyDir(options.appOutDir)
@@ -32,21 +31,26 @@ export class LibUiFramework implements Framework {
 
     if (this.isUseLaunchUiForPlatform(platform)) {
       const appOutDir = options.appOutDir
-      await executeAppBuilder(["proton-native",
-        "--node-version", this.version,
+      await executeAppBuilder([
+        "proton-native",
+        "--node-version",
+        this.version,
         "--use-launch-ui",
-        "--platform", platform.nodeName,
-        "--arch", options.arch,
-        "--stage", appOutDir,
-        "--executable", `${packager.appInfo.productFilename}${platform === Platform.WINDOWS ? ".exe" : ""}`,
+        "--platform",
+        platform.nodeName,
+        "--arch",
+        options.arch,
+        "--stage",
+        appOutDir,
+        "--executable",
+        `${packager.appInfo.productFilename}${platform === Platform.WINDOWS ? ".exe" : ""}`,
       ])
       return
     }
 
     if (platform === Platform.MAC) {
       await this.prepareMacosApplicationStageDirectory(packager as MacPackager, options)
-    }
-    else if (platform === Platform.LINUX) {
+    } else if (platform === Platform.LINUX) {
       await this.prepareLinuxApplicationStageDirectory(options)
     }
   }
@@ -63,11 +67,14 @@ export class LibUiFramework implements Framework {
     }
     await packager.applyCommonInfo(appPlist, appContentsDir)
     await Promise.all([
-      executeAppBuilderAndWriteJson(["encode-plist"], {[path.join(appContentsDir, "Info.plist")]: appPlist}),
-      writeExecutableMain(path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable), `#!/bin/sh
+      executeAppBuilderAndWriteJson(["encode-plist"], { [path.join(appContentsDir, "Info.plist")]: appPlist }),
+      writeExecutableMain(
+        path.join(appContentsDir, "MacOS", appPlist.CFBundleExecutable),
+        `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/../Resources/app/${options.packager.info.metadata.main || "index.js"}"
-  `),
+  `
+      ),
     ])
   }
 
@@ -75,10 +82,13 @@ export class LibUiFramework implements Framework {
     const appOutDir = options.appOutDir
     await executeAppBuilder(["proton-native", "--node-version", this.version, "--platform", "linux", "--arch", options.arch, "--stage", appOutDir])
     const mainPath = path.join(appOutDir, (options.packager as LinuxPackager).executableName)
-    await writeExecutableMain(mainPath, `#!/bin/sh
+    await writeExecutableMain(
+      mainPath,
+      `#!/bin/sh
   DIR=$(dirname "$0")
   "$DIR/node" "$DIR/app/${options.packager.info.metadata.main || "index.js"}"
-  `)
+  `
+    )
   }
 
   async afterPack(context: AfterPackContext) {
@@ -111,6 +121,6 @@ export class LibUiFramework implements Framework {
 }
 
 async function writeExecutableMain(file: string, content: string) {
-  await writeFile(file, content, {mode: 0o755})
+  await writeFile(file, content, { mode: 0o755 })
   await chmod(file, 0o755)
 }

@@ -3,7 +3,7 @@ import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
-import { remove } from "fs-extra"
+import { promises as fsPromises } from "fs"
 
 async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
@@ -18,121 +18,133 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
 
 test.ifMac.ifAll("icon set", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-    ]),
-    packed: () => assertIcon(platformPackager!!),
-  })()
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
+    },
+    {
+      projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
+      packed: () => assertIcon(platformPackager!!),
+    }
+  )()
 })
 
 test.ifMac.ifAll("custom icon set", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    config: {
-      mac: {
-        icon: "customIconSet",
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      config: {
+        mac: {
+          icon: "customIconSet",
+        },
       },
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-      fs.rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
-    ]),
-    packed: () => assertIcon(platformPackager!!),
-  })()
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          fs.unlink(path.join(projectDir, "build", "icon.icns")),
+          fs.unlink(path.join(projectDir, "build", "icon.ico")),
+          fs.rename(path.join(projectDir, "build", "icons"), path.join(projectDir, "customIconSet")),
+        ]),
+      packed: () => assertIcon(platformPackager!!),
+    }
+  )()
 })
 
 test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    config: {
-      mac: {
-        icon: "..",
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      config: {
+        mac: {
+          icon: "..",
+        },
       },
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-      fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
-      fs.copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
-    ]),
-    packed: () => assertIcon(platformPackager!!),
-  })()
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          fs.unlink(path.join(projectDir, "build", "icon.icns")),
+          fs.unlink(path.join(projectDir, "build", "icon.ico")),
+          fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "512x512.png")),
+          fs.copyFile(path.join(projectDir, "build", "icons", "128x128.png"), path.join(projectDir, "128x128.png")),
+        ]),
+      packed: () => assertIcon(platformPackager!!),
+    }
+  )()
 })
 
 test.ifMac.ifAll("png icon", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    config: {
-      mac: {
-        icon: "icons/512x512.png",
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      config: {
+        mac: {
+          icon: "icons/512x512.png",
+        },
       },
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-    ]),
-    packed: () => assertIcon(platformPackager!!),
-  })()
+    {
+      projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
+      packed: () => assertIcon(platformPackager!!),
+    }
+  )()
 })
 
 test.ifMac.ifAll("default png icon", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-      fs.copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
-        .then(() => remove(path.join(projectDir, "build", "icons")))
-    ]),
-    packed: () => assertIcon(platformPackager!!),
-  })()
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
+    },
+    {
+      projectDirCreated: projectDir =>
+        Promise.all([
+          fs.unlink(path.join(projectDir, "build", "icon.icns")),
+          fs.unlink(path.join(projectDir, "build", "icon.ico")),
+          fs
+            .copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
+            .then(() => fsPromises.rmdir(path.join(projectDir, "build", "icons"), { recursive: true })),
+        ]),
+      packed: () => assertIcon(platformPackager!!),
+    }
+  )()
 })
 
 test.ifMac.ifAll("png icon small", () => {
   let platformPackager: CheckingMacPackager | null = null
-  return app({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
-    config: {
-      mac: {
-        icon: "icons/128x128.png",
+  return app(
+    {
+      targets: Platform.MAC.createTarget(DIR_TARGET),
+      config: {
+        mac: {
+          icon: "icons/128x128.png",
+        },
       },
+      platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
-    platformPackagerFactory: packager => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => Promise.all([
-      fs.unlink(path.join(projectDir, "build", "icon.icns")),
-      fs.unlink(path.join(projectDir, "build", "icon.ico")),
-    ]),
-    packed: async () => {
-      try {
-        await platformPackager!!.getIconPath()
-      }
-      catch (e) {
-        if (!e.message.includes("must be at least 512x512")) {
-          throw e
+    {
+      projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
+      packed: async () => {
+        try {
+          await platformPackager!!.getIconPath()
+        } catch (e) {
+          if (!e.message.includes("must be at least 512x512")) {
+            throw e
+          }
+          return
         }
-        return
-      }
 
-      throw new Error("error expected")
-    },
-  })()
+        throw new Error("error expected")
+      },
+    }
+  )()
 })

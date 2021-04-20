@@ -14,9 +14,9 @@ const hex2byte: any = {}
 const byte2hex: Array<string> = []
 // populate lookup tables
 for (let i = 0; i < 256; i++) {
-    const hex = (i + 0x100).toString(16).substr(1)
-    hex2byte[hex] = i
-    byte2hex[i] = hex
+  const hex = (i + 0x100).toString(16).substr(1)
+  hex2byte[hex] = i
+  byte2hex[i] = hex
 }
 
 // UUID class
@@ -34,12 +34,11 @@ export class UUID {
       throw new Error("not a UUID")
     }
 
-    this.version = check.version!!
+    this.version = check.version!
 
     if (check.format === "ascii") {
       this.ascii = uuid as string
-    }
-    else {
+    } else {
       this.binary = uuid as Buffer
     }
   }
@@ -50,7 +49,7 @@ export class UUID {
 
   toString() {
     if (this.ascii == null) {
-      this.ascii = stringify(this.binary!!)
+      this.ascii = stringify(this.binary!)
     }
     return this.ascii
   }
@@ -59,7 +58,7 @@ export class UUID {
     return `UUID v${this.version} ${this.toString()}`
   }
 
-  static check(uuid: Buffer | string, offset: number = 0) {
+  static check(uuid: Buffer | string, offset = 0) {
     if (typeof uuid === "string") {
       uuid = uuid.toLowerCase()
 
@@ -68,13 +67,13 @@ export class UUID {
       }
 
       if (uuid === "00000000-0000-0000-0000-000000000000") {
-        return {version: undefined, variant: "nil", format: "ascii"}
+        return { version: undefined, variant: "nil", format: "ascii" }
       }
 
       return {
         version: (hex2byte[uuid[14] + uuid[15]] & 0xf0) >> 4,
         variant: getVariant((hex2byte[uuid[19] + uuid[20]] & 0xe0) >> 5),
-        format: "ascii"
+        format: "ascii",
       }
     }
 
@@ -90,13 +89,13 @@ export class UUID {
         }
       }
       if (i === 16) {
-        return {version: undefined, variant: "nil", format: "binary"}
+        return { version: undefined, variant: "nil", format: "binary" }
       }
 
       return {
         version: (uuid[offset + 6] & 0xf0) >> 4,
         variant: getVariant((uuid[offset + 8] & 0xe0) >> 5),
-        format: "binary"
+        format: "binary",
       }
     }
 
@@ -135,7 +134,9 @@ function getVariant(bits: number) {
 }
 
 enum UuidEncoding {
-  ASCII, BINARY, OBJECT
+  ASCII,
+  BINARY,
+  OBJECT,
 }
 
 // v3 + v5
@@ -164,30 +165,55 @@ function uuidNamed(name: string | Buffer, hashMethod: string, version: number, n
       result = new UUID(buffer)
       break
     default:
-      result = byte2hex[buffer[0]] + byte2hex[buffer[1]] +
-        byte2hex[buffer[2]] + byte2hex[buffer[3]] + "-" +
-        byte2hex[buffer[4]] + byte2hex[buffer[5]] + "-" +
+      result =
+        byte2hex[buffer[0]] +
+        byte2hex[buffer[1]] +
+        byte2hex[buffer[2]] +
+        byte2hex[buffer[3]] +
+        "-" +
+        byte2hex[buffer[4]] +
+        byte2hex[buffer[5]] +
+        "-" +
         byte2hex[(buffer[6] & 0x0f) | version] +
-        byte2hex[buffer[7]] + "-" +
+        byte2hex[buffer[7]] +
+        "-" +
         byte2hex[(buffer[8] & 0x3f) | 0x80] +
-        byte2hex[buffer[9]] + "-" +
-        byte2hex[buffer[10]] + byte2hex[buffer[11]] +
-        byte2hex[buffer[12]] + byte2hex[buffer[13]] +
-        byte2hex[buffer[14]] + byte2hex[buffer[15]]
+        byte2hex[buffer[9]] +
+        "-" +
+        byte2hex[buffer[10]] +
+        byte2hex[buffer[11]] +
+        byte2hex[buffer[12]] +
+        byte2hex[buffer[13]] +
+        byte2hex[buffer[14]] +
+        byte2hex[buffer[15]]
       break
   }
   return result
 }
 
 function stringify(buffer: Buffer) {
-  return byte2hex[buffer[0]] + byte2hex[buffer[1]] +
-    byte2hex[buffer[2]] + byte2hex[buffer[3]] + "-" +
-    byte2hex[buffer[4]] + byte2hex[buffer[5]] + "-" +
-    byte2hex[buffer[6]] + byte2hex[buffer[7]] + "-" +
-    byte2hex[buffer[8]] + byte2hex[buffer[9]] + "-" +
-    byte2hex[buffer[10]] + byte2hex[buffer[11]] +
-    byte2hex[buffer[12]] + byte2hex[buffer[13]] +
-    byte2hex[buffer[14]] + byte2hex[buffer[15]]
+  return (
+    byte2hex[buffer[0]] +
+    byte2hex[buffer[1]] +
+    byte2hex[buffer[2]] +
+    byte2hex[buffer[3]] +
+    "-" +
+    byte2hex[buffer[4]] +
+    byte2hex[buffer[5]] +
+    "-" +
+    byte2hex[buffer[6]] +
+    byte2hex[buffer[7]] +
+    "-" +
+    byte2hex[buffer[8]] +
+    byte2hex[buffer[9]] +
+    "-" +
+    byte2hex[buffer[10]] +
+    byte2hex[buffer[11]] +
+    byte2hex[buffer[12]] +
+    byte2hex[buffer[13]] +
+    byte2hex[buffer[14]] +
+    byte2hex[buffer[15]]
+  )
 }
 
 // according to rfc4122#section-4.1.7

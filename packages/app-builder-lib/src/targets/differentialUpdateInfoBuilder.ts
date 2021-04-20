@@ -29,7 +29,7 @@ export function createNsisWebDifferentialUpdateInfo(artifactPath: string, packag
       file,
     } as any
   }
-  return {packages}
+  return { packages }
 }
 
 export function configureDifferentialAwareArchiveOptions(archiveOptions: ArchiveOptions): ArchiveOptions {
@@ -63,13 +63,13 @@ export function configureDifferentialAwareArchiveOptions(archiveOptions: Archive
 }
 
 export async function appendBlockmap(file: string): Promise<BlockMapDataHolder> {
-  log.info({file: log.filePath(file)}, "building embedded block map")
+  log.info({ file: log.filePath(file) }, "building embedded block map")
   return await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--compression", "deflate"])
 }
 
 export async function createBlockmap(file: string, target: Target, packager: PlatformPackager<any>, safeArtifactName: string | null): Promise<BlockMapDataHolder> {
   const blockMapFile = `${file}${BLOCK_MAP_FILE_SUFFIX}`
-  log.info({blockMapFile: log.filePath(blockMapFile)}, "building block map")
+  log.info({ blockMapFile: log.filePath(blockMapFile) }, "building block map")
   const updateInfo = await executeAppBuilderAsJson<BlockMapDataHolder>(["blockmap", "--input", file, "--output", blockMapFile])
   await packager.info.callArtifactBuildCompleted({
     file: blockMapFile,

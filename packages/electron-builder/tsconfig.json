@@ -4,6 +4,20 @@
     "outDir": "out",
     "rootDir": "src"
   },
+  "references": [
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    },
+    {
+      "path": "../app-builder-lib"
+    },
+    {
+      "path": "../dmg-builder"
+    }
+  ],
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/builder",
     "examples": "../../scripts/jsdoc/examples",

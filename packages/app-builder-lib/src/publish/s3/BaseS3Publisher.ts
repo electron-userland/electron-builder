@@ -54,9 +54,8 @@ export abstract class BaseS3Publisher extends Publisher {
       })
         .then(() => {
           try {
-            log.debug({provider: this.providerName, file: fileName, bucket: this.getBucketName()}, "uploaded")
-          }
-          finally {
+            log.debug({ provider: this.providerName, file: fileName, bucket: this.getBucketName() }, "uploaded")
+          } finally {
             resolve(undefined)
           }
         })

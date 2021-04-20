@@ -34,7 +34,7 @@ export class WineManager {
   }
 
   exec(...args: Array<string>) {
-    return exec("wine", args, {env: this.env})
+    return exec("wine", args, { env: this.env })
   }
 
   async prepareWine(wineDir: string) {
@@ -46,7 +46,7 @@ export class WineManager {
       WINEPREFIX: wineDir,
     }
 
-    await exec("wineboot", ["--init"], {env})
+    await exec("wineboot", ["--init"], { env })
 
     // regedit often doesn't modify correctly
     let systemReg = await fs.readFile(path.join(wineDir, "system.reg"), "utf8")
@@ -75,7 +75,9 @@ export class WineManager {
 }
 
 enum ChangeType {
-  ADDED, REMOVED, NO_CHANGE
+  ADDED,
+  REMOVED,
+  NO_CHANGE,
 }
 
 export function diff(oldList: Array<string>, newList: Array<string>, rootDir: string) {
@@ -94,8 +96,7 @@ export function diff(oldList: Array<string>, newList: Array<string>, rootDir: st
     const d = deltaMap.get(item)
     if (d === ChangeType.REMOVED) {
       deltaMap.set(item, ChangeType.NO_CHANGE)
-    }
-    else {
+    } else {
       deltaMap.set(item, ChangeType.ADDED)
     }
   }
@@ -103,8 +104,7 @@ export function diff(oldList: Array<string>, newList: Array<string>, rootDir: st
   for (const [item, changeType] of deltaMap.entries()) {
     if (changeType === ChangeType.REMOVED) {
       delta.deleted.push(item.substring(rootDir.length + 1))
-    }
-    else if (changeType === ChangeType.ADDED) {
+    } else if (changeType === ChangeType.ADDED) {
       delta.added.push(item.substring(rootDir.length + 1))
     }
   }

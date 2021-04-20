@@ -1,9 +1,9 @@
 import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { readFile } from "fs-extra"
-import { fromUrl, Info } from "hosted-git-info"
+import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"
-import { Metadata, RepositoryInfo } from ".."
+import { Metadata, RepositoryInfo } from "../options/metadata"
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata | null): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
@@ -19,11 +19,11 @@ async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null
   const i = conf.indexOf('[remote "origin"]')
   if (i !== -1) {
     let u = conf[i + 1]
-    if (!u.match(/^\s*url =/)) {
+    if (!/^\s*url =/.exec(u)) {
       u = conf[i + 2]
     }
 
-    if (u.match(/^\s*url =/)) {
+    if (/^\s*url =/.exec(u)) {
       return u.replace(/^\s*url = /, "")
     }
   }
@@ -57,29 +57,30 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
   return url == null ? null : parseRepositoryUrl(url)
 }
 
-function parseRepositoryUrl(url: string): Info {
+function parseRepositoryUrl(url: string): GitHost | null {
   const info: any = fromUrl(url)
-  if (info != null) {
-    delete info.protocols
-    delete info.treepath
-    delete info.filetemplate
-    delete info.bugstemplate
-    delete info.gittemplate
-    delete info.tarballtemplate
-    delete info.sshtemplate
-    delete info.sshurltemplate
-    delete info.browsetemplate
-    delete info.docstemplate
-    delete info.httpstemplate
-    delete info.shortcuttemplate
-    delete info.pathtemplate
-    delete info.pathmatch
-    delete info.protocols_re
-    delete info.committish
-    delete info.default
-    delete info.opts
-    delete info.browsefiletemplate
-    delete info.auth
+  if (info == null) {
+    return null
   }
+  delete info.protocols
+  delete info.treepath
+  delete info.filetemplate
+  delete info.bugstemplate
+  delete info.gittemplate
+  delete info.tarballtemplate
+  delete info.sshtemplate
+  delete info.sshurltemplate
+  delete info.browsetemplate
+  delete info.docstemplate
+  delete info.httpstemplate
+  delete info.shortcuttemplate
+  delete info.pathtemplate
+  delete info.pathmatch
+  delete info.protocols_re
+  delete info.committish
+  delete info.default
+  delete info.opts
+  delete info.browsefiletemplate
+  delete info.auth
   return info
 }

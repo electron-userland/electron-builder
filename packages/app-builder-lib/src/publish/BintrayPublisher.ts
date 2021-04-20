@@ -20,7 +20,9 @@ export class BintrayPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
+        throw new InvalidConfigurationError(
+          `Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`
+        )
       }
 
       token = token.trim()
@@ -36,15 +38,13 @@ export class BintrayPublisher extends HttpPublisher {
   private async init(): Promise<Version | null> {
     try {
       return await this.client.getVersion(this.version)
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {
         if (this.options.publish !== "onTagOrDraft") {
-          log.info({version: this.version}, "version doesn't exist, creating one")
+          log.info({ version: this.version }, "version doesn't exist, creating one")
           return await this.client.createVersion(this.version)
-        }
-        else {
-          log.warn({reason: "version doesn't exist", version: this.version}, "skipped publishing")
+        } else {
+          log.warn({ reason: "version doesn't exist", version: this.version }, "skipped publishing")
         }
       }
 
@@ -55,7 +55,7 @@ export class BintrayPublisher extends HttpPublisher {
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
     const version = await this._versionPromise.value
     if (version == null) {
-      log.warn({file: fileName, reason: "version doesn't exist and is not created", version: this.version}, "skipped publishing")
+      log.warn({ file: fileName, reason: "version doesn't exist and is not created", version: this.version }, "skipped publishing")
       return
     }
 
@@ -67,23 +67,22 @@ export class BintrayPublisher extends HttpPublisher {
         "Content-Length": dataLength,
         "X-Bintray-Override": "1",
         "X-Bintray-Publish": "1",
-        "X-Bintray-Debian-Architecture": toLinuxArchString(arch, "deb")
-      }
+        "X-Bintray-Debian-Architecture": toLinuxArchString(arch, "deb"),
+      },
     }
 
     if (this.client.distribution != null) {
-      options.headers!!["X-Bintray-Debian-Distribution"] = this.client.distribution
+      options.headers!["X-Bintray-Debian-Distribution"] = this.client.distribution
     }
 
     if (this.client.component != null) {
-      options.headers!!["X-Bintray-Debian-Component"] = this.client.component
+      options.headers!["X-Bintray-Debian-Component"] = this.client.component
     }
 
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
         return await httpExecutor.doApiRequest(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
-      }
-      catch (e) {
+      } catch (e) {
         if (attemptNumber < 3 && ((e instanceof HttpError && e.statusCode === 502) || e.code === "EPIPE")) {
           continue
         }
@@ -99,13 +98,15 @@ export class BintrayPublisher extends HttpPublisher {
       return
     }
 
-    const version = (await this._versionPromise.value)
+    const version = await this._versionPromise.value
     if (version != null) {
       await this.client.deleteVersion(version.name)
     }
   }
 
   toString() {
-    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${this.version})`
+    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${
+      this.version
+    })`
   }
 }

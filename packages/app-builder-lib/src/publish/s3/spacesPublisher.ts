@@ -11,7 +11,7 @@ export default class SpacesPublisher extends BaseS3Publisher {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static async checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, errorIfCannot: boolean) {
+  static checkAndResolveOptions(options: SpacesOptions, channelFromAppVersion: string | null, errorIfCannot: boolean) {
     if (options.name == null) {
       throw new InvalidConfigurationError(`Please specify "name" for "spaces" publish provider (see https://www.electron.build/configuration/publish#spacesoptions)`)
     }
@@ -22,6 +22,7 @@ export default class SpacesPublisher extends BaseS3Publisher {
     if (options.channel == null && channelFromAppVersion != null) {
       options.channel = channelFromAppVersion
     }
+    return Promise.resolve()
   }
 
   protected getBucketName(): string {

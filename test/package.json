@@ -2,25 +2,16 @@
   "name": "@electron-builder/test",
   "private": true,
   "dependencies": {
-    "7zip-bin": "~5.0.3",
-    "@babel/core": "^7.12.16",
-    "@babel/plugin-transform-typescript": "^7.12.16",
-    "@babel/preset-env": "^7.12.16",
-    "@babel/preset-typescript": "^7.12.16",
+    "7zip-bin": "~5.1.1",
     "@jest/core": "^26.6.3",
-    "@types/ci-info": "^2.0.0",
-    "@types/fs-extra": "^9.0.7",
-    "@types/jest": "^26.0.20",
-    "@types/js-yaml": "^3.12.6",
-    "@types/semver": "^7.3.4",
     "app-builder-lib": "workspace:*",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.0",
-    "ci-info": "^2.0.0",
+    "ci-info": "^3.1.1",
     "decompress-zip": "^0.3.3",
-    "depcheck": "1.2.0",
+    "depcheck": "1.4.0",
     "dmg-builder": "workspace:*",
     "electron-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",
@@ -36,6 +27,14 @@
     "temp-file": "^3.3.7",
     "yargs": "^16.2.0"
   },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.8",
+    "@types/jest": "^26.0.20",
+    "@types/js-yaml": "^4.0.0",
+    "@types/semver": "^7.3.4",
+    "esbuild": "^0.9.2",
+    "esbuild-jest": "^0.5.0"
+  },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",
     "testEnvironment": "node",
@@ -43,8 +42,21 @@
       "src"
     ],
     "transformIgnorePatterns": [
-      "../.yarn"
+      "./node_modules",
+      "../node_modules",
+      "../packages"
     ],
+    "transform": {
+      "^.+\\.ts$": [
+        "esbuild-jest",
+        {
+          "sourcemap": "inline",
+          "loaders": {
+            ".ts": "ts"
+          }
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "[\\/]{1}helpers[\\/]{1}"
     ],

@@ -294,6 +294,7 @@
       <w>pkgbuild</w>
       <w>pkgutil</w>
       <w>pluginsdir</w>
+      <w>pnpm</w>
       <w>postinstall</w>
       <w>powerrequired</w>
       <w>powershell</w>
