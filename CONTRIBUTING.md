@@ -1,21 +1,27 @@
 You decided to contribute to this project? Great, thanks a lot for pushing it.
 
-This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. By participating, you are expected to uphold this code. Please file issue to report unacceptable behavior.
+This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. 
+By participating, you are expected to uphold this code. Please file issue to report unacceptable behavior.
+
+## Prerequisites
+> All prerequisites could be installed via script at the end of the chapter
+>
+
+* [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not so good as PNPM.
+* For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to 
+electron-builder for your other projects to leverage and test with.
+```
+npm install -g pnpm
+pnpm i yalc -g
+```
 
 ## To setup a local dev environment
-
-For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to electron-builder for your other projects to leverage and test with.
-
-Env setup from scratch (line by line for an easy copy-paste)
+Follow this chapter to set environment from scratch
 ```
-pnpm i yalc -g
-
 git clone https://github.com/electron-userland/electron-builder.git
 
 pushd ./electron-builder
 pnpm install
-pnpm compile
-find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc push'
 popd
 ```
 
@@ -24,8 +30,10 @@ You must link yalc's local "packages" to your project via the one-liner below (r
 yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
 ```
 
-The magical script for whenever you make changes to electron-builder! Rebuilds electron-builder, and then patches the npm modules in your project (such as electron-quick-start).
-Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder, otherwise adjust path as necessary.
+The magical script for whenever you make changes to electron-builder! Rebuilds electron-builder, and then patches 
+the npm modules in your project (such as electron-quick-start).
+Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder, 
+otherwise adjust path as necessary.
 ```
 pushd ../electron-builder
 pnpm compile
@@ -33,17 +41,23 @@ find packages/ -type d -maxdepth 1 -print0 | xargs -0 -L1 sh -c 'cd "$0" && yalc
 popd
 ```
 
+On Windows cmd.exe:
+```batch
+pushd ..\electron-builder
+pnpm compile
+for /D %d in (packages\*) do (pushd "%d" & yalc push & popd)  
+popd
+```
+
 ## Pull Requests
 To check that your contributions match the project coding style make sure `pnpm test` passes.
+To build project run: `pnpm i && pnpm compile`
 
-[pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not so good as PNPM.
-
-To build project: `pnpm i && pnpm compile`
-
-If you get strange compilation errors, try to remove all `node_modules` in the project (especially under `packages/*`).
-
+> If you get strange compilation errors, try to remove all `node_modules` in the project (especially under `packages/*`).
+>
 ### Git Commit Guidelines
-We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how our git [commit messages can be formatted](https://gist.github.com/develar/273e2eb938792cf5f86451fbac2bcd51).
+We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how 
+our git [commit messages can be formatted](https://gist.github.com/develar/273e2eb938792cf5f86451fbac2bcd51).
 
 ## Documentation
 
@@ -63,9 +77,11 @@ You'll want to copy the `mkdocs.yml` file from the master branch and then: `mkdo
 
 ## Debug Tests
 
-Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), [WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug.
+Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), 
+[WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug.
 
-If you use IntelliJ IDEA or WebStorm — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you can run tests from an editor (just click on `Run` green gutter icon).
+If you use IntelliJ IDEA or WebStorm — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you 
+can run tests from an editor (just click on `Run` green gutter icon).
 
 Or you can create Node.js run configuration manually:
 * Ensure that `Before launch` contains `Compile TypeScript`.
@@ -75,16 +91,18 @@ Or you can create Node.js run configuration manually:
   -t "extraResources - one-package" globTest.js
   ```
 * Set `Environment Variables`:
-  * Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test uses temporary directory (only if `--match` is used). Specified directory will be used instead of random temporary directory and *cleared* on each run.
+  * Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test 
+  uses temporary directory (only if `--match` is used). Specified directory will be used instead of random 
+  temporary directory and *cleared* on each run.
 
 ### Run Test using CLI
 ```sh
+pnpm compile
 TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'assisted' '/oneClickInstallerTest\.\w+$'
 ```
+where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `assisted` is the test name 
+and `/oneClickInstallerTest\.\w+$` is the path to test file.
 
-where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `assisted` is the test name and `/oneClickInstallerTest\.\w+$` is the path to test file.
-
-Do not forget to execute `pnpm compile` before run.
 
 ## Issues
 
