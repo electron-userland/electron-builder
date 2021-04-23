@@ -1,5 +1,6 @@
 import { app } from "../helpers/packTester"
 import { Platform } from "electron-builder"
+import fs from "fs"
 
 test.ifAll.ifDevOrWinCi(
   "msi",
@@ -53,6 +54,45 @@ test.ifAll.ifDevOrWinCi(
         productName: "Test MSI Per User",
         msi: {
           perMachine: false,
+        },
+      },
+    },
+    {
+      // signed: true,
+    }
+  )
+)
+
+const wixArgsProductName = "Test WiX Args";
+test.ifAll.ifDevOrWinCi(
+  "wix args",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("msi"),
+      config: {
+        appId: "build.electron.test.msi.oneClick.wixArgs",
+        extraMetadata: {
+          // version: "1.0.0",
+        },
+        productName: wixArgsProductName,
+        // Inject a custom-action which requires the WixUtilExtension DLL
+        msiProjectCreated: async (path) => {
+          await fs.promises.writeFile(path, (await fs.promises.readFile(path, "utf8")).replace(
+            '</Product>',
+            `<util:CloseApplication xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+              PromptToContinue="no"
+              Target="${wixArgsProductName}.exe"
+              CloseMessage="yes"
+              Timeout="2"
+              TerminateProcess="1"
+              RebootPrompt="no"
+            />
+            </Product>`
+          ));
+        },
+        msi: {
+	  // Apply the needed DLL
+          additionalWixArgs: ["-ext", "WixUtilExtension"],
         },
       },
     },

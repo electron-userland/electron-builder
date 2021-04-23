@@ -3388,6 +3388,13 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
           "type": "boolean"
+        },
+        "additionalWixArgs": {
+          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`",
+          "type": [
+            "null",
+            "array"
+          ]
         }
       },
       "type": "object"
