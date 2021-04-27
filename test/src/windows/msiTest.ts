@@ -91,7 +91,7 @@ test.ifAll.ifDevOrWinCi(
           ));
         },
         msi: {
-	  // Apply the needed DLL
+          // Apply the needed DLL
           additionalWixArgs: ["-ext", "WixUtilExtension"],
         },
       },
