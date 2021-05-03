@@ -138,6 +138,9 @@ export default class MsiTarget extends Target {
     if (this.options.warningsAsErrors !== false) {
       args.push("-wx")
     }
+    if (this.options.additionalWixArgs != null) {
+      args.push(...this.options.additionalWixArgs)
+    }
     return args
   }
 

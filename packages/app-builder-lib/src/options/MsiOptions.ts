@@ -18,4 +18,9 @@ export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetS
    * @default true
    */
   readonly warningsAsErrors?: boolean
+
+  /**
+   * Any additional arguments to be passed to the WiX installer compiler, such as `["-ext", "WixUtilExtension"]`
+   */
+  readonly additionalWixArgs?: Array<string> | null
 }
