@@ -218,8 +218,8 @@ Please double check that your authentication token is correct. Due to security r
             if (contentLength != null) {
               const size = parseInt(contentLength, 10)
               if (size > 0) {
-                if (size > 52428800) {
-                  callback(new Error("Maximum allowed size is 50 MB"))
+                if (size > 524288000) {
+                  callback(new Error("Maximum allowed size is 500 MB"))
                   return
                 }
 
@@ -234,8 +234,8 @@ Please double check that your authentication token is correct. Due to security r
               } else if (result == null) {
                 result = chunk
               } else {
-                if (result.length > 52428800) {
-                  callback(new Error("Maximum allowed size is 50 MB"))
+                if (result.length > 524288000) {
+                  callback(new Error("Maximum allowed size is 500 MB"))
                   return
                 }
                 result = Buffer.concat([result, chunk])
