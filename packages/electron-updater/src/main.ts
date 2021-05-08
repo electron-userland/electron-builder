@@ -5,7 +5,7 @@ import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
-export { UpdateInfo }
+export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 export { Provider } from "./providers/Provider"
 export { AppImageUpdater } from "./AppImageUpdater"
 export { MacUpdater } from "./MacUpdater"
