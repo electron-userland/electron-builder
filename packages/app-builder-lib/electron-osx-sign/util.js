@@ -132,7 +132,7 @@ var detectElectronPlatformAsync = module.exports.detectElectronPlatformAsync = f
   })
 }
 
-const isBinaryFile = require("istextorbinary").isBinary;
+const isBinaryFile = require("isbinaryfile").isBinaryFileSync;
 
 /**
  * This function returns a promise resolving the file path if file binary. We check filepath extension first to reduce overhead of reading the file to a buffer for it to scan start/mid/end encoding of the file
@@ -156,7 +156,7 @@ const getFilePathIfBinarySync = module.exports.getFilePathIfBinarySync = functio
   // Still consider the file as binary if extension is empty or seems invalid
   // https://github.com/electron-userland/electron-builder/issues/5465
   if ((ext === '' || ext.indexOf(' ') >= 0) && name[0] !== '.') {
-    return (isBinaryFile(filePath, null) || isBinaryFile(null, fs.readFileSync(filePath))) ? filePath : undefined
+    return isBinaryFile(filePath) ? filePath : undefined
   }
   return undefined
 }
