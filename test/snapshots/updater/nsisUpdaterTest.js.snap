@@ -62,8 +62,6 @@ Array [
 
 exports[`cancel download with progress 1`] = `"Cancelled"`;
 
-exports[`check updates - no versions at all 1`] = `"ERR_UPDATER_LATEST_VERSION_NOT_FOUND"`;
-
 exports[`checkForUpdates several times 1`] = `
 Object {
   "files": Array [
@@ -99,18 +97,6 @@ Array [
 ]
 `;
 
-exports[`downgrade (allowed) 1`] = `
-Object {
-  "files": Array [
-    Object {
-      "sha512": "@sha512",
-      "url": "TestApp Setup 1.1.1.exe",
-    },
-  ],
-  "version": "1.1.1",
-}
-`;
-
 exports[`downgrade (disallowed, beta) 1`] = `
 Object {
   "files": Array [
@@ -122,30 +108,6 @@ Object {
   "releaseName": "v1.5.2-beta.3",
   "releaseNotes": "",
   "version": "1.5.2-beta.3",
-}
-`;
-
-exports[`downgrade (disallowed, bintray) 1`] = `
-Object {
-  "files": Array [
-    Object {
-      "sha512": "@sha512",
-      "url": "TestApp Setup 1.1.1.exe",
-    },
-  ],
-  "version": "1.1.1",
-}
-`;
-
-exports[`file url (bintray) 1`] = `
-Object {
-  "files": Array [
-    Object {
-      "sha512": "@sha512",
-      "url": "TestApp Setup 1.1.1.exe",
-    },
-  ],
-  "version": "1.1.1",
 }
 `;
 
