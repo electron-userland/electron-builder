@@ -12,18 +12,18 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.3.4",
+    "@types/semver": "^7.3.5",
     "builder-util-runtime": "workspace:*",
-    "fs-extra": "^9.1.0",
-    "js-yaml": "^4.0.0",
+    "fs-extra": "^10.0.0",
+    "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.4",
     "lodash.escaperegexp": "^4.1.2",
     "lodash.isequal": "^4.5.0",
-    "semver": "^7.3.4"
+    "semver": "^7.3.5"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.7",
-    "@types/js-yaml": "^4.0.0",
+    "@types/fs-extra": "^9.0.11",
+    "@types/js-yaml": "^4.0.1",
     "@types/lodash.escaperegexp": "^4.1.6",
     "@types/lodash.isequal": "^4.5.5"
   },

@@ -1,8 +1,7 @@
-import { Arch, copyFile, TmpDir } from "builder-util"
+import { Arch } from "builder-util"
 import { CancellationToken, HttpError, S3Options, SpacesOptions } from "builder-util-runtime"
 import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"
-import { BintrayPublisher } from "app-builder-lib/out/publish/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { isCI as isCi } from "ci-info"
 import * as path from "path"
@@ -69,32 +68,6 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
     }
   })
 }
-
-test("Bintray upload", async () => {
-  const version = "42.0.0"
-  const tmpDir = new TmpDir("artifact-publisher-test")
-  const artifactPath = await tmpDir.getTempFile({ suffix: " test-space.icns" })
-  await copyFile(iconPath, artifactPath)
-
-  //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher(
-    publishContext,
-    { provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15" },
-    version
-  )
-  try {
-    // force delete old version to ensure that test doesn't depend on previous runs
-    await publisher.deleteRelease(true)
-    await publisher.upload({ file: artifactPath, arch: Arch.x64 })
-    await publisher.upload({ file: artifactPath, arch: Arch.x64 })
-  } finally {
-    try {
-      await publisher.deleteRelease(false)
-    } finally {
-      await tmpDir.cleanup()
-    }
-  }
-})
 
 testAndIgnoreApiRate("GitHub upload", async () => {
   const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token }, versionNumber())

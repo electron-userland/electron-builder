@@ -1,4 +1,4 @@
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
@@ -12,67 +12,6 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
     console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
   })
 }
-
-test("check updates - no versions at all", async () => {
-  const updater = await createNsisUpdater()
-  // tslint:disable-next-line:no-object-literal-type-assertion
-  updater.setFeedURL({
-    provider: "bintray",
-    owner: "actperepo",
-    package: "no-versions",
-  } as BintrayOptions)
-
-  await assertThat(updater.checkForUpdates()).throws()
-})
-
-async function testUpdateFromBintray(version?: string) {
-  const updater = await createNsisUpdater(version)
-  updater.allowDowngrade = true
-  updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
-    provider: "bintray",
-    owner: "actperepo",
-    package: "TestApp",
-  })
-
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
-  await checkDownloadPromise(updateCheckResult)
-
-  expect(actualEvents).toEqual(expectedEvents)
-}
-test("file url (bintray)", () => testUpdateFromBintray(undefined))
-
-test("downgrade (disallowed, bintray)", async () => {
-  const updater = await createNsisUpdater("2.0.0")
-  updater.updateConfigPath = await writeUpdateConfig<BintrayOptions>({
-    provider: "bintray",
-    owner: "actperepo",
-    package: "TestApp",
-  })
-
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-not-available"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
-  // noinspection JSIgnoredPromiseFromCall
-  expect(updateCheckResult.downloadPromise).toBeUndefined()
-
-  expect(actualEvents).toEqual(expectedEvents)
-})
 
 test("downgrade (disallowed, beta)", async () => {
   const updater = await createNsisUpdater("1.5.2-beta.4")
@@ -97,8 +36,6 @@ test("downgrade (disallowed, beta)", async () => {
 
   expect(actualEvents).toEqual(expectedEvents)
 })
-
-test("downgrade (allowed)", () => testUpdateFromBintray("2.0.0-beta.1"))
 
 test("file url generic", async () => {
   const updater = await createNsisUpdater()

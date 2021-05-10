@@ -69,7 +69,7 @@ export class AppInfo {
   get channel(): string | null {
     const prereleaseInfo = prerelease(this.version)
     if (prereleaseInfo != null && prereleaseInfo.length > 0) {
-      return prereleaseInfo[0]
+      return prereleaseInfo[0] as string | null
     }
     return null
   }
