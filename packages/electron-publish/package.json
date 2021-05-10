@@ -19,5 +19,8 @@
     "lazy-val": "^1.0.4",
     "mime": "^2.5.0"
   },
-  "typings": "./out/publisher.d.ts"
+  "typings": "./out/publisher.d.ts",
+  "devDependencies": {
+    "@types/mime": "^2.0.3"
+  }
 }
