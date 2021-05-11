@@ -4,7 +4,7 @@ import * as path from "path"
 import { Mode } from "stat-mode"
 import { log } from "./log"
 import { orIfFileNotExist, orNullIfFileNotExist } from "./promise"
-import isCI from "is-ci"
+import * as isCI from "is-ci"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
