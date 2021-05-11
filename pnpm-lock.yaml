@@ -4,7 +4,6 @@ importers:
 
   .:
     specifiers:
-      '@types/update-notifier': ^5.0.0
       '@typescript-eslint/eslint-plugin': ^4.23.0
       '@typescript-eslint/parser': ^4.23.0
       dmg-license: ~1.0.8
@@ -18,14 +17,13 @@ importers:
       jsdoc-to-markdown: ^7.0.1
       lint-staged: ^11.0.0
       prettier: ^2.3.0
-      ts-jsdoc: ^3.2.1
+      ts-jsdoc: ^3.2.2
       typescript: ~4.2.4
       typescript-json-schema: ^0.50.0
       v8-compile-cache: ^2.3.0
     dependencies:
       dmg-license: 1.0.8
     devDependencies:
-      '@types/update-notifier': 5.0.0
       '@typescript-eslint/eslint-plugin': 4.23.0_7cfaee78cda985ff9bc3d8b5cb92a136
       '@typescript-eslint/parser': 4.23.0_eslint@7.26.0+typescript@4.2.4
       eslint: 7.26.0
@@ -38,7 +36,7 @@ importers:
       jsdoc-to-markdown: 7.0.1
       lint-staged: 11.0.0
       prettier: 2.3.0
-      ts-jsdoc: 3.2.1_typescript@4.2.4
+      ts-jsdoc: 3.2.2_typescript@4.2.4
       typescript: 4.2.4
       typescript-json-schema: 0.50.0
       v8-compile-cache: 2.3.0
@@ -154,6 +152,7 @@ importers:
     specifiers:
       '@types/debug': ^4.1.5
       '@types/fs-extra': ^9.0.11
+      '@types/is-ci': ^3.0.0
       '@types/js-yaml': ^4.0.1
       '@types/source-map-support': ^0.5.3
       7zip-bin: ~5.1.1
@@ -184,6 +183,7 @@ importers:
       stat-mode: 1.0.0
       temp-file: 3.4.0
     devDependencies:
+      '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.1
       '@types/source-map-support': 0.5.3
 
@@ -230,6 +230,7 @@ importers:
     specifiers:
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': ^3.0.0
+      '@types/update-notifier': ^5.0.0
       '@types/yargs': ^16.0.1
       app-builder-lib: workspace:*
       builder-util: workspace:*
@@ -258,6 +259,7 @@ importers:
     devDependencies:
       '@types/fs-extra': 9.0.11
       '@types/is-ci': 3.0.0
+      '@types/update-notifier': 5.0.0
 
   packages/electron-builder-squirrel-windows:
     specifiers:
@@ -7206,12 +7208,12 @@ packages:
       utf8-byte-length: 1.0.4
     dev: false
 
-  /ts-jsdoc/3.2.1_typescript@4.2.4:
-    resolution: {integrity: sha512-mKVAntTDoekkk1rh6/yDXh1rwqesu7k0RLzpz8NSj3AvnOPUG4rtweToBcFLsZoaHIlJ7UjdwSsEPYeNS+eEKw==}
+  /ts-jsdoc/3.2.2_typescript@4.2.4:
+    resolution: {integrity: sha512-+Bj4ROKDrk3pOdel5u+gz8pqyuPak9D/dgNFfrpEGTZarRnxPGYB3DXkpu4qkFCfPjqBBiZEj6hf3wmfvJqbgA==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     peerDependencies:
-      typescript: ^3.5.2
+      typescript: ^4.2.4
     dependencies:
       bluebird-lst: 1.0.9
       chalk: 4.1.1
