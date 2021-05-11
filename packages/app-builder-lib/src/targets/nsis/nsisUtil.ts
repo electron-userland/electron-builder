@@ -7,8 +7,8 @@ import { unlink } from "fs-extra"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
-import fs from "fs"
-import zlib from "zlib"
+import * as fs from "fs"
+import * as zlib from "zlib"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
 

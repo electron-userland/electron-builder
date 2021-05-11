@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "22.11.2",
+  "version": "22.11.3",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -24,7 +24,7 @@
     "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.19",
     "stat-mode": "^1.0.0",
-    "temp-file": "^3.3.7"
+    "temp-file": "^3.4.0"
   },
   "typings": "./out/util.d.ts",
   "devDependencies": {

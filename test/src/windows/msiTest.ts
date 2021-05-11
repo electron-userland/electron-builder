@@ -1,6 +1,6 @@
 import { app } from "../helpers/packTester"
 import { Platform } from "electron-builder"
-import fs from "fs"
+import * as fs from "fs"
 
 test.ifAll.ifDevOrWinCi(
   "msi",

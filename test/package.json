@@ -24,7 +24,7 @@
     "path-sort": "^0.1.0",
     "semver": "^7.3.5",
     "stat-mode": "^1.0.0",
-    "temp-file": "^3.3.7",
+    "temp-file": "^3.4.0",
     "yargs": "^17.0.1"
   },
   "devDependencies": {
