@@ -40,7 +40,6 @@
     "dmg-license": "~1.0.8"
   },
   "devDependencies": {
-    "@types/update-notifier": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^4.23.0",
     "@typescript-eslint/parser": "^4.23.0",
     "eslint": "^7.26.0",
@@ -53,7 +52,7 @@
     "jsdoc-to-markdown": "^7.0.1",
     "lint-staged": "^11.0.0",
     "prettier": "^2.3.0",
-    "ts-jsdoc": "^3.2.1",
+    "ts-jsdoc": "^3.2.2",
     "typescript": "~4.2.4",
     "typescript-json-schema": "^0.50.0",
     "v8-compile-cache": "^2.3.0"
