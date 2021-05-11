@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "22.11.2",
+  "version": "22.11.3",
   "main": "out/index.js",
   "files": [
     "out",
@@ -62,10 +62,10 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.4",
     "minimatch": "^3.0.4",
-    "read-config-file": "6.1.0",
+    "read-config-file": "6.2.0",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.5",
-    "temp-file": "^3.3.7"
+    "temp-file": "^3.4.0"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
