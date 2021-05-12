@@ -1,7 +1,7 @@
 import { exec, safeStringifyJson } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, ensureDir } from "fs-extra"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import { homedir } from "os"
 import * as path from "path"
 import pathSorter from "path-sort"

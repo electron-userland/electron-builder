@@ -7,7 +7,7 @@ import { WinPackager } from "app-builder-lib/out/winPackager"
 import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
 import * as archiver from "archiver"
-import { promises as fsPromises } from "fs"
+import * as fs from "fs/promises"
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")
@@ -64,9 +64,9 @@ export class SquirrelBuilder {
     await Promise.all([
       copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate).then(() => packager.sign(appUpdate)),
       Promise.all([
-        fsPromises.rmdir(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`, { recursive: true }),
-        fsPromises.rmdir(path.join(outputDirectory, "RELEASES"), { recursive: true }),
-      ]).then(() => fsPromises.mkdir(outputDirectory, { recursive: true })),
+        fs.rm(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`, { recursive: true, force: true }),
+        fs.rm(path.join(outputDirectory, "RELEASES"), { recursive: true, force: true }),
+      ]).then(() => fs.mkdir(outputDirectory, { recursive: true })),
     ])
 
     if (isEmptyOrSpaces(options.description)) {

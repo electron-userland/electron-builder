@@ -1,9 +1,8 @@
 import { Platform, DIR_TARGET } from "electron-builder"
-import { promises as fs } from "fs"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
-import { promises as fsPromises } from "fs"
+import * as fs from "fs/promises"
 
 test.ifWinCi(
   "beta version",
@@ -90,8 +89,10 @@ test.ifAll("win icon from icns", () => {
       platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
     },
     {
-      projectDirCreated: projectDir =>
-        Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fsPromises.rmdir(path.join(projectDir, "build", "icons"), { recursive: true })]),
+      projectDirCreated: projectDir => Promise.all([
+        fs.unlink(path.join(projectDir, "build", "icon.ico")),
+        fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true }),
+      ]),
       packed: async () => {
         const file = await platformPackager!!.getIconPath()
         expect(file).toBeDefined()

@@ -4,8 +4,7 @@ import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"
 import * as path from "path"
-import { promises as fs } from "fs"
-import { remove } from "fs-extra"
+import * as fs from "fs/promises"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
@@ -45,7 +44,7 @@ test.ifMac(
       },
     },
     {
-      projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
+      projectDirCreated: projectDir => fs.rm(path.join(projectDir, "build"), { recursive: true, force: true }),
     }
   )
 )

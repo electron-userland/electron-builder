@@ -5,7 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     container:
-      image: electronuserland/builder:14-03.21@sha256:38761d41757f3cdaf6cd57587a2dbf54449fa4f49b3569808ac7bc9f097fa6cc
+      image: electronuserland/builder:14-05.21@sha256:e62bb9d32396037ec2a98a9d8f156b77238ddc9833ce067f788a0656e02029f2
     env:
       TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
     steps:

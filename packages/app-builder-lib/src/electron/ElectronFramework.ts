@@ -13,7 +13,7 @@ import { isSafeToUnpackElectronOnRemoteBuildServer } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
-import { promises as fsPromises } from "fs"
+import * as fs from "fs/promises"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -102,7 +102,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
         const language = file.substring(0, file.length - langFileExt.length)
         if (!wantedLanguages.includes(language)) {
-          return fsPromises.rmdir(path.join(resourcesDir, file), { recursive: false })
+          return fs.rm(path.join(resourcesDir, file), { force: true })
         }
         return
       },

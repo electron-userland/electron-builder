@@ -1,11 +1,11 @@
 import { Arch, build, Platform } from "electron-builder"
-import { outputFile, remove } from "fs-extra"
+import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GenericServerOptions } from "builder-util-runtime"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 
 const appImageTarget = Platform.LINUX.createTarget("appimage")
 
@@ -100,18 +100,15 @@ test.ifNotWindows.ifNotCiMac.ifAll(
     },
     {
       projectDirCreated: projectDir => {
-        return Promise.all([
-          outputFile(
-            path.join(projectDir, "build", "license.html"),
-            `
-<html>
-<body>
-  <a href="http://example.com">Test link</a>
-</body>      
-</html>
-      `
-          ),
-        ])
+        return outputFile(
+          path.join(projectDir, "build", "license.html"),
+          `
+        <html lang="en">
+        <body>
+          <a href="https://example.com">Test link</a>
+        </body>      
+        </html>`
+        )
       },
     }
   )
@@ -147,7 +144,7 @@ test.ifNotWindows.ifNotCiMac(
       },
     },
     {
-      projectDirCreated: it => remove(path.join(it, "build")),
+      projectDirCreated: it => fs.rm(path.join(it, "build"), { recursive: true, force: true }),
       packed: async context => {
         const projectDir = context.getContent(Platform.LINUX)
         await assertThat(path.join(projectDir, "Foo")).isFile()
@@ -177,7 +174,7 @@ test.ifNotWindows(
         await fs
           .mkdir(path.join(projectDir, "resources"), { recursive: true })
           .then(() => fs.rename(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "resources", "time.icns")))
-        await remove(path.join(projectDir, "build"))
+        await fs.rm(path.join(projectDir, "build"), { recursive: true, force: true })
       },
       packed: async context => {
         const projectDir = context.getResources(Platform.LINUX)
@@ -198,7 +195,7 @@ test.ifNotWindows(
     },
     {
       projectDirCreated: async projectDir => {
-        await remove(path.join(projectDir, "build", "icons"))
+        await fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })
       },
     }
   )
@@ -233,7 +230,7 @@ test.ifNotWindows(
       config: {
         publish: null,
         win: {
-          // doesn't matter, but just to be sure that presense of this configuration doesn't lead to errors
+          // doesn't matter, but just to be sure that presence of this configuration doesn't lead to errors
           icon: "icons/icon.ico",
         },
       },
@@ -241,7 +238,7 @@ test.ifNotWindows(
     {
       projectDirCreated: async projectDir => {
         await fs.rename(path.join(projectDir, "build", "icons", "256x256.png"), path.join(projectDir, "build", "icon.png"))
-        await remove(path.join(projectDir, "build", "icons"))
+        await fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })
         await fs.rename(path.join(projectDir, "build"), path.join(projectDir, "icons"))
       },
       packed: async context => {
@@ -263,11 +260,11 @@ test.ifNotWindows(
       },
     },
     {
-      projectDirCreated: it => remove(path.join(it, "build", "icons")),
+      projectDirCreated: it => fs.rm(path.join(it, "build", "icons"), { recursive: true, force: true }),
       packed: async context => {
         const projectDir = context.getResources(Platform.LINUX)
 
-        await remove(path.join(projectDir, "inspector"))
+        await fs.rm(path.join(projectDir, "inspector"), { recursive: true, force: true })
 
         await build({
           targets: appImageTarget,

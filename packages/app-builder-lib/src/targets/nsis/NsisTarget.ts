@@ -357,7 +357,7 @@ export class NsisTarget extends Target {
     // http://forums.winamp.com/showthread.php?p=3078545
     if (isMacOsCatalina()) {
       try {
-        UninstallerReader.exec(installerPath, uninstallerPath)
+        await UninstallerReader.exec(installerPath, uninstallerPath)
       } catch (error) {
         log.warn(`packager.vm is used: ${error.message}`)
 

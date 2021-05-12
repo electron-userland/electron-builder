@@ -1,5 +1,5 @@
 import { Arch, build, PackagerOptions, Platform } from "electron-builder"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, assertPack, linuxDirTarget, modifyPackageJson } from "./helpers/packTester"

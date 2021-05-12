@@ -45,10 +45,7 @@ export class ProtonFramework extends LibUiFramework {
 
     log.info(
       {
-        options: safeStringifyJson(
-          babelOptions,
-          new Set<string>(["presets"])
-        ),
+        options: safeStringifyJson(babelOptions, new Set<string>(["presets"])),
       },
       "transpile source code using Babel"
     )

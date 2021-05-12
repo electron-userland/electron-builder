@@ -11,7 +11,7 @@
     "chalk": "^4.1.1",
     "ci-info": "^3.1.1",
     "decompress-zip": "^0.3.3",
-    "depcheck": "1.4.0",
+    "depcheck": "1.4.1",
     "dmg-builder": "workspace:*",
     "electron-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",

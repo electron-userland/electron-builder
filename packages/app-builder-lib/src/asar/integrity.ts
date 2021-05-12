@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-import { readdir } from "fs-extra"
+import { readdir } from "fs/promises"
 import * as path from "path"
 
 export interface AsarIntegrityOptions {

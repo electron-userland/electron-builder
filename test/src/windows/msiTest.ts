@@ -63,7 +63,7 @@ test.ifAll.ifDevOrWinCi(
   )
 )
 
-const wixArgsProductName = "Test WiX Args";
+const wixArgsProductName = "Test WiX Args"
 test.ifAll.ifDevOrWinCi(
   "wix args",
   app(
@@ -76,10 +76,14 @@ test.ifAll.ifDevOrWinCi(
         },
         productName: wixArgsProductName,
         // Inject a custom-action which requires the WixUtilExtension DLL
-        msiProjectCreated: async (path) => {
-          await fs.promises.writeFile(path, (await fs.promises.readFile(path, "utf8")).replace(
-            '</Product>',
-            `<util:CloseApplication xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+        msiProjectCreated: async path => {
+          await fs.promises.writeFile(
+            path,
+            (
+              await fs.promises.readFile(path, "utf8")
+            ).replace(
+              "</Product>",
+              `<util:CloseApplication xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
               PromptToContinue="no"
               Target="${wixArgsProductName}.exe"
               CloseMessage="yes"
@@ -88,7 +92,8 @@ test.ifAll.ifDevOrWinCi(
               RebootPrompt="no"
             />
             </Product>`
-          ));
+            )
+          )
         },
         msi: {
           // Apply the needed DLL

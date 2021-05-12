@@ -1,5 +1,5 @@
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 

@@ -1,5 +1,5 @@
 import { Arch, archFromString, Platform } from "electron-builder"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"

@@ -1,6 +1,6 @@
 import { createHash } from "crypto"
 import { readJson, realpathSync } from "fs-extra"
-import { promises as fsPromises } from "fs"
+import * as fs from "fs/promises"
 import { isCI as isCi } from "ci-info"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -15,8 +15,8 @@ runTests().catch(error => {
 })
 
 async function runTests() {
-  await fsPromises.rmdir(APP_BUILDER_TMP_DIR, { recursive: true })
-  await fsPromises.mkdir(APP_BUILDER_TMP_DIR, { recursive: true })
+  await fs.rm(APP_BUILDER_TMP_DIR, { recursive: true, force: true })
+  await fs.mkdir(APP_BUILDER_TMP_DIR, { recursive: true })
   if (!process.env.CIRCLECI) {
     await Promise.all([deleteOldElectronVersion(), downloadAllRequiredElectronVersions()])
   }
@@ -123,7 +123,7 @@ async function runTests() {
     process.exit(exitCode)
   }
 
-  await fsPromises.rmdir(APP_BUILDER_TMP_DIR, { recursive: true })
+  await fs.rm(APP_BUILDER_TMP_DIR, { recursive: true, force: true })
   process.exitCode = exitCode
   if (testResult.globalConfig.forceExit) {
     process.exit(exitCode)

@@ -1,6 +1,6 @@
 import { debug, log, deepAssign } from "builder-util"
 import { FileTransformer } from "builder-util/out/fs"
-import { readFile } from "fs-extra"
+import { readFile } from "fs/promises"
 import * as path from "path"
 import { Configuration } from "./configuration"
 import { Packager } from "./packager"
@@ -41,7 +41,7 @@ export function createTransformer(srcDir: string, configuration: Configuration, 
           cleanupPackageJson(JSON.parse(it), {
             isMain: false,
             isRemovePackageScripts,
-            isRemovePackageKeywords
+            isRemovePackageKeywords,
           })
         )
         .catch(e => log.warn(e))
@@ -116,7 +116,7 @@ async function modifyMainPackageJson(file: string, extraMetadata: any, isRemoveP
   const serializedDataIfChanged = cleanupPackageJson(mainPackageData, {
     isMain: true,
     isRemovePackageScripts,
-    isRemovePackageKeywords
+    isRemovePackageKeywords,
   })
   if (serializedDataIfChanged != null) {
     return serializedDataIfChanged

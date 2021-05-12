@@ -1,13 +1,11 @@
-import BluebirdPromise from "bluebird-lst"
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { getBinFromUrl } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
-import { unlink } from "fs-extra"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
-import * as fs from "fs"
+import * as fs from "fs/promises"
 import * as zlib from "zlib"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
@@ -59,7 +57,7 @@ export class AppPackageHelper {
       }
     }
 
-    await BluebirdPromise.map(filesToDelete, it => unlink(it))
+    await Promise.all(filesToDelete.map(it => fs.unlink(it)))
   }
 }
 
@@ -160,8 +158,8 @@ class BinaryReader {
 
 export class UninstallerReader {
   // noinspection SpellCheckingInspection
-  static exec(installerPath: string, uninstallerPath: string) {
-    const buffer = fs.readFileSync(installerPath)
+  static async exec(installerPath: string, uninstallerPath: string) {
+    const buffer = await fs.readFile(installerPath)
     const reader = new BinaryReader(buffer)
     // IMAGE_DOS_HEADER
     if (!reader.match([0x4d, 0x5a])) {
@@ -241,7 +239,7 @@ export class UninstallerReader {
     if (!innerBuffer) {
       throw new Error("Inner block not found.")
     }
-    fs.writeFileSync(uninstallerPath, executable)
-    fs.appendFileSync(uninstallerPath, innerBuffer)
+    await fs.writeFile(uninstallerPath, executable)
+    await fs.appendFile(uninstallerPath, innerBuffer)
   }
 }
