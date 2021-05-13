@@ -110,3 +110,5 @@ areYouSureToUninstall:
   fi: Oletko varma, että haluat poistaa ${PRODUCT_NAME} asennuksen?
   es: ¿Seguro que quieres desinstalar ${PRODUCT_NAME}?
   da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
+decompressionFailed:
+  en: Failed to decompress files. Please try running the installer again.
