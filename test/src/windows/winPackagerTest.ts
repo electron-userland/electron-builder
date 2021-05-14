@@ -89,10 +89,8 @@ test.ifAll("win icon from icns", () => {
       platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
     },
     {
-      projectDirCreated: projectDir => Promise.all([
-        fs.unlink(path.join(projectDir, "build", "icon.ico")),
-        fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true }),
-      ]),
+      projectDirCreated: projectDir =>
+        Promise.all([fs.unlink(path.join(projectDir, "build", "icon.ico")), fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })]),
       packed: async () => {
         const file = await platformPackager!!.getIconPath()
         expect(file).toBeDefined()

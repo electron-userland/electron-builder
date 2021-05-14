@@ -2,7 +2,7 @@ import { Arch, Platform } from "electron-builder"
 import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst"
-import { ensureDir } from "fs-extra"
+import { mkdir } from "fs/promises"
 import { isEnvTrue } from "builder-util"
 
 // test that we can get info from protected pfx
@@ -20,7 +20,7 @@ it.ifDevOrWinCi(
     {
       projectDirCreated: async projectDir => {
         const targetDir = path.join(projectDir, "build", "appx")
-        await ensureDir(targetDir)
+        await mkdir(targetDir, { recursive: true })
         await BluebirdPromise.map(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"], name =>
           copyTestAsset(`appx-assets/${name}`, path.join(targetDir, name))
         )

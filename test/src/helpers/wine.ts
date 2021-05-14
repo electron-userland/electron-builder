@@ -1,6 +1,6 @@
 import { exec, safeStringifyJson } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { emptyDir, ensureDir } from "fs-extra"
+import { emptyDir } from "fs-extra"
 import * as fs from "fs/promises"
 import { homedir } from "os"
 import * as path from "path"
@@ -69,7 +69,7 @@ export class WineManager {
       unlinkIfExists(path.join(userDir, "My Videos")),
     ])
 
-    await ensureDir(desktopDir)
+    await fs.mkdir(desktopDir, { recursive: true })
     return env
   }
 }
