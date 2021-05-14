@@ -1,7 +1,6 @@
 import { Arch, Platform } from "electron-builder"
 import { app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst"
 import { mkdir } from "fs/promises"
 import { isEnvTrue } from "builder-util"
 
@@ -21,9 +20,8 @@ it.ifDevOrWinCi(
       projectDirCreated: async projectDir => {
         const targetDir = path.join(projectDir, "build", "appx")
         await mkdir(targetDir, { recursive: true })
-        await BluebirdPromise.map(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"], name =>
-          copyTestAsset(`appx-assets/${name}`, path.join(targetDir, name))
-        )
+        await Promise.all(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"]
+          .map(it => copyTestAsset(`appx-assets/${it}`, path.join(targetDir, it))))
       },
       signedWin: true,
     }

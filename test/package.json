@@ -5,7 +5,6 @@
     "7zip-bin": "~5.1.1",
     "@jest/core": "^26.6.3",
     "app-builder-lib": "workspace:*",
-    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.1",
@@ -32,7 +31,7 @@
     "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.6",
-    "esbuild": "^0.11.20",
+    "esbuild": "^0.11.23",
     "esbuild-jest": "^0.5.0"
   },
   "jest": {
