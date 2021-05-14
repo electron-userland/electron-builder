@@ -1,7 +1,7 @@
 import { log, executeAppBuilder } from "builder-util"
 import { BaseS3Options } from "builder-util-runtime"
 import { PublishContext, Publisher, UploadTask } from "electron-publish"
-import { ensureDir, symlink } from "fs-extra"
+import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
 
 export abstract class BaseS3Publisher extends Publisher {
@@ -30,7 +30,7 @@ export abstract class BaseS3Publisher extends Publisher {
 
     if (process.env.__TEST_S3_PUBLISHER__ != null) {
       const testFile = path.join(process.env.__TEST_S3_PUBLISHER__!, target)
-      await ensureDir(path.dirname(testFile))
+      await mkdir(path.dirname(testFile), { recursive: true })
       await symlink(task.file, testFile)
       return
     }

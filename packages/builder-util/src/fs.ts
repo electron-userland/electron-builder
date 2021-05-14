@@ -1,5 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { access, chmod, copyFile as _nodeCopyFile, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra"
+import { copyFile as _nodeCopyFile } from "fs-extra"
+import { Stats } from "fs"
+import { access, chmod, mkdir, link, lstat, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { Mode } from "stat-mode"
 import { log } from "./log"
@@ -137,7 +139,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCI || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
-  return (isEnsureDir ? ensureDir(path.dirname(dest)) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
+  return (isEnsureDir ? mkdir(path.dirname(dest), { recursive: true }) : Promise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
 }
 
 /**
@@ -288,7 +290,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
       }
 
       if (!createdSourceDirs.has(parent)) {
-        await ensureDir(parent.replace(src, destination))
+        await mkdir(parent.replace(src, destination), { recursive: true })
         createdSourceDirs.add(parent)
       }
 

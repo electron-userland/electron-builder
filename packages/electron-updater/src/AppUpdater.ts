@@ -1,7 +1,8 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { EventEmitter } from "events"
-import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra"
+import { outputFile } from "fs-extra"
+import { mkdir, readFile, rename, unlink } from "fs/promises"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -581,7 +582,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
-    await ensureDir(cacheDir)
+    await mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName()
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)

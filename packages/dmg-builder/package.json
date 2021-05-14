@@ -21,7 +21,7 @@
     "js-yaml": "^4.1.0"
   },
   "optionalDependencies": {
-    "dmg-license": "^1.0.8"
+    "dmg-license": "^1.0.9"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.11",

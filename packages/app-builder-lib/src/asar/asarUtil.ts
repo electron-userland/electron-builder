@@ -1,7 +1,7 @@
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { symlink } from "fs"
-import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra"
+import { symlink, createReadStream, createWriteStream, Stats } from "fs"
+import { writeFile, readFile, mkdir } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
@@ -30,7 +30,7 @@ export class AsarPackager {
       // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
       await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
     }
-    await ensureDir(path.dirname(this.outFile))
+    await mkdir(path.dirname(this.outFile), { recursive: true })
     const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
     for (const fileSet of fileSets) {
       unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
@@ -57,7 +57,7 @@ export class AsarPackager {
           unpackedDirs.add(filePathInArchive)
           // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
           // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-          await ensureDir(path.join(this.unpackedDest, filePathInArchive))
+          await mkdir(path.join(this.unpackedDest, filePathInArchive), { recursive: true })
           break
         }
       }
@@ -118,7 +118,7 @@ export class AsarPackager {
       if (isUnpacked) {
         if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
           dirToCreateForUnpackedFiles.add(fileParent)
-          await ensureDir(path.join(this.unpackedDest, fileParent))
+          await mkdir(path.join(this.unpackedDest, fileParent), { recursive: true })
         }
 
         const unpackedFile = path.join(this.unpackedDest, pathInArchive)

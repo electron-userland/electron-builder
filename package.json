@@ -37,7 +37,7 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "dmg-license": "~1.0.8"
+    "dmg-license": "~1.0.9"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.23.0",
@@ -47,7 +47,7 @@
     "eslint-plugin-prettier": "^3.4.0",
     "fs-extra": "^10.0.0",
     "globby": "^11.0.3",
-    "husky": "5.2.0",
+    "husky": "~6.0.0",
     "jest-cli": "^26.6.3",
     "jsdoc-to-markdown": "^7.0.1",
     "lint-staged": "^11.0.0",
