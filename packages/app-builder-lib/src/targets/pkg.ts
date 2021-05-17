@@ -34,7 +34,7 @@ export class PkgTarget extends Target {
     const appInfo = packager.appInfo
 
     // pkg doesn't like not ASCII symbols (Could not open package to list files: /Volumes/test/t-gIjdGK/test-project-0/dist/Test App ßW-1.1.0.pkg)
-    const artifactName = packager.expandArtifactNamePattern(options, "pkg")
+    const artifactName = packager.expandArtifactNamePattern(options, "pkg", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
     await packager.info.callArtifactBuildStarted({
