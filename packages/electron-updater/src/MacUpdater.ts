@@ -1,7 +1,6 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import { createReadStream } from "fs"
-import { execSync } from "child_process"
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"
@@ -9,6 +8,7 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { ResolvedUpdateFileInfo } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
+import { execShellCommand } from "./util"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -27,11 +27,18 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
 
     // Detect if we are running inside Rosetta emulation
-    const isRosetta = execSync("sysctl sysctl.proc_translated").toString().includes("sysctl.proc_translated: 1")
+    const sysctlRosettaInfoKey = "sysctl.proc_translated"
+    let isRosetta: boolean
+    try {
+      const { stdout, stderr } = await execShellCommand(`sysctl ${sysctlRosettaInfoKey}`)
+      isRosetta = !stderr && stdout?.toString()?.includes(`${sysctlRosettaInfoKey}: 1`)
+    } catch (e) {
+      this._logger.info(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
+    }
 
     // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")

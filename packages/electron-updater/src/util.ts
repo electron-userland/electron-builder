@@ -2,6 +2,7 @@
 import { URL } from "url"
 // @ts-ignore
 import * as escapeRegExp from "lodash.escaperegexp"
+import { exec, ExecException } from "child_process"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -34,4 +35,16 @@ export function blockmapFiles(baseUrl: URL, oldVersion: string, newVersion: stri
   const newBlockMapUrl = newUrlFromBase(`${baseUrl.pathname}.blockmap`, baseUrl)
   const oldBlockMapUrl = newUrlFromBase(`${baseUrl.pathname.replace(new RegExp(escapeRegExp(newVersion), "g"), oldVersion)}.blockmap`, baseUrl)
   return [oldBlockMapUrl, newBlockMapUrl]
+}
+
+export function execShellCommand(cmd: string): Promise<{ error: ExecException | null; stdout: string | Buffer; stderr: string | Buffer }> {
+  return new Promise((resolve, reject) => {
+    try {
+      exec(cmd, (error, stdout, stderr) => {
+        resolve({ error, stdout, stderr })
+      })
+    } catch (e) {
+      reject(e)
+    }
+  })
 }
