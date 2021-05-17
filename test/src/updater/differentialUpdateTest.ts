@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
@@ -296,7 +295,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     { virtual: true }
   )
 
-  return await new BluebirdPromise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
@@ -334,9 +333,13 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     }
 
     doTest()
-      .then(() => resolve())
+      .then(() => resolve(null))
       .catch(reject)
-  }).finally(() => {
+  }).then(v => {
     httpServerProcess.kill()
+    return v
+  }, e => {
+    httpServerProcess.kill()
+    throw e
   })
 }
