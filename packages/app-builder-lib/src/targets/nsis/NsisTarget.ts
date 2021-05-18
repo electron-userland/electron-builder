@@ -119,8 +119,15 @@ export class NsisTarget extends Target {
 
   async finishBuild(): Promise<any> {
     try {
-      const builds = new Set([this.archs])
-      await Promise.all([...builds].map(archs => this.buildInstaller(archs)))
+      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern);
+      const builds = new Set([this.archs]);
+      if (pattern.includes("${arch}") && this.archs.size > 1) {
+          ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)));
+      }
+      const doBuildArchs = builds.values();
+      for (let archs of doBuildArchs) {
+          await this.buildInstaller(archs);
+      }
     } finally {
       await this.packageHelper.finishBuild()
     }
@@ -353,7 +360,7 @@ export class NsisTarget extends Target {
     // http://forums.winamp.com/showthread.php?p=3078545
     if (isMacOsCatalina()) {
       try {
-        await UninstallerReader.exec(installerPath, uninstallerPath)
+        UninstallerReader.exec(installerPath, uninstallerPath)
       } catch (error) {
         log.warn(`packager.vm is used: ${error.message}`)
 
