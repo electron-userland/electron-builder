@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "22.11.4",
+  "version": "22.11.7",
   "main": "out/index.js",
   "files": [
     "out",
@@ -69,7 +69,7 @@
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
-    "@babel/core": "^7.14.2",
+    "@babel/core": "^7.14.3",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
     "@babel/plugin-proposal-decorators": "^7.14.2",
     "@babel/plugin-proposal-do-expressions": "^7.14.0",
