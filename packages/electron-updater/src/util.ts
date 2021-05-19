@@ -2,7 +2,7 @@
 import { URL } from "url"
 // @ts-ignore
 import * as escapeRegExp from "lodash.escaperegexp"
-import { exec, ExecException } from "child_process"
+import { exec } from "child_process"
 
 /** @internal */
 export function newBaseUrl(url: string): URL {
@@ -37,7 +37,7 @@ export function blockmapFiles(baseUrl: URL, oldVersion: string, newVersion: stri
   return [oldBlockMapUrl, newBlockMapUrl]
 }
 
-export function execShellCommand(cmd: string): Promise<{ error: ExecException | null; stdout: string | Buffer; stderr: string | Buffer }> {
+export function execShellCommand(cmd: string): Promise<{ stdout: string | Buffer; stderr: string | Buffer }> {
   return new Promise((resolve, reject) => {
     try {
       exec(cmd, (error, stdout, stderr) => {
