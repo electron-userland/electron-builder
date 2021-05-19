@@ -41,7 +41,8 @@ export function execShellCommand(cmd: string): Promise<{ error: ExecException | 
   return new Promise((resolve, reject) => {
     try {
       exec(cmd, (error, stdout, stderr) => {
-        resolve({ error, stdout, stderr })
+        if (error) throw error
+        resolve({ stdout, stderr })
       })
     } catch (e) {
       reject(e)
