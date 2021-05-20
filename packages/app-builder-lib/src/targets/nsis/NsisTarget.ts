@@ -119,14 +119,14 @@ export class NsisTarget extends Target {
 
   async finishBuild(): Promise<any> {
     try {
-      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern);
-      const builds = new Set([this.archs]);
+      const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern)
+      const builds = new Set([this.archs])
       if (pattern.includes("${arch}") && this.archs.size > 1) {
-          ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)));
+        ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)))
       }
-      const doBuildArchs = builds.values();
-      for (let archs of doBuildArchs) {
-          await this.buildInstaller(archs);
+      const doBuildArchs = builds.values()
+      for (const archs of doBuildArchs) {
+        await this.buildInstaller(archs)
       }
     } finally {
       await this.packageHelper.finishBuild()

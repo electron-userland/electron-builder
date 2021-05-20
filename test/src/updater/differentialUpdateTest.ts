@@ -335,11 +335,14 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     doTest()
       .then(() => resolve(null))
       .catch(reject)
-  }).then(v => {
-    httpServerProcess.kill()
-    return v
-  }, e => {
-    httpServerProcess.kill()
-    throw e
-  })
+  }).then(
+    v => {
+      httpServerProcess.kill()
+      return v
+    },
+    e => {
+      httpServerProcess.kill()
+      throw e
+    }
+  )
 }

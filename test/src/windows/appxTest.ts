@@ -20,8 +20,7 @@ it.ifDevOrWinCi(
       projectDirCreated: async projectDir => {
         const targetDir = path.join(projectDir, "build", "appx")
         await mkdir(targetDir, { recursive: true })
-        await Promise.all(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"]
-          .map(it => copyTestAsset(`appx-assets/${it}`, path.join(targetDir, it))))
+        await Promise.all(["BadgeLogo.scale-100.png", "BadgeLogo.scale-140.png", "BadgeLogo.scale-180.png"].map(it => copyTestAsset(`appx-assets/${it}`, path.join(targetDir, it))))
       },
       signedWin: true,
     }
