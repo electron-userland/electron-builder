@@ -66,6 +66,8 @@ appRunning:
   fi: "${PRODUCT_NAME} on käynnissä. Napsauta OK sulkeaksesi sen."
   es: "${PRODUCT_NAME} se está ejecutando. Haz clic en Aceptar para cerrarlo."
   da: "${PRODUCT_NAME} er i gang. Klik OK for at lukke."
+appCannotBeClosed:
+  en: "${PRODUCT_NAME} cannot be closed. \nPlease close it manually and click Retry to continue"
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
