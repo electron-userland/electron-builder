@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -e
 
-yarn
-yarn test
+pnpm i
+pnpm run test
