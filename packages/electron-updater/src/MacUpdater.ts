@@ -8,7 +8,7 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { ResolvedUpdateFileInfo } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
-import { execShellCommand } from "./util"
+import { spawn } from "builder-util"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -34,8 +34,8 @@ export class MacUpdater extends AppUpdater {
     const sysctlRosettaInfoKey = "sysctl.proc_translated"
     let isRosetta: boolean
     try {
-      const { stdout, stderr } = await execShellCommand(`sysctl ${sysctlRosettaInfoKey}`)
-      isRosetta = !stderr && stdout?.toString()?.includes(`${sysctlRosettaInfoKey}: 1`)
+      const results = await spawn(`sysctl`, [sysctlRosettaInfoKey])
+      isRosetta = results?.toString()?.includes(`${sysctlRosettaInfoKey}: 1`)
     } catch (e) {
       this._logger.info(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
     }
