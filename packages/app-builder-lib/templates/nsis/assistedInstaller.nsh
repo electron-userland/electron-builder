@@ -70,6 +70,9 @@
     !insertmacro PAGE_INSTALL_MODE
   !endif
   !insertmacro MUI_UNPAGE_INSTFILES
+  !ifmacrodef customUninstallPage
+    !insertmacro customUninstallPage
+  !endif
   !insertmacro MUI_UNPAGE_FINISH
 !endif
 

@@ -20,16 +20,13 @@ export class LangConfigurator {
 
     if (options.unicode === false || rawList === null || (Array.isArray(rawList) && rawList.length === 0)) {
       this.isMultiLang = false
-    }
-    else {
+    } else {
       this.isMultiLang = options.multiLanguageInstaller !== false
     }
 
     if (this.isMultiLang) {
-      this.langs = rawList == null ? bundledLanguages.slice() : asArray(rawList)
-        .map(it => toLangWithRegion(it.replace("-", "_")))
-    }
-    else {
+      this.langs = rawList == null ? bundledLanguages.slice() : asArray(rawList).map(it => toLangWithRegion(it.replace("-", "_")))
+    } else {
       this.langs = ["en_US"]
     }
   }
@@ -41,17 +38,13 @@ export function createAddLangsMacro(scriptGenerator: NsisScriptGenerator, langCo
     let name: string
     if (langWithRegion === "zh_CN") {
       name = "SimpChinese"
-    }
-    else if (langWithRegion === "zh_TW") {
+    } else if (langWithRegion === "zh_TW") {
       name = "TradChinese"
-    }
-    else if (langWithRegion === "nb_NO") {
+    } else if (langWithRegion === "nb_NO") {
       name = "Norwegian"
-    }
-    else if (langWithRegion === "pt_BR") {
+    } else if (langWithRegion === "pt_BR") {
       name = "PortugueseBR"
-    }
-    else {
+    } else {
       const lang = langWithRegion.substring(0, langWithRegion.indexOf("_"))
       name = (langIdToName as any)[lang]
       if (name == null) {

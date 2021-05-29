@@ -1,9 +1,9 @@
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { symlink } from "fs"
-import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra"
+import { symlink, createReadStream, createWriteStream, Stats } from "fs"
+import { writeFile, readFile, mkdir } from "fs/promises"
 import * as path from "path"
-import { AsarOptions } from ".."
+import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
@@ -30,7 +30,7 @@ export class AsarPackager {
       // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
       await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
     }
-    await ensureDir(path.dirname(this.outFile))
+    await mkdir(path.dirname(this.outFile), { recursive: true })
     const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
     for (const fileSet of fileSets) {
       unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
@@ -52,12 +52,12 @@ export class AsarPackager {
 
     const correctDirNodeUnpackedFlag = async (filePathInArchive: string, dirNode: Node) => {
       for (const dir of unpackedDirs) {
-        if (filePathInArchive.length > (dir.length + 2) && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
+        if (filePathInArchive.length > dir.length + 2 && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
           dirNode.unpacked = true
           unpackedDirs.add(filePathInArchive)
           // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
           // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-          await ensureDir(path.join(this.unpackedDest, filePathInArchive))
+          await mkdir(path.join(this.unpackedDest, filePathInArchive), { recursive: true })
           break
         }
       }
@@ -82,7 +82,7 @@ export class AsarPackager {
       const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
       if (stat.isSymbolicLink()) {
-        const s = (stat as any)
+        const s = stat as any
         this.fs.getOrCreateNode(pathInArchive).link = s.relativeLink
         s.pathInArchive = pathInArchive
         unpackedFileIndexSet.add(i)
@@ -105,8 +105,7 @@ export class AsarPackager {
         if (fileParent !== "" && !currentDirNode.unpacked) {
           if (unpackedDirs.has(fileParent)) {
             currentDirNode.unpacked = true
-          }
-          else {
+          } else {
             await correctDirNodeUnpackedFlag(fileParent, currentDirNode)
           }
         }
@@ -119,7 +118,7 @@ export class AsarPackager {
       if (isUnpacked) {
         if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
           dirToCreateForUnpackedFiles.add(fileParent)
-          await ensureDir(path.join(this.unpackedDest, fileParent))
+          await mkdir(path.join(this.unpackedDest, fileParent), { recursive: true })
         }
 
         const unpackedFile = path.join(this.unpackedDest, pathInArchive)
@@ -159,27 +158,25 @@ export class AsarPackager {
       let files = fileSets[0].files
       let metadata = fileSets[0].metadata
       let transformedFiles = fileSets[0].transformedFiles
-      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!!
+      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!
       const w = (index: number) => {
         while (true) {
           if (index >= files.length) {
             if (++fileSetIndex >= fileSets.length) {
               writeStream.end()
               return
-            }
-            else {
+            } else {
               files = fileSets[fileSetIndex].files
               metadata = fileSets[fileSetIndex].metadata
               transformedFiles = fileSets[fileSetIndex].transformedFiles
-              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!!
+              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!
               index = 0
             }
           }
 
           if (!unpackedFileIndexSet.has(index)) {
             break
-          }
-          else {
+          } else {
             const stat = metadata.get(files[index])
             if (stat != null && stat.isSymbolicLink()) {
               symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), () => w(index + 1))
@@ -198,20 +195,19 @@ export class AsarPackager {
 
         // https://github.com/yarnpkg/yarn/pull/3539
         const stat = metadata.get(file)
-        if (stat != null && stat.size < (2 * 1024 * 1024)) {
+        if (stat != null && stat.size < 2 * 1024 * 1024) {
           readFile(file)
             .then(it => {
               writeStream.write(it, () => w(index + 1))
             })
             .catch(e => reject(`Cannot read file ${file}: ${e.stack || e}`))
-        }
-        else {
+        } else {
           const readStream = createReadStream(file)
           readStream.on("error", reject)
           readStream.once("end", () => w(index + 1))
           readStream.on("open", () => {
             readStream.pipe(writeStream, {
-              end: false
+              end: false,
             })
           })
         }
@@ -256,15 +252,14 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
       missing += 1
     }
   }
-  log.info({coverage: ((total - missing) / total * 100)}, "ordering files in ASAR archive")
+  log.info({ coverage: ((total - missing) / total) * 100 }, "ordering files in ASAR archive")
   return sortedFiles
 }
 
 function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
   if (data == null) {
     return fileCopier.copy(source, destination, stats)
-  }
-  else {
+  } else {
     return writeFile(destination, data)
   }
 }

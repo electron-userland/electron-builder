@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { createReadStream } from "fs"
-import { readdir } from "fs-extra"
+import { readdir } from "fs/promises"
 import * as path from "path"
 
 export interface AsarIntegrityOptions {
@@ -26,15 +26,13 @@ export async function computeData(resourcesPath: string, options?: AsarIntegrity
   for (let i = 0; i < names.length; i++) {
     result[names[i]] = checksums[i]
   }
-  return {checksums: result, ...options}
+  return { checksums: result, ...options }
 }
 
-function hashFile(file: string, algorithm: string = "sha512", encoding: "hex" | "base64" | "latin1" = "base64") {
+function hashFile(file: string, algorithm = "sha512", encoding: "hex" | "base64" | "latin1" = "base64") {
   return new Promise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
-    hash
-      .on("error", reject)
-      .setEncoding(encoding)
+    hash.on("error", reject).setEncoding(encoding)
 
     createReadStream(file)
       .on("error", reject)
@@ -42,6 +40,6 @@ function hashFile(file: string, algorithm: string = "sha512", encoding: "hex" | 
         hash.end()
         resolve(hash.read() as string)
       })
-      .pipe(hash, {end: false})
+      .pipe(hash, { end: false })
   })
 }

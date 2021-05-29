@@ -1,9 +1,9 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
 import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { PkgOptions } from "./options/pkgOptions"
@@ -90,6 +90,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * AppImage options.
    */
   readonly appImage?: AppImageOptions | null
+  /**
+   * Flatpak options.
+   */
+  readonly flatpak?: FlatpakOptions | null
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null
@@ -140,16 +144,23 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly electronDownload?: ElectronDownloadOptions
 
   /**
+   * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.
+   */
+  readonly electronBranding?: ElectronBrandingOptions
+
+  /**
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
    */
   electronVersion?: string | null
 
   /**
-   * The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
+   * The name of a built-in configuration preset (currently, only `react-cra` is supported) or any number of paths to config files (relative to project dir).
+   *
+   * The latter allows to mixin a config from multiple other configs, as if you `Object.assign` them, but properly combine `files` glob patterns.
    *
    * If `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
    */
-  extends?: string | null
+  extends?: Array<string> | string | null
 
   /**
    * Inject properties to `package.json`.
@@ -200,6 +211,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
   /**
+   * MSI project created on disk - not packed into .msi package yet.
+   */
+  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
+  /**
    * Appx manifest created on disk - not packed into .appx package yet.
    */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
@@ -212,7 +227,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
-  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
+  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
 
   /**
    * Whether to build using Electron Build Service if target not supported on current OS.
@@ -232,6 +247,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
 }
 
 export interface AfterPackContext {

@@ -1,8 +1,8 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
-import { Notification } from "electron"
 import { EventEmitter } from "events"
-import { ensureDir, outputFile, readFile, rename, unlink } from "fs-extra"
+import { outputFile } from "fs-extra"
+import { mkdir, readFile, rename, unlink } from "fs/promises"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -22,25 +22,25 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Whether to automatically download an update when it is found.
    */
-  autoDownload: boolean = true
+  autoDownload = true
 
   /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
    */
-  autoInstallOnAppQuit: boolean = true
+  autoInstallOnAppQuit = true
 
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
    *
    * If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
    */
-  allowPrerelease: boolean = false
+  allowPrerelease = false
 
   /**
    * *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
    * @default false
    */
-  fullChangelog: boolean = false
+  fullChangelog = false
 
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
@@ -49,7 +49,7 @@ export abstract class AppUpdater extends EventEmitter {
    *
    * @default false
    */
-  allowDowngrade: boolean = false
+  allowDowngrade = false
 
   /**
    * The current application version.
@@ -77,8 +77,7 @@ export abstract class AppUpdater extends EventEmitter {
       // noinspection SuspiciousTypeOfGuard
       if (typeof value !== "string") {
         throw newError(`Channel must be a string, but got: ${value}`, "ERR_UPDATER_INVALID_CHANNEL")
-      }
-      else if (value.length === 0) {
+      } else if (value.length === 0) {
         throw newError(`Channel must be not an empty string`, "ERR_UPDATER_INVALID_CHANNEL")
       }
     }
@@ -157,8 +156,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (app == null) {
       this.app = new ElectronAppAdapter()
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
-    }
-    else {
+    } else {
       this.app = app
       this.httpExecutor = null as any
     }
@@ -194,12 +192,11 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let provider: Provider<any>
     if (typeof options === "string") {
-      provider = new GenericProvider({provider: "generic", url: options}, this, {
+      provider = new GenericProvider({ provider: "generic", url: options }, this, {
         ...runtimeOptions,
         isUseMultipleRangeRequest: isUrlProbablySupportMultiRangeRequests(options),
       })
-    }
-    else {
+    } else {
       provider = createClient(options, this, runtimeOptions)
     }
     this.clientPromise = Promise.resolve(provider)
@@ -215,7 +212,7 @@ export abstract class AppUpdater extends EventEmitter {
       return checkForUpdatesPromise
     }
 
-    const nullizePromise = () => this.checkForUpdatesPromise = null
+    const nullizePromise = () => (this.checkForUpdatesPromise = null)
 
     this._logger.info("Checking for update")
     checkForUpdatesPromise = this.doCheckForUpdates()
@@ -247,39 +244,36 @@ export abstract class AppUpdater extends EventEmitter {
       return Promise.resolve(null)
     }
 
-    return this.checkForUpdates()
-      .then(it => {
-        const downloadPromise = it.downloadPromise
-        if (downloadPromise == null) {
-          const debug = this._logger.debug
-          if (debug != null) {
-            debug("checkForUpdatesAndNotify called, downloadPromise is null")
-          }
-          return it
+    return this.checkForUpdates().then(it => {
+      const downloadPromise = it.downloadPromise
+      if (downloadPromise == null) {
+        if (this._logger.debug != null) {
+          this._logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         }
-
-        downloadPromise
-          .then(() => {
-            const notificationContent = this.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification);
-            new Notification(notificationContent).show()
-          })
-
         return it
+      }
+
+      void downloadPromise.then(() => {
+        const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
+        new (require("electron").Notification)(notificationContent).show()
       })
+
+      return it
+    })
   }
 
-  private formatDownloadNotification(version: string, appName: string, downloadNotification?: DownloadNotification): DownloadNotification {
+  private static formatDownloadNotification(version: string, appName: string, downloadNotification?: DownloadNotification): DownloadNotification {
     if (downloadNotification == null) {
       downloadNotification = {
         title: "A new update is ready to install",
-        body: `{appName} version {version} has been downloaded and will be automatically installed on exit`
+        body: `{appName} version {version} has been downloaded and will be automatically installed on exit`,
       }
     }
     downloadNotification = {
       title: downloadNotification.title.replace("{appName}", appName).replace("{version}", version),
-      body: downloadNotification.body.replace("{appName}", appName).replace("{version}", version)
+      body: downloadNotification.body.replace("{appName}", appName).replace("{version}", version),
     }
-    return downloadNotification;
+    return downloadNotification
   }
 
   private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
@@ -300,7 +294,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const stagingUserId = await this.stagingUserIdPromise.value
     const val = UUID.parse(stagingUserId).readUInt32BE(12)
-    const percentage = (val / 0xFFFFFFFF)
+    const percentage = val / 0xffffffff
     this._logger.info(`Staging percentage: ${stagingPercentage}, percentage: ${percentage}, user id: ${stagingUserId}`)
     return percentage < stagingPercentage
   }
@@ -315,7 +309,10 @@ export abstract class AppUpdater extends EventEmitter {
   private async isUpdateAvailable(updateInfo: UpdateInfo): Promise<boolean> {
     const latestVersion = parseVersion(updateInfo.version)
     if (latestVersion == null) {
-      throw newError(`This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`, "ERR_UPDATER_INVALID_VERSION")
+      throw newError(
+        `This file could not be downloaded, or the latest version (from update server) does not have a valid semver version: "${updateInfo.version}"`,
+        "ERR_UPDATER_INVALID_VERSION"
+      )
     }
 
     const currentVersion = this.currentVersion
@@ -336,7 +333,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (isLatestVersionNewer) {
       return true
     }
-    return this.allowDowngrade && isLatestVersionOlder;
+    return this.allowDowngrade && isLatestVersionOlder
   }
 
   protected async getUpdateInfoAndProvider(): Promise<UpdateInfoAndProvider> {
@@ -348,7 +345,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalHeaders({"x-user-staging-id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({ "x-user-staging-id": stagingUserId }))
     return {
       info: await client.getLatestVersion(),
       provider: client,
@@ -359,7 +356,7 @@ export abstract class AppUpdater extends EventEmitter {
   private createProviderRuntimeOptions() {
     return {
       isUseMultipleRangeRequest: true,
-      platform: this._testOnlyOptions == null ? process.platform as ProviderPlatform : this._testOnlyOptions.platform,
+      platform: this._testOnlyOptions == null ? (process.platform as ProviderPlatform) : this._testOnlyOptions.platform,
       executor: this.httpExecutor,
     }
   }
@@ -369,8 +366,10 @@ export abstract class AppUpdater extends EventEmitter {
 
     const result = await this.getUpdateInfoAndProvider()
     const updateInfo = result.info
-    if (!await this.isUpdateAvailable(updateInfo)) {
-      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`)
+    if (!(await this.isUpdateAvailable(updateInfo))) {
+      this._logger.info(
+        `Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+      )
       this.emit("update-not-available", updateInfo)
       return {
         versionInfo: updateInfo,
@@ -387,12 +386,16 @@ export abstract class AppUpdater extends EventEmitter {
       versionInfo: updateInfo,
       updateInfo,
       cancellationToken,
-      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null
+      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
     }
   }
 
   protected onUpdateAvailable(updateInfo: UpdateInfo): void {
-    this._logger.info(`Found version ${updateInfo.version} (url: ${asArray(updateInfo.files).map(it => it.url).join(", ")})`)
+    this._logger.info(
+      `Found version ${updateInfo.version} (url: ${asArray(updateInfo.files)
+        .map(it => it.url)
+        .join(", ")})`
+    )
     this.emit("update-available", updateInfo)
   }
 
@@ -408,14 +411,17 @@ export abstract class AppUpdater extends EventEmitter {
       return Promise.reject(error)
     }
 
-    this._logger.info(`Downloading update from ${asArray(updateInfoAndProvider.info.files).map(it => it.url).join(", ")}`)
+    this._logger.info(
+      `Downloading update from ${asArray(updateInfoAndProvider.info.files)
+        .map(it => it.url)
+        .join(", ")}`
+    )
     const errorHandler = (e: Error): Error => {
       // https://github.com/electron-userland/electron-builder/issues/1150#issuecomment-436891159
       if (!(e instanceof CancellationError)) {
         try {
           this.dispatchError(e)
-        }
-        catch (nestedError) {
+        } catch (nestedError) {
           this._logger.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
         }
       }
@@ -428,12 +434,10 @@ export abstract class AppUpdater extends EventEmitter {
         updateInfoAndProvider,
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
+      }).catch(e => {
+        throw errorHandler(e)
       })
-        .catch(e => {
-          throw errorHandler(e)
-        })
-    }
-    catch (e) {
+    } catch (e) {
       return Promise.reject(errorHandler(e))
     }
   }
@@ -471,12 +475,14 @@ export abstract class AppUpdater extends EventEmitter {
     const fileExtraDownloadHeaders = provider.fileExtraDownloadHeaders
     if (fileExtraDownloadHeaders != null) {
       const requestHeaders = this.requestHeaders
-      return requestHeaders == null ? fileExtraDownloadHeaders : {
-        ...fileExtraDownloadHeaders,
-        ...requestHeaders,
-      }
+      return requestHeaders == null
+        ? fileExtraDownloadHeaders
+        : {
+            ...fileExtraDownloadHeaders,
+            ...requestHeaders,
+          }
     }
-    return this.computeFinalHeaders({accept: "*/*"})
+    return this.computeFinalHeaders({ accept: "*/*" })
   }
 
   private async getOrCreateStagingUserId(): Promise<string> {
@@ -485,12 +491,10 @@ export abstract class AppUpdater extends EventEmitter {
       const id = await readFile(file, "utf-8")
       if (UUID.check(id)) {
         return id
-      }
-      else {
+      } else {
         this._logger.warn(`Staging user id file exists, but content was invalid: ${id}`)
       }
-    }
-    catch (e) {
+    } catch (e) {
       if (e.code !== "ENOENT") {
         this._logger.warn(`Couldn't read staging user ID, creating a blank one: ${e}`)
       }
@@ -500,8 +504,7 @@ export abstract class AppUpdater extends EventEmitter {
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
       await outputFile(file, id)
-    }
-    catch (e) {
+    } catch (e) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)
     }
     return id
@@ -571,8 +574,7 @@ export abstract class AppUpdater extends EventEmitter {
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
       if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
         return path.posix.basename(urlPath)
-      }
-      else {
+      } else {
         // url like /latest, generate name
         return `update.${taskOptions.fileExtension}`
       }
@@ -580,14 +582,14 @@ export abstract class AppUpdater extends EventEmitter {
 
     const downloadedUpdateHelper = await this.getOrCreateDownloadHelper()
     const cacheDir = downloadedUpdateHelper.cacheDirForPendingUpdate
-    await ensureDir(cacheDir)
+    await mkdir(cacheDir, { recursive: true })
     const updateFileName = getCacheUpdateFileName()
     let updateFile = path.join(cacheDir, updateFileName)
     const packageFile = packageInfo == null ? null : path.join(cacheDir, `package-${version}${path.extname(packageInfo.path) || ".7z"}`)
 
     const done = async (isSaveCache: boolean) => {
       await downloadedUpdateHelper.setDownloadedFile(updateFile, packageFile, updateInfo, fileInfo, updateFileName, isSaveCache)
-      await taskOptions.done!!({
+      await taskOptions.done!({
         ...updateInfo,
         downloadedFile: updateFile,
       })
@@ -602,22 +604,19 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const removeFileIfAny = async () => {
-      await downloadedUpdateHelper.clear()
-        .catch(() => {
-          // ignore
-        })
-      return await unlink(updateFile)
-        .catch(() => {
-          // ignore
-        })
+      await downloadedUpdateHelper.clear().catch(() => {
+        // ignore
+      })
+      return await unlink(updateFile).catch(() => {
+        // ignore
+      })
     }
 
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)
-    }
-    catch (e) {
+    } catch (e) {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {

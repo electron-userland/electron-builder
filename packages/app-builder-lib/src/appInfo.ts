@@ -1,9 +1,9 @@
 import { isEmptyOrSpaces, log } from "builder-util"
-import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { expandMacro } from "./util/macroExpander"
+import { sanitizeFileName } from "./util/sanitizeFileName"
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
 // http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
@@ -33,13 +33,19 @@ export class AppInfo {
   readonly productFilename: string
 
   constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
-    this.version = info.metadata.version!!
+    this.version = info.metadata.version!
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion
     }
 
-    this.buildNumber = process.env.BUILD_NUMBER || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_BUILDNUMBER || process.env.CI_PIPELINE_IID
+    this.buildNumber =
+      process.env.BUILD_NUMBER ||
+      process.env.TRAVIS_BUILD_NUMBER ||
+      process.env.APPVEYOR_BUILD_NUMBER ||
+      process.env.CIRCLE_BUILD_NUM ||
+      process.env.BUILD_BUILDNUMBER ||
+      process.env.CI_PIPELINE_IID
     if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {
@@ -55,17 +61,15 @@ export class AppInfo {
       this.shortVersionWindows = info.metadata.shortVersionWindows
     }
 
-    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!!
+    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.sanitizedProductName = sanitizeFileName(this.productName)
-    this.productFilename = platformSpecificOptions?.executableName != null
-      ? sanitizeFileName(platformSpecificOptions.executableName)
-      : this.sanitizedProductName
+    this.productFilename = platformSpecificOptions?.executableName != null ? sanitizeFileName(platformSpecificOptions.executableName) : this.sanitizedProductName
   }
 
   get channel(): string | null {
     const prereleaseInfo = prerelease(this.version)
     if (prereleaseInfo != null && prereleaseInfo.length > 0) {
-      return prereleaseInfo[0]
+      return prereleaseInfo[0] as string | null
     }
     return null
   }
@@ -116,7 +120,7 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.info.metadata.name!!
+    return this.info.metadata.name!
   }
 
   get linuxPackageName(): string {

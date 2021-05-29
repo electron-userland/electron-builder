@@ -38,6 +38,7 @@
       <excludeFolder url="file://$MODULE_DIR$/test/out" />
       <excludeFolder url="file://$MODULE_DIR$/test/snapshots" />
       <excludeFolder url="file://$MODULE_DIR$/test/vendor" />
+      <excludeFolder url="file://$MODULE_DIR$/.pnpm-store" />
       <excludePattern pattern="yarn.lock" />
     </content>
     <orderEntry type="inheritedJdk" />

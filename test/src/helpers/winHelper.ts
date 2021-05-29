@@ -2,7 +2,7 @@ import { walk } from "builder-util/out/fs"
 import { Arch, Platform } from "electron-builder"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
@@ -23,8 +23,7 @@ export async function checkHelpers(resourceDir: string, isPackElevateHelper: boo
   const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
   if (isPackElevateHelper) {
     await assertThat(elevateHelperExecutable).isFile()
-  }
-  else {
+  } else {
     await assertThat(elevateHelperExecutable).doesNotExist()
   }
 }
@@ -44,7 +43,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
   }
 
   function listFiles() {
-    return walk(driveC, null, {consume: walkFilter})
+    return walk(driveC, null, { consume: walkFilter })
   }
 
   let fsBefore = await listFiles()
@@ -71,8 +70,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
 
   if (packElevateHelper) {
     await assertThat(path.join(instDir, name, "resources", "elevate.exe")).isFile()
-  }
-  else {
+  } else {
     await assertThat(path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
   }
 

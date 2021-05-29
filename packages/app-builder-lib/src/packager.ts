@@ -3,16 +3,17 @@ import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { mkdirs, chmod, outputFile } from "fs-extra"
-import isCI from "is-ci"
+import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getArtifactArchName } from "builder-util/out/arch"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
+import { AfterPackContext, Configuration } from "./configuration"
+import { Platform, SourceRepositoryInfo, Target } from "./core"
 import { createElectronFrameworkSupport } from "./electron/ElectronFramework"
+import { Framework } from "./Framework"
 import { LibUiFramework } from "./frameworks/LibUiFramework"
-import { AfterPackContext, Configuration, Framework, Platform, SourceRepositoryInfo, Target } from "./index"
-import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager, resolveFunction } from "./platformPackager"
@@ -24,13 +25,12 @@ import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDepen
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
-import { WinPackager } from "./winPackager"
+import { PACKAGE_VERSION } from "./version"
+import { release as getOsRelease } from "os"
 
 function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)
 }
-
-declare const PACKAGE_VERSION: string
 
 async function createFrameworkInfo(configuration: Configuration, packager: Packager): Promise<Framework> {
   let framework = configuration.framework
@@ -51,11 +51,9 @@ async function createFrameworkInfo(configuration: Configuration, packager: Packa
   const isUseLaunchUi = configuration.launchUiVersion !== false
   if (framework === "proton" || framework === "proton-native") {
     return new ProtonFramework(nodeVersion, distMacOsName, isUseLaunchUi)
-  }
-  else if (framework === "libui") {
+  } else if (framework === "libui") {
     return new LibUiFramework(nodeVersion, distMacOsName, isUseLaunchUi)
-  }
-  else {
+  } else {
     throw new InvalidConfigurationError(`Unknown framework: ${framework}`)
   }
 }
@@ -70,16 +68,16 @@ export class Packager {
 
   private _metadata: Metadata | null = null
   get metadata(): Metadata {
-    return this._metadata!!
+    return this._metadata!
   }
 
-  private _nodeModulesHandledExternally: boolean = false
+  private _nodeModulesHandledExternally = false
 
   get areNodeModulesHandledExternally(): boolean {
     return this._nodeModulesHandledExternally
   }
 
-  private _isPrepackedAppAsar: boolean = false
+  private _isPrepackedAppAsar = false
 
   get isPrepackedAppAsar(): boolean {
     return this._isPrepackedAppAsar
@@ -93,7 +91,7 @@ export class Packager {
   private _configuration: Configuration | null = null
 
   get config(): Configuration {
-    return this._configuration!!
+    return this._configuration!
   }
 
   isTwoPackageJsonProjectLayoutUsed = false
@@ -102,7 +100,7 @@ export class Packager {
 
   _appInfo: AppInfo | null = null
   get appInfo(): AppInfo {
-    return this._appInfo!!
+    return this._appInfo!
   }
 
   readonly tempDirManager = new TmpDir("packager")
@@ -155,12 +153,12 @@ export class Packager {
   }
 
   get relativeBuildResourcesDirname(): string {
-    return this.config.directories!!.buildResources!!
+    return this.config.directories!.buildResources!
   }
 
   private _framework: Framework | null = null
   get framework(): Framework {
-    return this._framework!!
+    return this._framework!
   }
 
   private readonly toDispose: Array<() => Promise<void>> = []
@@ -206,8 +204,7 @@ export class Packager {
         const suffixPos = type.lastIndexOf(":")
         if (suffixPos > 0) {
           addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        }
-        else {
+        } else {
           for (const arch of commonArch(true)) {
             addValue(archToType, arch, type)
           }
@@ -229,13 +226,12 @@ export class Packager {
     this._appDir = this.projectDir
     this.options = {
       ...options,
-      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
+      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged),
     }
 
     try {
-      log.info({version: PACKAGE_VERSION, os: require("os").release()}, "electron-builder")
-    }
-    catch (e) {
+      log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
+    } catch (e) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
         throw e
@@ -253,11 +249,14 @@ export class Packager {
   }
 
   async callArtifactBuildStarted(event: ArtifactBuildStarted, logFields?: any): Promise<void> {
-    log.info(logFields || {
-      target: event.targetPresentableName,
-      arch: event.arch == null ? null : Arch[event.arch],
-      file: log.filePath(event.file),
-    }, "building")
+    log.info(
+      logFields || {
+        target: event.targetPresentableName,
+        arch: event.arch == null ? null : Arch[event.arch],
+        file: log.filePath(event.file),
+      },
+      "building"
+    )
     const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
     if (handler != null) {
       await Promise.resolve(handler(event))
@@ -287,6 +286,13 @@ export class Packager {
     }
   }
 
+  async callMsiProjectCreated(path: string): Promise<void> {
+    const handler = resolveFunction(this.config.msiProjectCreated, "msiProjectCreated")
+    if (handler != null) {
+      await Promise.resolve(handler(path))
+    }
+  }
+
   async build(): Promise<BuildResult> {
     let configPath: string | null = null
     let configFromOptions = this.options.config
@@ -294,8 +300,7 @@ export class Packager {
       // it is a path to config file
       configPath = configFromOptions
       configFromOptions = null
-    }
-    else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
+    } else if (configFromOptions != null && typeof configFromOptions.extends === "string" && configFromOptions.extends.includes(".")) {
       configPath = configFromOptions.extends
       delete configFromOptions.extends
     }
@@ -308,10 +313,10 @@ export class Packager {
     const devMetadata = this.devMetadata
     const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
     if (log.isDebugEnabled) {
-      log.debug({config: getSafeEffectiveConfig(configuration)}, "effective config")
+      log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
     }
 
-    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!!.app)
+    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
     this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
 
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
@@ -319,14 +324,13 @@ export class Packager {
     // tslint:disable:prefer-conditional-expression
     if (this.devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
       this._metadata = this.devMetadata
-    }
-    else {
+    } else {
       this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
     }
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      log.debug({devPackageFile, appPackageFile}, "two package.json structure is used")
+      log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
@@ -347,13 +351,16 @@ export class Packager {
     this._appInfo = new AppInfo(this, null)
     this._framework = await createFrameworkInfo(this.config, this)
 
-    const commonOutDirWithoutPossibleOsMacro = path.resolve(this.projectDir, expandMacro(configuration.directories!!.output!!, null, this._appInfo, {
-      os: "",
-    }))
+    const commonOutDirWithoutPossibleOsMacro = path.resolve(
+      this.projectDir,
+      expandMacro(configuration.directories!.output!, null, this._appInfo, {
+        os: "",
+      })
+    )
 
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
-      log.info({file: log.filePath(effectiveConfigFile)}, "writing effective config")
+      log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
       await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
     }
 
@@ -375,7 +382,7 @@ export class Packager {
       this.toDispose.length = 0
       for (const disposer of toDispose) {
         await disposer().catch(e => {
-          log.warn({error: e}, "cannot dispose")
+          log.warn({ error: e }, "cannot dispose")
         })
       }
     })
@@ -409,7 +416,7 @@ export class Packager {
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
-    for (const [platform, archToType] of this.options.targets!!) {
+    for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
       }
@@ -418,7 +425,7 @@ export class Packager {
         throw new InvalidConfigurationError("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
       }
 
-      const packager = this.createHelper(platform)
+      const packager = await this.createHelper(platform)
       const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
@@ -428,7 +435,7 @@ export class Packager {
         }
 
         // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!!.directories!!.output!!, Arch[arch]))
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         await packager.pack(outDir, arch, targetList, taskManager)
@@ -447,24 +454,24 @@ export class Packager {
     return platformToTarget
   }
 
-  private createHelper(platform: Platform): PlatformPackager<any> {
+  private async createHelper(platform: Platform): Promise<PlatformPackager<any>> {
     if (this.options.platformPackagerFactory != null) {
-      return this.options.platformPackagerFactory!(this, platform)
+      return this.options.platformPackagerFactory(this, platform)
     }
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass: typeof MacPackager = require("./macPackager").default
+        const helperClass = (await import("./macPackager")).default
         return new helperClass(this)
       }
 
       case Platform.WINDOWS: {
-        const helperClass: typeof WinPackager = require("./winPackager").WinPackager
+        const helperClass = (await import("./winPackager")).WinPackager
         return new helperClass(this)
       }
 
       case Platform.LINUX:
-        return new (require("./linuxPackager").LinuxPackager)(this)
+        return new (await import("./linuxPackager")).LinuxPackager(this)
 
       default:
         throw new Error(`Unknown platform: ${platform}`)
@@ -472,18 +479,18 @@ export class Packager {
   }
 
   public async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.options.prepackaged != null || this.framework.isNpmRebuildRequired !== true) {
+    if (this.options.prepackaged != null || !this.framework.isNpmRebuildRequired) {
       return
     }
 
-    const frameworkInfo = {version: this.framework.version, useCustomDist: true}
+    const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
     if (config.nodeGypRebuild === true) {
       await nodeGypRebuild(platform.nodeName, Arch[arch], frameworkInfo)
     }
 
     if (config.npmRebuild === false) {
-      log.info({reason: "npmRebuild is set to false"}, "skipped dependencies rebuild")
+      log.info({ reason: "npmRebuild is set to false" }, "skipped dependencies rebuild")
       return
     }
 
@@ -493,7 +500,7 @@ export class Packager {
         appDir: this.appDir,
         electronVersion: this.config.electronVersion!,
         platform,
-        arch: Arch[arch]
+        arch: Arch[arch],
       })
 
       // If beforeBuild resolves to false, it means that handling node_modules is done outside of electron-builder.
@@ -504,9 +511,8 @@ export class Packager {
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
-      log.info({reason: "platform is different and buildDependenciesFromSource is set to true"}, "skipped dependencies rebuild")
-    }
-    else {
+      log.info({ reason: "platform is different and buildDependenciesFromSource is set to true" }, "skipped dependencies rebuild")
+    } else {
       await installOrRebuild(config, this.appDir, {
         frameworkInfo,
         platform: platform.nodeName,
@@ -538,7 +544,7 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
       continue
     }
 
-    const outDir = (target as Target).outDir
+    const outDir = target.outDir
     if (!createdOutDirs.has(outDir)) {
       ourDirs.add(outDir)
     }
@@ -548,11 +554,15 @@ function createOutDirIfNeed(targetList: Array<Target>, createdOutDirs: Set<strin
     return Promise.resolve()
   }
 
-  return Promise.all(Array.from(ourDirs).sort().map(dir => {
-    return mkdirs(dir)
-      .then(() => chmod(dir, 0o755) /* set explicitly */)
-      .then(() => createdOutDirs.add(dir))
-  }))
+  return Promise.all(
+    Array.from(ourDirs)
+      .sort()
+      .map(dir => {
+        return mkdirs(dir)
+          .then(() => chmod(dir, 0o755) /* set explicitly */)
+          .then(() => createdOutDirs.add(dir))
+      })
+  )
 }
 
 export interface BuildResult {

@@ -5,7 +5,7 @@ import { getBinFromUrl } from "../binDownload"
 import { walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
-import { readFile, writeFile } from "fs-extra"
+import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
@@ -63,21 +63,20 @@ export default class MsiTarget extends Target {
 
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
-    const uiFile = commonOptions.isAssisted ?  stageDir.getTempFile(ASSISTED_UI_FILE_NAME) : null
+    const uiFile = commonOptions.isAssisted ? stageDir.getTempFile(ASSISTED_UI_FILE_NAME) : null
     await writeFile(projectFile, await this.writeManifest(appOutDir, arch, commonOptions))
     if (uiFile !== null) {
       await writeFile(uiFile, await readFile(path.join(getTemplatePath("msi"), ASSISTED_UI_FILE_NAME), "utf8"))
       objectFiles.push(ASSISTED_UI_FILE_NAME.replace(".wxs", ".wixobj"))
     }
 
+    await packager.info.callMsiProjectCreated(projectFile)
+
     // noinspection SpellCheckingInspection
     const vendorPath = await getBinFromUrl("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
 
     // noinspection SpellCheckingInspection
-    const candleArgs = [
-      "-arch", arch === Arch.ia32 ? "x86" : (arch === Arch.arm64 ? "arm64" : "x64"),
-      `-dappDir=${vm.toVmFile(appOutDir)}`,
-    ].concat(this.getCommonWixArgs())
+    const candleArgs = ["-arch", arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
     if (uiFile !== null) {
       candleArgs.push(ASSISTED_UI_FILE_NAME)
@@ -105,7 +104,8 @@ export default class MsiTarget extends Target {
   private async light(objectFiles: Array<string>, vm: VmManager, artifactPath: string, appOutDir: string, vendorPath: string, tempDir: string) {
     // noinspection SpellCheckingInspection
     const lightArgs = [
-      "-out", vm.toVmFile(artifactPath),
+      "-out",
+      vm.toVmFile(artifactPath),
       "-v",
       // https://github.com/wixtoolset/issues/issues/5169
       "-spdb",
@@ -138,12 +138,15 @@ export default class MsiTarget extends Target {
     if (this.options.warningsAsErrors !== false) {
       args.push("-wx")
     }
+    if (this.options.additionalWixArgs != null) {
+      args.push(...this.options.additionalWixArgs)
+    }
     return args
   }
 
   private async writeManifest(appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
     const appInfo = this.packager.appInfo
-    const {files, dirs} = await this.computeFileDeclaration(appOutDir)
+    const { files, dirs } = await this.computeFileDeclaration(appOutDir)
 
     const companyName = appInfo.companyName
     if (!companyName) {
@@ -199,8 +202,7 @@ export default class MsiTarget extends Target {
           dirNames.add(dirName)
           dirs.push(`<Directory Id="${directoryId}" Name="${ROOT_DIR_ID}:\\${dirName.replace(/\//g, "\\")}\\"/>`)
         }
-      }
-      else if (!isRootDirAddedToRemoveTable) {
+      } else if (!isRootDirAddedToRemoveTable) {
         isRootDirAddedToRemoveTable = true
       }
 
@@ -211,8 +213,7 @@ export default class MsiTarget extends Target {
       const isMainExecutable = packagePath === `${appInfo.productFilename}.exe`
       if (isMainExecutable) {
         result += ' Id="mainExecutable"'
-      }
-      else if (directoryId === null) {
+      } else if (directoryId === null) {
         result += ` Id="${path.basename(packagePath)}_f"`
       }
 
@@ -239,19 +240,18 @@ export default class MsiTarget extends Target {
         if (hasMenuCategory) {
           result += `<RemoveFolder Id="${startMenuShortcutDirectoryId}" Directory="${startMenuShortcutDirectoryId}" On="uninstall"/>\n`
         }
-      }
-      else {
+      } else {
         result += `/>`
       }
 
       return `${result}\n${fileSpace}</Component>`
     })
 
-    return {dirs: listToString(dirs, 2), files: listToString(files, 3)}
+    return { dirs: listToString(dirs, 2), files: listToString(files, 3) }
   }
 }
 
-function listToString(list: Array<string>, indentLevel:  number) {
+function listToString(list: Array<string>, indentLevel: number) {
   const space = " ".repeat(indentLevel * 2)
   return list.join(`\n${space}`)
 }

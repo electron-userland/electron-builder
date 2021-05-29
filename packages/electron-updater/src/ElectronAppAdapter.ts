@@ -2,8 +2,7 @@ import * as path from "path"
 import { AppAdapter, getAppCacheDir } from "./AppAdapter"
 
 export class ElectronAppAdapter implements AppAdapter {
-  constructor(private readonly app = require("electron").app) {
-  }
+  constructor(private readonly app = require("electron").app) {}
 
   whenReady(): Promise<void> {
     return this.app.whenReady()
@@ -22,7 +21,7 @@ export class ElectronAppAdapter implements AppAdapter {
   }
 
   get appUpdateConfigPath(): string {
-    return this.isPackaged ? path.join(process.resourcesPath!!, "app-update.yml") : path.join(this.app.getAppPath(), "dev-app-update.yml")
+    return this.isPackaged ? path.join(process.resourcesPath!, "app-update.yml") : path.join(this.app.getAppPath(), "dev-app-update.yml")
   }
 
   get userDataPath(): string {

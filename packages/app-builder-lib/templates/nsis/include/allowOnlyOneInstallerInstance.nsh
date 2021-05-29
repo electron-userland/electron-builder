@@ -62,16 +62,34 @@
       # to ensure that files are not "in-use"
       Sleep 300
 
-      ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
-      ${if} $R0 == 0
-        # wait to give a chance to exit gracefully
-        Sleep 1000
-        nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"` $R0
-        ${If} $R0 != 0
-          DetailPrint `Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).`
-          Sleep 2000
+      # Retry counter
+      StrCpy $R1 0
+
+      loop:
+        IntOp $R1 $R1 + 1
+
+        ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
+        ${if} $R0 == 0
+          # wait to give a chance to exit gracefully
+          Sleep 1000
+          nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"` $R0
+          ${If} $R0 != 0
+            DetailPrint `Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).`
+            Sleep 2000
+          ${endIf}
+        ${else}
+          Goto not_running
         ${endIf}
-      ${endIf}
+
+        # App likely running with elevated permissions.
+        # Ask user to close it manually
+        ${if} $R1 > 1
+          MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY loop
+          Quit
+        ${else}
+          Goto loop
+        ${endIf}
+      not_running:
     ${endIf}
   ${endIf}
 !macroend

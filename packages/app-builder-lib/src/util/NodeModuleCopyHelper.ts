@@ -7,8 +7,30 @@ import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
 
-const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(excludedNames.split(",")))
-const topLevelExcludedFiles = new Set(["test.js", "karma.conf.js", ".coveralls.yml", "README.md", "readme.markdown", "README", "readme.md", "Readme.md", "Readme", "readme", "test", "__tests__", "tests", "powered-test", "example", "examples", ".bin"])
+const excludedFiles = new Set(
+  [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
+    excludedNames.split(",")
+  )
+)
+const topLevelExcludedFiles = new Set([
+  "test.js",
+  "karma.conf.js",
+  ".coveralls.yml",
+  "README.md",
+  "readme.markdown",
+  "README",
+  "readme.md",
+  "Readme.md",
+  "Readme",
+  "readme",
+  "test",
+  "__tests__",
+  "tests",
+  "powered-test",
+  "example",
+  "examples",
+  ".bin",
+])
 
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
@@ -40,44 +62,42 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         const isTopLevel = dirPath === depPath
         const dirs: Array<string> = []
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
-        const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
-          if (onNodeModuleFile != null) {
-            onNodeModuleFile(dirPath + path.sep + name)
-          }
+        const sortedFilePaths = await BluebirdPromise.map(
+          childNames,
+          name => {
+            if (onNodeModuleFile != null) {
+              onNodeModuleFile(dirPath + path.sep + name)
+            }
 
-          if (excludedFiles.has(name) || name.startsWith("._")) {
-            return null
-          }
-
-          for (const ext of nodeModuleExcludedExts) {
-            if (name.endsWith(ext)) {
+            if (excludedFiles.has(name) || name.startsWith("._")) {
               return null
             }
-          }
 
-          // noinspection SpellCheckingInspection
-          if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
-            return null
-          }
+            for (const ext of nodeModuleExcludedExts) {
+              if (name.endsWith(ext)) {
+                return null
+              }
+            }
 
-          if (dirPath.endsWith("build")) {
-            if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
+            // noinspection SpellCheckingInspection
+            if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
               return null
             }
-          }
-          else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
-            return null
-          }
-          else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
-            return null
-          }
-          else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
-            return null
-          }
 
-          const filePath = dirPath + path.sep + name
-          return lstat(filePath)
-            .then(stat => {
+            if (dirPath.endsWith("build")) {
+              if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
+                return null
+              }
+            } else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
+              return null
+            } else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
+              return null
+            } else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
+              return null
+            }
+
+            const filePath = dirPath + path.sep + name
+            return lstat(filePath).then(stat => {
               if (filter != null && !filter(filePath, stat)) {
                 return null
               }
@@ -90,26 +110,24 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
                 if (stat.isDirectory()) {
                   dirs.push(name)
                   return null
-                }
-                else {
+                } else {
                   return filePath
                 }
-              }
-              else {
-                return consumerResult
-                  .then(it => {
-                    // asarUtil can return modified stat (symlink handling)
-                    if ((it == null ? stat : it).isDirectory()) {
-                      dirs.push(name)
-                      return null
-                    }
-                    else {
-                      return filePath
-                    }
-                  })
+              } else {
+                return consumerResult.then(it => {
+                  // asarUtil can return modified stat (symlink handling)
+                  if ((it == null ? stat : it).isDirectory()) {
+                    dirs.push(name)
+                    return null
+                  } else {
+                    return filePath
+                  }
+                })
               }
             })
-        }, CONCURRENCY)
+          },
+          CONCURRENCY
+        )
 
         for (const child of sortedFilePaths) {
           if (child != null) {

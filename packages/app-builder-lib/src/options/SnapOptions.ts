@@ -36,7 +36,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
-   * Defaults to `["libasound2", "libgconf2-4", "libnotify4", "libnspr4", "libnss3", "libpcre3", "libpulse0", "libxss1", "libxtst6"]`.
+   * Defaults to `["libnspr4", "libnss3", "libxss1", "libappindicator3-1", "libsecret-1-0"]`.
    *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
    */
@@ -71,7 +71,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * The list of [slots](https://snapcraft.io/docs/reference/interfaces).
-   * 
+   *
    * Additional attributes can be specified using object instead of just name of slot:
    * ```
    *[
@@ -81,12 +81,12 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    *    },
    *  }
    *]
-  *
+   *
    * In case you want your application to be a compliant MPris player, you will need to definie
    * The mpris slot with "chromium" name.
    * This electron has it [hardcoded](https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1),
    * and we need to pass this name so snap [will allow it](https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7) in strict confinement.
-   * 
+   *
    */
   readonly slots?: Array<string | SlotDescriptor> | PlugDescriptor | null
 
@@ -112,7 +112,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Specifies any files to make accessible from locations such as `/usr`, `/var`, and `/etc`. See [snap layouts](https://snapcraft.io/docs/snap-layouts) to learn more.
    */
-  readonly layout?: {[key: string]: {[key: string]: string}} | null
+  readonly layout?: { [key: string]: { [key: string]: string } } | null
 
   /**
    * Specifies which files from the app part to stage and which to exclude. Individual files, directories, wildcards, globstars, and exclusions are accepted. See [Snapcraft filesets](https://snapcraft.io/docs/snapcraft-filesets) to learn more about the format.
@@ -128,9 +128,9 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 }
 
 export interface PlugDescriptor {
-  [key: string]: {[key: string]: any} | null
+  [key: string]: { [key: string]: any } | null
 }
 
 export interface SlotDescriptor {
-  [key: string]: {[key: string]: any} | null
+  [key: string]: { [key: string]: any } | null
 }

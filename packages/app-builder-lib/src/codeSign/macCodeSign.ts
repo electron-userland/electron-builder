@@ -3,7 +3,7 @@ import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequ
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes, createHash } from "crypto"
-import { rename } from "fs-extra"
+import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
@@ -13,7 +13,14 @@ import { downloadCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
-export type CertType = "Developer ID Application" | "Developer ID Installer" | "3rd Party Mac Developer Application" | "3rd Party Mac Developer Installer" | "Mac Developer"
+export type CertType =
+  | "Developer ID Application"
+  | "Developer ID Installer"
+  | "3rd Party Mac Developer Application"
+  | "3rd Party Mac Developer Installer"
+  | "Mac Developer"
+  | "Apple Development"
+  | "Apple Distribution"
 
 export interface CodeSigningInfo {
   keychainFile?: string | null
@@ -22,12 +29,13 @@ export interface CodeSigningInfo {
 export function isSignAllowed(isPrintWarn = true): boolean {
   if (process.platform !== "darwin") {
     if (isPrintWarn) {
-      log.warn({reason: "supported only on macOS"}, "skipped macOS application code signing")
+      log.warn({ reason: "supported only on macOS" }, "skipped macOS application code signing")
     }
     return false
   }
 
-  const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+  const buildForPrWarning =
+    "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
     "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
 
   if (isPullRequest()) {
@@ -35,13 +43,12 @@ export function isSignAllowed(isPrintWarn = true): boolean {
       if (isPrintWarn) {
         log.warn(buildForPrWarning)
       }
-    }
-    else {
+    } else {
       if (isPrintWarn) {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        log.warn("Current build is a part of pull request, code signing will be skipped." +
-          "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
-          `\n${buildForPrWarning}`)
+        log.warn(
+          "Current build is a part of pull request, code signing will be skipped." + "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." + `\n${buildForPrWarning}`
+        )
       }
       return false
     }
@@ -49,19 +56,24 @@ export function isSignAllowed(isPrintWarn = true): boolean {
   return true
 }
 
-export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainFile: string | null | undefined, isForceCodeSigning: boolean) {
+export async function reportError(
+  isMas: boolean,
+  certificateTypes: CertType[],
+  qualifier: string | null | undefined,
+  keychainFile: string | null | undefined,
+  isForceCodeSigning: boolean
+) {
   const logFields: Fields = {}
   if (qualifier == null) {
     logFields.reason = ""
     if (isAutoDiscoveryCodeSignIdentity()) {
-      logFields.reason += `cannot find valid "${certificateType}" identity${(isMas ? "" : ` or custom non-Apple code signing certificate`)}`
+      logFields.reason += `cannot find valid "${certificateTypes.join(", ")}" identity${isMas ? "" : ` or custom non-Apple code signing certificate`}`
     }
     logFields.reason += ", see https://electron.build/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {
       logFields.CSC_IDENTITY_AUTO_DISCOVERY = false
     }
-  }
-  else {
+  } else {
     logFields.reason = "Identity name is specified, but no valid identity with this name in the keychain"
     logFields.identity = qualifier
   }
@@ -81,8 +93,7 @@ export async function reportError(isMas: boolean, certificateType: CertType, qua
 
   if (isMas || isForceCodeSigning) {
     throw new Error(Logger.createMessage("skipped macOS application code signing", logFields, "error", it => it))
-  }
-  else {
+  } else {
     log.warn(logFields, "skipped macOS application code signing")
   }
 }
@@ -98,8 +109,7 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
   const keychainPath = path.join(cacheDir, "electron-builder-root-certs.keychain")
   const results = await Promise.all<any>([
     listUserKeychains(),
-    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath)
-      .then(() => rename(tmpKeychainPath, keychainPath)),
+    copyFile(path.join(__dirname, "..", "..", "certs", "root_certs.keychain"), tmpKeychainPath).then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
   if (!list.includes(keychainPath)) {
@@ -109,18 +119,19 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
 
 function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env!!)
+  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
 }
 
 function listUserKeychains(): Promise<Array<string>> {
-  return exec("security", ["list-keychains", "-d", "user"])
-    .then(it => it
+  return exec("security", ["list-keychains", "-d", "user"]).then(it =>
+    it
       .split("\n")
       .map(it => {
         const r = it.trim()
         return r.substring(1, r.length - 1)
       })
-      .filter(it => it.length > 0))
+      .filter(it => it.length > 0)
+  )
 }
 
 export interface CreateKeychainOptions {
@@ -133,16 +144,15 @@ export interface CreateKeychainOptions {
 }
 
 export function removeKeychain(keychainFile: string, printWarn = true): Promise<any> {
-  return exec("security", ["delete-keychain", keychainFile])
-    .catch(e => {
-      if (printWarn) {
-        log.warn({file: keychainFile, error: e.stack || e}, "cannot delete keychain")
-      }
-      return unlinkIfExists(keychainFile)
-    })
+  return exec("security", ["delete-keychain", keychainFile]).catch(e => {
+    if (printWarn) {
+      log.warn({ file: keychainFile, error: e.stack || e }, "cannot delete keychain")
+    }
+    return unlinkIfExists(keychainFile)
+  })
 }
 
-export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
+export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir }: CreateKeychainOptions): Promise<CodeSigningInfo> {
   // travis has correct AppleWWDRCA cert
   if (process.env.TRAVIS !== "true") {
     await bundledCertKeychainAdded.value
@@ -153,7 +163,9 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   const keychainFile = path.join(process.env.APP_BUILDER_TMP_DIR || tmpdir(), `${createHash("sha256").update(currentDir).update("app-builder").digest("hex")}.keychain`)
   // noinspection JSUnusedLocalSymbols
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  await removeKeychain(keychainFile, false).catch(_ => {/* ignore*/})
+  await removeKeychain(keychainFile, false).catch(_ => {
+    /* ignore*/
+  })
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -165,7 +177,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   const securityCommands = [
     ["create-keychain", "-p", keychainPassword, keychainFile],
     ["unlock-keychain", "-p", keychainPassword, keychainFile],
-    ["set-keychain-settings", keychainFile]
+    ["set-keychain-settings", keychainFile],
   ]
 
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
@@ -177,8 +189,8 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
 
   await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
-    BluebirdPromise.mapSeries(securityCommands, it => exec("security", it))
+    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
+    BluebirdPromise.mapSeries(securityCommands, it => exec("security", it)),
   ])
   return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
 }
@@ -222,25 +234,30 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
     // https://github.com/electron-userland/electron-builder/issues/481
     // https://github.com/electron-userland/electron-builder/issues/535
     result = Promise.all<Array<string>>([
-      exec("security", addKeychain(["find-identity", "-v"]))
-        .then(it => it.trim().split("\n").filter(it => {
-          for (const prefix of appleCertificatePrefixes) {
-            if (it.includes(prefix)) {
-              return true
+      exec("security", addKeychain(["find-identity", "-v"])).then(it =>
+        it
+          .trim()
+          .split("\n")
+          .filter(it => {
+            for (const prefix of appleCertificatePrefixes) {
+              if (it.includes(prefix)) {
+                return true
+              }
             }
-          }
-          return false
-        })),
-      exec("security", addKeychain(["find-identity", "-v", "-p", "codesigning"]))
-        .then(it => it.trim().split(("\n"))),
-    ])
-      .then(it => {
-        const array = it[0].concat(it[1])
-          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
-          // remove 1)
-          .map(it => it.substring(it.indexOf(")") + 1).trim())
-        return Array.from(new Set(array))
-      })
+            return false
+          })
+      ),
+      exec("security", addKeychain(["find-identity", "-v", "-p", "codesigning"])).then(it => it.trim().split("\n")),
+    ]).then(it => {
+      const array = it[0]
+        .concat(it[1])
+        .filter(
+          it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.")
+        )
+        // remove 1)
+        .map(it => it.substring(it.indexOf(")") + 1).trim())
+      return Array.from(new Set(array))
+    })
 
     if (keychain == null) {
       findIdentityRawResult = result
@@ -309,13 +326,11 @@ export function findIdentity(certType: CertType, qualifier?: string | null, keyc
   if (isEmptyOrSpaces(identity)) {
     if (isAutoDiscoveryCodeSignIdentity()) {
       return _findIdentity(certType, null, keychain)
-    }
-    else {
+    } else {
       return Promise.resolve(null)
     }
-  }
-  else {
-    identity = identity!.trim()
+  } else {
+    identity = identity.trim()
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }

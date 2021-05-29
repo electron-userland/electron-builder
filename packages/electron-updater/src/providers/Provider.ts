@@ -2,7 +2,8 @@ import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFil
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { ResolvedUpdateFileInfo } from "../main"
+import { newUrlFromBase } from "../util"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 
@@ -30,8 +31,7 @@ export abstract class Provider<T extends UpdateInfo> {
       const arch = process.env.TEST_UPDATER_ARCH || process.arch
       const archSuffix = arch === "x64" ? "" : `-${arch}`
       return "-linux" + archSuffix
-    }
-    else {
+    } else {
       return this.runtimeOptions.platform === "darwin" ? "-mac" : ""
     }
   }
@@ -70,9 +70,8 @@ export abstract class Provider<T extends UpdateInfo> {
       if (headers != null) {
         result.headers = headers
       }
-    }
-    else {
-      result.headers = headers == null ? this.requestHeaders : {...this.requestHeaders, ...headers}
+    } else {
+      result.headers = headers == null ? this.requestHeaders : { ...this.requestHeaders, ...headers }
     }
 
     configureRequestUrl(url, result)
@@ -80,7 +79,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
-export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
@@ -88,11 +87,9 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
   if (result != null) {
     return result
-  }
-  else if (not == null) {
+  } else if (not == null) {
     return files[0]
-  }
-  else {
+  } else {
     return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
   }
 }
@@ -105,9 +102,11 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   let result: UpdateInfo
   try {
     result = load(rawData) as UpdateInfo
-  }
-  catch (e) {
-    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+  } catch (e) {
+    throw newError(
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      "ERR_UPDATER_INVALID_UPDATE_INFO"
+    )
   }
   return result
 }
@@ -128,8 +127,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
         sha512: updateInfo.sha512,
       } as any,
     ]
-  }
-  else {
+  } else {
     throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 }
@@ -147,9 +145,9 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
   })
 
   const packages = (updateInfo as WindowsUpdateInfo).packages
-  const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
+  const packageInfo = packages == null ? null : packages[process.arch] || packages.ia32
   if (packageInfo != null) {
-    (result[0] as any).packageInfo = {
+    ;(result[0] as any).packageInfo = {
       ...packageInfo,
       path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
     }
