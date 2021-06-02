@@ -48,19 +48,13 @@ export abstract class FileCopyHelper {
 }
 
 function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | null {
-    //  @ts-ignore
-    const includeSubNodeModules = (packager._configuration || {}).includeSubNodeModules;
+  const includeSubNodeModules: boolean = packager.config.includeSubNodeModules || false
 
-    //  for the places where we want to use the matcher to process node_modules
-    //  directories (i.e. when includeSubNodeModules is off), we have to
-    //  configure the matcher to act *exactly* like how it would according to
-    //  how the system currently works: filter out all node_modules directories
-    //  *except* the 'root' node_modules directory. We do this by finding the
-    //  universal '*/**' rule and splice in two rules that do that filtering.
-    //  then the user's rules that come after these rules can modify this
-    //  behavior to add specific node_modules directories in.
-    matcher.patterns.splice(
-      matcher.patterns.indexOf('*/**') + 1, 0, '!**/node_modules', '*/node_modules')
+  //  configure the matcher to act *exactly* like how it would according to
+  //  how the system currently works: filter out all node_modules directories
+  //  *except* the 'root' node_modules directory. Need to splice since glob
+  //  patterns are order-dependent.
+  matcher.patterns.splice(matcher.patterns.indexOf("**/*") + 1, 0, "!**/node_modules", "*/node_modules")
 
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()
@@ -97,8 +91,7 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
 
   constructor(matcher: FileMatcher, packager: Packager) {
     super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
-    //  @ts-ignore
-    this.includeSubNodeModules = (packager._configuration || {}).includeSubNodeModules;
+    this.includeSubNodeModules = packager.config.includeSubNodeModules || false
     this.matcherFilter = matcher.createFilter()
   }
 
