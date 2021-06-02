@@ -1179,10 +1179,10 @@ Object {
               "size": 1069,
             },
             "abi_registry.json": Object {
-              "size": 1884,
+              "size": 1885,
             },
             "index.js": Object {
-              "size": 6099,
+              "size": 6391,
             },
             "package.json": Object {
               "size": 547,
