@@ -41,6 +41,7 @@ export default class FpmTarget extends Target {
     const templateOptions = {
       // old API compatibility
       executable: packager.executableName,
+      sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
       ...packager.platformSpecificBuildOptions,
     }
