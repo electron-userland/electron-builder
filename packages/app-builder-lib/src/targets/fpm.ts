@@ -149,7 +149,7 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
+      args.push("--deb-priority", (options as DebOptions).priority ?? "optional")
     } else if (target === "rpm") {
       if (synopsis != null) {
         args.push("--rpm-summary", smarten(synopsis))
