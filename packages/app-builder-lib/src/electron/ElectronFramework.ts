@@ -102,7 +102,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
         const language = file.substring(0, file.length - langFileExt.length)
         if (!wantedLanguages.includes(language)) {
-          return fs.rm(path.join(resourcesDir, file), { force: true })
+          return fs.rm(path.join(resourcesDir, file), { recursive: true, force: true })
         }
         return
       },
