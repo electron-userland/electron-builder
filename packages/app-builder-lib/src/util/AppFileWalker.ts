@@ -52,9 +52,8 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 
   //  configure the matcher to act *exactly* like how it would according to
   //  how the system currently works: filter out all node_modules directories
-  //  *except* the 'root' node_modules directory. Need to splice since glob
-  //  patterns are order-dependent.
-  matcher.patterns.splice(matcher.patterns.indexOf("**/*") + 1, 0, "!**/node_modules", "*/node_modules")
+  //  Need to splice since glob patterns are order-dependent.
+  matcher.patterns.splice(matcher.patterns.indexOf("**/*") + 1, 0, "!**/node_modules")
 
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()

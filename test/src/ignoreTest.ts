@@ -205,6 +205,7 @@ test.ifDevOrLinuxCi(
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules")).isDirectory(),
+          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules", "package.json")).isFile(),
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
