@@ -2,6 +2,7 @@ import {
   AllPublishOptions,
   BaseS3Options,
   BintrayOptions,
+  CustomPublishOptions,
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
@@ -63,6 +64,15 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
 
     case "bintray":
       return new BintrayProvider(data as BintrayOptions, runtimeOptions)
+
+    case "custom": {
+      const options = data as CustomPublishOptions
+      const constructor = options.updateProvider
+      if (!constructor) {
+        throw newError("Custom provider not specified", "ERR_UPDATER_INVALID_PROVIDER_CONFIGURATION")
+      }
+      return new constructor(options, updater, runtimeOptions)
+    }
 
     default:
       throw newError(`Unsupported provider: ${provider}`, "ERR_UPDATER_UNSUPPORTED_PROVIDER")

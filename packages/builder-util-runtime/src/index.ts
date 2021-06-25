@@ -15,6 +15,7 @@ export {
 } from "./httpExecutor"
 export {
   BintrayOptions,
+  CustomPublishOptions,
   GenericServerOptions,
   GithubOptions,
   PublishConfiguration,
