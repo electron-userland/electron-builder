@@ -314,7 +314,7 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
 
     const entryPath = c.path || `${packager.appInfo.productFilename}.app`
     const entryName = c.name || path.basename(entryPath)
-    const escapedEntryName = entryName.replace(/(['\\])/g, (_, chr) => `\\${chr}`)
+    const escapedEntryName = entryName.replace(/['\\]/g, match => `\\${match}`)
     if (result.length !== 0) {
       result += ",\n"
     }
