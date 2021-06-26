@@ -158,9 +158,6 @@ export class MacUpdater extends AppUpdater {
       this.nativeUpdater.on("update-downloaded", () => {
         this.nativeUpdater.quitAndInstall()
       })
-
-      // And trigger the update
-      this.nativeUpdater.checkForUpdates()
     }
   }
 }
