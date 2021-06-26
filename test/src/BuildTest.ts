@@ -354,7 +354,7 @@ async function verifySmartUnpack(resourceDir: string) {
 }
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifAll.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "posix smart unpack",
   app(
     {
@@ -367,8 +367,11 @@ test.ifAll.ifDevOrLinuxCi(
         files: [
           // test ignore pattern for node_modules defined as file set filter
           {
-            filter: "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz",
-          },
+            filter: [
+              "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz",
+              "!node_modules/node-abi/*"
+            ]
+          }
         ],
       },
     },
