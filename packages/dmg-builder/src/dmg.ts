@@ -314,10 +314,11 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
 
     const entryPath = c.path || `${packager.appInfo.productFilename}.app`
     const entryName = c.name || path.basename(entryPath)
+    const escapedEntryName = entryName.replace(/['\\]/g, match => `\\${match}`)
     if (result.length !== 0) {
       result += ",\n"
     }
-    result += `'${entryName}': (${c.x}, ${c.y})`
+    result += `'${escapedEntryName}': (${c.x}, ${c.y})`
 
     if (c.type === "link") {
       asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath.startsWith("/") ? entryPath.substring(1) : entryPath}`, `${volumePath}/${entryName}`]))
