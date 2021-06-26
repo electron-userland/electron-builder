@@ -1156,46 +1156,6 @@ Object {
             },
           },
         },
-        "node-abi": Object {
-          "files": Object {
-            ".github": Object {
-              "files": Object {
-                "workflows": Object {
-                  "files": Object {
-                    "update-abi.yml": Object {
-                      "size": 1309,
-                    },
-                  },
-                },
-              },
-            },
-            "CODE_OF_CONDUCT.md": Object {
-              "size": 3194,
-            },
-            "CONTRIBUTING.md": Object {
-              "size": 1646,
-            },
-            "LICENSE": Object {
-              "size": 1069,
-            },
-            "abi_registry.json": Object {
-              "size": 1885,
-            },
-            "index.js": Object {
-              "size": 6391,
-            },
-            "package.json": Object {
-              "size": 547,
-            },
-            "scripts": Object {
-              "files": Object {
-                "update-abi-registry.js": Object {
-                  "size": 3105,
-                },
-              },
-            },
-          },
-        },
         "noop-logger": Object {
           "files": Object {
             "History.md": Object {
