@@ -10,9 +10,11 @@ RUN apt-get -qq update && apt-get -qq dist-upgrade && \
   # python for node-gyp
   # rpm is required for FPM to build rpm package
   # libsecret-1-dev is required even for prebuild keytar (https://atom.github.io/node-keytar/)
-  apt-get -qq install --no-install-recommends qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib lzip rpm python libcurl4 git git-lfs ssh unzip libarchive-tools \
-  libsecret-1-dev \
-  libopenjp2-tools && \
+  apt-get -qq install --no-install-recommends \
+        qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib \
+        lzip rpm python libcurl4 git git-lfs ssh unzip libarchive-tools \
+        libxtst6 libsecret-1-dev libopenjp2-tools \
+  && \
   # git-lfs
   git lfs install && \
   apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*

@@ -6195,6 +6195,11 @@
       "description": "Whether to include PDB files.",
       "type": "boolean"
     },
+    "includeSubNodeModules": {
+      "default": false,
+      "description": "Whether to include *all* of the submodules 'node_modules' directories.",
+      "type": "boolean"
+    },
     "launchUiVersion": {
       "description": "*libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.",
       "type": [

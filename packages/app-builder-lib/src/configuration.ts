@@ -101,6 +101,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
+   * Whether to include *all* of the submodules node_modules directories
+   * @default false
+   */
+  includeSubNodeModules?: boolean
+
+  /**
    * Whether to build the application native dependencies from source.
    * @default false
    */
