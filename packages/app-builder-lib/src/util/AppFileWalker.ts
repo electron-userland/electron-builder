@@ -48,6 +48,13 @@ export abstract class FileCopyHelper {
 }
 
 function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | null {
+  const includeSubNodeModules: boolean = packager.config.includeSubNodeModules || false
+
+  //  configure the matcher to act *exactly* like how it would according to
+  //  how the system currently works: filter out all node_modules directories
+  //  Need to splice since glob patterns are order-dependent.
+  matcher.patterns.splice(matcher.patterns.indexOf("**/*") + 1, 0, "!**/node_modules")
+
   if (packager.areNodeModulesHandledExternally) {
     return matcher.isEmpty() ? null : matcher.createFilter()
   }
@@ -62,17 +69,29 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 
   const filter = matcher.createFilter()
   return (file, fileStat) => {
+    const matchesFilter = filter(file, fileStat)
     if (!nodeModulesFilter(file, fileStat)) {
-      return false
+      //  it's a node_modules directory
+
+      //  if includeSubNodeModules is true, then we just return true - we want
+      //  all of them
+      if (includeSubNodeModules) {
+        return true
+      }
     }
-    return filter(file, fileStat)
+    return matchesFilter
   }
 }
 
 /** @internal */
 export class AppFileWalker extends FileCopyHelper implements FileConsumer {
+  readonly includeSubNodeModules: boolean
+  readonly matcherFilter
+
   constructor(matcher: FileMatcher, packager: Packager) {
     super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
+    this.includeSubNodeModules = packager.config.includeSubNodeModules || false
+    this.matcherFilter = matcher.createFilter()
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -83,7 +102,21 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
       // but do not filter if we inside node_modules dir
       // update: solution disabled, node module resolver should support such setup
       if (file.endsWith(nodeModulesSystemDependentSuffix)) {
-        return false
+        //  it's a node_modules directory
+
+        //  if includeSubNodeModules is true, then we just do nothing - we
+        //  definitely want it. But if its false (the default), then we match
+        //  and if the match is false, we return false (but if the match is
+        //  true, we do nothing).
+        if (!this.includeSubNodeModules) {
+          const matchesFilter = this.matcherFilter(file, fileStat)
+          //  if it matched the patterns filter, then we just do nothing - we
+          //  want it. Otherwise, it didn't match the filter so we need to
+          //  return false here.
+          if (!matchesFilter) {
+            return false
+          }
+        }
       }
     } else {
       // save memory - no need to store stat for directory

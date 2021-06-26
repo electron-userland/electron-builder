@@ -138,7 +138,7 @@ export class NsisUpdater extends BaseUpdater {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-      const blockmapFileUrls = blockmapFiles(fileInfo.url, downloadUpdateOptions.updateInfoAndProvider.info.version, this.app.version)
+      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version)
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {

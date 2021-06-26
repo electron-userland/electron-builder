@@ -41,6 +41,17 @@ export interface PublishConfiguration {
 
 // https://github.com/electron-userland/electron-builder/issues/3261
 export interface CustomPublishOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `custom`.
+   */
+  readonly provider: "custom"
+
+  /**
+   * The Provider to provide UpdateInfo regarding available updates.  Required
+   * to use custom providers with electron-updater.
+   */
+  updateProvider?: new (options: CustomPublishOptions, updater: any, runtimeOptions: any) => any
+
   [index: string]: any
 }
 
