@@ -5,7 +5,7 @@ const isCi = require("ci-info").isCI
 const isWindows = process.platform === "win32"
 
 // Squirrel.Windows msi is very slow
-jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 20) * 1000 * 60
+jest.setTimeout((isWindows ? 30 : 20) * 1000 * 60)
 
 const skip = test.skip
 const skipSuite = describe.skip
