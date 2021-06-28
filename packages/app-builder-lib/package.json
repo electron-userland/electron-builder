@@ -10,7 +10,11 @@
     "electron-osx-sign",
     "certs/root_certs.keychain"
   ],
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/app-builder-lib"
+  },
   "engines": {
     "node": ">=14.0.0"
   },
