@@ -1,0 +1,121 @@
+[
+    {
+        "color": "bfdadc",
+        "name": "AppImage"
+    },
+    {
+        "color": "d4c5f9",
+        "name": "Cannot Reproduce"
+    },
+    {
+        "color": "006b75",
+        "description": "",
+        "name": "Proton"
+    },
+    {
+        "color": "fbca04",
+        "name": "Squirrel.Windows"
+    },
+    {
+        "color": "bfd4f2",
+        "name": "appx"
+    },
+    {
+        "color": "d93f0b",
+        "name": "backlog"
+    },
+    {
+        "color": "fc2929",
+        "name": "bug"
+    },
+    {
+        "color": "1d76db",
+        "name": "deployment"
+    },
+    {
+        "color": "c2e0c6",
+        "name": "discuss"
+    },
+    {
+        "color": "1d76db",
+        "name": "docker"
+    },
+    {
+        "color": "cccccc",
+        "name": "duplicate"
+    },
+    {
+        "color": "5319e7",
+        "name": "electron-updater"
+    },
+    {
+        "color": "84b6eb",
+        "name": "feature"
+    },
+    {
+        "color": "FB9E8A",
+        "description": "",
+        "name": "fixed by third party"
+    },
+    {
+        "color": "D02FAC",
+        "description": "",
+        "name": "good first issue for a new contributor"
+    },
+    {
+        "color": "159818",
+        "name": "help wanted"
+    },
+    {
+        "color": "159818",
+        "name": "help-wanted"
+    },
+    {
+        "color": "e6e6e6",
+        "name": "invalid"
+    },
+    {
+        "color": "fef2c0",
+        "name": "investigate"
+    },
+    {
+        "color": "fef2c0",
+        "name": "linux"
+    },
+    {
+        "color": "009800",
+        "name": "mac"
+    },
+    {
+        "color": "bfe06d",
+        "name": "msi"
+    },
+    {
+        "color": "bfd4f2",
+        "name": "nsis"
+    },
+    {
+        "color": "cc317c",
+        "name": "question"
+    },
+    {
+        "color": "fbca04",
+        "name": "readme improvement"
+    },
+    {
+        "color": "006b75",
+        "name": "reply-needed"
+    },
+    {
+        "color": "c2e0c6",
+        "name": "snap"
+    },
+    {
+        "color": "fbca04",
+        "name": "windows"
+    },
+    {
+        "color": "ffffff",
+        "name": "wontfix"
+    }
+]
