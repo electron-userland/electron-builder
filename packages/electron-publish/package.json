@@ -4,7 +4,11 @@
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-publish"
+  },
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [

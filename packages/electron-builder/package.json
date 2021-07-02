@@ -10,7 +10,11 @@
     "electron-builder": "./cli.js",
     "install-app-deps": "./install-app-deps.js"
   },
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-builder"
+  },
   "engines": {
     "node": ">=14.0.0"
   },
