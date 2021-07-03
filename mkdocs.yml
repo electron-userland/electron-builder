@@ -1,11 +1,12 @@
 site_name: electron-builder
+site_url: https://www.electron.build
 use_directory_urls: false
 theme:
   feature:
     tabs: true
   name: material
-  logo:
-    icon: 'build'
+#  logo:
+#    icon: 'build'
   palette:
     primary: 'blue'
     accent: 'blue'
@@ -13,8 +14,12 @@ theme:
 repo_name: electron-userland/electron-builder
 repo_url: 'https://github.com/electron-userland/electron-builder'
 edit_uri: ""
-dev_addr: 0.0.0.0:8000
 strict: true
+
+extra:
+  analytics:
+    provider: google
+    property: UA-105592680-1
 
 extra_javascript:
   - extra.js
@@ -30,10 +35,6 @@ markdown_extensions:
       base_path: docs
   - toc:
       permalink: true
-
-google_analytics:
-  - 'UA-105592680-1'
-  - www.electron.build
 
 nav:
   - Introduction: index.md
