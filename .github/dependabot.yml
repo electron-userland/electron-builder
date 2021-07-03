@@ -10,61 +10,242 @@ updates:
     directory: "/packages/app-builder-lib"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/builder-util"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/builder-util-runtime"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/dmg-builder"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-builder"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-builder-squirrel-windows"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-forge-maker-appimage"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-forge-maker-nsis"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-forge-maker-nsis-web"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-forge-maker-snap"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-publish"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
   - package-ecosystem: "npm"
     directory: "/packages/electron-updater"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "app-builder-lib"
+      - dependency-name: "builder-util"
+      - dependency-name: "builder-util-runtime"
+      - dependency-name: "dmg-builder"
+      - dependency-name: "electron-builder"
+      - dependency-name: "electron-builder-squirrel-windows"
+      - dependency-name: "electron-forge-maker-appimage"
+      - dependency-name: "electron-forge-maker-nsis"
+      - dependency-name: "electron-forge-maker-nsis-web"
+      - dependency-name: "electron-forge-maker-snap"
+      - dependency-name: "electron-publish"
+      - dependency-name: "electron-updater"
+
+
 
 
 
