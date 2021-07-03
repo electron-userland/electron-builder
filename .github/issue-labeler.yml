@@ -1,0 +1,39 @@
+critical:
+  - '(critical|urgent)'
+
+app-builder-lib:
+builder-util:
+appimage:
+  - appimage
+appx:
+  - appx
+bug:
+  - bug
+docker:
+  - docker
+electron-updater:
+  - updater
+  - electron-updater
+linux:
+  - linux
+  - ubuntu
+  - fedora
+mac:
+  - mac
+  - macos
+windows:
+  - windows
+msi:
+  - msi
+nsis:
+  - nsis
+readme:
+  - '(docs|documentation|readme)'
+snap:
+  - '(snap|snaps|snapcraft)'
+flatpak:
+  - '(flat|flatpak|flatpack)'
+squirrel.windows:
+  - squirrel
+electron-publish:
+  - publish
