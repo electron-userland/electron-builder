@@ -1,6 +1,8 @@
 critical:
   - '(critical|urgent)'
 
+app-builder-lib:
+builder-util:
 appimage:
   - appimage
 appx:
@@ -11,6 +13,7 @@ docker:
   - docker
 electron-updater:
   - updater
+  - electron-updater
 linux:
   - linux
   - ubuntu

@@ -1,4 +1,4 @@
-name: "Lint PR"
+name: "Semantic Versioning enforcer"
 
 on:
   pull_request_target:
