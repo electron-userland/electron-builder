@@ -1,10 +1,14 @@
 {
   "name": "builder-util",
-  "version": "22.11.7",
+  "version": "22.11.8",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/builder-util"
+  },
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
@@ -14,7 +18,7 @@
     "7zip-bin": "~5.1.1",
     "@types/debug": "^4.1.5",
     "@types/fs-extra": "^9.0.11",
-    "app-builder-bin": "3.5.13",
+    "app-builder-bin": "3.6.1",
     "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.1",

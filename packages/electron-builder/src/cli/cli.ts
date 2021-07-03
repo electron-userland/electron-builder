@@ -16,7 +16,7 @@ import { start } from "./start"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 
 // tslint:disable:no-unused-expression
-createYargs()
+void createYargs()
   .command(["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
   .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))
