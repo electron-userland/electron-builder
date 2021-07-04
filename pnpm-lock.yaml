@@ -88,6 +88,7 @@ importers:
       dmg-builder: workspace:*
       ejs: ^3.1.6
       electron-builder-squirrel-windows: workspace:*
+      electron-osx-sign: ^0.5.0
       electron-publish: workspace:*
       fs-extra: ^10.0.0
       hosted-git-info: ^4.0.2
@@ -112,6 +113,7 @@ importers:
       chromium-pickle-js: 0.2.0
       debug: 4.3.2
       ejs: 3.1.6
+      electron-osx-sign: 0.5.0
       electron-publish: link:../electron-publish
       fs-extra: 10.0.0
       hosted-git-info: 4.0.2
@@ -379,6 +381,7 @@ importers:
       dmg-builder: workspace:*
       electron-builder: workspace:*
       electron-builder-squirrel-windows: workspace:*
+      electron-osx-sign: ^0.5.0
       electron-publish: workspace:*
       electron-updater: workspace:*
       esbuild: ^0.12.14
@@ -405,6 +408,7 @@ importers:
       dmg-builder: link:../packages/dmg-builder
       electron-builder: link:../packages/electron-builder
       electron-builder-squirrel-windows: link:../packages/electron-builder-squirrel-windows
+      electron-osx-sign: 0.5.0
       electron-publish: link:../packages/electron-publish
       electron-updater: link:../packages/electron-updater
       fs-extra: 10.0.0
@@ -3312,6 +3316,17 @@ packages:
     dependencies:
       node-int64: 0.4.0
 
+  /buffer-alloc-unsafe/1.1.0:
+    resolution: {integrity: sha512-TEM2iMIEQdJ2yjPJoSIsldnleVaAk1oW3DBVUykyOLsEsFmEc9kn+SFFPz+gl54KQNxlDnAwCXosOS9Okx2xAg==}
+    dev: false
+
+  /buffer-alloc/1.2.0:
+    resolution: {integrity: sha512-CFsHQgjtW1UChdXgbyJGtnm+O/uLQeZdtbDo8mfUgYXCHSM1wgrVxXm6bSyrUuErEb+4sYVGCzASBRot7zyrow==}
+    dependencies:
+      buffer-alloc-unsafe: 1.1.0
+      buffer-fill: 1.0.0
+    dev: false
+
   /buffer-crc32/0.2.13:
     resolution: {integrity: sha1-DTM+PwDqxQqhRUq9MO+MKl2ackI=}
     dev: false
@@ -3319,6 +3334,10 @@ packages:
   /buffer-equal/1.0.0:
     resolution: {integrity: sha1-WWFrSYME1Var1GaWayLu2j7KX74=}
     engines: {node: '>=0.4.0'}
+    dev: false
+
+  /buffer-fill/1.0.0:
+    resolution: {integrity: sha1-+PeLdniYiO858gXNY39o5wISKyw=}
     dev: false
 
   /buffer-from/1.1.1:
@@ -3632,6 +3651,11 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
+  /compare-version/0.1.2:
+    resolution: {integrity: sha1-AWLsLZNR9d3VmpICy6k1NmpyUIA=}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
   /component-emitter/1.3.0:
     resolution: {integrity: sha512-Rd3se6QB+sO1TwqZjscQrurpEPIfO0/yYnSin6Q/rD3mOutHvUrCAhJub3r90uNb+SESBuE0QYoB90YdfatsRg==}
     dev: true
@@ -3792,7 +3816,6 @@ packages:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
     dependencies:
       ms: 2.0.0
-    dev: true
 
   /debug/4.3.1:
     resolution: {integrity: sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==}
@@ -4042,6 +4065,19 @@ packages:
     hasBin: true
     dependencies:
       jake: 10.8.2
+    dev: false
+
+  /electron-osx-sign/0.5.0:
+    resolution: {integrity: sha512-icoRLHzFz/qxzDh/N4Pi2z4yVHurlsCAYQvsCSG7fCedJ4UJXBS6PoQyGH71IfcqKupcKeK7HX/NkyfG+v6vlQ==}
+    engines: {node: '>=4.0.0'}
+    hasBin: true
+    dependencies:
+      bluebird: 3.7.2
+      compare-version: 0.1.2
+      debug: 2.6.9
+      isbinaryfile: 3.0.3
+      minimist: 1.2.5
+      plist: 3.0.2
     dev: false
 
   /electron-to-chromium/1.3.766:
@@ -5096,6 +5132,13 @@ packages:
 
   /isarray/1.0.0:
     resolution: {integrity: sha1-u5NdSFgsuhaMBoNJV6VKPgcSTxE=}
+
+  /isbinaryfile/3.0.3:
+    resolution: {integrity: sha512-8cJBL5tTd2OS0dM4jz07wQd5g0dCCqIhUxPIGtZfa5L6hWlvV5MHTITy/DBAsF+Oe2LS1X3krBUhNwaGUWpWxw==}
+    engines: {node: '>=0.6.0'}
+    dependencies:
+      buffer-alloc: 1.2.0
+    dev: false
 
   /isbinaryfile/4.0.8:
     resolution: {integrity: sha512-53h6XFniq77YdW+spoRrebh0mnmTxRPTlcuIArO57lmMdq4uBKFKaeTjnb92oYWrSn/LVL+LT+Hap2tFQj8V+w==}
@@ -6281,7 +6324,6 @@ packages:
 
   /ms/2.0.0:
     resolution: {integrity: sha1-VgiurfwAvmwpAd9fmGF4jeDVl8g=}
-    dev: true
 
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
