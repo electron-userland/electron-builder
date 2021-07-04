@@ -190,7 +190,9 @@ export class NsisTarget extends Target {
       BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
 
       APP_PACKAGE_NAME: appInfo.name,
-      ENABLE_LOGGING: !!options.debugLogging,
+    }
+    if (options.debugLogging) {
+      defines.ENABLE_LOGGING = null
     }
     if (uninstallAppKey !== guid) {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
