@@ -11,14 +11,14 @@ interface CustomNsisBinary {
 
   /**
    * @private
-   * @default VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==
+   * @default cTeQgtymnETCMGZa89l5A790zw4otqFThfQbm52AbhUtPUD2yp2lmmu/T9Hd6fG/rDej0o6X6OTupxZB3n8HbA==
    */
 
   readonly checksum?: string | null
 
   /**
    * @private
-   * @default 3.0.4.1
+   * @default 3.0.5.0
    */
 
   readonly version?: string | null
