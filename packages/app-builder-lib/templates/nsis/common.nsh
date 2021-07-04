@@ -10,6 +10,7 @@ SpaceTexts none
 FileBufSize 64
 Name "${PRODUCT_NAME}"
 
+!define ENABLE_LOGGING
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
 
@@ -98,4 +99,18 @@ Name "${PRODUCT_NAME}"
   ${endif}
 
   ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
+!macroend
+
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING
+    LogSet ${SETTING}
+  !endif
+!macroend
+ 
+!define LogText "!insertmacro LogTextMacro"
+!macro LogTextMacro INPUT_TEXT
+  !ifdef ENABLE_LOGGING
+    LogText ${INPUT_TEXT}
+  !endif
 !macroend

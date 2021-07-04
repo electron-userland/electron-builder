@@ -1,4 +1,7 @@
 Function un.onInit
+  SetOutPath $INSTDIR
+  ${LogSet} on
+  
   !insertmacro check64BitAndSetRegView
 
   ${IfNot} ${Silent}

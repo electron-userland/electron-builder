@@ -50,8 +50,15 @@ export interface CommonNsisOptions {
   /**
    * @private
    */
-
   readonly customNsisBinary?: CustomNsisBinary | null
+
+  /**
+   * Whether or not to enable NSIS logging for debugging
+   * Note: Requires a debug-enabled NSIS build
+   * https://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612
+   * @private
+   */
+  readonly debugLogging?: boolean | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
