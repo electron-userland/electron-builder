@@ -101,8 +101,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null)
   }
 
   try {
-    // @ts-ignore
-    execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 })
+    execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 } as any)
   } catch (testError) {
     logger.warn(
       `Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
