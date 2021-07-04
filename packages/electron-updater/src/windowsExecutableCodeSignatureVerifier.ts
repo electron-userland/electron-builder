@@ -25,7 +25,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // * Backticks can be escaped by doubling them: 'A backtick (``) character';
     //
     // Also note that at this point the file has already been written to the disk, thus we are
-    // guaranteed that the path will not contains any illegal characters like <>:"/\|?*
+    // guaranteed that the path will not contain any illegal characters like <>:"/\|?*
     // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''").replace(/`/g, "``")
 
@@ -101,6 +101,7 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null)
   }
 
   try {
+    // @ts-ignore
     execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", "ConvertTo-Json test"], { timeout: 10 * 1000 })
   } catch (testError) {
     logger.warn(

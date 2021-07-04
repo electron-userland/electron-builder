@@ -3,7 +3,7 @@
   "private": true,
   "dependencies": {
     "7zip-bin": "~5.1.1",
-    "@jest/core": "^27.0.5",
+    "@jest/core": "^27.0.6",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -18,7 +18,7 @@
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
     "fs-extra": "^10.0.0",
-    "jest": "^27.0.5",
+    "jest": "^27.0.6",
     "jest-junit": "^12.0.0",
     "js-yaml": "^4.1.0",
     "path-sort": "^0.1.0",
@@ -32,7 +32,7 @@
     "@types/jest": "^26.0.23",
     "@types/js-yaml": "^4.0.1",
     "@types/semver": "^7.3.6",
-    "esbuild": "^0.12.11",
+    "esbuild": "^0.12.14",
     "esbuild-jest": "^0.5.0"
   },
   "jest": {

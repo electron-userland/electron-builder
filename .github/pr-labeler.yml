@@ -5,11 +5,11 @@ builder-util:
 - packages/builder-util-runtime/**/*
 mac:
 - packages/dmg-builder/**/*
-- packages/**/mac*.ts
+- '**/mac*.ts'
 linux:
-- packages/**/linux*.ts
+- '**/linux*.ts'
 windows:
-- packages/**/win*.ts
+- '**/win*.ts'
 squirrel.windows:
 - packages/electron-builder-squirrel-windows/**/*
 appimage:

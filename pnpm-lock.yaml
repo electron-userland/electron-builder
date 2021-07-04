@@ -5,21 +5,23 @@ importers:
   .:
     specifiers:
       '@babel/plugin-transform-modules-commonjs': ^7.14.5
-      '@typescript-eslint/eslint-plugin': ^4.28.0
-      '@typescript-eslint/parser': ^4.28.0
+      '@typescript-eslint/eslint-plugin': ^4.28.1
+      '@typescript-eslint/parser': ^4.28.1
       dmg-license: ~1.0.9
-      eslint: ^7.29.0
+      eslint: ^7.30.0
       eslint-config-prettier: ^8.3.0
       eslint-plugin-prettier: ^3.4.0
       fs-extra: ^10.0.0
       globby: ^11.0.4
       husky: ~6.0.0
-      jest-cli: ^27.0.5
+      jest-cli: ^27.0.6
       jsdoc-to-markdown: ^7.0.1
       lint-staged: ^11.0.0
+      path-sort: ^0.1.0
       prettier: ^2.3.2
+      source-map-support: ^0.5.19
       ts-jsdoc: ^3.2.2
-      typescript: ~4.3.4
+      typescript: ~4.3.5
       typescript-json-schema: ^0.50.1
       v8-compile-cache: ^2.3.0
     dependencies:
@@ -37,7 +39,9 @@ importers:
       jest-cli: 27.0.6
       jsdoc-to-markdown: 7.0.1
       lint-staged: 11.0.0
+      path-sort: 0.1.0
       prettier: 2.3.2
+      source-map-support: 0.5.19
       ts-jsdoc: 3.2.2_typescript@4.3.5
       typescript: 4.3.5
       typescript-json-schema: 0.50.1
@@ -67,7 +71,7 @@ importers:
       '@develar/schema-utils': ~2.6.5
       '@electron/universal': 1.0.5
       '@malept/flatpak-bundler': ^0.4.0
-      '@types/debug': ^4.1.5
+      '@types/debug': ^4.1.6
       '@types/ejs': ^3.0.6
       '@types/fs-extra': ^9.0.11
       '@types/hosted-git-info': ^3.0.1
@@ -154,13 +158,13 @@ importers:
 
   packages/builder-util:
     specifiers:
-      '@types/debug': ^4.1.5
+      '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': ^3.0.0
       '@types/js-yaml': ^4.0.1
       '@types/source-map-support': ^0.5.3
       7zip-bin: ~5.1.1
-      app-builder-bin: 3.6.1
+      app-builder-bin: 3.7.1
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
       chalk: ^4.1.1
@@ -175,7 +179,7 @@ importers:
       '@types/debug': 4.1.6
       '@types/fs-extra': 9.0.11
       7zip-bin: 5.1.1
-      app-builder-bin: 3.6.1
+      app-builder-bin: 3.7.1
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.1
@@ -193,7 +197,7 @@ importers:
 
   packages/builder-util-runtime:
     specifiers:
-      '@types/debug': ^4.1.5
+      '@types/debug': ^4.1.6
       '@types/sax': ^1.2.1
       debug: ^4.3.2
       sax: ^1.2.4
@@ -234,8 +238,8 @@ importers:
     specifiers:
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': ^3.0.0
-      '@types/update-notifier': ^5.0.0
-      '@types/yargs': ^17.0.0
+      '@types/update-notifier': ^5.0.1
+      '@types/yargs': ^17.0.1
       app-builder-lib: workspace:*
       builder-util: workspace:*
       builder-util-runtime: workspace:*
@@ -361,7 +365,7 @@ importers:
 
   test:
     specifiers:
-      '@jest/core': ^27.0.5
+      '@jest/core': ^27.0.6
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
@@ -380,10 +384,10 @@ importers:
       electron-osx-sign: ^0.5.0
       electron-publish: workspace:*
       electron-updater: workspace:*
-      esbuild: ^0.12.11
+      esbuild: ^0.12.14
       esbuild-jest: ^0.5.0
       fs-extra: ^10.0.0
-      jest: ^27.0.5
+      jest: ^27.0.6
       jest-junit: ^12.0.0
       js-yaml: ^4.1.0
       path-sort: ^0.1.0
@@ -2479,10 +2483,6 @@ packages:
   /@types/node/15.12.2:
     resolution: {integrity: sha512-zjQ69G564OCIWIOHSXyQEEDpdpGl+G348RAKY0XXy9Z5kU9Vzv1GMNnkar/ZJ8dzXB3COzD9Mo9NtRZ4xfgUww==}
 
-  /@types/node/15.12.5:
-    resolution: {integrity: sha512-se3yX7UHv5Bscf8f1ERKvQOD6sTyycH3hdaoozvaLxgUiY5lIGEeH37AD0G0Qi9kPqihPn0HOfd2yaIEN9VwEg==}
-    dev: false
-
   /@types/node/16.0.0:
     resolution: {integrity: sha512-TmCW5HoZ2o2/z2EYi109jLqIaPIi9y/lc2LmDCWzuCi35bcaQ+OtUh6nwBiFK7SOu25FAU5+YKdqFZUwtqGSdg==}
 
@@ -2492,7 +2492,7 @@ packages:
   /@types/plist/3.0.2:
     resolution: {integrity: sha512-ULqvZNGMv0zRFvqn8/4LSPtnmN4MfhlPNtJCTpKuIIxGVGZ2rYWzFXrvEBoh9CVyqSE7D6YFRJ1hydLHI6kbWw==}
     dependencies:
-      '@types/node': 15.12.5
+      '@types/node': 16.0.0
       xmlbuilder: 15.1.1
     dev: false
 
@@ -2524,8 +2524,8 @@ packages:
       boxen: 4.2.0
     dev: true
 
-  /@types/verror/1.10.4:
-    resolution: {integrity: sha512-OjJdqx6QlbyZw9LShPwRW+Kmiegeg3eWNI41MQQKaG3vjdU2L9SRElntM51HmHBY1cu7izxQJ1lMYioQh3XMBg==}
+  /@types/verror/1.10.5:
+    resolution: {integrity: sha512-9UjMCHK5GPgQRoNbqdLIAvAy0EInuiqbW0PBMtVP6B5B2HQJlvoJHM+KodPZMEjOa5VkSc+5LH7xy+cUzQdmHw==}
     dev: false
 
   /@types/yargs-parser/20.2.0:
@@ -2851,8 +2851,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.0
 
-  /app-builder-bin/3.6.1:
-    resolution: {integrity: sha512-Dl/DC8es+dDNHVddkER/bvJQnRy0Jn3rGvQydyewOlKZwFI3mhNQGh97H+8wcHPi+pz7y5mF6SOwET+C5KasLg==}
+  /app-builder-bin/3.7.1:
+    resolution: {integrity: sha512-ql93vEUq6WsstGXD+SBLSIQw6SNnhbDEM0swzgugytMxLp3rT24Ag/jcC80ZHxiPRTdew1niuR7P3/FCrDqIjw==}
     dev: false
 
   /archiver-utils/2.1.0:
@@ -2939,6 +2939,11 @@ packages:
   /array-back/5.0.0:
     resolution: {integrity: sha512-kgVWwJReZWmVuWOQKEOohXKJX+nD02JAZ54D1RRWlv8L0NebauKAaFxACKzB74RTclt1+WNz5KHaLRDAPZbDEw==}
     engines: {node: '>=10'}
+    dev: true
+
+  /array-back/6.1.1:
+    resolution: {integrity: sha512-48mQQRZmnKo3zNQ7DKz3gdXmj8s/oOi6rTcLx7RHYCjFjgG6yt6x9dFOfajQwFhcCmKRLleuojVIMIIFl94vVA==}
+    engines: {node: '>=14'}
     dev: true
 
   /array-differ/3.0.0:
@@ -3300,9 +3305,9 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001240
+      caniuse-lite: 1.0.30001241
       colorette: 1.2.2
-      electron-to-chromium: 1.3.759
+      electron-to-chromium: 1.3.766
       escalade: 3.1.1
       node-releases: 1.1.73
 
@@ -3406,8 +3411,8 @@ packages:
     resolution: {integrity: sha512-c7wVvbw3f37nuobQNtgsgG9POC9qMbNuMQmTCqZv23b6MIz0fcYpBiOlv9gEN/hdLdnZTDQhg6e9Dq5M1vKvfg==}
     engines: {node: '>=10'}
 
-  /caniuse-lite/1.0.30001240:
-    resolution: {integrity: sha512-nb8mDzfMdxBDN7ZKx8chWafAdBp5DAAlpWvNyUGe5tcDWd838zpzDN3Rah9cjCqhfOKkrvx40G2SDtP0qiWX/w==}
+  /caniuse-lite/1.0.30001241:
+    resolution: {integrity: sha512-1uoSZ1Pq1VpH0WerIMqwptXHNNGfdl7d1cJUFs80CwQ/lVzdhTvsFZCeNFslze7AjsQnb4C85tzclPa1VShbeQ==}
 
   /capture-exit/2.0.0:
     resolution: {integrity: sha512-PiT/hQmTonHhl/HFGN+Lx3JJUznrVYJ3+AQsnthneZbvW7x+f08Tk7yLJTLEOUvBTbduLeeBkxEaYXUOUrRq6g==}
@@ -4011,7 +4016,7 @@ packages:
     hasBin: true
     dependencies:
       '@types/plist': 3.0.2
-      '@types/verror': 1.10.4
+      '@types/verror': 1.10.5
       ajv: 6.12.6
       cli-truncate: 1.1.0
       crc: 3.8.0
@@ -4075,8 +4080,8 @@ packages:
       plist: 3.0.2
     dev: false
 
-  /electron-to-chromium/1.3.759:
-    resolution: {integrity: sha512-nM76xH0t2FBH5iMEZDVc3S/qbdKjGH7TThezxC8k1Q7w7WHvIAyJh8lAe2UamGfdRqBTjHfPDn82LJ0ksCiB9g==}
+  /electron-to-chromium/1.3.766:
+    resolution: {integrity: sha512-u2quJ862q9reRKh/je3GXis3w38+RoXH1J9N3XjtsS6NzmUAosNsyZgUVFZPN/ZlJ3v6T0rTyZR3q/J5c6Sy5w==}
 
   /emittery/0.8.1:
     resolution: {integrity: sha512-uDfvUjVrfGJJhymx/kz6prltenw1u7WrCg1oa94zYY8xxVpLLUu045LAT0dhDZdXG58/EpPL/5kA180fQ/qudg==}
@@ -5765,11 +5770,11 @@ packages:
       walk-back: 5.0.0
     dev: true
 
-  /jsdoc-parse/6.0.0:
-    resolution: {integrity: sha512-35DhfCHL1bq5r0TvolhyyGhhoem700IfEvviL8I1t99Qxa3aSmWbBEpnvvouA7TyXlwxcQfSg75ryXW8Ppq7FA==}
+  /jsdoc-parse/6.0.1:
+    resolution: {integrity: sha512-ij3Az5y2dp+ajMxYnEJH7kjKK5v6+yZ3Cg/KtRdoT15pIm6qTk/W8q72QdNLZ9jQm/U2/ifENFXXTOe6xIxGeA==}
     engines: {node: '>=14'}
     dependencies:
-      array-back: 5.0.0
+      array-back: 6.1.1
       lodash.omit: 4.5.0
       lodash.pick: 4.4.0
       reduce-extract: 1.0.0
@@ -5787,7 +5792,7 @@ packages:
       config-master: 3.1.0
       dmd: 6.0.0
       jsdoc-api: 7.0.1
-      jsdoc-parse: 6.0.0
+      jsdoc-parse: 6.0.1
       walk-back: 5.0.0
     dev: true
 
@@ -6601,7 +6606,6 @@ packages:
 
   /path-sort/0.1.0:
     resolution: {integrity: sha1-ywF11Oy/paGP5nTMbXIL/hXguAU=}
-    dev: false
 
   /path-type/4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
