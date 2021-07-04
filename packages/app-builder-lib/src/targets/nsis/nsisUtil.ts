@@ -13,10 +13,10 @@ export const nsisTemplatesDir = getTemplatePath("nsis")
 
 export const NsisTargetOptions = (() => {
   let _resolve: (options: NsisOptions) => any
-  const promise = new Promise<NsisOptions>(resolve => _resolve = resolve)
+  const promise = new Promise<NsisOptions>(resolve => (_resolve = resolve))
   return {
     then: (callback: (options: NsisOptions) => any): Promise<string> => promise.then(callback),
-    resolve: (options: NsisOptions): any => _resolve(options)
+    resolve: (options: NsisOptions): any => _resolve(options),
   }
 })()
 
