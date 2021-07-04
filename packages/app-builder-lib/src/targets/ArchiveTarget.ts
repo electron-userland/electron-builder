@@ -4,7 +4,7 @@ import { Platform, Target, TargetSpecificOptions } from "../core"
 import { copyFiles, getFileMatchers } from "../fileMatcher"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
-import { appendBlockmap } from "./differentialUpdateInfoBuilder"
+import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
@@ -65,7 +65,11 @@ export class ArchiveTarget extends Target {
       await archive(format, artifactPath, dirToArchive, archiveOptions)
 
       if (this.isWriteUpdateInfo && format === "zip") {
-        updateInfo = await appendBlockmap(artifactPath)
+        if (isMac) {
+          updateInfo = await createBlockmap(artifactPath, this, packager, artifactName)
+        } else {
+          updateInfo = await appendBlockmap(artifactPath)
+        }
       }
     }
 
