@@ -375,7 +375,7 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath)
+      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
