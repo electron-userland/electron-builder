@@ -1,8 +1,5 @@
 critical:
   - '(critical|urgent)'
-
-app-builder-lib:
-builder-util:
 appimage:
   - appimage
 appx:
