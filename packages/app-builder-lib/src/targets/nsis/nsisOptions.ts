@@ -7,7 +7,7 @@ interface CustomNsisBinary {
    * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
    */
 
-  readonly url?: string | null
+  readonly url: string | null
 
   /**
    * @private

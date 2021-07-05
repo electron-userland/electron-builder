@@ -10,7 +10,6 @@ SpaceTexts none
 FileBufSize 64
 Name "${PRODUCT_NAME}"
 
-!define ENABLE_LOGGING
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
 
