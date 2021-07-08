@@ -10,7 +10,6 @@ docker:
   - docker
 electron-updater:
   - updater
-  - 'electron-updater'
 linux:
   - linux
   - ubuntu
