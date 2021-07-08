@@ -1,6 +1,6 @@
 {
   "extends": [
-    ":ignoreModulesAndTests",
+    "config:base",
     ":semanticCommitType(chore)",
     ":label(renovate)",
     ":prHourlyLimit2",
@@ -14,13 +14,12 @@
     "extends": [
       // ":automergePatch",
       ":noUnscheduledUpdates",
-      ":separatePatchReleases",
       ":maintainLockFilesWeekly",
       "npm:unpublishSafe",
       "helpers:disableTypesNodeMajor"
     ],
     "schedule": ["after 9pm", "before 9am"],
-    "rangeStrategy": "bump",
+    // "rangeStrategy": "bump",
     // "postUpdateOptions": ["npmDedupe"],
     "packageRules": [
       {
