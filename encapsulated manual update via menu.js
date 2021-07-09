@@ -23,7 +23,7 @@ autoUpdater.on('update-available', () => {
     title: 'Found Updates',
     message: 'Found updates, do you want update now?',
     buttons: ['Sure', 'No']
-  }, (buttonIndex) => {
+  }).then((buttonIndex) => {
     if (buttonIndex === 0) {
       autoUpdater.downloadUpdate()
     }
@@ -47,7 +47,7 @@ autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
     title: 'Install Updates',
     message: 'Updates downloaded, application will be quit for update...'
-  }, () => {
+  }).then(() => {
     setImmediate(() => autoUpdater.quitAndInstall())
   })
 })
