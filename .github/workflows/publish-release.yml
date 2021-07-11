@@ -6,7 +6,7 @@ on:
     - 'v*'
 
 env:
-  CI: true
+  HUSKY_SKIP_INSTALL: true
   PNPM_CACHE_FOLDER: .pnpm-store
 jobs:
   publish:

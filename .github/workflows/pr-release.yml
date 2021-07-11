@@ -5,10 +5,10 @@ on:
     branches:
       - master
 env:
-  CI: true
+  HUSKY_SKIP_INSTALL: true
   PNPM_CACHE_FOLDER: .pnpm-store
 jobs:
-  release:
+  pr-release:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
