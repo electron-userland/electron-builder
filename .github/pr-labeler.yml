@@ -3,6 +3,8 @@ app-builder-lib:
 builder-util:
 - packages/builder-util/**/*
 - packages/builder-util-runtime/**/*
+dmg-builder:
+- packages/dmg-builder/**/*
 mac:
 - packages/dmg-builder/**/*
 - '**/mac*.ts'

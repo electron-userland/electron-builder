@@ -24,7 +24,7 @@ msi:
 nsis:
   - nsis
 readme:
-  - '(docs|documentation|readme)'
+  - '(docs|readme)'
 snap:
   - '(snap|snaps|snapcraft)'
 flatpak:
