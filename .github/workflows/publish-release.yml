@@ -6,7 +6,7 @@ on:
     - 'v*'
 
 env:
-  HUSKY_SKIP_INSTALL: true
+  HUSKY: 0 # Bypass husky commit hook for CI
   PNPM_CACHE_FOLDER: .pnpm-store
 jobs:
   publish:
