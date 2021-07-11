@@ -298,7 +298,7 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
   env.iconLocations = await computeDmgEntries(specification, volumePath, packager, asyncTaskManager)
   await asyncTaskManager.awaitTasks()
 
-  await exec("/usr/bin/python", [path.join(getDmgVendorPath(), "dmgbuild/core.py")], {
+  await exec(process.env.PYTHON_PATH || "/usr/bin/python", [path.join(getDmgVendorPath(), "dmgbuild/core.py")], {
     cwd: getDmgVendorPath(),
     env,
   })
@@ -314,10 +314,11 @@ async function computeDmgEntries(specification: DmgOptions, volumePath: string, 
 
     const entryPath = c.path || `${packager.appInfo.productFilename}.app`
     const entryName = c.name || path.basename(entryPath)
+    const escapedEntryName = entryName.replace(/['\\]/g, match => `\\${match}`)
     if (result.length !== 0) {
       result += ",\n"
     }
-    result += `'${entryName}': (${c.x}, ${c.y})`
+    result += `'${escapedEntryName}': (${c.x}, ${c.y})`
 
     if (c.type === "link") {
       asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath.startsWith("/") ? entryPath.substring(1) : entryPath}`, `${volumePath}/${entryName}`]))

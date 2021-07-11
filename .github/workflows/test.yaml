@@ -1,11 +1,16 @@
 name: Test
+
 on:
   push:
+  pull_request:
+    branches:
+      - master
+
 jobs:
   test:
     runs-on: ubuntu-20.04
     container:
-      image: electronuserland/builder:14-03.21@sha256:38761d41757f3cdaf6cd57587a2dbf54449fa4f49b3569808ac7bc9f097fa6cc
+      image: electronuserland/builder:14-05.21@sha256:837f5cbec3735ee27eb7105b9646aedd73340bce7d6ea44943a99a105a4dca55
     env:
       TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
     steps:
@@ -65,5 +70,6 @@ jobs:
       - name: test
         run: node ./test/out/helpers/runTests.js
         env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1

@@ -2,7 +2,7 @@ import * as chalk from "chalk"
 import { Results } from "depcheck"
 import * as depCheck from "depcheck"
 import { readJson } from "fs-extra"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { printErrorAndExit } from "builder-util/out/promise"
 

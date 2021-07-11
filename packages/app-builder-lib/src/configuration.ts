@@ -101,6 +101,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly apk?: LinuxTargetSpecificOptions | null
 
   /**
+   * Whether to include *all* of the submodules node_modules directories
+   * @default false
+   */
+  includeSubNodeModules?: boolean
+
+  /**
    * Whether to build the application native dependencies from source.
    * @default false
    */
@@ -247,6 +253,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
 }
 
 export interface AfterPackContext {

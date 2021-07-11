@@ -5,7 +5,7 @@ import { getBinFromUrl } from "../binDownload"
 import { walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
-import { readFile, writeFile } from "fs-extra"
+import { readFile, writeFile } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { MsiOptions } from "../"
@@ -137,6 +137,9 @@ export default class MsiTarget extends Target {
     const args: Array<string> = ["-pedantic"]
     if (this.options.warningsAsErrors !== false) {
       args.push("-wx")
+    }
+    if (this.options.additionalWixArgs != null) {
+      args.push(...this.options.additionalWixArgs)
     }
     return args
   }

@@ -121,10 +121,13 @@ export class NsisTarget extends Target {
     try {
       const { pattern } = this.packager.artifactPatternConfig(this.options, this.installerFilenamePattern)
       const builds = new Set([this.archs])
-      if (pattern.includes("${arch}")) {
-        ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map<Arch, string>().set(arch, appOutDir)))
+      if (pattern.includes("${arch}") && this.archs.size > 1) {
+        ;[...this.archs].forEach(([arch, appOutDir]) => builds.add(new Map().set(arch, appOutDir)))
       }
-      await Promise.all([...builds].map(archs => this.buildInstaller(archs)))
+      const doBuildArchs = builds.values()
+      for (const archs of doBuildArchs) {
+        await this.buildInstaller(archs)
+      }
     } finally {
       await this.packageHelper.finishBuild()
     }
@@ -363,7 +366,7 @@ export class NsisTarget extends Target {
     // http://forums.winamp.com/showthread.php?p=3078545
     if (isMacOsCatalina()) {
       try {
-        UninstallerReader.exec(installerPath, uninstallerPath)
+        await UninstallerReader.exec(installerPath, uninstallerPath)
       } catch (error) {
         log.warn(`packager.vm is used: ${error.message}`)
 
@@ -378,7 +381,7 @@ export class NsisTarget extends Target {
         }
       }
     } else {
-      await execWine(installerPath)
+      await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 

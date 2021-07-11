@@ -5,7 +5,7 @@ import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
-export { UpdateInfo }
+export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 export { Provider } from "./providers/Provider"
 export { AppImageUpdater } from "./AppImageUpdater"
 export { MacUpdater } from "./MacUpdater"
@@ -54,7 +54,7 @@ export interface UpdateCheckResult {
   readonly versionInfo: UpdateInfo
 }
 
-export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
+export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
 export const DOWNLOAD_PROGRESS: UpdaterEvents = "download-progress"
 export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"

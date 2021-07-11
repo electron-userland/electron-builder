@@ -1,7 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
 import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
-import { ensureDir, readlink, Stats, symlink } from "fs-extra"
+import { Stats } from "fs"
+import { mkdir, readlink, symlink } from "fs/promises"
 import * as path from "path"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
@@ -68,7 +69,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     const fileParent = path.dirname(destinationFile)
     if (!createdParentDirs.has(fileParent)) {
       createdParentDirs.add(fileParent)
-      await ensureDir(fileParent)
+      await mkdir(fileParent, { recursive: true })
     }
 
     taskManager.addTask(fileCopier.copy(sourceFile, destinationFile, stat))
@@ -218,7 +219,7 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
   const electronCompileCache = await packager.tempDirManager.getTempDir({ prefix: "electron-compile-cache" })
   const cacheDir = path.join(electronCompileCache, ".cache")
   // clear and create cache dir
-  await ensureDir(cacheDir)
+  await mkdir(cacheDir, { recursive: true })
   const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
   const nextSlashIndex = mainFileSet.src.length + 1
   // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir

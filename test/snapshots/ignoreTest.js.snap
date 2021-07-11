@@ -6,6 +6,24 @@ Object {
 }
 `;
 
+exports[`copied all submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`copied no submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`copied select submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`ignore build resources 1`] = `
 Object {
   "linux": Array [],

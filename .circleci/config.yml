@@ -32,7 +32,7 @@ jobs:
   test:
     parallelism: 4
     docker:
-      - image: electronuserland/builder:wine-mono
+      - image: electronuserland/builder:wine-mono-05.21@sha256:a623432c159a02019e77a71873dfc6d4bf45f4b2011b333dbca429f02ee4cc56
         environment:
           JEST_JUNIT_OUTPUT_DIR: /tmp/test-reports/test.xml
           TZ: Europe/Berlin

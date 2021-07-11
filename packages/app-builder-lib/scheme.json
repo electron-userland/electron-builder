@@ -3388,6 +3388,13 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
           "type": "boolean"
+        },
+        "additionalWixArgs": {
+          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`",
+          "type": [
+            "null",
+            "array"
+          ]
         }
       },
       "type": "object"
@@ -6191,6 +6198,11 @@
       "description": "Whether to include PDB files.",
       "type": "boolean"
     },
+    "includeSubNodeModules": {
+      "default": false,
+      "description": "Whether to include *all* of the submodules 'node_modules' directories.",
+      "type": "boolean"
+    },
     "launchUiVersion": {
       "description": "*libui-based frameworks only* The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.",
       "type": [
@@ -6473,6 +6485,11 @@
       "description": "Whether to remove `scripts` field from `package.json` files.",
       "type": "boolean"
     },
+	"removePackageKeywords": {
+	  "default": true,
+	  "description": "Whether to remove `keywords` field from `package.json` files.",
+	  "type": "boolean"
+	},
     "rpm": {
       "anyOf": [
         {

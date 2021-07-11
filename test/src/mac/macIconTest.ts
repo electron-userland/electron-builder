@@ -1,9 +1,8 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { app } from "../helpers/packTester"
-import { promises as fsPromises } from "fs"
 
 async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
@@ -112,7 +111,7 @@ test.ifMac.ifAll("default png icon", () => {
           fs.unlink(path.join(projectDir, "build", "icon.ico")),
           fs
             .copyFile(path.join(projectDir, "build", "icons", "512x512.png"), path.join(projectDir, "build", "icon.png"))
-            .then(() => fsPromises.rmdir(path.join(projectDir, "build", "icons"), { recursive: true })),
+            .then(() => fs.rm(path.join(projectDir, "build", "icons"), { recursive: true, force: true })),
         ]),
       packed: () => assertIcon(platformPackager!!),
     }

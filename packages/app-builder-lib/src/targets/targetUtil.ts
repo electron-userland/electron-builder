@@ -2,7 +2,7 @@ import * as path from "path"
 import { Target, AppInfo } from "../"
 import { Arch, debug } from "builder-util"
 import { PlatformPackager } from "../platformPackager"
-import { promises as fsPromises } from "fs"
+import * as fs from "fs/promises"
 
 export class StageDir {
   constructor(readonly dir: string) {}
@@ -13,7 +13,7 @@ export class StageDir {
 
   cleanup() {
     if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
-      return fsPromises.rmdir(this.dir, { recursive: true })
+      return fs.rm(this.dir, { recursive: true, force: true })
     }
     return Promise.resolve()
   }
@@ -29,8 +29,8 @@ export async function createStageDir(target: Target, packager: PlatformPackager<
 
 export async function createStageDirPath(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<string> {
   const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
-  await fsPromises.rmdir(tempDir, { recursive: true })
-  await fsPromises.mkdir(tempDir, { recursive: true })
+  await fs.rm(tempDir, { recursive: true, force: true })
+  await fs.mkdir(tempDir, { recursive: true })
   return tempDir
 }
 

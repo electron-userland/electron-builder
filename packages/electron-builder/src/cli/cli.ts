@@ -4,10 +4,10 @@ import { InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { pathExists, readJson } from "fs-extra"
-import isCi from "is-ci"
+import * as isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "read-config-file"
-import updateNotifier from "update-notifier"
+import * as updateNotifier from "update-notifier"
 import { ExecError } from "builder-util/out/util"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
@@ -16,7 +16,7 @@ import { start } from "./start"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 
 // tslint:disable:no-unused-expression
-createYargs()
+void createYargs()
   .command(["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
   .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))

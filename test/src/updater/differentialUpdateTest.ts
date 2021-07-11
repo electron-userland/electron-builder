@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
@@ -52,8 +51,9 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       },
       {
         signedWin: true,
-        packed: async context => {
+        packed: context => {
           outDirs.push(context.outDir)
+          return Promise.resolve()
         },
         tmpDir,
       }
@@ -83,7 +83,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
   } else {
     nsisWebDifferentialUpdateTestFakeSnapshot()
-    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!!, "dist")]
+    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!, "dist")]
   }
 
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
@@ -112,8 +112,9 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
       },
       {
         signedWin: true,
-        packed: async context => {
+        packed: context => {
           outDirs.push(context.outDir)
+          return Promise.resolve()
         },
       }
     )
@@ -145,7 +146,7 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
   } else {
     nsisDifferentialUpdateFakeSnapshot()
 
-    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!!, "dist")]
+    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!, "dist")]
   }
 
   await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, "win-unpacked", Platform.WINDOWS)
@@ -206,8 +207,9 @@ async function buildApp(version: string, outDirs: Array<string>, targets: Map<Pl
       },
     },
     {
-      packed: async context => {
+      packed: context => {
         outDirs.push(context.outDir)
+        return Promise.resolve()
       },
       tmpDir,
     }
@@ -246,7 +248,7 @@ async function checkResult(updater: NsisUpdater) {
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
-  expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
+  expect(files!.map(it => path.basename(it))).toMatchSnapshot()
 }
 
 class TestNativeUpdater extends EventEmitter {
@@ -267,7 +269,8 @@ class TestNativeUpdater extends EventEmitter {
   // }
 
   // noinspection JSMethodCanBeStatic
-  setFeedURL(updateUrl: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setFeedURL(_updateUrl: string) {
     // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
     // this.updateUrl = updateUrl
   }
@@ -278,7 +281,7 @@ function getTestUpdaterCacheDir(oldDir: string) {
 }
 
 async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, appUpdateConfigPath: string, platform: Platform) {
-  const port = 8000 + updaterClass.name.charCodeAt(0) + Math.floor(Math.random() * 10000)
+  const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
   // noinspection SpellCheckingInspection
   const httpServerProcess = doSpawn(
@@ -296,7 +299,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     { virtual: true }
   )
 
-  return await new BluebirdPromise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
@@ -334,9 +337,16 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
     }
 
     doTest()
-      .then(() => resolve())
+      .then(() => resolve(null))
       .catch(reject)
-  }).finally(() => {
-    httpServerProcess.kill()
-  })
+  }).then(
+    v => {
+      httpServerProcess.kill()
+      return v
+    },
+    e => {
+      httpServerProcess.kill()
+      throw e
+    }
+  )
 }

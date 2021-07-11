@@ -3,7 +3,8 @@ import { Arch, log } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { Hash } from "crypto"
-import { ensureDir, readFile, readJson, writeJson } from "fs-extra"
+import { readJson, writeJson } from "fs-extra"
+import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 
 export interface BuildCacheInfo {
@@ -63,7 +64,7 @@ export class BuildCacheManager {
     }
 
     try {
-      await ensureDir(this.cacheDir)
+      await mkdir(this.cacheDir, { recursive: true })
       await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
     } catch (e) {
       log.warn({ error: e.stack || e }, `cannot save build cache`)

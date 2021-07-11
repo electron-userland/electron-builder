@@ -1,7 +1,8 @@
 import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { ensureDir, outputFile, readFile } from "fs-extra"
+import { outputFile } from "fs-extra"
+import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
 import { Target } from "../core"
@@ -40,6 +41,7 @@ export default class FpmTarget extends Target {
     const templateOptions = {
       // old API compatibility
       executable: packager.executableName,
+      sanitizedProductName: packager.appInfo.sanitizedProductName,
       productFilename: packager.appInfo.productFilename,
       ...packager.platformSpecificBuildOptions,
     }
@@ -117,7 +119,7 @@ export default class FpmTarget extends Target {
 
     await unlinkIfExists(artifactPath)
     if (packager.packagerOptions.prepackaged != null) {
-      await ensureDir(this.outDir)
+      await mkdir(this.outDir, { recursive: true })
     }
 
     const scripts = await this.scriptFiles
@@ -147,7 +149,7 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
+      args.push("--deb-priority", (options as DebOptions).priority ?? "optional")
     } else if (target === "rpm") {
       if (synopsis != null) {
         args.push("--rpm-summary", smarten(synopsis))

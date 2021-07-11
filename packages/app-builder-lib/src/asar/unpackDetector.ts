@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra"
+import { mkdir } from "fs-extra"
+import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
-import { getFilePathIfBinarySync } from "../../electron-osx-sign"
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   let list = map.get(key)
@@ -83,7 +83,7 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
     } else if (!file.includes(".", nextSlashIndex)) {
-      shouldUnpack = !!getFilePathIfBinarySync(file)
+      shouldUnpack = !!isBinaryFileSync(file)
     }
 
     if (!shouldUnpack) {
@@ -98,19 +98,19 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
   }
 
   if (dirToCreate.size > 0) {
-    await ensureDir(unpackedDest + path.sep + "node_modules")
+    await mkdir(`${unpackedDest + path.sep}node_modules`, { recursive: true })
     // child directories should be not created asynchronously - parent directories should be created first
     await BluebirdPromise.map(
       dirToCreate.keys(),
       async parentDir => {
         const base = unpackedDest + path.sep + parentDir
-        await ensureDir(base)
+        await mkdir(base, { recursive: true })
         await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
           if (dirToCreate.has(parentDir + path.sep + it)) {
             // already created
             return null
           } else {
-            return ensureDir(base + path.sep + it)
+            return mkdir(base + path.sep + it, { recursive: true })
           }
         })
       },

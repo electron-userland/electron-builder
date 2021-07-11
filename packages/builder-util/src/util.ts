@@ -367,9 +367,9 @@ export function executeAppBuilder(
   function runCommand() {
     return new Promise<string>((resolve, reject) => {
       const childProcess = doSpawn(command, args, {
-        env,
         stdio: ["ignore", "pipe", process.stdout],
         ...extraOptions,
+        env,
       })
       if (childProcessConsumer != null) {
         childProcessConsumer(childProcess)

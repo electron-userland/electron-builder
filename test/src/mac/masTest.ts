@@ -2,7 +2,7 @@ import { Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {

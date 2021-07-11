@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
-import { signAsync, SignOptions } from "../electron-osx-sign"
-import { mkdirs, readdir } from "fs-extra"
+import { signAsync, SignOptions } from "electron-osx-sign"
+import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { copyFile, unlinkIfExists } from "builder-util/out/fs"
+import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError } from "./codeSign/macCodeSign"
@@ -18,7 +18,7 @@ import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
-import { promisify } from "util"
+import * as fs from "fs/promises"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -128,9 +128,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           outAppPath: path.join(appOutDir, appFile),
           force: true,
         })
-        const rmdir = promisify(require("fs").rmdir)
-        await rmdir(x64AppOutDir, { recursive: true })
-        await rmdir(arm64AppOutPath, { recursive: true })
+        await fs.rm(x64AppOutDir, { recursive: true, force: true })
+        await fs.rm(arm64AppOutPath, { recursive: true, force: true })
         await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
         break
       }
@@ -145,9 +144,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged
-        ? Promise.resolve()
-        : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+      nonMasPromise = (
+        prepackaged
+          ? Promise.resolve()
+          : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
       ).then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
     }
 
@@ -238,6 +238,20 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const filterRe = filter == null ? null : filter.map(it => new RegExp(it))
 
+    let binaries = options.binaries || undefined
+    if (binaries) {
+      // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
+      const userDefinedBinaries = await Promise.all(binaries.map(async (destination) => { 
+        if (await statOrNull(destination)) {
+          return destination
+        }
+        return path.resolve(appPath, destination)
+      }))
+      // Insert at front to prioritize signing. We still sort by depth next
+      binaries = userDefinedBinaries.concat(binaries)
+      log.info('Signing addtional user-defined binaries: ' + JSON.stringify(userDefinedBinaries, null, 1))
+    }
+
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
@@ -259,7 +273,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         )
 
         /* Those are browser automating modules, browser (chromium, nightly) cannot be signed
-          https://github.com/electron-userland/electron-builder/issues/2010 
+          https://github.com/electron-userland/electron-builder/issues/2010
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
@@ -269,7 +283,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       version: this.config.electronVersion,
       app: appPath,
       keychain: keychainFile || undefined,
-      binaries: options.binaries || undefined,
+      binaries,
       requirements: isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
@@ -348,7 +362,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   //noinspection JSMethodCanBeStatic
   protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
     // productbuild doesn't created directory for out file
-    await mkdirs(path.dirname(outFile))
+    await mkdir(path.dirname(outFile), { recursive: true })
 
     const args = prepareProductBuildArgs(identity, keychain)
     args.push("--component", appPath, "/Applications")

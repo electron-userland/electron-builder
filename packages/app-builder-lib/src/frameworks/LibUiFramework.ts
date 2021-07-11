@@ -1,4 +1,5 @@
-import { chmod, emptyDir, ensureDir, rename, writeFile } from "fs-extra"
+import { emptyDir } from "fs-extra"
+import { mkdir, chmod, rename, writeFile } from "fs/promises"
 import * as path from "path"
 import { executeAppBuilder } from "builder-util"
 import { AfterPackContext } from "../configuration"
@@ -57,8 +58,8 @@ export class LibUiFramework implements Framework {
 
   private async prepareMacosApplicationStageDirectory(packager: MacPackager, options: PrepareApplicationStageDirectoryOptions) {
     const appContentsDir = path.join(options.appOutDir, this.distMacOsAppName, "Contents")
-    await ensureDir(path.join(appContentsDir, "Resources"))
-    await ensureDir(path.join(appContentsDir, "MacOS"))
+    await mkdir(path.join(appContentsDir, "Resources"), { recursive: true })
+    await mkdir(path.join(appContentsDir, "MacOS"), { recursive: true })
     await executeAppBuilder(["proton-native", "--node-version", this.version, "--platform", "darwin", "--stage", path.join(appContentsDir, "MacOS")])
 
     const appPlist: any = {

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, log } from "builder-util"
 import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra"
+import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Configuration, FileSet, Packager, PlatformSpecificBuildOptions } from "./index"
@@ -338,7 +338,7 @@ export function copyFiles(matchers: Array<FileMatcher> | null, transformer: File
         return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat, isUseHardLink)
       }
 
-      await ensureDir(path.dirname(matcher.to))
+      await mkdir(path.dirname(matcher.to), { recursive: true })
       return await copyOrLinkFile(matcher.from, matcher.to, fromStat)
     }
 

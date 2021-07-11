@@ -4,7 +4,7 @@ import { Fields } from "builder-util/out/log"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
-import mime from "mime"
+import * as mime from "mime"
 import { parse as parseUrl, UrlWithStringQuery } from "url"
 import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 

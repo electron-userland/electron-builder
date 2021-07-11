@@ -111,6 +111,9 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
   // powershell can return object if the only item
   const rawResult = await vm.exec("powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
     "Get-ChildItem -Recurse Cert: -CodeSigningCert | Select-Object -Property Subject,PSParentPath,Thumbprint | ConvertTo-Json -Compress",
   ])
   const certList = rawResult.length === 0 ? [] : asArray<CertInfo>(JSON.parse(rawResult))

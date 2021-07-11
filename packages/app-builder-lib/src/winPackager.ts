@@ -3,12 +3,21 @@ import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder }
 import { parseDn } from "builder-util-runtime"
 import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
-import { readdir } from "fs-extra"
-import isCI from "is-ci"
+import { readdir } from "fs/promises"
+import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign/codesign"
-import { CertificateFromStoreInfo, CertificateInfo, FileCodeSigningInfo, getCertificateFromStoreInfo, getCertInfo, getSignVendorPath, sign, WindowsSignOptions } from "./codeSign/windowsCodeSign"
+import {
+  CertificateFromStoreInfo,
+  CertificateInfo,
+  FileCodeSigningInfo,
+  getCertificateFromStoreInfo,
+  getCertInfo,
+  getSignVendorPath,
+  sign,
+  WindowsSignOptions,
+} from "./codeSign/windowsCodeSign"
 import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
@@ -325,11 +334,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     // rcedit crashed of executed using wine, resourcehacker works
     if (process.platform === "win32" || process.platform === "darwin") {
       await executeAppBuilder(["rcedit", "--args", JSON.stringify(args)], undefined /* child-process */, {}, 3 /* retry three times */)
-    }
-    else if (this.info.framework.name === "electron") {
+    } else if (this.info.framework.name === "electron") {
       const vendorPath = await getSignVendorPath()
       await execWine(path.join(vendorPath, "rcedit-ia32.exe"), path.join(vendorPath, "rcedit-x64.exe"), args)
-   }
+    }
 
     await this.sign(file)
     timer.end()

@@ -8,6 +8,7 @@ import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { ResolvedUpdateFileInfo } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
+import { execFileSync } from "child_process"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -26,13 +27,23 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
+  protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     let files = downloadUpdateOptions.updateInfoAndProvider.provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info)
+
+    // Detect if we are running inside Rosetta emulation
+    const sysctlRosettaInfoKey = "sysctl.proc_translated"
+    let isRosetta: boolean
+    try {
+      const result = execFileSync("sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
+      isRosetta = result.includes(`${sysctlRosettaInfoKey}: 1`)
+    } catch (e) {
+      this._logger.info(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
+    }
 
     // Allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64")
     if (files.some(isArm64)) {
-      files = files.filter(file => (process.arch === "arm64") === isArm64(file))
+      files = files.filter(file => (process.arch === "arm64" || isRosetta) === isArm64(file))
     }
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
@@ -122,14 +133,15 @@ export class MacUpdater extends AppUpdater {
               headers: { "Cache-Control": "no-cache" },
             })
 
-            this.nativeUpdater.once("error", reject)
-
             // The update has been downloaded and is ready to be served to Squirrel
             this.dispatchUpdateDownloaded(event)
 
             if (this.autoInstallOnAppQuit) {
+              this.nativeUpdater.once("error", reject)
               // This will trigger fetching and installing the file on Squirrel side
               this.nativeUpdater.checkForUpdates()
+            } else {
+              resolve([])
             }
           })
         })
@@ -146,9 +158,6 @@ export class MacUpdater extends AppUpdater {
       this.nativeUpdater.on("update-downloaded", () => {
         this.nativeUpdater.quitAndInstall()
       })
-
-      // And trigger the update
-      this.nativeUpdater.checkForUpdates()
     }
   }
 }

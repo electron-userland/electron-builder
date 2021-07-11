@@ -1,5 +1,5 @@
 import { Arch, Platform } from "electron-builder"
-import { promises as fs } from "fs"
+import * as fs from "fs/promises"
 import { app, execShell, getTarExecutable } from "../helpers/packTester"
 
 test.ifNotWindows(
@@ -42,6 +42,31 @@ test.ifNotWindows(
       return false
     },
   })
+)
+
+test.ifNotWindows.ifAll(
+  "executable path in postinst script",
+  app(
+    {
+      targets: Platform.LINUX.createTarget("deb"),
+      config: {
+        productName: "foo",
+        linux: {
+          executableName: "Boo",
+        },
+      },
+    },
+    {
+      packed: async context => {
+        const postinst = (
+          await execShell(`ar p '${context.outDir}/TestApp_1.1.0_amd64.deb' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./postinst`, {
+            maxBuffer: 10 * 1024 * 1024,
+          })
+        ).stdout
+        expect(postinst.trim()).toMatchSnapshot()
+      },
+    }
+  )
 )
 
 test.ifNotWindows.ifAll(
