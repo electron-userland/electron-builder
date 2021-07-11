@@ -11,7 +11,6 @@
 "electron-forge-maker-snap": patch
 "electron-publish": patch
 "electron-updater": patch
-"@electron-builder/test": patch
 ---
 
-test
+Initial introduction of changeset config to only bump the patch version in first PR
