@@ -13,4 +13,4 @@
 "electron-updater": patch
 ---
 
-Initial introduction of changeset config to only bump the patch version in first PR
+Initial introduction of changset config
