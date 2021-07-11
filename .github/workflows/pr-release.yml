@@ -5,10 +5,10 @@ on:
     branches:
       - master
 env:
-  CI: true
+  HUSKY: 0 # Bypass husky commit hook for CI
   PNPM_CACHE_FOLDER: .pnpm-store
 jobs:
-  release:
+  pr-release:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:

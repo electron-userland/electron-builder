@@ -5,7 +5,7 @@ appimage:
 appx:
   - appx
 bug:
-  - bug
+  - ' bug '
 docker:
   - docker
 electron-updater:

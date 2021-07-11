@@ -5,6 +5,7 @@ importers:
   .:
     specifiers:
       '@babel/plugin-transform-modules-commonjs': ^7.14.5
+      '@changesets/changelog-git': ^0.1.7
       '@changesets/cli': ^2.16.0
       '@typescript-eslint/eslint-plugin': ^4.28.1
       '@typescript-eslint/parser': ^4.28.1
@@ -30,6 +31,7 @@ importers:
       dmg-license: 1.0.9
     devDependencies:
       '@babel/plugin-transform-modules-commonjs': 7.14.5
+      '@changesets/changelog-git': 0.1.7
       '@changesets/cli': 2.16.0
       '@typescript-eslint/eslint-plugin': 4.28.1_37ea0521d4014002f404f9b7c2b7f3d2
       '@typescript-eslint/parser': 4.28.1_eslint@7.30.0+typescript@4.3.5
@@ -2022,6 +2024,12 @@ packages:
       '@changesets/types': 4.0.0
       '@manypkg/get-packages': 1.1.1
       semver: 5.7.1
+    dev: true
+
+  /@changesets/changelog-git/0.1.7:
+    resolution: {integrity: sha512-fQbJpmCNp2od6w0aRFYoo+kUXnArLXimE84cS37cUGtkf0OWmNub45bDB1dx8v3UXoqPwBdQTuUVRBR6M64rDw==}
+    dependencies:
+      '@changesets/types': 4.0.0
     dev: true
 
   /@changesets/cli/2.16.0:
