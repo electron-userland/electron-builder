@@ -173,7 +173,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
    *
    * If set to a string, it will be the name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory
    * If set explicitly to `false`, it will use the Windows temp directory ($PLUGINSDIR) that is unique to each launch of the portable application.
-   * 
+   *
    * Defaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).
    */
   readonly unpackDirName?: string | boolean
