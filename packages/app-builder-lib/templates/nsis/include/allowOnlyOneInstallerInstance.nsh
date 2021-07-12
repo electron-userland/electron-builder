@@ -76,6 +76,8 @@
           ${If} $R0 != 0
             DetailPrint `Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).`
             Sleep 2000
+          ${else}
+            Goto not_running
           ${endIf}
         ${else}
           Goto not_running
