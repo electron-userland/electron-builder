@@ -39,30 +39,30 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "dmg-license": "~1.0.9"
+    "dmg-license": "1.0.9"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.14.5",
-    "@changesets/changelog-git": "^0.1.7",
-    "@changesets/cli": "^2.16.0",
+    "@changesets/changelog-git": "0.1.7",
+    "@changesets/cli": "2.16.0",
     "@typescript-eslint/eslint-plugin": "^4.28.1",
     "@typescript-eslint/parser": "^4.28.1",
-    "conventional-changelog-cli": "^2.1.1",
+    "conventional-changelog-cli": "2.1.1",
     "eslint": "^7.30.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
-    "fs-extra": "^10.0.0",
-    "globby": "^11.0.4",
-    "husky": "~6.0.0",
+    "fs-extra": "10.0.0",
+    "globby": "11.0.4",
+    "husky": "6.0.0",
     "jest-cli": "^27.0.6",
-    "jsdoc-to-markdown": "^7.0.1",
-    "lint-staged": "^11.0.0",
-    "path-sort": "^0.1.0",
+    "jsdoc-to-markdown": "7.0.1",
+    "lint-staged": "11.0.1",
+    "path-sort": "0.1.0",
     "prettier": "^2.3.2",
-    "source-map-support": "^0.5.19",
-    "ts-jsdoc": "^3.2.2",
-    "typescript": "~4.3.5",
-    "typescript-json-schema": "^0.50.1",
-    "v8-compile-cache": "^2.3.0"
+    "source-map-support": "0.5.19",
+    "ts-jsdoc": "3.2.2",
+    "typescript": "4.3.5",
+    "typescript-json-schema": "0.50.1",
+    "v8-compile-cache": "2.3.0"
   }
 }
