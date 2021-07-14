@@ -1,6 +1,6 @@
 {
   "name": "builder-util-runtime",
-  "version": "8.7.7",
+  "version": "8.7.8",
   "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
