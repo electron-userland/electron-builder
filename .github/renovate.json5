@@ -1,0 +1,47 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommitType(chore)",
+    ":label(renovate)",
+    ":prHourlyLimit2",
+    ":prConcurrentLimit10",
+    ":prNotPending",
+    "group:recommended",
+    "group:monorepos",
+    ":enableVulnerabilityAlerts"
+  ],
+  "npm": {
+    "extends": [
+      // ":automergePatch",
+      ":noUnscheduledUpdates",
+      ":maintainLockFilesWeekly",
+      "npm:unpublishSafe",
+      "helpers:disableTypesNodeMajor"
+    ],
+    "schedule": ["after 9pm", "before 9am"],
+    // "rangeStrategy": "bump",
+    // "postUpdateOptions": ["npmDedupe"],
+    "packageRules": [
+      {
+        "groupName": "ESLint and Prettier",
+        "matchPackageNames": ["eslint", "prettier"],
+        "matchPackagePatterns": ["^eslint-config-", "^eslint-plugin-"]
+      },
+    ]
+  },
+  "circleci": {
+    "enabled": true,
+    // "automerge": true,
+    // "automergeType": "branch",
+    "schedule": ["before 9am on Friday"],
+    "pinDigests": true,
+    "semanticCommitScope": "docker",
+    "semanticCommitType": "ci",
+    "packageRules": [
+      {
+        "groupName": "Node Docker digests in CircleCI",
+        "matchPackageNames": ["circleci/node", "node"]
+      }
+    ]
+  }
+}
