@@ -11,9 +11,9 @@ importers:
       '@typescript-eslint/parser': 4.28.3
       conventional-changelog-cli: 2.1.1
       dmg-license: 1.0.9
-      eslint: ^7.30.0
-      eslint-config-prettier: ^8.3.0
-      eslint-plugin-prettier: ^3.4.0
+      eslint: 7.30.0
+      eslint-config-prettier: 8.3.0
+      eslint-plugin-prettier: 3.4.0
       fs-extra: 10.0.0
       globby: 11.0.4
       husky: 6.0.0
@@ -21,7 +21,7 @@ importers:
       jsdoc-to-markdown: 7.0.1
       lint-staged: 11.0.1
       path-sort: 0.1.0
-      prettier: ^2.3.2
+      prettier: 2.3.2
       source-map-support: 0.5.19
       ts-jsdoc: 3.2.2
       typescript: 4.3.5
@@ -2208,7 +2208,7 @@ packages:
     engines: {node: ^10.12.0 || >=12.0.0}
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.1
+      debug: 4.3.2
       espree: 7.3.1
       globals: 13.9.0
       ignore: 4.0.6
@@ -2225,7 +2225,7 @@ packages:
     engines: {node: '>=10.10.0'}
     dependencies:
       '@humanwhocodes/object-schema': 1.2.0
-      debug: 4.3.1
+      debug: 4.3.2
       minimatch: 3.0.4
     transitivePeerDependencies:
       - supports-color
@@ -4795,7 +4795,7 @@ packages:
       ajv: 6.12.6
       chalk: 4.1.1
       cross-spawn: 7.0.3
-      debug: 4.3.1
+      debug: 4.3.2
       doctrine: 3.0.0
       enquirer: 2.3.6
       escape-string-regexp: 4.0.0
