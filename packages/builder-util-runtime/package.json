@@ -22,8 +22,8 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.6",
-    "@types/sax": "^1.2.1"
+    "@types/debug": "4.1.6",
+    "@types/sax": "1.2.2"
   },
   "types": "./out/index.d.ts"
 }

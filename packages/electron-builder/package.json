@@ -64,9 +64,9 @@
     "yargs": "^17.0.1"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.11",
-    "@types/is-ci": "^3.0.0",
-    "@types/update-notifier": "^5.0.1"
+    "@types/fs-extra": "9.0.12",
+    "@types/is-ci": "3.0.0",
+    "@types/update-notifier": "5.0.1"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {
