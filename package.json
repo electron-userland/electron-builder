@@ -54,7 +54,7 @@
     "fs-extra": "10.0.0",
     "globby": "11.0.4",
     "husky": "6.0.0",
-    "jest-cli": "^27.0.6",
+    "jest-cli": "27.0.6",
     "jsdoc-to-markdown": "7.0.1",
     "lint-staged": "11.0.1",
     "path-sort": "0.1.0",
