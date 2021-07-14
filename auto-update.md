@@ -244,7 +244,7 @@ Emitted on progress.
 
 * [.AppUpdater](#AppUpdater) ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-    * [`.checkForUpdatesAndNotify()`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+    * [`.checkForUpdatesAndNotify(downloadNotification)`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
@@ -256,9 +256,11 @@ Emitted on progress.
 Asks the server whether there is an update.
 
 <a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a>
-**`appUpdater.checkForUpdatesAndNotify()` ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>**
+**`appUpdater.checkForUpdatesAndNotify(downloadNotification)` ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>**
 
 Asks the server whether there is an update, download and notify if update available.
+
+ - downloadNotification <code>{ body: string, title: string }</code>
 
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
 **`appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>**
