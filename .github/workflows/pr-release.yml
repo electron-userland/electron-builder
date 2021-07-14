@@ -35,10 +35,10 @@ jobs:
       - name: create versions PR & prepare publish
         uses: changesets/action@master
         with:
-          version: pnpm changelog && pnpm bump-version
-          commit: 'chore: Bump versions'
-          title: 'chore: Bump versions'
-          publish: pnpm release
+          version: pnpm ci:version
+          commit: 'chore(deploy): Bump versions'
+          title: 'chore(deploy): Bump versions'
+          publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
