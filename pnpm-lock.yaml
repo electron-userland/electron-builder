@@ -204,7 +204,7 @@ importers:
   packages/builder-util-runtime:
     specifiers:
       '@types/debug': 4.1.6
-      '@types/sax': 1.2.2
+      '@types/sax': 1.2.3
       debug: ^4.3.2
       sax: ^1.2.4
     dependencies:
@@ -212,7 +212,7 @@ importers:
       sax: 1.2.4
     devDependencies:
       '@types/debug': 4.1.6
-      '@types/sax': 1.2.2
+      '@types/sax': 1.2.3
 
   packages/dmg-builder:
     specifiers:
@@ -2703,8 +2703,8 @@ packages:
   /@types/prettier/2.3.1:
     resolution: {integrity: sha512-NVkb4p4YjI8E3O6+1m8I+8JlMpFZwfSbPGdaw0wXuyPRTEz0SLKwBUWNSO7Maoi8tQMPC8JLZNWkrcKPI7/sLA==}
 
-  /@types/sax/1.2.2:
-    resolution: {integrity: sha512-nfnUx5UQ1R+/riXydS0UyYJiqtxgOeObr9Hw8xSTtpB4LNoHa1z31rsvGXN0JKz/7/kDXw0bT2Q/VQkXAbCYoA==}
+  /@types/sax/1.2.3:
+    resolution: {integrity: sha512-+QSw6Tqvs/KQpZX8DvIl3hZSjNFLW/OqE5nlyHXtTwODaJvioN2rOWpBNEWZp2HZUFhOh+VohmJku/WxEXU2XA==}
     dependencies:
       '@types/node': 16.0.0
     dev: true
