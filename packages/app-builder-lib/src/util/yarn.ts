@@ -74,6 +74,15 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
+function checkYarnBerry () {
+  const npmUserAgent = process.env["npm_config_user_agent"] || ''
+  const regex = /yarn\/(\d+)\./gm;
+
+  const yarnVersionMatch = regex.exec(npmUserAgent);
+  const yarnMajorVersion = Number(yarnVersionMatch?.[1] ?? 0)
+  return yarnMajorVersion >= 2;
+}
+
 function installDependencies(appDir: string, options: RebuildOptions): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
@@ -82,9 +91,8 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   log.info({ platform, arch, appDir }, `installing production dependencies`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install"]
-  const npmUserAgent = process.env["npm_config_user_agent"]
-  const isYarn2 = npmUserAgent != null && npmUserAgent.startsWith("yarn/2.")
-  if (!isYarn2) {
+  const isYarnBerry = checkYarnBerry()
+  if (!isYarnBerry) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }
@@ -97,7 +105,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
 
   if (execPath == null) {
     execPath = getPackageToolPath()
-  } else if (!isYarn2) {
+  } else if (!isYarnBerry) {
     execArgs.unshift(execPath)
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
