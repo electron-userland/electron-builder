@@ -18,9 +18,7 @@
       "npm:unpublishSafe",
       "helpers:disableTypesNodeMajor"
     ],
-    "schedule": ["after 9pm", "before 9am"],
-    // "rangeStrategy": "bump",
-    // "postUpdateOptions": ["npmDedupe"],
+    "schedule": ["every weekend"],
     "packageRules": [
       {
         "groupName": "ESLint and Prettier",
