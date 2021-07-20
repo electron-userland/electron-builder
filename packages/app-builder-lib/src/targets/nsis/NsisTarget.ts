@@ -534,6 +534,7 @@ export class NsisTarget extends Target {
 
   private async executeMakensis(defines: any, commands: any, script: string) {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
+    args.push("-INPUTCHARSET", "UTF8");
     for (const name of Object.keys(defines)) {
       const value = defines[name]
       if (value == null) {
