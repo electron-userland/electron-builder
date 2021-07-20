@@ -1,6 +1,28 @@
 import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../.."
 
+interface CustomNsisBinary {
+  /**
+   * @private
+   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
+   */
+
+  readonly url: string | null
+
+  /**
+   * @private
+   * @default o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==
+   */
+
+  readonly checksum?: string | null
+
+  /**
+   * @private
+   * @default 3.0.4.2
+   */
+
+  readonly version?: string | null
+}
 export interface CommonNsisOptions {
   /**
    * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
@@ -24,6 +46,19 @@ export interface CommonNsisOptions {
    * @default false
    */
   readonly useZip?: boolean
+
+  /**
+   * @private
+   */
+  readonly customNsisBinary?: CustomNsisBinary | null
+
+  /**
+   * Whether or not to enable NSIS logging for debugging
+   * Note: Requires a debug-enabled NSIS build
+   * https://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612
+   * @private
+   */
+  readonly debugLogging?: boolean | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {

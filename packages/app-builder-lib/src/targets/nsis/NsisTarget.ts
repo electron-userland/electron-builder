@@ -23,7 +23,7 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, nsisTemplatesDir, NSIS_PATH, UninstallerReader } from "./nsisUtil"
+import { AppPackageHelper, nsisTemplatesDir, NSIS_PATH, UninstallerReader, NsisTargetOptions } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -62,6 +62,8 @@ export class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       log.warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
+
+    NsisTargetOptions.resolve(this.options)
   }
 
   build(appOutDir: string, arch: Arch) {
@@ -188,6 +190,9 @@ export class NsisTarget extends Target {
       BUILD_RESOURCES_DIR: packager.info.buildResourcesDir,
 
       APP_PACKAGE_NAME: appInfo.name,
+    }
+    if (options.debugLogging) {
+      defines.ENABLE_LOGGING = null
     }
     if (uninstallAppKey !== guid) {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
