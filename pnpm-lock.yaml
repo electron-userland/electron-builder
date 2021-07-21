@@ -7,8 +7,8 @@ importers:
       '@babel/plugin-transform-modules-commonjs': 7.14.5
       '@changesets/changelog-git': 0.1.7
       '@changesets/cli': 2.16.0
-      '@typescript-eslint/eslint-plugin': 4.28.3
-      '@typescript-eslint/parser': 4.28.3
+      '@typescript-eslint/eslint-plugin': 4.28.4
+      '@typescript-eslint/parser': 4.28.4
       conventional-changelog-cli: 2.1.1
       dmg-license: 1.0.9
       eslint: 7.30.0
@@ -33,8 +33,8 @@ importers:
       '@babel/plugin-transform-modules-commonjs': 7.14.5
       '@changesets/changelog-git': 0.1.7
       '@changesets/cli': 2.16.0
-      '@typescript-eslint/eslint-plugin': 4.28.3_8da3816a7c3fb8ebc9f4c4b3e4b2e38f
-      '@typescript-eslint/parser': 4.28.3_eslint@7.30.0+typescript@4.3.5
+      '@typescript-eslint/eslint-plugin': 4.28.4_7cc26dc0f453b695a0f705b876899c75
+      '@typescript-eslint/parser': 4.28.4_eslint@7.30.0+typescript@4.3.5
       conventional-changelog-cli: 2.1.1
       eslint: 7.30.0
       eslint-config-prettier: 8.3.0_eslint@7.30.0
@@ -162,115 +162,6 @@ importers:
       dmg-builder: link:../dmg-builder
       electron-builder-squirrel-windows: link:../electron-builder-squirrel-windows
 
-  packages/app-builder-lib/out:
-    specifiers:
-      '@babel/core': ^7.14.6
-      '@babel/plugin-proposal-class-properties': ^7.13.0
-      '@babel/plugin-proposal-decorators': ^7.14.2
-      '@babel/plugin-proposal-do-expressions': ^7.14.0
-      '@babel/plugin-proposal-export-default-from': ^7.12.13
-      '@babel/plugin-proposal-export-namespace-from': ^7.14.2
-      '@babel/plugin-proposal-function-bind': ^7.12.13
-      '@babel/plugin-proposal-function-sent': ^7.12.13
-      '@babel/plugin-proposal-json-strings': ^7.14.2
-      '@babel/plugin-proposal-logical-assignment-operators': ^7.14.2
-      '@babel/plugin-proposal-nullish-coalescing-operator': ^7.14.2
-      '@babel/plugin-proposal-numeric-separator': ^7.14.2
-      '@babel/plugin-proposal-optional-chaining': ^7.14.2
-      '@babel/plugin-proposal-pipeline-operator': ^7.12.13
-      '@babel/plugin-proposal-throw-expressions': ^7.12.13
-      '@babel/plugin-syntax-dynamic-import': ^7.8.3
-      '@babel/plugin-syntax-import-meta': ^7.10.4
-      '@babel/preset-env': ^7.14.7
-      '@babel/preset-react': ^7.13.13
-      '@develar/schema-utils': ~2.6.5
-      '@electron/universal': 1.0.5
-      '@malept/flatpak-bundler': ^0.4.0
-      '@types/debug': ^4.1.6
-      '@types/ejs': ^3.0.6
-      '@types/fs-extra': ^9.0.11
-      '@types/hosted-git-info': ^3.0.1
-      '@types/is-ci': ^3.0.0
-      '@types/js-yaml': ^4.0.1
-      '@types/semver': ^7.3.6
-      7zip-bin: ~5.1.1
-      async-exit-hook: ^2.0.1
-      bluebird-lst: ^1.0.9
-      builder-util: workspace:*
-      builder-util-runtime: workspace:*
-      chromium-pickle-js: ^0.2.0
-      debug: ^4.3.2
-      dmg-builder: workspace:*
-      ejs: ^3.1.6
-      electron-builder-squirrel-windows: workspace:*
-      electron-osx-sign: ^0.5.0
-      electron-publish: workspace:*
-      fs-extra: ^10.0.0
-      hosted-git-info: ^4.0.2
-      is-ci: ^3.0.0
-      isbinaryfile: ^4.0.8
-      js-yaml: ^4.1.0
-      lazy-val: ^1.0.5
-      minimatch: ^3.0.4
-      read-config-file: 6.2.0
-      sanitize-filename: ^1.6.3
-      semver: ^7.3.5
-      temp-file: ^3.4.0
-    dependencies:
-      '@develar/schema-utils': 2.6.5
-      '@electron/universal': 1.0.5
-      '@malept/flatpak-bundler': 0.4.0
-      7zip-bin: 5.1.1
-      async-exit-hook: 2.0.1
-      bluebird-lst: 1.0.9
-      builder-util: link:../../builder-util
-      builder-util-runtime: link:../../builder-util-runtime
-      chromium-pickle-js: 0.2.0
-      debug: 4.3.2
-      ejs: 3.1.6
-      electron-osx-sign: 0.5.0
-      electron-publish: link:../../electron-publish
-      fs-extra: 10.0.0
-      hosted-git-info: 4.0.2
-      is-ci: 3.0.0
-      isbinaryfile: 4.0.8
-      js-yaml: 4.1.0
-      lazy-val: 1.0.5
-      minimatch: 3.0.4
-      read-config-file: 6.2.0
-      sanitize-filename: 1.6.3
-      semver: 7.3.5
-      temp-file: 3.4.0
-    devDependencies:
-      '@babel/core': 7.14.6
-      '@babel/plugin-proposal-class-properties': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-decorators': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-do-expressions': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-export-default-from': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-export-namespace-from': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-function-bind': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-function-sent': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-json-strings': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-logical-assignment-operators': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-nullish-coalescing-operator': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-numeric-separator': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-optional-chaining': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-pipeline-operator': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-proposal-throw-expressions': 7.14.5_@babel+core@7.14.6
-      '@babel/plugin-syntax-dynamic-import': 7.8.3_@babel+core@7.14.6
-      '@babel/plugin-syntax-import-meta': 7.10.4_@babel+core@7.14.6
-      '@babel/preset-env': 7.14.7_@babel+core@7.14.6
-      '@babel/preset-react': 7.14.5_@babel+core@7.14.6
-      '@types/debug': 4.1.6
-      '@types/ejs': 3.0.7
-      '@types/fs-extra': 9.0.12
-      '@types/hosted-git-info': 3.0.2
-      '@types/is-ci': 3.0.0
-      '@types/js-yaml': 4.0.2
-      '@types/semver': 7.3.7
-      dmg-builder: link:../../dmg-builder
-      electron-builder-squirrel-windows: link:../../electron-builder-squirrel-windows
-
   packages/builder-util:
     specifiers:
       '@types/debug': ^4.1.6
@@ -313,7 +204,7 @@ importers:
   packages/builder-util-runtime:
     specifiers:
       '@types/debug': 4.1.6
-      '@types/sax': 1.2.2
+      '@types/sax': 1.2.3
       debug: ^4.3.2
       sax: ^1.2.4
     dependencies:
@@ -321,7 +212,7 @@ importers:
       sax: 1.2.4
     devDependencies:
       '@types/debug': 4.1.6
-      '@types/sax': 1.2.2
+      '@types/sax': 1.2.3
 
   packages/dmg-builder:
     specifiers:
@@ -336,7 +227,7 @@ importers:
       js-yaml: ^4.1.0
       temp-file: 3.4.0
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       fs-extra: 10.0.0
@@ -368,7 +259,7 @@ importers:
       yargs: ^17.0.1
     dependencies:
       '@types/yargs': 17.0.1
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.1
@@ -394,7 +285,7 @@ importers:
       builder-util: workspace:*
       fs-extra: ^10.0.0
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
       archiver: 5.3.0
       builder-util: link:../builder-util
       fs-extra: 10.0.0
@@ -408,25 +299,25 @@ importers:
     specifiers:
       app-builder-lib: workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis:
     specifiers:
       app-builder-lib: workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
 
   packages/electron-forge-maker-nsis-web:
     specifiers:
       app-builder-lib: workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
 
   packages/electron-forge-maker-snap:
     specifiers:
       app-builder-lib: workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib/out
+      app-builder-lib: link:../app-builder-lib
 
   packages/electron-publish:
     specifiers:
@@ -513,7 +404,7 @@ importers:
     dependencies:
       '@jest/core': 27.0.6
       7zip-bin: 5.1.1
-      app-builder-lib: link:../packages/app-builder-lib/out
+      app-builder-lib: link:../packages/app-builder-lib
       builder-util: link:../packages/builder-util
       builder-util-runtime: link:../packages/builder-util-runtime
       chalk: 4.1.1
@@ -2812,8 +2703,8 @@ packages:
   /@types/prettier/2.3.1:
     resolution: {integrity: sha512-NVkb4p4YjI8E3O6+1m8I+8JlMpFZwfSbPGdaw0wXuyPRTEz0SLKwBUWNSO7Maoi8tQMPC8JLZNWkrcKPI7/sLA==}
 
-  /@types/sax/1.2.2:
-    resolution: {integrity: sha512-nfnUx5UQ1R+/riXydS0UyYJiqtxgOeObr9Hw8xSTtpB4LNoHa1z31rsvGXN0JKz/7/kDXw0bT2Q/VQkXAbCYoA==}
+  /@types/sax/1.2.3:
+    resolution: {integrity: sha512-+QSw6Tqvs/KQpZX8DvIl3hZSjNFLW/OqE5nlyHXtTwODaJvioN2rOWpBNEWZp2HZUFhOh+VohmJku/WxEXU2XA==}
     dependencies:
       '@types/node': 16.0.0
     dev: true
@@ -2873,8 +2764,8 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: false
 
-  /@typescript-eslint/eslint-plugin/4.28.3_8da3816a7c3fb8ebc9f4c4b3e4b2e38f:
-    resolution: {integrity: sha512-jW8sEFu1ZeaV8xzwsfi6Vgtty2jf7/lJmQmDkDruBjYAbx5DA8JtbcMnP0rNPUG+oH5GoQBTSp+9613BzuIpYg==}
+  /@typescript-eslint/eslint-plugin/4.28.4_7cc26dc0f453b695a0f705b876899c75:
+    resolution: {integrity: sha512-s1oY4RmYDlWMlcV0kKPBaADn46JirZzvvH7c2CtAqxCY96S538JRBAzt83RrfkDheV/+G/vWNK0zek+8TB3Gmw==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
       '@typescript-eslint/parser': ^4.0.0
@@ -2884,9 +2775,9 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/experimental-utils': 4.28.3_eslint@7.30.0+typescript@4.3.5
-      '@typescript-eslint/parser': 4.28.3_eslint@7.30.0+typescript@4.3.5
-      '@typescript-eslint/scope-manager': 4.28.3
+      '@typescript-eslint/experimental-utils': 4.28.4_eslint@7.30.0+typescript@4.3.5
+      '@typescript-eslint/parser': 4.28.4_eslint@7.30.0+typescript@4.3.5
+      '@typescript-eslint/scope-manager': 4.28.4
       debug: 4.3.2
       eslint: 7.30.0
       functional-red-black-tree: 1.0.1
@@ -2898,16 +2789,16 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/experimental-utils/4.28.3_eslint@7.30.0+typescript@4.3.5:
-    resolution: {integrity: sha512-zZYl9TnrxwEPi3FbyeX0ZnE8Hp7j3OCR+ELoUfbwGHGxWnHg9+OqSmkw2MoCVpZksPCZYpQzC559Ee9pJNHTQw==}
+  /@typescript-eslint/experimental-utils/4.28.4_eslint@7.30.0+typescript@4.3.5:
+    resolution: {integrity: sha512-OglKWOQRWTCoqMSy6pm/kpinEIgdcXYceIcH3EKWUl4S8xhFtN34GQRaAvTIZB9DD94rW7d/U7tUg3SYeDFNHA==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
       eslint: '*'
     dependencies:
       '@types/json-schema': 7.0.7
-      '@typescript-eslint/scope-manager': 4.28.3
-      '@typescript-eslint/types': 4.28.3
-      '@typescript-eslint/typescript-estree': 4.28.3_typescript@4.3.5
+      '@typescript-eslint/scope-manager': 4.28.4
+      '@typescript-eslint/types': 4.28.4
+      '@typescript-eslint/typescript-estree': 4.28.4_typescript@4.3.5
       eslint: 7.30.0
       eslint-scope: 5.1.1
       eslint-utils: 3.0.0_eslint@7.30.0
@@ -2916,8 +2807,8 @@ packages:
       - typescript
     dev: true
 
-  /@typescript-eslint/parser/4.28.3_eslint@7.30.0+typescript@4.3.5:
-    resolution: {integrity: sha512-ZyWEn34bJexn/JNYvLQab0Mo5e+qqQNhknxmc8azgNd4XqspVYR5oHq9O11fLwdZMRcj4by15ghSlIEq+H5ltQ==}
+  /@typescript-eslint/parser/4.28.4_eslint@7.30.0+typescript@4.3.5:
+    resolution: {integrity: sha512-4i0jq3C6n+og7/uCHiE6q5ssw87zVdpUj1k6VlVYMonE3ILdFApEzTWgppSRG4kVNB/5jxnH+gTeKLMNfUelQA==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
       eslint: ^5.0.0 || ^6.0.0 || ^7.0.0
@@ -2926,9 +2817,9 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/scope-manager': 4.28.3
-      '@typescript-eslint/types': 4.28.3
-      '@typescript-eslint/typescript-estree': 4.28.3_typescript@4.3.5
+      '@typescript-eslint/scope-manager': 4.28.4
+      '@typescript-eslint/types': 4.28.4
+      '@typescript-eslint/typescript-estree': 4.28.4_typescript@4.3.5
       debug: 4.3.2
       eslint: 7.30.0
       typescript: 4.3.5
@@ -2936,21 +2827,21 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/scope-manager/4.28.3:
-    resolution: {integrity: sha512-/8lMisZ5NGIzGtJB+QizQ5eX4Xd8uxedFfMBXOKuJGP0oaBBVEMbJVddQKDXyyB0bPlmt8i6bHV89KbwOelJiQ==}
+  /@typescript-eslint/scope-manager/4.28.4:
+    resolution: {integrity: sha512-ZJBNs4usViOmlyFMt9X9l+X0WAFcDH7EdSArGqpldXu7aeZxDAuAzHiMAeI+JpSefY2INHrXeqnha39FVqXb8w==}
     engines: {node: ^8.10.0 || ^10.13.0 || >=11.10.1}
     dependencies:
-      '@typescript-eslint/types': 4.28.3
-      '@typescript-eslint/visitor-keys': 4.28.3
+      '@typescript-eslint/types': 4.28.4
+      '@typescript-eslint/visitor-keys': 4.28.4
     dev: true
 
-  /@typescript-eslint/types/4.28.3:
-    resolution: {integrity: sha512-kQFaEsQBQVtA9VGVyciyTbIg7S3WoKHNuOp/UF5RG40900KtGqfoiETWD/v0lzRXc+euVE9NXmfer9dLkUJrkA==}
+  /@typescript-eslint/types/4.28.4:
+    resolution: {integrity: sha512-3eap4QWxGqkYuEmVebUGULMskR6Cuoc/Wii0oSOddleP4EGx1tjLnZQ0ZP33YRoMDCs5O3j56RBV4g14T4jvww==}
     engines: {node: ^8.10.0 || ^10.13.0 || >=11.10.1}
     dev: true
 
-  /@typescript-eslint/typescript-estree/4.28.3_typescript@4.3.5:
-    resolution: {integrity: sha512-YAb1JED41kJsqCQt1NcnX5ZdTA93vKFCMP4lQYG6CFxd0VzDJcKttRlMrlG+1qiWAw8+zowmHU1H0OzjWJzR2w==}
+  /@typescript-eslint/typescript-estree/4.28.4_typescript@4.3.5:
+    resolution: {integrity: sha512-z7d8HK8XvCRyN2SNp+OXC2iZaF+O2BTquGhEYLKLx5k6p0r05ureUtgEfo5f6anLkhCxdHtCf6rPM1p4efHYDQ==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
       typescript: '*'
@@ -2958,8 +2849,8 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/types': 4.28.3
-      '@typescript-eslint/visitor-keys': 4.28.3
+      '@typescript-eslint/types': 4.28.4
+      '@typescript-eslint/visitor-keys': 4.28.4
       debug: 4.3.2
       globby: 11.0.4
       is-glob: 4.0.1
@@ -2970,11 +2861,11 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/visitor-keys/4.28.3:
-    resolution: {integrity: sha512-ri1OzcLnk1HH4gORmr1dllxDzzrN6goUIz/P4MHFV0YZJDCADPR3RvYNp0PW2SetKTThar6wlbFTL00hV2Q+fg==}
+  /@typescript-eslint/visitor-keys/4.28.4:
+    resolution: {integrity: sha512-NIAXAdbz1XdOuzqkJHjNKXKj8QQ4cv5cxR/g0uQhCYf/6//XrmfpaYsM7PnBcNbfvTDLUkqQ5TPNm1sozDdTWg==}
     engines: {node: ^8.10.0 || ^10.13.0 || >=11.10.1}
     dependencies:
-      '@typescript-eslint/types': 4.28.3
+      '@typescript-eslint/types': 4.28.4
       eslint-visitor-keys: 2.1.0
     dev: true
 
