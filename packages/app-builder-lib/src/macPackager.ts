@@ -241,7 +241,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     let binaries = options.binaries || undefined
     if (binaries) {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
-      const userDefinedBinaries = await Promise.all(binaries.map(async (destination) => { 
+      const userDefinedBinaries = await Promise.all(binaries.map(async (destination) => {
         if (await statOrNull(destination)) {
           return destination
         }
@@ -284,6 +284,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       app: appPath,
       keychain: keychainFile || undefined,
       binaries,
+      timestamp: isMas ? masOptions?.timestamp : options.timestamp,
       requirements: isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements),
       // https://github.com/electron-userland/electron-osx-sign/issues/196
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
