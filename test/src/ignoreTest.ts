@@ -175,7 +175,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.skip.ifDevOrLinuxCi(
   "copied select submodule node_modules",
   app(
     {
@@ -184,7 +184,9 @@ test.ifDevOrLinuxCi(
         asar: false,
         files: [
           "**/*",
-          "*/submodule-1-test/node_modules/**",
+          "**/submodule-1-test/node_modules/**/*",
+          "*/submodule-1-test/node_modules/**/*",
+          "node_modules/submodule-1-test/node_modules/**/*",
         ],
       },
     },
