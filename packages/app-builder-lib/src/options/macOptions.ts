@@ -170,6 +170,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Regex or an array of regex's that signal skipping signing a file.
    */
   readonly signIgnore?: Array<string> | string | null
+
+  /**
+   * Specify the URL of the timestamp authority server
+   */
+  readonly timestamp?: string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
