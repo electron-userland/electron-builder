@@ -62,9 +62,6 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 
   const filter = matcher.createFilter()
   return (file, fileStat) => {
-    // if (!nodeModulesFilter(file, fileStat) && !!packager.config.includeSubNodeModules) {
-    //   return true
-    // }
     if (!nodeModulesFilter(file, fileStat)) {
       return !!packager.config.includeSubNodeModules
     }
@@ -92,14 +89,8 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
           const matchesFilter = this.matcherFilter(file, fileStat)
           if (!matchesFilter) {
             // Skip the file
-            console.error('file', file)
             return false
           }
-        } else {
-          // Ignore?
-          console.error('file', file)
-
-          return null
         }
       }
     } else {

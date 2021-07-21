@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-Fixing app walker that is conditionally including all sub node modules
+fix: App file walker including all node modules when a `node_modules/___` glob pattern is specified in `files` config (#6045)
