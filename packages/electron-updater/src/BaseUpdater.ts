@@ -57,19 +57,18 @@ export abstract class BaseUpdater extends AppUpdater {
     this.quitAndInstallCalled = true
 
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
-      
       let installPathRequiresElevation = false
-      if (process.platform === 'win32') {
+      if (process.platform === "win32") {
         try {
-          var accessTestPath = path.join(path.dirname(process.execPath), 'access')
-          fs.writeFileSync(accessTestPath, ' ')
+          const accessTestPath = path.join(path.dirname(process.execPath), "access")
+          fs.writeFileSync(accessTestPath, " ")
         } catch(err) {
           // Require admin rights if needed
           installPathRequiresElevation = true
         }
       }
-      
+
+      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}, installPathRequiresElevation: ${installPathRequiresElevation}`)
       return this.doInstall({
         installerPath,
         isSilent,
