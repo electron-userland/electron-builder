@@ -60,8 +60,9 @@ export abstract class BaseUpdater extends AppUpdater {
       let installPathRequiresElevation = false
       if (process.platform === "win32") {
         try {
-          const accessTestPath = path.join(path.dirname(process.execPath), "access")
+          const accessTestPath = path.join(path.dirname(process.execPath), `access-${Math.floor(Math.random() * 100)}.tmp`)
           fs.writeFileSync(accessTestPath, " ")
+          fs.rmSync(accessTestPath)
         } catch(err) {
           // Require admin rights if needed
           installPathRequiresElevation = true
