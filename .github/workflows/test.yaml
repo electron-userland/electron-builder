@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 14
       - name: Cache .pnpm-store
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -33,7 +33,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm lint-deps
       - name: Cache ~/.cache/electron
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.cache/electron
           key: v-11.0.0-electron
@@ -52,7 +52,7 @@ jobs:
         with:
           node-version: 14
       - name: Cache .pnpm-store
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: $HOMEPATH/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -63,7 +63,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm compile
       - name: Cache ~/.cache/electron
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: $HOMEPATH/.cache/electron
           key: v-11.0.0-windows-electron

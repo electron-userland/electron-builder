@@ -114,7 +114,7 @@ test.ifDevOrLinuxCi(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        includeSubNodeModules: false, //  defaults to false too
+        includeSubNodeModules: false,
       },
     },
     {
@@ -175,7 +175,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.skip.ifDevOrLinuxCi(
   "copied select submodule node_modules",
   app(
     {
