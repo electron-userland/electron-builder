@@ -1,5 +1,13 @@
 ## 4.3.0
 
+## 4.4.2
+
+### Patch Changes
+
+- 878671d0: Updating patch number as many deps were updated as parted of RenovateBot integration
+- Updated dependencies [878671d0]
+  - builder-util-runtime@8.7.9
+
 ## 4.4.1
 
 ### Patch Changes
