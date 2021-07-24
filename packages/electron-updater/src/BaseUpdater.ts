@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { AllPublishOptions } from "builder-util-runtime"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
@@ -55,12 +57,24 @@ export abstract class BaseUpdater extends AppUpdater {
     this.quitAndInstallCalled = true
 
     try {
-      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}`)
+      let installPathRequiresElevation = false
+      if (process.platform === "win32") {
+        try {
+          const accessTestPath = path.join(path.dirname(process.execPath), `access-${Math.floor(Math.random() * 100)}.tmp`)
+          fs.writeFileSync(accessTestPath, " ")
+          fs.rmSync(accessTestPath)
+        } catch(err) {
+          // Require admin rights if needed
+          installPathRequiresElevation = true
+        }
+      }
+
+      this._logger.info(`Install: isSilent: ${isSilent}, isForceRunAfter: ${isForceRunAfter}, installPathRequiresElevation: ${installPathRequiresElevation}`)
       return this.doInstall({
         installerPath,
         isSilent,
         isForceRunAfter,
-        isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
+        isAdminRightsRequired: installPathRequiresElevation || downloadedFileInfo.isAdminRightsRequired,
       })
     } catch (e) {
       this.dispatchError(e)
