@@ -1,7 +1,6 @@
 ---
 "app-builder-lib": patch
 "builder-util-runtime": patch
-"@electron-builder/test": patch
 "builder-util": patch
 "dmg-builder": patch
 "electron-builder": patch
