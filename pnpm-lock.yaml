@@ -83,7 +83,7 @@ importers:
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.2
-      '@types/semver': 7.3.7
+      '@types/semver': 7.3.8
       7zip-bin: ~5.1.1
       async-exit-hook: ^2.0.1
       bluebird-lst: ^1.0.9
@@ -158,7 +158,7 @@ importers:
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.2
-      '@types/semver': 7.3.7
+      '@types/semver': 7.3.8
       dmg-builder: link:../dmg-builder
       electron-builder-squirrel-windows: link:../electron-builder-squirrel-windows
 
@@ -2502,6 +2502,10 @@ packages:
 
   /@types/semver/7.3.7:
     resolution: {integrity: sha512-4g1jrL98mdOIwSOUh6LTlB0Cs9I0dQPwINUhBg7C6pN4HLr8GS8xsksJxilW6S6dQHVi2K/o+lQuQcg7LroCnw==}
+
+  /@types/semver/7.3.8:
+    resolution: {integrity: sha512-D/2EJvAlCEtYFEYmmlGwbGXuK886HzyCc3nZX/tkFTQdEU8jZDAgiv08P162yB17y4ZXZoq7yFAnW4GDBb9Now==}
+    dev: true
 
   /@types/source-map-support/0.5.4:
     resolution: {integrity: sha512-9zGujX1sOPg32XLyfgEB/0G9ZnrjthL/Iv1ZfuAjj8LEilHZEpQSQs1scpRXPhHzGYgWiLz9ldF1cI8JhL+yMw==}
