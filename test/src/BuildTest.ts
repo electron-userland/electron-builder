@@ -367,11 +367,8 @@ test.ifDevOrLinuxCi(
         files: [
           // test ignore pattern for node_modules defined as file set filter
           {
-            filter: [
-              "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz",
-              "!node_modules/node-abi/*"
-            ]
-          }
+            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*"],
+          },
         ],
       },
     },
