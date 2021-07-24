@@ -241,15 +241,17 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     let binaries = options.binaries || undefined
     if (binaries) {
       // Accept absolute paths for external binaries, else resolve relative paths from the artifact's app Contents path.
-      const userDefinedBinaries = await Promise.all(binaries.map(async (destination) => {
-        if (await statOrNull(destination)) {
-          return destination
-        }
-        return path.resolve(appPath, destination)
-      }))
+      const userDefinedBinaries = await Promise.all(
+        binaries.map(async destination => {
+          if (await statOrNull(destination)) {
+            return destination
+          }
+          return path.resolve(appPath, destination)
+        })
+      )
       // Insert at front to prioritize signing. We still sort by depth next
       binaries = userDefinedBinaries.concat(binaries)
-      log.info('Signing addtional user-defined binaries: ' + JSON.stringify(userDefinedBinaries, null, 1))
+      log.info("Signing addtional user-defined binaries: " + JSON.stringify(userDefinedBinaries, null, 1))
     }
 
     const signOptions: any = {
