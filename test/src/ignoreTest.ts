@@ -114,7 +114,7 @@ test.ifDevOrLinuxCi(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        includeSubNodeModules: false  //  defaults to false too
+        includeSubNodeModules: false,
       },
     },
     {
@@ -148,7 +148,7 @@ test.ifDevOrLinuxCi(
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        includeSubNodeModules: true
+        includeSubNodeModules: true,
       },
     },
     {
@@ -175,17 +175,14 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.skip.ifDevOrLinuxCi(
   "copied select submodule node_modules",
   app(
     {
       targets: Platform.LINUX.createTarget(DIR_TARGET),
       config: {
         asar: false,
-        files: [
-          "**/*",
-          "*/submodule-1-test/node_modules/**",
-        ],
+        files: ["**/*", "*/submodule-1-test/node_modules/**"],
       },
     },
     {
@@ -205,7 +202,9 @@ test.ifDevOrLinuxCi(
       packed: context => {
         return Promise.all([
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules")).isDirectory(),
-          assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules", "package.json")).isFile(),
+          assertThat(
+            path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-1-test", "node_modules", "package.json")
+          ).isFile(),
           assertThat(path.join(context.getResources(Platform.LINUX, archFromString(process.arch)), "app", "node_modules", "submodule-2-test", "node_modules")).doesNotExist(),
         ])
       },
