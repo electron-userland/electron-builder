@@ -74,13 +74,13 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: NodeJS.
   }
 }
 
-function checkYarnBerry () {
-  const npmUserAgent = process.env["npm_config_user_agent"] || ''
-  const regex = /yarn\/(\d+)\./gm;
+function checkYarnBerry() {
+  const npmUserAgent = process.env["npm_config_user_agent"] || ""
+  const regex = /yarn\/(\d+)\./gm
 
-  const yarnVersionMatch = regex.exec(npmUserAgent);
+  const yarnVersionMatch = regex.exec(npmUserAgent)
   const yarnMajorVersion = Number(yarnVersionMatch?.[1] ?? 0)
-  return yarnMajorVersion >= 2;
+  return yarnMajorVersion >= 2
 }
 
 function installDependencies(appDir: string, options: RebuildOptions): Promise<any> {
