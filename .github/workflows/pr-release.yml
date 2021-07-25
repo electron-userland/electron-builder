@@ -18,26 +18,28 @@ jobs:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
 
-      - name: setup node.js
-        uses: actions/setup-node@v2
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: 14
+          version: 6.10.0
 
-      - name: install pnpm
-        run: npm i pnpm@latest -g
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          cache: 'pnpm'
+      
+      - name: Set up NPM credentials
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: setup pnpm config
-        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
-
-      - name: install dependencies
-        run: pnpm install
-        
-      - name: create versions PR & prepare publish
+      - run: pnpm install
+      
+      - name: Create versions PR & prepare publish
         uses: changesets/action@master
         with:
           version: pnpm ci:version
-          commit: 'chore(deploy): Bump versions'
-          title: 'chore(deploy): Bump versions'
+          commit: 'chore(deploy): Release'
+          title: 'chore(deploy): Release'
           publish: pnpm ci:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -56,11 +56,12 @@ jobs:
         with:
           path: $HOMEPATH/.pnpm-store
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install pnpm
-        run: |
-          npm i -g pnpm
-          pnpm config set store-dir $HOMEPATH/.pnpm-store
-      - run: pnpm install --frozen-lockfile
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.10.0
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile ]
       - run: pnpm compile
       - name: Cache ~/.cache/electron
         uses: actions/cache@v2
