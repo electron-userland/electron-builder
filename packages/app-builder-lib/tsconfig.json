@@ -2,7 +2,8 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "out",
-    "rootDir": "src"
+    "rootDir": ".",
+    "resolveJsonModule": true
   },
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/builder-lib",
@@ -21,6 +22,7 @@
     }
   ],
   "include": [
+    "./package.json",
     "src/**/*.ts",
     "../../typings/*.d.ts"
   ],
