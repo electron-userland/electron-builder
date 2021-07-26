@@ -1,13 +1,19 @@
+Function un.checkAppRunning
+  !insertmacro CHECK_APP_RUNNING
+FunctionEnd
+
 Function un.onInit
   !insertmacro check64BitAndSetRegView
 
-  ${IfNot} ${Silent}
+  ${If} ${Silent}
+    call un.checkAppRunning
+  ${else}
     !ifdef ONE_CLICK
       MessageBox MB_OKCANCEL "$(areYouSureToUninstall)" IDOK +2
       Quit
 
       # one-click installer executes uninstall section in the silent mode, but we must show message dialog if silent mode was not explicitly set by user (using /S flag)
-      !insertmacro CHECK_APP_RUNNING
+      call un.checkAppRunning
       SetSilent silent
     !endif
   ${endIf}
@@ -20,9 +26,11 @@ Function un.onInit
 FunctionEnd
 
 Section "un.install"
+  # for assisted installer we check it here to show progress
   !ifndef ONE_CLICK
-    # for assisted installer we check it here to show progress
-    !insertmacro CHECK_APP_RUNNING
+    ${IfNot} ${Silent}
+      call un.checkAppRunning
+    ${endIf}
   !endif
 
   !insertmacro setLinkVars
