@@ -32,9 +32,13 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+
       - run: pnpm install
       
       - name: Create versions PR & prepare publish
+        id: changesets
         uses: changesets/action@master
         with:
           version: pnpm ci:version
@@ -44,3 +48,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Send a stream message
+        uses: zulip/github-actions-zulip/send-message@v1
+        if: steps.changesets.outputs.published == 'true'
+        with:
+          api-key: ${{ secrets.ZULIP_API_KEY }}
+          email: 'mmaietta@outlook.com'
+          organization-url: 'https://electron-builder.zulipchat.com'
+          to: 'releases'
+          type: 'stream'
+          content: ${{ steps.changesets.outputs.publishedPackages }}
