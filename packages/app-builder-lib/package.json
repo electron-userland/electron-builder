@@ -93,7 +93,7 @@
     "@babel/plugin-syntax-import-meta": "7.10.4",
     "@babel/preset-env": "7.14.7",
     "@babel/preset-react": "7.14.5",
-    "@types/debug": "4.1.6",
+    "@types/debug": "4.1.7",
     "@types/ejs": "3.0.7",
     "@types/fs-extra": "9.0.12",
     "@types/hosted-git-info": "3.0.2",

@@ -77,7 +77,7 @@ importers:
       '@develar/schema-utils': ~2.6.5
       '@electron/universal': 1.0.5
       '@malept/flatpak-bundler': ^0.4.0
-      '@types/debug': 4.1.6
+      '@types/debug': 4.1.7
       '@types/ejs': 3.0.7
       '@types/fs-extra': 9.0.12
       '@types/hosted-git-info': 3.0.2
@@ -152,7 +152,7 @@ importers:
       '@babel/plugin-syntax-import-meta': 7.10.4_@babel+core@7.14.6
       '@babel/preset-env': 7.14.7_@babel+core@7.14.6
       '@babel/preset-react': 7.14.5_@babel+core@7.14.6
-      '@types/debug': 4.1.6
+      '@types/debug': 4.1.7
       '@types/ejs': 3.0.7
       '@types/fs-extra': 9.0.12
       '@types/hosted-git-info': 3.0.2
@@ -203,7 +203,7 @@ importers:
 
   packages/builder-util-runtime:
     specifiers:
-      '@types/debug': 4.1.6
+      '@types/debug': 4.1.7
       '@types/sax': 1.2.3
       debug: ^4.3.2
       sax: ^1.2.4
@@ -211,7 +211,7 @@ importers:
       debug: 4.3.2
       sax: 1.2.4
     devDependencies:
-      '@types/debug': 4.1.6
+      '@types/debug': 4.1.7
       '@types/sax': 1.2.3
 
   packages/dmg-builder:
@@ -2521,15 +2521,10 @@ packages:
     resolution: {integrity: sha512-c/QCznvk7bLKGhHETj29rqKufui3jaAxjBhK4R2zUrMG5UG0qTwfWYxBoUbH8JCyDjdCWMIxPJ7/Fdz1UcAnWg==}
     dev: true
 
-  /@types/debug/4.1.6:
-    resolution: {integrity: sha512-7fDOJFA/x8B+sO1901BmHlf5dE1cxBU8mRXj8QOEDnn16hhGJv/IHxJtZhvsabZsIMn0eLIyeOKAeqSNJJYTpA==}
-    dev: true
-
   /@types/debug/4.1.7:
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
     dependencies:
       '@types/ms': 0.7.31
-    dev: false
 
   /@types/ejs/3.0.7:
     resolution: {integrity: sha512-AUxAGNIPr7wQmzdFMNhHy/RkR5kk8gSzAZIuCYY//6ZYJKHvnjezmoEYP34coPleUPnqrUWt03cCq7NzNaA/qg==}
@@ -2622,7 +2617,6 @@ packages:
 
   /@types/ms/0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
-    dev: false
 
   /@types/node/12.20.17:
     resolution: {integrity: sha512-so8EHl4S6MmatPS0f9sE1ND94/ocbcEshW5OpyYthRqeRpiYyW2uXYTo/84kmfdfeNrDycARkvuiXl6nO40NGg==}
