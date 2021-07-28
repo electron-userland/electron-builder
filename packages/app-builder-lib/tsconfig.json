@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "out",
     "rootDir": ".",
-    "resolveJsonModule": true
   },
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/builder-lib",
