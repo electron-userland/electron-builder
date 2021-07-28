@@ -1,19 +1,13 @@
 critical:
   - '(critical|urgent)'
-
-app-builder-lib:
-builder-util:
 appimage:
   - appimage
 appx:
   - appx
 bug:
-  - bug
+  - ' bug '
 docker:
   - docker
-electron-updater:
-  - updater
-  - electron-updater
 linux:
   - linux
   - ubuntu
@@ -28,7 +22,7 @@ msi:
 nsis:
   - nsis
 readme:
-  - '(docs|documentation|readme)'
+  - '(docs|readme)'
 snap:
   - '(snap|snaps|snapcraft)'
 flatpak:

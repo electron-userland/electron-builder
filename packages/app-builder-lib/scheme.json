@@ -2621,6 +2621,13 @@
           ],
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
         },
+        "timestamp": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "description": "Specify the URL of the timestamp authority server"
+        },
         "type": {
           "anyOf": [
             {
@@ -3212,6 +3219,13 @@
             }
           ],
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
+        },
+        "timestamp": {
+          "type": [
+            "null",
+            "string"
+          ],
+          "description": "Specify the URL of the timestamp authority server"
         },
         "type": {
           "anyOf": [
@@ -6534,11 +6548,11 @@
       "description": "Whether to remove `scripts` field from `package.json` files.",
       "type": "boolean"
     },
-	"removePackageKeywords": {
-	  "default": true,
-	  "description": "Whether to remove `keywords` field from `package.json` files.",
-	  "type": "boolean"
-	},
+    "removePackageKeywords": {
+      "default": true,
+      "description": "Whether to remove `keywords` field from `package.json` files.",
+      "type": "boolean"
+    },
     "rpm": {
       "anyOf": [
         {

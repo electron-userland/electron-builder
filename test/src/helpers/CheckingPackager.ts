@@ -5,7 +5,7 @@ import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
 import MacPackager from "app-builder-lib/out/macPackager"
 import { DmgTarget } from "dmg-builder"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { SignOptions as MacSignOptions } from "app-builder-lib/electron-osx-sign"
+import { SignOptions as MacSignOptions } from "electron-osx-sign"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

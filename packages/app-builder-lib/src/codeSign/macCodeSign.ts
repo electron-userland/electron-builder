@@ -312,7 +312,7 @@ export declare class Identity {
   constructor(name: string, hash: string)
 }
 
-const _Identity = require("../../electron-osx-sign/util-identities").Identity
+const _Identity = require("electron-osx-sign/util-identities").Identity
 
 function parseIdentity(line: string): Identity {
   const firstQuoteIndex = line.indexOf('"')
