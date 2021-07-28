@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
+import { version as VERSION } from "../../package.json"
 import { log, use, getArchCliNames } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
 import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config"
@@ -36,7 +36,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
 /** @internal */
 export async function installAppDeps(args: any) {
   try {
-    log.info({ version: PACKAGE_VERSION }, "electron-builder")
+    log.info({ version: VERSION }, "electron-builder")
   } catch (e) {
     // error in dev mode without babel
     if (!(e instanceof ReferenceError)) {
