@@ -1,5 +1,13 @@
 # builder-util
 
+## 22.11.11
+
+### Patch Changes
+
+- a4eae34f: Synchronizing CLI and package.json versions. Updating auto-publish values + changeset generation to be more frictionless
+- Updated dependencies [a4eae34f]
+  - builder-util-runtime@8.7.10
+
 ## 22.11.10
 
 ### Patch Changes
