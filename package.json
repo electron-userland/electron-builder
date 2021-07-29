@@ -24,7 +24,7 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "generate-changeset": "pnpm changeset",
     "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && git add .",
-    "ci:publish": "pnpm compile && changeset publish",
+    "ci:publish": "pnpm compile && pnpm publish -r",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
