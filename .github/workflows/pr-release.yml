@@ -54,7 +54,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
-          email: 'mmaietta@outlook.com'
+          email: ${{ secrets.ZULIP_EMAIL }}
           organization-url: 'https://electron-builder.zulipchat.com'
           to: 'releases'
           type: 'stream'
