@@ -1,9 +1,20 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@1.6.0/schema.json",
   "changelog": "@changesets/changelog-git",
-  "commit": true,
-  "linked": [],
-  "access": "restricted",
+  "commit": false,
+  "linked": [[
+    "app-builder-lib",
+    "builder-util",
+    "dmg-builder",
+    "electron-builder",
+    "electron-builder-squirrel-windows",
+    "electron-forge-maker-appimage",
+    "electron-forge-maker-nsis",
+    "electron-forge-maker-nsis-web",
+    "electron-forge-maker-snap",
+    "electron-publish"
+  ]],
+  "access": "public",
   "baseBranch": "master",
   "updateInternalDependencies": "patch",
   "ignore": ["@electron-builder/test"]

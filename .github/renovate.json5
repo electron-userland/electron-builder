@@ -18,7 +18,7 @@
       "npm:unpublishSafe",
       "helpers:disableTypesNodeMajor"
     ],
-    "schedule": ["every weekend"],
+    "schedule": ["before 3am on the first day of the month"],
     "packageRules": [
       {
         "groupName": "ESLint and Prettier",
@@ -29,9 +29,7 @@
   },
   "circleci": {
     "enabled": true,
-    // "automerge": true,
-    // "automergeType": "branch",
-    "schedule": ["before 9am on Friday"],
+    "schedule": ["before 3am on the first day of the month"],
     "pinDigests": true,
     "semanticCommitScope": "docker",
     "semanticCommitType": "ci",
