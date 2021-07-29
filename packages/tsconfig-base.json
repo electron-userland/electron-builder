@@ -5,7 +5,6 @@
     "baseUrl": ".",
     "declaration": true,
     "stripInternal": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true
+    "skipLibCheck": true
   }
 }

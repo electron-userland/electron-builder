@@ -1,3 +1,1 @@
-import { version } from "../package.json"
-
-export const PACKAGE_VERSION = version
+export const PACKAGE_VERSION = "22.11.8"

@@ -2,7 +2,7 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "out",
-    "rootDir": "."
+    "rootDir": "src"
   },
   "references": [
     {
@@ -24,7 +24,6 @@
     "access": "public"
   },
   "include": [
-    "./package.json",
     "src/**/*.ts",
     "../../typings/*.d.ts"
   ],
