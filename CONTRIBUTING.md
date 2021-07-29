@@ -7,7 +7,7 @@ By participating, you are expected to uphold this code. Please file issue to rep
 > All prerequisites could be installed via script at the end of the chapter
 >
 
-* [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not so good as PNPM.
+* [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM.
 * For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to 
 electron-builder for your other projects to leverage and test with.
 ```
@@ -16,7 +16,7 @@ pnpm i yalc -g
 ```
 
 ## To setup a local dev environment
-Follow this chapter to set environment from scratch
+Follow this chapter to setup an environment from scratch.
 ```
 git clone https://github.com/electron-userland/electron-builder.git
 
@@ -25,13 +25,13 @@ pnpm install
 popd
 ```
 
-You must link yalc's local "packages" to your project via the one-liner below (run from your project folder)
+You must link `yalc`'s local "packages" to your project via the one-liner below (run from your project folder)
 ```
 yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
 ```
 
 The magical script for whenever you make changes to electron-builder! Rebuilds electron-builder, and then patches 
-the npm modules in your project (such as electron-quick-start).
+the npm modules in your project (such as `electron-quick-start`).
 Ready for copy-paste into terminal presuming electron-builder repo is at root level outside your project folder, 
 otherwise adjust path as necessary.
 ```
@@ -53,7 +53,7 @@ popd
 To check that your contributions match the project coding style make sure `pnpm test` passes.
 To build project run: `pnpm i && pnpm compile`
 
-> If you get strange compilation errors, try to remove all `node_modules` in the project (especially under `packages/*`).
+> If you get strange compilation errors, try to remove all `node_modules` directories in the project (especially under `packages/*`).
 >
 ### Git Commit Guidelines
 We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how 
@@ -61,7 +61,7 @@ our git [commit messages can be formatted](https://gist.github.com/develar/273e2
 
 ## Documentation
 
-To avoid google indexing, documentation files located in the branch `docs`. To clone:
+To avoid Google indexing, documentation files located in the branch `docs`. To clone:
 
 ```shell script
 git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs
@@ -73,7 +73,7 @@ Documentation files located in the `/docs`.
 
 `pip3 install mkdocs-material mkdocs markdown-include pymdown-extensions pygments --upgrade`
 
-You'll want to copy the `mkdocs.yml` file from the master branch and then: `mkdocs build`
+You'll want to copy the `mkdocs.yml` file from the master branch and then run `mkdocs build`.
 
 ## Debug Tests
 
@@ -83,7 +83,7 @@ Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/di
 If you use IntelliJ IDEA or WebStorm — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you 
 can run tests from an editor (just click on `Run` green gutter icon).
 
-Or you can create Node.js run configuration manually:
+Or you can create the Node.js run configuration manually:
 * Ensure that `Before launch` contains `Compile TypeScript`.
 * Set `Node interpreter` to NodeJS 8. NodeJS 8 is required to debug.
 * Set `Application Parameters` to `-t "test name" relative-test-file-name` if you want to debug particular test. E.g.
@@ -111,7 +111,7 @@ When filing an issue please make sure, that you give all information needed.
 This includes:
 
 - description of what you're trying to do
-- package.json
+- `package.json`
 - log of the terminal output
 - node version
 - npm version
