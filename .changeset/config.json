@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@1.6.0/schema.json",
   "changelog": "@changesets/changelog-git",
-  "commit": true,
+  "commit": false,
   "linked": [[
     "app-builder-lib",
     "builder-util",
