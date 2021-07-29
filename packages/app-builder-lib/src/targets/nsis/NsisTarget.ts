@@ -247,12 +247,16 @@ export class NsisTarget extends Target {
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
-      const portableOptions = options as PortableOptions
-      defines.REQUEST_EXECUTION_LEVEL = portableOptions.requestExecutionLevel || "user"
-      defines.UNPACK_DIR_NAME = portableOptions.unpackDirName || (await executeAppBuilder(["ksuid"]))
+      const { unpackDirName, requestExecutionLevel, splashImage } = options as PortableOptions
+      defines.REQUEST_EXECUTION_LEVEL = requestExecutionLevel || "user"
 
-      if (portableOptions.splashImage != null) {
-        defines.SPLASH_IMAGE = path.resolve(packager.projectDir, portableOptions.splashImage)
+      // https://github.com/electron-userland/electron-builder/issues/5764
+      if (typeof unpackDirName === "string" || !unpackDirName) {
+        defines.UNPACK_DIR_NAME = unpackDirName || (await executeAppBuilder(["ksuid"]))
+      }
+
+      if (splashImage != null) {
+        defines.SPLASH_IMAGE = path.resolve(packager.projectDir, splashImage)
       }
     } else {
       await this.configureDefines(oneClick, defines)

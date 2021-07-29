@@ -39,6 +39,7 @@ test.ifAll.ifNotCi(
       publish: null,
       portable: {
         useZip: true,
+        unpackDirName: false,
       },
       compression: "store",
     },
@@ -57,6 +58,7 @@ test.ifNotCiMac(
           installerIcon: "foo test space.ico",
         },
         portable: {
+          unpackDirName: true,
           requestExecutionLevel: "admin",
           //tslint:disable-next-line:no-invalid-template-strings
           artifactName: "${productName}Portable.${version}.${ext}",
