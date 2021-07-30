@@ -1,6 +1,6 @@
 {
   "name": "builder-util-runtime",
-  "version": "8.7.9",
+  "version": "8.7.10",
   "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/debug": "4.1.6",
+    "@types/debug": "4.1.7",
     "@types/sax": "1.2.3"
   },
   "types": "./out/index.d.ts"

@@ -453,7 +453,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
 function getCertificateTypes(isMas: boolean, isDevelopment: boolean): CertType[] {
   if (isDevelopment) {
-    return ["Mac Developer", "Apple Development"]
+    return isMas ? ["Mac Developer", "Apple Development"] : ["Developer ID Application"]
   }
-  return isMas ? ["3rd Party Mac Developer Application", "Apple Distribution"] : ["Developer ID Application"]
+  return isMas ? ["Apple Distribution"] : ["Developer ID Application"]
 }

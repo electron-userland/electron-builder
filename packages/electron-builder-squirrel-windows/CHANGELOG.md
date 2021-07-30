@@ -1,5 +1,15 @@
 # electron-builder-squirrel-windows
 
+## 22.11.11
+
+### Patch Changes
+
+- a4eae34f: Synchronizing CLI and package.json versions. Updating auto-publish values + changeset generation to be more frictionless
+- Updated dependencies [a4eae34f]
+- Updated dependencies [4a177dc0]
+  - app-builder-lib@22.11.11
+  - builder-util@22.11.11
+
 ## 22.11.10
 
 ### Patch Changes
