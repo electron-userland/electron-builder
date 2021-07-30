@@ -3460,11 +3460,17 @@
             },
             "checksum": {
               "description": "SHA256 to validate downloaded `makensis`",
-              "type": [ "null", "string" ]
+              "type": [
+                "null",
+                "string"
+              ]
             },
             "version": {
               "description": "Version of `makensis` (used for caching)",
-              "type": [ "null", "string" ]
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         },
@@ -3787,11 +3793,17 @@
             },
             "checksum": {
               "description": "SHA256 to validate downloaded `makensis`",
-              "type": [ "null", "string" ]
+              "type": [
+                "null",
+                "string"
+              ]
             },
             "version": {
               "description": "Version of `makensis` (used for caching)",
-              "type": [ "null", "string" ]
+              "type": [
+                "null",
+                "string"
+              ]
             }
           }
         },

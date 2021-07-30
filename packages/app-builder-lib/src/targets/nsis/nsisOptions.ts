@@ -53,8 +53,9 @@ export interface CommonNsisOptions {
   readonly customNsisBinary?: CustomNsisBinary | null
 
   /**
-   * Whether or not to enable NSIS logging for debugging
-   * Note: Requires a debug-enabled NSIS build
+   * Whether or not to enable NSIS logging for debugging.
+   * Note: Requires a debug-enabled NSIS build.
+   * electron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently
    * https://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612
    * @private
    */
