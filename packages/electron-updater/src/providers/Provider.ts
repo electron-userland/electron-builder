@@ -55,7 +55,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   abstract getLatestVersion(): Promise<T>
 
-  abstract resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo>
+  abstract resolveFiles(updateInfo: T): Array<ResolvedUpdateFileInfo>
 
   /**
    * Method to perform API request only to resolve update info, but not to download update.
