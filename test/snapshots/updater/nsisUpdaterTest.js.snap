@@ -107,6 +107,7 @@ Object {
   ],
   "releaseName": "v1.5.2-beta.3",
   "releaseNotes": "",
+  "tag": "v1.5.2-beta.3",
   "version": "1.5.2-beta.3",
 }
 `;
@@ -160,6 +161,7 @@ Object {
   ],
   "releaseName": "1.1.0",
   "releaseNotes": "",
+  "tag": "v1.1.0",
   "version": "1.1.0",
 }
 `;
@@ -174,6 +176,7 @@ Object {
   ],
   "releaseName": "1.1.0",
   "releaseNotes": "",
+  "tag": "v1.1.0",
   "version": "1.1.0",
 }
 `;
@@ -205,6 +208,7 @@ Object {
       "version": "1.5.0",
     },
   ],
+  "tag": "v1.5.2-beta.3",
   "version": "1.5.2-beta.3",
 }
 `;
@@ -228,6 +232,7 @@ Object {
       "version": "1.5.0",
     },
   ],
+  "tag": "v1.5.2-beta.3",
   "version": "1.5.2-beta.3",
 }
 `;
@@ -259,6 +264,7 @@ Object {
       "version": "1.5.0",
     },
   ],
+  "tag": "v1.5.2-beta.3",
   "version": "1.5.2-beta.3",
 }
 `;
@@ -418,6 +424,7 @@ Object {
   ],
   "releaseName": "1.1.0",
   "releaseNotes": "",
+  "tag": "v1.1.0",
   "version": "1.1.0",
 }
 `;

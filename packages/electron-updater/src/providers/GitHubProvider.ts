@@ -6,8 +6,11 @@ import { ResolvedUpdateFileInfo } from "../main"
 import { getChannelFilename, newBaseUrl, newUrlFromBase } from "../util"
 import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from "./Provider"
 
-const hrefRegExp = /\/tag\/v?([^/]+)$/
+const hrefRegExp = /\/tag\/([^/]+)$/
 
+interface GithubUpdateInfo extends UpdateInfo {
+  tag: string
+}
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: URL
@@ -32,12 +35,12 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   }
 }
 
-export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
+export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
   constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
     super(options, "github.com", runtimeOptions)
   }
 
-  async getLatestVersion(): Promise<UpdateInfo> {
+  async getLatestVersion(): Promise<GithubUpdateInfo> {
     const cancellationToken = new CancellationToken()
 
     const feedXml: string = (await this.httpRequest(
@@ -51,16 +54,16 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const feed = parseXml(feedXml)
     // noinspection TypeScriptValidateJSTypes
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    let version: string | null
+    let tag: string | null
     try {
       if (this.updater.allowPrerelease) {
         // noinspection TypeScriptValidateJSTypes
-        version = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+        tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
       } else {
-        version = await this.getLatestVersionString(cancellationToken)
+        tag = await this.getLatestTagName(cancellationToken)
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
-          if (hrefRegExp.exec(element.element("link").attribute("href"))![1] === version) {
+          if (hrefRegExp.exec(element.element("link").attribute("href"))![1] === tag) {
             latestRelease = element
             break
           }
@@ -70,12 +73,12 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
-    if (version == null) {
+    if (tag == null) {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
     const channelFile = getChannelFilename(this.getDefaultChannelName())
-    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(version, channelFile), this.baseUrl)
+    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
     try {
@@ -95,10 +98,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     if (result.releaseNotes == null) {
       result.releaseNotes = computeReleaseNotes(this.updater.currentVersion, this.updater.fullChangelog, feed, latestRelease)
     }
-    return result
+    return {
+      tag: tag,
+      ...result,
+    }
   }
 
-  private async getLatestVersionString(cancellationToken: CancellationToken): Promise<string | null> {
+  private async getLatestTagName(cancellationToken: CancellationToken): Promise<string | null> {
     const options = this.options
     // do not use API for GitHub to avoid limit, only for custom host or GitHub Enterprise
     const url =
@@ -112,7 +118,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       }
 
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
-      return releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+      return releaseInfo.tag_name
     } catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
@@ -122,13 +128,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return `/${this.options.owner}/${this.options.repo}/releases`
   }
 
-  resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
+  resolveFiles(updateInfo: GithubUpdateInfo): Array<ResolvedUpdateFileInfo> {
     // still replace space to - due to backward compatibility
-    return resolveFiles(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.version, p.replace(/ /g, "-")))
+    return resolveFiles(updateInfo, this.baseUrl, p => this.getBaseDownloadPath(updateInfo.tag, p.replace(/ /g, "-")))
   }
 
-  private getBaseDownloadPath(version: string, fileName: string): string {
-    return `${this.basePath}/download/${this.options.vPrefixedTagName === false ? "" : "v"}${version}/${fileName}`
+  private getBaseDownloadPath(tag: string, fileName: string): string {
+    return `${this.basePath}/download/${tag}/${fileName}`
   }
 }
 
