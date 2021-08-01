@@ -244,7 +244,7 @@ importers:
     specifiers:
       '@types/fs-extra': 9.0.12
       '@types/is-ci': 3.0.0
-      '@types/update-notifier': 5.0.1
+      '@types/update-notifier': 5.1.0
       '@types/yargs': ^17.0.1
       app-builder-lib: workspace:*
       builder-util: workspace:*
@@ -273,7 +273,7 @@ importers:
     devDependencies:
       '@types/fs-extra': 9.0.12
       '@types/is-ci': 3.0.0
-      '@types/update-notifier': 5.0.1
+      '@types/update-notifier': 5.1.0
 
   packages/electron-builder-squirrel-windows:
     specifiers:
@@ -2517,8 +2517,8 @@ packages:
   /@types/stack-utils/2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
 
-  /@types/update-notifier/5.0.1:
-    resolution: {integrity: sha512-MCYeVOuxNyaXez3r6R93uFwOOJ8EhqFpconkNN3uGzXBJgGhO87PQir61hU+IdMs7gor440UYm7nuJvcPaIooA==}
+  /@types/update-notifier/5.1.0:
+    resolution: {integrity: sha512-aGY5pH1Q/DcToKXl4MCj1c0uDUB+zSVFDRCI7Q7js5sguzBTqJV/5kJA2awofbtWYF3xnon1TYdZYnFditRPtQ==}
     dependencies:
       '@types/configstore': 5.0.1
       boxen: 4.2.0
