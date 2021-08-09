@@ -1,5 +1,12 @@
 # app-builder-lib
 
+## 22.12.0
+
+### Minor Changes
+
+- 14974114: feat(nsis portable): Adding support for unique dir on each portable app launch
+- a99a7c87: feat: allowing custom makensis url to be specified and adding flag to enable debug logging for NSIS scripts
+
 ## 22.11.11
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 4.4.4
+
+### Patch Changes
+
+- ae81dfae: fix(electron-updater): small cleanup and add more debug logging for MacUpdater to investigate #6120
+
 ## 4.4.3
 
 ### Patch Changes
