@@ -3447,6 +3447,38 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
+        "customNsisBinary": {
+          "description": "Allows providing the URL configuration for `makensis`.",
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "url": {
+              "description": "URL to download from",
+              "type": "string"
+            },
+            "checksum": {
+              "description": "SHA256 to validate downloaded `makensis`",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "version": {
+              "description": "Version of `makensis` (used for caching)",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        },
+        "debugLogging": {
+          "default": false,
+          "description": "Enables `LogText` to be used in `nsh` scripts",
+          "type": "boolean"
+        },
         "deleteAppDataOnUninstall": {
           "default": false,
           "description": "*one-click installer only.* Whether to delete app data on uninstall.",
@@ -3746,6 +3778,38 @@
         "createStartMenuShortcut": {
           "default": true,
           "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "customNsisBinary": {
+          "description": "Allows providing the URL configuration for `makensis`.",
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "url": {
+              "description": "URL to download from",
+              "type": "string"
+            },
+            "checksum": {
+              "description": "SHA256 to validate downloaded `makensis`",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "version": {
+              "description": "Version of `makensis` (used for caching)",
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        },
+        "debugLogging": {
+          "default": false,
+          "description": "Enables `LogText` to be used in `nsh` scripts",
           "type": "boolean"
         },
         "deleteAppDataOnUninstall": {

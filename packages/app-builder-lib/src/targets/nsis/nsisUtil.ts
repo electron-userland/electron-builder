@@ -1,22 +1,41 @@
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
-import { getBinFromUrl } from "../../binDownload"
+import { getBinFromUrl, getBinFromCustomLoc } from "../../binDownload"
 import { copyFile } from "builder-util/out/fs"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
 import * as fs from "fs/promises"
 import * as zlib from "zlib"
+import { NsisOptions } from "./nsisOptions"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
+
+export const NsisTargetOptions = (() => {
+  let _resolve: (options: NsisOptions) => any
+  const promise = new Promise<NsisOptions>(resolve => (_resolve = resolve))
+  return {
+    then: (callback: (options: NsisOptions) => any): Promise<string> => promise.then(callback),
+    resolve: (options: NsisOptions): any => _resolve(options),
+  }
+})()
 
 export const NSIS_PATH = () => {
   const custom = process.env.ELECTRON_BUILDER_NSIS_DIR
   if (custom != null && custom.length > 0) {
     return Promise.resolve(custom.trim())
   }
-  // noinspection SpellCheckingInspection
-  return getBinFromUrl("nsis", "3.0.4.1", "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==")
+  return NsisTargetOptions.then((options: NsisOptions) => {
+    if (options.customNsisBinary) {
+      const { checksum, url, version } = options.customNsisBinary
+      if (checksum && url) {
+        const binaryVersion = version || checksum.substr(0, 8)
+        return getBinFromCustomLoc("nsis", binaryVersion, url, checksum)
+      }
+    }
+    // noinspection SpellCheckingInspection
+    return getBinFromUrl("nsis", "3.0.4.2", "o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==")
+  })
 }
 
 export class AppPackageHelper {

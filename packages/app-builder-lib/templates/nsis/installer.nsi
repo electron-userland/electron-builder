@@ -40,6 +40,9 @@ Var oldMenuDirectory
 !endif
 
 Function .onInit
+  SetOutPath $INSTDIR
+  ${LogSet} on
+
   !ifmacrodef preInit
     !insertmacro preInit
   !endif
