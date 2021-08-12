@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 4.4.5
+
+### Patch Changes
+
+- a3f2cd15: fix(electron-updater): default import throws error for fs and path leading to always requiring elevation
+- ae363e51: fix: removing data from error being thrown. It's unnecessary and also unnecessarily large to be passing to the console. Resolves: #6131
+
 ## 4.4.4
 
 ### Patch Changes
