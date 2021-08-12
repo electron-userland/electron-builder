@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.12.0...v) (2021-08-12)
+
+
+### Bug Fixes
+
+* console log data for electron-updater blockmaps are far too large ([#6143](https://github.com/electron-userland/electron-builder/issues/6143)) ([ae363e5](https://github.com/electron-userland/electron-builder/commit/ae363e51957d0abfc7d848f51aa23c7e5faf5f33))
+* **electron-updater:** fix import errors ([#6140](https://github.com/electron-userland/electron-builder/issues/6140)) ([a3f2cd1](https://github.com/electron-userland/electron-builder/commit/a3f2cd1565771c8ce6c5a4b40d1c88316a75dff3)), closes [#6134](https://github.com/electron-userland/electron-builder/issues/6134)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.11.11...v) (2021-08-09)
 
 
