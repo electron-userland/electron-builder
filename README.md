@@ -80,4 +80,4 @@ We do this open source work in our free time. If you'd like us to invest more ti
 
 <a href="https://workflowy.com"><img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/></a>
 <a href="https://tidepool.org"><img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/></a>
-<a href="https://keygen.sh/"><img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen.sh" align="middle"/></a>
+<a href="https://keygen.sh/?via=mike"><img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" align="middle"/></a>
