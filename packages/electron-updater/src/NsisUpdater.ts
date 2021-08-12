@@ -154,7 +154,7 @@ export class NsisUpdater extends BaseUpdater {
         try {
           return JSON.parse(gunzipSync(data).toString())
         } catch (e) {
-          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}, raw data: ${data}`)
+          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
         }
       }
 
