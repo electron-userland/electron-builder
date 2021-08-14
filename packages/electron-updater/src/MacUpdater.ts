@@ -80,16 +80,17 @@ export class MacUpdater extends AppUpdater {
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     const server = createServer()
+    this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     server.on("close", () => {
       log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
     })
 
+    // must be called after server is listening, otherwise address is null
     function getServerUrl(): string {
       const address = server.address() as AddressInfo
       return `http://127.0.0.1:${address.port}`
     }
 
-    this.debug(`Proxy server for native Squirrel.Mac is created (address=${getServerUrl()}, ${logContext})`)
     return await new Promise<Array<string>>((resolve, reject) => {
       // insecure random is ok
       const fileUrl = `/${Date.now().toString(16)}-${Math.floor(Math.random() * 9999).toString(16)}.zip`
@@ -145,6 +146,7 @@ export class MacUpdater extends AppUpdater {
 
       this.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
       server.listen(0, "127.0.0.1", () => {
+        this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl()}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
           url: getServerUrl(),
           headers: { "Cache-Control": "no-cache" },
