@@ -50,7 +50,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Send a stream message
-        uses: zulip/github-actions-zulip@v0.1.2
+        uses: zulip/github-actions-zulip@v1.0.0
         if: steps.changesets.outputs.published == 'true'
         with:
           api-key: ${{ secrets.ZULIP_API_KEY }}
