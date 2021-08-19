@@ -1,25 +1,11 @@
 import { createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
-import { GithubOptions, GenericServerOptions, SpacesOptions } from "builder-util-runtime"
+import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
 import { assertThat } from "./helpers/fileAssert"
 import { app, checkDirContents } from "./helpers/packTester"
 
-test.ifNotWindows.ifDevOrLinuxCi(
-  "generic, github and spaces",
-  app({
-    targets: Platform.MAC.createTarget("zip"),
-    config: {
-      generateUpdatesFilesForAllChannels: true,
-      mac: {
-        electronUpdaterCompatibility: ">=2.16",
-      },
-      publish: [genericPublisher("https://example.com/downloads"), githubPublisher("foo/foo"), spacesPublisher()],
-    },
-  })
-)
-
-function spacesPublisher(publishAutoUpdate: boolean = true): SpacesOptions {
+function spacesPublisher(publishAutoUpdate = true): SpacesOptions {
   return {
     provider: "spaces",
     name: "mySpaceName",
@@ -41,6 +27,28 @@ function genericPublisher(url: string): GenericServerOptions {
     url,
   }
 }
+
+function keygenPublisher(): KeygenOptions {
+  return {
+    provider: "keygen",
+    product: "43981278-96e7-47de-b8c2-98d59987206b",
+    account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
+  }
+}
+
+test.ifNotWindows.ifDevOrLinuxCi(
+  "generic, github and spaces",
+  app({
+    targets: Platform.MAC.createTarget("zip"),
+    config: {
+      generateUpdatesFilesForAllChannels: true,
+      mac: {
+        electronUpdaterCompatibility: ">=2.16",
+      },
+      publish: [genericPublisher("https://example.com/downloads"), githubPublisher("foo/foo"), spacesPublisher()],
+    },
+  })
+)
 
 test.ifNotWindows.ifDevOrLinuxCi(
   "github and spaces (publishAutoUpdate)",
@@ -66,7 +74,7 @@ test.ifMac(
         mac: {
           electronUpdaterCompatibility: ">=2.16",
         },
-        publish: [spacesPublisher()],
+        publish: [spacesPublisher(), keygenPublisher()],
       },
     },
     {

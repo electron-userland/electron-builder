@@ -84,7 +84,7 @@ export abstract class HttpPublisher extends Publisher {
     const fileStat = await stat(task.file)
 
     const progressBar = this.createProgressBar(fileName, fileStat.size)
-    await this.doUpload(
+    return this.doUpload(
       fileName,
       task.arch || Arch.x64,
       fileStat.size,

@@ -47,7 +47,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     })
   }
 
-  createRequest(options: any, callback: (response: any) => void): any {
+  createRequest(options: any, callback: (response: any) => void): Electron.ClientRequest {
     // fix (node 7+) for making electron updater work when using AWS private buckets, check if headers contain Host property
     if (options.headers && options.headers.Host) {
       // set host value from headers.Host
@@ -64,7 +64,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     const request = require("electron").net.request({
       ...options,
       session: this.cachedSession,
-    })
+    }) as Electron.ClientRequest
     request.on("response", callback)
     if (this.proxyLoginCallback != null) {
       request.on("login", this.proxyLoginCallback)

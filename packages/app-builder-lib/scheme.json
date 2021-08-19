@@ -85,6 +85,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -107,6 +110,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -235,6 +241,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -257,6 +266,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -420,12 +432,45 @@
       ],
       "type": "object"
     },
+    "CustomNsisBinary": {
+      "additionalProperties": false,
+      "properties": {
+        "checksum": {
+          "default": "o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "url": {
+          "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "version": {
+          "default": "3.0.4.2",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "type": "object"
+    },
     "CustomPublishOptions": {
       "additionalProperties": {},
       "properties": {
         "provider": {
-          "$ref": "#/definitions/PublishProvider",
-          "description": "The provider."
+          "description": "The provider. Must be `custom`.",
+          "enum": [
+            "custom"
+          ],
+          "type": "string"
         },
         "publishAutoUpdate": {
           "default": true,
@@ -448,6 +493,10 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "updateProvider": {
+          "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
+          "typeof": "function"
         },
         "updaterCacheDirName": {
           "type": [
@@ -624,6 +673,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -646,6 +698,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -808,6 +863,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -830,6 +888,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -899,11 +960,12 @@
     },
     "ElectronBrandingOptions": {
       "additionalProperties": false,
+      "description": "Electron distributables branding options.",
       "properties": {
-        "projectName": {
+        "productName": {
           "type": "string"
         },
-        "productName": {
+        "projectName": {
           "type": "string"
         }
       },
@@ -1180,6 +1242,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -1202,6 +1267,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -1441,6 +1509,76 @@
         }
       },
       "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "KeygenOptions": {
+      "additionalProperties": false,
+      "description": "Keygen options.\nhttps://keygen.sh/\nDefine `KEYGEN_TOKEN` environment variable.",
+      "properties": {
+        "account": {
+          "description": "Keygen account's UUID",
+          "type": "string"
+        },
+        "channel": {
+          "default": "stable",
+          "description": "The channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "platform": {
+          "description": "The target Platform. Is set programmatically explicitly during publishing.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "product": {
+          "description": "Keygen product's UUID",
+          "type": "string"
+        },
+        "provider": {
+          "description": "The provider. Must be `keygen`.",
+          "enum": [
+            "keygen"
+          ],
+          "type": "string"
+        },
+        "publishAutoUpdate": {
+          "default": true,
+          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
+          "type": "boolean"
+        },
+        "publisherName": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requestHeaders": {
+          "$ref": "#/definitions/OutgoingHttpHeaders",
+          "description": "Any custom request headers"
+        },
+        "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "required": [
+        "account",
+        "product",
         "provider"
       ],
       "type": "object"
@@ -1745,6 +1883,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -1767,6 +1908,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -1991,6 +2135,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -2013,6 +2160,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -2479,6 +2629,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -2501,6 +2654,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -2622,11 +2778,11 @@
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
         },
         "timestamp": {
+          "description": "Specify the URL of the timestamp authority server",
           "type": [
             "null",
             "string"
-          ],
-          "description": "Specify the URL of the timestamp authority server"
+          ]
         },
         "type": {
           "anyOf": [
@@ -3078,6 +3234,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -3100,6 +3259,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -3221,11 +3383,11 @@
           "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
         },
         "timestamp": {
+          "description": "Specify the URL of the timestamp authority server",
           "type": [
             "null",
             "string"
-          ],
-          "description": "Specify the URL of the timestamp authority server"
+          ]
         },
         "type": {
           "anyOf": [
@@ -3278,6 +3440,20 @@
     "MsiOptions": {
       "additionalProperties": false,
       "properties": {
+        "additionalWixArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
+        },
         "artifactName": {
           "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
           "type": [
@@ -3338,6 +3514,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -3360,6 +3539,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -3402,13 +3584,6 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
           "type": "boolean"
-        },
-        "additionalWixArgs": {
-          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`",
-          "type": [
-            "null",
-            "array"
-          ]
         }
       },
       "type": "object"
@@ -3448,36 +3623,21 @@
           "type": "boolean"
         },
         "customNsisBinary": {
-          "description": "Allows providing the URL configuration for `makensis`.",
-          "type": [
-            "null",
-            "object"
-          ],
-          "properties": {
-            "url": {
-              "description": "URL to download from",
-              "type": "string"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisBinary"
             },
-            "checksum": {
-              "description": "SHA256 to validate downloaded `makensis`",
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "version": {
-              "description": "Version of `makensis` (used for caching)",
-              "type": [
-                "null",
-                "string"
-              ]
+            {
+              "type": "null"
             }
-          }
+          ]
         },
         "debugLogging": {
-          "default": false,
-          "description": "Enables `LogText` to be used in `nsh` scripts",
-          "type": "boolean"
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -3642,6 +3802,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -3664,6 +3827,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -3781,36 +3947,21 @@
           "type": "boolean"
         },
         "customNsisBinary": {
-          "description": "Allows providing the URL configuration for `makensis`.",
-          "type": [
-            "null",
-            "object"
-          ],
-          "properties": {
-            "url": {
-              "description": "URL to download from",
-              "type": "string"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisBinary"
             },
-            "checksum": {
-              "description": "SHA256 to validate downloaded `makensis`",
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "version": {
-              "description": "Version of `makensis` (used for caching)",
-              "type": [
-                "null",
-                "string"
-              ]
+            {
+              "type": "null"
             }
-          }
+          ]
         },
         "debugLogging": {
-          "default": false,
-          "description": "Enables `LogText` to be used in `nsh` scripts",
-          "type": "boolean"
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -3975,6 +4126,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -3997,6 +4151,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -4290,6 +4447,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -4312,6 +4472,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -4373,6 +4536,23 @@
             "string"
           ]
         },
+        "customNsisBinary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CustomNsisBinary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "debugLogging": {
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "guid": {
           "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
           "type": [
@@ -4401,6 +4581,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -4423,6 +4606,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -4465,7 +4651,7 @@
           "type": "boolean"
         },
         "unpackDirName": {
-          "description": "The unpack directory for the portable app resources.\nIf set to a string, it will be the name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.\nIf set explicitly to `false`, it will use the Windows temp directory ($PLUGINSDIR) that is unique to each launch of the portable application.\nDefaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).",
+          "description": "The unpack directory for the portable app resources.\n\nIf set to a string, it will be the name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory\nIf set explicitly to `false`, it will use the Windows temp directory ($PLUGINSDIR) that is unique to each launch of the portable application.\n\nDefaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).",
           "type": [
             "string",
             "boolean"
@@ -4522,6 +4708,7 @@
         "custom",
         "generic",
         "github",
+        "keygen",
         "s3",
         "snapStore",
         "spaces"
@@ -4929,6 +5116,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -4951,6 +5141,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -5238,6 +5431,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -5260,6 +5456,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -5629,6 +5828,9 @@
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
               "$ref": "#/definitions/SnapStoreOptions"
             },
             {
@@ -5651,6 +5853,9 @@
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
                   },
                   {
                     "$ref": "#/definitions/SnapStoreOptions"
@@ -6071,6 +6276,10 @@
       ],
       "description": "macOS DMG options."
     },
+    "electronBranding": {
+      "$ref": "#/definitions/ElectronBrandingOptions",
+      "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
+    },
     "electronCompile": {
       "description": "Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.",
       "type": "boolean"
@@ -6085,10 +6294,6 @@
         }
       ],
       "description": "Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory"
-    },
-    "electronBranding": {
-      "$ref": "#/definitions/ElectronBrandingOptions",
-      "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
     },
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
@@ -6278,7 +6483,7 @@
     },
     "includeSubNodeModules": {
       "default": false,
-      "description": "Whether to include *all* of the submodules 'node_modules' directories.",
+      "description": "Whether to include *all* of the submodules node_modules directories",
       "type": "boolean"
     },
     "launchUiVersion": {
@@ -6508,6 +6713,9 @@
           "$ref": "#/definitions/CustomPublishOptions"
         },
         {
+          "$ref": "#/definitions/KeygenOptions"
+        },
+        {
           "$ref": "#/definitions/SnapStoreOptions"
         },
         {
@@ -6530,6 +6738,9 @@
               },
               {
                 "$ref": "#/definitions/CustomPublishOptions"
+              },
+              {
+                "$ref": "#/definitions/KeygenOptions"
               },
               {
                 "$ref": "#/definitions/SnapStoreOptions"
@@ -6558,14 +6769,14 @@
       "description": "Whether to build using Electron Build Service if target not supported on current OS.",
       "type": "boolean"
     },
-    "removePackageScripts": {
-      "default": true,
-      "description": "Whether to remove `scripts` field from `package.json` files.",
-      "type": "boolean"
-    },
     "removePackageKeywords": {
       "default": true,
       "description": "Whether to remove `keywords` field from `package.json` files.",
+      "type": "boolean"
+    },
+    "removePackageScripts": {
+      "default": true,
+      "description": "Whether to remove `scripts` field from `package.json` files.",
       "type": "boolean"
     },
     "rpm": {

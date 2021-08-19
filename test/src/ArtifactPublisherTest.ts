@@ -1,10 +1,12 @@
 import { Arch } from "builder-util"
-import { CancellationToken, HttpError, S3Options, SpacesOptions } from "builder-util-runtime"
-import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
+import { CancellationToken, HttpError, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { PublishContext } from "electron-publish"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { isCI as isCi } from "ci-info"
 import * as path from "path"
+import { KeygenPublisher } from "app-builder-lib/out/publish/KeygenPublisher"
+import { Platform } from "app-builder-lib"
+import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -80,28 +82,24 @@ testAndIgnoreApiRate("GitHub upload", async () => {
   }
 })
 
-if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null) {
-  test("S3 upload", async () => {
-    const publisher = createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)!!
-    await publisher.upload({ file: iconPath, arch: Arch.x64 })
-    // test overwrite
-    await publisher.upload({ file: iconPath, arch: Arch.x64 })
-  })
-}
+test.ifEnv(process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null)("S3 upload", async () => {
+  const publisher = createPublisher(publishContext, "0.0.1", { provider: "s3", bucket: "electron-builder-test" } as S3Options, {}, {} as any)!
+  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  // test overwrite
+  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+})
 
-if (process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null) {
-  test("DO upload", async () => {
-    const configuration: SpacesOptions = {
-      provider: "spaces",
-      name: "electron-builder-test",
-      region: "nyc3",
-    }
-    const publisher = createPublisher(publishContext, "0.0.1", configuration, {}, {} as any)!!
-    await publisher.upload({ file: iconPath, arch: Arch.x64 })
-    // test overwrite
-    await publisher.upload({ file: iconPath, arch: Arch.x64 })
-  })
-}
+test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("DO upload", async () => {
+  const configuration: SpacesOptions = {
+    provider: "spaces",
+    name: "electron-builder-test",
+    region: "nyc3",
+  }
+  const publisher = createPublisher(publishContext, "0.0.1", configuration, {}, {} as any)!
+  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  // test overwrite
+  await publisher.upload({ file: iconPath, arch: Arch.x64 })
+})
 
 testAndIgnoreApiRate("prerelease", async () => {
   const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease" }, versionNumber())
@@ -125,4 +123,20 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
   } finally {
     await publisher.deleteRelease()
   }
+})
+
+test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
+  const publisher = new KeygenPublisher(
+    publishContext,
+    {
+      provider: "keygen",
+      // electron-builder-test
+      product: "43981278-96e7-47de-b8c2-98d59987206b",
+      account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
+      platform: Platform.MAC.name,
+    } as KeygenOptions,
+    versionNumber()
+  )
+  const releaseId = await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  await publisher.deleteRelease(releaseId)
 })

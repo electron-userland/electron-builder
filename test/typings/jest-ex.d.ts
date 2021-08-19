@@ -17,6 +17,8 @@ declare module jest {
     ifLinuxOrDevMac: jest.It
 
     ifAll: jest.It
+    
+    ifEnv: (envVar: any) => jest.It
   }
 
   interface Describe {

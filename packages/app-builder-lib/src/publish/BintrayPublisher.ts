@@ -1,5 +1,5 @@
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
-import { BintrayOptions, configureRequestOptions, HttpError } from "builder-util-runtime"
+import { BintrayOptions, configureRequestOptions, HttpError, HttpExecutor } from "builder-util-runtime"
 import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest, RequestOptions } from "http"
@@ -79,17 +79,9 @@ export class BintrayPublisher extends HttpPublisher {
       options.headers!["X-Bintray-Debian-Component"] = this.client.component
     }
 
-    for (let attemptNumber = 0; ; attemptNumber++) {
-      try {
-        return await httpExecutor.doApiRequest(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
-      } catch (e) {
-        if (attemptNumber < 3 && ((e instanceof HttpError && e.statusCode === 502) || e.code === "EPIPE")) {
-          continue
-        }
-
-        throw e
-      }
-    }
+    return HttpExecutor.retryOnServerError(() => {
+      return httpExecutor.doApiRequest(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
+    })
   }
 
   //noinspection JSUnusedGlobalSymbols

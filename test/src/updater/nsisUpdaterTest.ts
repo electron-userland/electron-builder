@@ -1,4 +1,4 @@
-import { GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
+import { GenericServerOptions, GithubOptions, KeygenOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import { outputFile } from "fs-extra"
 import { tmpdir } from "os"
@@ -42,6 +42,17 @@ test("file url generic", async () => {
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
+  })
+  await validateDownload(updater)
+})
+
+test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
+  const updater = await createNsisUpdater()
+  updater.addAuthHeader(`Bearer ${process.env.KEYGEN_TOKEN}`)
+  updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
+    provider: "keygen",
+    product: "43981278-96e7-47de-b8c2-98d59987206b",
+    account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
   })
   await validateDownload(updater)
 })

@@ -7,6 +7,7 @@ import {
   getS3LikeProviderBaseUrl,
   GithubOptions,
   githubUrl,
+  KeygenOptions,
   PublishConfiguration,
   PublishProvider,
 } from "builder-util-runtime"
@@ -29,6 +30,7 @@ import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
 import { SnapStoreOptions, SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
+import { KeygenPublisher } from "./KeygenPublisher"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -297,6 +299,9 @@ export function createPublisher(context: PublishContext, version: string, publis
     case "bintray":
       return new BintrayPublisher(context, publishConfig as BintrayOptions, version, options)
 
+    case "keygen":
+      return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
+
     case "generic":
       return null
 
@@ -320,6 +325,9 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
 
     case "generic":
       return null
+
+    case "keygen":
+      return KeygenPublisher
 
     case "s3":
       return S3Publisher
@@ -419,6 +427,8 @@ async function resolvePublishConfigurations(
       serviceName = "github"
     } else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
       serviceName = "bintray"
+    } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
+      serviceName = "keygen"
     }
 
     if (serviceName != null) {
@@ -497,6 +507,13 @@ async function getResolvedPublishConfig(
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion, errorIfCannot)
     return options
+  }
+
+  if (provider === "keygen") {
+    return {
+      ...options,
+      platform: platformPackager?.platform.name,
+    } as KeygenOptions
   }
 
   const isGithub = provider === "github"

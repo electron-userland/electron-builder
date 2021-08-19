@@ -13,8 +13,11 @@ const skipSuite = describe.skip
 const isAllTests = process.env.ALL_TESTS !== "false"
 describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
-
 skip.ifAll = skip
+
+const execEnv = (envVar) => !!envVar ? test : skip
+test.ifEnv = execEnv
+skip.ifEnv = execEnv
 
 const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip

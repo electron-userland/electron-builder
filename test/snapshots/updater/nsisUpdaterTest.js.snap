@@ -353,6 +353,30 @@ Array [
 ]
 `;
 
+exports[`file url keygen 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "r0NdvVubzJWAN56nqjTdLkBWV/dq0HQOKz9A6QFplUozu3uSVXA2t731miy/S29mY4MD18iLxKD6GXnPfNNbNw==",
+      "size": 59865147,
+      "url": "electron-quick-start-typescript-1.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.0-x64.exe",
+  "releaseDate": "2021-08-19T04:34:01.089Z",
+  "sha512": "r0NdvVubzJWAN56nqjTdLkBWV/dq0HQOKz9A6QFplUozu3uSVXA2t731miy/S29mY4MD18iLxKD6GXnPfNNbNw==",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url keygen 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`invalid signature 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
 
 exports[`invalid signature 2`] = `
