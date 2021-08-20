@@ -100,7 +100,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   }
 
   if (!isRunningYarn(execPath)) {
-    execArgs.push("--cache-min", "999999999")
+    execArgs.push("--prefer-offline")
   }
 
   if (execPath == null) {
