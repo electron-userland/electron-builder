@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 4.4.6
+
+### Patch Changes
+
+- a3c72b24: fix(electron-updater): workaround vite's process.env.\* replacement
+- ca0e8454: fix(electron-updater): `null` object error when MacUpdater attempts to log the server port before it is listening
+
 ## 4.4.5
 
 ### Patch Changes
