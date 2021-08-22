@@ -34,11 +34,11 @@ export function getAppCacheDir() {
   // https://github.com/electron/electron/issues/1404#issuecomment-194391247
   let result: string
   if (process.platform === "win32") {
-    result = process.env.LOCALAPPDATA || path.join(homedir, "AppData", "Local")
+    result = process.env["LOCALAPPDATA"] || path.join(homedir, "AppData", "Local")
   } else if (process.platform === "darwin") {
     result = path.join(homedir, "Library", "Application Support", "Caches")
   } else {
-    result = process.env.XDG_CACHE_HOME || path.join(homedir, ".cache")
+    result = process.env["XDG_CACHE_HOME"] || path.join(homedir, ".cache")
   }
   return result
 }

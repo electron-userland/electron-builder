@@ -16,8 +16,8 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   public isUpdaterActive(): boolean {
-    if (process.env.APPIMAGE == null) {
-      if (process.env.SNAP == null) {
+    if (process.env["APPIMAGE"] == null) {
+      if (process.env["SNAP"] == null) {
         this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
       } else {
         this._logger.info("SNAP env is defined, updater is disabled")
@@ -36,7 +36,7 @@ export class AppImageUpdater extends BaseUpdater {
       fileInfo,
       downloadUpdateOptions,
       task: async (updateFile, downloadOptions) => {
-        const oldFile = process.env.APPIMAGE!
+        const oldFile = process.env["APPIMAGE"]!
         if (oldFile == null) {
           throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
         }
@@ -74,7 +74,7 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const appImageFile = process.env.APPIMAGE!
+    const appImageFile = process.env["APPIMAGE"]!
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
     }

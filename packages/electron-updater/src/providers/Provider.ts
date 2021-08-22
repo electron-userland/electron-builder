@@ -28,7 +28,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   private getChannelFilePrefix(): string {
     if (this.runtimeOptions.platform === "linux") {
-      const arch = process.env.TEST_UPDATER_ARCH || process.arch
+      const arch = process.env["TEST_UPDATER_ARCH"] || process.arch
       const archSuffix = arch === "x64" ? "" : `-${arch}`
       return "-linux" + archSuffix
     } else {
