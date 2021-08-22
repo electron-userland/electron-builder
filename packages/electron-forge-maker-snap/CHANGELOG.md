@@ -1,5 +1,12 @@
 # electron-forge-maker-snap
 
+## 22.12.1
+
+### Patch Changes
+
+- Updated dependencies [c02ccbb9]
+  - app-builder-lib@22.12.1
+
 ## 22.12.0
 
 ### Patch Changes

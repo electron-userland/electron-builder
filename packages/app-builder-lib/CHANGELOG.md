@@ -1,5 +1,14 @@
 # app-builder-lib
 
+## 22.12.1
+
+### Patch Changes
+
+- c02ccbb9: fix: replace deprecated `--cache-min` option and use `--prefer-offline`
+- Updated dependencies [6c945bd5]
+  - builder-util@22.12.1
+  - electron-publish@22.12.1
+
 ## 22.12.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # builder-util
 
+## 22.12.1
+
+### Patch Changes
+
+- 6c945bd5: fix(windows): detect node path correctly on windows with cross-spawn (#6069)
+
 ## 22.11.11
 
 ### Patch Changes
