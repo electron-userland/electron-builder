@@ -1,5 +1,12 @@
 # electron-publish
 
+## 22.12.1
+
+### Patch Changes
+
+- Updated dependencies [6c945bd5]
+  - builder-util@22.12.1
+
 ## 22.11.11
 
 ### Patch Changes

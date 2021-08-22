@@ -1,6 +1,6 @@
 {
   "name": "builder-util",
-  "version": "22.11.11",
+  "version": "22.12.1",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -22,6 +22,7 @@
     "bluebird-lst": "^1.0.9",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.1",
+    "cross-spawn": "^7.0.3",
     "debug": "^4.3.2",
     "fs-extra": "^10.0.0",
     "is-ci": "^3.0.0",
@@ -32,6 +33,7 @@
   },
   "typings": "./out/util.d.ts",
   "devDependencies": {
+    "@types/cross-spawn": "^6.0.2",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.2",
     "@types/source-map-support": "0.5.4"

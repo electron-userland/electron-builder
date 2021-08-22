@@ -48,15 +48,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Send a stream message
-        uses: zulip/github-actions-zulip@v0.1.2
-        if: steps.changesets.outputs.published == 'true'
-        with:
-          api-key: ${{ secrets.ZULIP_API_KEY }}
-          username: ${{ secrets.ZULIP_EMAIL }}
-          organization-url: 'https://electron-builder.zulipchat.com'
-          to: 'releases'
-          topic: 'deployment'
-          type: 'stream'
-          content: ${{ steps.changesets.outputs.publishedPackages }}

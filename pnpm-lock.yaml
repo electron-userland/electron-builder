@@ -164,6 +164,7 @@ importers:
 
   packages/builder-util:
     specifiers:
+      '@types/cross-spawn': ^6.0.2
       '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': 3.0.0
@@ -174,6 +175,7 @@ importers:
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
       chalk: ^4.1.1
+      cross-spawn: ^7.0.3
       debug: ^4.3.2
       fs-extra: ^10.0.0
       is-ci: ^3.0.0
@@ -189,6 +191,7 @@ importers:
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
+      cross-spawn: 7.0.3
       debug: 4.3.2
       fs-extra: 10.0.0
       is-ci: 3.0.0
@@ -197,6 +200,7 @@ importers:
       stat-mode: 1.0.0
       temp-file: 3.4.0
     devDependencies:
+      '@types/cross-spawn': 6.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.2
       '@types/source-map-support': 0.5.4
@@ -2380,6 +2384,12 @@ packages:
 
   /@types/configstore/5.0.1:
     resolution: {integrity: sha512-c/QCznvk7bLKGhHETj29rqKufui3jaAxjBhK4R2zUrMG5UG0qTwfWYxBoUbH8JCyDjdCWMIxPJ7/Fdz1UcAnWg==}
+    dev: true
+
+  /@types/cross-spawn/6.0.2:
+    resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
+    dependencies:
+      '@types/node': 16.4.10
     dev: true
 
   /@types/debug/4.1.7:

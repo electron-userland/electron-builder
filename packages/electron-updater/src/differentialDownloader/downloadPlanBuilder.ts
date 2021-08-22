@@ -87,7 +87,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   return operations
 }
 
-const isValidateOperationRange = process.env.DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES === "true"
+const isValidateOperationRange = process.env["DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES"] === "true"
 
 function validateAndAdd(operation: Operation, operations: Array<Operation>, checksum: string, index: number): void {
   if (isValidateOperationRange && operations.length !== 0) {
