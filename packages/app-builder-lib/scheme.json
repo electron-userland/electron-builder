@@ -5820,6 +5820,20 @@
       ],
       "description": "The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild)."
     },
+    "beforePack": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run before pack](#beforepack)"
+    },
     "afterPack": {
       "anyOf": [
         {

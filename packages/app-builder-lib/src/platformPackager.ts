@@ -201,6 +201,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
+    const beforePack = resolveFunction(this.config.beforePack, "beforePack")
+    if (beforePack != null) {
+      await beforePack({
+        appOutDir,
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: platformName,
+      })
+    }
+
     await this.info.installAppDependencies(this.platform, arch)
 
     if (this.info.cancellationToken.cancelled) {
