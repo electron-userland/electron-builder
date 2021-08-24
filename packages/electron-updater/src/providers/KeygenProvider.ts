@@ -15,18 +15,13 @@ export class KeygenProvider extends Provider<UpdateInfo> {
     this.baseUrl = newBaseUrl(`https://api.keygen.sh/v1/accounts/${this.configuration.account}/artifacts`)
   }
 
-  protected getDefaultChannelName() {
-    return this.getCustomChannelName("stable")
-  }
-
   private get channel(): string {
-    const result = this.updater.channel || this.configuration.channel
-    return result == null ? this.getDefaultChannelName() : this.getCustomChannelName(result)
+    return this.updater.channel || this.configuration.channel || "stable"
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
     const cancellationToken = new CancellationToken()
-    const channelFile = getChannelFilename(this.channel)
+    const channelFile = getChannelFilename(this.getCustomChannelName(this.channel))
     const channelUrl = newUrlFromBase(channelFile, this.baseUrl, this.updater.isAddNoCacheQuery)
     try {
       const updateInfo = await this.httpRequest(
