@@ -61,9 +61,8 @@ export class HttpError extends Error {
     ;(this as NodeJS.ErrnoException).code = `HTTP_ERROR_${statusCode}`
   }
 
-  // Check if 500 error
   isServerError() {
-    return this.statusCode % 500 <= 99
+    return this.statusCode >= 500 && this.statusCode <= 599
   }
 }
 

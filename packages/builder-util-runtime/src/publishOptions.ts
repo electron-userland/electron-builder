@@ -171,7 +171,7 @@ export interface KeygenOptions extends PublishConfiguration {
    * The channel.
    * @default stable
    */
-  readonly channel?: string | null
+  readonly channel?: "stable" | "rc" | "beta" | "alpha" | "dev" | null
 
   /**
    * The target Platform. Is set programmatically explicitly during publishing.
