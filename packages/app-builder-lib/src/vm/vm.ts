@@ -22,7 +22,7 @@ export class VmManager {
 
 export async function getWindowsVm(debugLogger: DebugLogger): Promise<VmManager> {
   const parallelsVmModule = await import("./ParallelsVm")
-  const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => it.os === "win-10")
+  const vmList = (await parallelsVmModule.parseVmList(debugLogger)).filter(it => ["win-10", "win-11"].includes(it.os))
   if (vmList.length === 0) {
     throw new InvalidConfigurationError("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
   }
