@@ -1,4 +1,4 @@
-osx_image: xcode13
+osx_image: xcode13.0
 language: node_js
 
 env:
