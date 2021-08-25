@@ -1,7 +1,8 @@
-import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl } from "builder-util-runtime"
+import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
+import { ElectronHttpExecutor } from "../electronHttpExecutor"
 import { ResolvedUpdateFileInfo } from "../main"
 import { newUrlFromBase } from "../util"
 
@@ -11,12 +12,12 @@ export interface ProviderRuntimeOptions {
   isUseMultipleRangeRequest: boolean
   platform: ProviderPlatform
 
-  executor: HttpExecutor<any>
+  executor: ElectronHttpExecutor
 }
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
-  protected readonly executor: HttpExecutor<any>
+  protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
     this.executor = runtimeOptions.executor

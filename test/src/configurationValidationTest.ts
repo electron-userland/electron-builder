@@ -21,7 +21,7 @@ test.ifAll.ifDevOrLinuxCi(
   )
 )
 
-test.skip.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi(
   "appId as object",
   appThrows({
     targets: linuxDirTarget,
@@ -82,6 +82,6 @@ test.ifAll.ifDevOrLinuxCi("null string as null", async () => {
   const options = normalizeOptions(yargs.parse(["-c.mac.identity=null", "--config.mac.hardenedRuntime=false"]) as CliOptions)
   const config = options.config as Configuration
   await validateConfig(config, new DebugLogger())
-  expect(config.mac!!.identity).toBeNull()
-  expect(config.mac!!.hardenedRuntime).toBe(false)
+  expect(config.mac!.identity).toBeNull()
+  expect(config.mac!.hardenedRuntime).toBe(false)
 })

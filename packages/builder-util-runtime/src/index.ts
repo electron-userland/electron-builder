@@ -18,6 +18,7 @@ export {
   CustomPublishOptions,
   GenericServerOptions,
   GithubOptions,
+  KeygenOptions,
   PublishConfiguration,
   S3Options,
   SpacesOptions,

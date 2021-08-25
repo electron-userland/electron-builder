@@ -60,22 +60,39 @@ export class HttpError extends Error {
     this.name = "HttpError"
     ;(this as NodeJS.ErrnoException).code = `HTTP_ERROR_${statusCode}`
   }
+
+  isServerError() {
+    return this.statusCode >= 500 && this.statusCode <= 599
+  }
 }
 
 export function parseJson(result: Promise<string | null>) {
   return result.then(it => (it == null || it.length === 0 ? null : JSON.parse(it)))
 }
 
-export abstract class HttpExecutor<REQUEST> {
+interface Request {
+  abort: () => void
+  end: () => void
+}
+export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
 
   request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any } | null): Promise<string | null> {
     configureRequestOptions(options)
-    const encodedData = data == null ? undefined : Buffer.from(JSON.stringify(data))
+    const json = data == null ? undefined : JSON.stringify(data)
+    const encodedData = json ? Buffer.from(json) : undefined
     if (encodedData != null) {
-      options.method = "post"
-      options.headers!["Content-Type"] = "application/json"
-      options.headers!["Content-Length"] = encodedData.length
+      debug(json!)
+      const { headers, ...opts } = options
+      options = {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": encodedData.length,
+          ...headers,
+        },
+        ...opts,
+      }
     }
     return this.doApiRequest(options, cancellationToken, it => {
       ;(it as any).end(encodedData)
@@ -85,7 +102,7 @@ export abstract class HttpExecutor<REQUEST> {
   doApiRequest(
     options: RequestOptions,
     cancellationToken: CancellationToken,
-    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void,
+    requestProcessor: (request: T, reject: (error: Error) => void) => void,
     redirectCount = 0
   ): Promise<string> {
     if (debug.enabled) {
@@ -130,7 +147,7 @@ export abstract class HttpExecutor<REQUEST> {
     resolve: (data?: any) => void,
     reject: (error: Error) => void,
     redirectCount: number,
-    requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void
+    requestProcessor: (request: T, reject: (error: Error) => void) => void
   ) {
     if (debug.enabled) {
       debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
@@ -144,7 +161,7 @@ export abstract class HttpExecutor<REQUEST> {
           response,
           `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
 
-Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
+Please double check that your authentication token is correct. Due to security reasons, actual status maybe not reported, but 404.
 `
         )
       )
@@ -155,8 +172,10 @@ Please double check that your authentication token is correct. Due to security r
       return
     }
 
+    const code = response.statusCode ?? 0
+    const shouldRedirect = code >= 300 && code < 400
     const redirectUrl = safeGetHeader(response, "location")
-    if (redirectUrl != null) {
+    if (shouldRedirect && redirectUrl != null) {
       if (redirectCount > this.maxRedirects) {
         reject(this.createMaxRedirectError())
         return
@@ -176,7 +195,16 @@ Please double check that your authentication token is correct. Due to security r
         if (response.statusCode != null && response.statusCode >= 400) {
           const contentType = safeGetHeader(response, "content-type")
           const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
-          reject(createHttpError(response, isJson ? JSON.parse(data) : data))
+          reject(
+            createHttpError(
+              response,
+              `method: ${options.method || "GET"} url: ${options.protocol || "https:"}//${options.hostname}${options.port ? `:${options.port}` : ""}${options.path}
+
+          Data:
+          ${isJson ? JSON.stringify(JSON.parse(data)) : data}
+          `
+            )
+          )
         } else {
           resolve(data.length === 0 ? null : data)
         }
@@ -187,7 +215,7 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   // noinspection JSUnusedLocalSymbols
-  abstract createRequest(options: any, callback: (response: any) => void): any
+  abstract createRequest(options: any, callback: (response: any) => void): T
 
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
@@ -255,7 +283,7 @@ Please double check that your authentication token is correct. Due to security r
     })
   }
 
-  protected doDownload(requestOptions: any, options: DownloadCallOptions, redirectCount: number) {
+  protected doDownload(requestOptions: RequestOptions, options: DownloadCallOptions, redirectCount: number) {
     const request = this.createRequest(requestOptions, (response: IncomingMessage) => {
       if (response.statusCode! >= 400) {
         options.callback(
@@ -310,13 +338,26 @@ Please double check that your authentication token is correct. Due to security r
   static prepareRedirectUrlOptions(redirectUrl: string, options: RequestOptions): RequestOptions {
     const newOptions = configureRequestOptionsFromUrl(redirectUrl, { ...options })
     const headers = newOptions.headers
-    if (headers != null && headers.authorization != null && (headers.authorization as string).startsWith("token")) {
+    if (headers?.authorization) {
       const parsedNewUrl = new URL(redirectUrl)
       if (parsedNewUrl.hostname.endsWith(".amazonaws.com") || parsedNewUrl.searchParams.has("X-Amz-Credential")) {
         delete headers.authorization
       }
     }
     return newOptions
+  }
+
+  static retryOnServerError(task: () => Promise<any>, maxRetries = 3) {
+    for (let attemptNumber = 0; ; attemptNumber++) {
+      try {
+        return task()
+      } catch (e) {
+        if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
+          continue
+        }
+        throw e
+      }
+    }
   }
 }
 
@@ -467,7 +508,7 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   const headers = options.headers
 
   if (token != null) {
-    ;(headers as any).authorization = token.startsWith("Basic") ? token : `token ${token}`
+    ;(headers as any).authorization = token.startsWith("Basic") || token.startsWith("Bearer") ? token : `token ${token}`
   }
   if (headers["User-Agent"] == null) {
     headers["User-Agent"] = "electron-builder"
@@ -489,6 +530,7 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
     data,
     (name, value) => {
       if (
+        name.endsWith("Authorization") ||
         name.endsWith("authorization") ||
         name.endsWith("Password") ||
         name.endsWith("PASSWORD") ||

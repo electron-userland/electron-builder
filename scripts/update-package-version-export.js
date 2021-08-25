@@ -4,4 +4,6 @@ const version = require(path.join(__dirname, "../packages/app-builder-lib/packag
 const destFile = path.join(__dirname, '../packages/app-builder-lib/src/version.ts')
 
 const { writeFileSync } = require("fs")
-writeFileSync(destFile, `export const PACKAGE_VERSION = "${version}"`)
+writeFileSync(destFile, `
+export const PACKAGE_VERSION = "${version}"
+`)

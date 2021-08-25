@@ -1,8 +1,8 @@
-import { serializeToYaml, TmpDir, executeAppBuilder } from "builder-util"
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions, DownloadOptions } from "builder-util-runtime"
+import { serializeToYaml, TmpDir } from "builder-util"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions, DownloadOptions, KeygenOptions } from "builder-util-runtime"
 import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
-import { outputFile } from "fs-extra"
+import { outputFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
@@ -24,7 +24,7 @@ export async function createNsisUpdater(version: string = "0.0.1") {
 }
 
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
-export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options | SpacesOptions>(data: T): Promise<string> {
+export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options | SpacesOptions | KeygenOptions>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir({ prefix: "test-update-config" }), "app-update.yml")
   await outputFile(updateConfigPath, serializeToYaml(data))
   return updateConfigPath
@@ -61,12 +61,11 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
 }
 
 export class TestNodeHttpExecutor extends NodeHttpExecutor {
-  download(url: string, destination: string, options: DownloadOptions): Promise<string> {
-    const args = ["download", "--url", url, "--output", destination]
-    if (options != null && options.sha512) {
-      args.push("--sha512", options.sha512)
-    }
-    return executeAppBuilder(args).then(() => destination)
+  async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
+    const obj = new URL(url)
+    const buffer = await this.downloadToBuffer(obj, options)
+    await writeFile(destination, buffer)
+    return buffer.toString()
   }
 }
 

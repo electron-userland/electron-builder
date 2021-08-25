@@ -1,9 +1,9 @@
 import { OutgoingHttpHeaders } from "http"
 
-export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore"
+export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
-export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions
+export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions | KeygenOptions
 
 export interface PublishConfiguration {
   /**
@@ -144,6 +144,39 @@ export interface GenericServerOptions extends PublishConfiguration {
    * Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
    */
   readonly useMultipleRangeRequest?: boolean
+}
+
+/**
+ * Keygen options.
+ * https://keygen.sh/
+ * Define `KEYGEN_TOKEN` environment variable.
+ */
+export interface KeygenOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `keygen`.
+   */
+  readonly provider: "keygen"
+
+  /**
+   * Keygen account's UUID
+   */
+  readonly account: string
+
+  /**
+   * Keygen product's UUID
+   */
+  readonly product: string
+
+  /**
+   * The channel.
+   * @default stable
+   */
+  readonly channel?: "stable" | "rc" | "beta" | "alpha" | "dev" | null
+
+  /**
+   * The target Platform. Is set programmatically explicitly during publishing.
+   */
+  readonly platform?: string | null
 }
 
 export interface BaseS3Options extends PublishConfiguration {

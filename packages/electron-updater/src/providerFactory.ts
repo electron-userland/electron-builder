@@ -6,6 +6,7 @@ import {
   GenericServerOptions,
   getS3LikeProviderBaseUrl,
   GithubOptions,
+  KeygenOptions,
   newError,
   PublishConfiguration,
 } from "builder-util-runtime"
@@ -13,6 +14,7 @@ import { AppUpdater } from "./AppUpdater"
 import { BintrayProvider } from "./providers/BintrayProvider"
 import { GenericProvider } from "./providers/GenericProvider"
 import { GitHubProvider } from "./providers/GitHubProvider"
+import { KeygenProvider } from "./providers/KeygenProvider"
 import { PrivateGitHubProvider } from "./providers/PrivateGitHubProvider"
 import { Provider, ProviderRuntimeOptions } from "./providers/Provider"
 
@@ -37,6 +39,9 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         return new PrivateGitHubProvider(githubOptions, updater, token, runtimeOptions)
       }
     }
+
+    case "keygen":
+      return new KeygenProvider(data as KeygenOptions, updater, runtimeOptions)
 
     case "s3":
     case "spaces":
