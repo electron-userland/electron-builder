@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.12.1...v) (2021-08-25)
+
+
+### Features
+
+* add `beforePack` hook ([#6176](https://github.com/electron-userland/electron-builder/issues/6176)) ([6f42f64](https://github.com/electron-userland/electron-builder/commit/6f42f646c9d36405c9d69ca45dda51baabdec4bd))
+* Adding Keygen as an official publisher/updater for electron-builder ([#6167](https://github.com/electron-userland/electron-builder/issues/6167)) ([f45110c](https://github.com/electron-userland/electron-builder/commit/f45110cbf66572d5748d21fc24dc26cabd06f35f))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.12.0...v) (2021-08-22)
 
 

@@ -1,5 +1,16 @@
 ## 4.3.0
 
+## 4.5.0
+
+### Minor Changes
+
+- [#6167](https://github.com/electron-userland/electron-builder/pull/6167) [`f45110cb`](https://github.com/electron-userland/electron-builder/commit/f45110cbf66572d5748d21fc24dc26cabd06f35f) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Adding Keygen as an official publisher/updater for electron-builder (#6167)
+
+### Patch Changes
+
+- Updated dependencies [[`f45110cb`](https://github.com/electron-userland/electron-builder/commit/f45110cbf66572d5748d21fc24dc26cabd06f35f)]:
+  - builder-util-runtime@8.8.0
+
 ## 4.4.6
 
 ### Patch Changes
