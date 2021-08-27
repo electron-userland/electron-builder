@@ -182,7 +182,7 @@ export interface KeygenOptions extends PublishConfiguration {
 /**
  * [Snap Store](https://snapcraft.io/) options.
  */
- export interface SnapStoreOptions extends PublishConfiguration {
+export interface SnapStoreOptions extends PublishConfiguration {
   /**
    * The list of channels the snap would be released.
    * @default ["edge"]
