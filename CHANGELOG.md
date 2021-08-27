@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.13.0...v) (2021-08-27)
+
+
+### Bug Fixes
+
+* Adding snapStore to AllPublishOptions for generating Configuration schema ([#6193](https://github.com/electron-userland/electron-builder/issues/6193)) ([7f933d0](https://github.com/electron-userland/electron-builder/commit/7f933d0004a0a5f808a2a1c71dca7362cab2728e))
+* Support Windows 11 in VMs ([#6185](https://github.com/electron-userland/electron-builder/issues/6185)) ([f6a3053](https://github.com/electron-userland/electron-builder/commit/f6a3053563bd50dc77010d2910086c81acdf613e))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.12.1...v) (2021-08-25)
 
 
