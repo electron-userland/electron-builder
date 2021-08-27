@@ -4713,19 +4713,6 @@
       ],
       "type": "object"
     },
-    "PublishProvider": {
-      "enum": [
-        "bintray",
-        "custom",
-        "generic",
-        "github",
-        "keygen",
-        "s3",
-        "snapStore",
-        "spaces"
-      ],
-      "type": "string"
-    },
     "ReleaseInfo": {
       "additionalProperties": false,
       "properties": {
@@ -5265,8 +5252,11 @@
           "description": "The list of channels the snap would be released."
         },
         "provider": {
-          "$ref": "#/definitions/PublishProvider",
-          "description": "The provider."
+          "description": "The provider. Must be `snapStore`.",
+          "enum": [
+            "snapStore"
+          ],
+          "type": "string"
         },
         "publishAutoUpdate": {
           "default": true,
@@ -5286,6 +5276,10 @@
             }
           ]
         },
+        "repo": {
+          "description": "snapcraft repo name",
+          "type": "string"
+        },
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
@@ -5298,7 +5292,8 @@
         }
       },
       "required": [
-        "provider"
+        "provider",
+        "repo"
       ],
       "type": "object"
     },

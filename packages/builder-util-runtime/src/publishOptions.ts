@@ -184,6 +184,16 @@ export interface KeygenOptions extends PublishConfiguration {
  */
 export interface SnapStoreOptions extends PublishConfiguration {
   /**
+   * The provider. Must be `snapStore`.
+   */
+  readonly provider: "snapStore"
+
+  /**
+   * snapcraft repo name
+   */
+  readonly repo: string
+
+  /**
    * The list of channels the snap would be released.
    * @default ["edge"]
    */
