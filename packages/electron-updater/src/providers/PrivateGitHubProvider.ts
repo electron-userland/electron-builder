@@ -11,6 +11,7 @@ import { getFileList, ProviderRuntimeOptions } from "./Provider"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
+  currentVersionAssets: Array<Asset>
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
@@ -29,6 +30,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const channelFile = getChannelFilename(this.getDefaultChannelName())
 
     const releaseInfo = await this.getLatestVersionInfo(cancellationToken)
+    const currentInfo = await this.getVersionInfo(this.updater.currentVersion.version, cancellationToken)
+
     const asset = releaseInfo.assets.find(it => it.name === channelFile)
     if (asset == null) {
       // html_url must be always, but just to be sure
@@ -47,6 +50,8 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
 
     ;(result as PrivateGitHubUpdateInfo).assets = releaseInfo.assets
+    ;(result as PrivateGitHubUpdateInfo).currentVersionAssets = currentInfo.assets
+
     return result
   }
 
@@ -82,8 +87,23 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
   }
 
+  async getVersionInfo(version: string, cancellationToken: CancellationToken): Promise<ReleaseInfo> {
+    const url = this.getVersionUrl(version)
+    try {
+      const version = JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!)
+      return version
+    } catch (e) {
+      throw newError(`Unable to find version ${version} on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_VERSION_NOT_FOUND")
+    }
+  }
+
   private get basePath(): string {
     return this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
+  }
+
+  private getVersionUrl(version: string): URL {
+    const tagName = this.options.vPrefixedTagName === false ? version : `v${version}`
+    return new URL(`/repos/${this.options.owner}/${this.options.repo}/releases/tags/${tagName}`, this.baseApiUrl)
   }
 
   resolveFiles(updateInfo: PrivateGitHubUpdateInfo): Array<ResolvedUpdateFileInfo> {
@@ -97,6 +117,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       return {
         url: new URL(asset.url),
         info: it,
+        updateFileUrls: {
+          new: updateInfo.assets.map(it => ({ name: it.name, url: new URL(it.url) })),
+          old: updateInfo.currentVersionAssets.map(it => ({ name: it.name, url: new URL(it.url) })),
+        },
       }
     })
   }

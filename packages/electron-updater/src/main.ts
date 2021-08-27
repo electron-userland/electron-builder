@@ -40,7 +40,17 @@ export interface ResolvedUpdateFileInfo {
   readonly url: URL
   readonly info: UpdateFileInfo
 
+  updateFileUrls?: {
+    new: UpdateFileUrl[]
+    old: UpdateFileUrl[]
+  }
+
   packageInfo?: PackageFileInfo
+}
+
+export interface UpdateFileUrl {
+  name: string
+  url: URL
 }
 
 export interface UpdateCheckResult {

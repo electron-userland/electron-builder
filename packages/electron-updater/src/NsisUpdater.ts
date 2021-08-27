@@ -138,7 +138,19 @@ export class NsisUpdater extends BaseUpdater {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
         return true
       }
-      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version)
+
+      let blockmapFileUrls: URL[]
+      if (fileInfo.updateFileUrls) {
+        const oldBlockmap = fileInfo.updateFileUrls.old.find(it => it.name.endsWith(".blockmap"))
+        const newBlockmap = fileInfo.updateFileUrls.new.find(it => it.name.endsWith(".blockmap"))
+        if (!oldBlockmap || !newBlockmap) {
+          throw new Error(`Blockmap file not found (old: [name: "${oldBlockmap?.name}" url: "${oldBlockmap?.url}"] new: [name: "${newBlockmap?.name}" url: "${newBlockmap?.url}"])`)
+        }
+        blockmapFileUrls = [oldBlockmap.url, newBlockmap.url]
+      } else {
+        blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version)
+      }
+
       this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
 
       const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
