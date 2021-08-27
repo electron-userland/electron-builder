@@ -3,7 +3,7 @@ import { OutgoingHttpHeaders } from "http"
 export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
-export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions | KeygenOptions
+export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions | KeygenOptions | SnapStoreOptions
 
 export interface PublishConfiguration {
   /**
@@ -177,6 +177,27 @@ export interface KeygenOptions extends PublishConfiguration {
    * The target Platform. Is set programmatically explicitly during publishing.
    */
   readonly platform?: string | null
+}
+
+/**
+ * [Snap Store](https://snapcraft.io/) options.
+ */
+export interface SnapStoreOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `snapStore`.
+   */
+  readonly provider: "snapStore"
+
+  /**
+   * snapcraft repo name
+   */
+  readonly repo: string
+
+  /**
+   * The list of channels the snap would be released.
+   * @default ["edge"]
+   */
+  readonly channels?: string | Array<string> | null
 }
 
 export interface BaseS3Options extends PublishConfiguration {

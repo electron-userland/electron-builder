@@ -195,6 +195,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly framework?: string | null
 
+  /**
+   * The function (or path to file or module id) to be [run before pack](#beforepack)
+   */
   readonly beforePack?: ((context: BeforePackContext) => Promise<any> | any) | string | null
 
   /**

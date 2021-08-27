@@ -8,6 +8,7 @@ import {
   GithubOptions,
   githubUrl,
   KeygenOptions,
+  SnapStoreOptions,
   PublishConfiguration,
   PublishProvider,
 } from "builder-util-runtime"
@@ -28,7 +29,7 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { expandMacro } from "../util/macroExpander"
 import { WinPackager } from "../winPackager"
-import { SnapStoreOptions, SnapStorePublisher } from "./SnapStorePublisher"
+import { SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 import { KeygenPublisher } from "./KeygenPublisher"
 
