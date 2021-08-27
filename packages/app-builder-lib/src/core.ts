@@ -1,9 +1,8 @@
 import { Arch, archFromString, ArchType } from "builder-util"
 import { AllPublishOptions } from "builder-util-runtime"
-import { SnapStoreOptions } from "./publish/SnapStorePublisher"
 
 // https://github.com/YousefED/typescript-json-schema/issues/80
-export type Publish = AllPublishOptions | SnapStoreOptions | Array<AllPublishOptions | SnapStoreOptions> | null
+export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
 
 export type TargetConfigType = Array<string | TargetConfiguration> | string | TargetConfiguration | null
 

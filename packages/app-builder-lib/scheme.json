@@ -1522,12 +1522,23 @@
           "type": "string"
         },
         "channel": {
+          "anyOf": [
+            {
+              "enum": [
+                "alpha",
+                "beta",
+                "dev",
+                "rc",
+                "stable"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": "stable",
-          "description": "The channel.",
-          "type": [
-            "null",
-            "string"
-          ]
+          "description": "The channel."
         },
         "platform": {
           "description": "The target Platform. Is set programmatically explicitly during publishing.",
@@ -6025,20 +6036,6 @@
       ],
       "description": "The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild)."
     },
-    "beforePack": {
-      "anyOf": [
-        {
-          "typeof": "function"
-        },
-        {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      ],
-      "description": "The function (or path to file or module id) to be [run before pack](#beforepack)"
-    },
     "afterPack": {
       "anyOf": [
         {
@@ -6200,6 +6197,19 @@
         }
       ],
       "description": "The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.\n\nIf provided and `node_modules` are missing, it will not invoke production dependencies check."
+    },
+    "beforePack": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ]
     },
     "buildDependenciesFromSource": {
       "default": false,

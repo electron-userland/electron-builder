@@ -19,6 +19,7 @@ export {
   GenericServerOptions,
   GithubOptions,
   KeygenOptions,
+  SnapStoreOptions,
   PublishConfiguration,
   S3Options,
   SpacesOptions,

@@ -1,7 +1,7 @@
 import { Publisher, UploadTask, PublishContext } from "electron-publish"
 import { executeAppBuilder } from "builder-util"
 import * as path from "path"
-import { PublishConfiguration } from "builder-util-runtime"
+import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
 
 export class SnapStorePublisher extends Publisher {
   readonly providerName = "snapStore"
@@ -34,15 +34,4 @@ export class SnapStorePublisher extends Publisher {
   toString(): string {
     return "Snap Store"
   }
-}
-
-/**
- * [Snap Store](https://snapcraft.io/) options.
- */
-export interface SnapStoreOptions extends PublishConfiguration {
-  /**
-   * The list of channels the snap would be released.
-   * @default ["edge"]
-   */
-  readonly channels?: string | Array<string> | null
 }
