@@ -100,6 +100,7 @@ export default class SnapTarget extends Target {
       version: appInfo.version,
       title: options.title || appInfo.productName,
       summary: options.summary || appInfo.productName,
+      compression: options.compression,
       description: this.helper.getDescription(options),
       architectures: [toLinuxArchString(arch, "snap")],
       apps: {
