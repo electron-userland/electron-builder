@@ -2146,7 +2146,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "xz"
+                "xz",
+                "lzo"
               ],
               "type": "string"
             },
