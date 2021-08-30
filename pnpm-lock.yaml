@@ -78,7 +78,7 @@ importers:
       '@electron/universal': 1.0.5
       '@malept/flatpak-bundler': ^0.4.0
       '@types/debug': 4.1.7
-      '@types/ejs': 3.0.7
+      '@types/ejs': 3.1.0
       '@types/fs-extra': 9.0.12
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
@@ -153,7 +153,7 @@ importers:
       '@babel/preset-env': 7.14.8_@babel+core@7.14.8
       '@babel/preset-react': 7.14.5_@babel+core@7.14.8
       '@types/debug': 4.1.7
-      '@types/ejs': 3.0.7
+      '@types/ejs': 3.1.0
       '@types/fs-extra': 9.0.12
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
@@ -2406,8 +2406,8 @@ packages:
     dependencies:
       '@types/ms': 0.7.31
 
-  /@types/ejs/3.0.7:
-    resolution: {integrity: sha512-AUxAGNIPr7wQmzdFMNhHy/RkR5kk8gSzAZIuCYY//6ZYJKHvnjezmoEYP34coPleUPnqrUWt03cCq7NzNaA/qg==}
+  /@types/ejs/3.1.0:
+    resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
     dev: true
 
   /@types/estree/0.0.48:
