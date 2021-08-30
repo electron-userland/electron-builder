@@ -103,7 +103,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
 
   private getVersionUrl(version: string): URL {
     const tagName = this.options.vPrefixedTagName === false ? version : `v${version}`
-    return new URL(`/repos/${this.options.owner}/${this.options.repo}/releases/tags/${tagName}`, this.baseApiUrl)
+    return newUrlFromBase(`/repos/${this.options.owner}/${this.options.repo}/releases/tags/${tagName}`, this.baseApiUrl)
   }
 
   resolveFiles(updateInfo: PrivateGitHubUpdateInfo): Array<ResolvedUpdateFileInfo> {
