@@ -43,7 +43,7 @@
     "dmg-license": "1.0.9"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "7.14.5",
+    "@babel/plugin-transform-modules-commonjs": "7.15.0",
     "@changesets/changelog-github": "^0.4.0",
     "@changesets/cli": "2.16.0",
     "@typescript-eslint/eslint-plugin": "4.28.5",
