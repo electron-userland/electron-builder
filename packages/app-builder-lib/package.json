@@ -98,7 +98,7 @@
     "@types/fs-extra": "9.0.12",
     "@types/hosted-git-info": "3.0.2",
     "@types/is-ci": "3.0.0",
-    "@types/js-yaml": "4.0.2",
+    "@types/js-yaml": "4.0.3",
     "@types/semver": "7.3.8",
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*"
