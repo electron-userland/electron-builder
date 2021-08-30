@@ -61,19 +61,13 @@ our git [commit messages can be formatted](https://gist.github.com/develar/273e2
 
 ## Documentation
 
-To avoid Google indexing, documentation files located in the branch `docs`. To clone:
+Documentation files located in the `/documentation`.
 
-```shell script
-git clone --single-branch -b docs git@github.com:electron-userland/electron-builder.git docs
-```
+`/documentation` is deployed to Netlify when `next` release is marked as `latest` and available for all users.
 
-Documentation files located in the `/docs`.
+`pip3 install -r requirements.txt`
 
-`/docs` is deployed to Netlify when `next` release is marked as `latest` and available for all users.
-
-`pip3 install mkdocs-material mkdocs markdown-include pymdown-extensions pygments --upgrade`
-
-You'll want to copy the `mkdocs.yml` file from the master branch and then run `mkdocs build`.
+Run `mkdocs build`.
 
 ## Debug Tests
 
