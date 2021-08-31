@@ -38,7 +38,7 @@
   "repository": "https://github.com/electron-userland/electron-builder",
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
-  "dependencies": {
+  "optionalDependencies": {
     "dmg-license": "1.0.9"
   },
   "devDependencies": {
@@ -48,7 +48,9 @@
     "@types/node": "^16.7.8",
     "@typescript-eslint/eslint-plugin": "4.28.5",
     "@typescript-eslint/parser": "4.28.5",
+    "catharsis": "^0.9.0",
     "conventional-changelog-cli": "2.1.1",
+    "dmd": "^6.0.0",
     "eslint": "7.30.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-prettier": "3.4.0",
