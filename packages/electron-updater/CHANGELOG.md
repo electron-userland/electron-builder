@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 4.5.2
+
+### Patch Changes
+
+- [#6212](https://github.com/electron-userland/electron-builder/pull/6212) [`0c21cd69`](https://github.com/electron-userland/electron-builder/commit/0c21cd69663a7eebe0687eaba9eea851cc2fea9e) Thanks [@johnnyopao](https://github.com/johnnyopao)! - Fix upgrade flows on intel mac when both x64 and arm64 versions published
+
 ## 4.5.1
 
 ### Patch Changes
