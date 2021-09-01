@@ -25,6 +25,7 @@ importers:
       lint-staged: 11.1.1
       path-sort: 0.1.0
       prettier: 2.3.2
+      replace-in-file: ^6.2.0
       source-map-support: 0.5.19
       ts-jsdoc: 3.2.2
       typescript: 4.3.5
@@ -53,6 +54,7 @@ importers:
       lint-staged: 11.1.1
       path-sort: 0.1.0
       prettier: 2.3.2
+      replace-in-file: 6.2.0
       source-map-support: 0.5.19
       ts-jsdoc: 3.2.2_typescript@4.3.5
       typescript: 4.3.5
@@ -7830,6 +7832,16 @@ packages:
   /repeat-string/1.6.1:
     resolution: {integrity: sha1-jcrkcOHIirwtYA//Sndihtp15jc=}
     engines: {node: '>=0.10'}
+    dev: true
+
+  /replace-in-file/6.2.0:
+    resolution: {integrity: sha512-Im2AF9G/qgkYneOc9QwWwUS/efyyonTUBvzXS2VXuxPawE5yQIjT/e6x4CTijO0Quq48lfAujuo+S89RR2TP2Q==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      glob: 7.1.7
+      yargs: 16.2.0
     dev: true
 
   /require-directory/2.1.1:

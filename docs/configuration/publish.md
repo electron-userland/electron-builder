@@ -109,13 +109,13 @@ Detected automatically using:
 Define `BT_TOKEN` environment variable.
 
 * **<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.
-* <code id="BintrayOptions-package">package</code> String - The Bintray package name.
-* <code id="BintrayOptions-repo">repo</code> = `generic` String - The Bintray repository name.
-* <code id="BintrayOptions-owner">owner</code> String - The owner.
-* <code id="BintrayOptions-component">component</code> String - The Bintray component (Debian only).
-* <code id="BintrayOptions-distribution">distribution</code> = `stable` String - The Bintray distribution (Debian only).
-* <code id="BintrayOptions-user">user</code> String - The Bintray user account. Used in cases where the owner is an organization.
-* <code id="BintrayOptions-token">token</code> String
+* <code id="BintrayOptions-package">package</code> String | "undefined" - The Bintray package name.
+* <code id="BintrayOptions-repo">repo</code> = `generic` String | "undefined" - The Bintray repository name.
+* <code id="BintrayOptions-owner">owner</code> String | "undefined" - The owner.
+* <code id="BintrayOptions-component">component</code> String | "undefined" - The Bintray component (Debian only).
+* <code id="BintrayOptions-distribution">distribution</code> = `stable` String | "undefined" - The Bintray distribution (Debian only).
+* <code id="BintrayOptions-user">user</code> String | "undefined" - The Bintray user account. Used in cases where the owner is an organization.
+* <code id="BintrayOptions-token">token</code> String | "undefined"
 
 Inherited from `PublishConfiguration`:
 
@@ -123,6 +123,7 @@ Inherited from `PublishConfiguration`:
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 
+* <code id="BintrayOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
 
 ## GenericServerOptions
 Generic (any HTTP(S) server) options.
@@ -130,7 +131,7 @@ In all publish options [File Macros](/file-patterns#file-macros) are supported.
 
 * **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
 * **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
-* <code id="GenericServerOptions-channel">channel</code> = `latest` String - The channel.
+* <code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
 * <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
 
 Inherited from `PublishConfiguration`:
@@ -139,22 +140,23 @@ Inherited from `PublishConfiguration`:
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 
+* <code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
 
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
 
-A GitHub token is required for publishing. If you are using [GitHub Actions](https://docs.github.com/en/actions/reference/authentication-in-a-workflow), you should use the repo scoped `{{secrets.GITHUB_TOKEN}}` created by the workflow. Otherwise, a GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) can be used. You can generate a GitHub personal access token by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
-Define `GH_TOKEN` or `GITHUB_TOKEN` environment variable.
+GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
+Define `GH_TOKEN` environment variable.
 
 * **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
-* <code id="GithubOptions-repo">repo</code> String - The repository name. [Detected automatically](#github-repository-and-bintray-package).
-* <code id="GithubOptions-owner">owner</code> String - The owner.
+* <code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).
+* <code id="GithubOptions-owner">owner</code> String | "undefined" - The owner.
 * <code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = `true` Boolean - Whether to use `v`-prefixed tag name.
-* <code id="GithubOptions-host">host</code> = `github.com` String - The host (including the port if need).
-* <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
-* <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
-* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` or `GITHUB_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
-* <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" - The type of release. By default `draft` release will be created.
+* <code id="GithubOptions-host">host</code> = `github.com` String | "undefined" - The host (including the port if need).
+* <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" | "undefined" - The protocol. GitHub Publisher supports only `https`.
+* <code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
+* <code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
+* <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
     
     Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
 
@@ -165,6 +167,7 @@ Inherited from `PublishConfiguration`:
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 
+* <code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
 
 
 <!-- end of generated block -->

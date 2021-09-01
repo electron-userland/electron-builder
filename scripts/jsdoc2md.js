@@ -8,8 +8,17 @@ const fs = require("fs-extra")
 const jsdoc2md = require("jsdoc-to-markdown")
 const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")
+const replace = require('replace-in-file');
 
 async function main() {
+  // JSDoc generates weird types with `<>` suffix (such as URL<> or Platform<>), so the hack is to just remove those entries before we process the doc to `.md`
+  const options = {
+    files: path.join(source, '**/*.js'),
+    from: /<>/g,
+    to: '',
+  };
+  await replace.replaceInFile(options)
+
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 

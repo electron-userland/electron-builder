@@ -17,6 +17,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 * **<code id="Arch-x64">x64</code>** 
 * **<code id="Arch-armv7l">armv7l</code>** 
 * **<code id="Arch-arm64">arm64</code>** 
+* **<code id="Arch-universal">universal</code>** 
 
 <a name="module_electron-builder.build"></a>
 ## `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
@@ -33,8 +34,8 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 | Param | Type |
 | --- | --- |
 | platforms | <code>Array&lt;Platform&gt;</code> | 
-| type | <code>String</code> \| <code>null</code> | 
-| arch | <code>String</code> \| <code>null</code> | 
+| type | <code>String</code> \| <code>"undefined"</code> | 
+| arch | <code>String</code> \| <code>"undefined"</code> | 
 
 
 <!-- end of generated block -->

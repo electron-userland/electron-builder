@@ -7,15 +7,15 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
     
     Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
 
-* <code id="LinuxConfiguration-maintainer">maintainer</code> String - The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).
-* <code id="LinuxConfiguration-vendor">vendor</code> String - The vendor. Defaults to [author](/configuration/configuration#Metadata-author).
-* <code id="LinuxConfiguration-executableName">executableName</code> String - The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`.
+* <code id="LinuxConfiguration-maintainer">maintainer</code> String | "undefined" - The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).
+* <code id="LinuxConfiguration-vendor">vendor</code> String | "undefined" - The vendor. Defaults to [author](/configuration/configuration#Metadata-author).
 * <code id="LinuxConfiguration-icon">icon</code> String - The path to icon set directory or one png file, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.
-* <code id="LinuxConfiguration-synopsis">synopsis</code> String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-* <code id="LinuxConfiguration-description">description</code> String - As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.
-* <code id="LinuxConfiguration-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
-* <code id="LinuxConfiguration-mimeTypes">mimeTypes</code> Array&lt;String&gt; - The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing.
-* <code id="LinuxConfiguration-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+* <code id="LinuxConfiguration-synopsis">synopsis</code> String | "undefined" - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+* <code id="LinuxConfiguration-description">description</code> String | "undefined" - As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.
+* <code id="LinuxConfiguration-category">category</code> String | "undefined" - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+* <code id="LinuxConfiguration-mimeTypes">mimeTypes</code> Array&lt;String&gt; | "undefined" - The mime types in addition to specified in the file associations. Use it if you don't want to register a new mime type, but reuse existing.
+* <code id="LinuxConfiguration-desktop">desktop</code> any | "undefined" - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+* <code id="LinuxConfiguration-executableArgs">executableArgs</code> Array&lt;String&gt; | "undefined" - The executable parameters. Pass to executableName
 
 <!-- end of generated block -->
 
