@@ -27,8 +27,8 @@
     "ci:publish": "pnpm compile && pnpm publish -r",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater",
-    "jsdoc2md": "node scripts/jsdoc2md.js",
-    "docs": "pnpm compile && pnpm jsdoc && pnpm jsdoc2md",
+    "jsdoc2md2html": "node scripts/jsdoc2md2html.js",
+    "docs": "pnpm compile && pnpm jsdoc && pnpm jsdoc2md2html",
     "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",
     "prepare": "husky install",
     "update-deps": "pnpm update -i -r --latest"

@@ -5,14 +5,12 @@
 <p><a href="https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces">DigitalOcean Spaces</a> options.
 Access key is required, define <code>DO_KEY_ID</code> and <code>DO_SECRET_KEY</code> environment variables.</p>
 <ul>
-<li>**<code id="SpacesOptions-provider">provider</code>** "spaces" - The provider. Must be `spaces`.</li>
-<li>**<code id="SpacesOptions-name">name</code>** String - The space name.</li>
-<li>**<code id="SpacesOptions-region">region</code>** String - The region (e.g. `nyc3`).</li>
-</ul>
-<ul>
-<li><code id="SpacesOptions-channel">channel</code> = `latest` String | "undefined" - The update channel.</li>
-<li><code id="SpacesOptions-path">path</code> = `/` String | "undefined" - The directory path.</li>
-<li><code id="SpacesOptions-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).</li>
+<li><strong><code id="SpacesOptions-provider">provider</code></strong> “spaces” - The provider. Must be <code>spaces</code>.</li>
+<li><strong><code id="SpacesOptions-name">name</code></strong> String - The space name.</li>
+<li><strong><code id="SpacesOptions-region">region</code></strong> String - The region (e.g. <code>nyc3</code>).</li>
+<li><code id="SpacesOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</li>
+<li><code id="SpacesOptions-path">path</code> = <code>/</code> String | “undefined” - The directory path.</li>
+<li><code id="SpacesOptions-acl">acl</code> = <code>public-read</code> “private” | “public-read” | “undefined” - The ACL. Set to <code>null</code> to not <a href="https://github.com/electron-userland/electron-builder/issues/1822">add</a>.</li>
 </ul>
 
 <!-- end of generated block -->

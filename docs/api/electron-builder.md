@@ -28,11 +28,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: enum of <a href="#module_electron-builder"><code>electron-builder</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="Arch-ia32">ia32</code></b> </li>
-<li><b><code id="Arch-x64">x64</code></b> </li>
-<li><b><code id="Arch-armv7l">armv7l</code></b> </li>
-<li><b><code id="Arch-arm64">arm64</code></b> </li>
-<li><b><code id="Arch-universal">universal</code></b> </li>
+<li><strong><code id="Arch-ia32">ia32</code></strong></li>
+<li><strong><code id="Arch-x64">x64</code></strong></li>
+<li><strong><code id="Arch-armv7l">armv7l</code></strong></li>
+<li><strong><code id="Arch-arm64">arm64</code></strong></li>
+<li><strong><code id="Arch-universal">universal</code></strong></li>
 </ul>
 <p><a name="module_electron-builder.build"></a></p>
 <h2 id="electron-builder.build(rawoptions)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>electron-builder.build(rawOptions)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h2>
@@ -175,9 +175,9 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="ArtifactBuildStarted-targetPresentableName">targetPresentableName</code></b> String</li>
-<li><b><code id="ArtifactBuildStarted-file">file</code></b> String</li>
-<li><b><code id="ArtifactBuildStarted-arch">arch</code></b> [Arch](#Arch) | "undefined"</li>
+<li><strong><code id="ArtifactBuildStarted-targetPresentableName">targetPresentableName</code></strong> String</li>
+<li><strong><code id="ArtifactBuildStarted-file">file</code></strong> String</li>
+<li><strong><code id="ArtifactBuildStarted-arch">arch</code></strong> <a href="#Arch">Arch</a> | “undefined”</li>
 </ul>
 <p><a name="ArtifactCreated"></a></p>
 <h2 id="artifactcreated-%E2%87%90-module%3Apackages%2Felectron-publish%2Fout%2Fpublisher.uploadtask"><code>ArtifactCreated</code> ⇐ <code>module:packages/electron-publish/out/publisher.UploadTask</code></h2>
@@ -185,11 +185,11 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Extends</strong>: <code>module:packages/electron-publish/out/publisher.UploadTask</code><br>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="ArtifactCreated-packager">packager</code></b> [PlatformPackager](#PlatformPackager)&lt;any&gt;</li>
-<li><b><code id="ArtifactCreated-target">target</code></b> [Target](#Target) | "undefined"</li>
+<li><strong><code id="ArtifactCreated-packager">packager</code></strong> <a href="#PlatformPackager">PlatformPackager</a>&lt;any&gt;</li>
+<li><strong><code id="ArtifactCreated-target">target</code></strong> <a href="#Target">Target</a> | “undefined”</li>
 <li><code id="ArtifactCreated-updateInfo">updateInfo</code> any</li>
-<li><code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String | "undefined"</li>
-<li><code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/configuration/publish#publishconfiguration) | "undefined"</li>
+<li><code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String | “undefined”</li>
+<li><code id="ArtifactCreated-publishConfig">publishConfig</code> <a href="/configuration/publish#publishconfiguration">PublishConfiguration</a> | “undefined”</li>
 <li><code id="ArtifactCreated-isWriteUpdateInfo">isWriteUpdateInfo</code> Boolean</li>
 </ul>
 <p><a name="BeforeBuildContext"></a></p>
@@ -197,51 +197,51 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="BeforeBuildContext-appDir">appDir</code></b> String</li>
-<li><b><code id="BeforeBuildContext-electronVersion">electronVersion</code></b> String</li>
-<li><b><code id="BeforeBuildContext-platform">platform</code></b> [Platform](#Platform)</li>
-<li><b><code id="BeforeBuildContext-arch">arch</code></b> String</li>
+<li><strong><code id="BeforeBuildContext-appDir">appDir</code></strong> String</li>
+<li><strong><code id="BeforeBuildContext-electronVersion">electronVersion</code></strong> String</li>
+<li><strong><code id="BeforeBuildContext-platform">platform</code></strong> <a href="#Platform">Platform</a></li>
+<li><strong><code id="BeforeBuildContext-arch">arch</code></strong> String</li>
 </ul>
 <p><a name="BuildResult"></a></p>
 <h2 id="buildresult"><code>BuildResult</code></h2>
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="BuildResult-outDir">outDir</code></b> String</li>
-<li><b><code id="BuildResult-artifactPaths">artifactPaths</code></b> Array&lt;String&gt;</li>
-<li><b><code id="BuildResult-platformToTargets">platformToTargets</code></b> Map&lt;[Platform](#Platform) | Map&lt;String | [Target](#Target)&gt;&gt;</li>
-<li><b><code id="BuildResult-configuration">configuration</code></b> [Configuration](#Configuration)</li>
+<li><strong><code id="BuildResult-outDir">outDir</code></strong> String</li>
+<li><strong><code id="BuildResult-artifactPaths">artifactPaths</code></strong> Array&lt;String&gt;</li>
+<li><strong><code id="BuildResult-platformToTargets">platformToTargets</code></strong> Map&lt;<a href="#Platform">Platform</a> | Map&lt;String | <a href="#Target">Target</a>&gt;&gt;</li>
+<li><strong><code id="BuildResult-configuration">configuration</code></strong> <a href="#Configuration">Configuration</a></li>
 </ul>
 <p><a name="CertificateFromStoreInfo"></a></p>
 <h2 id="certificatefromstoreinfo"><code>CertificateFromStoreInfo</code></h2>
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="CertificateFromStoreInfo-thumbprint">thumbprint</code></b> String</li>
-<li><b><code id="CertificateFromStoreInfo-subject">subject</code></b> String</li>
-<li><b><code id="CertificateFromStoreInfo-store">store</code></b> String</li>
-<li><b><code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code></b> Boolean</li>
+<li><strong><code id="CertificateFromStoreInfo-thumbprint">thumbprint</code></strong> String</li>
+<li><strong><code id="CertificateFromStoreInfo-subject">subject</code></strong> String</li>
+<li><strong><code id="CertificateFromStoreInfo-store">store</code></strong> String</li>
+<li><strong><code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code></strong> Boolean</li>
 </ul>
 <p><a name="FileCodeSigningInfo"></a></p>
 <h2 id="filecodesigninginfo"><code>FileCodeSigningInfo</code></h2>
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="FileCodeSigningInfo-file">file</code></b> String</li>
-<li><b><code id="FileCodeSigningInfo-password">password</code></b> String | "undefined"</li>
+<li><strong><code id="FileCodeSigningInfo-file">file</code></strong> String</li>
+<li><strong><code id="FileCodeSigningInfo-password">password</code></strong> String | “undefined”</li>
 </ul>
 <p><a name="Framework"></a></p>
 <h2 id="framework"><code>Framework</code></h2>
 <p><strong>Kind</strong>: interface of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="Framework-name">name</code></b> String</li>
-<li><b><code id="Framework-version">version</code></b> String</li>
-<li><b><code id="Framework-distMacOsAppName">distMacOsAppName</code></b> String</li>
-<li><b><code id="Framework-macOsDefaultTargets">macOsDefaultTargets</code></b> Array&lt;String&gt;</li>
-<li><b><code id="Framework-defaultAppIdPrefix">defaultAppIdPrefix</code></b> String</li>
-<li><b><code id="Framework-isNpmRebuildRequired">isNpmRebuildRequired</code></b> Boolean</li>
-<li><b><code id="Framework-isCopyElevateHelper">isCopyElevateHelper</code></b> Boolean</li>
+<li><strong><code id="Framework-name">name</code></strong> String</li>
+<li><strong><code id="Framework-version">version</code></strong> String</li>
+<li><strong><code id="Framework-distMacOsAppName">distMacOsAppName</code></strong> String</li>
+<li><strong><code id="Framework-macOsDefaultTargets">macOsDefaultTargets</code></strong> Array&lt;String&gt;</li>
+<li><strong><code id="Framework-defaultAppIdPrefix">defaultAppIdPrefix</code></strong> String</li>
+<li><strong><code id="Framework-isNpmRebuildRequired">isNpmRebuildRequired</code></strong> Boolean</li>
+<li><strong><code id="Framework-isCopyElevateHelper">isCopyElevateHelper</code></strong> Boolean</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -362,15 +362,15 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><code id="SourceRepositoryInfo-type">type</code> String</li>
 <li><code id="SourceRepositoryInfo-domain">domain</code> String</li>
-<li><b><code id="SourceRepositoryInfo-user">user</code></b> String</li>
-<li><b><code id="SourceRepositoryInfo-project">project</code></b> String</li>
+<li><strong><code id="SourceRepositoryInfo-user">user</code></strong> String</li>
+<li><strong><code id="SourceRepositoryInfo-project">project</code></strong> String</li>
 </ul>
 <p><a name="AppInfo"></a></p>
 <h2 id="appinfo">AppInfo</h2>
 <p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><code id="AppInfo-description">description</code> = `smarten(this.info.metadata.description || "")` String</li>
+<li><code id="AppInfo-description">description</code> = <code>smarten(this.info.metadata.description || &quot;&quot;)</code> String</li>
 <li><code id="AppInfo-version">version</code> String</li>
 <li><code id="AppInfo-shortVersion">shortVersion</code> String | undefined</li>
 <li><code id="AppInfo-shortVersionWindows">shortVersionWindows</code> String | undefined</li>
@@ -379,15 +379,15 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><code id="AppInfo-productName">productName</code> String</li>
 <li><code id="AppInfo-sanitizedProductName">sanitizedProductName</code> String</li>
 <li><code id="AppInfo-productFilename">productFilename</code> String</li>
-<li><b><code id="AppInfo-channel">channel</code></b> String | "undefined"</li>
-<li><b><code id="AppInfo-companyName">companyName</code></b> String | "undefined"</li>
-<li><b><code id="AppInfo-id">id</code></b> String</li>
-<li><b><code id="AppInfo-macBundleIdentifier">macBundleIdentifier</code></b> String</li>
-<li><b><code id="AppInfo-name">name</code></b> String</li>
-<li><b><code id="AppInfo-linuxPackageName">linuxPackageName</code></b> String</li>
-<li><b><code id="AppInfo-sanitizedName">sanitizedName</code></b> String</li>
-<li><b><code id="AppInfo-updaterCacheDirName">updaterCacheDirName</code></b> String</li>
-<li><b><code id="AppInfo-copyright">copyright</code></b> String</li>
+<li><strong><code id="AppInfo-channel">channel</code></strong> String | “undefined”</li>
+<li><strong><code id="AppInfo-companyName">companyName</code></strong> String | “undefined”</li>
+<li><strong><code id="AppInfo-id">id</code></strong> String</li>
+<li><strong><code id="AppInfo-macBundleIdentifier">macBundleIdentifier</code></strong> String</li>
+<li><strong><code id="AppInfo-name">name</code></strong> String</li>
+<li><strong><code id="AppInfo-linuxPackageName">linuxPackageName</code></strong> String</li>
+<li><strong><code id="AppInfo-sanitizedName">sanitizedName</code></strong> String</li>
+<li><strong><code id="AppInfo-updaterCacheDirName">updaterCacheDirName</code></strong> String</li>
+<li><strong><code id="AppInfo-copyright">copyright</code></strong> String</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -420,28 +420,28 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Properties</strong></p>
 <ul>
 <li><code id="Packager-projectDir">projectDir</code> String</li>
-<li><b><code id="Packager-appDir">appDir</code></b> String</li>
-<li><b><code id="Packager-metadata">metadata</code></b> [Metadata](#Metadata)</li>
-<li><b><code id="Packager-areNodeModulesHandledExternally">areNodeModulesHandledExternally</code></b> Boolean</li>
-<li><b><code id="Packager-isPrepackedAppAsar">isPrepackedAppAsar</code></b> Boolean</li>
-<li><b><code id="Packager-devMetadata">devMetadata</code></b> [Metadata](#Metadata) | "undefined"</li>
-<li><b><code id="Packager-config">config</code></b> [Configuration](#Configuration)</li>
-<li><code id="Packager-isTwoPackageJsonProjectLayoutUsed">isTwoPackageJsonProjectLayoutUsed</code> = `false` Boolean</li>
-<li><code id="Packager-eventEmitter">eventEmitter</code> = `new EventEmitter()` module:events.EventEmitter</li>
-<li><b><code id="Packager-_appInfo">_appInfo</code></b> [AppInfo](#AppInfo) | "undefined"</li>
-<li><b><code id="Packager-appInfo">appInfo</code></b> [AppInfo](#AppInfo)</li>
-<li><code id="Packager-tempDirManager">tempDirManager</code> = `new TmpDir("packager")` TmpDir</li>
-<li><code id="Packager-options">options</code> [PackagerOptions](#PackagerOptions)</li>
-<li><code id="Packager-debugLogger">debugLogger</code> = `new DebugLogger(log.isDebugEnabled)` DebugLogger</li>
-<li><b><code id="Packager-repositoryInfo">repositoryInfo</code></b> Promise&lt; | [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</li>
-<li><b><code id="Packager-[stageDirPathCustomizer=(target, packager, arch) => {
-    return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
-  }]">[stageDirPathCustomizer=(target, packager, arch) => {
-    return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
-  }]</code></b> callback</li>
-<li><b><code id="Packager-buildResourcesDir">buildResourcesDir</code></b> String</li>
-<li><b><code id="Packager-relativeBuildResourcesDirname">relativeBuildResourcesDirname</code></b> String</li>
-<li><b><code id="Packager-framework">framework</code></b> [Framework](#Framework)</li>
+<li><strong><code id="Packager-appDir">appDir</code></strong> String</li>
+<li><strong><code id="Packager-metadata">metadata</code></strong> <a href="#Metadata">Metadata</a></li>
+<li><strong><code id="Packager-areNodeModulesHandledExternally">areNodeModulesHandledExternally</code></strong> Boolean</li>
+<li><strong><code id="Packager-isPrepackedAppAsar">isPrepackedAppAsar</code></strong> Boolean</li>
+<li><strong><code id="Packager-devMetadata">devMetadata</code></strong> <a href="#Metadata">Metadata</a> | “undefined”</li>
+<li><strong><code id="Packager-config">config</code></strong> <a href="#Configuration">Configuration</a></li>
+<li><code id="Packager-isTwoPackageJsonProjectLayoutUsed">isTwoPackageJsonProjectLayoutUsed</code> = <code>false</code> Boolean</li>
+<li><code id="Packager-eventEmitter">eventEmitter</code> = <code>new EventEmitter()</code> module:events.EventEmitter</li>
+<li><strong><code id="Packager-_appInfo">_appInfo</code></strong> <a href="#AppInfo">AppInfo</a> | “undefined”</li>
+<li><strong><code id="Packager-appInfo">appInfo</code></strong> <a href="#AppInfo">AppInfo</a></li>
+<li><code id="Packager-tempDirManager">tempDirManager</code> = <code>new TmpDir(&quot;packager&quot;)</code> TmpDir</li>
+<li><code id="Packager-options">options</code> <a href="#PackagerOptions">PackagerOptions</a></li>
+<li><code id="Packager-debugLogger">debugLogger</code> = <code>new DebugLogger(log.isDebugEnabled)</code> DebugLogger</li>
+<li><strong><code id="Packager-repositoryInfo">repositoryInfo</code></strong> Promise&lt; | <a href="#SourceRepositoryInfo">SourceRepositoryInfo</a>&gt;</li>
+<li><strong><code id="Packager-[stageDirPathCustomizer=(target, packager, arch) => {
+  return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
+}]">[stageDirPathCustomizer=(target, packager, arch) =&gt; {
+return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arch, target.name)}</code>)
+}]</code></strong> callback</li>
+<li><strong><code id="Packager-buildResourcesDir">buildResourcesDir</code></strong> String</li>
+<li><strong><code id="Packager-relativeBuildResourcesDirname">relativeBuildResourcesDirname</code></strong> String</li>
+<li><strong><code id="Packager-framework">framework</code></strong> <a href="#Framework">Framework</a></li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -683,9 +683,9 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><code id="Platform-MAC">MAC</code> = `new Platform("mac", "mac", "darwin")` [Platform](#Platform)</li>
-<li><code id="Platform-LINUX">LINUX</code> = `new Platform("linux", "linux", "linux")` [Platform](#Platform)</li>
-<li><code id="Platform-WINDOWS">WINDOWS</code> = `new Platform("windows", "win", "win32")` [Platform](#Platform)</li>
+<li><code id="Platform-MAC">MAC</code> = <code>new Platform(&quot;mac&quot;, &quot;mac&quot;, &quot;darwin&quot;)</code> <a href="#Platform">Platform</a></li>
+<li><code id="Platform-LINUX">LINUX</code> = <code>new Platform(&quot;linux&quot;, &quot;linux&quot;, &quot;linux&quot;)</code> <a href="#Platform">Platform</a></li>
+<li><code id="Platform-WINDOWS">WINDOWS</code> = <code>new Platform(&quot;windows&quot;, &quot;win&quot;, &quot;win32&quot;)</code> <a href="#Platform">Platform</a></li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -743,18 +743,18 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="PlatformPackager-packagerOptions">packagerOptions</code></b> [PackagerOptions](#PackagerOptions)</li>
-<li><b><code id="PlatformPackager-buildResourcesDir">buildResourcesDir</code></b> String</li>
-<li><b><code id="PlatformPackager-projectDir">projectDir</code></b> String</li>
-<li><b><code id="PlatformPackager-config">config</code></b> [Configuration](#Configuration)</li>
+<li><strong><code id="PlatformPackager-packagerOptions">packagerOptions</code></strong> <a href="#PackagerOptions">PackagerOptions</a></li>
+<li><strong><code id="PlatformPackager-buildResourcesDir">buildResourcesDir</code></strong> String</li>
+<li><strong><code id="PlatformPackager-projectDir">projectDir</code></strong> String</li>
+<li><strong><code id="PlatformPackager-config">config</code></strong> <a href="#Configuration">Configuration</a></li>
 <li><code id="PlatformPackager-platformSpecificBuildOptions">platformSpecificBuildOptions</code> module:app-builder-lib/out/platformPackager.DC</li>
-<li><b><code id="PlatformPackager-resourceList">resourceList</code></b> Promise&lt;Array&lt;String&gt;&gt;</li>
-<li><code id="PlatformPackager-appInfo">appInfo</code> [AppInfo](#AppInfo)</li>
-<li><b><code id="PlatformPackager-compression">compression</code></b> "store" | "normal" | "maximum"</li>
-<li><b><code id="PlatformPackager-debugLogger">debugLogger</code></b> DebugLogger</li>
-<li><b><code id="PlatformPackager-defaultTarget">defaultTarget</code></b> Array&lt;String&gt;</li>
-<li><b><code id="PlatformPackager-fileAssociations">fileAssociations</code></b> Array&lt;[FileAssociation](#FileAssociation)&gt;</li>
-<li><b><code id="PlatformPackager-forceCodeSigning">forceCodeSigning</code></b> Boolean</li>
+<li><strong><code id="PlatformPackager-resourceList">resourceList</code></strong> Promise&lt;Array&lt;String&gt;&gt;</li>
+<li><code id="PlatformPackager-appInfo">appInfo</code> <a href="#AppInfo">AppInfo</a></li>
+<li><strong><code id="PlatformPackager-compression">compression</code></strong> “store” | “normal” | “maximum”</li>
+<li><strong><code id="PlatformPackager-debugLogger">debugLogger</code></strong> DebugLogger</li>
+<li><strong><code id="PlatformPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</li>
+<li><strong><code id="PlatformPackager-fileAssociations">fileAssociations</code></strong> Array&lt;<a href="#FileAssociation">FileAssociation</a>&gt;</li>
+<li><strong><code id="PlatformPackager-forceCodeSigning">forceCodeSigning</code></strong> Boolean</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1159,8 +1159,8 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Extends</strong>: <code>module:packages/electron-publish/out/publisher.PublishContext</code><br>
 <strong>Properties</strong></p>
 <ul>
-<li><code id="PublishManager-isPublish">isPublish</code> = `false` Boolean</li>
-<li><code id="PublishManager-progress">progress</code> = `(process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null` MultiProgress</li>
+<li><code id="PublishManager-isPublish">isPublish</code> = <code>false</code> Boolean</li>
+<li><code id="PublishManager-progress">progress</code> = <code>(process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null</code> MultiProgress</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1184,7 +1184,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Properties</strong></p>
 <ul>
 <li><code id="Target-outDir">outDir</code> String</li>
-<li><code id="Target-options">options</code> [TargetSpecificOptions](#TargetSpecificOptions) | "undefined" | undefined</li>
+<li><code id="Target-options">options</code> <a href="#TargetSpecificOptions">TargetSpecificOptions</a> | “undefined” | undefined</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1292,18 +1292,18 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: interface of <a href="#module_electron-publish"><code>electron-publish</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="PublishContext-cancellationToken">cancellationToken</code></b> CancellationToken</li>
-<li><b><code id="PublishContext-progress">progress</code></b> module:electron-publish/out/multiProgress.MultiProgress | "undefined"</li>
+<li><strong><code id="PublishContext-cancellationToken">cancellationToken</code></strong> CancellationToken</li>
+<li><strong><code id="PublishContext-progress">progress</code></strong> module:electron-publish/out/multiProgress.MultiProgress | “undefined”</li>
 </ul>
 <p><a name="UploadTask"></a></p>
 <h2 id="uploadtask"><code>UploadTask</code></h2>
 <p><strong>Kind</strong>: interface of <a href="#module_electron-publish"><code>electron-publish</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="UploadTask-file">file</code></b> String</li>
-<li><code id="UploadTask-fileContent">fileContent</code> module:global.Buffer | "undefined"</li>
-<li><b><code id="UploadTask-arch">arch</code></b> [Arch](#Arch) | "undefined"</li>
-<li><code id="UploadTask-safeArtifactName">safeArtifactName</code> String | "undefined"</li>
+<li><strong><code id="UploadTask-file">file</code></strong> String</li>
+<li><code id="UploadTask-fileContent">fileContent</code> module:global.Buffer | “undefined”</li>
+<li><strong><code id="UploadTask-arch">arch</code></strong> <a href="#Arch">Arch</a> | “undefined”</li>
+<li><code id="UploadTask-safeArtifactName">safeArtifactName</code> String | “undefined”</li>
 </ul>
 <p><a name="HttpPublisher"></a></p>
 <h2 id="httppublisher-%E2%87%90-publisher">HttpPublisher ⇐ <code><a href="#Publisher">Publisher</a></code></h2>
@@ -1364,7 +1364,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: class of <a href="#module_electron-publish"><code>electron-publish</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="Publisher-providerName">providerName</code></b> String</li>
+<li><strong><code id="Publisher-providerName">providerName</code></strong> String</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1545,8 +1545,8 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: interface of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="ResolvedUpdateFileInfo-url">url</code></b> module:url.URL</li>
-<li><b><code id="ResolvedUpdateFileInfo-info">info</code></b> module:builder-util-runtime.UpdateFileInfo</li>
+<li><strong><code id="ResolvedUpdateFileInfo-url">url</code></strong> module:url.URL</li>
+<li><strong><code id="ResolvedUpdateFileInfo-info">info</code></strong> module:builder-util-runtime.UpdateFileInfo</li>
 <li><code id="ResolvedUpdateFileInfo-packageInfo">packageInfo</code> module:builder-util-runtime.PackageFileInfo</li>
 </ul>
 <p><a name="UpdateCheckResult"></a></p>
@@ -1554,10 +1554,10 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <p><strong>Kind</strong>: interface of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="UpdateCheckResult-updateInfo">updateInfo</code></b> module:builder-util-runtime.UpdateInfo</li>
-<li><code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt; | "undefined"</li>
+<li><strong><code id="UpdateCheckResult-updateInfo">updateInfo</code></strong> module:builder-util-runtime.UpdateInfo</li>
+<li><code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt; | “undefined”</li>
 <li><code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken</li>
-<li><b><code id="UpdateCheckResult-versionInfo">versionInfo</code></b> module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}</li>
+<li tag.description=""><strong><code id="UpdateCheckResult-versionInfo">versionInfo</code></strong> module:builder-util-runtime.UpdateInfo - Deprecated:</li>
 </ul>
 <p><a name="UpdateDownloadedEvent"></a></p>
 <h2 id="updatedownloadedevent-%E2%87%90-module%3Abuilder-util-runtime.updateinfo"><code>UpdateDownloadedEvent</code> ⇐ <code>module:builder-util-runtime.UpdateInfo</code></h2>
@@ -1565,7 +1565,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Extends</strong>: <code>module:builder-util-runtime.UpdateInfo</code><br>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code></b> String</li>
+<li><strong><code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code></strong> String</li>
 </ul>
 <p><a name="AppImageUpdater"></a></p>
 <h2 id="appimageupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">AppImageUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
@@ -1579,22 +1579,50 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Extends</strong>: <code>module:events.EventEmitter</code><br>
 <strong>Properties</strong></p>
 <ul>
-<li><code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.</li>
-<li><code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true` Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).</li>
-<li><code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
-<p>If <code>true</code>, downgrade will be allowed (<code>allowDowngrade</code> will be set to <code>true</code>).</li></p>
-<li><code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.</li>
-<li><code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
-<p>Taken in account only if channel differs (pre-release version component in terms of semantic versioning).</li></p>
-<li><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</li>
-<li><b><code id="AppUpdater-channel">channel</code></b> String | "undefined" - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.</li>
-<li><b><code id="AppUpdater-requestHeaders">requestHeaders</code></b> [key: string]: string | "undefined" - The request headers.</li>
-<li><b><code id="AppUpdater-netSession">netSession</code></b> Electron:Session</li>
-<li><b><code id="AppUpdater-logger">logger</code></b> [Logger](#Logger) | "undefined" - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.</li>
-<li><code id="AppUpdater-signals">signals</code> = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal)</li>
-<li><code id="AppUpdater-configOnDisk">configOnDisk</code> = `new Lazy<any>(() => this.loadUpdateConfig())` Lazy&lt;any&gt;</li>
-<li><code id="AppUpdater-httpExecutor">httpExecutor</code> module:electron-updater/out/electronHttpExecutor.ElectronHttpExecutor</li>
-<li><b><code id="AppUpdater-isAddNoCacheQuery">isAddNoCacheQuery</code></b> Boolean</li>
+<li>
+<p><code id="AppUpdater-autoDownload">autoDownload</code> = <code>true</code> Boolean - Whether to automatically download an update when it is found.</p>
+</li>
+<li>
+<p><code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = <code>true</code> Boolean - Whether to automatically install a downloaded update on app quit (if <code>quitAndInstall</code> was not called before).</p>
+</li>
+<li>
+<p><code id="AppUpdater-allowPrerelease">allowPrerelease</code> = <code>false</code> Boolean - <em>GitHub provider only.</em> Whether to allow update to pre-release versions. Defaults to <code>true</code> if application version contains prerelease components (e.g. <code>0.12.1-alpha.1</code>, here <code>alpha</code> is a prerelease component), otherwise <code>false</code>.</p>
+<p>If <code>true</code>, downgrade will be allowed (<code>allowDowngrade</code> will be set to <code>true</code>).</p>
+</li>
+<li>
+<p><code id="AppUpdater-fullChangelog">fullChangelog</code> = <code>false</code> Boolean - <em>GitHub provider only.</em> Get all release notes (from current version to latest), not just the latest.</p>
+</li>
+<li>
+<p><code id="AppUpdater-allowDowngrade">allowDowngrade</code> = <code>false</code> Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).</p>
+<p>Taken in account only if channel differs (pre-release version component in terms of semantic versioning).</p>
+</li>
+<li>
+<p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
+</li>
+<li>
+<p><strong><code id="AppUpdater-channel">channel</code></strong> String | “undefined” - Get the update channel. Not applicable for GitHub. Doesn’t return <code>channel</code> from the update configuration, only if was previously set.</p>
+</li>
+<li>
+<p><strong><code id="AppUpdater-requestHeaders">requestHeaders</code></strong> [key: string]: string | “undefined” - The request headers.</p>
+</li>
+<li>
+<p><strong><code id="AppUpdater-netSession">netSession</code></strong> Electron:Session</p>
+</li>
+<li>
+<p><strong><code id="AppUpdater-logger">logger</code></strong> <a href="#Logger">Logger</a> | “undefined” - The logger. You can pass <a href="https://github.com/megahertz/electron-log">electron-log</a>, <a href="https://github.com/winstonjs/winston">winston</a> or another logger with the following interface: <code>{ info(), warn(), error() }</code>. Set it to <code>null</code> if you would like to disable a logging feature.</p>
+</li>
+<li>
+<p><code id="AppUpdater-signals">signals</code> = <code>new UpdaterSignal(this)</code> <a href="#UpdaterSignal">UpdaterSignal</a></p>
+</li>
+<li>
+<p><code id="AppUpdater-configOnDisk">configOnDisk</code> = <code>new Lazy&lt;any&gt;(() =&gt; this.loadUpdateConfig())</code> Lazy&lt;any&gt;</p>
+</li>
+<li>
+<p><code id="AppUpdater-httpExecutor">httpExecutor</code> module:electron-updater/out/electronHttpExecutor.ElectronHttpExecutor</p>
+</li>
+<li>
+<p><strong><code id="AppUpdater-isAddNoCacheQuery">isAddNoCacheQuery</code></strong> Boolean</p>
+</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1822,8 +1850,8 @@ This is different from the normal quit event sequence.</p>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><b><code id="Provider-isUseMultipleRangeRequest">isUseMultipleRangeRequest</code></b> Boolean</li>
-<li><b><code id="Provider-fileExtraDownloadHeaders">fileExtraDownloadHeaders</code></b> [key: string]: string | "undefined"</li>
+<li><strong><code id="Provider-isUseMultipleRangeRequest">isUseMultipleRangeRequest</code></strong> Boolean</li>
+<li><strong><code id="Provider-fileExtraDownloadHeaders">fileExtraDownloadHeaders</code></strong> [key: string]: string | “undefined”</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>

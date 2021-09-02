@@ -106,11 +106,9 @@ function renderProperties(object, root, level) {
   for (const member of properties) {
     if (member !== first) {
       result += "\n"
-    } else {
-      result += "<ul>\n"
     }
 
-    result += "<li>" + renderMemberName(member, object)
+    result += indent + "* " + renderMemberName(member, object)
 
     const types = member.type == null ? [] : member.type.names
     let child = getInlinedChild(types)
@@ -140,9 +138,7 @@ function renderProperties(object, root, level) {
       result += "\n"
       result += renderProperties(child, root, level + 1)
     }
-    result += "</li>"
   }
-  result += "\n</ul>"
 
   if (level === 0) {
     result += "\n\n"
@@ -158,9 +154,10 @@ function renderProperties(object, root, level) {
 }
 
 function renderMemberName(member, object) {
+  const wrap = member.optional ? "" : "**"
   // gitbook doesn't like several "a" tags in a row (another one will be added if property is an object and documented as inlined)
   // in any case better to avoid empty "a" tags, since ` will be transformed to <code>
-  let result = `${member.optional ? "" : "<b>"}<code id="${object.name}-${member.name}">${member.name}</code>${member.optional ? "" : "</b>"}`
+  let result = `${wrap}<code id="${object.name}-${member.name}">${member.name}</code>${wrap}`
   if (member.defaultvalue != null) {
     result += " = `" + member.defaultvalue + "`"
   }
