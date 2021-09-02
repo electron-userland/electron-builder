@@ -25,8 +25,6 @@
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
 	},
-	"optionalDependencies": {
-	},
 	"devDependencies": {
 		"@types/fs-extra": "9.0.12",
 		"@types/js-yaml": "4.0.2",

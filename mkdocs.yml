@@ -39,7 +39,9 @@ markdown_extensions:
 nav:
   - Introduction: index.md
   - Command Line Interface (CLI): cli.md
-  - Programmatic API: api/electron-builder.md
+  - Programmatic API:
+      API: api/electron-builder.md
+      Example: api/programmaticUsage.md
   - Donate: donate.md
 
   - Configuration:
