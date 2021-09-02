@@ -16,9 +16,7 @@ All options are optional. All required for AppX configuration is inferred and co
 <li><code id="AppXOptions-showNameOnTiles">showNameOnTiles</code> = `false` Boolean - Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.</li>
 <li><code id="AppXOptions-setBuildNumber">setBuildNumber</code> = `false` Boolean - Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875</li>
 </ul>
-
-Inherited from `TargetSpecificOptions`:
-
+<p>Inherited from <code>TargetSpecificOptions</code>:</p>
 <ul>
 <li><code id="AppXOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template).</li>
 <li><code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish) options.</li>

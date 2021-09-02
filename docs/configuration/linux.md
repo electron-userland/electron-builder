@@ -3,10 +3,10 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 <!-- do not edit. start of generated block -->
 <ul>
 <li><code id="LinuxConfiguration-target">target</code> = `AppImage` String | [TargetConfiguration](/cli#targetconfiguration) - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
-    
-    electron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.
-    
-    Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
+<pre><code class="hljs">electron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.
+
+Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
+</code></pre>
 </li>
 <li><code id="LinuxConfiguration-maintainer">maintainer</code> String | "undefined" - The maintainer. Defaults to [author](/configuration/configuration#Metadata-author).</li>
 <li><code id="LinuxConfiguration-vendor">vendor</code> String | "undefined" - The vendor. Defaults to [author](/configuration/configuration#Metadata-author).</li>

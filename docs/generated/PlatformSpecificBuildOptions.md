@@ -7,13 +7,11 @@
 <li><code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> The [extra resources](/configuration/contents#extraresources) configuration.</li>
 <li><code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> The [extra files](/configuration/contents#extrafiles) configuration.</li>
 <li><code id="PlatformSpecificBuildOptions-asar">asar</code> = `true` [AsarOptions](#AsarOptions) | Boolean | "undefined" - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
-    
-    Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
+<pre><code class="hljs">Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
+</code></pre>
 </li>
 <li><code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String | "undefined" - A [glob patterns](/file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.</li>
-
----
-
+<hr>
 <li><code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;FileAssociation&gt; | FileAssociation<a name="FileAssociation"></a> - The file associations.
 <ul>
 <li>**<code id="FileAssociation-ext">ext</code>** String | Array&lt;String&gt; - The extension (minus the leading period). e.g. `png`.</li>
@@ -21,8 +19,8 @@
 <li><code id="FileAssociation-description">description</code> String | "undefined" - *windows-only.* The description.</li>
 <li><code id="FileAssociation-mimeType">mimeType</code> String | "undefined" - *linux-only.* The mime-type.</li>
 <li><code id="FileAssociation-icon">icon</code> String | "undefined" - The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
-        
-        Not supported on Linux, file issue if need (default icon will be `x-office-document`).
+<pre><code class="hljs">    Not supported on Linux, file issue if need (default icon will be `x-office-document`).
+</code></pre>
 </li>
 <li><code id="FileAssociation-role">role</code> = `Editor` String - *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.</li>
 <li><code id="FileAssociation-isPackage">isPackage</code> Boolean - *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.</li>
@@ -34,18 +32,15 @@
 <li>**<code id="Protocol-schemes">schemes</code>** Array&lt;String&gt; - The schemes. e.g. `["irc", "ircs"]`.</li>
 <li><code id="Protocol-role">role</code> = `Editor` "Editor" | "Viewer" | "Shell" | "None" - *macOS-only* The app’s role with respect to the type.</li>
 </ul></li>
-
----
-
+<hr>
 <li><code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean - Whether to fail if app will be not code signed.</li>
 <li><code id="PlatformSpecificBuildOptions-electronUpdaterCompatibility">electronUpdaterCompatibility</code> String | "undefined" - The [electron-updater compatibility](/auto-update#compatibility) semver range.</li>
 <li><code id="PlatformSpecificBuildOptions-publish">publish</code> The [publish](/configuration/publish) options.</li>
 <li><code id="PlatformSpecificBuildOptions-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.</li>
 <li><code id="PlatformSpecificBuildOptions-generateUpdatesFilesForAllChannels">generateUpdatesFilesForAllChannels</code> = `false` Boolean - Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).</li>
 <li><code id="PlatformSpecificBuildOptions-releaseInfo">releaseInfo</code><a name="ReleaseInfo"></a> - The release info. Intended for command line usage:
-    
-    ``` -c.releaseInfo.releaseNotes="new features" ```
-
+<pre><code class="hljs">``` -c.releaseInfo.releaseNotes=&quot;new features&quot; ```
+</code></pre>
 <ul>
 <li><code id="ReleaseInfo-releaseName">releaseName</code> String | "undefined" - The release name.</li>
 <li><code id="ReleaseInfo-releaseNotes">releaseNotes</code> String | "undefined" - The release notes.</li>

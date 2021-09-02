@@ -4,18 +4,16 @@
 <ul>
 <li><code id="NsisOptions-oneClick">oneClick</code> = `true` Boolean - Whether to create one-click installer or assisted.</li>
 <li><code id="NsisOptions-perMachine">perMachine</code> = `false` Boolean - Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).
-    
-    If `oneClick` is `true` (default): Whether to install per all users (per-machine).
-    
-    If `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.
-    
-    If `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.
+<pre><code class="hljs">If `oneClick` is `true` (default): Whether to install per all users (per-machine).
+
+If `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.
+
+If `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.
+</code></pre>
 </li>
 <li><code id="NsisOptions-allowElevation">allowElevation</code> = `true` Boolean - *assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.</li>
 <li><code id="NsisOptions-allowToChangeInstallationDirectory">allowToChangeInstallationDirectory</code> = `false` Boolean - *assisted installer only.* Whether to allow user to change installation directory.</li>
-
----
-
+<hr>
 <li><code id="NsisOptions-installerIcon">installerIcon</code> String | "undefined" - The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.</li>
 <li><code id="NsisOptions-uninstallerIcon">uninstallerIcon</code> String | "undefined" - The path to uninstaller icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.</li>
 <li><code id="NsisOptions-installerHeader">installerHeader</code> = `build/installerHeader.bmp` String | "undefined" - *assisted installer only.* `MUI_HEADERIMAGE`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.</li>
@@ -23,22 +21,18 @@
 <li><code id="NsisOptions-installerSidebar">installerSidebar</code> String | "undefined" - *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.</li>
 <li><code id="NsisOptions-uninstallerSidebar">uninstallerSidebar</code> String | "undefined" - *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`</li>
 <li><code id="NsisOptions-uninstallDisplayName">uninstallDisplayName</code> = `${productName} ${version}` String - The uninstaller display name in the control panel.</li>
-
----
-
+<hr>
 <li><code id="NsisOptions-include">include</code> String | "undefined" - The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).</li>
 <li><code id="NsisOptions-script">script</code> String | "undefined" - The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).</li>
 <li><code id="NsisOptions-license">license</code> String | "undefined" - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
-    
-    Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
-    
-    Appropriate license file will be selected by user OS language.
+<pre><code class="hljs">Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+
+Appropriate license file will be selected by user OS language.
+</code></pre>
 </li>
 <li><code id="NsisOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.</li>
 <li><code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.</li>
-
----
-
+<hr>
 <li><code id="NsisOptions-displayLanguageSelector">displayLanguageSelector</code> = `false` Boolean - Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).</li>
 <li><code id="NsisOptions-installerLanguages">installerLanguages</code> Array&lt;String&gt; | String | "undefined" - The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what.</li>
 <li><code id="NsisOptions-language">language</code> String | "undefined" - [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).</li>
@@ -53,9 +47,7 @@
 </ul>
 <ul>
 <li><code id="NsisOptions-runAfterFinish">runAfterFinish</code> = `true` Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.</li>
-
----
-
+<hr>
 <li><code id="NsisOptions-createDesktopShortcut">createDesktopShortcut</code> = `true` Boolean | "always" - Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).</li>
 <li><code id="NsisOptions-createStartMenuShortcut">createStartMenuShortcut</code> = `true` Boolean - Whether to create start menu shortcut.</li>
 <li><code id="NsisOptions-menuCategory">menuCategory</code> = `false` Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.</li>

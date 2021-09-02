@@ -1,7 +1,7 @@
 "use strict"
 
 require("source-map-support").install()
-
+const Markdown2HtmlPro = require('markdown2html-pro').Markdown2HtmlPro;
 const globby = require("globby")
 const path = require("path")
 const fs = require("fs-extra")
@@ -408,7 +408,9 @@ async function render(pages, jsdoc2MdOptions) {
   }
 }
 
+const markdown2htmlPro = new Markdown2HtmlPro();
 async function writeDocFile(docOutFile, content) {
+  content = await markdown2htmlPro.markdown2html(content);
   let existingContent
   try {
     existingContent = await fs.readFile(docOutFile, "utf8")

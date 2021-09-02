@@ -3,14 +3,12 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <!-- do not edit. start of generated block -->
 <ul>
 <li><code id="WindowsConfiguration-target">target</code> = `nsis` String | [TargetConfiguration](/cli#targetconfiguration) - The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
-    
-    To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+<pre><code class="hljs">To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+</code></pre>
 </li>
 <li><code id="WindowsConfiguration-icon">icon</code> = `build/icon.ico` String | "undefined" - The path to application icon.</li>
 <li><code id="WindowsConfiguration-legalTrademarks">legalTrademarks</code> String | "undefined" - The trademarks and registered trademarks.</li>
-
----
-
+<hr>
 <li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = `['sha1', 'sha256']` Array&lt;"sha1" | "sha256"&gt; | "undefined" - Array of signing algorithms used. For AppX `sha256` is always used.</li>
 <li><code id="WindowsConfiguration-sign">sign</code> String | (configuration: CustomWindowsSignTaskConfiguration) => Promise - The custom function (or path to file or module id) to sign Windows executable.</li>
 <li><code id="WindowsConfiguration-certificateFile">certificateFile</code> String | "undefined" - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason. Please see [Code Signing](/code-signing).</li>
@@ -20,9 +18,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <li><code id="WindowsConfiguration-additionalCertificateFile">additionalCertificateFile</code> String | "undefined" - The path to an additional certificate file you want to add to the signature block.</li>
 <li><code id="WindowsConfiguration-rfc3161TimeStampServer">rfc3161TimeStampServer</code> = `http://timestamp.digicert.com` String | "undefined" - The URL of the RFC 3161 time stamp server.</li>
 <li><code id="WindowsConfiguration-timeStampServer">timeStampServer</code> = `http://timestamp.digicert.com` String | "undefined" - The URL of the time stamp server.</li>
-
----
-
+<hr>
 <li><code id="WindowsConfiguration-publisherName">publisherName</code> String | Array&lt;String&gt; | "undefined" - [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.</li>
 <li><code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](#publisherName) will be used for the signature verification.</li>
 <li><code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = `asInvoker` "asInvoker" | "highestAvailable" | "requireAdministrator" | "undefined" - The [security level](https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9) at which the application requests to be executed. Cannot be specified per target, allowed only in the `win`.</li>

@@ -9,13 +9,11 @@
 <li><code id="LinuxTargetSpecificOptions-afterInstall">afterInstall</code> String | "undefined"</li>
 <li><code id="LinuxTargetSpecificOptions-afterRemove">afterRemove</code> String | "undefined"</li>
 <li><code id="LinuxTargetSpecificOptions-fpm">fpm</code> Array&lt;String&gt; | "undefined" - *Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.
-    
-    Example: `["--before-install=build/deb-preinstall.sh", "--after-upgrade=build/deb-postinstall.sh"]`
+<pre><code class="hljs">Example: `[&quot;--before-install=build/deb-preinstall.sh&quot;, &quot;--after-upgrade=build/deb-postinstall.sh&quot;]`
+</code></pre>
 </li>
 </ul>
-
-Inherited from `CommonLinuxOptions`:
-
+<p>Inherited from <code>CommonLinuxOptions</code>:</p>
 <ul>
 <li><code id="LinuxTargetSpecificOptions-synopsis">synopsis</code> String | "undefined" - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).</li>
 <li><code id="LinuxTargetSpecificOptions-description">description</code> String | "undefined" - As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.</li>
@@ -24,9 +22,7 @@ Inherited from `CommonLinuxOptions`:
 <li><code id="LinuxTargetSpecificOptions-desktop">desktop</code> any | "undefined" - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).</li>
 <li><code id="LinuxTargetSpecificOptions-executableArgs">executableArgs</code> Array&lt;String&gt; | "undefined" - The executable parameters. Pass to executableName</li>
 </ul>
-
-Inherited from `TargetSpecificOptions`:
-
+<p>Inherited from <code>TargetSpecificOptions</code>:</p>
 <ul>
 <li><code id="LinuxTargetSpecificOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template).</li>
 <li><code id="LinuxTargetSpecificOptions-publish">publish</code> The [publish](/configuration/publish) options.</li>

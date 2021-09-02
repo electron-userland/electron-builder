@@ -6,8 +6,8 @@
 <li>**<code id="S3Options-bucket">bucket</code>** String - The bucket name.</li>
 <li><code id="S3Options-region">region</code> String | "undefined" - The region. Is determined and set automatically when publishing.</li>
 <li><code id="S3Options-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
-    
-    Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
+<pre><code class="hljs">Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
+</code></pre>
 </li>
 <li><code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | "undefined" - The type of storage to use for the object.</li>
 <li><code id="S3Options-encryption">encryption</code> "AES256" | "aws:kms" | "undefined" - Server-side encryption algorithm to use for the object.</li>

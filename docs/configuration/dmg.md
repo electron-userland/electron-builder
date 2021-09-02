@@ -8,8 +8,8 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 <li><code id="DmgOptions-iconSize">iconSize</code> = `80` Number | "undefined" - The size of all the icons inside the DMG.</li>
 <li><code id="DmgOptions-iconTextSize">iconTextSize</code> = `12` Number | "undefined" - The size of all the icon texts inside the DMG.</li>
 <li><code id="DmgOptions-title">title</code> = `${productName} ${version}` String | "undefined" - The title of the produced DMG, which will be shown when mounted (volume name).
-    
-    Macro `${productName}`, `${version}` and `${name}` are supported.
+<pre><code class="hljs">Macro `${productName}`, `${version}` and `${name}` are supported.
+</code></pre>
 </li>
 <li><code id="DmgOptions-contents">contents</code> Array&lt;DmgContent&gt;<a name="DmgContent"></a> - The content — to customize icon locations. The x and y coordinates refer to the position of the **center** of the icon (at 1x scale), and do not take the label into account.
 <ul>
@@ -21,9 +21,8 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 </ul></li>
 <li><code id="DmgOptions-format">format</code> = `UDZO` "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" - The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).</li>
 <li><code id="DmgOptions-window">window</code><a name="DmgWindow"></a> - The DMG window position and size. With y co-ordinates running from bottom to top.
-    
-    The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `"x": 0, "y": 100000` as the x, y co-ordinates. It is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
-
+<pre><code class="hljs">The Finder makes sure that the window will be on the user’s display, so if you want your window at the top left of the display you could use `&quot;x&quot;: 0, &quot;y&quot;: 100000` as the x, y co-ordinates. It is not to be possible to position the window relative to the [top left](https://github.com/electron-userland/electron-builder/issues/3990#issuecomment-512960957) or relative to the center of the user’s screen.
+</code></pre>
 <ul>
 <li><code id="DmgWindow-x">x</code> = `400` Number - The X position relative to left of the screen.</li>
 <li><code id="DmgWindow-y">y</code> = `100` Number - The Y position relative to bottom of the screen.</li>
@@ -33,9 +32,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 <li><code id="DmgOptions-internetEnabled">internetEnabled</code> = `false` Boolean - Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).</li>
 <li><code id="DmgOptions-sign">sign</code> = `false` Boolean - Whether to sign the DMG or not. Signing is not required and will lead to unwanted errors in combination with notarization requirements.</li>
 </ul>
-
-Inherited from `TargetSpecificOptions`:
-
+<p>Inherited from <code>TargetSpecificOptions</code>:</p>
 <ul>
 <li><code id="DmgOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template).</li>
 <li><code id="DmgOptions-publish">publish</code> The [publish](/configuration/publish) options.</li>

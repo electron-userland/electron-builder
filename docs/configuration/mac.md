@@ -3,18 +3,18 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <!-- do not edit. start of generated block -->
 <ul>
 <li><code id="MacConfiguration-category">category</code> String | "undefined" - The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
-    
-    For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
-    
-    Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
+<pre><code class="hljs">For example, `&quot;category&quot;: &quot;public.app-category.developer-tools&quot;` will set the application category to *Developer Tools*.
+
+Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
+</code></pre>
 </li>
 <li><code id="MacConfiguration-target">target</code> String | [TargetConfiguration](/cli#targetconfiguration) - The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).</li>
 <li><code id="MacConfiguration-identity">identity</code> String | "undefined" - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing) instead of specifying this option. MAS installer identity is specified in the [mas](/configuration/mas).</li>
 <li><code id="MacConfiguration-icon">icon</code> = `build/icon.icns` String | "undefined" - The path to application icon.</li>
 <li><code id="MacConfiguration-entitlements">entitlements</code> String | "undefined" - The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](/configuration/mas).</li>
 <li><code id="MacConfiguration-entitlementsInherit">entitlementsInherit</code> String | "undefined" - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
-    
-    This option only applies when signing with `entitlements` provided.
+<pre><code class="hljs">This option only applies when signing with `entitlements` provided.
+</code></pre>
 </li>
 <li><code id="MacConfiguration-entitlementsLoginHelper">entitlementsLoginHelper</code> String | "undefined" - Path to login helper entitlement file. When using App Sandbox, the the `com.apple.security.inherit` key that is normally in the inherited entitlements cannot be inherited since the login helper is a standalone executable. Defaults to the value provided for `entitlements`. This option only applies when signing with `entitlements` provided.</li>
 <li><code id="MacConfiguration-provisioningProfile">provisioningProfile</code> String | "undefined" - The path to the provisioning profile to use when signing, absolute or relative to the app root.</li>

@@ -104,10 +104,9 @@ Detected automatically using:
 * if no env, from `.git/config` origin url.
  
 <!-- do not edit. start of generated block -->
-## BintrayOptions
-[Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page ("Edit Your Profile" -> API Key).
-Define `BT_TOKEN` environment variable.
-
+<h2 id="bintrayoptions">BintrayOptions</h2>
+<p><a href="https://bintray.com/">Bintray</a> options. Requires an API key. An API key can be obtained from the user <a href="https://bintray.com/profile/edit">profile</a> page (“Edit Your Profile” -&gt; API Key).
+Define <code>BT_TOKEN</code> environment variable.</p>
 <ul>
 <li>**<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.</li>
 <li><code id="BintrayOptions-package">package</code> String | "undefined" - The Bintray package name.</li>
@@ -118,44 +117,35 @@ Define `BT_TOKEN` environment variable.
 <li><code id="BintrayOptions-user">user</code> String | "undefined" - The Bintray user account. Used in cases where the owner is an organization.</li>
 <li><code id="BintrayOptions-token">token</code> String | "undefined"</li>
 </ul>
-
-Inherited from `PublishConfiguration`:
-
+<p>Inherited from <code>PublishConfiguration</code>:</p>
 <ul>
 <li><code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-    
-    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+<pre><code class="hljs">Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+</code></pre>
 </li>
 <li><code id="BintrayOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
 </ul>
-
-## GenericServerOptions
-Generic (any HTTP(S) server) options.
-In all publish options [File Macros](/file-patterns#file-macros) are supported.
-
+<h2 id="genericserveroptions">GenericServerOptions</h2>
+<p>Generic (any HTTP(S) server) options.
+In all publish options <a href="/file-patterns#file-macros">File Macros</a> are supported.</p>
 <ul>
 <li>**<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.</li>
 <li>**<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.</li>
 <li><code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.</li>
 <li><code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.</li>
 </ul>
-
-Inherited from `PublishConfiguration`:
-
+<p>Inherited from <code>PublishConfiguration</code>:</p>
 <ul>
 <li><code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-    
-    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+<pre><code class="hljs">Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+</code></pre>
 </li>
 <li><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
 </ul>
-
-## GithubOptions
-[GitHub](https://help.github.com/articles/about-releases/) options.
-
-GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
-Define `GH_TOKEN` environment variable.
-
+<h2 id="githuboptions">GithubOptions</h2>
+<p><a href="https://help.github.com/articles/about-releases/">GitHub</a> options.</p>
+<p>GitHub <a href="https://help.github.com/articles/creating-an-access-token-for-command-line-use/">personal access token</a> is required. You can generate by going to <a href="https://github.com/settings/tokens/new">https://github.com/settings/tokens/new</a>. The access token should have the repo scope/permission.
+Define <code>GH_TOKEN</code> environment variable.</p>
 <ul>
 <li>**<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.</li>
 <li><code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).</li>
@@ -166,21 +156,18 @@ Define `GH_TOKEN` environment variable.
 <li><code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).</li>
 <li><code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).</li>
 <li><code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
-    
-    Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
+<pre><code class="hljs">Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
+</code></pre>
 </li>
 </ul>
-
-Inherited from `PublishConfiguration`:
-
+<p>Inherited from <code>PublishConfiguration</code>:</p>
 <ul>
 <li><code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-    
-    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+<pre><code class="hljs">Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+</code></pre>
 </li>
 <li><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
 </ul>
-
 
 <!-- end of generated block -->
 
