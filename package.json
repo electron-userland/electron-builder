@@ -26,7 +26,7 @@
     "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm schema && pnpm run docs && git add .",
     "ci:publish": "pnpm compile && pnpm publish -r",
     "schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
-    "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish",
+    "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater",
     "jsdoc2md": "node scripts/jsdoc2md.js",
     "docs": "pnpm compile && pnpm jsdoc && pnpm jsdoc2md",
     "deploy-docs": "mkdocs build --clean && netlifyctl deploy --publish-directory site",

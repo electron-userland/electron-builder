@@ -1,3 +1,4 @@
+```
 "use strict"
 
 const builder = require("electron-builder")
@@ -126,3 +127,4 @@ builder.build({
 .catch((error) => {
   console.error(error)
 })
+```

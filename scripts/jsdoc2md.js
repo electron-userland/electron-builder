@@ -26,18 +26,14 @@ async function main() {
     {
       page: "api/electron-builder.md", pageUrl: "electron-builder",
       files: [
-        path.join(source, "util/builder-util.js"),
         path.join(source, "builder/electron-builder.js"),
+        path.join(source, "publisher/electron-publish.js"),
+        path.join(source, "updater/electron-updater.js"),
+        path.join(source, "builder-lib/app-builder-lib.js"),
+        path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+        path.join(source, "util/builder-util.js"),
       ]
     },
-
-    // {
-    //   page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
-    //   files: [
-    //     path.join(source, "updater/electron-updater.js"),
-    //     path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-    //   ]
-    // },
   ]
 
   const jsdoc2MdOptions = {
