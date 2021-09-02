@@ -108,7 +108,7 @@ function renderProperties(object, root, level) {
       result += "\n"
     }
 
-    result += indent + "- " + renderMemberName(member, object)
+    result += indent + "* " + renderMemberName(member, object) + "\n"
 
     const types = member.type == null ? [] : member.type.names
     let child = getInlinedChild(types)
