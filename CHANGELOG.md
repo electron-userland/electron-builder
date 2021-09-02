@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.13.1...v) (2021-09-01)
+
+
+### Bug Fixes
+
+* (mac) Fix intel mac upgrade flow when both x64 and arm64 published ([#6212](https://github.com/electron-userland/electron-builder/issues/6212)) ([0c21cd6](https://github.com/electron-userland/electron-builder/commit/0c21cd69663a7eebe0687eaba9eea851cc2fea9e))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.13.0...v) (2021-08-27)
 
 
