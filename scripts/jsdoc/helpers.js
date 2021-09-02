@@ -154,7 +154,7 @@ function renderProperties(object, root, level) {
 }
 
 function renderMemberName(member, object) {
-  const wrap = member.optional ? "" : "**"
+  const wrap = ""
   // gitbook doesn't like several "a" tags in a row (another one will be added if property is an object and documented as inlined)
   // in any case better to avoid empty "a" tags, since ` will be transformed to <code>
   let result = `${wrap}<code id="${object.name}-${member.name}">${member.name}</code>${wrap}`
