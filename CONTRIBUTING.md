@@ -61,13 +61,13 @@ our git [commit messages can be formatted](https://gist.github.com/develar/273e2
 
 ## Documentation
 
-Documentation files located in the `/documentation`.
+Documentation files located in the `/docs`.
 
-`/documentation` is deployed to Netlify when `next` release is marked as `latest` and available for all users.
+`/docs` is deployed to Netlify on every release and available for all users.
 
-`pip3 install -r requirements.txt`
+`bash netlify-docs.sh` to setup local env (Python 3) and build.
 
-Run `mkdocs build`.
+Build command: `mkdocs build`.
 
 ## Debug Tests
 
