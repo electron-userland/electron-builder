@@ -140,7 +140,7 @@ function renderProperties(object, root, level) {
       result += "\n"
       result += renderProperties(child, root, level + 1)
     }
-    result += "</li>\n"
+    result += "</li>"
   }
   result += "\n</ul>"
 

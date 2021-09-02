@@ -13,7 +13,7 @@ const replace = require('replace-in-file');
 async function main() {
   // JSDoc generates weird types with `<>` suffix (such as URL<> or Platform<>), so the hack is to just remove those entries before we process the doc to `.md`
   const options = {
-    files: path.join(source, '**/*.js'),
+    files: path.join(source, "**/*.js"),
     from: /<>/g,
     to: '',
   };
@@ -22,17 +22,18 @@ async function main() {
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
+  const files = [
+    path.join(source, "builder/electron-builder.js"),
+    path.join(source, "publisher/electron-publish.js"),
+    path.join(source, "updater/electron-updater.js"),
+    path.join(source, "builder-lib/app-builder-lib.js"),
+    path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+    path.join(source, "util/builder-util.js"),
+  ]
   const pages = [
     {
       page: "api/electron-builder.md", pageUrl: "electron-builder",
-      files: [
-        path.join(source, "builder/electron-builder.js"),
-        path.join(source, "publisher/electron-publish.js"),
-        path.join(source, "updater/electron-updater.js"),
-        path.join(source, "builder-lib/app-builder-lib.js"),
-        path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-        path.join(source, "util/builder-util.js"),
-      ]
+      files
     },
   ]
 
@@ -43,12 +44,7 @@ async function main() {
       path.join(partialDir, "helpers.js")
     ],
   }
-  await render2([
-    path.join(source, "builder", "electron-builder.js"),
-    path.join(source, "builder-lib", "app-builder-lib.js"),
-    path.join(source, "builder-util-runtime", "builder-util-runtime.js")
-  ], jsdoc2MdOptions)
-
+  await render2(files, jsdoc2MdOptions)
   await render(pages, jsdoc2MdOptions)
 }
 

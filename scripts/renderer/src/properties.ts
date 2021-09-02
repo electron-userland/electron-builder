@@ -32,15 +32,16 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
     const first = properties[0]
     for (const member of properties) {
       if (member !== first) {
-        // mkdocs requires second new line for items of nested list
         result += "\n"
+      } else {
+        result += "<ul>\n"
       }
 
       if (renderer.isInsertHorizontalLineBefore(member)) {
         result += "\n---\n\n"
       }
 
-      result += indent + "* " + renderMemberName(member, object)
+      result += "<li>" + renderMemberName(member, object)
 
       const types = member.type.names
       let child = getInlinedChild(types, renderer)
@@ -75,7 +76,9 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
         result += "\n"
         result += renderProperties(renderer, child, level + 1)
       }
+      result += "</li>"
     }
+    result += "\n</ul>"
   }
 
   const renderParentProperties = (isPrintInherits: boolean) => {

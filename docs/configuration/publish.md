@@ -108,39 +108,47 @@ Detected automatically using:
 [Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page ("Edit Your Profile" -> API Key).
 Define `BT_TOKEN` environment variable.
 
-* **<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.
-* <code id="BintrayOptions-package">package</code> String | "undefined" - The Bintray package name.
-* <code id="BintrayOptions-repo">repo</code> = `generic` String | "undefined" - The Bintray repository name.
-* <code id="BintrayOptions-owner">owner</code> String | "undefined" - The owner.
-* <code id="BintrayOptions-component">component</code> String | "undefined" - The Bintray component (Debian only).
-* <code id="BintrayOptions-distribution">distribution</code> = `stable` String | "undefined" - The Bintray distribution (Debian only).
-* <code id="BintrayOptions-user">user</code> String | "undefined" - The Bintray user account. Used in cases where the owner is an organization.
-* <code id="BintrayOptions-token">token</code> String | "undefined"
+<ul>
+<li>**<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.</li>
+<li><code id="BintrayOptions-package">package</code> String | "undefined" - The Bintray package name.</li>
+<li><code id="BintrayOptions-repo">repo</code> = `generic` String | "undefined" - The Bintray repository name.</li>
+<li><code id="BintrayOptions-owner">owner</code> String | "undefined" - The owner.</li>
+<li><code id="BintrayOptions-component">component</code> String | "undefined" - The Bintray component (Debian only).</li>
+<li><code id="BintrayOptions-distribution">distribution</code> = `stable` String | "undefined" - The Bintray distribution (Debian only).</li>
+<li><code id="BintrayOptions-user">user</code> String | "undefined" - The Bintray user account. Used in cases where the owner is an organization.</li>
+<li><code id="BintrayOptions-token">token</code> String | "undefined"</li>
+</ul>
 
 Inherited from `PublishConfiguration`:
 
-* <code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+<ul>
+<li><code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
-
-* <code id="BintrayOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+</li>
+<li><code id="BintrayOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
+</ul>
 
 ## GenericServerOptions
 Generic (any HTTP(S) server) options.
 In all publish options [File Macros](/file-patterns#file-macros) are supported.
 
-* **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
-* **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
-* <code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
-* <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
+<ul>
+<li>**<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.</li>
+<li>**<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.</li>
+<li><code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.</li>
+<li><code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.</li>
+</ul>
 
 Inherited from `PublishConfiguration`:
 
-* <code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+<ul>
+<li><code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
-
-* <code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+</li>
+<li><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
+</ul>
 
 ## GithubOptions
 [GitHub](https://help.github.com/articles/about-releases/) options.
@@ -148,26 +156,30 @@ Inherited from `PublishConfiguration`:
 GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
 Define `GH_TOKEN` environment variable.
 
-* **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
-* <code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).
-* <code id="GithubOptions-owner">owner</code> String | "undefined" - The owner.
-* <code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = `true` Boolean - Whether to use `v`-prefixed tag name.
-* <code id="GithubOptions-host">host</code> = `github.com` String | "undefined" - The host (including the port if need).
-* <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" | "undefined" - The protocol. GitHub Publisher supports only `https`.
-* <code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
-* <code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
-* <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
+<ul>
+<li>**<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.</li>
+<li><code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).</li>
+<li><code id="GithubOptions-owner">owner</code> String | "undefined" - The owner.</li>
+<li><code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = `true` Boolean - Whether to use `v`-prefixed tag name.</li>
+<li><code id="GithubOptions-host">host</code> = `github.com` String | "undefined" - The host (including the port if need).</li>
+<li><code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" | "undefined" - The protocol. GitHub Publisher supports only `https`.</li>
+<li><code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).</li>
+<li><code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).</li>
+<li><code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
     
     Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
-
+</li>
+</ul>
 
 Inherited from `PublishConfiguration`:
 
-* <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+<ul>
+<li><code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
     
     Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
-
-* <code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+</li>
+<li><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</li>
+</ul>
 
 
 <!-- end of generated block -->
