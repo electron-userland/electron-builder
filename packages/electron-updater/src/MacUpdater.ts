@@ -40,7 +40,7 @@ export class MacUpdater extends AppUpdater {
 
     // detect if we are running inside Rosetta emulation
     const sysctlRosettaInfoKey = "sysctl.proc_translated"
-    let isRosetta: boolean
+    let isRosetta = false
     try {
       this.debug("Checking for macOS Rosetta environment")
       const result = execFileSync("sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
@@ -50,13 +50,18 @@ export class MacUpdater extends AppUpdater {
       log.warn(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
     }
 
+    const isArm64Mac = process.arch === "arm64" || isRosetta
+
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
-    if (files.some(isArm64)) {
-      files = files.filter(file => (process.arch === "arm64" || isRosetta) === isArm64(file))
+    if (isArm64Mac && files.some(isArm64)) {
+      files = files.filter(file => isArm64Mac === isArm64(file))
+    } else {
+      files = files.filter(file => !isArm64(file))
     }
 
     const zipFileInfo = findFile(files, "zip", ["pkg", "dmg"])
+
     if (zipFileInfo == null) {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
     }
