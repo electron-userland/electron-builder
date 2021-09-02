@@ -1,14 +1,3 @@
-# [](https://github.com/electron-userland/electron-builder/compare/v22.13.1...v) (2021-09-02)
-
-
-### Bug Fixes
-
-* (mac) Fix intel mac upgrade flow when both x64 and arm64 published ([#6212](https://github.com/electron-userland/electron-builder/issues/6212)) ([0c21cd6](https://github.com/electron-userland/electron-builder/commit/0c21cd69663a7eebe0687eaba9eea851cc2fea9e))
-* **deploy:** Removing schema generation since it doesn't compile during release ([7e28c11](https://github.com/electron-userland/electron-builder/commit/7e28c11ec894c9ce7664a2ea3bfdb3e96f09d983))
-* **deploy:** Update package.json script name ([e22fc16](https://github.com/electron-userland/electron-builder/commit/e22fc16cd196ab0f3cc7b2f9bdaae237e64121a8))
-
-
-
 # [](https://github.com/electron-userland/electron-builder/compare/v22.13.1...v) (2021-09-01)
 
 
