@@ -26,16 +26,12 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 ## `electron-builder.Arch` : <code>enum</code>
 **Kind**: enum of [<code>electron-builder</code>](#module_electron-builder)<br/>
 **Properties**
-* **<code id="Arch-ia32">ia32</code>**
- 
-* **<code id="Arch-x64">x64</code>**
- 
-* **<code id="Arch-armv7l">armv7l</code>**
- 
-* **<code id="Arch-arm64">arm64</code>**
- 
-* **<code id="Arch-universal">universal</code>**
- 
+<br/>
+* **<code id="Arch-ia32">ia32</code>** 
+* **<code id="Arch-x64">x64</code>** 
+* **<code id="Arch-armv7l">armv7l</code>** 
+* **<code id="Arch-arm64">arm64</code>** 
+* **<code id="Arch-universal">universal</code>** 
 
 <a name="module_electron-builder.build"></a>
 ## `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
@@ -129,97 +125,74 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 ## `ArtifactBuildStarted`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="ArtifactBuildStarted-targetPresentableName">targetPresentableName</code>**
- String
-* **<code id="ArtifactBuildStarted-file">file</code>**
- String
-* **<code id="ArtifactBuildStarted-arch">arch</code>**
- [Arch](#Arch) | "undefined"
+<br/>
+* **<code id="ArtifactBuildStarted-targetPresentableName">targetPresentableName</code>** String
+* **<code id="ArtifactBuildStarted-file">file</code>** String
+* **<code id="ArtifactBuildStarted-arch">arch</code>** [Arch](#Arch) | "undefined"
 
 <a name="ArtifactCreated"></a>
 ## `ArtifactCreated` ⇐ <code>module:packages/electron-publish/out/publisher.UploadTask</code>
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Extends**: <code>module:packages/electron-publish/out/publisher.UploadTask</code>  
 **Properties**
-* **<code id="ArtifactCreated-packager">packager</code>**
- [PlatformPackager](#PlatformPackager)&lt;any&gt;
-* **<code id="ArtifactCreated-target">target</code>**
- [Target](#Target) | "undefined"
-* <code id="ArtifactCreated-updateInfo">updateInfo</code>
- any
-* <code id="ArtifactCreated-safeArtifactName">safeArtifactName</code>
- String | "undefined"
-* <code id="ArtifactCreated-publishConfig">publishConfig</code>
- [PublishConfiguration](/configuration/publish#publishconfiguration) | "undefined"
-* <code id="ArtifactCreated-isWriteUpdateInfo">isWriteUpdateInfo</code>
- Boolean
+<br/>
+* **<code id="ArtifactCreated-packager">packager</code>** [PlatformPackager](#PlatformPackager)&lt;any&gt;
+* **<code id="ArtifactCreated-target">target</code>** [Target](#Target) | "undefined"
+* <code id="ArtifactCreated-updateInfo">updateInfo</code> any
+* <code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String | "undefined"
+* <code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/configuration/publish#publishconfiguration) | "undefined"
+* <code id="ArtifactCreated-isWriteUpdateInfo">isWriteUpdateInfo</code> Boolean
 
 <a name="BeforeBuildContext"></a>
 ## `BeforeBuildContext`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="BeforeBuildContext-appDir">appDir</code>**
- String
-* **<code id="BeforeBuildContext-electronVersion">electronVersion</code>**
- String
-* **<code id="BeforeBuildContext-platform">platform</code>**
- [Platform](#Platform)
-* **<code id="BeforeBuildContext-arch">arch</code>**
- String
+<br/>
+* **<code id="BeforeBuildContext-appDir">appDir</code>** String
+* **<code id="BeforeBuildContext-electronVersion">electronVersion</code>** String
+* **<code id="BeforeBuildContext-platform">platform</code>** [Platform](#Platform)
+* **<code id="BeforeBuildContext-arch">arch</code>** String
 
 <a name="BuildResult"></a>
 ## `BuildResult`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="BuildResult-outDir">outDir</code>**
- String
-* **<code id="BuildResult-artifactPaths">artifactPaths</code>**
- Array&lt;String&gt;
-* **<code id="BuildResult-platformToTargets">platformToTargets</code>**
- Map&lt;[Platform](#Platform) | Map&lt;String | [Target](#Target)&gt;&gt;
-* **<code id="BuildResult-configuration">configuration</code>**
- [Configuration](#Configuration)
+<br/>
+* **<code id="BuildResult-outDir">outDir</code>** String
+* **<code id="BuildResult-artifactPaths">artifactPaths</code>** Array&lt;String&gt;
+* **<code id="BuildResult-platformToTargets">platformToTargets</code>** Map&lt;[Platform](#Platform) | Map&lt;String | [Target](#Target)&gt;&gt;
+* **<code id="BuildResult-configuration">configuration</code>** [Configuration](#Configuration)
 
 <a name="CertificateFromStoreInfo"></a>
 ## `CertificateFromStoreInfo`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="CertificateFromStoreInfo-thumbprint">thumbprint</code>**
- String
-* **<code id="CertificateFromStoreInfo-subject">subject</code>**
- String
-* **<code id="CertificateFromStoreInfo-store">store</code>**
- String
-* **<code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code>**
- Boolean
+<br/>
+* **<code id="CertificateFromStoreInfo-thumbprint">thumbprint</code>** String
+* **<code id="CertificateFromStoreInfo-subject">subject</code>** String
+* **<code id="CertificateFromStoreInfo-store">store</code>** String
+* **<code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code>** Boolean
 
 <a name="FileCodeSigningInfo"></a>
 ## `FileCodeSigningInfo`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="FileCodeSigningInfo-file">file</code>**
- String
-* **<code id="FileCodeSigningInfo-password">password</code>**
- String | "undefined"
+<br/>
+* **<code id="FileCodeSigningInfo-file">file</code>** String
+* **<code id="FileCodeSigningInfo-password">password</code>** String | "undefined"
 
 <a name="Framework"></a>
 ## `Framework`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="Framework-name">name</code>**
- String
-* **<code id="Framework-version">version</code>**
- String
-* **<code id="Framework-distMacOsAppName">distMacOsAppName</code>**
- String
-* **<code id="Framework-macOsDefaultTargets">macOsDefaultTargets</code>**
- Array&lt;String&gt;
-* **<code id="Framework-defaultAppIdPrefix">defaultAppIdPrefix</code>**
- String
-* **<code id="Framework-isNpmRebuildRequired">isNpmRebuildRequired</code>**
- Boolean
-* **<code id="Framework-isCopyElevateHelper">isCopyElevateHelper</code>**
- Boolean
+<br/>
+* **<code id="Framework-name">name</code>** String
+* **<code id="Framework-version">version</code>** String
+* **<code id="Framework-distMacOsAppName">distMacOsAppName</code>** String
+* **<code id="Framework-macOsDefaultTargets">macOsDefaultTargets</code>** Array&lt;String&gt;
+* **<code id="Framework-defaultAppIdPrefix">defaultAppIdPrefix</code>** String
+* **<code id="Framework-isNpmRebuildRequired">isNpmRebuildRequired</code>** Boolean
+* **<code id="Framework-isCopyElevateHelper">isCopyElevateHelper</code>** Boolean
 
 **Methods**
 * [`.Framework`](#Framework)
@@ -279,55 +252,35 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 ## `SourceRepositoryInfo`
 **Kind**: interface of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* <code id="SourceRepositoryInfo-type">type</code>
- String
-* <code id="SourceRepositoryInfo-domain">domain</code>
- String
-* **<code id="SourceRepositoryInfo-user">user</code>**
- String
-* **<code id="SourceRepositoryInfo-project">project</code>**
- String
+<br/>
+* <code id="SourceRepositoryInfo-type">type</code> String
+* <code id="SourceRepositoryInfo-domain">domain</code> String
+* **<code id="SourceRepositoryInfo-user">user</code>** String
+* **<code id="SourceRepositoryInfo-project">project</code>** String
 
 <a name="AppInfo"></a>
 ## AppInfo
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* <code id="AppInfo-description">description</code> = `smarten(this.info.metadata.description || "")`
- String
-* <code id="AppInfo-version">version</code>
- String
-* <code id="AppInfo-shortVersion">shortVersion</code>
- String | undefined
-* <code id="AppInfo-shortVersionWindows">shortVersionWindows</code>
- String | undefined
-* <code id="AppInfo-buildNumber">buildNumber</code>
- String | undefined
-* <code id="AppInfo-buildVersion">buildVersion</code>
- String
-* <code id="AppInfo-productName">productName</code>
- String
-* <code id="AppInfo-sanitizedProductName">sanitizedProductName</code>
- String
-* <code id="AppInfo-productFilename">productFilename</code>
- String
-* **<code id="AppInfo-channel">channel</code>**
- String | "undefined"
-* **<code id="AppInfo-companyName">companyName</code>**
- String | "undefined"
-* **<code id="AppInfo-id">id</code>**
- String
-* **<code id="AppInfo-macBundleIdentifier">macBundleIdentifier</code>**
- String
-* **<code id="AppInfo-name">name</code>**
- String
-* **<code id="AppInfo-linuxPackageName">linuxPackageName</code>**
- String
-* **<code id="AppInfo-sanitizedName">sanitizedName</code>**
- String
-* **<code id="AppInfo-updaterCacheDirName">updaterCacheDirName</code>**
- String
-* **<code id="AppInfo-copyright">copyright</code>**
- String
+<br/>
+* <code id="AppInfo-description">description</code> = `smarten(this.info.metadata.description || "")` String
+* <code id="AppInfo-version">version</code> String
+* <code id="AppInfo-shortVersion">shortVersion</code> String | undefined
+* <code id="AppInfo-shortVersionWindows">shortVersionWindows</code> String | undefined
+* <code id="AppInfo-buildNumber">buildNumber</code> String | undefined
+* <code id="AppInfo-buildVersion">buildVersion</code> String
+* <code id="AppInfo-productName">productName</code> String
+* <code id="AppInfo-sanitizedProductName">sanitizedProductName</code> String
+* <code id="AppInfo-productFilename">productFilename</code> String
+* **<code id="AppInfo-channel">channel</code>** String | "undefined"
+* **<code id="AppInfo-companyName">companyName</code>** String | "undefined"
+* **<code id="AppInfo-id">id</code>** String
+* **<code id="AppInfo-macBundleIdentifier">macBundleIdentifier</code>** String
+* **<code id="AppInfo-name">name</code>** String
+* **<code id="AppInfo-linuxPackageName">linuxPackageName</code>** String
+* **<code id="AppInfo-sanitizedName">sanitizedName</code>** String
+* **<code id="AppInfo-updaterCacheDirName">updaterCacheDirName</code>** String
+* **<code id="AppInfo-copyright">copyright</code>** String
 
 **Methods**
 * [.AppInfo](#AppInfo)
@@ -347,48 +300,30 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 ## Packager
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* <code id="Packager-projectDir">projectDir</code>
- String
-* **<code id="Packager-appDir">appDir</code>**
- String
-* **<code id="Packager-metadata">metadata</code>**
- [Metadata](#Metadata)
-* **<code id="Packager-areNodeModulesHandledExternally">areNodeModulesHandledExternally</code>**
- Boolean
-* **<code id="Packager-isPrepackedAppAsar">isPrepackedAppAsar</code>**
- Boolean
-* **<code id="Packager-devMetadata">devMetadata</code>**
- [Metadata](#Metadata) | "undefined"
-* **<code id="Packager-config">config</code>**
- [Configuration](#Configuration)
-* <code id="Packager-isTwoPackageJsonProjectLayoutUsed">isTwoPackageJsonProjectLayoutUsed</code> = `false`
- Boolean
-* <code id="Packager-eventEmitter">eventEmitter</code> = `new EventEmitter()`
- module:events.EventEmitter
-* **<code id="Packager-_appInfo">_appInfo</code>**
- [AppInfo](#AppInfo) | "undefined"
-* **<code id="Packager-appInfo">appInfo</code>**
- [AppInfo](#AppInfo)
-* <code id="Packager-tempDirManager">tempDirManager</code> = `new TmpDir("packager")`
- TmpDir
-* <code id="Packager-options">options</code>
- [PackagerOptions](#PackagerOptions)
-* <code id="Packager-debugLogger">debugLogger</code> = `new DebugLogger(log.isDebugEnabled)`
- DebugLogger
-* **<code id="Packager-repositoryInfo">repositoryInfo</code>**
- Promise&lt; | [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;
+<br/>
+* <code id="Packager-projectDir">projectDir</code> String
+* **<code id="Packager-appDir">appDir</code>** String
+* **<code id="Packager-metadata">metadata</code>** [Metadata](#Metadata)
+* **<code id="Packager-areNodeModulesHandledExternally">areNodeModulesHandledExternally</code>** Boolean
+* **<code id="Packager-isPrepackedAppAsar">isPrepackedAppAsar</code>** Boolean
+* **<code id="Packager-devMetadata">devMetadata</code>** [Metadata](#Metadata) | "undefined"
+* **<code id="Packager-config">config</code>** [Configuration](#Configuration)
+* <code id="Packager-isTwoPackageJsonProjectLayoutUsed">isTwoPackageJsonProjectLayoutUsed</code> = `false` Boolean
+* <code id="Packager-eventEmitter">eventEmitter</code> = `new EventEmitter()` module:events.EventEmitter
+* **<code id="Packager-_appInfo">_appInfo</code>** [AppInfo](#AppInfo) | "undefined"
+* **<code id="Packager-appInfo">appInfo</code>** [AppInfo](#AppInfo)
+* <code id="Packager-tempDirManager">tempDirManager</code> = `new TmpDir("packager")` TmpDir
+* <code id="Packager-options">options</code> [PackagerOptions](#PackagerOptions)
+* <code id="Packager-debugLogger">debugLogger</code> = `new DebugLogger(log.isDebugEnabled)` DebugLogger
+* **<code id="Packager-repositoryInfo">repositoryInfo</code>** Promise&lt; | [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;
 * **<code id="Packager-[stageDirPathCustomizer=(target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
   }]">[stageDirPathCustomizer=(target, packager, arch) => {
     return path.join(target.outDir, `__${target.name}-${getArtifactArchName(arch, target.name)}`)
-  }]</code>**
- callback
-* **<code id="Packager-buildResourcesDir">buildResourcesDir</code>**
- String
-* **<code id="Packager-relativeBuildResourcesDirname">relativeBuildResourcesDirname</code>**
- String
-* **<code id="Packager-framework">framework</code>**
- [Framework](#Framework)
+  }]</code>** callback
+* **<code id="Packager-buildResourcesDir">buildResourcesDir</code>** String
+* **<code id="Packager-relativeBuildResourcesDirname">relativeBuildResourcesDirname</code>** String
+* **<code id="Packager-framework">framework</code>** [Framework](#Framework)
 
 **Methods**
 * [.Packager](#Packager)
@@ -503,12 +438,10 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## Platform
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* <code id="Platform-MAC">MAC</code> = `new Platform("mac", "mac", "darwin")`
- [Platform](#Platform)
-* <code id="Platform-LINUX">LINUX</code> = `new Platform("linux", "linux", "linux")`
- [Platform](#Platform)
-* <code id="Platform-WINDOWS">WINDOWS</code> = `new Platform("windows", "win", "win32")`
- [Platform](#Platform)
+<br/>
+* <code id="Platform-MAC">MAC</code> = `new Platform("mac", "mac", "darwin")` [Platform](#Platform)
+* <code id="Platform-LINUX">LINUX</code> = `new Platform("linux", "linux", "linux")` [Platform](#Platform)
+* <code id="Platform-WINDOWS">WINDOWS</code> = `new Platform("windows", "win", "win32")` [Platform](#Platform)
 
 **Methods**
 * [.Platform](#Platform)
@@ -540,30 +473,19 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## PlatformPackager
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* **<code id="PlatformPackager-packagerOptions">packagerOptions</code>**
- [PackagerOptions](#PackagerOptions)
-* **<code id="PlatformPackager-buildResourcesDir">buildResourcesDir</code>**
- String
-* **<code id="PlatformPackager-projectDir">projectDir</code>**
- String
-* **<code id="PlatformPackager-config">config</code>**
- [Configuration](#Configuration)
-* <code id="PlatformPackager-platformSpecificBuildOptions">platformSpecificBuildOptions</code>
- module:app-builder-lib/out/platformPackager.DC
-* **<code id="PlatformPackager-resourceList">resourceList</code>**
- Promise&lt;Array&lt;String&gt;&gt;
-* <code id="PlatformPackager-appInfo">appInfo</code>
- [AppInfo](#AppInfo)
-* **<code id="PlatformPackager-compression">compression</code>**
- "store" | "normal" | "maximum"
-* **<code id="PlatformPackager-debugLogger">debugLogger</code>**
- DebugLogger
-* **<code id="PlatformPackager-defaultTarget">defaultTarget</code>**
- Array&lt;String&gt;
-* **<code id="PlatformPackager-fileAssociations">fileAssociations</code>**
- Array&lt;[FileAssociation](#FileAssociation)&gt;
-* **<code id="PlatformPackager-forceCodeSigning">forceCodeSigning</code>**
- Boolean
+<br/>
+* **<code id="PlatformPackager-packagerOptions">packagerOptions</code>** [PackagerOptions](#PackagerOptions)
+* **<code id="PlatformPackager-buildResourcesDir">buildResourcesDir</code>** String
+* **<code id="PlatformPackager-projectDir">projectDir</code>** String
+* **<code id="PlatformPackager-config">config</code>** [Configuration](#Configuration)
+* <code id="PlatformPackager-platformSpecificBuildOptions">platformSpecificBuildOptions</code> module:app-builder-lib/out/platformPackager.DC
+* **<code id="PlatformPackager-resourceList">resourceList</code>** Promise&lt;Array&lt;String&gt;&gt;
+* <code id="PlatformPackager-appInfo">appInfo</code> [AppInfo](#AppInfo)
+* **<code id="PlatformPackager-compression">compression</code>** "store" | "normal" | "maximum"
+* **<code id="PlatformPackager-debugLogger">debugLogger</code>** DebugLogger
+* **<code id="PlatformPackager-defaultTarget">defaultTarget</code>** Array&lt;String&gt;
+* **<code id="PlatformPackager-fileAssociations">fileAssociations</code>** Array&lt;[FileAssociation](#FileAssociation)&gt;
+* **<code id="PlatformPackager-forceCodeSigning">forceCodeSigning</code>** Boolean
 
 **Methods**
 * [.PlatformPackager](#PlatformPackager)
@@ -735,10 +657,9 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Extends**: <code>module:packages/electron-publish/out/publisher.PublishContext</code>  
 **Properties**
-* <code id="PublishManager-isPublish">isPublish</code> = `false`
- Boolean
-* <code id="PublishManager-progress">progress</code> = `(process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null`
- MultiProgress
+<br/>
+* <code id="PublishManager-isPublish">isPublish</code> = `false` Boolean
+* <code id="PublishManager-progress">progress</code> = `(process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null` MultiProgress
 
 **Methods**
 * [.PublishManager](#PublishManager) ⇐ <code>module:packages/electron-publish/out/publisher.PublishContext</code>
@@ -756,10 +677,9 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## Target
 **Kind**: class of [<code>app-builder-lib</code>](#module_app-builder-lib)<br/>
 **Properties**
-* <code id="Target-outDir">outDir</code>
- String
-* <code id="Target-options">options</code>
- [TargetSpecificOptions](#TargetSpecificOptions) | "undefined" | undefined
+<br/>
+* <code id="Target-outDir">outDir</code> String
+* <code id="Target-options">options</code> [TargetSpecificOptions](#TargetSpecificOptions) | "undefined" | undefined
 
 **Methods**
 * [.Target](#Target)
@@ -814,23 +734,19 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## `PublishContext`
 **Kind**: interface of [<code>electron-publish</code>](#module_electron-publish)<br/>
 **Properties**
-* **<code id="PublishContext-cancellationToken">cancellationToken</code>**
- CancellationToken
-* **<code id="PublishContext-progress">progress</code>**
- module:electron-publish/out/multiProgress.MultiProgress | "undefined"
+<br/>
+* **<code id="PublishContext-cancellationToken">cancellationToken</code>** CancellationToken
+* **<code id="PublishContext-progress">progress</code>** module:electron-publish/out/multiProgress.MultiProgress | "undefined"
 
 <a name="UploadTask"></a>
 ## `UploadTask`
 **Kind**: interface of [<code>electron-publish</code>](#module_electron-publish)<br/>
 **Properties**
-* **<code id="UploadTask-file">file</code>**
- String
-* <code id="UploadTask-fileContent">fileContent</code>
- module:global.Buffer | "undefined"
-* **<code id="UploadTask-arch">arch</code>**
- [Arch](#Arch) | "undefined"
-* <code id="UploadTask-safeArtifactName">safeArtifactName</code>
- String | "undefined"
+<br/>
+* **<code id="UploadTask-file">file</code>** String
+* <code id="UploadTask-fileContent">fileContent</code> module:global.Buffer | "undefined"
+* **<code id="UploadTask-arch">arch</code>** [Arch](#Arch) | "undefined"
+* <code id="UploadTask-safeArtifactName">safeArtifactName</code> String | "undefined"
 
 <a name="HttpPublisher"></a>
 ## HttpPublisher ⇐ <code>[Publisher](#Publisher)</code>
@@ -866,8 +782,8 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## Publisher
 **Kind**: class of [<code>electron-publish</code>](#module_electron-publish)<br/>
 **Properties**
-* **<code id="Publisher-providerName">providerName</code>**
- String
+<br/>
+* **<code id="Publisher-providerName">providerName</code>** String
 
 **Methods**
 * [.Publisher](#Publisher)
@@ -974,33 +890,28 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 ## `ResolvedUpdateFileInfo`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="ResolvedUpdateFileInfo-url">url</code>**
- module:url.URL
-* **<code id="ResolvedUpdateFileInfo-info">info</code>**
- module:builder-util-runtime.UpdateFileInfo
-* <code id="ResolvedUpdateFileInfo-packageInfo">packageInfo</code>
- module:builder-util-runtime.PackageFileInfo
+<br/>
+* **<code id="ResolvedUpdateFileInfo-url">url</code>** module:url.URL
+* **<code id="ResolvedUpdateFileInfo-info">info</code>** module:builder-util-runtime.UpdateFileInfo
+* <code id="ResolvedUpdateFileInfo-packageInfo">packageInfo</code> module:builder-util-runtime.PackageFileInfo
 
 <a name="UpdateCheckResult"></a>
 ## `UpdateCheckResult`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="UpdateCheckResult-updateInfo">updateInfo</code>**
- module:builder-util-runtime.UpdateInfo
-* <code id="UpdateCheckResult-downloadPromise">downloadPromise</code>
- Promise&lt;Array&lt;String&gt;&gt; | "undefined"
-* <code id="UpdateCheckResult-cancellationToken">cancellationToken</code>
- CancellationToken
-* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>**
- module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
+<br/>
+* **<code id="UpdateCheckResult-updateInfo">updateInfo</code>** module:builder-util-runtime.UpdateInfo
+* <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt; | "undefined"
+* <code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken
+* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.UpdateInfo - Deprecated: {tag.description}
 
 <a name="UpdateDownloadedEvent"></a>
 ## `UpdateDownloadedEvent` ⇐ <code>module:builder-util-runtime.UpdateInfo</code>
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Extends**: <code>module:builder-util-runtime.UpdateInfo</code>  
 **Properties**
-* **<code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code>**
- String
+<br/>
+* **<code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code>** String
 
 <a name="AppImageUpdater"></a>
 ## AppImageUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
@@ -1013,38 +924,25 @@ Only for sub artifacts (update info), for main artifacts use `callArtifactBuildC
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Extends**: <code>module:events.EventEmitter</code>  
 **Properties**
-* <code id="AppUpdater-autoDownload">autoDownload</code> = `true`
- Boolean - Whether to automatically download an update when it is found.
-* <code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true`
- Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
-* <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false`
- Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
+<br/>
+* <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
+* <code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true` Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
+* <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
   
   If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
-* <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false`
- Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
-* <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false`
- Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
+* <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
+* <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
   
   Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
-* <code id="AppUpdater-currentVersion">currentVersion</code>
- SemVer - The current application version.
-* **<code id="AppUpdater-channel">channel</code>**
- String | "undefined" - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
-* **<code id="AppUpdater-requestHeaders">requestHeaders</code>**
- [key: string]: string | "undefined" - The request headers.
-* **<code id="AppUpdater-netSession">netSession</code>**
- Electron:Session
-* **<code id="AppUpdater-logger">logger</code>**
- [Logger](#Logger) | "undefined" - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
-* <code id="AppUpdater-signals">signals</code> = `new UpdaterSignal(this)`
- [UpdaterSignal](#UpdaterSignal)
-* <code id="AppUpdater-configOnDisk">configOnDisk</code> = `new Lazy<any>(() => this.loadUpdateConfig())`
- Lazy&lt;any&gt;
-* <code id="AppUpdater-httpExecutor">httpExecutor</code>
- module:electron-updater/out/electronHttpExecutor.ElectronHttpExecutor
-* **<code id="AppUpdater-isAddNoCacheQuery">isAddNoCacheQuery</code>**
- Boolean
+* <code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.
+* **<code id="AppUpdater-channel">channel</code>** String | "undefined" - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
+* **<code id="AppUpdater-requestHeaders">requestHeaders</code>** [key: string]: string | "undefined" - The request headers.
+* **<code id="AppUpdater-netSession">netSession</code>** Electron:Session
+* **<code id="AppUpdater-logger">logger</code>** [Logger](#Logger) | "undefined" - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
+* <code id="AppUpdater-signals">signals</code> = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal)
+* <code id="AppUpdater-configOnDisk">configOnDisk</code> = `new Lazy<any>(() => this.loadUpdateConfig())` Lazy&lt;any&gt;
+* <code id="AppUpdater-httpExecutor">httpExecutor</code> module:electron-updater/out/electronHttpExecutor.ElectronHttpExecutor
+* **<code id="AppUpdater-isAddNoCacheQuery">isAddNoCacheQuery</code>** Boolean
 
 **Methods**
 * [.AppUpdater](#AppUpdater) ⇐ <code>module:events.EventEmitter</code>
@@ -1183,10 +1081,9 @@ Configure update provider. If value is `string`, [GenericServerOptions](/configu
 ## Provider
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="Provider-isUseMultipleRangeRequest">isUseMultipleRangeRequest</code>**
- Boolean
-* **<code id="Provider-fileExtraDownloadHeaders">fileExtraDownloadHeaders</code>**
- [key: string]: string | "undefined"
+<br/>
+* **<code id="Provider-isUseMultipleRangeRequest">isUseMultipleRangeRequest</code>** Boolean
+* **<code id="Provider-fileExtraDownloadHeaders">fileExtraDownloadHeaders</code>** [key: string]: string | "undefined"
 
 **Methods**
 * [.Provider](#Provider)
