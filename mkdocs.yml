@@ -79,5 +79,6 @@ nav:
       - Loading App Dependencies Manually: tutorials/loading-app-dependencies-manually.md
       - Two package.json Structure: tutorials/two-package-structure.md
       - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md
-      - Release Using Channels: tutorials/release-using-channels.md
       - Sign a Windows app on macOS/Linux: tutorials/code-signing-windows-apps-on-unix.md
+      - Release Using Channels: tutorials/release-using-channels.md
+      - Test Update on s3 Locally: tutorials/test-update-on-s3-locally.md
