@@ -4,6 +4,11 @@
     "outDir": "out",
     "rootDir": "src"
   },
+  "jsdoc": {
+    "out": "../../scripts/jsdoc/out/dmg-builder",
+    "examples": "../../scripts/jsdoc/examples",
+    "access": "public"
+  },
   "references": [
     {
       "path": "../app-builder-lib"
