@@ -1,34 +1,40 @@
 "use strict"
 
 require("source-map-support").install()
-
+const Markdown2HtmlPro = require('markdown2html-pro').Markdown2HtmlPro;
 const globby = require("globby")
 const path = require("path")
 const fs = require("fs-extra")
 const jsdoc2md = require("jsdoc-to-markdown")
 const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")
+const replace = require('replace-in-file');
 
 async function main() {
+  // JSDoc generates weird types with `<>` suffix (such as URL<> or Platform<>), so the hack is to just remove those entries before we process the doc to `.md`
+  const options = {
+    files: path.join(source, "**/*.js"),
+    from: /<>/g,
+    to: '',
+  };
+  await replace.replaceInFile(options)
+
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
+  const files = [
+    path.join(source, "builder/electron-builder.js"),
+    path.join(source, "publisher/electron-publish.js"),
+    path.join(source, "updater/electron-updater.js"),
+    path.join(source, "builder-lib/app-builder-lib.js"),
+    path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+    path.join(source, "util/builder-util.js"),
+  ]
   const pages = [
     {
       page: "api/electron-builder.md", pageUrl: "electron-builder",
-      files: [
-        path.join(source, "util/builder-util.js"),
-        path.join(source, "builder/electron-builder.js"),
-      ]
+      files
     },
-
-    // {
-    //   page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
-    //   files: [
-    //     path.join(source, "updater/electron-updater.js"),
-    //     path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-    //   ]
-    // },
   ]
 
   const jsdoc2MdOptions = {
@@ -38,12 +44,7 @@ async function main() {
       path.join(partialDir, "helpers.js")
     ],
   }
-  await render2([
-    path.join(source, "builder", "electron-builder.js"),
-    path.join(source, "builder-lib", "app-builder-lib.js"),
-    path.join(source, "builder-util-runtime", "builder-util-runtime.js")
-  ], jsdoc2MdOptions)
-
+  await render2(files, jsdoc2MdOptions)
   await render(pages, jsdoc2MdOptions)
 }
 
@@ -209,14 +210,13 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/snap.md", "SnapOptions"),
 
     new Page("configuration/publish.md", null, {
-      "BintrayOptions": "",
       "GenericServerOptions": "",
       "GithubOptions": "",
+      "SnapStoreOptions": "",
+      "SpacesOptions": "",
+      "KeygenOptions": "",
     }),
-
     new Page("generated/s3-options.md", "S3Options"),
-    new Page("generated/snap-store-options.md", null, {"SnapStoreOptions": ""}),
-    new Page("generated/spaces-options.md", null, {"SpacesOptions": ""}),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),
     new Page("generated/DebOptions.md", "DebOptions"),
@@ -407,7 +407,9 @@ async function render(pages, jsdoc2MdOptions) {
   }
 }
 
+const markdown2htmlPro = new Markdown2HtmlPro();
 async function writeDocFile(docOutFile, content) {
+  content = await markdown2htmlPro.markdown2html(content);
   let existingContent
   try {
     existingContent = await fs.readFile(docOutFile, "utf8")

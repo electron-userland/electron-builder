@@ -16,7 +16,6 @@ out/
 
 /packages/dmg-builder/vendor/
 /packages/electron-builder/README.md
-#/packages/app-builder-lib/scheme.json
 
 /scripts/jsdoc/out/
 /scripts/renderer/out/
@@ -24,7 +23,6 @@ out/
 electron-builder-*.d.ts
 
 /site/
-/docs/
 
 tsconfig.tsbuildinfo
 

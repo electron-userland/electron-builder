@@ -503,18 +503,15 @@ Object {
             "LICENSE": Object {
               "size": 1077,
             },
-            "float.patch": Object {
-              "size": 16278,
-            },
             "lib": Object {
               "files": Object {
                 "util.js": Object {
-                  "size": 3021,
+                  "size": 3039,
                 },
               },
             },
             "package.json": Object {
-              "size": 373,
+              "size": 402,
             },
           },
         },
