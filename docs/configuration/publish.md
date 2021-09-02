@@ -1,13 +1,13 @@
 The [publish](configuration.md#Configuration-publish) key contains a set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](../auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [Bintray](#bintrayoptions), [Generic Server](#genericserveroptions), [GitHub](#githuboptions), [S3](#s3options), [Spaces](#spacesoptions) or [Snap Store](#snapstoreoptions) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygenoptions), [Generic Server](#genericserveroptions), [GitHub](#githuboptions), [S3](#s3options), [Spaces](#spacesoptions) or [Snap Store](#snapstoreoptions) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
 `electron-builder` makes publishing dead simple.
 
 If `GH_TOKEN` or `GITHUB_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
-If `BT_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — defaults to `[{provider: "bintray"}]`.
+If `KEYGEN_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — defaults to `[{provider: "keygen"}]`.
 
 !!! info "Snap store"
     `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
@@ -104,29 +104,6 @@ Detected automatically using:
 * if no env, from `.git/config` origin url.
  
 <!-- do not edit. start of generated block -->
-<h2 id="bintrayoptions">BintrayOptions</h2>
-<p><a href="https://bintray.com/">Bintray</a> options. Requires an API key. An API key can be obtained from the user <a href="https://bintray.com/profile/edit">profile</a> page (“Edit Your Profile” -&gt; API Key).
-Define <code>BT_TOKEN</code> environment variable.</p>
-<ul>
-<li><strong><code id="BintrayOptions-provider">provider</code></strong> “bintray” - The provider. Must be <code>bintray</code>.</li>
-<li><code id="BintrayOptions-package">package</code> String | “undefined” - The Bintray package name.</li>
-<li><code id="BintrayOptions-repo">repo</code> = <code>generic</code> String | “undefined” - The Bintray repository name.</li>
-<li><code id="BintrayOptions-owner">owner</code> String | “undefined” - The owner.</li>
-<li><code id="BintrayOptions-component">component</code> String | “undefined” - The Bintray component (Debian only).</li>
-<li><code id="BintrayOptions-distribution">distribution</code> = <code>stable</code> String | “undefined” - The Bintray distribution (Debian only).</li>
-<li><code id="BintrayOptions-user">user</code> String | “undefined” - The Bintray user account. Used in cases where the owner is an organization.</li>
-<li><code id="BintrayOptions-token">token</code> String | “undefined”</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="BintrayOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-</ul>
 <h2 id="genericserveroptions">GenericServerOptions</h2>
 <p>Generic (any HTTP(S) server) options.
 In all publish options <a href="/file-patterns#file-macros">File Macros</a> are supported.</p>
@@ -190,6 +167,55 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 <p><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
 </ul>
+<h2 id="snapstoreoptions">SnapStoreOptions</h2>
+<p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
+<ul>
+<li><strong><code id="SnapStoreOptions-provider">provider</code></strong> “snapStore” - The provider. Must be <code>snapStore</code>.</li>
+<li><strong><code id="SnapStoreOptions-repo">repo</code></strong> String - snapcraft repo name</li>
+<li><code id="SnapStoreOptions-channels">channels</code> = <code>[&quot;edge&quot;]</code> String | Array&lt;String&gt; | “undefined” - The list of channels the snap would be released.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="SnapStoreOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="SnapStoreOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+</ul>
+<h2 id="spacesoptions">SpacesOptions</h2>
+<p><a href="https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces">DigitalOcean Spaces</a> options.
+Access key is required, define <code>DO_KEY_ID</code> and <code>DO_SECRET_KEY</code> environment variables.</p>
+<ul>
+<li><strong><code id="SpacesOptions-provider">provider</code></strong> “spaces” - The provider. Must be <code>spaces</code>.</li>
+<li><strong><code id="SpacesOptions-name">name</code></strong> String - The space name.</li>
+<li><strong><code id="SpacesOptions-region">region</code></strong> String - The region (e.g. <code>nyc3</code>).</li>
+<li><code id="SpacesOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</li>
+<li><code id="SpacesOptions-path">path</code> = <code>/</code> String | “undefined” - The directory path.</li>
+<li><code id="SpacesOptions-acl">acl</code> = <code>public-read</code> “private” | “public-read” | “undefined” - The ACL. Set to <code>null</code> to not <a href="https://github.com/electron-userland/electron-builder/issues/1822">add</a>.</li>
+</ul>
+<h2 id="keygenoptions">KeygenOptions</h2>
+<p>Keygen options.
+<a href="https://keygen.sh/">https://keygen.sh/</a>
+Define <code>KEYGEN_TOKEN</code> environment variable.</p>
+<ul>
+<li><strong><code id="KeygenOptions-provider">provider</code></strong> “keygen” - The provider. Must be <code>keygen</code>.</li>
+<li><strong><code id="KeygenOptions-account">account</code></strong> String - Keygen account’s UUID</li>
+<li><strong><code id="KeygenOptions-product">product</code></strong> String - Keygen product’s UUID</li>
+<li><code id="KeygenOptions-channel">channel</code> = <code>stable</code> “stable” | “rc” | “beta” | “alpha” | “dev” | “undefined” - The channel.</li>
+<li><code id="KeygenOptions-platform">platform</code> String | “undefined” - The target Platform. Is set programmatically explicitly during publishing.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="KeygenOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+</ul>
 
 <!-- end of generated block -->
 
@@ -214,7 +240,3 @@ Example configuration:
 ```
 
 {!generated/s3-options.md!}
-
-{!generated/spaces-options.md!}
-
-{!generated/snap-store-options.md!}

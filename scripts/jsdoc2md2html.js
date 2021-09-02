@@ -210,14 +210,13 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/snap.md", "SnapOptions"),
 
     new Page("configuration/publish.md", null, {
-      "BintrayOptions": "",
       "GenericServerOptions": "",
       "GithubOptions": "",
+      "SnapStoreOptions": "",
+      "SpacesOptions": "",
+      "KeygenOptions": "",
     }),
-
     new Page("generated/s3-options.md", "S3Options"),
-    new Page("generated/snap-store-options.md", null, {"SnapStoreOptions": ""}),
-    new Page("generated/spaces-options.md", null, {"SpacesOptions": ""}),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),
     new Page("generated/DebOptions.md", "DebOptions"),
