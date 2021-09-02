@@ -5,14 +5,14 @@ importers:
   .:
     specifiers:
       '@babel/plugin-transform-modules-commonjs': 7.15.0
-      '@changesets/changelog-github': ^0.4.0
+      '@changesets/changelog-github': 0.4.1
       '@changesets/cli': 2.16.0
-      '@types/node': ^16.7.8
+      '@types/node': 16.7.10
       '@typescript-eslint/eslint-plugin': 4.30.0
       '@typescript-eslint/parser': 4.30.0
-      catharsis: ^0.9.0
+      catharsis: 0.9.0
       conventional-changelog-cli: 2.1.1
-      dmd: ^6.0.0
+      dmd: 6.0.0
       eslint: 7.30.0
       eslint-config-prettier: 8.3.0
       eslint-plugin-prettier: 3.4.0
@@ -22,20 +22,20 @@ importers:
       jest-cli: 27.0.6
       jsdoc-to-markdown: 7.0.1
       lint-staged: 11.1.2
-      markdown2html-pro: ^1.0.6
+      markdown2html-pro: 1.0.6
       path-sort: 0.1.0
       prettier: 2.3.2
-      replace-in-file: ^6.2.0
+      replace-in-file: 6.2.0
       source-map-support: 0.5.19
       ts-jsdoc: 3.2.2
       typescript: 4.3.5
-      typescript-json-schema: ^0.50.1
+      typescript-json-schema: 0.50.1
       v8-compile-cache: 2.3.0
     devDependencies:
       '@babel/plugin-transform-modules-commonjs': 7.15.0
-      '@changesets/changelog-github': 0.4.0
+      '@changesets/changelog-github': 0.4.1
       '@changesets/cli': 2.16.0
-      '@types/node': 16.7.8
+      '@types/node': 16.7.10
       '@typescript-eslint/eslint-plugin': 4.30.0_d181787336d08305e79fb0af6772ebf6
       '@typescript-eslint/parser': 4.30.0_eslint@7.30.0+typescript@4.3.5
       catharsis: 0.9.0
@@ -171,7 +171,7 @@ importers:
 
   packages/builder-util:
     specifiers:
-      '@types/cross-spawn': ^6.0.2
+      '@types/cross-spawn': 6.0.2
       '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': 3.0.0
@@ -2049,11 +2049,11 @@ packages:
       semver: 5.7.1
     dev: true
 
-  /@changesets/changelog-github/0.4.0:
-    resolution: {integrity: sha512-4GphTAdHJfECuuQg4l0eFGYyUh26mfyXpAi2FImrQvaN+boqTM+9EAAJe2b8Y3OKRfoET+ihgo+LARhW2xJoiw==}
+  /@changesets/changelog-github/0.4.1:
+    resolution: {integrity: sha512-WK9DzS3i0wa2doEnOr4sm/FMnNtxzCCAKP7dEcWvhYkgXYX5R6jmfHAcDstmjAhiuvbhoHYom4MOC1tIzgwnfA==}
     dependencies:
       '@changesets/get-github-info': 0.5.0
-      '@changesets/types': 4.0.0
+      '@changesets/types': 4.0.1
       dotenv: 8.6.0
     dev: true
 
@@ -2193,6 +2193,10 @@ packages:
 
   /@changesets/types/4.0.0:
     resolution: {integrity: sha512-whLmPx2wgJRoOtxVZop+DJ71z1gTSkij7osiHgN+pe//FiE6bb4ffvBBb0rACs2cUPfAkWxgSPzqkECgKS1jvQ==}
+    dev: true
+
+  /@changesets/types/4.0.1:
+    resolution: {integrity: sha512-zVfv752D8K2tjyFmxU/vnntQ+dPu+9NupOSguA/2Zuym4tVxRh0ylArgKZ1bOAi2eXfGlZMxJU/kj7uCSI15RQ==}
     dev: true
 
   /@changesets/write/0.1.4:
@@ -2623,7 +2627,7 @@ packages:
   /@types/cross-spawn/6.0.2:
     resolution: {integrity: sha512-KuwNhp3eza+Rhu8IFI5HUXRP0LIhqH5cAjubUvGXXthh4YYBuP2ntwEX+Cz8GJoZUHlKo247wPWOfA9LYEq4cw==}
     dependencies:
-      '@types/node': 16.4.10
+      '@types/node': 16.7.10
     dev: true
 
   /@types/debug/4.1.7:
@@ -2742,8 +2746,8 @@ packages:
   /@types/node/16.4.10:
     resolution: {integrity: sha512-TmVHsm43br64js9BqHWqiDZA+xMtbUpI1MBIA0EyiBmoV9pcEYFOSdj5fr6enZNfh4fChh+AGOLIzGwJnkshyQ==}
 
-  /@types/node/16.7.8:
-    resolution: {integrity: sha512-8upnoQU0OPzbIkm+ZMM0zCeFCkw2s3mS0IWdx0+AAaWqm4fkBb0UJp8Edl7FVKRamYbpJC/aVsHpKWBIbiC7Zg==}
+  /@types/node/16.7.10:
+    resolution: {integrity: sha512-S63Dlv4zIPb8x6MMTgDq5WWRJQe56iBEY0O3SOFA9JrRienkOVDXSXBjjJw6HTNQYSE2JI6GMCR6LVbIMHJVvA==}
     dev: true
 
   /@types/normalize-package-data/2.4.1:
