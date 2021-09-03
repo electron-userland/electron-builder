@@ -217,6 +217,7 @@ async function render2(files, jsdoc2MdOptions) {
       "KeygenOptions": "",
     }),
     new Page("generated/s3-options.md", "S3Options"),
+    new Page("generated/bitbucket-options.md", "BitbucketOptions"),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),
     new Page("generated/DebOptions.md", "DebOptions"),

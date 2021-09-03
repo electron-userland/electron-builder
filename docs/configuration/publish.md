@@ -92,7 +92,7 @@ This example workflow is modelled on how releases are handled in maven (it is an
 3. When you are ready to deploy, simply change you package version to `1.9.0` and push. This will then produce a `latest.yml` and `something.exe` on s3. Usually you'll git-tag this version as well (just to keep track of it).
 4. Change the version back to a snapshot version right after, i.e. `1.10.0-snapshot`, and commit it.
 
-## GitHub Repository and Bintray Package
+## GitHub Repository
 
 Detected automatically using:
 
@@ -228,7 +228,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 Example configuration:
 
-```json tab="package.json"
+```json
 {
   "build":
     "publish": {
@@ -240,3 +240,12 @@ Example configuration:
 ```
 
 {!generated/s3-options.md!}
+
+{!generated/bitbucket-options.md!}
+For converting an app password to a usable token, you can utilize this
+```typescript
+convertAppPassword(owner: string, token: string) {
+  const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+  return `Basic ${base64encodedData}`
+}
+```

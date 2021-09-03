@@ -1,9 +1,19 @@
 import { OutgoingHttpHeaders } from "http"
 
-export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen"
+export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
-export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions | KeygenOptions | SnapStoreOptions
+export type AllPublishOptions =
+  | string
+  | GithubOptions
+  | S3Options
+  | SpacesOptions
+  | GenericServerOptions
+  | BintrayOptions
+  | CustomPublishOptions
+  | KeygenOptions
+  | SnapStoreOptions
+  | BitbucketOptions
 
 export interface PublishConfiguration {
   /**
@@ -177,6 +187,34 @@ export interface KeygenOptions extends PublishConfiguration {
    * The target Platform. Is set programmatically explicitly during publishing.
    */
   readonly platform?: string | null
+}
+
+/**
+ * Bitbucket options.
+ * https://keygen.sh/
+ * Define `BITBUCKET_TOKEN` environment variable.
+ */
+export interface BitbucketOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `bitbucket`.
+   */
+  readonly provider: "bitbucket"
+
+  /**
+   * Repository owner
+   */
+  readonly owner: string
+
+  /**
+   * Repository slug/name
+   */
+  readonly slug: string
+
+  /**
+   * The channel.
+   * @default latest
+   */
+  readonly channel?: string | null
 }
 
 /**

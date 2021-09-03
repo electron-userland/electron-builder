@@ -32,6 +32,7 @@ import { WinPackager } from "../winPackager"
 import { SnapStorePublisher } from "./SnapStorePublisher"
 import { createUpdateInfoTasks, UpdateInfoFileTask, writeUpdateInfoFiles } from "./updateInfoBuilder"
 import { KeygenPublisher } from "./KeygenPublisher"
+import { BitbucketPublisher } from "./BitbucketPublisher"
 
 const publishForPrWarning =
   "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -303,11 +304,11 @@ export function createPublisher(context: PublishContext, version: string, publis
     case "keygen":
       return new KeygenPublisher(context, publishConfig as KeygenOptions, version)
 
-    case "generic":
-      return null
-
     case "snapStore":
       return new SnapStorePublisher(context, publishConfig as SnapStoreOptions)
+
+    case "generic":
+      return null
 
     default: {
       const clazz = requireProviderClass(provider, packager)
@@ -338,6 +339,9 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
 
     case "spaces":
       return SpacesPublisher
+
+    case "bitbucket":
+      return BitbucketPublisher
 
     default: {
       const name = `electron-publisher-${provider}`
@@ -430,6 +434,8 @@ async function resolvePublishConfigurations(
       serviceName = "bintray"
     } else if (!isEmptyOrSpaces(process.env.KEYGEN_TOKEN)) {
       serviceName = "keygen"
+    } else if (!isEmptyOrSpaces(process.env.BITBUCKET_TOKEN)) {
+      serviceName = "bitbucket"
     }
 
     if (serviceName != null) {

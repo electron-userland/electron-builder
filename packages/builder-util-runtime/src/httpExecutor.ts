@@ -72,7 +72,7 @@ export function parseJson(result: Promise<string | null>) {
 
 interface Request {
   abort: () => void
-  end: () => void
+  end: (data?: Buffer) => void
 }
 export abstract class HttpExecutor<T extends Request> {
   protected readonly maxRedirects = 10
@@ -94,9 +94,7 @@ export abstract class HttpExecutor<T extends Request> {
         ...opts,
       }
     }
-    return this.doApiRequest(options, cancellationToken, it => {
-      ;(it as any).end(encodedData)
-    })
+    return this.doApiRequest(options, cancellationToken, it => it.end(encodedData))
   }
 
   doApiRequest(
@@ -499,7 +497,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
   })
 }
 
-export function configureRequestOptions(options: RequestOptions, token?: string | null, method?: "GET" | "DELETE" | "PUT"): RequestOptions {
+export function configureRequestOptions(options: RequestOptions, token?: string | null, method?: "GET" | "DELETE" | "PUT" | "POST"): RequestOptions {
   if (method != null) {
     options.method = method
   }
