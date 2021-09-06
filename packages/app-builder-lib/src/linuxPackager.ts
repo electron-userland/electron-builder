@@ -10,7 +10,7 @@ import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
-import { sanitizeFileName } from "./util/sanitizeFileName"
+import { sanitizeFileName } from "./util/filename"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
