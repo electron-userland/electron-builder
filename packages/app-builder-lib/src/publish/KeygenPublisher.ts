@@ -4,7 +4,7 @@ import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext } from "electron-publish"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import * as path from "path"
+
 export class KeygenPublisher extends HttpPublisher {
   readonly providerName = "keygen"
   readonly hostname = "api.keygen.sh"
@@ -78,7 +78,7 @@ export class KeygenPublisher extends HttpPublisher {
         type: "release",
         attributes: {
           filename: fileName,
-          filetype: path.extname(fileName),
+          filetype: this.getFiletype(fileName),
           filesize: dataLength,
           version: this.version,
           platform: this.info.platform,
@@ -112,5 +112,36 @@ export class KeygenPublisher extends HttpPublisher {
   toString() {
     const { account, product, platform } = this.info
     return `Keygen (account: ${account}, product: ${product}, platform: ${platform}, version: ${this.version})`
+  }
+
+  // Get the filetype from a filename. Returns a string of one or more file extensions,
+  // e.g. `zip`, `dmg`, `tar.gz`, `tar.bz2`, `exe.blockmap`. We'd use `path.extname()`,
+  // but it doesn't support multiple extensions, e.g. `dmg.blockmap`.
+  private getFiletype(filename: string): string {
+    const components = filename
+      .split(".")
+      .filter(c => c !== "")
+      .slice(1)
+      .reverse()
+    const extnames = []
+    const regex = new RegExp(
+      "^" + // Test from start of string.
+        "(?=.*?[a-z])" + // Must contain at least 1 lowercase letter.
+        "(?=.*?[0-9]?)" + // May contain optional numbers.
+        "[a-z0-9]+" + // Must contain only lowercase letters and numbers.
+        "$" // Test to end of string.
+    )
+
+    // Collect extensions, working backwards until we reach a non-extension.
+    for (const component of components) {
+      if (!regex.test(component)) {
+        // We've reached a non-extension (i.e. we've collected all valid extensions).
+        break
+      }
+
+      extnames.unshift(component)
+    }
+
+    return extnames.join(".")
   }
 }
