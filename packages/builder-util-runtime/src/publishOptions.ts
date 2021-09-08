@@ -193,6 +193,14 @@ export interface KeygenOptions extends PublishConfiguration {
  * Bitbucket options.
  * https://keygen.sh/
  * Define `BITBUCKET_TOKEN` environment variable.
+ * 
+ * For converting an app password to a usable token, you can utilize this
+```typescript
+convertAppPassword(owner: string, token: string) {
+  const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+  return `Basic ${base64encodedData}`
+}
+```
  */
 export interface BitbucketOptions extends PublishConfiguration {
   /**
@@ -259,6 +267,25 @@ export interface BaseS3Options extends PublishConfiguration {
   readonly acl?: "private" | "public-read" | null
 }
 
+/**
+ * [Amazon S3](https://aws.amazon.com/s3/) options.
+ * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
+ * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
+ * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
+ * 
+ * Example configuration:
+ * 
+```json
+{
+  "build":
+    "publish": {
+      "provider": "s3",
+      "bucket": "bucket-name"
+    }
+  }
+}
+```
+ */
 export interface S3Options extends BaseS3Options {
   /**
    * The provider. Must be `s3`.
