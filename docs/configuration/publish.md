@@ -92,7 +92,7 @@ This example workflow is modelled on how releases are handled in maven (it is an
 3. When you are ready to deploy, simply change you package version to `1.9.0` and push. This will then produce a `latest.yml` and `something.exe` on s3. Usually you'll git-tag this version as well (just to keep track of it).
 4. Change the version back to a snapshot version right after, i.e. `1.10.0-snapshot`, and commit it.
 
-## GitHub Repository
+## GitHub Repository and Publisher Options
 
 Detected automatically using:
 
@@ -104,25 +104,6 @@ Detected automatically using:
 * if no env, from `.git/config` origin url.
  
 <!-- do not edit. start of generated block -->
-<h2 id="genericserveroptions">GenericServerOptions</h2>
-<p>Generic (any HTTP(S) server) options.
-In all publish options <a href="/file-patterns#file-macros">File Macros</a> are supported.</p>
-<ul>
-<li><strong><code id="GenericServerOptions-provider">provider</code></strong> “generic” - The provider. Must be <code>generic</code>.</li>
-<li><strong><code id="GenericServerOptions-url">url</code></strong> String - The base url. e.g. <code>https://bucket_name.s3.amazonaws.com</code>.</li>
-<li><code id="GenericServerOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
-<li><code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to <code>true</code> if <code>url</code> doesn’t contain <code>s3.amazonaws.com</code>.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-</ul>
 <h2 id="githuboptions">GithubOptions</h2>
 <p><a href="https://help.github.com/articles/about-releases/">GitHub</a> options.</p>
 <p>GitHub <a href="https://help.github.com/articles/creating-an-access-token-for-command-line-use/">personal access token</a> is required. You can generate by going to <a href="https://github.com/settings/tokens/new">https://github.com/settings/tokens/new</a>. The access token should have the repo scope/permission.
@@ -165,6 +146,25 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 </li>
 <li>
 <p><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+</ul>
+<h2 id="genericserveroptions">GenericServerOptions</h2>
+<p>Generic (any HTTP(S) server) options.
+In all publish options <a href="/file-patterns#file-macros">File Macros</a> are supported.</p>
+<ul>
+<li><strong><code id="GenericServerOptions-provider">provider</code></strong> “generic” - The provider. Must be <code>generic</code>.</li>
+<li><strong><code id="GenericServerOptions-url">url</code></strong> String - The base url. e.g. <code>https://bucket_name.s3.amazonaws.com</code>.</li>
+<li><code id="GenericServerOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
+<li><code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to <code>true</code> if <code>url</code> doesn’t contain <code>s3.amazonaws.com</code>.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
 </ul>
 <h2 id="snapstoreoptions">SnapStoreOptions</h2>
@@ -216,6 +216,26 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
 </ul>
+<h2 id="bitbucketoptions">BitbucketOptions</h2>
+<p>Bitbucket options.
+<a href="https://keygen.sh/">https://keygen.sh/</a>
+Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
+<ul>
+<li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
+<li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
+<li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
+<li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="BitbucketOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+</ul>
 
 <!-- end of generated block -->
 
@@ -228,7 +248,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 Example configuration:
 
-```json
+```json tab="package.json"
 {
   "build":
     "publish": {
@@ -241,6 +261,12 @@ Example configuration:
 
 {!generated/s3-options.md!}
 
+{!generated/github-options.md!}
+
+{!generated/snap-options.md!}
+
+{!generated/spaces-options.md!}
+
 {!generated/bitbucket-options.md!}
 For converting an app password to a usable token, you can utilize this
 ```typescript
@@ -249,3 +275,6 @@ convertAppPassword(owner: string, token: string) {
   return `Basic ${base64encodedData}`
 }
 ```
+
+
+{!generated/keygen-options.md!}
