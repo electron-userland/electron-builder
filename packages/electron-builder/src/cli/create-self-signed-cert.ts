@@ -1,4 +1,4 @@
-import { sanitizeFileName } from "app-builder-lib/out/util/sanitizeFileName"
+import { sanitizeFileName } from "app-builder-lib/out/util/filename"
 import { exec, log, spawn, TmpDir } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import * as chalk from "chalk"

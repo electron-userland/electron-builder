@@ -4,7 +4,8 @@ import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext } from "electron-publish"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"
 import { configureRequestOptions, HttpExecutor, parseJson } from "builder-util-runtime"
-import * as path from "path"
+import { getCompleteExtname } from "../util/filename"
+
 export class KeygenPublisher extends HttpPublisher {
   readonly providerName = "keygen"
   readonly hostname = "api.keygen.sh"
@@ -78,7 +79,7 @@ export class KeygenPublisher extends HttpPublisher {
         type: "release",
         attributes: {
           filename: fileName,
-          filetype: path.extname(fileName),
+          filetype: getCompleteExtname(fileName),
           filesize: dataLength,
           version: this.version,
           platform: this.info.platform,
