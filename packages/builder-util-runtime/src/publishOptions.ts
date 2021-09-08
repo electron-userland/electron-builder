@@ -191,7 +191,7 @@ export interface KeygenOptions extends PublishConfiguration {
 
 /**
  * Bitbucket options.
- * https://keygen.sh/
+ * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
  * 
  * For converting an app password to a usable token, you can utilize this

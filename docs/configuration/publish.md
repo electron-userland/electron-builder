@@ -228,7 +228,7 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 </ul>
 <h2 id="bitbucketoptions">BitbucketOptions</h2>
 <p>Bitbucket options.
-<a href="https://keygen.sh/">https://keygen.sh/</a>
+<a href="https://bitbucket.org/">https://bitbucket.org/</a>
 Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <p>For converting an app password to a usable token, you can utilize this</p>
 <pre><code class="hljs language-typescript"><span class="hljs-function"><span class="hljs-title">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>)</span> {
