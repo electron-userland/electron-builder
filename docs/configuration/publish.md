@@ -12,23 +12,23 @@ If `KEYGEN_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — default
 !!! info "Snap store"
     `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
 
-You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bintray (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
+You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
 
-```json tab="package.json"
+```json
 {
   "build": {
     "win": {
-      "publish": ["github", "bintray"]
+      "publish": ["github", "bitbucket"]
     }
   }
 }
 ```
 
-```yaml tab="electron-builder.yaml"
+```yaml
 win:
   publish:
     - github
-    - bintray
+    - bitbucket
 ```
 
 You can also configure publishing using CLI arguments, for example, to force publishing snap not to Snap Store, but to GitHub: `-c.snap.publish=github`
@@ -66,7 +66,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
  Add to `scripts` in the development `package.json`:
  
- ```json tab="package.json"
+ ```json
  "release": "electron-builder"
  ```
 
@@ -92,7 +92,7 @@ This example workflow is modelled on how releases are handled in maven (it is an
 3. When you are ready to deploy, simply change you package version to `1.9.0` and push. This will then produce a `latest.yml` and `something.exe` on s3. Usually you'll git-tag this version as well (just to keep track of it).
 4. Change the version back to a snapshot version right after, i.e. `1.10.0-snapshot`, and commit it.
 
-## GitHub Repository and Bintray Package
+## GitHub Repository
 
 Detected automatically using:
 
@@ -103,6 +103,16 @@ Detected automatically using:
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
  
+## Publishers
+**Options Available:**
+- GenericServerOptions
+- GithubOptions
+- SnapStoreOptions
+- SpacesOptions
+- KeygenOptions
+- BitbucketOptions
+- S3Options
+
 <!-- do not edit. start of generated block -->
 <h2 id="genericserveroptions">GenericServerOptions</h2>
 <p>Generic (any HTTP(S) server) options.
@@ -216,27 +226,76 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
 </ul>
+<h2 id="bitbucketoptions">BitbucketOptions</h2>
+<p>Bitbucket options.
+<a href="https://bitbucket.org/">https://bitbucket.org/</a>
+Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
+<p>For converting an app password to a usable token, you can utilize this</p>
+<pre><code class="hljs language-typescript"><span class="hljs-function"><span class="hljs-title">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>)</span> {
+<span class="hljs-keyword">const</span> base64encodedData = Buffer.from(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${token.trim()}</span>`</span>).toString(<span class="hljs-string">&quot;base64&quot;</span>)
+<span class="hljs-keyword">return</span> <span class="hljs-string">`Basic <span class="hljs-subst">${base64encodedData}</span>`</span>
+}
+</code></pre>
+<ul>
+<li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
+<li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
+<li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
+<li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="BitbucketOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+</ul>
+<h2 id="s3options">S3Options</h2>
+<p><a href="https://aws.amazon.com/s3/">Amazon S3</a> options.
+AWS credentials are required, please see <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html">getting your credentials</a>.
+Define <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html">environment variables</a>.
+Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html">~/.aws/credentials</a>.</p>
+<p>Example configuration:</p>
+<pre><code class="hljs language-json">{
+<span class="hljs-attr">&quot;build&quot;</span>:
+<span class="hljs-string">&quot;publish&quot;</span>: {
+<span class="hljs-attr">&quot;provider&quot;</span>: <span class="hljs-string">&quot;s3&quot;</span>,
+<span class="hljs-attr">&quot;bucket&quot;</span>: <span class="hljs-string">&quot;bucket-name&quot;</span>
+}
+}
+}
+</code></pre>
+<ul>
+<li>
+<p><strong><code id="S3Options-provider">provider</code></strong> “s3” - The provider. Must be <code>s3</code>.</p>
+</li>
+<li>
+<p><strong><code id="S3Options-bucket">bucket</code></strong> String - The bucket name.</p>
+</li>
+<li>
+<p><code id="S3Options-region">region</code> String | “undefined” - The region. Is determined and set automatically when publishing.</p>
+</li>
+<li>
+<p><code id="S3Options-acl">acl</code> = <code>public-read</code> “private” | “public-read” | “undefined” - The ACL. Set to <code>null</code> to not <a href="https://github.com/electron-userland/electron-builder/issues/1822">add</a>.</p>
+<p>Please see <a href="https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128">required permissions for the S3 provider</a>.</p>
+</li>
+<li>
+<p><code id="S3Options-storageClass">storageClass</code> = <code>STANDARD</code> “STANDARD” | “REDUCED_REDUNDANCY” | “STANDARD_IA” | “undefined” - The type of storage to use for the object.</p>
+</li>
+<li>
+<p><code id="S3Options-encryption">encryption</code> “AES256” | “aws:kms” | “undefined” - Server-side encryption algorithm to use for the object.</p>
+</li>
+<li>
+<p><code id="S3Options-endpoint">endpoint</code> String | “undefined” - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like <code>https://{service}.{region}.amazonaws.com</code>.</p>
+</li>
+<li>
+<p><code id="S3Options-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</p>
+</li>
+<li>
+<p><code id="S3Options-path">path</code> = <code>/</code> String | “undefined” - The directory path.</p>
+</li>
+</ul>
 
 <!-- end of generated block -->
-
-## S3Options
-[Amazon S3](https://aws.amazon.com/s3/) options.
-
-AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
-Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
-Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
-
-Example configuration:
-
-```json tab="package.json"
-{
-  "build":
-    "publish": {
-      "provider": "s3",
-      "bucket": "bucket-name"
-    }
-  }
-}
-```
-
-{!generated/s3-options.md!}

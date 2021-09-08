@@ -77,7 +77,7 @@ export abstract class HttpPublisher extends Publisher {
     const fileName = (this.useSafeArtifactName ? task.safeArtifactName : null) || basename(task.file)
 
     if (task.fileContent != null) {
-      await this.doUpload(fileName, task.arch || Arch.x64, task.fileContent.length, it => it.end(task.fileContent))
+      await this.doUpload(fileName, task.arch || Arch.x64, task.fileContent.length, it => it.end(task.fileContent), task.file)
       return
     }
 
@@ -104,7 +104,7 @@ export abstract class HttpPublisher extends Publisher {
     arch: Arch,
     dataLength: number,
     requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
-    file?: string
+    file: string
   ): Promise<any>
 }
 

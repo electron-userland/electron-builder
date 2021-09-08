@@ -35,7 +35,7 @@ export class KeygenPublisher extends HttpPublisher {
     dataLength: number,
     requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _file?: string
+    _file: string
   ): Promise<any> {
     return HttpExecutor.retryOnServerError(async () => {
       const { data, errors } = await this.upsertRelease(fileName, dataLength)

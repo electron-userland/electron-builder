@@ -103,6 +103,7 @@ importers:
       electron-builder-squirrel-windows: workspace:*
       electron-osx-sign: ^0.5.0
       electron-publish: workspace:*
+      form-data: ^4.0.0
       fs-extra: ^10.0.0
       hosted-git-info: ^4.0.2
       is-ci: ^3.0.0
@@ -128,6 +129,7 @@ importers:
       ejs: 3.1.6
       electron-osx-sign: 0.5.0
       electron-publish: link:../electron-publish
+      form-data: 4.0.0
       fs-extra: 10.0.0
       hosted-git-info: 4.0.2
       is-ci: 3.0.0
@@ -5609,6 +5611,15 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.32
+
+  /form-data/4.0.0:
+    resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
+    engines: {node: '>= 6'}
+    dependencies:
+      asynckit: 0.4.0
+      combined-stream: 1.0.8
+      mime-types: 2.1.32
+    dev: false
 
   /fragment-cache/0.2.1:
     resolution: {integrity: sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=}
