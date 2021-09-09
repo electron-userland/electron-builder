@@ -13,6 +13,7 @@ importers:
       catharsis: 0.9.0
       conventional-changelog-cli: 2.1.1
       dmd: 6.0.0
+      dmg-license: 1.0.9
       eslint: 7.30.0
       eslint-config-prettier: 8.3.0
       eslint-plugin-prettier: 3.4.0
@@ -31,6 +32,8 @@ importers:
       typescript: 4.3.5
       typescript-json-schema: 0.50.1
       v8-compile-cache: 2.3.0
+    optionalDependencies:
+      dmg-license: 1.0.9
     devDependencies:
       '@babel/plugin-transform-modules-commonjs': 7.15.0
       '@changesets/changelog-github': 0.4.1
