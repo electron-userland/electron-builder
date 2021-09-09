@@ -20,8 +20,8 @@
     <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
 
     {{ if (iconPath) { }}
-    <Icon Id="icon.ico" SourceFile="${iconPath}"/>
-    <Property Id="ARPPRODUCTICON" Value="icon.ico"/>
+    <Icon Id="${iconId}" SourceFile="${iconPath}"/>
+    <Property Id="ARPPRODUCTICON" Value="${iconId}"/>
     {{ } -}}
 
     {{ if (isAssisted || isRunAfterFinish) { }}
