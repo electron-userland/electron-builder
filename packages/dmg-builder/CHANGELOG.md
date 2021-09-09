@@ -1,5 +1,14 @@
 # dmg-builder
 
+## 22.14.1
+
+### Patch Changes
+
+- [#6244](https://github.com/electron-userland/electron-builder/pull/6244) [`8ccb2da5`](https://github.com/electron-userland/electron-builder/commit/8ccb2da5d4c641b971f6a7403d3b2e3a3b844a05) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: "error dmg-license@1.0.9: The platform "linux" is incompatible with this module."
+
+- Updated dependencies [[`8ccb2da5`](https://github.com/electron-userland/electron-builder/commit/8ccb2da5d4c641b971f6a7403d3b2e3a3b844a05)]:
+  - app-builder-lib@22.14.1
+
 ## 22.14.0
 
 ### Patch Changes
