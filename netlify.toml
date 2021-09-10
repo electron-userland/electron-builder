@@ -4,3 +4,6 @@
 [Build]
   Publish = ""
   Functions = ""
+
+[build.environment]
+  NPM_FLAGS = "--version"
