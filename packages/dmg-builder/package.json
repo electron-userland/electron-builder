@@ -20,10 +20,12 @@
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
 		"builder-util-runtime": "workspace:*",
-		"dmg-license": "^1.0.9",
 		"fs-extra": "^10.0.0",
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
+	},
+	"optionalDependencies": {
+		"dmg-license": "^1.0.9"
 	},
 	"devDependencies": {
 		"@types/fs-extra": "9.0.12",
