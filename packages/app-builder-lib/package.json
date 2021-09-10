@@ -101,8 +101,9 @@
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/semver": "7.3.8",
+    "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*"
   },
-  "//": "electron-builder-squirrel-windows added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
+  "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "typings": "./out/index.d.ts"
 }

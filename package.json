@@ -37,6 +37,9 @@
   "repository": "https://github.com/electron-userland/electron-builder",
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
+  "dependencies": {
+    "dmg-license": "1.0.9"
+  },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.15.0",
     "@changesets/changelog-github": "0.4.1",
