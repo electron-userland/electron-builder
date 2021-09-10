@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 22.14.2
+
+### Patch Changes
+
+- [#6248](https://github.com/electron-userland/electron-builder/pull/6248) [`f3590355`](https://github.com/electron-userland/electron-builder/commit/f3590355c61dab05a6c92c5951aae8e59503d693) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: dmg-license as an optional dependency while still enabling docs site to build properly
+
 ## 22.14.1
 
 ### Patch Changes
