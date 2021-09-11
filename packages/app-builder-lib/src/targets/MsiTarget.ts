@@ -156,11 +156,13 @@ export default class MsiTarget extends Target {
     const compression = this.packager.compression
     const options = this.options
     const iconPath = await this.packager.getIconPath()
+    const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
     return (await projectTemplate.value)({
       ...commonOptions,
       isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
+      iconId: iconId,
       compressionLevel: compression === "store" ? "none" : "high",
       version: appInfo.getVersionInWeirdWindowsForm(),
       productName: appInfo.productName,
@@ -221,8 +223,9 @@ export default class MsiTarget extends Target {
       if (isMainExecutable && (isCreateDesktopShortcut || commonOptions.isCreateStartMenuShortcut)) {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
+        const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
         if (isCreateDesktopShortcut) {
-          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="icon.ico"/>\n`
+          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}"/>\n`
         }
 
         const hasMenuCategory = commonOptions.menuCategory != null
@@ -231,7 +234,7 @@ export default class MsiTarget extends Target {
           if (hasMenuCategory) {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
-          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="icon.ico">\n`
+          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}">\n`
           result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${this.packager.appInfo.id}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
