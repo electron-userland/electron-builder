@@ -48,7 +48,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+
+      - name: Push release version tag
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git push --follow-tags
+          git push origin releases
+
       - name: Deploy Documentation
         uses: netlify/actions/build@master
         if: steps.changesets.outputs.published == 'true'
