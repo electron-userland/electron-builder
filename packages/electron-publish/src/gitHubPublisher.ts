@@ -40,18 +40,19 @@ export class GitHubPublisher extends HttpPublisher {
   constructor(context: PublishContext, private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
     super(context, true)
 
-    let token = info.token
+    if (isEmptyOrSpaces((info as any).token)) {
+      throw new InvalidConfigurationError(`Token is no longer accepted as part of config file. Please use "GH_TOKEN"`)
+    }
+    
+    let token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     if (isEmptyOrSpaces(token)) {
-      token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-      if (isEmptyOrSpaces(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
-      }
+      throw new InvalidConfigurationError(`GitHub Personal Access Token is not set using env "GH_TOKEN"`)
+    }
 
-      token = token.trim()
+    token = token.trim()
 
-      if (!isTokenCharValid(token)) {
-        throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
-      }
+    if (!isTokenCharValid(token)) {
+      throw new InvalidConfigurationError(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
     }
 
     this.token = token
