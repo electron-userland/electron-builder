@@ -85,20 +85,6 @@ export function parseDn(seq: string): Map<string, string> {
   return result
 }
 
-function toStringDn(dn: Map<string, string>) {
-  const fields = ["CN", "O", "L", "S", "C"] as string[]
-  return fields.reduce((prev, curr, _index, _array) => {
-    if (dn.has(curr)) {
-      return `${prev} ${dn.get(curr)}`
-    }
-    return prev
-  })
-}
-
-export function stringifyBloodyMicrosoftSubjectDn(dn: string) {
-  return toStringDn(parseDn(dn))
-}
-
 export function compareDnToPublisher(dn: string, publisherName: string) {
   const fields = ["CN", "O", "L", "S", "C"]
   const dict1 = parseDn(dn)
@@ -106,7 +92,7 @@ export function compareDnToPublisher(dn: string, publisherName: string) {
   for (const field of fields) {
     const v1 = dict1.get(field)
     const v2 = dict2.get(field)
-    if (v1 && v2 && v1 !== v2) {
+    if (v1 !== v2) {
       return false
     }
   }
