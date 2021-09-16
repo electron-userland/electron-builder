@@ -103,8 +103,11 @@ export class MacUpdater extends AppUpdater {
 
     // must be called after server is listening, otherwise address is null
     function getServerUrl(): string {
-      const address = server.address() as AddressInfo
-      return `http://127.0.0.1:${address.port}`
+      const address = server.address()
+      if (typeof address === "string") {
+        return address
+      }
+      return `${address?.address}:${address?.port}`
     }
 
     return await new Promise<Array<string>>((resolve, reject) => {
