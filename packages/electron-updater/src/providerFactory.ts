@@ -1,7 +1,6 @@
 import {
   AllPublishOptions,
   BaseS3Options,
-  BintrayOptions,
   BitbucketOptions,
   CustomPublishOptions,
   GenericServerOptions,
@@ -12,7 +11,6 @@ import {
   PublishConfiguration,
 } from "builder-util-runtime"
 import { AppUpdater } from "./AppUpdater"
-import { BintrayProvider } from "./providers/BintrayProvider"
 import { BitbucketProvider } from "./providers/BitbucketProvider"
 import { GenericProvider } from "./providers/GenericProvider"
 import { GitHubProvider } from "./providers/GitHubProvider"
@@ -71,9 +69,6 @@ export function createClient(data: PublishConfiguration | AllPublishOptions, upd
         isUseMultipleRangeRequest: options.useMultipleRangeRequest !== false && isUrlProbablySupportMultiRangeRequests(options.url),
       })
     }
-
-    case "bintray":
-      return new BintrayProvider(data as BintrayOptions, runtimeOptions)
 
     case "custom": {
       const options = data as CustomPublishOptions

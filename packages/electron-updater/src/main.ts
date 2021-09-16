@@ -49,9 +49,6 @@ export interface UpdateCheckResult {
   readonly downloadPromise?: Promise<Array<string>> | null
 
   readonly cancellationToken?: CancellationToken
-
-  /** @deprecated */
-  readonly versionInfo: UpdateInfo
 }
 
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"

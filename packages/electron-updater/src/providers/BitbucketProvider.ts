@@ -12,8 +12,8 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
       ...runtimeOptions,
       isUseMultipleRangeRequest: false,
     })
-    const { owner, slug } = configuration
-    this.baseUrl = newBaseUrl(`https://api.bitbucket.org/2.0/repositories/${owner}/${slug}/downloads`)
+    const { owner, repo } = configuration
+    this.baseUrl = newBaseUrl(`https://api.bitbucket.org/2.0/repositories/${owner}/${repo}/downloads`)
   }
 
   private get channel(): string {
@@ -37,7 +37,7 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
   }
 
   toString() {
-    const { owner, slug } = this.configuration
-    return `Bitbucket (owner: ${owner}, slug: ${slug}, channel: ${this.channel})`
+    const { owner, repo } = this.configuration
+    return `Bitbucket (owner: ${owner}, repo: ${repo}, channel: ${this.channel})`
   }
 }

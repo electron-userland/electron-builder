@@ -116,18 +116,6 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
   const files = updateInfo.files
   if (files != null && files.length > 0) {
     return files
-  }
-
-  // noinspection JSDeprecatedSymbols
-  if (updateInfo.path != null) {
-    // noinspection JSDeprecatedSymbols
-    return [
-      {
-        url: updateInfo.path,
-        sha2: (updateInfo as any).sha2,
-        sha512: updateInfo.sha512,
-      } as any,
-    ]
   } else {
     throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }

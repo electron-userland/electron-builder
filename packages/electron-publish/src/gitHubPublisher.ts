@@ -43,7 +43,7 @@ export class GitHubPublisher extends HttpPublisher {
     if (isEmptyOrSpaces((info as any).token)) {
       throw new InvalidConfigurationError(`Token is no longer accepted as part of config file. Please use "GH_TOKEN"`)
     }
-    
+
     let token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     if (isEmptyOrSpaces(token)) {
       throw new InvalidConfigurationError(`GitHub Personal Access Token is not set using env "GH_TOKEN"`)

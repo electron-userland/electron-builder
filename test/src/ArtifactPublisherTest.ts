@@ -146,7 +146,7 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   const publisher = new BitbucketPublisher(publishContext, {
     provider: "bitbucket",
     owner: "mike-m",
-    slug: "electron-builder-test",
+    repo: "electron-builder-test",
   } as BitbucketOptions)
   const filename = await publisher.upload({ file: iconPath, arch: Arch.x64 })
   await publisher.deleteRelease(filename)
