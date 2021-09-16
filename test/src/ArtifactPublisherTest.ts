@@ -30,7 +30,7 @@ function versionNumber() {
 }
 
 //noinspection SpellCheckingInspection
-const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
+process.env.GITHUB_TOKEN = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 
 const publishContext: PublishContext = {
@@ -40,7 +40,7 @@ const publishContext: PublishContext = {
 
 test("GitHub unauthorized", async () => {
   try {
-    await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token" }, versionNumber())._release.value
+    await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2" }, versionNumber())._release.value
   } catch (e) {
     expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
     return
@@ -73,7 +73,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 }
 
 testAndIgnoreApiRate("GitHub upload", async () => {
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token }, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2" }, versionNumber())
   try {
     await publisher.upload({ file: iconPath, arch: Arch.x64 })
     // test overwrite
@@ -103,7 +103,7 @@ test.ifEnv(process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null)("
 })
 
 testAndIgnoreApiRate("prerelease", async () => {
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease" }, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", releaseType: "prerelease" }, versionNumber())
   try {
     await publisher.upload({ file: iconPath, arch: Arch.x64 })
     const r = await publisher.getRelease()
@@ -118,7 +118,7 @@ testAndIgnoreApiRate("prerelease", async () => {
 
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
-  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "builder-gh-test", repo: "darpa", token }, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, { provider: "github", owner: "builder-gh-test", repo: "darpa" }, versionNumber())
   try {
     await publisher.upload({ file: iconPath, arch: Arch.x64 })
   } finally {

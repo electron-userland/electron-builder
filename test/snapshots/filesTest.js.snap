@@ -82,17 +82,7 @@ Object {
 }
 `;
 
-exports[`files 2`] = `
-Array [
-  "index.html",
-  "index.js",
-  "package.json",
-  "test.h",
-  "dist/electron/foo.js",
-  "app/readme.md",
-  "app/package.json/readme.md",
-]
-`;
+exports[`files 2`] = `Array []`;
 
 exports[`files.from asar 1`] = `
 Object {

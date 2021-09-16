@@ -489,6 +489,12 @@ async function getResolvedPublishConfig(
   options = { ...options }
   expandPublishConfig(options, platformPackager, packager, arch)
 
+  if ((options as any).token != null) {
+    throw new Error(
+      '"token" specified in the publish options. It should be only provided via env variable for publish and during runtime via [addAuthHeader](module:electron-updater/out/AppUpdater.AppUpdater+addAuthHeader).'
+    )
+  }
+
   let channelFromAppVersion: string | null = null
   if (
     (options as GenericServerOptions).channel == null &&
@@ -571,9 +577,6 @@ async function getResolvedPublishConfig(
   }
 
   if (isGithub) {
-    if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
-      log.warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
-    }
     //tslint:disable-next-line:no-object-literal-type-assertion
     return { owner, repo: project, ...options } as GithubOptions
   } else {

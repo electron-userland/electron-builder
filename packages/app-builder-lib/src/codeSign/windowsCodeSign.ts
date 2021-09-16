@@ -94,7 +94,6 @@ export async function getCertInfo(file: string, password: string): Promise<Certi
 }
 
 export interface CertificateInfo {
-  readonly commonName: string
   readonly bloodyMicrosoftSubjectDn: string
 }
 
