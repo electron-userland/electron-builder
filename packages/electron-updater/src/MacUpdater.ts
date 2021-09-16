@@ -9,6 +9,7 @@ import { ResolvedUpdateFileInfo, UpdateDownloadedEvent } from "./main"
 import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
+import crypto from "crypto"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -111,9 +112,32 @@ export class MacUpdater extends AppUpdater {
     }
 
     return await new Promise<Array<string>>((resolve, reject) => {
+      const pass = crypto.randomBytes(64).toString("base64").replace(/\//g, "_").replace(/\+/g, "-")
+      const authInfo = Buffer.from(`autoupdater:${pass}`, "base64")
+
       // insecure random is ok
       const fileUrl = `/${Date.now().toString(16)}-${Math.floor(Math.random() * 9999).toString(16)}.zip`
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
+        // check for basic auth header
+        if (!request.headers.authorization || request.headers.authorization.indexOf("Basic ") === -1) {
+          response.statusCode = 401
+          response.statusMessage = "Invalid Authentication Credentials"
+          response.end()
+          log.warn("No authenthication info")
+        }
+
+        // verify auth credentials
+        const base64Credentials = request.headers.authorization!.split(" ")[1]
+        const credentials = Buffer.from(base64Credentials, "base64").toString("ascii");
+        const [username, password] = credentials.split(":")
+        if (username !== "autoupdater" || password !== pass) {
+          response.statusCode = 401
+          response.statusMessage = "Invalid Authentication Credentials"
+          response.end()
+          log.warn("Invalid authenthication credentials")
+          return
+        }
+
         const requestUrl = request.url!
         log.info(`${requestUrl} requested`)
         if (requestUrl === "/") {
@@ -164,11 +188,15 @@ export class MacUpdater extends AppUpdater {
       })
 
       this.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
+
       server.listen(0, "127.0.0.1", () => {
         this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl()}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
           url: getServerUrl(),
-          headers: { "Cache-Control": "no-cache" },
+          headers: {
+            "Cache-Control": "no-cache",
+            Authorization: `Basic ${authInfo.toString("ascii")}`,
+          },
         })
 
         // The update has been downloaded and is ready to be served to Squirrel
