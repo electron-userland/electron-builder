@@ -85,7 +85,7 @@ export function parseDn(seq: string): Map<string, string> {
   return result
 }
 
-export function compareDnToPublisher(dn: string, publisherName: string) {
+export function compareCertDnToPublisherDn(dn: string, publisherName: string) {
   const fields = ["CN", "O", "L", "S", "C"]
   const dict1 = parseDn(dn)
   const dict2 = parseDn(publisherName)

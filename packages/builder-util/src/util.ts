@@ -260,7 +260,7 @@ export class ExecError extends Error {
   alreadyLogged = false
 
   constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
-    super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
   }
 }

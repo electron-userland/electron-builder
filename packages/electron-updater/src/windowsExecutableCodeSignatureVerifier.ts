@@ -1,4 +1,4 @@
-import { compareDnToPublisher } from "builder-util-runtime"
+import { compareCertDnToPublisherDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import { Logger } from "./main"
@@ -55,7 +55,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           const data = parseOut(Buffer.from(stdout, "base64").toString("utf-8"))
           if (data.Status === 0) {
             for (const name of publisherNames) {
-              if (compareDnToPublisher(data.SignerCertificate.Subject, name)) {
+              if (compareCertDnToPublisherDn(data.SignerCertificate.Subject, name)) {
                 resolve(null)
                 return
               }
