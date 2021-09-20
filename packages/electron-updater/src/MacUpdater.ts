@@ -2,7 +2,6 @@ import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-run
 import { stat } from "fs-extra"
 import { createReadStream } from "fs"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
-import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
 import { ResolvedUpdateFileInfo, UpdateDownloadedEvent } from "./main"
