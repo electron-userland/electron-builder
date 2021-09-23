@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, executeAppBuilder, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
-import { emptyDir, readdir, rename } from "fs-extra"
+import { emptyDir, readdir, rename, remove } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../configuration"
@@ -102,7 +102,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 
         const language = file.substring(0, file.length - langFileExt.length)
         if (!wantedLanguages.includes(language)) {
-          return fs.rm(path.join(resourcesDir, file), { recursive: true, force: true })
+          return remove(path.join(resourcesDir, file))
         }
         return
       },
