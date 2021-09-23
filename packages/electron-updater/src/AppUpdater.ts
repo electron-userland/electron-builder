@@ -52,6 +52,17 @@ export abstract class AppUpdater extends EventEmitter {
   allowDowngrade = false
 
   /**
+   * Web installer files might not have signature verification, this switch prevents to load them unless it is needed.
+   *
+   * Currently false to prevent breaking the current API, but it should be changed to default true at some point that
+   * breaking changes are allowed.
+   *
+   * @default false
+   */
+
+  disableWebInstaller = false
+
+  /**
    * The current application version.
    */
   readonly currentVersion: SemVer
@@ -443,6 +454,7 @@ export abstract class AppUpdater extends EventEmitter {
         updateInfoAndProvider,
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
+        disableWebInstaller: this.disableWebInstaller,
       }).catch(e => {
         throw errorHandler(e)
       })
@@ -644,6 +656,7 @@ export interface DownloadUpdateOptions {
   readonly updateInfoAndProvider: UpdateInfoAndProvider
   readonly requestHeaders: OutgoingHttpHeaders
   readonly cancellationToken: CancellationToken
+  readonly disableWebInstaller?: boolean
 }
 
 function hasPrereleaseComponents(version: SemVer) {

@@ -31,7 +31,10 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))) {
+        if (
+          (isWebInstaller && !downloadUpdateOptions.disableWebInstaller) ||
+          (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))
+        ) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -46,6 +49,10 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
+          if (downloadUpdateOptions.disableWebInstaller) {
+            await unlink(packageFile!)
+            throw new Error("WebInstaller files are not allowed")
+          }
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
             try {
               await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
