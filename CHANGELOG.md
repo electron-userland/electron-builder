@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.14.2...v) (2021-09-25)
+
+
+### Bug Fixes
+
+* **msi:** fix broken shortcut icon when using msi target, adding msi option `iconId` ([#6247](https://github.com/electron-userland/electron-builder/issues/6247)) ([a9ec90d](https://github.com/electron-userland/electron-builder/commit/a9ec90d539fdbb5786692629275b1a89bfd7aec4))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.13.1...v) (2021-09-10)
 
 
