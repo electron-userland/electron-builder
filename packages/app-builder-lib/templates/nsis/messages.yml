@@ -86,6 +86,7 @@ appCannotBeClosed:
   sl: "${PRODUCT_NAME} se ne more zapreti. \nPoskusite ga zapreti ročno in kliknite Ponovi za nadaljevanje."
   sq: "${PRODUCT_NAME} s’mund të mbyllet. \nQë të vazhdohet, ju lutemi, mbylleni dorazi dhe klikoni mbi Riprovo."
   tr: "${PRODUCT_NAME} kapatılamaz. \nLütfen elle kapatın ve devam etmek için Tekrar'a tıklayın"
+  zh_CN: "${PRODUCT_NAME} 无法关闭。\n请手动关闭它，然后单击重试以继续。"
   zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後單擊重試以繼續。"
 installing:
   en: Installing, please wait...
