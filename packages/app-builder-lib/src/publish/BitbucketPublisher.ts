@@ -18,11 +18,13 @@ export class BitbucketPublisher extends HttpPublisher {
     super(context)
 
     const token = process.env.BITBUCKET_TOKEN
+    const username = process.env.BITBUCKET_USERNAME
+
     if (isEmptyOrSpaces(token)) {
       throw new InvalidConfigurationError(`Bitbucket token is not set using env "BITBUCKET_TOKEN" (see https://www.electron.build/configuration/publish#BitbucketOptions)`)
     }
     this.info = info
-    this.auth = BitbucketPublisher.convertAppPassword(this.info.owner, token)
+    this.auth = BitbucketPublisher.convertAppPassword(this.info.owner, token, username)
     this.basePath = `/2.0/repositories/${this.info.owner}/${this.info.slug}/downloads`
   }
 
@@ -60,8 +62,8 @@ export class BitbucketPublisher extends HttpPublisher {
     return `Bitbucket (owner: ${owner}, slug: ${slug}, channel: ${channel})`
   }
 
-  static convertAppPassword(owner: string, token: string) {
-    const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+  static convertAppPassword(owner: string, token: string, username?: string) {
+    const base64encodedData = Buffer.from(`${username ?? owner}:${token.trim()}`).toString("base64")
     return `Basic ${base64encodedData}`
   }
 }
