@@ -396,7 +396,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (oldIcon != null) {
         await unlinkIfExists(path.join(resourcesPath, oldIcon))
       }
-      const iconFileName = `${appFilename}.icns`
+      const iconFileName = "icon.icns"
       appPlist.CFBundleIconFile = iconFileName
       await copyFile(icon, path.join(resourcesPath, iconFileName))
     }
