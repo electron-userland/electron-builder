@@ -33,7 +33,10 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
   }
 
   resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo> {
-    return resolveFiles(updateInfo, this.baseUrl)
+    return resolveFiles(
+      { ...updateInfo, files: updateInfo.files?.map(f => ({ ...f, url: f.url.replaceAll(" ", "_") })), path: updateInfo.path?.replaceAll(" ", "_") },
+      this.baseUrl
+    )
   }
 
   toString() {
