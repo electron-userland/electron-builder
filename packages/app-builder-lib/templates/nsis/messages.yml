@@ -98,6 +98,7 @@ appCannotBeClosed:
   tr: "${PRODUCT_NAME} kapatılamaz. \nLütfen elle kapatın ve devam etmek için Tekrar'a tıklayın"
   zh_CN: "${PRODUCT_NAME} 无法关闭。\n请手动关闭它，然后单击重试以继续。"
   zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後單擊重試以繼續。"
+  ko: "${PRODUCT_NAME}을(를) 닫을 수 없습니다. \n계속하려면 수동으로 닫고 [다시 시도]를 클릭하십시오."
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
@@ -142,5 +143,7 @@ areYouSureToUninstall:
   fi: Oletko varma, että haluat poistaa ${PRODUCT_NAME} asennuksen?
   es: ¿Seguro que quieres desinstalar ${PRODUCT_NAME}?
   da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
+  ko: ${PRODUCT_NAME}을(를) 제거하시겠습니까?
 decompressionFailed:
   en: Failed to decompress files. Please try running the installer again.
+  ko: 파일 압축 해제에 실패했습니다. 설치 프로그램을 다시 한번 실행해 주시기 바랍니다.
