@@ -254,7 +254,7 @@ exports[`two-package 2`] = `
 Object {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
-  "CFBundleIconFile": "TestApp.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "TestApp",
@@ -289,7 +289,7 @@ Object {
 
 exports[`two-package 3`] = `
 Array [
-  "TestApp.icns",
+  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -301,7 +301,7 @@ exports[`two-package 4`] = `
 Object {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
-  "CFBundleIconFile": "TestApp.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "TestApp",
@@ -336,7 +336,7 @@ Object {
 
 exports[`two-package 5`] = `
 Array [
-  "TestApp.icns",
+  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
@@ -348,7 +348,7 @@ exports[`two-package 6`] = `
 Object {
   "CFBundleDisplayName": "TestApp",
   "CFBundleExecutable": "TestApp",
-  "CFBundleIconFile": "TestApp.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "TestApp",
@@ -383,7 +383,7 @@ Object {
 
 exports[`two-package 7`] = `
 Array [
-  "TestApp.icns",
+  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
