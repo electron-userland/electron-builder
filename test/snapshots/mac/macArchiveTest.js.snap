@@ -16,7 +16,7 @@ exports[`empty installLocation 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -77,7 +77,7 @@ exports[`extraDistFiles 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -159,7 +159,7 @@ exports[`only zip 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -208,7 +208,7 @@ exports[`pkg 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -257,7 +257,7 @@ exports[`pkg extended configuration 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -306,7 +306,7 @@ exports[`pkg scripts 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -405,7 +405,7 @@ Array [
   "Test App ßW.app/Contents/Resources/sw.lproj",
   "Test App ßW.app/Contents/Resources/ta.lproj",
   "Test App ßW.app/Contents/Resources/te.lproj",
-  "Test App ßW.app/Contents/Resources/Test App ßW.icns",
+  "Test App ßW.app/Contents/Resources/icon.icns",
   "Test App ßW.app/Contents/Resources/th.lproj",
   "Test App ßW.app/Contents/Resources/tr.lproj",
   "Test App ßW.app/Contents/Resources/uk.lproj",
@@ -791,7 +791,7 @@ exports[`tar.gz 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",

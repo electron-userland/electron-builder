@@ -162,7 +162,7 @@ exports[`generic, github and spaces 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -289,7 +289,7 @@ exports[`mac artifactName  2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -366,7 +366,7 @@ exports[`os macro 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
