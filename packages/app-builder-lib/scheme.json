@@ -446,7 +446,7 @@
     },
     "BitbucketOptions": {
       "additionalProperties": false,
-      "description": "Bitbucket options.\nhttps://keygen.sh/\nDefine `BITBUCKET_TOKEN` environment variable.",
+      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, token: string) {\nconst base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
       "properties": {
         "channel": {
           "default": "latest",
@@ -643,7 +643,7 @@
               "type": "null"
             }
           ],
-          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`."
+          "description": "Package dependencies. Defaults to `[\"gconf2\", \"gconf-service\", \"libnotify4\", \"libappindicator1\", \"libxtst6\", \"libnss3\"]`.\nIf need to support Debian, `libappindicator1` should be removed, it is [deprecated in Debian](https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037).\nIf need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used by GNOME](https://packages.debian.org/bullseye/gconf2)."
         },
         "description": {
           "description": "As [description](/configuration/configuration#Metadata-description) from application package.json, but allows you to specify different for Linux.",
@@ -3603,6 +3603,10 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
+        "iconId": {
+          "description": "The [shortcut iconId](https://wixtoolset.org/documentation/manual/v4/reference/wxs/shortcut/). Optional, by default generated using app file name.",
+          "type": "string"
+        },
         "menuCategory": {
           "default": false,
           "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
@@ -4893,6 +4897,7 @@
     },
     "S3Options": {
       "additionalProperties": false,
+      "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nDefine `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).\nOr in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
       "properties": {
         "acl": {
           "anyOf": [
@@ -5445,8 +5450,7 @@
         }
       },
       "required": [
-        "provider",
-        "repo"
+        "provider"
       ],
       "type": "object"
     },
