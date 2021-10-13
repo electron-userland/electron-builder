@@ -237,7 +237,7 @@ export interface SnapStoreOptions extends PublishConfiguration {
   /**
    * snapcraft repo name
    */
-  readonly repo: string
+  readonly repo?: string
 
   /**
    * The list of channels the snap would be released.
