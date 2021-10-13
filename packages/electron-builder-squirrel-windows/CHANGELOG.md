@@ -1,5 +1,13 @@
 # electron-builder-squirrel-windows
 
+## 22.14.5
+
+### Patch Changes
+
+- Updated dependencies [[`54ee4e72`](https://github.com/electron-userland/electron-builder/commit/54ee4e72c5db859b9a00104179786567a0e977ff)]:
+  - app-builder-lib@22.14.5
+  - builder-util@22.14.5
+
 ## 22.14.4
 
 ### Patch Changes

@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.14.4...v) (2021-10-13)
+
+
+### Bug Fixes
+
+* SnapStoreOptions required properties ([#6327](https://github.com/electron-userland/electron-builder/issues/6327)) ([#6333](https://github.com/electron-userland/electron-builder/issues/6333)) ([54ee4e7](https://github.com/electron-userland/electron-builder/commit/54ee4e72c5db859b9a00104179786567a0e977ff))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.14.3...v) (2021-10-03)
 
 
