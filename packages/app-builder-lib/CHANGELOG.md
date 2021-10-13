@@ -1,5 +1,16 @@
 # app-builder-lib
 
+## 22.14.5
+
+### Patch Changes
+
+- [#6333](https://github.com/electron-userland/electron-builder/pull/6333) [`54ee4e72`](https://github.com/electron-userland/electron-builder/commit/54ee4e72c5db859b9a00104179786567a0e977ff) Thanks [@lutzroeder](https://github.com/lutzroeder)! - fix: SnapStoreOptions required properties (#6327)
+
+- Updated dependencies [[`54ee4e72`](https://github.com/electron-userland/electron-builder/commit/54ee4e72c5db859b9a00104179786567a0e977ff)]:
+  - builder-util-runtime@8.9.1
+  - builder-util@22.14.5
+  - electron-publish@22.14.5
+
 ## 22.14.4
 
 ### Patch Changes

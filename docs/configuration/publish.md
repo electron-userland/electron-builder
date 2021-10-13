@@ -181,7 +181,7 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 <p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
 <ul>
 <li><strong><code id="SnapStoreOptions-provider">provider</code></strong> “snapStore” - The provider. Must be <code>snapStore</code>.</li>
-<li><strong><code id="SnapStoreOptions-repo">repo</code></strong> String - snapcraft repo name</li>
+<li><code id="SnapStoreOptions-repo">repo</code> String - snapcraft repo name</li>
 <li><code id="SnapStoreOptions-channels">channels</code> = <code>[&quot;edge&quot;]</code> String | Array&lt;String&gt; | “undefined” - The list of channels the snap would be released.</li>
 </ul>
 <p>Inherited from <code>PublishConfiguration</code>:</p>
