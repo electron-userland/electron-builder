@@ -50,7 +50,18 @@ export class MacUpdater extends AppUpdater {
       log.warn(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
     }
 
-    const isArm64Mac = process.arch === "arm64" || isRosetta
+    let isArm64Mac = false
+    try {
+      this.debug("Checking for arm64 in uname")
+      const result = execFileSync("uname", ['-a'], { encoding: "utf8" })
+      const isArm = result.includes('ARM')
+      log.info(`Checked 'uname -a': arm64=${isArm}`)
+      isArm64Mac = isArm64Mac || isArm
+    } catch (e) {
+      log.warn(`uname shell command to check for arm64 failed: ${e}`)
+    }
+    
+    isArm64Mac = isArm64Mac || process.arch === 'arm64' || isRosetta
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
