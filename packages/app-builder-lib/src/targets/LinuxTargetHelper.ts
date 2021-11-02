@@ -105,7 +105,11 @@ export class LinuxTargetHelper {
         exec += " "
         exec += executableArgs.join(" ")
       }
-      exec += " %U"
+      // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
+      const execCodes = ['%f', '%u', '%F', '%U']
+      if (executableArgs == null || executableArgs.findIndex((arg) => execCodes.includes(arg)) === -1) {
+        exec += " %U"
+      }
     }
 
     const desktopMeta: any = {
