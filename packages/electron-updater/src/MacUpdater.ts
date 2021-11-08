@@ -176,18 +176,18 @@ export class MacUpdater extends AppUpdater {
       // update already fetched by Squirrel, it's ready to install
       this.nativeUpdater.quitAndInstall()
     } else {
+      // Quit and install as soon as Squirrel get the update
+      this.nativeUpdater.on("update-downloaded", () => {
+        this.nativeUpdater.quitAndInstall()
+      })
+
       if (!this.autoInstallOnAppQuit) {
         /**
          * If this was not `true` previously then MacUpdater.doDownloadUpdate()
          * would not actually initiate the downloading by electron's autoUpdater
          */
-        this.nativeUpdater.checkForUpdates();
+        this.nativeUpdater.checkForUpdates()
       }
-
-      // Quit and install as soon as Squirrel get the update
-      this.nativeUpdater.on("update-downloaded", () => {
-        this.nativeUpdater.quitAndInstall()
-      })
     }
   }
 }
