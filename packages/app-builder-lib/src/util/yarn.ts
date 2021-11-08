@@ -123,7 +123,18 @@ export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, fr
   log.info({ platform, arch }, "executing node-gyp rebuild")
   // this script must be used only for electron
   const nodeGyp = `node-gyp${process.platform === "win32" ? ".cmd" : ""}`
-  await spawn(nodeGyp, ["rebuild"], { env: getGypEnv(frameworkInfo, platform, arch, true) })
+  const args = ["rebuild"]
+  // headers of old Electron versions do not have a valid config.gypi file
+  // and --force-process-config must be passed to node-gyp >= 8.4.0 to
+  // correctly build modules for them.
+  // see also https://github.com/nodejs/node-gyp/pull/2497
+  const [major, minor] = frameworkInfo.version.split('.').slice(0, 2).map(n => parseInt(n, 10))
+  if ((major <= 13) ||
+      (major == 14 && minor <= 1) ||
+      (major == 15 && minor <= 2)) {
+    args.push('--force-process-config')
+  }
+  await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
 }
 
 function getPackageToolPath() {
