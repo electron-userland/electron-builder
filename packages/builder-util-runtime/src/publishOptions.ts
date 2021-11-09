@@ -214,6 +214,16 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
+   * The access token to support auto-update from private bitbucket repositories.
+   */
+  readonly token?: string | null
+
+  /**
+   * The user name to support auto-update from private bitbucket repositories.
+   */
+  readonly username?: string | null
+
+  /**
    * Repository slug/name
    */
   readonly slug: string
