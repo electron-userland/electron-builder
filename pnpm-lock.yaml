@@ -190,6 +190,8 @@ importers:
       cross-spawn: ^7.0.3
       debug: ^4.3.2
       fs-extra: ^10.0.0
+      http-proxy-agent: ^5.0.0
+      https-proxy-agent: ^5.0.0
       is-ci: ^3.0.0
       js-yaml: ^4.1.0
       source-map-support: ^0.5.19
@@ -206,6 +208,8 @@ importers:
       cross-spawn: 7.0.3
       debug: 4.3.2
       fs-extra: 10.0.0
+      http-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.0
       is-ci: 3.0.0
       js-yaml: 4.1.0
       source-map-support: 0.5.20
@@ -2539,6 +2543,11 @@ packages:
   /@tootallnate/once/1.1.2:
     resolution: {integrity: sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==}
     engines: {node: '>= 6'}
+
+  /@tootallnate/once/2.0.0:
+    resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
+    engines: {node: '>= 10'}
+    dev: false
 
   /@tsconfig/node10/1.0.8:
     resolution: {integrity: sha512-6XFfSQmMgq0CFLY1MslA/CPUfhIL919M1rMsa5lP2P097N2Wd1sSX0tx1u4olM16fLNhtHZpRhedZJphNJqmZg==}
@@ -5991,6 +6000,17 @@ packages:
       debug: 4.3.2
     transitivePeerDependencies:
       - supports-color
+
+  /http-proxy-agent/5.0.0:
+    resolution: {integrity: sha512-n2hY8YdoRE1i7r6M0w9DIw5GgZN0G25P8zLCRQ8rjXtTU3vsNFBI/vWK/UIeE6g5MUUz6avwAPXmL6Fy9D/90w==}
+    engines: {node: '>= 6'}
+    dependencies:
+      '@tootallnate/once': 2.0.0
+      agent-base: 6.0.2
+      debug: 4.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /https-proxy-agent/4.0.0:
     resolution: {integrity: sha512-zoDhWrkR3of1l9QAL8/scJZyLu8j/gBkcwcaQOZh7Gyh/+uJQzGVETdgT30akuwkpL8HTRfssqI3BZuV18teDg==}
