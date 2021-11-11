@@ -1,5 +1,11 @@
 # builder-util
 
+## 22.14.7
+
+### Patch Changes
+
+- [#6410](https://github.com/electron-userland/electron-builder/pull/6410) [`04a84352`](https://github.com/electron-userland/electron-builder/commit/04a84352b2b3fbb3c54533a8428bfd103df0af21) Thanks [@baparham](https://github.com/baparham)! - fix(builder-util): enable proxy handling in NodeHttpExecutor to fix requests/publishing behind corporate proxies
+
 ## 22.14.6
 
 ### Patch Changes
