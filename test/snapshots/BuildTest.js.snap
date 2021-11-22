@@ -1505,10 +1505,10 @@ Object {
               "size": 748,
             },
             "index.js": Object {
-              "size": 4976,
+              "size": 5664,
             },
             "package.json": Object {
-              "size": 568,
+              "size": 567,
             },
             "signals.js": Object {
               "size": 1295,
