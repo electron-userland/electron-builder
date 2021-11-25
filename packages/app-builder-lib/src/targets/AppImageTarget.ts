@@ -19,11 +19,12 @@ export default class AppImageTarget extends Target {
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() =>
-      helper.computeDesktopEntry(this.options, "AppRun --no-sandbox %U", {
+    this.desktopEntry = new Lazy<string>(() => {
+      const args = this.options.executableArgs?.join(" ") || "--no-sandbox";
+      return helper.computeDesktopEntry(this.options, `AppRun ${args} %U`, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-      })
-    )
+      });
+    })
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
