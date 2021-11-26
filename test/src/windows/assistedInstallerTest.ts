@@ -117,28 +117,17 @@ test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   )
 })
 
-test.ifNotCiMac(
-  "custom makensis.exe",
-  app({
-    targets: nsisTarget,
-    config: {
-      nsis: {
-        customNsisBinary: {
-          url: "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z",
-          version: "3.0.4.1",
-          checksum: "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
-        },
-      },
-    },
-  })
-)
-
-test.ifNotCiMac(
+test.skip.ifNotCiMac(
   "debug logging enabled",
   app({
     targets: nsisTarget,
     config: {
       nsis: {
+        customNsisBinary: {
+          url: "https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.2/nsis-3.0.4.2.7z",
+          version: "3.0.4.2",
+          checksum: "o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==",
+        },
         debugLogging: true,
       },
     },
