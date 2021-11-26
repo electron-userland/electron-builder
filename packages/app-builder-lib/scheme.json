@@ -493,7 +493,21 @@
           "description": "Repository slug/name",
           "type": "string"
         },
+        "token": {
+          "description": "The access token to support auto-update from private bitbucket repositories.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "updaterCacheDirName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "username": {
+          "description": "The user name to support auto-update from private bitbucket repositories.",
           "type": [
             "null",
             "string"
@@ -525,7 +539,7 @@
           ]
         },
         "version": {
-          "default": "3.0.4.2",
+          "default": "3.0.4.1",
           "type": [
             "null",
             "string"
