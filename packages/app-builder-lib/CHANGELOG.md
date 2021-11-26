@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 22.14.8
+
+### Patch Changes
+
+- [#6447](https://github.com/electron-userland/electron-builder/pull/6447) [`d20bcf0c`](https://github.com/electron-userland/electron-builder/commit/d20bcf0cea4e4cb49aab08f820131a2d6b083a2c) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(nsis): downgrade nsis from v3.0.4.2 to v3.0.4.1 due to (#6334)
+
 ## 22.14.7
 
 ### Patch Changes

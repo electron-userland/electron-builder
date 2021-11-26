@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 4.6.3
+
+### Patch Changes
+
+- [#6395](https://github.com/electron-userland/electron-builder/pull/6395) [`3c38af42`](https://github.com/electron-userland/electron-builder/commit/3c38af4288908abeea1be1f245d9e3db6c62b227) Thanks [@Nokel81](https://github.com/Nokel81)! - Emulate electron.autoUpdater's event lifecycle for AppImageUpdater
+
 ## 4.6.2
 
 ### Patch Changes

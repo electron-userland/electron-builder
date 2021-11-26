@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.14.7...v) (2021-11-26)
+
+
+### Bug Fixes
+
+* Downgrading nsis to v3.0.4.1 since v3.0.4.2 throws false virus positives ([#6334](https://github.com/electron-userland/electron-builder/issues/6334)) ([#6447](https://github.com/electron-userland/electron-builder/issues/6447)) ([d20bcf0](https://github.com/electron-userland/electron-builder/commit/d20bcf0cea4e4cb49aab08f820131a2d6b083a2c))
+
+
+### Features
+
+* make `--no-sandbox` optional for building with AppImage ([#6429](https://github.com/electron-userland/electron-builder/issues/6429)) ([e95afc1](https://github.com/electron-userland/electron-builder/commit/e95afc1ab8c1a09fc8c9496084fc9f49b185469e))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.14.6...v) (2021-11-11)
 
 
