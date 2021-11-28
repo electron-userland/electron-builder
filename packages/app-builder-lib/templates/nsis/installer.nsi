@@ -84,6 +84,28 @@ FunctionEnd
 
 Section "install"
   !ifndef BUILD_UNINSTALLER
+    # If we're running a silent upgrade of a per-machine installation, elevate so extracting the new app will succeed.
+    # For a non-silent install, the elevation will be triggered when the install mode is selected in the UI,
+    # but that won't be executed when silent.
+    ${if} $hasPerMachineInstallation == "1" # set in onInit by initMultiUser
+    ${andIf} ${Silent}
+      ${ifNot} ${UAC_IsAdmin}
+        ShowWindow $HWNDPARENT ${SW_HIDE}
+        !insertmacro UAC_RunElevated
+        ${Switch} $0
+          ${Case} 0
+            ${Break}
+          ${Case} 1223 ;user aborted
+            ${Break}
+          ${Default}
+            MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+            ${Break}
+        ${EndSwitch}
+        Quit
+      ${else}
+        !insertmacro setInstallModePerAllUsers
+      ${endIf}
+    ${endIf}
     !include "installSection.nsh"
   !endif
 SectionEnd
