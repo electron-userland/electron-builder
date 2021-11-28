@@ -525,7 +525,7 @@
       "additionalProperties": false,
       "properties": {
         "checksum": {
-          "default": "o+YZsXHp8LNihhuk7JsCDhdIgx0MKKK+1b3sGD+4zX5djZULe4/4QMcAsfQ+0r+a8FnwBt7BVBHkIkJHjKQ0sg==",
+          "default": "VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==",
           "type": [
             "null",
             "string"
@@ -1505,6 +1505,14 @@
       "additionalProperties": false,
       "description": "[GitHub](https://help.github.com/articles/about-releases/) options.\n\nGitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.\nDefine `GH_TOKEN` environment variable.",
       "properties": {
+        "channel": {
+          "default": "latest",
+          "description": "The channel.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "host": {
           "default": "github.com",
           "description": "The host (including the port if need).",
