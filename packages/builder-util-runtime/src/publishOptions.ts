@@ -116,6 +116,12 @@ export interface GithubOptions extends PublishConfiguration {
   readonly private?: boolean | null
 
   /**
+   * The channel.
+   * @default latest
+   */
+  readonly channel?: string | null
+
+  /**
    * The type of release. By default `draft` release will be created.
    *
    * Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
@@ -193,7 +199,7 @@ export interface KeygenOptions extends PublishConfiguration {
  * Bitbucket options.
  * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
- * 
+ *
  * For converting an app password to a usable token, you can utilize this
 ```typescript
 convertAppPassword(owner: string, token: string) {
@@ -282,9 +288,9 @@ export interface BaseS3Options extends PublishConfiguration {
  * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
  * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
  * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
- * 
+ *
  * Example configuration:
- * 
+ *
 ```json
 {
   "build":
