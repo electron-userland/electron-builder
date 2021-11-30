@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 22.14.10
+
+### Patch Changes
+
+- [#6449](https://github.com/electron-userland/electron-builder/pull/6449) [`df7a4255`](https://github.com/electron-userland/electron-builder/commit/df7a4255d219aea7a1236fd5693f7c13460099ad) Thanks [@saadshahd](https://github.com/saadshahd)! - Enable channel alternation for github publishing provider.
+
 ## 22.14.9
 
 ### Patch Changes
