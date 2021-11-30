@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 22.14.9
+
+### Patch Changes
+
+- [#6450](https://github.com/electron-userland/electron-builder/pull/6450) [`661a6522`](https://github.com/electron-userland/electron-builder/commit/661a6522520e9ea59549cb7e18986fcfb58e873a) Thanks [@robertpatrick](https://github.com/robertpatrick)! - fix(nsis): fix per-machine installs to properly elevate during silent install/updates
+
 ## 22.14.8
 
 ### Patch Changes
