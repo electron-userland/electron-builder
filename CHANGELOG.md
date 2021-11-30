@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.14.8...v) (2021-11-30)
+
+
+### Bug Fixes
+
+* **nsis:** per-machine installs must properly elevate during silent install/updates ([#6450](https://github.com/electron-userland/electron-builder/issues/6450)) ([661a652](https://github.com/electron-userland/electron-builder/commit/661a6522520e9ea59549cb7e18986fcfb58e873a)), closes [#6438](https://github.com/electron-userland/electron-builder/issues/6438) [#6073](https://github.com/electron-userland/electron-builder/issues/6073) [#6425](https://github.com/electron-userland/electron-builder/issues/6425) [#5468](https://github.com/electron-userland/electron-builder/issues/5468)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.14.7...v) (2021-11-26)
 
 
