@@ -28,7 +28,7 @@
 		"dmg-license": "^1.0.9"
 	},
 	"devDependencies": {
-		"@types/fs-extra": "9.0.12",
+		"@types/fs-extra": "9.0.13",
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},

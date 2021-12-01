@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@types/archiver": "5.1.1",
-    "@types/fs-extra": "9.0.12"
+    "@types/fs-extra": "9.0.13"
   },
   "optionalDependencies": {
     "7zip-bin": "~5.1.1"

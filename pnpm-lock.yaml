@@ -89,7 +89,7 @@ importers:
       '@malept/flatpak-bundler': ^0.4.0
       '@types/debug': 4.1.7
       '@types/ejs': 3.1.0
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
@@ -166,7 +166,7 @@ importers:
       '@babel/preset-react': 7.14.5_@babel+core@7.15.5
       '@types/debug': 4.1.7
       '@types/ejs': 3.1.0
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
@@ -236,7 +236,7 @@ importers:
 
   packages/dmg-builder:
     specifiers:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       app-builder-lib: workspace:*
       builder-util: workspace:*
@@ -256,13 +256,13 @@ importers:
     optionalDependencies:
       dmg-license: 1.0.9
     devDependencies:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       temp-file: 3.4.0
 
   packages/electron-builder:
     specifiers:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
       '@types/update-notifier': 5.1.0
       '@types/yargs': ^17.0.1
@@ -291,14 +291,14 @@ importers:
       update-notifier: 5.1.0
       yargs: 17.2.1
     devDependencies:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
       '@types/update-notifier': 5.1.0
 
   packages/electron-builder-squirrel-windows:
     specifiers:
       '@types/archiver': 5.1.1
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       7zip-bin: ~5.1.1
       app-builder-lib: workspace:*
       archiver: ^5.3.0
@@ -313,7 +313,7 @@ importers:
       7zip-bin: 5.1.1
     devDependencies:
       '@types/archiver': 5.1.1
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
 
   packages/electron-forge-maker-appimage:
     specifiers:
@@ -362,7 +362,7 @@ importers:
 
   packages/electron-updater:
     specifiers:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
@@ -384,7 +384,7 @@ importers:
       lodash.isequal: 4.5.0
       semver: 7.3.5
     devDependencies:
-      '@types/fs-extra': 9.0.12
+      '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
@@ -2626,12 +2626,6 @@ packages:
 
   /@types/ejs/3.1.0:
     resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
-    dev: true
-
-  /@types/fs-extra/9.0.12:
-    resolution: {integrity: sha512-I+bsBr67CurCGnSenZZ7v94gd3tc3+Aj2taxMT4yu4ABLuOgOjeFxX3dokG24ztSRg5tnT00sL8BszO7gSMoIw==}
-    dependencies:
-      '@types/node': 16.11.7
     dev: true
 
   /@types/fs-extra/9.0.13:

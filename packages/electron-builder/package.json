@@ -64,7 +64,7 @@
     "yargs": "^17.0.1"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.12",
+    "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",
     "@types/update-notifier": "5.1.0"
   },
