@@ -96,7 +96,7 @@
     "@babel/preset-react": "7.14.5",
     "@types/debug": "4.1.7",
     "@types/ejs": "3.1.0",
-    "@types/fs-extra": "9.0.12",
+    "@types/fs-extra": "9.0.13",
     "@types/hosted-git-info": "3.0.2",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",

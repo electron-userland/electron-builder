@@ -26,7 +26,7 @@
     "semver": "^7.3.5"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.12",
+    "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
     "@types/lodash.isequal": "4.5.5"
