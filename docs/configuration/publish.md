@@ -163,6 +163,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 <p><code id="GithubOptions-private">private</code> Boolean | “undefined” - Whether to use private github auto-update provider if <code>GH_TOKEN</code> environment variable is defined. See <a href="/auto-update#private-github-update-repo">Private GitHub Update Repo</a>.</p>
 </li>
 <li>
+<p><code id="GithubOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</p>
+</li>
+<li>
 <p><code id="GithubOptions-releaseType">releaseType</code> = <code>draft</code> “draft” | “prerelease” | “release” | “undefined” - The type of release. By default <code>draft</code> release will be created.</p>
 <p>Also you can set release type using environment variable. If <code>EP_DRAFT</code>is set to <code>true</code> — <code>draft</code>, if <code>EP_PRE_RELEASE</code>is set to <code>true</code> — <code>prerelease</code>.</p>
 </li>
