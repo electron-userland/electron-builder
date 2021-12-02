@@ -222,6 +222,10 @@ export default class SnapTarget extends Target {
     if (this.isUseTemplateApp) {
       args.push("--template-url", `electron4:${snapArch}`)
     }
+
+    if (options.compression != null) {
+      args.push("--compression", options.compression)
+    }
     await executeAppBuilder(args)
 
     await packager.info.callArtifactBuildCompleted({

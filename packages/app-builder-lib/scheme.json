@@ -5414,8 +5414,8 @@
               "type": "null"
             }
           ],
-          "default": "xz",
-          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to xz when not specified."
+          "default": "lzo",
+          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified."
         },
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
