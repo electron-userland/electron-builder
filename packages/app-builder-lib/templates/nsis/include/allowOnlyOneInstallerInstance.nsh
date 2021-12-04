@@ -88,13 +88,12 @@
           Sleep 1000
           !ifdef INSTALL_MODE_PER_ALL_USERS
             nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
-            Pop $R0
           !else
             nsExec::Exec `cmd /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
-            Pop $R0
           !endif
-          ${If} $R0 != 0
-            DetailPrint `Waiting for "${PRODUCT_NAME}" to close (taskkill exit code $R0).`
+          !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
+          ${If} $R0 == 0
+            DetailPrint `Waiting for "${PRODUCT_NAME}" to close.`
             Sleep 2000
           ${else}
             Goto not_running
