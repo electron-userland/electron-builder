@@ -1,6 +1,7 @@
 base: core18
 grade: stable
 confinement: strict
+compression: lzo
 parts:
   launch-scripts:
     plugin: dump

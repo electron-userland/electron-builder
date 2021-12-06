@@ -208,6 +208,10 @@ export default class SnapTarget extends Target {
       }
     }
 
+    if (snap.compression != null) {
+      args.push("--compression", snap.compression)
+    }
+
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
       return
     }
@@ -223,9 +227,6 @@ export default class SnapTarget extends Target {
       args.push("--template-url", `electron4:${snapArch}`)
     }
 
-    if (options.compression != null) {
-      args.push("--compression", options.compression)
-    }
     await executeAppBuilder(args)
 
     await packager.info.callArtifactBuildCompleted({
