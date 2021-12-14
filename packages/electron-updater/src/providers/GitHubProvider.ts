@@ -57,8 +57,34 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     let tag: string | null
     try {
       if (this.updater.allowPrerelease) {
-        // noinspection TypeScriptValidateJSTypes
-        tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+        const currentChannel = this.updater?.channel || null;
+        for (const element of feed.getElements("entry")) {
+          // noinspection TypeScriptValidateJSTypes
+          const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
+
+          // If this is null then something is wrong and skip this release
+          if (hrefElement == null) continue
+
+          //Get Channel from this release
+          const hrefChannel = semver.prerelease(hrefElement[1])?.[0]
+
+          //If no channel is set by the current version, then grab latest (including prerelease)
+          if (currentChannel == null) {
+            // Skip any "custom" channels
+            if (hrefChannel != null && hrefChannel !== 'alpha' && hrefChannel !== 'beta') continue
+            tag = element
+            break
+          }
+
+          // Skip Production release
+          if (hrefChannel == null) continue
+
+          // Get next release in the same channel
+          if (hrefChannel === currentChannel) {
+            tag = element
+            break
+          }
+        }
       } else {
         tag = await this.getLatestTagName(cancellationToken)
         for (const element of feed.getElements("entry")) {
