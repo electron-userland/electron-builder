@@ -66,7 +66,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           if (hrefElement == null) continue
 
           //Get Channel from this release
-          const hrefChannel = semver.prerelease(hrefElement[1])?.[0]
+          const hrefChannel = semver.prerelease(hrefElement[1])?.[0] || null ;
 
           //If no channel is set by the current version, then grab latest (including prerelease)
           if (currentChannel == null || currentChannel == 'alpha' || currentChannel == 'beta'){
@@ -75,7 +75,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             // Skip alphas if in Beta Channel
             if (currentChannel == 'beta' && hrefChannel == 'alpha') continue
             // Get tag
-            tag = element
+            tag = hrefChannel
             break
           }
 
@@ -84,7 +84,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
           // Get next release in the same channel
           if (hrefChannel === currentChannel) {
-            tag = element
+            tag = hrefChannel
             break
           }
         }
