@@ -57,7 +57,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     let tag: string | null
     try {
       if (this.updater.allowPrerelease) {
-        const currentChannel = this.updater?.channel || null;
+        const currentChannel = this.updater?.channel || this.updater.currentVersion.prerelease?.[0] ||  null;
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
           const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
@@ -69,9 +69,12 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           const hrefChannel = semver.prerelease(hrefElement[1])?.[0]
 
           //If no channel is set by the current version, then grab latest (including prerelease)
-          if (currentChannel == null) {
+          if (currentChannel == null || currentChannel == 'alpha' || currentChannel == 'beta'){
             // Skip any "custom" channels
             if (hrefChannel != null && hrefChannel !== 'alpha' && hrefChannel !== 'beta') continue
+            // Skip alphas if in Beta Channel
+            if (currentChannel == 'beta' && hrefChannel == 'alpha') continue
+            // Get tag
             tag = element
             break
           }
@@ -103,7 +106,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(this.getDefaultChannelName())
+    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(semver.prerelease(tag)?.[0] || 'latest') : this.getDefaultChannelName())
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
