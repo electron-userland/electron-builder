@@ -54,10 +54,10 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const feed = parseXml(feedXml)
     // noinspection TypeScriptValidateJSTypes
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    let tag: string | null
+    let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
-        const currentChannel = this.updater?.channel || this.updater.currentVersion.prerelease?.[0] ||  null;
+        const currentChannel = this.updater?.channel || String(semver.prerelease(this.updater.currentVersion)?.[0]) ||  null;
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
           const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
@@ -106,7 +106,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(semver.prerelease(tag)?.[0] || 'latest') : this.getDefaultChannelName())
+    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0]) || 'latest') : this.getDefaultChannelName())
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
