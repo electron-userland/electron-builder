@@ -1,32 +1,32 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate) [![project discussions](https://img.shields.io/badge/discuss-on_github-blue.svg)](https://github.com/electron-userland/electron-builder/discussions)
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
 
-:large_orange_diamond: Looking for additional maintainers!
+:large_orange_diamond: - Looking for additional maintainers!
 
 ## Sponsors
 
 <div align="center">
-	<a href="https://workflowy.com">
+<a href="https://workflowy.com">
 <div>
 <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/>
 </div>
-<b>Notes,Tasks,Projects. All in a Single Place.</b>
+<b>Notes, Tasks, Projects. All in a Single Place.</b>
 </a>
 <br>
 <br>
 <a href="https://tidepool.org">
 <div>
 <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/>
-			</div>
-			<b>Your gateway to understanding your diabetes data</b>
+</div>
+<b>Your gateway to understanding your diabetes data</b>
 </a>
 <br>
 <br>
 <a href="https://keygen.sh/?via=electron-builder">
 <div>
 <img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" align="middle"/>
-			</div>
-			<b>A dead-simple software licensing and distribution API built for developers</b>
+</div>
+<b>A dead-simple software licensing and distribution API built for developers</b>
 </a>
 <br>
 <br>
