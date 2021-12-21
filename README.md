@@ -1,7 +1,40 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate) [![project discussions](https://img.shields.io/badge/discuss-on_github-blue.svg)](https://github.com/electron-userland/electron-builder/discussions)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box.
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
 
-See documentation on [electron.build](https://www.electron.build).
+:large_orange_diamond: - Looking for additional maintainers!
+
+## Sponsors
+
+<div align="center">
+<a href="https://workflowy.com">
+<div>
+<img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/>
+</div>
+<b>Notes, Tasks, Projects. All in a Single Place.</b>
+</a>
+<br>
+<br>
+<a href="https://tidepool.org">
+<div>
+<img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/>
+</div>
+<b>Your gateway to understanding your diabetes data</b>
+</a>
+<br>
+<br>
+<a href="https://keygen.sh/?via=electron-builder">
+<div>
+<img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" align="middle"/>
+</div>
+<b>A dead-simple software licensing and distribution API built for developers</b>
+</a>
+<br>
+<br>
+</div>
+
+## Documentation
+
+See the full documentation on [electron.build](https://www.electron.build).
 
 * NPM packages management:
     * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
@@ -58,11 +91,11 @@ See documentation on [electron.build](https://www.electron.build).
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
     "scripts": {
-      "pack": "electron-builder --dir",
-      "dist": "electron-builder"
+      "app:dir": "electron-builder --dir",
+      "app:dist": "electron-builder"
     }
     ```
-    Then you can run `yarn dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn run pack` (only generates the package directory without really packaging it. This is useful for testing purposes).
+    Then you can run `yarn app:dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn app:dir` (only generates the package directory without really packaging it. This is useful for testing purposes).
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
@@ -74,10 +107,4 @@ For an app that will be shipped to production, you should sign your application.
 
 ## Donate
 
-We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/donate). Donation can be used to increase some issue priority.
-
-## Sponsors
-
-<a href="https://workflowy.com"><img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/></a>
-<a href="https://tidepool.org"><img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/></a>
-<a href="https://keygen.sh/?via=electron-builder"><img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" align="middle"/></a>
+We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/donate).
