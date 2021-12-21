@@ -1,6 +1,6 @@
 {
   "name": "electron-builder-squirrel-windows",
-  "version": "22.14.10",
+  "version": "22.14.11",
   "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",

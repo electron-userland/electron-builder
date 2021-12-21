@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v22.14.10...v) (2021-12-21)
+
+
+### Bug Fixes
+
+* **nsis:** Ignore other users processes during per-user installation ([#6472](https://github.com/electron-userland/electron-builder/issues/6472)) ([e3d06af](https://github.com/electron-userland/electron-builder/commit/e3d06afae1236d44e4b6e670b453b260b1f74d84)), closes [#6104](https://github.com/electron-userland/electron-builder/issues/6104)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.14.8...v) (2021-11-30)
 
 

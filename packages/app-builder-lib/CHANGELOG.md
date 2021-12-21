@@ -1,5 +1,12 @@
 # app-builder-lib
 
+## 22.14.11
+
+### Patch Changes
+
+- [#6472](https://github.com/electron-userland/electron-builder/pull/6472) [`e3d06afa`](https://github.com/electron-userland/electron-builder/commit/e3d06afae1236d44e4b6e670b453b260b1f74d84) Thanks [@I-Otsuki](https://github.com/I-Otsuki)! - fix(nsis): Ignore other users processes when installing for only current user
+  Closes #6104
+
 ## 22.14.10
 
 ### Patch Changes
