@@ -325,7 +325,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
-  delete info.AsarIntegrity
+  delete info.ElectronAsarIntegrity
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright
@@ -350,14 +350,12 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 
   expect(info).toMatchSnapshot()
 
-  const checksumData = info.AsarIntegrity
+  const checksumData = info.ElectronAsarIntegrity
   if (checksumData != null) {
-    const data = JSON.parse(checksumData)
-    const checksums = data.checksums
-    for (const name of Object.keys(checksums)) {
-      checksums[name] = "hash"
+    for (const name of Object.keys(checksumData)) {
+      checksumData[name] = { "algorithm": "SHA256", "hash": "hash" }
     }
-    info.AsarIntegrity = JSON.stringify(data)
+    info.ElectronAsarIntegrity = JSON.stringify(checksumData)
   }
 
   if (checkOptions.checkMacApp != null) {

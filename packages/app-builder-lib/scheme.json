@@ -330,11 +330,6 @@
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
-        "externalAllowed": {
-          "default": false,
-          "description": "Allows external asar files.",
-          "type": "boolean"
-        },
         "ordering": {
           "type": [
             "null",

@@ -8,6 +8,7 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
+import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -112,9 +113,10 @@ export class AsarPackager {
       }
 
       const dirNode = currentDirNode!
-      const newData = transformedFiles == null ? null : transformedFiles.get(i)
+      const newData = transformedFiles == null ? undefined : transformedFiles.get(i)
       const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
-      this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData), isUnpacked, stat)
+      const integrity = newData === undefined ? await hashFile(file) : hashFileContents(newData)
+      this.fs.addFileNode(file, dirNode, newData == undefined ? stat.size : Buffer.byteLength(newData), isUnpacked, stat, integrity)
       if (isUnpacked) {
         if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
           dirToCreateForUnpackedFiles.add(fileParent)

@@ -214,7 +214,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   }
 
   if (asarIntegrity != null) {
-    appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
+    appPlist.ElectronAsarIntegrity = asarIntegrity
   }
 
   const plistDataToWrite: any = {
