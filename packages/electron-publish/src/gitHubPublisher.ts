@@ -182,7 +182,7 @@ export class GitHubPublisher extends HttpPublisher {
       .doApiRequest(
         configureRequestOptions(
           {
-            protocol: "https:",
+            protocol: parsedUrl.protocol,
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             method: "POST",
@@ -264,7 +264,7 @@ export class GitHubPublisher extends HttpPublisher {
       httpExecutor.request(
         configureRequestOptions(
           {
-            protocol: "https:",
+            protocol: baseUrl.protocol,
             hostname: baseUrl.hostname,
             port: baseUrl.port as any,
             path: this.info.host != null && this.info.host !== "github.com" ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
