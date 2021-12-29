@@ -1,0 +1,130 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`allowElevation false, app requestedExecutionLevel admin 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "test Setup 1.1.0.exe",
+      "safeArtifactName": "test-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`allowToChangeInstallationDirectory 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+          },
+        ],
+        "path": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+        "releaseDate": "@releaseDate",
+        "releaseNotes": "New release with new bugs and
+
+without features",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test Custom Installation Dir Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-Custom-Installation-Dir-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`allowToChangeInstallationDirectory 2`] = `
+Object {
+  "owner": "foo",
+  "provider": "github",
+  "repo": "bar",
+  "updaterCacheDirName": "test-custom-inst-dir-updater",
+}
+`;
+
+exports[`assisted 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`assisted, MUI_HEADER 1`] = `
+Object {
+  "win": Array [],
+}
+`;
+
+exports[`assisted, MUI_HEADER as option 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`assisted, only perMachine 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
