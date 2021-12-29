@@ -1,5 +1,6 @@
 ---
 "app-builder-lib": minor
+"builder-util": major
 ---
 
 Default to LZO compression for snap packages.
