@@ -582,7 +582,7 @@ export abstract class AppUpdater extends EventEmitter {
       // NodeJS URL doesn't decode automatically
       const urlPath = decodeURIComponent(taskOptions.fileInfo.url.pathname)
       if (urlPath.endsWith(`.${taskOptions.fileExtension}`)) {
-        return path.posix.basename(urlPath)
+        return path.basename(urlPath)
       } else {
         // url like /latest, generate name
         return `update.${taskOptions.fileExtension}`
