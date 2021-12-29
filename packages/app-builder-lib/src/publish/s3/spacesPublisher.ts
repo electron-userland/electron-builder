@@ -4,7 +4,7 @@ import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class SpacesPublisher extends BaseS3Publisher {
-  readonly providerName = "Spaces"
+  readonly providerName = "spaces"
 
   constructor(context: PublishContext, private readonly info: SpacesOptions) {
     super(context, info)

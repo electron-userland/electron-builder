@@ -31,7 +31,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   private readonly token: string
 
-  readonly providerName = "GitHub"
+  readonly providerName = "github"
 
   private readonly releaseType: "draft" | "prerelease" | "release"
 
