@@ -1364,7 +1364,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p><strong>Kind</strong>: class of <a href="#module_electron-publish"><code>electron-publish</code></a><br/>
 <strong>Properties</strong></p>
 <ul>
-<li><strong><code id="Publisher-providerName">providerName</code></strong> String</li>
+<li><strong><code id="Publisher-providerName">providerName</code></strong> “github” | “s3” | “spaces” | “generic” | “custom” | “snapStore” | “keygen” | “bitbucket”</li>
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
@@ -1557,6 +1557,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><strong><code id="UpdateCheckResult-updateInfo">updateInfo</code></strong> module:builder-util-runtime.UpdateInfo</li>
 <li><code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt; | “undefined”</li>
 <li><code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken</li>
+<li tag.description=""><strong><code id="UpdateCheckResult-versionInfo">versionInfo</code></strong> module:builder-util-runtime.UpdateInfo - Deprecated:</li>
 </ul>
 <p><a name="UpdateDownloadedEvent"></a></p>
 <h2 id="updatedownloadedevent-%E2%87%90-module%3Abuilder-util-runtime.updateinfo"><code>UpdateDownloadedEvent</code> ⇐ <code>module:builder-util-runtime.UpdateInfo</code></h2>

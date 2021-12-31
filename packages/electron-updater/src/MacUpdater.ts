@@ -55,15 +55,15 @@ export class MacUpdater extends AppUpdater {
     let isArm64Mac = false
     try {
       this.debug("Checking for arm64 in uname")
-      const result = execFileSync("uname", ['-a'], { encoding: "utf8" })
-      const isArm = result.includes('ARM')
+      const result = execFileSync("uname", ["-a"], { encoding: "utf8" })
+      const isArm = result.includes("ARM")
       log.info(`Checked 'uname -a': arm64=${isArm}`)
       isArm64Mac = isArm64Mac || isArm
     } catch (e) {
       log.warn(`uname shell command to check for arm64 failed: ${e}`)
     }
-    
-    isArm64Mac = isArm64Mac || process.arch === 'arm64' || isRosetta
+
+    isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
@@ -97,9 +97,7 @@ export class MacUpdater extends AppUpdater {
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    if (typeof this.server !== 'undefined') {
-      this.server.close()
-    }
+    this.server?.close()
     this.server = createServer()
     this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     this.server.on("close", () => {
@@ -107,8 +105,8 @@ export class MacUpdater extends AppUpdater {
     })
 
     // must be called after server is listening, otherwise address is null
-    const getServerUrl = (): string => {
-      const address = this.server!.address()
+    const getServerUrl = (s: Server): string => {
+      const address = s.address()
       if (typeof address === "string") {
         return address
       }
@@ -132,7 +130,7 @@ export class MacUpdater extends AppUpdater {
 
         // verify auth credentials
         const base64Credentials = request.headers.authorization!.split(" ")[1]
-        const credentials = Buffer.from(base64Credentials, "base64").toString("ascii");
+        const credentials = Buffer.from(base64Credentials, "base64").toString("ascii")
         const [username, password] = credentials.split(":")
         if (username !== "autoupdater" || password !== pass) {
           response.statusCode = 401
@@ -145,7 +143,7 @@ export class MacUpdater extends AppUpdater {
         const requestUrl = request.url!
         log.info(`${requestUrl} requested`)
         if (requestUrl === "/") {
-          const data = Buffer.from(`{ "url": "${getServerUrl()}${fileUrl}" }`)
+          const data = Buffer.from(`{ "url": "${getServerUrl(this.server!)}${fileUrl}" }`)
           response.writeHead(200, { "Content-Type": "application/json", "Content-Length": data.length })
           response.end(data)
           return
@@ -190,9 +188,9 @@ export class MacUpdater extends AppUpdater {
       this.debug(`Proxy server for native Squirrel.Mac is starting to listen (${logContext})`)
 
       this.server!.listen(0, "127.0.0.1", () => {
-        this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl()}, ${logContext})`)
+        this.debug(`Proxy server for native Squirrel.Mac is listening (address=${getServerUrl(this.server!)}, ${logContext})`)
         this.nativeUpdater.setFeedURL({
-          url: getServerUrl(),
+          url: getServerUrl(this.server!),
           headers: {
             "Cache-Control": "no-cache",
             Authorization: `Basic ${authInfo.toString("ascii")}`,
@@ -214,9 +212,7 @@ export class MacUpdater extends AppUpdater {
   }
 
   quitAndInstall(): void {
-    if (typeof this.server !== "undefined") {
-      this.server.close()
-    }
+    this.server?.close()
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.nativeUpdater.quitAndInstall()
