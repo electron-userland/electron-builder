@@ -1,5 +1,12 @@
 # app-builder-lib
 
+## 22.14.12
+
+### Patch Changes
+
+- Updated dependencies [[`344bb232`](https://github.com/electron-userland/electron-builder/commit/344bb232d71e608b881a04fc98dca0858e42ddfc)]:
+  - electron-publish@22.14.12
+
 ## 22.14.11
 
 ### Patch Changes
