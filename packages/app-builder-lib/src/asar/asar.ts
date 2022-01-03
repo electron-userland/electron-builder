@@ -89,7 +89,9 @@ export class AsarFilesystem {
 
     const node = new Node()
     node.size = size
-    node.integrity = integrity
+    if (integrity) {
+      node.integrity = integrity
+    }
     if (unpacked) {
       node.unpacked = true
     } else {
