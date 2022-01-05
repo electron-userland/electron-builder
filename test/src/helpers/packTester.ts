@@ -521,6 +521,10 @@ export function removeUnstableProperties(data: any) {
         // to ensure that some property exists
         return `@${name}`
       }
+      // Keep existing test coverage
+      if (value.integrity) {
+        delete value.integrity
+      }
       return value
     })
   )
@@ -528,8 +532,19 @@ export function removeUnstableProperties(data: any) {
 
 export async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
-  expect(fs.header).toMatchSnapshot()
+
+  const stableHeader = JSON.parse(
+    JSON.stringify(fs.header, (name, value) => {
+      // Keep existing test coverage
+      if (value.integrity) {
+        delete value.integrity
+      }
+      return value
+    })
+  )
+
+  // console.log(resourceDir + " " + JSON.stringify(stableHeader, null, 2))
+  expect(stableHeader).toMatchSnapshot()
 }
 
 export function toSystemIndependentPath(s: string): string {
