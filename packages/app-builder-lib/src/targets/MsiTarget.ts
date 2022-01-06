@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, log, deepAssign } from "builder-util"
+import { Arch, asArray, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromUrl } from "../binDownload"
 import { walk } from "builder-util/out/fs"
@@ -11,6 +11,7 @@ import * as path from "path"
 import { MsiOptions } from "../"
 import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { normalizeExt } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
@@ -38,6 +39,18 @@ export default class MsiTarget extends Target {
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("msi")
+  }
+
+  /**
+   * A product-specific string that can be used in an [MSI Identifier](https://docs.microsoft.com/en-us/windows/win32/msi/identifier).
+   */
+  private get productMsiIdPrefix() {
+    const sanitizedId = this.packager.appInfo.productFilename.replace(/[^\w.]/g, "").replace(/^[^A-Za-z_]+/, "")
+    return sanitizedId.length > 0 ? sanitizedId : "ElectronApp"
+  }
+
+  private get iconId() {
+    return this.options.iconId ?? `${this.productMsiIdPrefix}Icon.exe`
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -156,13 +169,12 @@ export default class MsiTarget extends Target {
     const compression = this.packager.compression
     const options = this.options
     const iconPath = await this.packager.getIconPath()
-    const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
     return (await projectTemplate.value)({
       ...commonOptions,
       isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
-      iconId: iconId,
+      iconId: this.iconId,
       compressionLevel: compression === "store" ? "none" : "high",
       version: appInfo.getVersionInWeirdWindowsForm(),
       productName: appInfo.productName,
@@ -223,9 +235,8 @@ export default class MsiTarget extends Target {
       if (isMainExecutable && (isCreateDesktopShortcut || commonOptions.isCreateStartMenuShortcut)) {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
-        const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
         if (isCreateDesktopShortcut) {
-          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}"/>\n`
+          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
         }
 
         const hasMenuCategory = commonOptions.menuCategory != null
@@ -234,7 +245,7 @@ export default class MsiTarget extends Target {
           if (hasMenuCategory) {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
-          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}">\n`
+          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
           result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${this.packager.appInfo.id}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
@@ -245,6 +256,22 @@ export default class MsiTarget extends Target {
         }
       } else {
         result += `/>`
+      }
+
+      const fileAssociations = this.packager.fileAssociations
+      if (isMainExecutable && fileAssociations.length !== 0) {
+        for (const item of fileAssociations) {
+          const extensions = asArray(item.ext).map(normalizeExt)
+          for (const ext of extensions) {
+            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${ext}" Advertise="yes" Icon="${this.iconId}" ${
+              item.description ? `Description="${item.description}"` : ""
+            }>\n`
+            result += `${fileSpace}    <Extension Id="${ext}" Advertise="yes">\n`
+            result += `${fileSpace}      <Verb Id="open" Command="Open with ${this.packager.appInfo.productName}" Argument="&quot;%1&quot;"/>\n`
+            result += `${fileSpace}    </Extension>\n`
+            result += `${fileSpace}  </ProgId>\n`
+          }
+        }
       }
 
       return `${result}\n${fileSpace}</Component>`
