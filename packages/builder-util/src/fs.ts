@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { copyFile as _nodeCopyFile } from "fs-extra"
 import { Stats } from "fs"
+import { platform } from "os"
 import { access, chmod, mkdir, link, lstat, readdir, readlink, stat, symlink, unlink, writeFile } from "fs/promises"
 import * as path from "path"
 import { Mode } from "stat-mode"
@@ -283,6 +284,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []
+  const symlinkType = platform() === "win32" ? "junction" : "file"
   return walk(src, options.filter, {
     consume: async (file, stat, parent) => {
       if (!stat.isFile() && !stat.isSymbolicLink()) {
@@ -301,7 +303,7 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
         links.push({ file: destFile, link: await readlink(file) })
       }
     },
-  }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
+  }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
