@@ -23,9 +23,4 @@ export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetS
    * Any additional arguments to be passed to the WiX installer compiler, such as `["-ext", "WixUtilExtension"]`
    */
   readonly additionalWixArgs?: Array<string> | null
-
-  /**
-   * The [shortcut iconId](https://wixtoolset.org/documentation/manual/v4/reference/wxs/shortcut/). Optional, by default generated using app file name.
-   */
-  readonly iconId?: string
 }

@@ -46,11 +46,15 @@ export default class MsiTarget extends Target {
    */
   private get productMsiIdPrefix() {
     const sanitizedId = this.packager.appInfo.productFilename.replace(/[^\w.]/g, "").replace(/^[^A-Za-z_]+/, "")
-    return sanitizedId.length > 0 ? sanitizedId : "ElectronApp"
+    return sanitizedId.length > 0 ? sanitizedId : "App" + this.upgradeCode.replace(/-/g, "")
   }
 
   private get iconId() {
-    return this.options.iconId ?? `${this.productMsiIdPrefix}Icon.exe`
+    return `${this.productMsiIdPrefix}Icon.exe`
+  }
+
+  private get upgradeCode(): string {
+    return (this.options.upgradeCode || UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase()
   }
 
   async build(appOutDir: string, arch: Arch) {
@@ -178,7 +182,7 @@ export default class MsiTarget extends Target {
       compressionLevel: compression === "store" ? "none" : "high",
       version: appInfo.getVersionInWeirdWindowsForm(),
       productName: appInfo.productName,
-      upgradeCode: (options.upgradeCode || UUID.v5(appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase(),
+      upgradeCode: this.upgradeCode,
       manufacturer: companyName || appInfo.productName,
       appDescription: appInfo.description,
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
