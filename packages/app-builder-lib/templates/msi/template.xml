@@ -18,6 +18,7 @@
 
     <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}"/>
     <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
+    <Property Id="DISABLEADVTSHORTCUTS" Value="1"/>
 
     {{ if (iconPath) { }}
     <Icon Id="${iconId}" SourceFile="${iconPath}"/>
