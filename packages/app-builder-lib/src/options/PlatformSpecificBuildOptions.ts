@@ -1,4 +1,3 @@
-import { AsarIntegrityOptions } from "../asar/integrity"
 import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { FileAssociation } from "./FileAssociation"
 
@@ -17,7 +16,7 @@ export interface FileSet {
   filter?: Array<string> | string
 }
 
-export interface AsarOptions extends AsarIntegrityOptions {
+export interface AsarOptions {
   /**
    * Whether to automatically unpack executables files.
    * @default true
