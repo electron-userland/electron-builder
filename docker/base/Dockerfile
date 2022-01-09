@@ -13,7 +13,7 @@ RUN apt-get -qq update && apt-get -qq dist-upgrade && \
   apt-get -qq install --no-install-recommends \
         qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib \
         lzip rpm python libcurl4 git git-lfs ssh unzip libarchive-tools \
-        libxtst6 libsecret-1-dev libopenjp2-tools \
+        libxtst6 libsecret-1-dev libopenjp2-tools liblzo2-2 \
   && \
   # git-lfs
   git lfs install && \
