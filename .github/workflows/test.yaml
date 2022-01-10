@@ -8,6 +8,11 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      build-docker-locally:
+        type: boolean
+        description: Force rebuild docker images for CI tests
+        required: false
 
 jobs:
   test:
@@ -30,7 +35,7 @@ jobs:
           since_last_remote_commit: "true"
 
       - name: Dockerfile has changed, rebuild for tests
-        if: contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
+        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
         run: pnpm docker-images
 
       - name: Compile and Lint
