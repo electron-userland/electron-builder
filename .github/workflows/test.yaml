@@ -21,7 +21,7 @@ jobs:
       matrix:
         testFiles:
           - ArtifactPublisherTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest
-          - snapTest,debTest,fpmTest,flatpakTest,protonTest
+          - snapTest,debTest,fpmTest,protonTest
           - BuildTest,ExtraBuildTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
     steps:
       - name: Checkout code repository
@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - masTest,dmgTest,macUpdaterTest,protonTest
+          - masTest,dmgTest,protonTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
