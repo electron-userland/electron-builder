@@ -20,10 +20,10 @@ export default class AppImageTarget extends Target {
     super("appImage")
 
     this.desktopEntry = new Lazy<string>(() => {
-      const args = this.options.executableArgs?.join(" ") || "--no-sandbox";
+      const args = this.options.executableArgs?.join(" ") || "--no-sandbox"
       return helper.computeDesktopEntry(this.options, `AppRun ${args} %U`, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-      });
+      })
     })
   }
 

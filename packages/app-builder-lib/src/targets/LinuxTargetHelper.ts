@@ -106,8 +106,8 @@ export class LinuxTargetHelper {
         exec += executableArgs.join(" ")
       }
       // https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#exec-variables
-      const execCodes = ['%f', '%u', '%F', '%U']
-      if (executableArgs == null || executableArgs.findIndex((arg) => execCodes.includes(arg)) === -1) {
+      const execCodes = ["%f", "%u", "%F", "%U"]
+      if (executableArgs == null || executableArgs.findIndex(arg => execCodes.includes(arg)) === -1) {
         exec += " %U"
       }
     }
