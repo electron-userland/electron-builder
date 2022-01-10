@@ -26,7 +26,6 @@ test.ifNotCiMac(
 test.ifNotCiMac.ifAll(
   "zip artifactName",
   app({
-    linux: ["appimage"],
     win: ["zip"],
     config: {
       //tslint:disable-next-line:no-invalid-template-strings
