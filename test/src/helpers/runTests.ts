@@ -27,29 +27,6 @@ async function runTests() {
   if (testFiles != null && testFiles.length !== 0) {
     console.log(`Test files: ${testFiles}`)
     testPatterns.push(...testFiles.split(","))
-  } else if (process.env.CIRCLE_NODE_INDEX != null && process.env.CIRCLE_NODE_INDEX.length !== 0) {
-    const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
-    if (circleNodeIndex === 0) {
-      testPatterns.push("debTest")
-      testPatterns.push("fpmTest")
-      testPatterns.push("winPackagerTest")
-      testPatterns.push("winCodeSignTest")
-      testPatterns.push("macArchiveTest")
-      testPatterns.push("webInstallerTest")
-    } else if (circleNodeIndex === 1) {
-      testPatterns.push("oneClickInstallerTest")
-    } else if (circleNodeIndex === 2) {
-      testPatterns.push("snapTest")
-      testPatterns.push("macPackagerTest")
-      testPatterns.push("msiTest")
-      testPatterns.push("portableTest")
-      testPatterns.push("BuildTest")
-      testPatterns.push("squirrelWindowsTest")
-    } else {
-      testPatterns.push("assistedInstallerTest")
-      testPatterns.push("macCodeSignTest")
-    }
-    console.log(`Test files for node ${circleNodeIndex}: ${testPatterns.join(", ")}`)
   }
 
   process.env.APP_BUILDER_TMP_DIR = APP_BUILDER_TMP_DIR

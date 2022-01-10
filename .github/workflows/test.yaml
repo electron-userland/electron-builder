@@ -17,8 +17,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-20.04
-    env:
-      TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
+    strategy:
+      matrix:
+        testFiles:
+          - ArtifactPublisherTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest
+          - snapTest,debTest,fpmTest,flatpakTest,protonTest
+          - BuildTest,ExtraBuildTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
@@ -49,14 +53,48 @@ jobs:
 
       - name: Run tests in docker image
         run: pnpm test-linux
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+  
+  test-mac:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        testFiles:
+          - masTest,dmgTest,macUpdaterTest,protonTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
+
+      - name: Compile
+        run: pnpm compile
+      
+      - name: Cache ~/.cache/electron
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/electron
+          key: v-11.0.0-mac-electron
+
+      - name: Test
+        run: node ./test/out/helpers/runTests.js
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
 
   test-windows:
     runs-on: windows-2019
     strategy:
       matrix:
         testFiles:
-          - filesTest,globTest,installerTest,appxTest,msiTest,portableTest
-          - oneClickInstallerTest,ExtraBuildTest,BuildTest,extraMetadataTest,protonTest,nsisUpdaterTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,squirrelWindowsTest,protonTest
+          - oneClickInstallerTest,differentialUpdateTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
@@ -73,7 +111,7 @@ jobs:
           path: $HOMEPATH/.cache/electron
           key: v-11.0.0-windows-electron
       
-      - name: test
+      - name: Test
         run: node ./test/out/helpers/runTests.js
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
