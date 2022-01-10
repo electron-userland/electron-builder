@@ -4,42 +4,32 @@ on:
   push:
     branches:
       - master
+
 env:
   HUSKY: 0 # Bypass husky commit hook for CI
-  PNPM_CACHE_FOLDER: .pnpm-store
+
 jobs:
   pr-release:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - name: checkout code repository
+      - name: Checkout code repository
         uses: actions/checkout@v2
         with:
           # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 6.10.0
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
 
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-          cache: 'pnpm'
-      
       - name: Set up NPM credentials
         run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: setup pnpm config
-        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
-
-      - run: pnpm install
-      
       - name: Create versions PR & prepare publish
         id: changesets
-        uses: changesets/action@master
+        uses: changesets/action@v1
         with:
           version: pnpm ci:version
           commit: 'chore(deploy): Release'
@@ -48,20 +38,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Push release version tag
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git push --follow-tags
-          git push origin releases
-
-      - name: Deploy Documentation
-        uses: netlify/actions/build@master
-        if: steps.changesets.outputs.published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_CMD: bash netlify-docs.sh
-          NETLIFY_DIR: site

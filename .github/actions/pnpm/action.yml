@@ -1,0 +1,29 @@
+name: 'pnpm installation'
+description: 'Install and audit dependencies via pnpm'
+inputs:
+  version: # id of input
+    description: 'The pnpm version to use'
+    required: false
+    default: 6.25.1
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v2
+      with:
+        version: ${{ inputs.version }}
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+        cache: 'pnpm'
+
+    - name: install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+
+## Usage
+# - name: install and audit
+#   uses: ./.github/actions/pnpm
+#   with:
+#     version: ${{ env.PNPM_VERSION }}
