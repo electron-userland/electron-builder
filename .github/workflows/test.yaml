@@ -6,38 +6,50 @@ on:
     branches:
       - master
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      build-docker-locally:
+        type: boolean
+        description: Force rebuild docker images for CI tests
+        required: false
+
 jobs:
   test:
     runs-on: ubuntu-20.04
-    container:
-      image: electronuserland/builder:14-05.21@sha256:837f5cbec3735ee27eb7105b9646aedd73340bce7d6ea44943a99a105a4dca55
     env:
       TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v2
+      - name: Checkout code repository
+        uses: actions/checkout@v2
         with:
-          node-version: 14
-      - name: Cache .pnpm-store
-        uses: actions/cache@v2
+          fetch-depth: 0
+
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
+
+      - name: Determine if Dockerfiles changed
+        id: changed-files
+        uses: tj-actions/changed-files@v13
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install pnpm
-        run: |
-          npm i -g pnpm
-          pnpm config set store-dir ~/.pnpm-store
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm compile
-      - run: pnpm lint
-      - run: pnpm lint-deps
+          since_last_remote_commit: "true"
+
+      - name: Dockerfile has changed, rebuild for tests
+        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
+        run: pnpm docker-images
+
+      - name: Compile and Lint
+        run: pnpm pretest
+      
       - name: Cache ~/.cache/electron
         uses: actions/cache@v2
         with:
           path: ~/.cache/electron
           key: v-11.0.0-electron
-      - run: node ./test/out/helpers/runTests.js
+
+      - name: Run tests in docker image
+        run: pnpm test-linux
+
   test-windows:
     runs-on: windows-2019
     strategy:
@@ -46,27 +58,21 @@ jobs:
           - filesTest,globTest,installerTest,appxTest,msiTest,portableTest
           - oneClickInstallerTest,ExtraBuildTest,BuildTest,extraMetadataTest,protonTest,nsisUpdaterTest
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-      - name: Cache .pnpm-store
-        uses: actions/cache@v2
-        with:
-          path: $HOMEPATH/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install pnpm
-        run: |
-          npm i -g pnpm
-          pnpm config set store-dir $HOMEPATH/.pnpm-store
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm compile
+      - name: Checkout code repository
+        uses: actions/checkout@v2
+
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
+
+      - name: Compile
+        run: pnpm compile
+      
       - name: Cache ~/.cache/electron
         uses: actions/cache@v2
         with:
           path: $HOMEPATH/.cache/electron
           key: v-11.0.0-windows-electron
+      
       - name: test
         run: node ./test/out/helpers/runTests.js
         env:

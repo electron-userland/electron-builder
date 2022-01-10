@@ -1,5 +1,11 @@
 # electron-publish
 
+## 22.14.12
+
+### Patch Changes
+
+- [#6516](https://github.com/electron-userland/electron-builder/pull/6516) [`344bb232`](https://github.com/electron-userland/electron-builder/commit/344bb232d71e608b881a04fc98dca0858e42ddfc) Thanks [@robertpatrick](https://github.com/robertpatrick)! - fix: Explicitly set the protocol to https on the request objects to allow publishing to work from behind a proxy server when the https_proxy environment variable is set.
+
 ## 22.14.7
 
 ### Patch Changes

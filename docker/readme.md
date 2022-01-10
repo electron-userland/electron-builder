@@ -2,7 +2,7 @@ It is developer documentation. See [user documentation](https://www.electron.bui
 
 # Build
 
-`yarn docker-images`
+`pnpm docker-images`
 
 # Notes
 

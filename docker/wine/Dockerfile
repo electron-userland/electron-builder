@@ -1,4 +1,5 @@
-FROM electronuserland/builder:latest
+ARG IMAGE_VERSION=latest
+FROM electronuserland/builder:$IMAGE_VERSION
 
 RUN dpkg --add-architecture i386 && \
   curl -Lo /usr/share/keyrings/winehq.asc https://dl.winehq.org/wine-builds/winehq.key && \
