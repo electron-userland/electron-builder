@@ -93,7 +93,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,squirrelWindowsTest,protonTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - oneClickInstallerTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
