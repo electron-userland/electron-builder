@@ -67,7 +67,9 @@ export async function reportError(
   if (qualifier == null) {
     logFields.reason = ""
     if (isAutoDiscoveryCodeSignIdentity()) {
-      logFields.reason += `cannot find valid "${certificateTypes.join(", ")}" identity${isMas ? "" : ` or custom non-Apple code signing certificate, it could cause some undefined behaviour, e.g. macOS localized description not visible`}`
+      logFields.reason += `cannot find valid "${certificateTypes.join(", ")}" identity${
+        isMas ? "" : ` or custom non-Apple code signing certificate, it could cause some undefined behaviour, e.g. macOS localized description not visible`
+      }`
     }
     logFields.reason += ", see https://electron.build/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {

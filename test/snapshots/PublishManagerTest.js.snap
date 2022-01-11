@@ -336,7 +336,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -353,7 +352,14 @@ Object {
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -402,6 +408,7 @@ Object {
 exports[`os macro 3`] = `
 Array [
   "latest/mac/Test App ßW-1.1.0-mac.zip",
+  "latest/mac/Test App ßW-1.1.0-mac.zip.blockmap",
   "latest/mac/latest-mac.yml",
   "latest/linux/TestApp-1.1.0.zip",
 ]
