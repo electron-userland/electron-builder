@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "22.14.12",
+  "version": "22.14.13",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",

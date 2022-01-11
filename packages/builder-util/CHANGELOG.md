@@ -1,5 +1,11 @@
 # builder-util
 
+## 22.14.13
+
+### Patch Changes
+
+- [#6529](https://github.com/electron-userland/electron-builder/pull/6529) [`f7b38698`](https://github.com/electron-userland/electron-builder/commit/f7b386986ec30f7e4cd3e3f68e078a773940a51c) Thanks [@frankwang1101](https://github.com/frankwang1101)! - fix: use `junction` for symlink type when on Windows to solve Error: EPERM: operation not permitted
+
 ## 22.14.7
 
 ### Patch Changes
