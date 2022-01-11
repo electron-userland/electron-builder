@@ -7,7 +7,7 @@ import * as fs from "fs/promises"
 test.ifWinCi(
   "beta version",
   app({
-    targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
+    targets: Platform.WINDOWS.createTarget(["nsis"]),
     config: {
       extraMetadata: {
         version: "3.0.0-beta.2",
