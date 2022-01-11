@@ -15,10 +15,13 @@ on:
         required: false
 
 jobs:
-  test:
+  test-linux:
     runs-on: ubuntu-20.04
-    env:
-      TEST_FILES: configurationValidationTest,globTest,RepoSlugTest,mainEntryTest,ArtifactPublisherTest,ignoreTest,filesTest,nsisUpdaterTest,extraMetadataTest,linuxPackagerTest,linuxArchiveTest,protonTest
+    strategy:
+      matrix:
+        testFiles:
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
+          - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
@@ -49,14 +52,47 @@ jobs:
 
       - name: Run tests in docker image
         run: pnpm test-linux
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+  
+  test-mac:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        testFiles:
+          - masTest,dmgTest,protonTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install deps and audit
+        uses: ./.github/actions/pnpm
+
+      - name: Compile
+        run: pnpm compile
+      
+      - name: Cache ~/Library/Caches/electron
+        uses: actions/cache@v2
+        with:
+          path: ~/Library/Caches/electron
+          key: v-11.0.0-mac-electron
+
+      - name: Test
+        run: node ./test/out/helpers/runTests.js
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
 
   test-windows:
     runs-on: windows-2019
     strategy:
       matrix:
         testFiles:
-          - filesTest,globTest,installerTest,appxTest,msiTest,portableTest
-          - oneClickInstallerTest,ExtraBuildTest,BuildTest,extraMetadataTest,protonTest,nsisUpdaterTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - oneClickInstallerTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
@@ -67,15 +103,18 @@ jobs:
       - name: Compile
         run: pnpm compile
       
-      - name: Cache ~/.cache/electron
+      - name: Cache ~\AppData\Local\Cache\electron
         uses: actions/cache@v2
         with:
-          path: $HOMEPATH/.cache/electron
+          path: ~\AppData\Local\Cache\electron
           key: v-11.0.0-windows-electron
       
-      - name: test
+      - name: Test
         run: node ./test/out/helpers/runTests.js
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
