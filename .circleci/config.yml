@@ -1,0 +1,40 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/node:14.17@sha256:b1c0b133fc872314dee5b24e34084693f0747850aad6ac0181b70061e198375f
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - install-dep-cache-{{ checksum "pnpm-lock.yaml" }}
+      - restore_cache:
+          keys:
+            - v-11.0.0-electron
+      - run:
+          command: npm i --prefix=$HOME/.local -g pnpm
+      - run:
+          command: pnpm install --frozen-lockfile
+      - run:
+          command: pnpm compile
+      - save_cache:
+          key: install-dep-cache-{{ checksum "pnpm-lock.yaml" }}
+          paths:
+            - node_modules
+      - run:
+          command: node ./test/out/helpers/downloadElectron.js
+      - save_cache:
+          key: v-11.0.0-electron
+          paths:
+            - ~/.cache/electron
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - docs
