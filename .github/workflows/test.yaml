@@ -113,5 +113,8 @@ jobs:
         run: node ./test/out/helpers/runTests.js
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
