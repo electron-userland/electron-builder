@@ -74,10 +74,10 @@ jobs:
       - name: Compile
         run: pnpm compile
       
-      - name: Cache ~/.cache/electron
+      - name: Cache ~/Library/Caches/electron
         uses: actions/cache@v2
         with:
-          path: ~/.cache/electron
+          path: ~/Library/Caches/electron
           key: v-11.0.0-mac-electron
 
       - name: Test
@@ -104,15 +104,15 @@ jobs:
       - name: Compile
         run: pnpm compile
       
-      - name: Cache ~/.cache/electron
+      - name: Cache ~\AppData\Local\Cache\electron
         uses: actions/cache@v2
         with:
-          path: $HOMEPATH/.cache/electron
+          path: ~\AppData\Local\Cache\electron
           key: v-11.0.0-windows-electron
       
       - name: Test
         run: node ./test/out/helpers/runTests.js
         env:
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
