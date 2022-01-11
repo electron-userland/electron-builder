@@ -20,9 +20,8 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
           - snapTest,debTest,fpmTest,protonTest
-          - extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
