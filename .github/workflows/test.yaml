@@ -61,8 +61,6 @@ jobs:
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
@@ -87,7 +85,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest
           - oneClickInstallerTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository

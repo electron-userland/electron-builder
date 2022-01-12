@@ -177,7 +177,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifNotCiMac("installerHeaderIcon", () => {
+test.skip.ifNotCiMac("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack(
     "test-app-one",
@@ -323,7 +323,7 @@ test.ifDevOrLinuxCi(
   })
 )
 
-test.ifWindows(
+test.skip.ifWindows(
   "custom exec name",
   app({
     targets: nsisTarget,
