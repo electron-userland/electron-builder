@@ -90,5 +90,45 @@
 !macroend
 
 !macro extractUsing7za FILE
-    Nsis7z::Extract "${FILE}"
+  Push $OUTDIR
+  CreateDirectory "$PLUGINSDIR\7z-out"
+  ClearErrors
+  SetOutPath "$PLUGINSDIR\7z-out"
+  Nsis7z::Extract "${FILE}"
+  Pop $R0
+  SetOutPath $R0
+
+  # Retry counter
+  StrCpy $R1 0
+
+  LoopExtract7za:
+    IntOp $R1 $R1 + 1
+
+    CopyFiles /SILENT "$PLUGINSDIR\7z-out\*" $OUTDIR
+    IfErrors 0 DoneExtract7za
+
+    ${if} $R1 > 1
+      DetailPrint `Can't modify "${PRODUCT_NAME}"'s files.`
+      ${if} $R1 < 5
+        # Try copying a few times before giving up
+        Goto LoopExtract7za
+      ${else}
+        MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY RetryExtract7za
+      ${endIf}
+
+      # CopyFiles will remove all overwritten files when it encounters an
+      # issue and make app non-launchable. Extract over from the archive
+      # ignoring the failures so at least we will partially update and the
+      # app would start.
+      Nsis7z::Extract "${FILE}"
+      Quit
+    ${else}
+      Goto LoopExtract7za
+    ${endIf}
+
+  RetryExtract7za:
+    Sleep 1000
+    Goto LoopExtract7za
+
+  DoneExtract7za:
 !macroend
