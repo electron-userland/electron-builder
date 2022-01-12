@@ -77,7 +77,7 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
    * The compression type.
    * @default xz
    */
-  readonly compression?: "gz" | "bzip2" | "xz" | null
+  readonly compression?: "gz" | "bzip2" | "xz" | "lzo" | null
 
   readonly icon?: string
 

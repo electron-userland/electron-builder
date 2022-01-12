@@ -255,3 +255,44 @@ test.ifAll.ifDevOrLinuxCi(
     },
   })
 )
+
+test.ifDevOrLinuxCi(
+  "default compression",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+    },
+    effectiveOptionComputed: async ({ snap, args }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.compression).toEqual("lzo")
+      expect(args).toEqual(expect.arrayContaining(["--compression", "lzo"]))
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "compression option",
+  app({
+    targets: snapTarget,
+    config: {
+      extraMetadata: {
+        name: "sep",
+      },
+      productName: "Sep",
+      snap: {
+        compression: "xz"
+      }
+    },
+    effectiveOptionComputed: async ({ snap, args }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.compression).toEqual("xz")
+      expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
+      return true
+    },
+  })
+)

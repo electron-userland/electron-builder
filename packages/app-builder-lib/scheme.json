@@ -2141,7 +2141,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "xz"
+                "xz",
+                "lzo"
               ],
               "type": "string"
             },
@@ -5394,6 +5395,22 @@
             "null",
             "string"
           ]
+        },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "xz",
+                "lzo"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "lzo",
+          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified."
         },
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
