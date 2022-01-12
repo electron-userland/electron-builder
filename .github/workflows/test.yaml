@@ -3,8 +3,6 @@ name: Test
 on:
   push:
   pull_request:
-    branches:
-      - master
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -34,8 +32,6 @@ jobs:
       - name: Determine if Dockerfiles changed
         id: changed-files
         uses: tj-actions/changed-files@v13
-        with:
-          since_last_remote_commit: "true"
 
       - name: Dockerfile has changed, rebuild for tests
         if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
@@ -65,8 +61,6 @@ jobs:
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Install deps and audit
         uses: ./.github/actions/pnpm
@@ -91,7 +85,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest
           - oneClickInstallerTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
@@ -115,6 +109,5 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
