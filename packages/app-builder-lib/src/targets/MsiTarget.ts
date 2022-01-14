@@ -21,8 +21,6 @@ import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
-const ASSISTED_UI_FILE_NAME = "WixUI_Assisted.wxs"
-
 const projectTemplate = new Lazy<(data: any) => string>(async () => {
   const template = (await readFile(path.join(getTemplatePath("msi"), "template.xml"), "utf8"))
     .replace(/{{/g, "<%")
@@ -72,20 +70,9 @@ export default class MsiTarget extends Target {
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
-    if (commonOptions.isAssisted) {
-      // F*** *** ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  *** WiX  ***  ***  ***  ***  ***  ***  ***  ***  ***
-      // cannot understand how to set MSIINSTALLPERUSER on radio box change. In any case installed per user.
-      log.warn(`MSI DOESN'T SUPPORT assisted installer. Please use NSIS instead.`)
-    }
-
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
-    const uiFile = commonOptions.isAssisted ? stageDir.getTempFile(ASSISTED_UI_FILE_NAME) : null
     await writeFile(projectFile, await this.writeManifest(appOutDir, arch, commonOptions))
-    if (uiFile !== null) {
-      await writeFile(uiFile, await readFile(path.join(getTemplatePath("msi"), ASSISTED_UI_FILE_NAME), "utf8"))
-      objectFiles.push(ASSISTED_UI_FILE_NAME.replace(".wxs", ".wixobj"))
-    }
 
     await packager.info.callMsiProjectCreated(projectFile)
 
@@ -95,9 +82,6 @@ export default class MsiTarget extends Target {
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
-    if (uiFile !== null) {
-      candleArgs.push(ASSISTED_UI_FILE_NAME)
-    }
     await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
       cwd: stageDir.dir,
     })
@@ -188,7 +172,7 @@ export default class MsiTarget extends Target {
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
       programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
       // wix in the name because special wix format can be used in the name
-      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isPerMachine === true),
+      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
       dirs,
       files,
     })
