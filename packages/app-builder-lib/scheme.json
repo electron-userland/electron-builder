@@ -79,9 +79,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -107,9 +104,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -241,9 +235,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -269,9 +260,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -342,101 +330,6 @@
           "type": "boolean"
         }
       },
-      "type": "object"
-    },
-    "BintrayOptions": {
-      "additionalProperties": false,
-      "description": "[Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page (\"Edit Your Profile\" -> API Key).\nDefine `BT_TOKEN` environment variable.",
-      "properties": {
-        "component": {
-          "description": "The Bintray component (Debian only).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "distribution": {
-          "default": "stable",
-          "description": "The Bintray distribution (Debian only).",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "owner": {
-          "description": "The owner.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "package": {
-          "description": "The Bintray package name.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "provider": {
-          "description": "The provider. Must be `bintray`.",
-          "enum": [
-            "bintray"
-          ],
-          "type": "string"
-        },
-        "publishAutoUpdate": {
-          "default": true,
-          "description": "Whether to publish auto update info files.\n\nAuto update relies only on the first provider in the list (you can specify several publishers).\nThus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.",
-          "type": "boolean"
-        },
-        "publisherName": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "repo": {
-          "default": "generic",
-          "description": "The Bintray repository name.",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "requestHeaders": {
-          "$ref": "#/definitions/OutgoingHttpHeaders",
-          "description": "Any custom request headers"
-        },
-        "token": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "updaterCacheDirName": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "user": {
-          "description": "The Bintray user account. Used in cases where the owner is an organization.",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "required": [
-        "provider"
-      ],
       "type": "object"
     },
     "BitbucketOptions": {
@@ -629,6 +522,7 @@
               "enum": [
                 "bzip2",
                 "gz",
+                "lzo",
                 "xz"
               ],
               "type": "string"
@@ -751,9 +645,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -779,9 +670,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -947,9 +835,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -975,9 +860,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -1122,7 +1004,7 @@
     },
     "FileAssociation": {
       "additionalProperties": false,
-      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only.\n\nOn Windows works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.",
+      "description": "File associations.\n\nmacOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)), NSIS, and MSI only.\n\nOn Windows (NSIS) works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.",
       "properties": {
         "description": {
           "description": "*windows-only.* The description.",
@@ -1146,7 +1028,7 @@
           "description": "The extension (minus the leading period). e.g. `png`."
         },
         "icon": {
-          "description": "The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.\n\nNot supported on Linux, file issue if need (default icon will be `x-office-document`).",
+          "description": "The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.\n\nNot supported on Linux, file issue if need (default icon will be `x-office-document`). Not supported on MSI.",
           "type": [
             "null",
             "string"
@@ -1332,9 +1214,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -1360,9 +1239,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -1998,9 +1874,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -2026,9 +1899,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -2141,8 +2011,8 @@
               "enum": [
                 "bzip2",
                 "gz",
-                "xz",
-                "lzo"
+                "lzo",
+                "xz"
               ],
               "type": "string"
             },
@@ -2257,9 +2127,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -2285,9 +2152,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -2757,9 +2621,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -2785,9 +2646,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -3368,9 +3226,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -3396,9 +3251,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -3621,10 +3473,6 @@
           "description": "Whether to create start menu shortcut.",
           "type": "boolean"
         },
-        "iconId": {
-          "description": "The [shortcut iconId](https://wixtoolset.org/documentation/manual/v4/reference/wxs/shortcut/). Optional, by default generated using app file name.",
-          "type": "string"
-        },
         "menuCategory": {
           "default": false,
           "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
@@ -3658,9 +3506,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -3686,9 +3531,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -3952,9 +3794,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -3980,9 +3819,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -4282,9 +4118,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -4310,9 +4143,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -4609,9 +4439,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -4637,9 +4464,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -4749,9 +4573,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -4777,9 +4598,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -5135,6 +4953,22 @@
             "string"
           ]
         },
+        "compression": {
+          "anyOf": [
+            {
+              "enum": [
+                "lzo",
+                "xz"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "lzo",
+          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified."
+        },
         "confinement": {
           "anyOf": [
             {
@@ -5278,9 +5112,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -5306,9 +5137,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -5395,22 +5223,6 @@
             "null",
             "string"
           ]
-        },
-        "compression": {
-          "anyOf": [
-            {
-              "enum": [
-                "xz",
-                "lzo"
-              ],
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "lzo",
-          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified."
         },
         "useTemplateApp": {
           "description": "Whether to use template snap. Defaults to `true` if `stagePackages` not specified.",
@@ -5622,9 +5434,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -5650,9 +5459,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -6025,9 +5831,6 @@
               "$ref": "#/definitions/GenericServerOptions"
             },
             {
-              "$ref": "#/definitions/BintrayOptions"
-            },
-            {
               "$ref": "#/definitions/CustomPublishOptions"
             },
             {
@@ -6053,9 +5856,6 @@
                   },
                   {
                     "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BintrayOptions"
                   },
                   {
                     "$ref": "#/definitions/CustomPublishOptions"
@@ -6930,9 +6730,6 @@
           "$ref": "#/definitions/GenericServerOptions"
         },
         {
-          "$ref": "#/definitions/BintrayOptions"
-        },
-        {
           "$ref": "#/definitions/CustomPublishOptions"
         },
         {
@@ -6958,9 +6755,6 @@
               },
               {
                 "$ref": "#/definitions/GenericServerOptions"
-              },
-              {
-                "$ref": "#/definitions/BintrayOptions"
               },
               {
                 "$ref": "#/definitions/CustomPublishOptions"

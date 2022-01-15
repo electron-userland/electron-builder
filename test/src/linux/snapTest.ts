@@ -285,8 +285,8 @@ test.ifDevOrLinuxCi(
       },
       productName: "Sep",
       snap: {
-        compression: "xz"
-      }
+        compression: "xz",
+      },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()

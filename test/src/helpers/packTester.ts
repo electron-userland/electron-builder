@@ -353,7 +353,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   const checksumData = info.ElectronAsarIntegrity
   if (checksumData != null) {
     for (const name of Object.keys(checksumData)) {
-      checksumData[name] = { "algorithm": "SHA256", "hash": "hash" }
+      checksumData[name] = { algorithm: "SHA256", hash: "hash" }
     }
     info.ElectronAsarIntegrity = JSON.stringify(checksumData)
   }

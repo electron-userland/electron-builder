@@ -130,7 +130,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified.
    * @default lzo
    */
-   readonly compression?: "xz" | "lzo" | null
+  readonly compression?: "xz" | "lzo" | null
 }
 
 export interface PlugDescriptor {
