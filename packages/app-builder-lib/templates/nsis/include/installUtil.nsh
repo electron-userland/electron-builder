@@ -159,7 +159,7 @@ Function uninstallOldVersion
     !endif
     ${if} $uninstallString == ""
       ClearErrors
-      Goto Done
+      Return
     ${endif}
   ${endif}
 
@@ -178,7 +178,7 @@ Function uninstallOldVersion
   ${if} $installationDir == ""
   ${andIf} $uninstallerFileName == ""
     ClearErrors
-    Goto Done
+    Return
   ${endif}
 
   ${if} $installMode == "CurrentUser"
@@ -209,12 +209,37 @@ Function uninstallOldVersion
   StrCpy $uninstallerFileNameTemp "$PLUGINSDIR\old-uninstaller.exe"
   !insertmacro copyFile "$uninstallerFileName" "$uninstallerFileNameTemp"
 
-  ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
-  ifErrors 0 Done
-    # the execution failed - might have been caused by some group policy restrictions
-    # we try to execute the uninstaller in place
-    ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
-  Done:
+  # Retry counter
+  StrCpy $R5 0
+
+  UninstallLoop:
+    IntOp $R5 $R5 + 1
+
+    ${if} $R5 > 5
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY OneMoreAttempt
+      Return
+    ${endIf}
+
+  OneMoreAttempt:
+    ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
+    ifErrors TryInPlace CheckResult
+
+    TryInPlace:
+      # the execution failed - might have been caused by some group policy restrictions
+      # we try to execute the uninstaller in place
+      ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0
+      ifErrors DoesNotExist
+
+    CheckResult:
+      ${if} $R0 == 0
+        Return
+      ${endIf}
+
+    Sleep 1000
+    Goto UninstallLoop
+
+  DoesNotExist:
+    SetErrors
 FunctionEnd
 
 !macro uninstallOldVersion ROOT_KEY
