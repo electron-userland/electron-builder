@@ -144,3 +144,5 @@ areYouSureToUninstall:
   da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
 decompressionFailed:
   en: Failed to decompress files. Please try running the installer again.
+uninstallFailed:
+  en: Failed to uninstall old application files. Please try running the installer again.

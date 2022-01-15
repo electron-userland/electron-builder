@@ -104,27 +104,23 @@
   LoopExtract7za:
     IntOp $R1 $R1 + 1
 
+    # Attempt to copy files in atomic way
     CopyFiles /SILENT "$PLUGINSDIR\7z-out\*" $OUTDIR
     IfErrors 0 DoneExtract7za
 
-    ${if} $R1 > 1
-      DetailPrint `Can't modify "${PRODUCT_NAME}"'s files.`
-      ${if} $R1 < 5
-        # Try copying a few times before giving up
-        Goto LoopExtract7za
-      ${else}
-        MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY RetryExtract7za
-      ${endIf}
-
-      # CopyFiles will remove all overwritten files when it encounters an
-      # issue and make app non-launchable. Extract over from the archive
-      # ignoring the failures so at least we will partially update and the
-      # app would start.
-      Nsis7z::Extract "${FILE}"
-      Quit
+    DetailPrint `Can't modify "${PRODUCT_NAME}"'s files.`
+    ${if} $R1 < 5
+      # Try copying a few times before asking for a user action.
+      Goto RetryExtract7za
     ${else}
-      Goto LoopExtract7za
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY RetryExtract7za
     ${endIf}
+
+    # As an absolutely last resort after a few automatic attempts and user
+    # intervention - we will just overwrite everything with `Nsis7z::Extract`
+    # even though it is not atomic and will ignore errors.
+    Nsis7z::Extract "${FILE}"
+    Quit
 
   RetryExtract7za:
     Sleep 1000

@@ -126,7 +126,10 @@ Function handleUninstallResult
   Return
 
   ${if} $R0 != 0
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstallFailed): $R0"
     DetailPrint `Uninstall was not successful. Uninstaller error code: $R0.`
+    SetErrorLevel 2
+    Quit
   ${endif}
 FunctionEnd
 
