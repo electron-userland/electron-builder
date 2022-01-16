@@ -18,34 +18,61 @@
 
     <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}"/>
     <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
+    <Property Id="DISABLEADVTSHORTCUTS" Value="1"/>
 
     {{ if (iconPath) { }}
     <Icon Id="${iconId}" SourceFile="${iconPath}"/>
     <Property Id="ARPPRODUCTICON" Value="${iconId}"/>
     {{ } -}}
 
-    {{ if (isAssisted || isRunAfterFinish) { }}
-    <CustomAction Id="runAfterFinish" FileKey="mainExecutable" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait"/>
+    {{ if (isRunAfterFinish) { }}
+      <CustomAction Id="runAfterFinish" FileKey="mainExecutable" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait"/>
+      {{ if (!isAssisted) { }}
+        <!-- https://stackoverflow.com/questions/1871531/launch-after-install-with-no-ui -->
+        <InstallExecuteSequence>
+          <Custom Action="runAfterFinish" After="InstallFinalize">NOT Installed AND UILevel >= 4</Custom>
+        </InstallExecuteSequence>
+      {{ } -}}
     {{ } -}}
 
-    <Property Id="ALLUSERS" Secure="yes" Value="2"/>
     {{ if (isPerMachine) { }}
-    <Property Id="MSIINSTALLPERUSER" Secure="yes"/>
+      <Property Id="ALLUSERS" Secure="yes" Value="1"/>
     {{ } else { }}
-    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+      <Property Id="ALLUSERS" Secure="yes" Value="2"/>
     {{ } -}}
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
 
     {{ if (isAssisted) { }}
-    <!-- Check "Run after finish" checkbox by default -->
-    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
-    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run ${productName}"/>
+      <WixVariable Id="WixUISupportPerUser" Value="1" Overridable="yes"/>
+      <WixVariable Id="WixUISupportPerMachine" Value="1" Overridable="yes"/>
+      {{ if (isPerMachine) { }}
+        <WixVariable Id="WixUISupportPerUser" Value="0"/>
+      {{ } -}}
 
-    <UIRef Id="WixUI_Assisted"/>
-    {{ } else if (isRunAfterFinish) { }}
-    <!-- https://stackoverflow.com/questions/1871531/launch-after-install-with-no-ui -->
-    <InstallExecuteSequence>
-      <Custom Action="runAfterFinish" After="InstallFinalize"/>
-    </InstallExecuteSequence>
+      {{ if (isRunAfterFinish) { }}
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run ${productName}"/>
+        <UI>
+          <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="runAfterFinish">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed</Publish>
+        </UI>
+      {{ } -}}
+
+      <UIRef Id="WixUI_InstallDir"/>
+      <UI>
+        <Publish Dialog="WelcomeDlg" Control="Next" Event="SpawnWaitDialog" Value="WaitForCostingDlg" Order="2">1 OR CostingComplete = 1</Publish>
+        <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallScopeDlg" Order="2">NOT Installed</Publish>
+
+        <Publish Dialog="InstallScopeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">1</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="WixAppFolder" Value="WixPerUserFolder" Order="1">!(wix.WixUISupportPerUser) AND NOT Privileged</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="WixAppFolder" Value="WixPerMachineFolder" Order="2">NOT !(wix.WixUISupportPerUser)</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="ALLUSERS" Value="{}" Order="3">WixAppFolder = "WixPerUserFolder"</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="ALLUSERS" Value="1" Order="4">WixAppFolder = "WixPerMachineFolder"</Publish>
+        <!-- Run 'FindRelatedProducts' again after changing the install scope, because its first run might have ignored an existing installation based on the default scope at the time. https://stackoverflow.com/a/35064434 -->
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="DoAction" Value="FindRelatedProducts" Order="5">1</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="6">1</Publish>
+
+        <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallScopeDlg" Order="2">NOT Installed</Publish>
+      </UI>
     {{ } -}}
 
     <Directory Id="TARGETDIR" Name="SourceDir">

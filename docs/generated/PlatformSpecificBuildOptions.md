@@ -46,7 +46,7 @@
 </li>
 <li>
 <p><code id="FileAssociation-icon">icon</code> String | “undefined” - The path to icon (<code>.icns</code> for MacOS and <code>.ico</code> for Windows), relative to <code>build</code> (build resources directory). Defaults to <code>${firstExt}.icns</code>/<code>${firstExt}.ico</code> (if several extensions specified, first is used) or to application icon.</p>
-<p>Not supported on Linux, file issue if need (default icon will be <code>x-office-document</code>).</p>
+<p>Not supported on Linux, file issue if need (default icon will be <code>x-office-document</code>). Not supported on MSI.</p>
 </li>
 <li>
 <p><code id="FileAssociation-role">role</code> = <code>Editor</code> String - <em>macOS-only</em> The app’s role with respect to the type. The value can be <code>Editor</code>, <code>Viewer</code>, <code>Shell</code>, or <code>None</code>. Corresponds to <code>CFBundleTypeRole</code>.</p>

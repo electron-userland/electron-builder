@@ -280,10 +280,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (framework.beforeCopyExtraFiles != null) {
+      const resourcesRelativePath = this.platform === Platform.MAC ? "Resources" : isElectronBased(framework) ? "resources" : ""
+
       await framework.beforeCopyExtraFiles({
         packager: this,
         appOutDir,
-        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? { externalAllowed: true } : null),
+        asarIntegrity: asarOptions == null || disableAsarIntegrity ? null : await computeData({ resourcesPath, resourcesRelativePath }),
         platformName,
       })
     }

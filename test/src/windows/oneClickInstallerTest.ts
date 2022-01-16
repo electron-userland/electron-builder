@@ -35,9 +35,9 @@ test(
           publisherName: "Foo, Inc",
         },
         publish: {
-          provider: "bintray",
-          owner: "actperepo",
-          package: "TestApp",
+          provider: "generic",
+          // tslint:disable:no-invalid-template-strings
+          url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
         nsis: {
           deleteAppDataOnUninstall: true,

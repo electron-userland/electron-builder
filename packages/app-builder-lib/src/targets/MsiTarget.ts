@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, log, deepAssign } from "builder-util"
+import { Arch, asArray, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromUrl } from "../binDownload"
 import { walk } from "builder-util/out/fs"
@@ -11,6 +11,7 @@ import * as path from "path"
 import { MsiOptions } from "../"
 import { Target } from "../core"
 import { DesktopShortcutCreationPolicy, FinalCommonWindowsInstallerOptions, getEffectiveOptions } from "../options/CommonWindowsInstallerConfiguration"
+import { normalizeExt } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { VmManager } from "../vm/vm"
 import { WineVmManager } from "../vm/WineVm"
@@ -19,8 +20,6 @@ import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
-
-const ASSISTED_UI_FILE_NAME = "WixUI_Assisted.wxs"
 
 const projectTemplate = new Lazy<(data: any) => string>(async () => {
   const template = (await readFile(path.join(getTemplatePath("msi"), "template.xml"), "utf8"))
@@ -40,6 +39,22 @@ export default class MsiTarget extends Target {
     super("msi")
   }
 
+  /**
+   * A product-specific string that can be used in an [MSI Identifier](https://docs.microsoft.com/en-us/windows/win32/msi/identifier).
+   */
+  private get productMsiIdPrefix() {
+    const sanitizedId = this.packager.appInfo.productFilename.replace(/[^\w.]/g, "").replace(/^[^A-Za-z_]+/, "")
+    return sanitizedId.length > 0 ? sanitizedId : "App" + this.upgradeCode.replace(/-/g, "")
+  }
+
+  private get iconId() {
+    return `${this.productMsiIdPrefix}Icon.exe`
+  }
+
+  private get upgradeCode(): string {
+    return (this.options.upgradeCode || UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase()
+  }
+
   async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
     const artifactName = packager.expandArtifactBeautyNamePattern(this.options, "msi", arch)
@@ -55,20 +70,9 @@ export default class MsiTarget extends Target {
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
-    if (commonOptions.isAssisted) {
-      // F*** *** ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  *** WiX  ***  ***  ***  ***  ***  ***  ***  ***  ***
-      // cannot understand how to set MSIINSTALLPERUSER on radio box change. In any case installed per user.
-      log.warn(`MSI DOESN'T SUPPORT assisted installer. Please use NSIS instead.`)
-    }
-
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
-    const uiFile = commonOptions.isAssisted ? stageDir.getTempFile(ASSISTED_UI_FILE_NAME) : null
     await writeFile(projectFile, await this.writeManifest(appOutDir, arch, commonOptions))
-    if (uiFile !== null) {
-      await writeFile(uiFile, await readFile(path.join(getTemplatePath("msi"), ASSISTED_UI_FILE_NAME), "utf8"))
-      objectFiles.push(ASSISTED_UI_FILE_NAME.replace(".wxs", ".wixobj"))
-    }
 
     await packager.info.callMsiProjectCreated(projectFile)
 
@@ -78,9 +82,6 @@ export default class MsiTarget extends Target {
     // noinspection SpellCheckingInspection
     const candleArgs = ["-arch", arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
-    if (uiFile !== null) {
-      candleArgs.push(ASSISTED_UI_FILE_NAME)
-    }
     await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
       cwd: stageDir.dir,
     })
@@ -156,23 +157,22 @@ export default class MsiTarget extends Target {
     const compression = this.packager.compression
     const options = this.options
     const iconPath = await this.packager.getIconPath()
-    const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
     return (await projectTemplate.value)({
       ...commonOptions,
       isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
-      iconId: iconId,
+      iconId: this.iconId,
       compressionLevel: compression === "store" ? "none" : "high",
       version: appInfo.getVersionInWeirdWindowsForm(),
       productName: appInfo.productName,
-      upgradeCode: (options.upgradeCode || UUID.v5(appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase(),
+      upgradeCode: this.upgradeCode,
       manufacturer: companyName || appInfo.productName,
       appDescription: appInfo.description,
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
       programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
       // wix in the name because special wix format can be used in the name
-      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isPerMachine === true),
+      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
       dirs,
       files,
     })
@@ -223,9 +223,8 @@ export default class MsiTarget extends Target {
       if (isMainExecutable && (isCreateDesktopShortcut || commonOptions.isCreateStartMenuShortcut)) {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
-        const iconId = `${appInfo.productFilename}Icon.exe`.replace(/\s/g, "")
         if (isCreateDesktopShortcut) {
-          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}"/>\n`
+          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
         }
 
         const hasMenuCategory = commonOptions.menuCategory != null
@@ -234,7 +233,7 @@ export default class MsiTarget extends Target {
           if (hasMenuCategory) {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
-          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${iconId}">\n`
+          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${shortcutName}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
           result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${this.packager.appInfo.id}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
@@ -245,6 +244,22 @@ export default class MsiTarget extends Target {
         }
       } else {
         result += `/>`
+      }
+
+      const fileAssociations = this.packager.fileAssociations
+      if (isMainExecutable && fileAssociations.length !== 0) {
+        for (const item of fileAssociations) {
+          const extensions = asArray(item.ext).map(normalizeExt)
+          for (const ext of extensions) {
+            result += `${fileSpace}  <ProgId Id="${this.productMsiIdPrefix}.${ext}" Advertise="yes" Icon="${this.iconId}" ${
+              item.description ? `Description="${item.description}"` : ""
+            }>\n`
+            result += `${fileSpace}    <Extension Id="${ext}" Advertise="yes">\n`
+            result += `${fileSpace}      <Verb Id="open" Command="Open with ${this.packager.appInfo.productName}" Argument="&quot;%1&quot;"/>\n`
+            result += `${fileSpace}    </Extension>\n`
+            result += `${fileSpace}  </ProgId>\n`
+          }
+        }
       }
 
       return `${result}\n${fileSpace}</Component>`

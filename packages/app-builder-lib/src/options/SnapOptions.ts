@@ -125,6 +125,12 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * An optional title for the snap, may contain uppercase letters and spaces. Defaults to `productName`. See [snap format documentation](https://snapcraft.io/docs/snap-format).
    */
   readonly title?: string | null
+
+  /**
+   * Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified.
+   * @default lzo
+   */
+  readonly compression?: "xz" | "lzo" | null
 }
 
 export interface PlugDescriptor {

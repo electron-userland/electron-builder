@@ -116,7 +116,8 @@ test.ifNotWindows(
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)).toMatchSnapshot()
+        const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
+        expect(removeUnstableProperties(file)).toMatchSnapshot()
       },
     }
   )

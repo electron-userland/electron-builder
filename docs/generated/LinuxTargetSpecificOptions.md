@@ -3,7 +3,7 @@
 <p><code id="LinuxTargetSpecificOptions-depends">depends</code> Array&lt;String&gt; | “undefined” - Package dependencies.</p>
 </li>
 <li>
-<p><code id="LinuxTargetSpecificOptions-compression">compression</code> = <code>xz</code> “gz” | “bzip2” | “xz” | “undefined” - The compression type.</p>
+<p><code id="LinuxTargetSpecificOptions-compression">compression</code> = <code>xz</code> “gz” | “bzip2” | “xz” | “lzo” | “undefined” - The compression type.</p>
 </li>
 <li>
 <p><code id="LinuxTargetSpecificOptions-icon">icon</code> String</p>

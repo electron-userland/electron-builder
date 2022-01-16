@@ -26,8 +26,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install deps and audit
-        uses: ./.github/actions/pnpm
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-11.0.0-linux-electron
+
+      - name: Lint
+        run: pnpm pretest
 
       - name: Determine if Dockerfiles changed
         id: changed-files
@@ -37,15 +43,6 @@ jobs:
         if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
         run: pnpm docker-images
 
-      - name: Compile and Lint
-        run: pnpm pretest
-      
-      - name: Cache ~/.cache/electron
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/electron
-          key: v-11.0.0-electron
-
       - name: Run tests in docker image
         run: pnpm test-linux
         env:
@@ -54,60 +51,64 @@ jobs:
   
   test-mac:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        testFiles:
-          - masTest,dmgTest,protonTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
 
-      - name: Install deps and audit
-        uses: ./.github/actions/pnpm
-
-      - name: Compile
-        run: pnpm compile
-      
-      - name: Cache ~/Library/Caches/electron
-        uses: actions/cache@v2
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
         with:
-          path: ~/Library/Caches/electron
-          key: v-11.0.0-mac-electron
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-11.0.0-macos-electron
 
       - name: Test
-        run: node ./test/out/helpers/runTests.js
+        run: pnpm ci:test
         env:
-          TEST_FILES: ${{ matrix.testFiles }}
+          TEST_FILES: masTest,dmgTest,protonTest
+          FORCE_COLOR: 1
+  
+  # Need to separate from other tests because logic is specific to when TOKEN env vars are set
+  test-updater:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v2
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-11.0.0-update-electron
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: nsisUpdaterTest
+          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+          # BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
 
   test-windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       matrix:
         testFiles:
-          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest
-          - oneClickInstallerTest,nsisUpdaterTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v2
 
-      - name: Install deps and audit
-        uses: ./.github/actions/pnpm
-
-      - name: Compile
-        run: pnpm compile
-      
-      - name: Cache ~\AppData\Local\Cache\electron
-        uses: actions/cache@v2
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
         with:
-          path: ~\AppData\Local\Cache\electron
-          key: v-11.0.0-windows-electron
+          cache-path: ~\AppData\Local\Cache\electron
+          cache-key: v-11.0.0-windows-electron
       
       - name: Test
-        run: node ./test/out/helpers/runTests.js
+        run: pnpm ci:test
         env:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1

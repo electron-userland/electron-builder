@@ -326,10 +326,14 @@ export function removeUnstableProperties(data: any) {
     JSON.stringify(data, (name, value) => {
       if (name === "offset") {
         return undefined
-      } else if (name.endsWith(".node") && value.size != null) {
+      }
+      if (name.endsWith(".node") && value.size != null) {
         // size differs on various OS
         value.size = "<size>"
-        return value
+      }
+      // Keep existing test coverage
+      if (value.integrity) {
+        delete value.integrity
       }
       return value
     })

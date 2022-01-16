@@ -113,10 +113,8 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
   const tasks: Array<UpdateInfoFileTask> = []
   const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
-    const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir
-    // Bintray uses different variant of channel file info, better to generate it to a separate dir by always
-    if (isBintray || (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0])) {
+    if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
@@ -149,7 +147,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, (isBintray ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }

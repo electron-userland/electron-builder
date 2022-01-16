@@ -14,7 +14,6 @@ export {
   configureRequestUrl,
 } from "./httpExecutor"
 export {
-  BintrayOptions,
   CustomPublishOptions,
   GenericServerOptions,
   GithubOptions,

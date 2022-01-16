@@ -325,7 +325,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   })
 
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
-  delete info.AsarIntegrity
+  delete info.ElectronAsarIntegrity
   delete info.CFBundleVersion
   delete info.BuildMachineOSBuild
   delete info.NSHumanReadableCopyright
@@ -350,14 +350,12 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 
   expect(info).toMatchSnapshot()
 
-  const checksumData = info.AsarIntegrity
+  const checksumData = info.ElectronAsarIntegrity
   if (checksumData != null) {
-    const data = JSON.parse(checksumData)
-    const checksums = data.checksums
-    for (const name of Object.keys(checksums)) {
-      checksums[name] = "hash"
+    for (const name of Object.keys(checksumData)) {
+      checksumData[name] = { algorithm: "SHA256", hash: "hash" }
     }
-    info.AsarIntegrity = JSON.stringify(data)
+    info.ElectronAsarIntegrity = JSON.stringify(checksumData)
   }
 
   if (checkOptions.checkMacApp != null) {
@@ -523,6 +521,10 @@ export function removeUnstableProperties(data: any) {
         // to ensure that some property exists
         return `@${name}`
       }
+      // Keep existing test coverage
+      if (value.integrity) {
+        delete value.integrity
+      }
       return value
     })
   )
@@ -530,8 +532,19 @@ export function removeUnstableProperties(data: any) {
 
 export async function verifyAsarFileTree(resourceDir: string) {
   const fs = await readAsar(path.join(resourceDir, "app.asar"))
-  // console.log(resourceDir + " " + JSON.stringify(fs.header, null, 2))
-  expect(fs.header).toMatchSnapshot()
+
+  const stableHeader = JSON.parse(
+    JSON.stringify(fs.header, (name, value) => {
+      // Keep existing test coverage
+      if (value.integrity) {
+        delete value.integrity
+      }
+      return value
+    })
+  )
+
+  // console.log(resourceDir + " " + JSON.stringify(stableHeader, null, 2))
+  expect(stableHeader).toMatchSnapshot()
 }
 
 export function toSystemIndependentPath(s: string): string {

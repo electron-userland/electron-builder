@@ -183,7 +183,7 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
       7zip-bin: ~5.1.1
-      app-builder-bin: 3.7.1
+      app-builder-bin: 4.1.0
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
       chalk: ^4.1.1
@@ -201,7 +201,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/fs-extra': 9.0.13
       7zip-bin: 5.1.1
-      app-builder-bin: 3.7.1
+      app-builder-bin: 4.1.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
@@ -3145,8 +3145,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.0
 
-  /app-builder-bin/3.7.1:
-    resolution: {integrity: sha512-ql93vEUq6WsstGXD+SBLSIQw6SNnhbDEM0swzgugytMxLp3rT24Ag/jcC80ZHxiPRTdew1niuR7P3/FCrDqIjw==}
+  /app-builder-bin/4.1.0:
+    resolution: {integrity: sha512-rbdMe0sIVE95cpYqMQh4IFqhTDdB8LkKlTRcbO/Y3QleRYoIePejIbX774IYomYYzZbJfJuX7pLRiGvSdIxIYA==}
     dev: false
 
   /archiver-utils/2.1.0:

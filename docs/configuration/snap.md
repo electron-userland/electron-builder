@@ -57,6 +57,9 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <li>
 <p><code id="SnapOptions-title">title</code> String | “undefined” - An optional title for the snap, may contain uppercase letters and spaces. Defaults to <code>productName</code>. See <a href="https://snapcraft.io/docs/snap-format">snap format documentation</a>.</p>
 </li>
+<li>
+<p><code id="SnapOptions-compression">compression</code> = <code>lzo</code> “xz” | “lzo” | “undefined” - Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified.</p>
+</li>
 </ul>
 <p>Inherited from <code>CommonLinuxOptions</code>:</p>
 <ul>

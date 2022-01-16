@@ -1,5 +1,5 @@
 import { Arch, log } from "builder-util"
-import { CancellationToken, ProgressCallbackTransform } from "builder-util-runtime"
+import { CancellationToken, ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
 import { PADDING } from "builder-util/out/log"
 import * as chalk from "chalk"
 import { createReadStream, stat, Stats } from "fs-extra"
@@ -37,7 +37,7 @@ export interface UploadTask {
 export abstract class Publisher {
   protected constructor(protected readonly context: PublishContext) {}
 
-  abstract get providerName(): string
+  abstract get providerName(): PublishProvider
 
   abstract upload(task: UploadTask): Promise<any>
 

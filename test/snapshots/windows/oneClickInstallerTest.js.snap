@@ -274,7 +274,7 @@ exports[`one-click 1`] = `
 Object {
   "win": Array [
     Object {
-      "file": "1.1.0_latest.yml",
+      "file": "latest.yml",
       "fileContent": Object {
         "files": Array [
           Object {
@@ -312,10 +312,9 @@ Object {
 
 exports[`one-click 2`] = `
 Object {
-  "owner": "actperepo",
-  "package": "TestApp",
-  "provider": "bintray",
+  "provider": "generic",
   "updaterCacheDirName": "testapp-updater",
+  "url": "https://develar.s3.amazonaws.com/test/win/x64",
 }
 `;
 

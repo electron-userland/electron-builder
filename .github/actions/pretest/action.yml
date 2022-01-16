@@ -1,0 +1,42 @@
+name: 'Setup Tests'
+description: 'Set up pnpm, node w/ pnpm cache, install and audit deps, compile, and restore electron cache'
+inputs:
+  cache-key:
+    description: 'The key to the electron cache'
+    required: true
+  cache-path:
+    description: 'The path to the electron cache'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 6.25.1
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+        cache: 'pnpm'
+
+    - name: install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+
+    - name: Compile
+      run: pnpm compile
+      shell: bash
+    
+    - name: Cache Electron
+      uses: actions/cache@v2
+      with:
+        path: ${{ inputs.cache-path }}
+        key: ${{ inputs.cache-key }}
+
+## Usage
+# - name: Setup Tests
+#   uses: ./.github/actions/pretest
+#   with:
+#     cache-path: ~/Library/Caches/electron
+#     cache-key: v-11.0.0-macos-electron

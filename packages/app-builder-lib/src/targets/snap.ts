@@ -100,6 +100,7 @@ export default class SnapTarget extends Target {
       version: appInfo.version,
       title: options.title || appInfo.productName,
       summary: options.summary || appInfo.productName,
+      compression: options.compression,
       description: this.helper.getDescription(options),
       architectures: [toLinuxArchString(arch, "snap")],
       apps: {
@@ -207,6 +208,10 @@ export default class SnapTarget extends Target {
       }
     }
 
+    if (snap.compression != null) {
+      args.push("--compression", snap.compression)
+    }
+
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
       return
     }
@@ -221,6 +226,7 @@ export default class SnapTarget extends Target {
     if (this.isUseTemplateApp) {
       args.push("--template-url", `electron4:${snapArch}`)
     }
+
     await executeAppBuilder(args)
 
     await packager.info.callArtifactBuildCompleted({
