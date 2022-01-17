@@ -16,5 +16,16 @@
     "electron-updater": "4.6.5",
     "@electron-builder/test": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "chilly-trains-study",
+    "cool-ladybugs-matter",
+    "giant-dryers-beg",
+    "giant-dryers-copy",
+    "healthy-peaches-deliver",
+    "nervous-buckets-dance",
+    "nervous-cherries-speak",
+    "nervous-pandas-film",
+    "serious-peas-help",
+    "spicy-crabs-draw"
+  ]
 }
