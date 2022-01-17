@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build all Docker images
-        run: pnpm docker-images
+        run: sh ./docker/build.sh
 
       - name: Push all Docker images
-        run: pnpm docker-push
+        run: sh ./docker/push.sh
