@@ -31,7 +31,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected computeGithubBasePath(result: string): string {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const host = this.options.host
-    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
+    return host !== null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
   }
 }
 
@@ -63,24 +63,28 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
 
           // If this is null then something is wrong and skip this release
-          if (hrefElement == null) continue
+          if (hrefElement === null)
+            continue
 
           //Get Channel from this release
           const hrefChannel = semver.prerelease(hrefElement[1])?.[0] || null ;
 
           //If no channel is set by the current version, then grab latest (including prerelease)
-          if (currentChannel == null || currentChannel == 'alpha' || currentChannel == 'beta'){
+          if (currentChannel === null || currentChannel === 'alpha' || currentChannel === 'beta'){
             // Skip any "custom" channels
-            if (hrefChannel != null && hrefChannel !== 'alpha' && hrefChannel !== 'beta') continue
+            if (hrefChannel != null && hrefChannel !== 'alpha' && hrefChannel !== 'beta')
+              continue
             // Skip alphas if in Beta Channel
-            if (currentChannel == 'beta' && hrefChannel == 'alpha') continue
+            if (currentChannel === 'beta' && hrefChannel === 'alpha')
+              continue
             // Get tag
             tag = hrefChannel
             break
           }
 
           // Skip Production release
-          if (hrefChannel == null) continue
+          if (hrefChannel === null)
+            continue
 
           // Get next release in the same channel
           if (hrefChannel === currentChannel) {
@@ -106,7 +110,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0]) || 'latest') : this.getDefaultChannelName())
+    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || 'latest')) : this.getDefaultChannelName())
     const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
     const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
