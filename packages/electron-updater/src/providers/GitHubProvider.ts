@@ -57,7 +57,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
-        const currentChannel = this.updater?.channel || String(semver.prerelease(this.updater.currentVersion)?.[0]) ||  null;
+        const currentChannel = this.updater?.channel || String(semver.prerelease(this.updater.currentVersion)?.[0]) ||  null
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
           const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
@@ -66,30 +66,26 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           if (hrefElement === null)
             continue
 
-          //Get Channel from this release
-          const hrefChannel = semver.prerelease(hrefElement[1])?.[0] || null ;
+          // This Release's Tag
+          const hrefTag = hrefElement[1]
+          //Get Channel from this release's tag
+          const hrefChannel = semver.prerelease(hrefTag)?.[0] || null 
+          
 
-          //If no channel is set by the current version, then grab latest (including prerelease)
-          if (currentChannel === null || currentChannel === 'alpha' || currentChannel === 'beta'){
-            // Skip any "custom" channels
-            if (hrefChannel != null && hrefChannel !== 'alpha' && hrefChannel !== 'beta')
-              continue
-            // Skip alphas if in Beta Channel
-            if (currentChannel === 'beta' && hrefChannel === 'alpha')
-              continue
-            // Get tag
-            tag = hrefChannel
-            break
+          const shouldFetchVersion = !currentChannel || ['alpha', 'beta'].includes(currentChannel)
+          const isCustomChannel = !['alpha', 'beta'].includes(hrefChannel)
+          // Allow moving from alpha to beta but not down
+          const channelMismatch = currentChannel === 'beta' && hrefChannel === 'alpha'
+          
+          if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
+             tag = hrefTag
+             break
           }
 
-          // Skip Production release
-          if (hrefChannel === null)
-            continue
-
-          // Get next release in the same channel
-          if (hrefChannel === currentChannel) {
-            tag = hrefChannel
-            break
+          const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
+          if (isNextPreRelease) {
+             tag = hrefTag
+             break
           }
         }
       } else {
