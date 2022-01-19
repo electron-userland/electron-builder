@@ -1,5 +1,12 @@
 # app-builder-lib
 
+## 23.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [[`39da9edd`](https://github.com/electron-userland/electron-builder/commit/39da9edd2df5c147ef2d868f022484a8b2e0466a)]:
+  - electron-publish@23.0.0-alpha.1
+
 ## 23.0.0-alpha.0
 
 ### Major Changes
