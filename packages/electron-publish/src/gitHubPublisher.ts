@@ -198,7 +198,7 @@ export class GitHubPublisher extends HttpPublisher {
         requestProcessor
       )
       .catch(e => {
-        if (e.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
+        if (this.doesErrorMeanAlreadyExists(e)) {
           return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release))
         }
 
@@ -213,6 +213,16 @@ export class GitHubPublisher extends HttpPublisher {
           })
         }
       })
+  }
+
+  private doesErrorMeanAlreadyExists(e: any) {
+    if (!e.description) {
+      return false
+    }
+    const desc = e.description
+    const descIncludesAlreadyExists =
+      (desc.includes("errors") && desc.includes("already_exists")) || (desc.errors && desc.errors.length >= 1 && desc.errors[0].code === "already_exists")
+    return e.statusCode === 422 && descIncludesAlreadyExists
   }
 
   private createRelease() {
