@@ -50,7 +50,6 @@ export class NsisUpdater extends BaseUpdater {
 
         if (isWebInstaller) {
           if (downloadUpdateOptions.disableWebInstaller) {
-            await unlink(packageFile!)
             throw new Error("WebInstaller files are not allowed")
           }
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
