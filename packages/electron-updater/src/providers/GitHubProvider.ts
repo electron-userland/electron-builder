@@ -73,7 +73,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           
 
           const shouldFetchVersion = !currentChannel || ['alpha', 'beta'].includes(currentChannel)
-          const isCustomChannel = !['alpha', 'beta'].includes(hrefChannel)
+          const isCustomChannel = !['alpha', 'beta'].includes(String(hrefChannel))
           // Allow moving from alpha to beta but not down
           const channelMismatch = currentChannel === 'beta' && hrefChannel === 'alpha'
           
