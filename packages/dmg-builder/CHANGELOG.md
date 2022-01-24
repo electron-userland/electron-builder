@@ -1,5 +1,12 @@
 # dmg-builder
 
+## 23.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - app-builder-lib@23.0.0-alpha.1
+
 ## 23.0.0-alpha.0
 
 ### Patch Changes
