@@ -54,8 +54,21 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
 
           const data = parseOut(Buffer.from(stdout, "base64").toString("utf-8"))
           if (data.Status === 0) {
-            const name = parseDn(data.SignerCertificate.Subject).get("CN")!
-            if (publisherNames.includes(name)) {
+            const subject = parseDn(data.SignerCertificate.Subject)
+            let match = false
+            publisherNames.forEach(name => {
+              const dn = parseDn(name)
+              if (dn.size) {
+                // if we have a full DN, compare all values
+                const allKeys = Array.from(dn.keys())
+                match = allKeys.every(key => {
+                  return dn.get(key) === subject.get(key)
+                })
+              } else if (name === subject.get("CN")!) {
+                match = true
+              }
+            })
+            if (match) {
               resolve(null)
               return
             }

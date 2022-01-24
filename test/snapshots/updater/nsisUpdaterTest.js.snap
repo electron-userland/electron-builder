@@ -460,3 +460,18 @@ Array [
   "update-downloaded",
 ]
 `;
+
+exports[`valid signature using DN 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
