@@ -1,11 +1,5 @@
 # electron-publish
 
-## 23.0.0-alpha.1
-
-### Patch Changes
-
-- [#6563](https://github.com/electron-userland/electron-builder/pull/6563) [`39da9edd`](https://github.com/electron-userland/electron-builder/commit/39da9edd2df5c147ef2d868f022484a8b2e0466a) Thanks [@baparham](https://github.com/baparham)! - fix(electron-publish): handle plain text description from github api HTTP_ERROR_422 to resolve socket hang ups
-
 ## 23.0.0-alpha.0
 
 ### Major Changes
