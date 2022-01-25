@@ -240,6 +240,17 @@ test.ifAll.ifWindows("valid signature", async () => {
   await validateDownload(updater)
 })
 
+test.ifAll.ifWindows("valid signature using DN", async () => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: [`CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE`],
+  })
+  await validateDownload(updater)
+})
+
 test.ifAll.ifWindows("invalid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
