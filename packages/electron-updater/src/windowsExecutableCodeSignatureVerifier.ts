@@ -56,7 +56,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           if (data.Status === 0) {
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
-            publisherNames.forEach(name => {
+            for (const name of publisherNames) {
               const dn = parseDn(name)
               if (dn.size) {
                 // if we have a full DN, compare all values
@@ -65,12 +65,13 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
                   return dn.get(key) === subject.get(key)
                 })
               } else if (name === subject.get("CN")!) {
+                logger.warn(`Signature validated using only CN ${name}. Please add your full Distinguished Name (DN) to publisherNames configuration`)
                 match = true
               }
-            })
-            if (match) {
-              resolve(null)
-              return
+              if (match) {
+                resolve(null)
+                return
+              }
             }
           }
 
