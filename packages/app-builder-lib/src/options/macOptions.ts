@@ -180,7 +180,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Whether to merge ASAR files for different architectures or not.
    *
    * This option has no effect unless building for "universal" arch.
-   * @default false
+   * @default true
    */
   readonly mergeASARs?: boolean
 

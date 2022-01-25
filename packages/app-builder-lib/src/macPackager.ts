@@ -127,7 +127,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           arm64AppPath: path.join(arm64AppOutPath, appFile),
           outAppPath: path.join(appOutDir, appFile),
           force: true,
-          mergeASARs: platformSpecificBuildOptions.mergeASARs,
+          mergeASARs: platformSpecificBuildOptions.mergeASARs ?? true,
           singleArchFiles: platformSpecificBuildOptions.singleArchFiles,
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })

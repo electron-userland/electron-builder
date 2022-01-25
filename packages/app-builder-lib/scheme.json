@@ -2579,7 +2579,7 @@
           ]
         },
         "mergeASARs": {
-          "default": false,
+          "default": true,
           "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
           "type": "boolean"
         },
@@ -3193,7 +3193,7 @@
           ]
         },
         "mergeASARs": {
-          "default": false,
+          "default": true,
           "description": "Whether to merge ASAR files for different architectures or not.\n\nThis option has no effect unless building for \"universal\" arch.",
           "type": "boolean"
         },
