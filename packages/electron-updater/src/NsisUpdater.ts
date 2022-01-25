@@ -31,10 +31,18 @@ export class NsisUpdater extends BaseUpdater {
       task: async (destinationFile, downloadOptions, packageFile, removeTempDirIfAny) => {
         const packageInfo = fileInfo.packageInfo
         const isWebInstaller = packageInfo != null && packageFile != null
-        if (
-          (isWebInstaller && !downloadUpdateOptions.disableWebInstaller) ||
-          (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))
-        ) {
+        if (isWebInstaller && downloadUpdateOptions.disableWebInstaller) {
+          throw newError(
+            `Unable to download new version ${downloadUpdateOptions.updateInfoAndProvider.info.version}. Web Installers are disabled`,
+            "ERR_UPDATER_WEB_INSTALLER_DISABLED"
+          )
+        }
+        if (!isWebInstaller && !downloadUpdateOptions.disableWebInstaller) {
+          this._logger.warn(
+            "disableWebInstaller is set to false, you should set it to true if you do not plan on using a web installer. This will default to true in a future version."
+          )
+        }
+        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -49,9 +57,6 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (downloadUpdateOptions.disableWebInstaller) {
-            throw new Error("WebInstaller files are not allowed")
-          }
           if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
             try {
               await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
