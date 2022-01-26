@@ -106,18 +106,36 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || 'latest')) : this.getDefaultChannelName())
-    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
-    const requestOptions = this.createRequestOptions(channelFileUrl)
+
     let rawData: string
-    try {
-      rawData = (await this.executor.request(requestOptions, cancellationToken))!
-    } catch (e) {
-      if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
-        throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+    let channelFile: string = ''
+    let channelFileUrl: string = ''
+    const fetchData = async (channelName: string) => {
+      channelFile = getChannelFilename(channelName)
+      channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
+      const requestOptions = this.createRequestOptions(channelFileUrl)
+      try {
+          return (await this.executor.request(requestOptions, cancellationToken))!
+      } catch (e) {
+          if (e instanceof HttpError && e.statusCode === 404) {
+              throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+          }
+          throw e
       }
-      throw e
-    }
+  }
+  
+  try {
+      const channel = this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || 'latest')) : this.getDefaultChannelName()
+      rawData = await fetchData(channel)
+  } catch (e) {
+      if (this.updater.allowPrerelease) {
+          // Allow fallback to `latest.yml`
+          rawData = await fetchData(this.getDefaultChannelName())
+      } else {
+          throw e
+      }
+  }
+
 
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
     if (result.releaseName == null) {
