@@ -109,7 +109,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
     let rawData: string
     let channelFile: string = ''
-    let channelFileUrl: string = ''
+    let channelFileUrl: any = ''
     const fetchData = async (channelName: string) => {
       channelFile = getChannelFilename(channelName)
       channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
