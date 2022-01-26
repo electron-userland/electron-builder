@@ -175,6 +175,23 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Specify the URL of the timestamp authority server
    */
   readonly timestamp?: string | null
+
+  /**
+   * Whether to merge ASAR files for different architectures or not.
+   *
+   * This option has no effect unless building for "universal" arch.
+   * @default true
+   */
+  readonly mergeASARs?: boolean
+
+  /**
+   * Minimatch pattern of paths that are allowed to be present in one of the
+   * ASAR files, but not in the other.
+   *
+   * This option has no effect unless building for "universal" arch and applies
+   * only if `mergeASARs` is `true`.
+   */
+  readonly singleArchFiles?: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

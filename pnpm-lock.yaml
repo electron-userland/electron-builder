@@ -85,7 +85,7 @@ importers:
       '@babel/preset-env': 7.15.6
       '@babel/preset-react': 7.14.5
       '@develar/schema-utils': ~2.6.5
-      '@electron/universal': 1.0.5
+      '@electron/universal': 1.2.0
       '@malept/flatpak-bundler': ^0.4.0
       '@types/debug': 4.1.7
       '@types/ejs': 3.1.0
@@ -120,7 +120,7 @@ importers:
       temp-file: ^3.4.0
     dependencies:
       '@develar/schema-utils': 2.6.5
-      '@electron/universal': 1.0.5
+      '@electron/universal': 1.2.0
       '@malept/flatpak-bundler': 0.4.0
       7zip-bin: 5.1.1
       async-exit-hook: 2.0.1
@@ -2206,8 +2206,8 @@ packages:
       ajv-keywords: 3.5.2_ajv@6.12.6
     dev: false
 
-  /@electron/universal/1.0.5:
-    resolution: {integrity: sha512-zX9O6+jr2NMyAdSkwEUlyltiI4/EBLu2Ls/VD3pUQdi3cAYeYfdQnT2AJJ38HE4QxLccbU13LSpccw1IWlkyag==}
+  /@electron/universal/1.2.0:
+    resolution: {integrity: sha512-eu20BwNsrMPKoe2bZ3/l9c78LclDvxg3PlVXrQf3L50NaUuW5M59gbPytI+V4z7/QMrohUHetQaU0ou+p1UG9Q==}
     engines: {node: '>=8.6'}
     dependencies:
       '@malept/cross-spawn-promise': 1.1.1
@@ -2215,6 +2215,8 @@ packages:
       debug: 4.3.3
       dir-compare: 2.4.0
       fs-extra: 9.1.0
+      minimatch: 3.0.4
+      plist: 3.0.4
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -2648,6 +2650,7 @@ packages:
 
   /@types/glob/7.2.0:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
+    requiresBuild: true
     dependencies:
       '@types/minimatch': 3.0.5
       '@types/node': 16.11.12
@@ -5730,7 +5733,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       at-least-node: 1.0.0
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.9
       jsonfile: 6.1.0
       universalify: 2.0.0
     dev: false

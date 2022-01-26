@@ -49,7 +49,7 @@
   "dependencies": {
     "7zip-bin": "~5.1.1",
     "@develar/schema-utils": "~2.6.5",
-    "@electron/universal": "1.0.5",
+    "@electron/universal": "1.2.0",
     "@malept/flatpak-bundler": "^0.4.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
