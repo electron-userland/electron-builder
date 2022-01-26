@@ -92,6 +92,14 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <li>
 <p><code id="MacConfiguration-timestamp">timestamp</code> String | “undefined” - Specify the URL of the timestamp authority server</p>
 </li>
+<li>
+<p><code id="MacConfiguration-mergeASARs">mergeASARs</code> = <code>true</code> Boolean - Whether to merge ASAR files for different architectures or not.</p>
+<p>This option has no effect unless building for “universal” arch.</p>
+</li>
+<li>
+<p><code id="MacConfiguration-singleArchFiles">singleArchFiles</code> String - Minimatch pattern of paths that are allowed to be present in one of the ASAR files, but not in the other.</p>
+<p>This option has no effect unless building for “universal” arch and applies only if <code>mergeASARs</code> is <code>true</code>.</p>
+</li>
 </ul>
 
 <!-- end of generated block -->

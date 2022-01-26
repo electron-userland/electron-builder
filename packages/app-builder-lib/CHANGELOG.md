@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.0.0-alpha.2
+
+### Minor Changes
+
+- [#6578](https://github.com/electron-userland/electron-builder/pull/6578) [`81132a85`](https://github.com/electron-userland/electron-builder/commit/81132a857b24bfdb01fc44eba75fc89fa2885545) Thanks [@indutny-signal](https://github.com/indutny-signal)! - feat: use `mergeASARs` API by @electron/universal
+
 ## 23.0.0-alpha.1
 
 ### Patch Changes
