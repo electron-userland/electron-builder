@@ -1597,6 +1597,10 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>Taken in account only if channel differs (pre-release version component in terms of semantic versioning).</p>
 </li>
 <li>
+<p><code id="AppUpdater-disableWebInstaller">disableWebInstaller</code> = <code>false</code> Boolean - Web installer files might not have signature verification, this switch prevents to load them unless it is needed.</p>
+<p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
+</li>
+<li>
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
 </li>
 <li>

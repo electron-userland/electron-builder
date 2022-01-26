@@ -1,5 +1,13 @@
 ## 4.3.0
 
+## 5.0.0-alpha.1
+
+### Major Changes
+
+- [#6575](https://github.com/electron-userland/electron-builder/pull/6575) [`5e381c55`](https://github.com/electron-userland/electron-builder/commit/5e381c556d12ce185bb7ea720380509c1ddc5cf7) Thanks [@devinbinnie](https://github.com/devinbinnie)! - fix: Allow disabling of webinstaller files to avoid confusion with actual installers
+
+* [#6576](https://github.com/electron-userland/electron-builder/pull/6576) [`53467c72`](https://github.com/electron-userland/electron-builder/commit/53467c724dacc11fc270cebaba22f8cf84dff24f) Thanks [@devinbinnie](https://github.com/devinbinnie)! - fix: Update certificate validation on Windows to check full DN
+
 ## 5.0.0-alpha.0
 
 ### Major Changes
