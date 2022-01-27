@@ -105,7 +105,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     }
 
     let rawData: string
-    let channelFile: string = ""
+    let channelFile = ""
     let channelFileUrl: any = ""
     const fetchData = async (channelName: string) => {
       channelFile = getChannelFilename(channelName)
