@@ -31,7 +31,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected computeGithubBasePath(result: string): string {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const host = this.options.host
-    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
+    return host !== null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
   }
 }
 
@@ -54,11 +54,38 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     const feed = parseXml(feedXml)
     // noinspection TypeScriptValidateJSTypes
     let latestRelease = feed.element("entry", false, `No published versions on GitHub`)
-    let tag: string | null
+    let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
-        // noinspection TypeScriptValidateJSTypes
-        tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]
+        const currentChannel = this.updater?.channel || String(semver.prerelease(this.updater.currentVersion)?.[0]) || null
+        for (const element of feed.getElements("entry")) {
+          // noinspection TypeScriptValidateJSTypes
+          const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
+
+          // If this is null then something is wrong and skip this release
+          if (hrefElement === null) continue
+
+          // This Release's Tag
+          const hrefTag = hrefElement[1]
+          //Get Channel from this release's tag
+          const hrefChannel = semver.prerelease(hrefTag)?.[0] || null
+
+          const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
+          const isCustomChannel = !["alpha", "beta"].includes(String(hrefChannel))
+          // Allow moving from alpha to beta but not down
+          const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
+
+          if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
+            tag = hrefTag
+            break
+          }
+
+          const isNextPreRelease = hrefChannel && hrefChannel === currentChannel
+          if (isNextPreRelease) {
+            tag = hrefTag
+            break
+          }
+        }
       } else {
         tag = await this.getLatestTagName(cancellationToken)
         for (const element of feed.getElements("entry")) {
@@ -77,17 +104,33 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       throw newError(`No published versions on GitHub`, "ERR_UPDATER_NO_PUBLISHED_VERSIONS")
     }
 
-    const channelFile = getChannelFilename(this.getDefaultChannelName())
-    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(tag, channelFile), this.baseUrl)
-    const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
-    try {
-      rawData = (await this.executor.request(requestOptions, cancellationToken))!
-    } catch (e) {
-      if (!this.updater.allowPrerelease && e instanceof HttpError && e.statusCode === 404) {
-        throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+    let channelFile = ""
+    let channelFileUrl: any = ""
+    const fetchData = async (channelName: string) => {
+      channelFile = getChannelFilename(channelName)
+      channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(String(tag), channelFile), this.baseUrl)
+      const requestOptions = this.createRequestOptions(channelFileUrl)
+      try {
+        return (await this.executor.request(requestOptions, cancellationToken))!
+      } catch (e) {
+        if (e instanceof HttpError && e.statusCode === 404) {
+          throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
+        }
+        throw e
       }
-      throw e
+    }
+
+    try {
+      const channel = this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || "latest")) : this.getDefaultChannelName()
+      rawData = await fetchData(channel)
+    } catch (e) {
+      if (this.updater.allowPrerelease) {
+        // Allow fallback to `latest.yml`
+        rawData = await fetchData(this.getDefaultChannelName())
+      } else {
+        throw e
+      }
     }
 
     const result = parseUpdateInfo(rawData, channelFile, channelFileUrl)
