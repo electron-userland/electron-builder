@@ -118,7 +118,7 @@ export class MacUpdater extends AppUpdater {
       const authInfo = Buffer.from(`autoupdater:${pass}`, "ascii")
 
       // insecure random is ok
-      const fileUrl = `/${Date.now().toString(16)}-${Math.floor(Math.random() * 9999).toString(16)}.zip`
+      const fileUrl = `/${randomBytes(64).toString("hex")}.zip`
       this.server!.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         log.info(`${requestUrl} requested`)

@@ -22,12 +22,11 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules?view=powershell-7
     // * Double quotes `"` are treated literally within single-quoted strings;
     // * Single quotes can be escaped by doubling them: 'don''t' -> don't;
-    // * Backticks can be escaped by doubling them: 'A backtick (``) character';
     //
     // Also note that at this point the file has already been written to the disk, thus we are
     // guaranteed that the path will not contain any illegal characters like <>:"/\|?*
     // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-    const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''").replace(/`/g, "``")
+    const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
 
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
