@@ -186,7 +186,7 @@ test("file url github pre-release and fullChangelog", async () => {
   expect(updateCheckResult.updateInfo).toMatchSnapshot()
 })
 
-test.skip("file url github private", async () => {
+test.ifEnv(process.env.GH_TOKEN || process.env.GITHUB_TOKEN)("file url github private", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
@@ -229,7 +229,7 @@ test.skip("test download progress", async () => {
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
 
-test.ifAll.ifWindows("valid signature", async () => {
+test.ifAll("valid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -240,18 +240,29 @@ test.ifAll.ifWindows("valid signature", async () => {
   await validateDownload(updater)
 })
 
-test.ifAll.ifWindows("valid signature using DN", async () => {
+test.ifAll("valid signature - multiple publisher DNs", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
-    publisherName: [`CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE`],
+    publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
   })
   await validateDownload(updater)
 })
 
-test.ifAll.ifWindows("invalid signature", async () => {
+test.ifAll("valid signature using DN", async () => {
+  const updater = await createNsisUpdater("0.0.1")
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+  })
+  await validateDownload(updater)
+})
+
+test.skip.ifAll("invalid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -265,7 +276,7 @@ test.ifAll.ifWindows("invalid signature", async () => {
 })
 
 // disable for now
-test.skip("90 staging percentage", async () => {
+test("90 staging percentage", async () => {
   const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
   await outputFile(userIdFile, "1wa70172-80f8-5cc4-8131-28f5e0edd2a1")
 
@@ -293,7 +304,7 @@ test("1 staging percentage", async () => {
   await validateDownload(updater, false)
 })
 
-test.skip("cancel download with progress", async () => {
+test("cancel download with progress", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",

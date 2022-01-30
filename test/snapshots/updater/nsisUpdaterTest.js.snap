@@ -60,7 +60,7 @@ Array [
 ]
 `;
 
-exports[`cancel download with progress 1`] = `"Cancelled"`;
+exports[`cancel download with progress 1`] = `"cancelled"`;
 
 exports[`checkForUpdates several times 1`] = `
 Object {
@@ -438,6 +438,29 @@ Array [
 ]
 `;
 
+exports[`valid signature - multiple publisher DNs 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`valid signature - multiple publisher DNs 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`valid signature 1`] = `
 Object {
   "files": Array [
@@ -474,4 +497,12 @@ Object {
   "tag": "v1.1.0",
   "version": "1.1.0",
 }
+`;
+
+exports[`valid signature using DN 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
 `;
