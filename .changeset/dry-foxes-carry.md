@@ -1,5 +1,4 @@
 ---
-"app-builder-lib": patch
 "electron-updater": patch
 ---
 
