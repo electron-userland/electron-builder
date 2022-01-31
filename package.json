@@ -9,6 +9,7 @@
     "docs/**/*": "pnpm generate-docs"
   },
   "scripts": {
+    "postinstall": "patch-package",
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "tsc --build",
     "lint": "eslint packages --ext .ts",
