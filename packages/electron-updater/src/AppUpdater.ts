@@ -1,8 +1,7 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { EventEmitter } from "events"
-import { outputFile } from "fs-extra"
-import { mkdir, readFile, rename, unlink } from "fs/promises"
+import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -441,7 +440,7 @@ export abstract class AppUpdater extends EventEmitter {
       if (!(e instanceof CancellationError)) {
         try {
           this.dispatchError(e)
-        } catch (nestedError) {
+        } catch (nestedError: any) {
           this._logger.warn(`Cannot dispatch error event: ${nestedError.stack || nestedError}`)
         }
       }
@@ -458,7 +457,7 @@ export abstract class AppUpdater extends EventEmitter {
       }).catch(e => {
         throw errorHandler(e)
       })
-    } catch (e) {
+    } catch (e: any) {
       return Promise.reject(errorHandler(e))
     }
   }
@@ -515,7 +514,7 @@ export abstract class AppUpdater extends EventEmitter {
       } else {
         this._logger.warn(`Staging user id file exists, but content was invalid: ${id}`)
       }
-    } catch (e) {
+    } catch (e: any) {
       if (e.code !== "ENOENT") {
         this._logger.warn(`Couldn't read staging user ID, creating a blank one: ${e}`)
       }
