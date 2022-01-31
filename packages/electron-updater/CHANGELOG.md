@@ -1,5 +1,14 @@
 ## 4.3.0
 
+## 5.0.0-alpha.3
+
+### Patch Changes
+
+- [#6594](https://github.com/electron-userland/electron-builder/pull/6594) [`edc4b030`](https://github.com/electron-userland/electron-builder/commit/edc4b030703ee3929b31608a496798635169f5b1) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(updater): Replacing fs/promises with fs-extra to support legacy versions of Electron that use node 12 and below. Fixes: #6000
+
+* [#6589](https://github.com/electron-userland/electron-builder/pull/6589) [`633ee5dc`](https://github.com/electron-userland/electron-builder/commit/633ee5dc292174ed1486c53af93320f20cf02169) Thanks [@devinbinnie](https://github.com/devinbinnie)! - - Removed backtick escaping for Windows code signing as it is unnecessary for Powershell and can cause the script to attempt to access the wrong file
+  - Updated the proxy filename to be more secure (512-bit string)
+
 ## 5.0.0-alpha.2
 
 ### Minor Changes

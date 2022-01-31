@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.0.0-alpha.2...v) (2022-01-31)
+
+
+### Bug Fixes
+
+* fixes for server auth for MacUpdater ([#6587](https://github.com/electron-userland/electron-builder/issues/6587)) ([8746f91](https://github.com/electron-userland/electron-builder/commit/8746f910d136fb9b531e688d0a646eeb9528adc6))
+* **updater:** Support Electron 11 and below (Node < 14) ([#6594](https://github.com/electron-userland/electron-builder/issues/6594)) ([edc4b03](https://github.com/electron-userland/electron-builder/commit/edc4b030703ee3929b31608a496798635169f5b1)), closes [#6000](https://github.com/electron-userland/electron-builder/issues/6000)
+* **win/mac:** Small security fixes for electron-updater ([#6589](https://github.com/electron-userland/electron-builder/issues/6589)) ([633ee5d](https://github.com/electron-userland/electron-builder/commit/633ee5dc292174ed1486c53af93320f20cf02169))
+
+
+### Features
+
+* **updater:** Add Channel Support for Github with PreRelease ([#6505](https://github.com/electron-userland/electron-builder/issues/6505)) ([#1722](https://github.com/electron-userland/electron-builder/issues/1722)) ([#4988](https://github.com/electron-userland/electron-builder/issues/4988)) ([1de0adb](https://github.com/electron-userland/electron-builder/commit/1de0adbd615b3b3d26faeb6a449f522355b36041))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v22.14.12...v) (2022-01-28)
 
 
