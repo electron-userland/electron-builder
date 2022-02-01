@@ -31,12 +31,13 @@ All these targets are default, custom configuration is not required. (Though it 
 2. [Configure publish](configuration/publish.md).
 
 3. Use `autoUpdater` from `electron-updater` instead of `electron`:
-
-    ```js tab="JavaScript"
+    
+    JavaScript
+    ```js
     const { autoUpdater } = require("electron-updater")
     ```
-
-    ```js tab="ES2015"
+    ES2015
+    ```js
     import { autoUpdater } from "electron-updater"
     ```
 

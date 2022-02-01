@@ -76,7 +76,9 @@ Platforms and archs can be configured or using [CLI args](https://github.com/ele
 For example, if you don't want to pass `--ia32` and `--x64` flags each time, but instead build by default NSIS target for all archs for Windows:
 
 !!! example "Configuration"
-    ```json tab="package.json"
+
+    package.json
+    ```json
     "build": {
       "win": {
         "target": [
@@ -91,8 +93,9 @@ For example, if you don't want to pass `--ia32` and `--x64` flags each time, but
       }
     }
     ```
-    
-    ``` yaml tab="electron-builder.yml"
+
+    electron-builder.yml
+    ``` yaml
      win:
        target:
          - target: nsis
@@ -108,4 +111,4 @@ build -wl
 
 ### TargetConfiguration
 * **<code id="TargetConfiguration-target">target</code>** String - The target name. e.g. `snap`.
-* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64"&gt; | "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.
+* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64" | "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.
