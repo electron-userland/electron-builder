@@ -131,15 +131,16 @@ For portable app, following environment variables are available:
     
     Yes, you need to switch to assisted installer (not default one-click).
     
-    ```json tab="package.json"
+    package.json
+    ```json
     "build": {
       "nsis": {
         "oneClick": false
       }
     }
     ```
-    
-    ```yaml tab="electron-builder.yml"
+    electron-builder.yml
+    ```yaml
     nsis:
       oneClick: false
     ```
