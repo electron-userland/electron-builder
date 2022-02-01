@@ -27,7 +27,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 ## Environment Variables from File
 
-Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/master/test/.env)). Supported only for CLI usage.
+Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/1cc80d02e1f8aa749253a04a2061c0fecb9bdb69/tests/.env)). Supported only for CLI usage.
 
 ## How to Read Docs
 
