@@ -211,6 +211,11 @@ export default class SnapTarget extends Target {
     if (snap.compression != null) {
       args.push("--compression", snap.compression)
     }
+    
+    const publishConfig = getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
+    if (publishConfig != null) {
+      await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
+    }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {
       return
