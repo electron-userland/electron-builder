@@ -238,16 +238,16 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
 
 async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
-  const downloadPromise = updateCheckResult.downloadPromise
+  const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
   expect(downloadPromise).not.toBeNull()
   const files = await downloadPromise
-  const fileInfo: any = updateCheckResult.updateInfo.files[0]
+  const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
   // because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
-  expect(removeUnstableProperties(updateCheckResult.updateInfo)).toMatchSnapshot()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
   expect(files!.map(it => path.basename(it))).toMatchSnapshot()
 }
 
@@ -309,7 +309,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
       "app-update.yml"
     )
     const doTest = async () => {
-      await tuneTestUpdater(updater, {
+      tuneTestUpdater(updater, {
         platform: platform.nodeName as any,
         isUseDifferentialDownload: true,
       })
