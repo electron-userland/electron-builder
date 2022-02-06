@@ -224,7 +224,11 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Asks the server whether there is an update.
    */
-  checkForUpdates(): Promise<UpdateCheckResult> {
+  checkForUpdates(): Promise<UpdateCheckResult | null> {
+    if (!this.isUpdaterActive()) {
+      return Promise.resolve(null)
+    }
+
     let checkForUpdatesPromise = this.checkForUpdatesPromise
     if (checkForUpdatesPromise != null) {
       this._logger.info("Checking for update (already in progress)")
@@ -259,20 +263,15 @@ export abstract class AppUpdater extends EventEmitter {
 
   // noinspection JSUnusedGlobalSymbols
   checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
-    if (!this.isUpdaterActive()) {
-      return Promise.resolve(null)
-    }
-
     return this.checkForUpdates().then(it => {
-      const downloadPromise = it.downloadPromise
-      if (downloadPromise == null) {
+      if (!it?.downloadPromise) {
         if (this._logger.debug != null) {
           this._logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         }
         return it
       }
 
-      void downloadPromise.then(() => {
+      void it.downloadPromise.then(() => {
         const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
         new (require("electron").Notification)(notificationContent).show()
       })

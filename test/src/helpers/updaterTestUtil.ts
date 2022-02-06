@@ -34,18 +34,18 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
-  const assets = (updateCheckResult.updateInfo as any).assets
+  const assets = (updateCheckResult?.updateInfo as any).assets
   if (assets != null) {
     for (const asset of assets) {
       delete asset.download_count
     }
   }
 
-  expect(updateCheckResult.updateInfo).toMatchSnapshot()
+  expect(updateCheckResult?.updateInfo).toMatchSnapshot()
   if (expectDownloadPromise) {
     // noinspection JSIgnoredPromiseFromCall
-    expect(updateCheckResult.downloadPromise).toBeDefined()
-    const downloadResult = await updateCheckResult.downloadPromise
+    expect(updateCheckResult?.downloadPromise).toBeDefined()
+    const downloadResult = await updateCheckResult?.downloadPromise
     if (updater instanceof MacUpdater) {
       expect(downloadResult).toEqual([])
     } else {
@@ -53,7 +53,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
     }
   } else {
     // noinspection JSIgnoredPromiseFromCall
-    expect(updateCheckResult.downloadPromise).toBeUndefined()
+    expect(updateCheckResult?.downloadPromise).toBeUndefined()
   }
 
   expect(actualEvents).toMatchSnapshot()

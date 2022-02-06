@@ -51,15 +51,15 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
     // console.log(JSON.stringify(data))
   })
 
-  await tuneTestUpdater(updater)
+  tuneTestUpdater(updater)
   ;(updater as any)._testOnlyOptions.platform = process.platform
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   // todo when will be updated to use files
-  // expect(removeUnstableProperties(updateCheckResult.updateInfo.files)).toMatchSnapshot()
-  const files = await updateCheckResult.downloadPromise
-  expect(files!!.length).toEqual(1)
-  await assertThat(files!![0]).isFile()
+  // expect(removeUnstableProperties(updateCheckResult?.updateInfo.files)).toMatchSnapshot()
+  const files = await updateCheckResult?.downloadPromise
+  expect(files!.length).toEqual(1)
+  await assertThat(files![0]).isFile()
   expect(actualEvents).toMatchSnapshot()
 })
