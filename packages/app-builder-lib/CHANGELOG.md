@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.0.0-alpha.3
+
+### Patch Changes
+
+- [#6598](https://github.com/electron-userland/electron-builder/pull/6598) [`70c35176`](https://github.com/electron-userland/electron-builder/commit/70c35176e452ee3159196edabaf685337a09cb82) Thanks [@baparham](https://github.com/baparham)! - chore(app-builder-lib): update electron-osx-sign from 0.5.0 to 0.6.0
+
 ## 23.0.0-alpha.2
 
 ### Minor Changes

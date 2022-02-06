@@ -1,5 +1,14 @@
 # dmg-builder
 
+## 23.0.0-alpha.3
+
+### Patch Changes
+
+- [#6617](https://github.com/electron-userland/electron-builder/pull/6617) [`2def112b`](https://github.com/electron-userland/electron-builder/commit/2def112bc1ac42046b921206825871b82ebf0955) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(dmg-builder): Adding python 3 support to dmg-builder in order to support mac os 12 which has entirely removed python2. Fixes: #6606
+
+- Updated dependencies [[`70c35176`](https://github.com/electron-userland/electron-builder/commit/70c35176e452ee3159196edabaf685337a09cb82)]:
+  - app-builder-lib@23.0.0-alpha.3
+
 ## 23.0.0-alpha.2
 
 ### Patch Changes

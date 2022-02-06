@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.0.0-alpha.4
+
+### Patch Changes
+
+- [#6616](https://github.com/electron-userland/electron-builder/pull/6616) [`86e6d150`](https://github.com/electron-userland/electron-builder/commit/86e6d1509f9b9c76c559e9c3a12b7a1595fe3ac4) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(updater): Remove checks for app-update.yml when auto-updates are not supported
+
 ## 5.0.0-alpha.3
 
 ### Patch Changes
