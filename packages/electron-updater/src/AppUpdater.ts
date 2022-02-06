@@ -264,15 +264,14 @@ export abstract class AppUpdater extends EventEmitter {
   // noinspection JSUnusedGlobalSymbols
   checkForUpdatesAndNotify(downloadNotification?: DownloadNotification): Promise<UpdateCheckResult | null> {
     return this.checkForUpdates().then(it => {
-      const downloadPromise = it?.downloadPromise
-      if (!it || downloadPromise == null) {
+      if (!it?.downloadPromise) {
         if (this._logger.debug != null) {
           this._logger.debug("checkForUpdatesAndNotify called, downloadPromise is null")
         }
         return it
       }
 
-      void downloadPromise.then(() => {
+      void it.downloadPromise.then(() => {
         const notificationContent = AppUpdater.formatDownloadNotification(it.updateInfo.version, this.app.name, downloadNotification)
         new (require("electron").Notification)(notificationContent).show()
       })
