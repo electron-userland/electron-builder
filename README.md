@@ -8,25 +8,33 @@ A complete solution to package and build a ready for distribution [Electron](htt
 <div align="center">
 <a href="https://workflowy.com">
 <div>
-<img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/>
+<img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
 </div>
-<b>Notes, Tasks, Projects. All in a Single Place.</b>
+Notes, Tasks, Projects. All in a Single Place.
 </a>
 <br>
 <br>
 <a href="https://tidepool.org">
 <div>
-<img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/>
+<img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
 </div>
-<b>Your gateway to understanding your diabetes data</b>
+Your gateway to understanding your diabetes data
 </a>
 <br>
 <br>
 <a href="https://keygen.sh/?via=electron-builder">
 <div>
-<img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" align="middle"/>
+<img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
 </div>
-<b>A dead-simple software licensing and distribution API built for developers</b>
+A dead-simple software licensing and distribution API built for developers
+</a>
+<br>
+<br>
+<a href="https://www.todesktop.com/electron?utm_source=electron-builder">
+<div>
+<img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
+</div>
+ToDesktop: An all-in-one platform for building and releasing Electron apps
 </a>
 <br>
 <br>
