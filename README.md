@@ -10,7 +10,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
 <div>
 <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
 </div>
-<b>Notes, Tasks, Projects. All in a Single Place.</b>
+Notes, Tasks, Projects. All in a Single Place.
 </a>
 <br>
 <br>
@@ -18,7 +18,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
 <div>
 <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
 </div>
-<b>Your gateway to understanding your diabetes data</b>
+Your gateway to understanding your diabetes data
 </a>
 <br>
 <br>
@@ -26,7 +26,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
 <div>
 <img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
 </div>
-<b>A dead-simple software licensing and distribution API built for developers</b>
+A dead-simple software licensing and distribution API built for developers
 </a>
 <br>
 <br>
@@ -34,7 +34,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
 <div>
 <img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
 </div>
-<b>ToDesktop: An all-in-one platform for building and releasing Electron apps</b>
+ToDesktop: An all-in-one platform for building and releasing Electron apps
 </a>
 <br>
 <br>
