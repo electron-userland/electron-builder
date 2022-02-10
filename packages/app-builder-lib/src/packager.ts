@@ -271,12 +271,12 @@ export class Packager {
   }
 
   async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
-    this.dispatchArtifactCreated(event)
-
     const handler = resolveFunction(this.config.artifactBuildCompleted, "artifactBuildCompleted")
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
+    
+    this.dispatchArtifactCreated(event)
   }
 
   async callAppxManifestCreated(path: string): Promise<void> {
