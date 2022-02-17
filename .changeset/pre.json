@@ -17,6 +17,7 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "angry-starfishes-divide",
     "chilly-trains-study",
     "clean-kangaroos-serve",
     "cool-ladybugs-matter",
