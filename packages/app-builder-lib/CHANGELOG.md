@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.0.0-alpha.4
+
+### Patch Changes
+
+- [#6625](https://github.com/electron-userland/electron-builder/pull/6625) [`c561af81`](https://github.com/electron-userland/electron-builder/commit/c561af810d5de52bec57709cbaebca2ac92c55fc) Thanks [@DanielMcAssey](https://github.com/DanielMcAssey)! - fix(packager): wait for event before starting an upload
+
 ## 23.0.0-alpha.3
 
 ### Patch Changes

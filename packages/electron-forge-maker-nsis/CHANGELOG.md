@@ -1,5 +1,12 @@
 # electron-forge-maker-nsis
 
+## 23.0.0-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [[`c561af81`](https://github.com/electron-userland/electron-builder/commit/c561af810d5de52bec57709cbaebca2ac92c55fc)]:
+  - app-builder-lib@23.0.0-alpha.4
+
 ## 23.0.0-alpha.3
 
 ### Patch Changes
