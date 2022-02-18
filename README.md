@@ -87,7 +87,7 @@ node-linker=hoisted
 public-hoist-pattern=*
 ```
 ```
-hamefully-hoist=true
+shamefully-hoist=true
 ```
 
 ## Quick Setup Guide
