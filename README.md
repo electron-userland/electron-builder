@@ -77,6 +77,19 @@ See the full documentation on [electron.build](https://www.electron.build).
 
 `yarn add electron-builder --dev`
 
+### Note for PNPM
+
+In order to use with `pnpm`, you'll need to adjust your `.npmrc` to use any one the following approaches in order for your dependencies to be bundled correctly (ref: [#6389](https://github.com/electron-userland/electron-builder/issues/6289#issuecomment-1042620422)):
+```
+node-linker=hoisted
+```
+```
+public-hoist-pattern=*
+```
+```
+hamefully-hoist=true
+```
+
 ## Quick Setup Guide
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).

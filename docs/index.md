@@ -34,6 +34,20 @@ A complete solution to package and build a ready for distribution Electron app f
 
 `yarn add electron-builder --dev`
 
+### Note for PNPM
+
+In order to use with `pnpm`, you'll need to adjust your `.npmrc` to use any one the following approaches in order for your dependencies to be bundled correctly (ref: [#6389](https://github.com/electron-userland/electron-builder/issues/6289#issuecomment-1042620422)):
+```
+node-linker=hoisted
+```
+```
+public-hoist-pattern=*
+```
+```
+hamefully-hoist=true
+```
+
+
 ## Boilerplates
 
 * [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
@@ -79,8 +93,9 @@ Please note that everything is packaged into an asar archive [by default](config
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](code-signing.md#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript are provided and also can be found [here](/api/electron-builder).
 
+Code snippit provided below is also shown "in action" [here](/api/programmatic-usage) as well.
 ```js
 "use strict"
 
