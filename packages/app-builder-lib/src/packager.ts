@@ -275,7 +275,7 @@ export class Packager {
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
-    
+
     this.dispatchArtifactCreated(event)
   }
 

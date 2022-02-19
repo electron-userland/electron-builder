@@ -1704,13 +1704,13 @@ Object {
         "which-pm-runs": Object {
           "files": Object {
             "LICENSE": Object {
-              "size": 1079,
+              "size": 1099,
             },
             "index.js": Object {
-              "size": 408,
+              "size": 467,
             },
             "package.json": Object {
-              "size": 533,
+              "size": 699,
             },
           },
         },
