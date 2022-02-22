@@ -43,7 +43,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly certificatePassword?: string | null
   /**
-   * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
    */
   readonly certificateSubjectName?: string | null
   /**
