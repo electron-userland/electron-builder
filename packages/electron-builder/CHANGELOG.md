@@ -1,5 +1,13 @@
 # electron-builder
 
+## 23.0.1
+
+### Patch Changes
+
+- Updated dependencies [[`3a4b64ab`](https://github.com/electron-userland/electron-builder/commit/3a4b64abb58f01e8a80e496b6c4681455b2434ca), [`4c6d1546`](https://github.com/electron-userland/electron-builder/commit/4c6d1546d4942aa9d9a93b7309e8ed279f6378d2)]:
+  - dmg-builder@23.0.1
+  - app-builder-lib@23.0.1
+
 ## 23.0.0
 
 ### Patch Changes
