@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.0.1
+
+### Patch Changes
+
+- [#6660](https://github.com/electron-userland/electron-builder/pull/6660) [`4c6d1546`](https://github.com/electron-userland/electron-builder/commit/4c6d1546d4942aa9d9a93b7309e8ed279f6378d2) Thanks [@mifi](https://github.com/mifi)! - Fix error thrown due to duplicated signing of user-defined binaries on mac when resolving relative path
+
 ## 23.0.0
 
 ### Major Changes
