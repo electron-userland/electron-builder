@@ -85,7 +85,7 @@ jobs:
         env:
           TEST_FILES: nsisUpdaterTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
-          # BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
 
