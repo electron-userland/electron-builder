@@ -112,6 +112,30 @@ Object {
 }
 `;
 
+exports[`file url bitbucket 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "jgS5EI08u/fsS9XfqpJtmV2ctAFQF+6BQjGUZmWq93Nyg+Z/aPxQT0zkCWPaCdIqJdEDHB91JjYquK/tS3fcDw==",
+      "size": 69549503,
+      "url": "electron-quick-start-typescript-1.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.0-x64.exe",
+  "releaseDate": "2022-02-26T18:50:44.444Z",
+  "sha512": "jgS5EI08u/fsS9XfqpJtmV2ctAFQF+6BQjGUZmWq93Nyg+Z/aPxQT0zkCWPaCdIqJdEDHB91JjYquK/tS3fcDw==",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url bitbucket 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`file url generic - manual download 1`] = `
 Object {
   "files": Array [
