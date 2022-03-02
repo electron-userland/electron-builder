@@ -4984,8 +4984,7 @@
               "type": "null"
             }
           ],
-          "default": "lzo",
-          "description": "Sets the compression type for the snap. Can be xz or lzo. Defaults to lzo when not specified."
+          "description": "Sets the compression type for the snap. Can be xz, lzo, or null."
         },
         "confinement": {
           "anyOf": [
