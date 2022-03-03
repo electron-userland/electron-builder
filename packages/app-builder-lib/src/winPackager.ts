@@ -392,18 +392,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return
     }
 
-    const directoriesToBeSigned = [["resources", "app.asar.unpacked"], ["swiftshader"]]
-
-    const outDirectories = directoriesToBeSigned.map(directoryPath => {
-      return path.join.apply(this, [packContext.appOutDir, ...directoryPath])
-    })
-
-    const filesToSignPromise = outDirectories.map(async outDir => {
-      return await walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
-    })
-
-    const filesToSign = await Promise.all(filesToSignPromise)
-    const filesToSignFlat = filesToSign.flat(1)
-    await BluebirdPromise.map(filesToSignFlat, file => this.sign(file), { concurrency: 4 })
+    const signPromise = (filepath: string[]) => {
+      const outDir = path.join(packContext.appOutDir, ...filepath)
+      return walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
+    }
+    const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
+    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
   }
 }
