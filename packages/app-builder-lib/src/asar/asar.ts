@@ -2,13 +2,11 @@ import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra"
 import * as path from "path"
 
-/** @internal */
 export interface ReadAsarHeader {
   readonly header: string
   readonly size: number
 }
 
-/** @internal */
 export interface NodeIntegrity {
   algorithm: "SHA256"
   hash: string
@@ -34,7 +32,6 @@ export class Node {
   integrity?: NodeIntegrity
 }
 
-/** @internal */
 export class AsarFilesystem {
   private offset = 0
 
