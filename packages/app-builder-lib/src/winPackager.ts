@@ -392,9 +392,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       return
     }
 
-    const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    // noinspection JSUnusedLocalSymbols
-    const fileToSign = await walk(outResourcesDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
-    await BluebirdPromise.map(fileToSign, file => this.sign(file), { concurrency: 4 })
+    const signPromise = (filepath: string[]) => {
+      const outDir = path.join(packContext.appOutDir, ...filepath)
+      return walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
+    }
+    const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
+    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
   }
 }
