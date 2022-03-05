@@ -268,8 +268,6 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      expect(snap.compression).toEqual("lzo")
-      expect(args).toEqual(expect.arrayContaining(["--compression", "lzo"]))
       return true
     },
   })
