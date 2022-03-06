@@ -1,5 +1,11 @@
 # builder-util
 
+## 23.0.2
+
+### Patch Changes
+
+- [#6684](https://github.com/electron-userland/electron-builder/pull/6684) [`5ffbe1e2`](https://github.com/electron-userland/electron-builder/commit/5ffbe1e2994b95aaccdc36d05a876db2cb5b28a3) Thanks [@mmaietta](https://github.com/mmaietta)! - Fix: Downgrading app-builder-bin in an attempt to resolve #6678
+
 ## 23.0.0
 
 ### Major Changes
