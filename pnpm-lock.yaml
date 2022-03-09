@@ -185,7 +185,7 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
       7zip-bin: ~5.1.1
-      app-builder-bin: 4.0.0
+      app-builder-bin: 4.1.2
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
       chalk: ^4.1.1
@@ -203,7 +203,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/fs-extra': 9.0.13
       7zip-bin: 5.1.1
-      app-builder-bin: 4.0.0
+      app-builder-bin: 4.1.2
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
@@ -3159,8 +3159,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.0
 
-  /app-builder-bin/4.0.0:
-    resolution: {integrity: sha512-xwdG0FJPQMe0M0UA4Tz0zEB8rBJTRA5a476ZawAqiBkMv16GRK5xpXThOjMaEOFnZ6zabejjG4J3da0SXG63KA==}
+  /app-builder-bin/4.1.2:
+    resolution: {integrity: sha512-3NqhQmcgz7bc0z6UBZic0kiKjTTwGrwov8JrjMyI4GMZyP2vrSnjSurIaeYbGdahagth7mPVWAdknCzm2mrVUw==}
     dev: false
 
   /archiver-utils/2.1.0:
@@ -6992,7 +6992,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@types/node': 16.11.12
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.9
 
   /jest-snapshot/27.4.4:
     resolution: {integrity: sha512-yy+rpCvYMOjTl7IMuaMI9OP9WT229zi8BhdNHm6e6mttAOIzvIiCxFoZ6yRxaV3HDPPgMryi+ReX2b8+IQJdPA==}
