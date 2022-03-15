@@ -61,7 +61,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li><code id="Configuration-nsisWeb">nsisWeb</code> <a href="#NsisWebOptions">NsisWebOptions</a> | “undefined”</li>
 <li><code id="Configuration-portable">portable</code> <a href="#PortableOptions">PortableOptions</a> | “undefined”</li>
 <li><code id="Configuration-appx">appx</code> <a href="appx">AppXOptions</a></li>
-<li><code id="Configuration-squirrelWindows">squirrelWindows</code> <a href="squirrel-windows.md">SquirrelWindowsOptions</a></li>
+<li><code id="Configuration-squirrelWindows">squirrelWindows</code> <a href="squirrel-windows">SquirrelWindowsOptions</a></li>
 </ul>
 <hr>
 <ul>
