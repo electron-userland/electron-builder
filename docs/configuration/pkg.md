@@ -33,7 +33,8 @@ The top-level [pkg](configuration.md#Configuration-pkg) key contains set of opti
 <p><code id="PkgOptions-welcome">welcome</code> String | “undefined” - The path to the welcome file. This may be used to customize the text on the Introduction page of the installer.</p>
 </li>
 <li>
-<p><code id="PkgOptions-mustClose">mustClose</code> Array&lt;String&gt; | “undefined” - Identifies applications that must be closed before the package is installed.\n\nCorresponds to <a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77">must-close</a></p>
+<p><code id="PkgOptions-mustClose">mustClose</code> Array&lt;String&gt; | “undefined” - Identifies applications that must be closed before the package is installed.</p>
+<p>Corresponds to <a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77">must-close</a>.</p>
 </li>
 <li>
 <p><code id="PkgOptions-conclusion">conclusion</code> String | “undefined” - The path to the conclusion file. This may be used to customize the text on the final “Summary” page of the installer.</p>
