@@ -59,6 +59,7 @@
 <li><code id="NsisOptions-unicode">unicode</code> = <code>true</code> Boolean - Whether to create <a href="http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode">Unicode installer</a>.</li>
 <li><code id="NsisOptions-guid">guid</code> String | “undefined” - See <a href="../configuration/nsis#guid-vs-application-name">GUID vs Application Name</a>.</li>
 <li><code id="NsisOptions-warningsAsErrors">warningsAsErrors</code> = <code>true</code> Boolean - If <code>warningsAsErrors</code> is <code>true</code> (default): NSIS will treat warnings as errors. If <code>warningsAsErrors</code> is <code>false</code>: NSIS will allow warnings.</li>
+<li><code id="NsisOptions-customNsisBinary">customNsisBinary</code> module:app-builder-lib/out/targets/nsis/nsisOptions.CustomNsisBinary | “undefined” - Allows you to provide your own <code>makensis</code>, such as one with support for debug logging via LogSet and LogText. (Logging also requires option <code>debugLogging = true</code>)</li>
 <li><code id="NsisOptions-runAfterFinish">runAfterFinish</code> = <code>true</code> Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.</li>
 </ul>
 <hr>

@@ -191,8 +191,8 @@ export class NsisTarget extends Target {
 
       APP_PACKAGE_NAME: appInfo.name,
     }
-    if (options.debugLogging) {
-      defines.ENABLE_LOGGING = null
+    if (options.customNsisBinary?.debugLogging) {
+      defines.ENABLE_LOGGING_ELECTRON_BUILDER = null
     }
     if (uninstallAppKey !== guid) {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
@@ -370,7 +370,7 @@ export class NsisTarget extends Target {
     if (isMacOsCatalina()) {
       try {
         await UninstallerReader.exec(installerPath, uninstallerPath)
-      } catch (error) {
+      } catch (error: any) {
         log.warn(`packager.vm is used: ${error.message}`)
 
         const vm = await packager.vm.value

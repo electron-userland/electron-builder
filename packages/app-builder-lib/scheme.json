@@ -419,6 +419,13 @@
             "string"
           ]
         },
+        "debugLogging": {
+          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`\nIn your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "url": {
           "default": "https://github.com/electron-userland/electron-builder-binaries/releases/download",
           "type": [
@@ -3646,14 +3653,8 @@
             {
               "type": "null"
             }
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
-          "type": [
-            "null",
-            "boolean"
-          ]
+          ],
+          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -3970,14 +3971,8 @@
             {
               "type": "null"
             }
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
-          "type": [
-            "null",
-            "boolean"
-          ]
+          ],
+          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
         "deleteAppDataOnUninstall": {
           "default": false,
@@ -4560,14 +4555,8 @@
             {
               "type": "null"
             }
-          ]
-        },
-        "debugLogging": {
-          "description": "Whether or not to enable NSIS logging for debugging.\nNote: Requires a debug-enabled NSIS build.\nelectron-builder's included `makensis` only supports building debug-enabled NSIS installers on Windows currently\nhttps://github.com/electron-userland/electron-builder/issues/5119#issuecomment-811353612",
-          "type": [
-            "null",
-            "boolean"
-          ]
+          ],
+          "description": "Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)"
         },
         "guid": {
           "description": "See [GUID vs Application Name](../configuration/nsis#guid-vs-application-name).",
