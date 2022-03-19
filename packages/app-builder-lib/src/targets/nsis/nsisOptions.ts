@@ -23,7 +23,7 @@ interface CustomNsisBinary {
    * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`
    * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
    */
-   readonly debugLogging?: boolean | null
+  readonly debugLogging?: boolean | null
 }
 export interface CommonNsisOptions {
   /**
