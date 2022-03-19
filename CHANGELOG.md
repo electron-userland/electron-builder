@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.0.2...v) (2022-03-19)
+
+
+### Bug Fixes
+
+* Change DEBUG_LOGGING env var for nsis installers as part of `customNsisBinary` config ([#6729](https://github.com/electron-userland/electron-builder/issues/6729)) ([0a30846](https://github.com/electron-userland/electron-builder/commit/0a308469f269dc5294f29f2c422d9936175c0880)), closes [#6715](https://github.com/electron-userland/electron-builder/issues/6715)
+* **docs:** link to SquirrelWindowsOptions in configuration ([#6724](https://github.com/electron-userland/electron-builder/issues/6724)) ([4eaab19](https://github.com/electron-userland/electron-builder/commit/4eaab1936429ac69dafcc7cfbf53caa85c241a11))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.0.1...v) (2022-03-05)
 
 
