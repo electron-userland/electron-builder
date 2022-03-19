@@ -102,14 +102,15 @@ Name "${PRODUCT_NAME}"
 
 !define LogSet "!insertmacro LogSetMacro"
 !macro LogSetMacro SETTING
-  !ifdef ENABLE_LOGGING
+  !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+    SetOutPath $INSTDIR
     LogSet ${SETTING}
   !endif
 !macroend
  
-!define LogText "!insertmacro LogTextMacro"
-!macro LogTextMacro INPUT_TEXT
-  !ifdef ENABLE_LOGGING
+!define LogText "!insertmacro LogTextMacroEB"
+!macro LogTextMacroEB INPUT_TEXT
+  !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
     LogText ${INPUT_TEXT}
   !endif
 !macroend
