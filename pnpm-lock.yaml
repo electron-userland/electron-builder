@@ -87,7 +87,7 @@ importers:
       '@babel/preset-env': 7.15.6
       '@babel/preset-react': 7.14.5
       '@develar/schema-utils': ~2.6.5
-      '@electron/universal': 1.2.0
+      '@electron/universal': 1.2.1
       '@malept/flatpak-bundler': ^0.4.0
       '@types/debug': 4.1.7
       '@types/ejs': 3.1.0
@@ -122,7 +122,7 @@ importers:
       temp-file: ^3.4.0
     dependencies:
       '@develar/schema-utils': 2.6.5
-      '@electron/universal': 1.2.0
+      '@electron/universal': 1.2.1
       '@malept/flatpak-bundler': 0.4.0
       7zip-bin: 5.1.1
       async-exit-hook: 2.0.1
@@ -2208,8 +2208,8 @@ packages:
       ajv-keywords: 3.5.2_ajv@6.12.6
     dev: false
 
-  /@electron/universal/1.2.0:
-    resolution: {integrity: sha512-eu20BwNsrMPKoe2bZ3/l9c78LclDvxg3PlVXrQf3L50NaUuW5M59gbPytI+V4z7/QMrohUHetQaU0ou+p1UG9Q==}
+  /@electron/universal/1.2.1:
+    resolution: {integrity: sha512-7323HyMh7KBAl/nPDppdLsC87G6RwRU02dy5FPeGB1eS7rUePh55+WNWiDPLhFQqqVPHzh77M69uhmoT8XnwMQ==}
     engines: {node: '>=8.6'}
     dependencies:
       '@malept/cross-spawn-promise': 1.1.1
