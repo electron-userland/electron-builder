@@ -4,8 +4,16 @@ from __future__ import unicode_literals
 import os
 import re
 import sys
-reload(sys)  # Reload is a hack
-sys.setdefaultencoding('UTF8')
+
+if sys.version_info.major == 3:
+  try:
+      from importlib import reload
+  except ImportError:
+      from imp import reload
+  reload(sys)  # To workaround the unbound issue
+else:
+  reload(sys)  # Reload is a hack
+  sys.setdefaultencoding('UTF8')
 
 sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "..")))
 

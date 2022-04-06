@@ -4,6 +4,14 @@
     "outDir": "out",
     "rootDir": "src"
   },
+  "references": [
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    }
+  ],
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/publisher",
     "access": "public"

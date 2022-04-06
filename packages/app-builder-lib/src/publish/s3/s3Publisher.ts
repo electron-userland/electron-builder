@@ -4,7 +4,7 @@ import { PublishContext } from "electron-publish"
 import { BaseS3Publisher } from "./BaseS3Publisher"
 
 export default class S3Publisher extends BaseS3Publisher {
-  readonly providerName = "S3"
+  readonly providerName = "s3"
 
   constructor(context: PublishContext, private readonly info: S3Options) {
     super(context, info)
@@ -16,16 +16,14 @@ export default class S3Publisher extends BaseS3Publisher {
       throw new InvalidConfigurationError(`Please specify "bucket" for "s3" publish provider`)
     }
 
-    if (options.endpoint == null && (bucket.includes(".") && options.region == null)) {
+    if (options.endpoint == null && bucket.includes(".") && options.region == null) {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
       try {
         options.region = await executeAppBuilder(["get-bucket-location", "--bucket", bucket])
-      }
-      catch (e) {
+      } catch (e) {
         if (errorIfCannot) {
           throw e
-        }
-        else {
+        } else {
           log.warn(`cannot compute region for bucket (required because on dotted bucket names, we need to use a path-based endpoint URL): ${e}`)
         }
       }
@@ -36,12 +34,12 @@ export default class S3Publisher extends BaseS3Publisher {
     }
 
     if (options.endpoint != null && options.endpoint.endsWith("/")) {
-      (options as any).endpoint = options.endpoint.slice(0, -1)
+      ;(options as any).endpoint = options.endpoint.slice(0, -1)
     }
   }
 
   protected getBucketName(): string {
-    return this.info.bucket!
+    return this.info.bucket
   }
 
   protected configureS3Options(args: Array<string>): void {

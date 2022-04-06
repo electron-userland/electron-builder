@@ -53,6 +53,7 @@ Array [
   "lib/net45/v8_context_snapshot.bin",
   "lib/net45/vk_swiftshader.dll",
   "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
   "lib/net45/locales/en-US.pak",
   "lib/net45/resources/app.asar",
   "lib/net45/resources/platformSpecificR",

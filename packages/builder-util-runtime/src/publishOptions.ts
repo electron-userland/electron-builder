@@ -1,9 +1,18 @@
 import { OutgoingHttpHeaders } from "http"
 
-export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore"
+export type PublishProvider = "github" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" | "bitbucket"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
-export type AllPublishOptions = string | GithubOptions | S3Options | SpacesOptions | GenericServerOptions | BintrayOptions | CustomPublishOptions
+export type AllPublishOptions =
+  | string
+  | GithubOptions
+  | S3Options
+  | SpacesOptions
+  | GenericServerOptions
+  | CustomPublishOptions
+  | KeygenOptions
+  | SnapStoreOptions
+  | BitbucketOptions
 
 export interface PublishConfiguration {
   /**
@@ -41,6 +50,17 @@ export interface PublishConfiguration {
 
 // https://github.com/electron-userland/electron-builder/issues/3261
 export interface CustomPublishOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `custom`.
+   */
+  readonly provider: "custom"
+
+  /**
+   * The Provider to provide UpdateInfo regarding available updates.  Required
+   * to use custom providers with electron-updater.
+   */
+  updateProvider?: new (options: CustomPublishOptions, updater: any, runtimeOptions: any) => any
+
   [index: string]: any
 }
 
@@ -95,6 +115,12 @@ export interface GithubOptions extends PublishConfiguration {
   readonly private?: boolean | null
 
   /**
+   * The channel.
+   * @default latest
+   */
+  readonly channel?: string | null
+
+  /**
    * The type of release. By default `draft` release will be created.
    *
    * Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
@@ -104,7 +130,7 @@ export interface GithubOptions extends PublishConfiguration {
 }
 
 /** @private */
-export function githubUrl(options: GithubOptions, defaultHost: string = "github.com") {
+export function githubUrl(options: GithubOptions, defaultHost = "github.com") {
   return `${options.protocol || "https"}://${options.host || defaultHost}`
 }
 
@@ -135,6 +161,106 @@ export interface GenericServerOptions extends PublishConfiguration {
   readonly useMultipleRangeRequest?: boolean
 }
 
+/**
+ * Keygen options.
+ * https://keygen.sh/
+ * Define `KEYGEN_TOKEN` environment variable.
+ */
+export interface KeygenOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `keygen`.
+   */
+  readonly provider: "keygen"
+
+  /**
+   * Keygen account's UUID
+   */
+  readonly account: string
+
+  /**
+   * Keygen product's UUID
+   */
+  readonly product: string
+
+  /**
+   * The channel.
+   * @default stable
+   */
+  readonly channel?: "stable" | "rc" | "beta" | "alpha" | "dev" | null
+
+  /**
+   * The target Platform. Is set programmatically explicitly during publishing.
+   */
+  readonly platform?: string | null
+}
+
+/**
+ * Bitbucket options.
+ * https://bitbucket.org/
+ * Define `BITBUCKET_TOKEN` environment variable.
+ * 
+ * For converting an app password to a usable token, you can utilize this
+```typescript
+convertAppPassword(owner: string, token: string) {
+  const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+  return `Basic ${base64encodedData}`
+}
+```
+ */
+export interface BitbucketOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `bitbucket`.
+   */
+  readonly provider: "bitbucket"
+
+  /**
+   * Repository owner
+   */
+  readonly owner: string
+
+  /**
+   * The access token to support auto-update from private bitbucket repositories.
+   */
+  readonly token?: string | null
+
+  /**
+   * The user name to support auto-update from private bitbucket repositories.
+   */
+  readonly username?: string | null
+
+  /**
+   * Repository slug/name
+   */
+  readonly slug: string
+
+  /**
+   * The channel.
+   * @default latest
+   */
+  readonly channel?: string | null
+}
+
+/**
+ * [Snap Store](https://snapcraft.io/) options.
+ */
+export interface SnapStoreOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `snapStore`.
+   */
+  readonly provider: "snapStore"
+
+  /**
+   * snapcraft repo name
+   */
+  readonly repo?: string
+
+  /**
+   * The list of channels the snap would be released.
+   * @default ["edge"]
+   */
+  readonly channels?: string | Array<string> | null
+}
+
 export interface BaseS3Options extends PublishConfiguration {
   /**
    * The update channel.
@@ -156,6 +282,25 @@ export interface BaseS3Options extends PublishConfiguration {
   readonly acl?: "private" | "public-read" | null
 }
 
+/**
+ * [Amazon S3](https://aws.amazon.com/s3/) options.
+ * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
+ * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
+ * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
+ * 
+ * Example configuration:
+ * 
+```json
+{
+  "build":
+    "publish": {
+      "provider": "s3",
+      "bucket": "bucket-name"
+    }
+  }
+}
+```
+ */
 export interface S3Options extends BaseS3Options {
   /**
    * The provider. Must be `s3`.
@@ -223,10 +368,10 @@ export interface SpacesOptions extends BaseS3Options {
 export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
   const provider = configuration.provider
   if (provider === "s3") {
-    return s3Url((configuration as S3Options))
+    return s3Url(configuration as S3Options)
   }
   if (provider === "spaces") {
-    return spacesUrl((configuration as SpacesOptions))
+    return spacesUrl(configuration as SpacesOptions)
   }
   throw new Error(`Not supported provider: ${provider}`)
 }
@@ -235,8 +380,7 @@ function s3Url(options: S3Options) {
   let url: string
   if (options.endpoint != null) {
     url = `${options.endpoint}/${options.bucket}`
-  }
-  else if (options.bucket.includes(".")) {
+  } else if (options.bucket.includes(".")) {
     if (options.region == null) {
       throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
     }
@@ -244,15 +388,12 @@ function s3Url(options: S3Options) {
     // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
     if (options.region === "us-east-1") {
       url = `https://s3.amazonaws.com/${options.bucket}`
-    }
-    else {
+    } else {
       url = `https://s3-${options.region}.amazonaws.com/${options.bucket}`
     }
-  }
-  else if (options.region === "cn-north-1") {
+  } else if (options.region === "cn-north-1") {
     url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
-  }
-  else {
+  } else {
     url = `https://${options.bucket}.s3.amazonaws.com`
   }
   return appendPath(url, options.path)
@@ -276,49 +417,4 @@ function spacesUrl(options: SpacesOptions) {
     throw new Error(`region is missing`)
   }
   return appendPath(`https://${options.name}.${options.region}.digitaloceanspaces.com`, options.path)
-}
-
-/**
- * [Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page ("Edit Your Profile" -> API Key).
- * Define `BT_TOKEN` environment variable.
- */
-export interface BintrayOptions extends PublishConfiguration {
-  /**
-   * The provider. Must be `bintray`.
-   */
-  readonly provider: "bintray"
-
-  /**
-   * The Bintray package name.
-   */
-  readonly package?: string | null
-
-  /**
-   * The Bintray repository name.
-   * @default generic
-   */
-  readonly repo?: string | null
-
-  /**
-   * The owner.
-   */
-  readonly owner?: string | null
-
-  /**
-   * The Bintray component (Debian only).
-   */
-  readonly component?: string | null
-
-  /**
-   * The Bintray distribution (Debian only).
-   * @default stable
-   */
-  readonly distribution?: string | null
-
-  /**
-   * The Bintray user account. Used in cases where the owner is an organization.
-   */
-  readonly user?: string | null
-
-  readonly token?: string | null
 }

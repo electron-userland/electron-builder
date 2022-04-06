@@ -1,7 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
 import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
-import { ensureDir, readlink, Stats, symlink } from "fs-extra"
+import { Stats } from "fs"
+import { mkdir, readlink, symlink } from "fs/promises"
 import * as path from "path"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
@@ -19,14 +20,12 @@ export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
-  }
-  else {
+  } else {
     const src = fileSet.src
     const dest = fileSet.destination
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
       return dest + file.substring(src.length)
-    }
-    else {
+    } else {
       // hoisted node_modules
       // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
       // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
@@ -63,14 +62,14 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
 
     const destinationFile = getDestinationPath(sourceFile, fileSet)
     if (stat.isSymbolicLink()) {
-      links.push({file: destinationFile, link: await readlink(sourceFile)})
+      links.push({ file: destinationFile, link: await readlink(sourceFile) })
       continue
     }
 
     const fileParent = path.dirname(destinationFile)
     if (!createdParentDirs.has(fileParent)) {
       createdParentDirs.add(fileParent)
-      await ensureDir(fileParent)
+      await mkdir(fileParent, { recursive: true })
     }
 
     taskManager.addTask(fileCopier.copy(sourceFile, destinationFile, stat))
@@ -110,32 +109,40 @@ export async function transformFiles(transformer: FileTransformer, fileSet: Reso
   }
 
   const metadata = fileSet.metadata
-  await BluebirdPromise.filter(fileSet.files, (it, index) => {
-    const fileStat = metadata.get(it)
-    if (fileStat == null || !fileStat.isFile()) {
-      return false
-    }
+  await BluebirdPromise.filter(
+    fileSet.files,
+    (it, index) => {
+      const fileStat = metadata.get(it)
+      if (fileStat == null || !fileStat.isFile()) {
+        return false
+      }
 
-    const transformedValue = transformer(it)
-    if (transformedValue == null) {
-      return false
-    }
+      const transformedValue = transformer(it)
+      if (transformedValue == null) {
+        return false
+      }
 
-    if (typeof transformedValue === "object" && "then" in transformedValue) {
-      return (transformedValue as Promise<any>)
-        .then(it => {
+      if (typeof transformedValue === "object" && "then" in transformedValue) {
+        return (transformedValue as Promise<any>).then(it => {
           if (it != null) {
-            transformedFiles!!.set(index, it)
+            transformedFiles!.set(index, it)
           }
           return false
         })
-    }
-    transformedFiles!!.set(index, transformedValue as string | Buffer)
-    return false
-  }, CONCURRENCY)
+      }
+      transformedFiles!.set(index, transformedValue as string | Buffer)
+      return false
+    },
+    CONCURRENCY
+  )
 }
 
-export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer | null, platformPackager: PlatformPackager<any>, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+export async function computeFileSets(
+  matchers: Array<FileMatcher>,
+  transformer: FileTransformer | null,
+  platformPackager: PlatformPackager<any>,
+  isElectronCompile: boolean
+): Promise<Array<ResolvedFileSet>> {
   const fileSets: Array<ResolvedFileSet> = []
   const packager = platformPackager.info
 
@@ -144,13 +151,13 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
 
     const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      log.debug({directory: matcher.from, reason: "doesn't exist"}, `skipped copying`)
+      log.debug({ directory: matcher.from, reason: "doesn't exist" }, `skipped copying`)
       continue
     }
 
     const files = await walk(matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
-    fileSets.push(validateFileSet({src: matcher.from, files, metadata, destination: matcher.to}))
+    fileSets.push(validateFileSet({ src: matcher.from, files, metadata, destination: matcher.to }))
   }
 
   if (isElectronCompile) {
@@ -190,14 +197,18 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   for (const info of deps) {
     const source = info.dir
-    const destination = getDestinationPath(source, {src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any})
+    const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
     const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(source, info.deps.map(it => it.name), nodeModuleExcludedExts)
-    result[index++] = validateFileSet({src: source, destination, files, metadata: copier.metadata})
+    const files = await copier.collectNodeModules(
+      source,
+      info.deps.map(it => it.name),
+      nodeModuleExcludedExts
+    )
+    result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
   }
   return result
 }
@@ -205,22 +216,28 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
   log.info("compiling using electron-compile")
 
-  const electronCompileCache = await packager.tempDirManager.getTempDir({prefix: "electron-compile-cache"})
+  const electronCompileCache = await packager.tempDirManager.getTempDir({ prefix: "electron-compile-cache" })
   const cacheDir = path.join(electronCompileCache, ".cache")
   // clear and create cache dir
-  await ensureDir(cacheDir)
+  await mkdir(cacheDir, { recursive: true })
   const compilerHost = await createElectronCompilerHost(mainFileSet.src, cacheDir)
   const nextSlashIndex = mainFileSet.src.length + 1
   // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
-  await BluebirdPromise.map(mainFileSet.files, file => {
-    if (file.includes(NODE_MODULES_PATTERN) || file.includes(BOWER_COMPONENTS_PATTERN)
-      || !file.includes(path.sep, nextSlashIndex) // ignore not root files
-      || !mainFileSet.metadata.get(file)!.isFile()) {
-      return null
-    }
-    return compilerHost.compile(file)
-      .then(() => null)
-  }, CONCURRENCY)
+  await BluebirdPromise.map(
+    mainFileSet.files,
+    file => {
+      if (
+        file.includes(NODE_MODULES_PATTERN) ||
+        file.includes(BOWER_COMPONENTS_PATTERN) ||
+        !file.includes(path.sep, nextSlashIndex) || // ignore not root files
+        !mainFileSet.metadata.get(file)!.isFile()
+      ) {
+        return null
+      }
+      return compilerHost.compile(file).then(() => null)
+    },
+    CONCURRENCY
+  )
 
   await compilerHost.saveConfiguration()
 
@@ -231,19 +248,22 @@ async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, package
         metadata.set(file, fileStat)
       }
       return null
-    }
+    },
   })
 
   // add shim
   const shimPath = `${mainFileSet.src}${path.sep}${ELECTRON_COMPILE_SHIM_FILENAME}`
   mainFileSet.files.push(shimPath)
-  mainFileSet.metadata.set(shimPath, {isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false} as any)
+  mainFileSet.metadata.set(shimPath, { isFile: () => true, isDirectory: () => false, isSymbolicLink: () => false } as any)
   if (mainFileSet.transformedFiles == null) {
     mainFileSet.transformedFiles = new Map()
   }
-  mainFileSet.transformedFiles.set(mainFileSet.files.length - 1, `
+  mainFileSet.transformedFiles.set(
+    mainFileSet.files.length - 1,
+    `
 'use strict';
 require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
-`)
-  return {src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination}
+`
+  )
+  return { src: electronCompileCache, files: cacheFiles, metadata, destination: mainFileSet.destination }
 }

@@ -1,15 +1,16 @@
 import { Arch, AsyncTaskManager, log } from "builder-util"
-import sanitizeFileName from "sanitize-filename"
 import { DIR_TARGET, Platform, Target, TargetSpecificOptions } from "./core"
 import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import { RemoteBuilder } from "./remoteBuilder/RemoteBuilder"
 import AppImageTarget from "./targets/AppImageTarget"
+import FlatpakTarget from "./targets/FlatpakTarget"
 import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
+import { sanitizeFileName } from "./util/filename"
 
 export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
@@ -41,12 +42,14 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
         continue
       }
 
-      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FpmTarget | null = (() => {
+      const targetClass: typeof AppImageTarget | typeof SnapTarget | typeof FlatpakTarget | typeof FpmTarget | null = (() => {
         switch (name) {
           case "appimage":
             return require("./targets/AppImageTarget").default
           case "snap":
             return require("./targets/snap").default
+          case "flatpak":
+            return require("./targets/FlatpakTarget").default
           case "deb":
           case "rpm":
           case "sh":
@@ -91,7 +94,10 @@ class RemoteTarget extends Target {
   }
 
   constructor(private readonly target: Target, private readonly remoteBuilder: RemoteBuilder) {
-    super(target.name, true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */)
+    super(
+      target.name,
+      true /* all must be scheduled in time (so, on finishBuild RemoteBuilder will have all targets added - so, we must set isAsyncSupported to true (resolved promise is returned)) */
+    )
   }
 
   async finishBuild() {
@@ -106,7 +112,7 @@ class RemoteTarget extends Target {
   }
 
   private async doBuild(appOutDir: string, arch: Arch) {
-    log.info({target: this.target.name, arch: Arch[arch]}, "scheduling remote build")
+    log.info({ target: this.target.name, arch: Arch[arch] }, "scheduling remote build")
     await this.target.checkOptions()
     this.remoteBuilder.scheduleBuild(this.target, arch, appOutDir)
   }

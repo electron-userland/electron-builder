@@ -1,4 +1,5 @@
 import * as path from "path"
+import { homedir as getHomedir } from "os"
 
 export interface AppAdapter {
   readonly version: string
@@ -29,17 +30,15 @@ export interface AppAdapter {
 }
 
 export function getAppCacheDir() {
-  const homedir = require("os").homedir()
+  const homedir = getHomedir()
   // https://github.com/electron/electron/issues/1404#issuecomment-194391247
   let result: string
   if (process.platform === "win32") {
-    result = process.env.LOCALAPPDATA || path.join(homedir, "AppData", "Local")
-  }
-  else if (process.platform === "darwin") {
+    result = process.env["LOCALAPPDATA"] || path.join(homedir, "AppData", "Local")
+  } else if (process.platform === "darwin") {
     result = path.join(homedir, "Library", "Application Support", "Caches")
-  }
-  else {
-    result = process.env.XDG_CACHE_HOME || path.join(homedir, ".cache")
+  } else {
+    result = process.env["XDG_CACHE_HOME"] || path.join(homedir, ".cache")
   }
   return result
 }

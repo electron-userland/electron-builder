@@ -1,5 +1,5 @@
 /.vscode/
-/node_modules/
+node_modules
 *.log
 
 /.idea/compiler.xml
@@ -16,7 +16,6 @@ out/
 
 /packages/dmg-builder/vendor/
 /packages/electron-builder/README.md
-#/packages/app-builder-lib/scheme.json
 
 /scripts/jsdoc/out/
 /scripts/renderer/out/
@@ -24,10 +23,7 @@ out/
 electron-builder-*.d.ts
 
 /site/
-/docs/
 
-/.yarn/cache
-/.yarn/unplugged
-/.yarn/build-state.yml
-/.yarn/install-state.gz
-/.pnp.*
+tsconfig.tsbuildinfo
+
+.pnpm-store/

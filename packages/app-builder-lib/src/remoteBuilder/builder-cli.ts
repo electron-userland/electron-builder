@@ -1,7 +1,9 @@
+import { PublishOptions, UploadTask } from "electron-publish"
 import { readJson, writeFile } from "fs-extra"
 import * as path from "path"
-import { UploadTask, Arch, Packager, PackagerOptions, PublishOptions } from ".."
-import { InvalidConfigurationError } from "builder-util"
+import { Arch, InvalidConfigurationError } from "builder-util"
+import { Packager } from "../packager"
+import { PackagerOptions } from "../packagerApi"
 import SnapTarget from "../targets/snap"
 
 if (process.env.BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG == null) {
@@ -49,7 +51,7 @@ async function doBuild(data: BuildTask): Promise<void> {
   const packager = new Packager(options)
 
   const artifacts: Array<ArtifactInfo> = []
-  const relativePathOffset = projectOutDir!!.length + 1
+  const relativePathOffset = projectOutDir!.length + 1
   packager.artifactCreated(event => {
     if (event.file == null) {
       return
@@ -68,33 +70,37 @@ async function doBuild(data: BuildTask): Promise<void> {
   packager.stageDirPathCustomizer = (target, packager, arch) => {
     // snap creates a lot of files and so, we cannot use tmpfs to avoid out of memory error
     const parentDir = target.name === "snap" && !(target as SnapTarget).isUseTemplateApp ? projectOutDir : projectDir
-    return parentDir + path.sep + `__${target.name}-${Arch[arch]}`
+    return `${parentDir}${path.sep}__${target.name}-${Arch[arch]}`
   }
 
   // _build method expects final effective configuration - packager.options.config is ignored
-  await packager._build({
-    ...info.configuration,
-    publish: null,
-    beforeBuild: null,
-    afterPack: null,
-    afterSign: null,
-    afterAllArtifactBuild: null,
-    onNodeModuleFile: null,
-    directories: {
-      output: projectOutDir,
-      buildResources: projectDir + path.sep + info.buildResourceDirName
+  await packager._build(
+    {
+      ...info.configuration,
+      publish: null,
+      beforeBuild: null,
+      afterPack: null,
+      afterSign: null,
+      afterAllArtifactBuild: null,
+      onNodeModuleFile: null,
+      directories: {
+        output: projectOutDir,
+        buildResources: `${projectDir}${path.sep}${info.buildResourceDirName}`,
+      },
     },
-  }, info.metadata, info.devMetadata, info.repositoryInfo)
+    info.metadata,
+    info.devMetadata,
+    info.repositoryInfo
+  )
 
   // writeJson must be not used because it adds unwanted \n as last file symbol
-  await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), JSON.stringify(artifacts))
+  await writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!, "__build-result.json"), JSON.stringify(artifacts))
 }
 
-doBuild(JSON.parse(process.argv[2]))
-  .catch(error => {
-    process.exitCode = 0
-    return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!!, "__build-result.json"), (error.stack || error).toString())
-  })
+doBuild(JSON.parse(process.argv[2])).catch(error => {
+  process.exitCode = 0
+  return writeFile(path.join(process.env.APP_BUILDER_TMP_DIR!, "__build-result.json"), (error.stack || error).toString())
+})
 
 interface TargetInfo {
   name: string

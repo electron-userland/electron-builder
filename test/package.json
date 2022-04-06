@@ -1,41 +1,40 @@
 {
   "name": "@electron-builder/test",
+  "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "7zip-bin": "~5.0.3",
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-transform-typescript": "^7.11.0",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/preset-typescript": "^7.10.4",
-    "@jest/core": "^26.4.2",
-    "@types/ci-info": "^2.0.0",
-    "@types/fs-extra": "^9.0.1",
-    "@types/jest": "^26.0.14",
-    "@types/js-yaml": "^3.12.5",
-    "@types/node": "^14.11.2",
-    "@types/semver": "^7.3.4",
+    "7zip-bin": "~5.1.1",
+    "@jest/core": "^27.0.6",
     "app-builder-lib": "workspace:*",
-    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.0",
-    "ci-info": "^2.0.0",
-    "decompress-zip": "^0.2.2",
-    "depcheck": "^1.2.0",
+    "chalk": "^4.1.1",
+    "ci-info": "^3.1.1",
+    "decompress-zip": "^0.3.3",
+    "depcheck": "1.4.2",
     "dmg-builder": "workspace:*",
     "electron-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",
+    "electron-osx-sign": "^0.5.0",
     "electron-publish": "workspace:*",
     "electron-updater": "workspace:*",
-    "fs-extra": "^9.0.1",
-    "jest": "^26.4.2",
-    "jest-junit": "^11.1.0",
-    "js-yaml": "^3.14.0",
+    "fs-extra": "^10.0.0",
+    "jest": "^27.0.6",
+    "jest-junit": "^12.0.0",
+    "js-yaml": "^4.1.0",
     "path-sort": "^0.1.0",
-    "semver": "^7.3.2",
+    "semver": "^7.3.5",
     "stat-mode": "^1.0.0",
-    "temp-file": "^3.3.7",
-    "yargs": "^16.0.3"
+    "temp-file": "^3.4.0",
+    "yargs": "^17.0.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.11",
+    "@types/jest": "^26.0.23",
+    "@types/js-yaml": "^4.0.1",
+    "@types/semver": "^7.3.6",
+    "esbuild": "^0.12.14",
+    "esbuild-jest": "^0.5.0"
   },
   "jest": {
     "snapshotResolver": "<rootDir>/snapshotResolver.js",
@@ -44,8 +43,21 @@
       "src"
     ],
     "transformIgnorePatterns": [
-      "../.yarn"
+      "./node_modules",
+      "../node_modules",
+      "../packages"
     ],
+    "transform": {
+      "^.+\\.ts$": [
+        "esbuild-jest",
+        {
+          "sourcemap": "inline",
+          "loaders": {
+            ".ts": "ts"
+          }
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "[\\/]{1}helpers[\\/]{1}"
     ],

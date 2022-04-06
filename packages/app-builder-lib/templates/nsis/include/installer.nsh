@@ -206,7 +206,7 @@
       # The keepShortcuts mechanism IS enabled.
       # The desktop shortcut could exist in an obsolete location (due to name change).
       ${elseif} $oldDesktopLink != $newDesktopLink
-      ${orIf} ${FileExists} "$oldDesktopLink"
+      ${andIf} ${FileExists} "$oldDesktopLink"
         Rename $oldDesktopLink $newDesktopLink
         WinShell::UninstShortcut "$oldDesktopLink"
         WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"

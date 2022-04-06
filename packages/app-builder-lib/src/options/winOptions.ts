@@ -9,7 +9,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
    *
    * @default nsis
-  */
+   */
   readonly target?: TargetConfigType
 
   /**
@@ -31,7 +31,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The custom function (or path to file or module id) to sign Windows executable.
    */
-  readonly sign?: CustomWindowsSign| string | null
+  readonly sign?: CustomWindowsSign | string | null
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
    * Please see [Code Signing](/code-signing).
@@ -43,7 +43,7 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly certificatePassword?: string | null
   /**
-   * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
+   * The name of the subject of the signing certificate, which is often labeled with the field name `issued to`. Required only for EV Code Signing and works only on Windows (or on macOS if [Parallels Desktop](https://www.parallels.com/products/desktop/) Windows 10 virtual machines exits).
    */
   readonly certificateSubjectName?: string | null
   /**

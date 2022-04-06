@@ -47,3 +47,15 @@ Object {
   ],
 }
 `;
+
+exports[`wix args 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test WiX Args 1.1.0.msi",
+      "safeArtifactName": "Test-WiX-Args-1.1.0.msi",
+    },
+  ],
+}
+`;

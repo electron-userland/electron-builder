@@ -1,4 +1,5 @@
-import chalk, { Chalk } from "chalk"
+import { Chalk } from "chalk"
+import * as chalk from "chalk"
 import _debug from "debug"
 import WritableStream = NodeJS.WritableStream
 
@@ -19,10 +20,9 @@ export type LogLevel = "info" | "warn" | "debug" | "notice" | "error"
 export const PADDING = 2
 
 export class Logger {
-  constructor(protected readonly stream: WritableStream) {
-  }
+  constructor(protected readonly stream: WritableStream) {}
 
-  messageTransformer: ((message: string, level: LogLevel) => string) = it => it
+  messageTransformer: (message: string, level: LogLevel) => string = it => it
 
   filePath(file: string) {
     const cwd = process.cwd()
@@ -55,8 +55,7 @@ export class Logger {
   private doLog(message: string | undefined | Error, messageOrFields: Fields | null | string, level: LogLevel) {
     if (message === undefined) {
       this._doLog(messageOrFields as string, null, level)
-    }
-    else {
+    } else {
       this._doLog(message, messageOrFields as Fields | null, level)
     }
   }
@@ -65,8 +64,7 @@ export class Logger {
     // noinspection SuspiciousInstanceOfGuard
     if (message instanceof Error) {
       message = message.stack || message.toString()
-    }
-    else {
+    } else {
       message = message.toString()
     }
 
@@ -89,23 +87,19 @@ export class Logger {
     for (const name of fieldNames) {
       let fieldValue = fields[name]
       let valuePadding: string | null = null
+      // Remove unnecessary line breaks
       if (fieldValue != null && typeof fieldValue === "string" && fieldValue.includes("\n")) {
         valuePadding = " ".repeat(messagePadding + message.length + fieldPadding.length + 2)
-        fieldValue = "\n" + valuePadding + fieldValue.replace(/\n/g, `\n${valuePadding}`)
-      }
-      else if (Array.isArray(fieldValue)) {
+        fieldValue = fieldValue.replace(/\n\s*\n/g, `\n${valuePadding}`)
+      } else if (Array.isArray(fieldValue)) {
         fieldValue = JSON.stringify(fieldValue)
-      }
-      else if (typeof fieldValue === "object") {
-        // fieldValue = safeStringifyJson(fieldValue)
       }
 
       text += `${color(name)}=${fieldValue}`
       if (++counter !== fieldNames.length) {
         if (valuePadding == null) {
           text += " "
-        }
-        else {
+        } else {
           text += "\n" + valuePadding
         }
       }
@@ -116,8 +110,7 @@ export class Logger {
   log(message: string): void {
     if (printer == null) {
       this.stream.write(`${message}\n`)
-    }
-    else {
+    } else {
       printer(message)
     }
   }

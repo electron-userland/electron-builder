@@ -35,13 +35,14 @@ export class CancellationToken extends EventEmitter {
   private onCancel(handler: () => any) {
     if (this.cancelled) {
       handler()
-    }
-    else {
+    } else {
       this.once("cancel", handler)
     }
   }
 
-  createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error: Error) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
+  createPromise<R>(
+    callback: (resolve: (thenableOrResult: R | PromiseLike<R>) => void, reject: (error: Error) => void, onCancel: (callback: () => void) => void) => void
+  ): Promise<R> {
     if (this.cancelled) {
       return Promise.reject<R>(new CancellationError())
     }
@@ -51,8 +52,7 @@ export class CancellationToken extends EventEmitter {
         try {
           this.removeListener("cancel", cancelHandler)
           cancelHandler = null
-        }
-        catch (ignore) {
+        } catch (ignore) {
           // ignore
         }
       }
@@ -68,8 +68,7 @@ export class CancellationToken extends EventEmitter {
             addedCancelHandler()
             addedCancelHandler = null
           }
-        }
-        finally {
+        } finally {
           reject(new CancellationError())
         }
       }
@@ -106,8 +105,7 @@ export class CancellationToken extends EventEmitter {
   dispose() {
     try {
       this.removeParentCancelHandler()
-    }
-    finally {
+    } finally {
       this.removeAllListeners()
       this._parent = null
     }

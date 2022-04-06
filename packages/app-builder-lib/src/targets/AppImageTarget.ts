@@ -2,10 +2,9 @@ import { Arch, serializeToYaml } from "builder-util"
 import { outputFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import * as semver from "semver"
-import { AppImageOptions } from ".."
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
+import { AppImageOptions } from "../options/linuxOptions"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 import { executeAppBuilderAsJson, objectToArgs } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"
@@ -14,15 +13,18 @@ import { createStageDir } from "./targetUtil"
 
 // https://unix.stackexchange.com/questions/375191/append-to-sub-directory-inside-squashfs-file
 export default class AppImageTarget extends Target {
-  readonly options: AppImageOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
+  readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   private readonly desktopEntry: Lazy<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
-    this.desktopEntry = new Lazy<string>(() => helper.computeDesktopEntry(this.options, "AppRun --no-sandbox %U", {
-      "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-    }))
+    this.desktopEntry = new Lazy<string>(() => {
+      const args = this.options.executableArgs?.join(" ") || "--no-sandbox"
+      return helper.computeDesktopEntry(this.options, `AppRun ${args} %U`, {
+        "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
+      })
+    })
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -47,24 +49,32 @@ export default class AppImageTarget extends Target {
       createStageDir(this, packager, arch),
     ])
     const license = c[3]
-    const stageDir = c[4]!!
+    const stageDir = c[4]!
 
     const publishConfig = c[2]
     if (publishConfig != null) {
       await outputFile(path.join(packager.getResourcesDir(stageDir.dir), "app-update.yml"), serializeToYaml(publishConfig))
     }
 
-    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed({desktop: await this.desktopEntry.value})) {
+    if (
+      this.packager.packagerOptions.effectiveOptionComputed != null &&
+      (await this.packager.packagerOptions.effectiveOptionComputed({ desktop: await this.desktopEntry.value }))
+    ) {
       return
     }
 
     const args = [
       "appimage",
-      "--stage", stageDir.dir,
-      "--arch", Arch[arch],
-      "--output", artifactPath,
-      "--app", appOutDir,
-      "--configuration", (JSON.stringify({
+      "--stage",
+      stageDir.dir,
+      "--arch",
+      Arch[arch],
+      "--output",
+      artifactPath,
+      "--app",
+      appOutDir,
+      "--configuration",
+      JSON.stringify({
         productName: this.packager.appInfo.productName,
         productFilename: this.packager.appInfo.productFilename,
         desktopEntry: c[0],
@@ -72,7 +82,7 @@ export default class AppImageTarget extends Target {
         icons: c[1],
         fileAssociations: this.packager.fileAssociations,
         ...options,
-      })),
+      }),
     ]
     objectToArgs(args, {
       license,

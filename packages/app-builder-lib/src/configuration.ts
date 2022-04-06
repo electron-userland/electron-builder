@@ -1,8 +1,9 @@
 import { Arch } from "builder-util"
 import { BeforeBuildContext, Target } from "./core"
-import { ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { ElectronBrandingOptions, ElectronDownloadOptions } from "./electron/ElectronFramework"
+import { PrepareApplicationStageDirectoryOptions } from "./Framework"
 import { AppXOptions } from "./options/AppXOptions"
-import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
 import { PkgOptions } from "./options/pkgOptions"
@@ -29,6 +30,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name).
+   * If not specified inside of the `build` configuration, `productName` property defined at the top level of `package.json` is used. If not specified at the top level of `package.json`, [name property](https://docs.npmjs.com/files/package.json#name) is used.
    */
   readonly productName?: string | null
 
@@ -89,11 +91,21 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * AppImage options.
    */
   readonly appImage?: AppImageOptions | null
+  /**
+   * Flatpak options.
+   */
+  readonly flatpak?: FlatpakOptions | null
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null
   readonly p5p?: LinuxTargetSpecificOptions | null
   readonly apk?: LinuxTargetSpecificOptions | null
+
+  /**
+   * Whether to include *all* of the submodules node_modules directories
+   * @default false
+   */
+  includeSubNodeModules?: boolean
 
   /**
    * Whether to build the application native dependencies from source.
@@ -129,9 +141,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly electronCompile?: boolean
 
   /**
-   * The path to custom Electron build (e.g. `~/electron/out/R`).
+   * Returns the path to custom Electron build (e.g. `~/electron/out/R`). Zip files must follow the pattern `electron-v${version}-${platformName}-${arch}.zip`, otherwise it will be assumed to be an unpacked Electron app directory
    */
-  readonly electronDist?: string
+  readonly electronDist?: string | ((options: PrepareApplicationStageDirectoryOptions) => string)
 
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
@@ -139,16 +151,23 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly electronDownload?: ElectronDownloadOptions
 
   /**
+   * The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file.
+   */
+  readonly electronBranding?: ElectronBrandingOptions
+
+  /**
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
    */
   electronVersion?: string | null
 
   /**
-   * The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
+   * The name of a built-in configuration preset (currently, only `react-cra` is supported) or any number of paths to config files (relative to project dir).
+   *
+   * The latter allows to mixin a config from multiple other configs, as if you `Object.assign` them, but properly combine `files` glob patterns.
    *
    * If `react-scripts` in the app dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
    */
-  extends?: string | null
+  extends?: Array<string> | string | null
 
   /**
    * Inject properties to `package.json`.
@@ -178,6 +197,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly framework?: string | null
 
   /**
+   * The function (or path to file or module id) to be [run before pack](#beforepack)
+   */
+  readonly beforePack?: ((context: BeforePackContext) => Promise<any> | any) | string | null
+
+  /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
    */
   readonly afterPack?: ((context: AfterPackContext) => Promise<any> | any) | string | null
@@ -199,6 +223,10 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly afterAllArtifactBuild?: ((context: BuildResult) => Promise<Array<string>> | Array<string>) | string | null
   /**
+   * MSI project created on disk - not packed into .msi package yet.
+   */
+  readonly msiProjectCreated?: ((path: string) => Promise<any> | any) | string | null
+  /**
    * Appx manifest created on disk - not packed into .appx package yet.
    */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
@@ -211,7 +239,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    *
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
-  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string| null
+  readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
 
   /**
    * Whether to build using Electron Build Service if target not supported on current OS.
@@ -231,9 +259,16 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageScripts?: boolean
+
+  /**
+   * Whether to remove `keywords` field from `package.json` files.
+   *
+   * @default true
+   */
+  readonly removePackageKeywords?: boolean
 }
 
-export interface AfterPackContext {
+interface PackContext {
   readonly outDir: string
   readonly appOutDir: string
   readonly packager: PlatformPackager<any>
@@ -241,6 +276,8 @@ export interface AfterPackContext {
   readonly arch: Arch
   readonly targets: Array<Target>
 }
+export type AfterPackContext = PackContext
+export type BeforePackContext = PackContext
 
 export interface MetadataDirectories {
   /**

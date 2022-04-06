@@ -99,3 +99,18 @@ Name "${PRODUCT_NAME}"
 
   ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
 !macroend
+
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+    SetOutPath $INSTDIR
+    LogSet ${SETTING}
+  !endif
+!macroend
+ 
+!define LogText "!insertmacro LogTextMacroEB"
+!macro LogTextMacroEB INPUT_TEXT
+  !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
+    LogText ${INPUT_TEXT}
+  !endif
+!macroend

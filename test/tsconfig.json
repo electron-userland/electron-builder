@@ -2,12 +2,27 @@
   "extends": "../tsconfig-base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "module": "commonjs",
     "outDir": "out",
     "skipLibCheck": true,
-    "baseUrl": "../packages",
-    "esModuleInterop": true
+    "baseUrl": "../packages"
   },
+  "references": [
+    {
+      "path": "../packages/builder-util"
+    },
+    {
+      "path": "../packages/builder-util-runtime"
+    },
+    {
+      "path": "../packages/electron-builder"
+    },
+    {
+      "path": "../packages/electron-publish"
+    },
+    {
+      "path": "../packages/electron-updater"
+    }
+  ],
   "declaration": false,
   "include": [
     "../typings/*.d.ts",

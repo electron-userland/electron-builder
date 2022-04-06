@@ -1,27 +1,28 @@
 import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { safeStringifyJson } from "builder-util-runtime"
-import chalk from "chalk"
-import { ChildProcess, execFile, ExecFileOptions, spawn as _spawn, SpawnOptions } from "child_process"
+import * as chalk from "chalk"
+import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
+import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { safeDump } from "js-yaml"
+import { dump } from "js-yaml"
 import * as path from "path"
-import sourceMapSupport from "source-map-support"
 import { debug, log } from "./log"
+import { install as installSourceMap } from "source-map-support"
 
 if (process.env.JEST_WORKER_ID == null) {
-  sourceMapSupport.install()
+  installSourceMap()
 }
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export { log, debug } from "./log"
-export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
+export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString, defaultArchFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 
-export { copyFile } from "./fs"
+export { copyFile, exists } from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"
@@ -29,7 +30,7 @@ export { deepAssign } from "./deepAssign"
 export const debug7z = _debug("electron-builder:7z")
 
 export function serializeToYaml(object: any, skipInvalid = false, noRefs = false) {
-  return safeDump(object, {
+  return dump(object, {
     lineWidth: 8000,
     skipInvalid,
     noRefs,
@@ -52,12 +53,12 @@ function getProcessEnv(env: { [key: string]: string | undefined } | undefined | 
   }
 
   const finalEnv = {
-    ...(env || process.env)
+    ...(env || process.env),
   }
 
   // without LC_CTYPE dpkg can returns encoded unicode symbols
   // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-  const locale = process.platform === "linux" ? (process.env.LANG || "C.UTF-8") : "en_US.UTF-8"
+  const locale = process.platform === "linux" ? process.env.LANG || "C.UTF-8" : "en_US.UTF-8"
   finalEnv.LANG = locale
   finalEnv.LC_CTYPE = locale
   finalEnv.LC_ALL = locale
@@ -76,7 +77,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
       }
 
       if (options.env != null) {
-        const diffEnv = {...options.env}
+        const diffEnv = { ...options.env }
         for (const name of Object.keys(process.env)) {
           if (process.env[name] === options.env[name]) {
             delete diffEnv[name]
@@ -90,45 +91,49 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecFi
   }
 
   return new Promise<string>((resolve, reject) => {
-    execFile(file, args, {
-    ...options,
-    maxBuffer: 1000 * 1024 * 1024,
-    env: getProcessEnv(options == null ? null : options.env),
-  }, (error, stdout, stderr) => {
-      if (error == null) {
-        if (isLogOutIfDebug && log.isDebugEnabled) {
-          const logFields: any = {
-            file,
+    execFile(
+      file,
+      args,
+      {
+        ...options,
+        maxBuffer: 1000 * 1024 * 1024,
+        env: getProcessEnv(options == null ? null : options.env),
+      },
+      (error, stdout, stderr) => {
+        if (error == null) {
+          if (isLogOutIfDebug && log.isDebugEnabled) {
+            const logFields: any = {
+              file,
+            }
+            if (stdout.length > 0) {
+              logFields.stdout = stdout
+            }
+            if (stderr.length > 0) {
+              logFields.stderr = stderr
+            }
+
+            log.debug(logFields, "executed")
           }
-          if (stdout.length > 0) {
-            logFields.stdout = stdout
+          resolve(stdout.toString())
+        } else {
+          let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
+          if (stdout.length !== 0) {
+            if (file.endsWith("wine")) {
+              stdout = stdout.toString()
+            }
+            message += `\n${chalk.yellow(stdout.toString())}`
           }
-          if (stderr.length > 0) {
-            logFields.stderr = stderr
+          if (stderr.length !== 0) {
+            if (file.endsWith("wine")) {
+              stderr = stderr.toString()
+            }
+            message += `\n${chalk.red(stderr.toString())}`
           }
 
-          log.debug(logFields, "executed")
+          reject(new Error(message))
         }
-        resolve(stdout.toString())
       }
-      else {
-        let message = chalk.red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
-        if (stdout.length !== 0) {
-          if (file.endsWith("wine")) {
-            stdout = stdout.toString()
-          }
-          message += `\n${chalk.yellow(stdout.toString())}`
-        }
-        if (stderr.length !== 0) {
-          if (file.endsWith("wine")) {
-            stderr = stderr.toString()
-          }
-          message += `\n${chalk.red(stderr.toString())}`
-        }
-
-        reject(new Error(message))
-      }
-    })
+    )
   })
 }
 
@@ -168,33 +173,36 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   logSpawn(command, args, options)
   try {
     return _spawn(command, args, options)
-  }
-  catch (e) {
+  } catch (e) {
     throw new Error(`Cannot spawn ${command}: ${e.stack || e}`)
   }
 }
 
 export function spawnAndWrite(command: string, args: Array<string>, data: string, options?: SpawnOptions) {
-  const childProcess = doSpawn(command, args, options, {isPipeInput: true})
+  const childProcess = doSpawn(command, args, options, { isPipeInput: true })
   const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
   return new Promise<any>((resolve, reject) => {
-    handleProcess("close", childProcess, command, () => {
-      try {
-        clearTimeout(timeout)
+    handleProcess(
+      "close",
+      childProcess,
+      command,
+      () => {
+        try {
+          clearTimeout(timeout)
+        } finally {
+          resolve(undefined)
+        }
+      },
+      error => {
+        try {
+          clearTimeout(timeout)
+        } finally {
+          reject(error)
+        }
       }
-      finally {
-        resolve()
-      }
-    }, error => {
-      try {
-        clearTimeout(timeout)
-      }
-      finally {
-        reject(error)
-      }
-    })
+    )
 
-    childProcess.stdin!!.end(data)
+    childProcess.stdin!.end(data)
   })
 }
 
@@ -238,9 +246,8 @@ function handleProcess(event: string, childProcess: ChildProcess, command: strin
       if (resolve != null) {
         resolve(out)
       }
-    }
-    else {
-      reject(new ExecError(command, code, formatOut(out, "Output"), formatOut(errorOut, "Error output")))
+    } else {
+      reject(new ExecError(command, code, out, errorOut))
     }
   })
 }
@@ -252,10 +259,9 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
-  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code: string = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
-    super(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`);
-
-    (this as NodeJS.ErrnoException).code = code
+  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+    super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
+    ;(this as NodeJS.ErrnoException).code = code
   }
 }
 
@@ -275,8 +281,7 @@ export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
   const list = map.get(key)
   if (list == null) {
     map.set(key, [value])
-  }
-  else if (!list.includes(value)) {
+  } else if (!list.includes(value)) {
     list.push(value)
   }
 }
@@ -290,7 +295,7 @@ export function replaceDefault(inList: Array<string> | null | undefined, default
   if (index >= 0) {
     const list = inList.slice(0, index)
     list.push(...defaultList)
-    if (index !== (inList.length - 1)) {
+    if (index !== inList.length - 1) {
       list.push(...inList.slice(index + 1))
     }
     inList = list
@@ -320,7 +325,9 @@ export function isPullRequest() {
     return value && value !== "false"
   }
 
-  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  return (
+    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+  )
 }
 
 export function isEnvTrue(value: string | null | undefined) {
@@ -331,14 +338,18 @@ export function isEnvTrue(value: string | null | undefined) {
 }
 
 export class InvalidConfigurationError extends Error {
-  constructor(message: string, code: string = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
-    super(message);
-
-    (this as NodeJS.ErrnoException).code = code
+  constructor(message: string, code = "ERR_ELECTRON_BUILDER_INVALID_CONFIGURATION") {
+    super(message)
+    ;(this as NodeJS.ErrnoException).code = code
   }
 }
 
-export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (childProcess: ChildProcess) => void, extraOptions: SpawnOptions = {}, maxRetries = 0): Promise<string> {
+export function executeAppBuilder(
+  args: Array<string>,
+  childProcessConsumer?: (childProcess: ChildProcess) => void,
+  extraOptions: SpawnOptions = {},
+  maxRetries = 0
+): Promise<string> {
   const command = appBuilderPath
   const env: any = {
     ...process.env,
@@ -357,9 +368,9 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
   function runCommand() {
     return new Promise<string>((resolve, reject) => {
       const childProcess = doSpawn(command, args, {
-        env,
         stdio: ["ignore", "pipe", process.stdout],
-        ...extraOptions
+        ...extraOptions,
+        env,
       })
       if (childProcessConsumer != null) {
         childProcessConsumer(childProcess)
@@ -375,23 +386,20 @@ export function executeAppBuilder(args: Array<string>, childProcessConsumer?: (c
 
   if (maxRetries === 0) {
     return runCommand()
-  }
-  else {
+  } else {
     return retry(runCommand, maxRetries, 1000)
   }
 }
 
-async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
   try {
     return await task()
-  }
-  catch (error) {
+  } catch (error) {
     log.info(`Above command failed, retrying ${retriesLeft} more times`)
     if (retriesLeft > 0) {
       await new Promise(resolve => setTimeout(resolve, interval))
       return await retry(task, retriesLeft - 1, interval)
-    }
-    else {
+    } else {
       throw error
     }
   }

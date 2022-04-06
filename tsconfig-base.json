@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "esnext",
+    "target": "es2019",
+    "module": "CommonJS",
+    "esModuleInterop": false,
+    "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-
+    "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,
     "noFallthroughCasesInSwitch": true,

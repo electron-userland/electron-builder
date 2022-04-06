@@ -1,29 +1,35 @@
 {
   "name": "electron-updater",
-  "version": "4.3.5",
+  "version": "5.0.0",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-updater"
+  },
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.3.4",
+    "@types/semver": "^7.3.6",
     "builder-util-runtime": "workspace:*",
-    "fs-extra": "^9.0.1",
-    "js-yaml": "^3.14.0",
-    "lazy-val": "^1.0.4",
+    "fs-extra": "^10.0.0",
+    "js-yaml": "^4.1.0",
+    "lazy-val": "^1.0.5",
+    "lodash.escaperegexp": "^4.1.2",
     "lodash.isequal": "^4.5.0",
-    "semver": "^7.3.2"
+    "semver": "^7.3.5"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.1",
-    "@types/js-yaml": "^3.12.5",
-    "@types/lodash.isequal": "^4.5.5"
+    "@types/fs-extra": "9.0.13",
+    "@types/js-yaml": "4.0.3",
+    "@types/lodash.escaperegexp": "4.1.6",
+    "@types/lodash.isequal": "4.5.5"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {
