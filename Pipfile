@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 mkdocs-material = "*"
-mkdocs = ">=1.2.3"
+mkdocs = "==1.2.4"
 markdown-include = "*"
 pymdown-extensions = "*"
 pygments = "*"
