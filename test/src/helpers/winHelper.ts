@@ -2,15 +2,15 @@ import { walk } from "builder-util/out/fs"
 import { Arch, Platform } from "electron-builder"
 import { readAsarJson } from "app-builder-lib/out/asar/asar"
 import { outputFile } from "fs-extra"
-import { promises as fs } from "fs"
-import { safeLoad } from "js-yaml"
+import * as fs from "fs/promises"
+import { load } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./fileAssert"
 import { PackedContext } from "./packTester"
 import { diff, WineManager } from "./wine"
 
 export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
-  const data = safeLoad(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
+  const data = load(await fs.readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8")) as any
   if (requireCodeSign) {
     expect(data.publisherName).toEqual(["Foo, Inc"])
     delete data.publisherName
@@ -23,8 +23,7 @@ export async function checkHelpers(resourceDir: string, isPackElevateHelper: boo
   const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
   if (isPackElevateHelper) {
     await assertThat(elevateHelperExecutable).isFile()
-  }
-  else {
+  } else {
     await assertThat(elevateHelperExecutable).doesNotExist()
   }
 }
@@ -44,7 +43,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
   }
 
   function listFiles() {
-    return walk(driveC, null, {consume: walkFilter})
+    return walk(driveC, null, { consume: walkFilter })
   }
 
   let fsBefore = await listFiles()
@@ -71,8 +70,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
 
   if (packElevateHelper) {
     await assertThat(path.join(instDir, name, "resources", "elevate.exe")).isFile()
-  }
-  else {
+  } else {
     await assertThat(path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
   }
 

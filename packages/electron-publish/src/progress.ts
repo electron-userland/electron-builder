@@ -5,11 +5,11 @@
  */
 
 export abstract class ProgressBar {
-  private stream: any
+  private readonly stream: any
 
   private current = 0
   total = 0
-  private width: number
+  private readonly width: number
 
   private chars: any
   private tokens: any = null
@@ -51,7 +51,7 @@ export abstract class ProgressBar {
     this.chars = {
       complete: options.complete || "=",
       incomplete: options.incomplete || "-",
-      head: options.head || (options.complete || "=")
+      head: options.head || options.complete || "=",
     }
   }
 
@@ -87,7 +87,7 @@ export abstract class ProgressBar {
 
     const percent = ratio * 100
     const elapsed = Date.now() - this.start
-    const eta = percent === 100 ? 0 : (elapsed * (this.total / this.current - 1))
+    const eta = percent === 100 ? 0 : elapsed * (this.total / this.current - 1)
     const rate = this.current / (elapsed / 1000)
 
     /* populate the bar template with percentages and timestamps */
@@ -95,7 +95,7 @@ export abstract class ProgressBar {
       .replace(":current", this.current.toString())
       .replace(":total", this.total.toString())
       .replace(":elapsed", isNaN(elapsed) ? "0.0" : (elapsed / 1000).toFixed(1))
-      .replace(":eta", (isNaN(eta) || !isFinite(eta)) ? "0.0" : (eta / 1000).toFixed(1))
+      .replace(":eta", isNaN(eta) || !isFinite(eta) ? "0.0" : (eta / 1000).toFixed(1))
       .replace(":percent", percent.toFixed(0) + "%")
       .replace(":rate", Math.round(rate).toString())
 
@@ -112,7 +112,7 @@ export abstract class ProgressBar {
 
     /* add head to the complete string */
     if (completeLength > 0) {
-      complete = complete.slice(0, -1) + this.chars.head
+      complete = `${complete.slice(0, -1)}${this.chars.head}`
     }
 
     /* fill in the actual progress bar */
@@ -172,8 +172,7 @@ export class ProgressCallback {
   private start = Date.now()
   private nextUpdate = this.start + 1000
 
-  constructor(private readonly progressBar: ProgressBar) {
-  }
+  constructor(private readonly progressBar: ProgressBar) {}
 
   update(transferred: number, total: number) {
     const now = Date.now()

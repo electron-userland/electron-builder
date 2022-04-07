@@ -1,4 +1,3 @@
-import { AsarIntegrityOptions } from "../asar/integrity"
 import { CompressionLevel, Publish, TargetConfiguration, TargetSpecificOptions } from "../core"
 import { FileAssociation } from "./FileAssociation"
 
@@ -17,7 +16,7 @@ export interface FileSet {
   filter?: Array<string> | string
 }
 
-export interface AsarOptions extends AsarIntegrityOptions {
+export interface AsarOptions {
   /**
    * Whether to automatically unpack executables files.
    * @default true
@@ -39,6 +38,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    * The [artifact file name template](/configuration/configuration#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null
+
+  /**
+   * The executable name. Defaults to `productName`.
+   */
+  readonly executableName?: string | null
 
   /**
    * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
@@ -115,6 +119,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   /** @private */
   cscKeyPassword?: string | null
+
+  readonly defaultArch?: string
 }
 
 export interface ReleaseInfo {
@@ -152,7 +158,7 @@ export interface Protocol {
 
   /**
    * The schemes. e.g. `["irc", "ircs"]`.
-  */
+   */
   readonly schemes: Array<string>
 
   /**

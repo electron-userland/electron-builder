@@ -1,11 +1,12 @@
 site_name: electron-builder
+site_url: https://www.electron.build
 use_directory_urls: false
 theme:
   feature:
     tabs: true
   name: material
-  logo:
-    icon: 'build'
+#  logo:
+#    icon: 'build'
   palette:
     primary: 'blue'
     accent: 'blue'
@@ -13,8 +14,12 @@ theme:
 repo_name: electron-userland/electron-builder
 repo_url: 'https://github.com/electron-userland/electron-builder'
 edit_uri: ""
-dev_addr: 0.0.0.0:8000
 strict: true
+
+extra:
+  analytics:
+    provider: google
+    property: UA-105592680-1
 
 extra_javascript:
   - extra.js
@@ -31,14 +36,12 @@ markdown_extensions:
   - toc:
       permalink: true
 
-google_analytics:
-  - 'UA-105592680-1'
-  - www.electron.build
-
 nav:
   - Introduction: index.md
   - Command Line Interface (CLI): cli.md
-  - Programmatic API: api/electron-builder.md
+  - Programmatic API:
+      API: api/electron-builder.md
+      Example: api/programmatic-usage.md
   - Donate: donate.md
 
   - Configuration:
@@ -76,5 +79,6 @@ nav:
       - Loading App Dependencies Manually: tutorials/loading-app-dependencies-manually.md
       - Two package.json Structure: tutorials/two-package-structure.md
       - macOS Kernel Extensions: tutorials/macos-kernel-extensions.md
-      - Release Using Channels: tutorials/release-using-channels.md
       - Sign a Windows app on macOS/Linux: tutorials/code-signing-windows-apps-on-unix.md
+      - Release Using Channels: tutorials/release-using-channels.md
+      - Test Update on s3 Locally: tutorials/test-update-on-s3-locally.md

@@ -30,7 +30,11 @@ Section
     HideWindow
   !endif
 
-  StrCpy $INSTDIR "$TEMP\${UNPACK_DIR_NAME}"
+  StrCpy $INSTDIR "$PLUGINSDIR\app"
+  !ifdef UNPACK_DIR_NAME
+    StrCpy $INSTDIR "$TEMP\${UNPACK_DIR_NAME}"
+  !endif
+
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
 
@@ -82,6 +86,6 @@ Section
 	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0" $0
   SetErrorLevel $0
 
-  SetOutPath $PLUGINSDIR
+  SetOutPath $EXEDIR
 	RMDir /r $INSTDIR
 SectionEnd

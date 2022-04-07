@@ -1,6 +1,13 @@
+<!--
+issue_labeler_regex_version=0
+--!>
+
 <!-- Which version of electron-builder are you using? -->
 <!-- Please always try to use latest version before reporting any issue. -->
-* **Version**: 
+* **Electron-Builder Version**: 
+
+<!-- Which version of node are you using? -->
+* **Node Version**: 
 
 <!-- Which version of electron are you using? -->
 <!-- Please verify if the error is electron related before reporting any issues. -->

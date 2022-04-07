@@ -1,10 +1,14 @@
 {
   "name": "electron-forge-maker-appimage",
-  "version": "22.8.1",
+  "version": "23.0.3",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-forge-maker-appimage"
+  },
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [

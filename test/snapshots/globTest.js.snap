@@ -99,7 +99,7 @@ Object {
 exports[`outside link 2`] = `
 Object {
   "offset": "5281",
-  "size": 4,
+  "size": "@size",
 }
 `;
 

@@ -1,12 +1,11 @@
-import { emptyDir, remove } from "fs-extra"
 import * as path from "path"
 import { Target, AppInfo } from "../"
 import { Arch, debug } from "builder-util"
 import { PlatformPackager } from "../platformPackager"
+import * as fs from "fs/promises"
 
 export class StageDir {
-  constructor(readonly dir: string) {
-  }
+  constructor(readonly dir: string) {}
 
   getTempFile(name: string) {
     return this.dir + path.sep + name
@@ -14,7 +13,7 @@ export class StageDir {
 
   cleanup() {
     if (!debug.enabled || process.env.ELECTRON_BUILDER_REMOVE_STAGE_EVEN_IF_DEBUG === "true") {
-      return remove(this.dir)
+      return fs.rm(this.dir, { recursive: true, force: true })
     }
     return Promise.resolve()
   }
@@ -30,7 +29,8 @@ export async function createStageDir(target: Target, packager: PlatformPackager<
 
 export async function createStageDirPath(target: Target, packager: PlatformPackager<any>, arch: Arch): Promise<string> {
   const tempDir = packager.info.stageDirPathCustomizer(target, packager, arch)
-  await emptyDir(tempDir)
+  await fs.rm(tempDir, { recursive: true, force: true })
+  await fs.mkdir(tempDir, { recursive: true })
   return tempDir
 }
 

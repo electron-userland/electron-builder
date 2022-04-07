@@ -14,7 +14,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
-  */
+   */
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
@@ -170,6 +170,28 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Regex or an array of regex's that signal skipping signing a file.
    */
   readonly signIgnore?: Array<string> | string | null
+
+  /**
+   * Specify the URL of the timestamp authority server
+   */
+  readonly timestamp?: string | null
+
+  /**
+   * Whether to merge ASAR files for different architectures or not.
+   *
+   * This option has no effect unless building for "universal" arch.
+   * @default true
+   */
+  readonly mergeASARs?: boolean
+
+  /**
+   * Minimatch pattern of paths that are allowed to be present in one of the
+   * ASAR files, but not in the other.
+   *
+   * This option has no effect unless building for "universal" arch and applies
+   * only if `mergeASARs` is `true`.
+   */
+  readonly singleArchFiles?: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

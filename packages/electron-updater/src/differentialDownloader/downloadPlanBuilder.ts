@@ -2,7 +2,8 @@ import { BlockMap, BlockMapFile } from "builder-util-runtime/out/blockMapApi"
 import { Logger } from "../main"
 
 export enum OperationKind {
-  COPY, DOWNLOAD
+  COPY,
+  DOWNLOAD,
 }
 
 export interface Operation {
@@ -33,10 +34,10 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
     throw new Error(`no file ${name} in old blockmap`)
   }
 
-  const newFile = nameToNewBlocks.get(name)!!
+  const newFile = nameToNewBlocks.get(name)!
   let changedBlockCount = 0
 
-  const {checksumToOffset: checksumToOldOffset, checksumToOldSize} = buildChecksumMap(nameToOldBlocks.get(name)!!, oldEntry.offset, logger)
+  const { checksumToOffset: checksumToOldOffset, checksumToOldSize } = buildChecksumMap(nameToOldBlocks.get(name)!, oldEntry.offset, logger)
 
   let newOffset = blockMapFile.offset
   for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
@@ -54,8 +55,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
 
       if (lastOperation != null && lastOperation.kind === OperationKind.DOWNLOAD && lastOperation.end === newOffset) {
         lastOperation.end += blockSize
-      }
-      else {
+      } else {
         lastOperation = {
           kind: OperationKind.DOWNLOAD,
           start: newOffset,
@@ -64,14 +64,12 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
         }
         validateAndAdd(lastOperation, operations, checksum, i)
       }
-    }
-    else {
+    } else {
       // reuse data from old file
       if (lastOperation != null && lastOperation.kind === OperationKind.COPY && lastOperation.end === oldOffset) {
         lastOperation.end += blockSize
         // lastOperation.oldBlocks!!.push(checksum)
-      }
-      else {
+      } else {
         lastOperation = {
           kind: OperationKind.COPY,
           start: oldOffset,
@@ -84,21 +82,22 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   }
 
   if (changedBlockCount > 0) {
-    logger.info(`File${blockMapFile.name === "file" ? "" : (" " + blockMapFile.name)} has ${changedBlockCount} changed blocks`)
+    logger.info(`File${blockMapFile.name === "file" ? "" : " " + blockMapFile.name} has ${changedBlockCount} changed blocks`)
   }
   return operations
 }
 
-const isValidateOperationRange = process.env.DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES === "true"
+const isValidateOperationRange = process.env["DIFFERENTIAL_DOWNLOAD_PLAN_BUILDER_VALIDATE_RANGES"] === "true"
 
 function validateAndAdd(operation: Operation, operations: Array<Operation>, checksum: string, index: number): void {
   if (isValidateOperationRange && operations.length !== 0) {
     const lastOperation = operations[operations.length - 1]
     if (lastOperation.kind === operation.kind && operation.start < lastOperation.end && operation.start > lastOperation.start) {
-      const min = [lastOperation.start, lastOperation.end, operation.start, operation.end].reduce((p, v) => p < v ? p : v)
-      throw new Error(`operation (block index: ${index}, checksum: ${checksum}, kind: ${OperationKind[operation.kind]}) overlaps previous operation (checksum: ${checksum}):\n` +
-      `abs: ${lastOperation.start} until ${lastOperation.end} and ${operation.start} until ${operation.end}\n` +
-      `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`
+      const min = [lastOperation.start, lastOperation.end, operation.start, operation.end].reduce((p, v) => (p < v ? p : v))
+      throw new Error(
+        `operation (block index: ${index}, checksum: ${checksum}, kind: ${OperationKind[operation.kind]}) overlaps previous operation (checksum: ${checksum}):\n` +
+          `abs: ${lastOperation.start} until ${lastOperation.end} and ${operation.start} until ${operation.end}\n` +
+          `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`
       )
     }
   }
@@ -110,7 +109,6 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
   const checksumToOffset = new Map<string, number>()
   const checksumToSize = new Map<string, number>()
   let offset = fileOffset
-  const debugLog = logger.debug
   for (let i = 0; i < file.checksums.length; i++) {
     const checksum = file.checksums[i]
     const size = file.sizes[i]
@@ -119,14 +117,13 @@ function buildChecksumMap(file: BlockMapFile, fileOffset: number, logger: Logger
     if (existing === undefined) {
       checksumToOffset.set(checksum, offset)
       checksumToSize.set(checksum, size)
-    }
-    else if (debugLog != null) {
+    } else if (logger.debug != null) {
       const sizeExplanation = existing === size ? "(same size)" : `(size: ${existing}, this size: ${size})`
-      debugLog(`${checksum} duplicated in blockmap ${sizeExplanation}, it doesn't lead to broken differential downloader, just corresponding block will be skipped)`)
+      logger.debug(`${checksum} duplicated in blockmap ${sizeExplanation}, it doesn't lead to broken differential downloader, just corresponding block will be skipped)`)
     }
     offset += size
   }
-  return {checksumToOffset, checksumToOldSize: checksumToSize}
+  return { checksumToOffset, checksumToOldSize: checksumToSize }
 }
 
 function buildBlockFileMap(list: Array<BlockMapFile>): Map<string, BlockMapFile> {

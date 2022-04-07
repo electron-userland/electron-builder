@@ -16,19 +16,17 @@ function addAllPatternIfNeed(matcher: FileMatcher) {
 export abstract class FileCopyHelper {
   readonly metadata = new Map<string, Stats>()
 
-  protected constructor(protected readonly matcher: FileMatcher, readonly filter: Filter | null, protected readonly packager: Packager) {
-  }
+  protected constructor(protected readonly matcher: FileMatcher, readonly filter: Filter | null, protected readonly packager: Packager) {}
 
   protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {
       return null
     }
 
-    return readlink(file)
-      .then((linkTarget): any => {
-        // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
-        return this.handleSymlink(fileStat, file, parent, linkTarget)
-      })
+    return readlink(file).then((linkTarget): any => {
+      // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
+      return this.handleSymlink(fileStat, file, parent, linkTarget)
+    })
   }
 
   private handleSymlink(fileStat: Stats, file: string, parent: string, linkTarget: string): Promise<Stats> | null {
@@ -36,14 +34,12 @@ export abstract class FileCopyHelper {
     const link = path.relative(this.matcher.from, resolvedLinkTarget)
     if (link.startsWith("..")) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
-      return stat(resolvedLinkTarget)
-        .then(targetFileStat => {
-          this.metadata.set(file, targetFileStat)
-          return targetFileStat
-        })
-    }
-    else {
-      const s = (fileStat as any)
+      return stat(resolvedLinkTarget).then(targetFileStat => {
+        this.metadata.set(file, targetFileStat)
+        return targetFileStat
+      })
+    } else {
+      const s = fileStat as any
       s.relativeLink = link
       s.linkRelativeToFile = path.relative(parent, resolvedLinkTarget)
     }
@@ -67,7 +63,7 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
   const filter = matcher.createFilter()
   return (file, fileStat) => {
     if (!nodeModulesFilter(file, fileStat)) {
-      return false
+      return !!packager.config.includeSubNodeModules
     }
     return filter(file, fileStat)
   }
@@ -75,8 +71,10 @@ function createAppFilter(matcher: FileMatcher, packager: Packager): Filter | nul
 
 /** @internal */
 export class AppFileWalker extends FileCopyHelper implements FileConsumer {
+  readonly matcherFilter: any
   constructor(matcher: FileMatcher, packager: Packager) {
     super(addAllPatternIfNeed(matcher), createAppFilter(matcher, packager), packager)
+    this.matcherFilter = matcher.createFilter()
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -87,10 +85,15 @@ export class AppFileWalker extends FileCopyHelper implements FileConsumer {
       // but do not filter if we inside node_modules dir
       // update: solution disabled, node module resolver should support such setup
       if (file.endsWith(nodeModulesSystemDependentSuffix)) {
-        return false
+        if (!this.packager.config.includeSubNodeModules) {
+          const matchesFilter = this.matcherFilter(file, fileStat)
+          if (!matchesFilter) {
+            // Skip the file
+            return false
+          }
+        }
       }
-    }
-    else {
+    } else {
       // save memory - no need to store stat for directory
       this.metadata.set(file, fileStat)
     }

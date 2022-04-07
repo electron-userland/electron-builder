@@ -30,7 +30,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -47,7 +46,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -64,7 +62,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -81,7 +78,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -98,7 +94,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -115,7 +110,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -132,7 +126,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac.zip",
@@ -149,7 +142,14 @@ Object {
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -162,13 +162,14 @@ exports[`generic, github and spaces 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -236,7 +237,22 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW_1.1.0_mac.zip",
+          },
+        ],
+        "path": "Test App ßW_1.1.0_mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW_1.1.0_mac.zip",
@@ -253,7 +269,14 @@ Object {
       "file": "Test App ßW_1.1.0_mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW_1.1.0_mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW_1.1.0_mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -266,13 +289,14 @@ exports[`mac artifactName  2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -312,7 +336,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -329,7 +352,14 @@ Object {
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -342,13 +372,14 @@ exports[`os macro 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -377,6 +408,7 @@ Object {
 exports[`os macro 3`] = `
 Array [
   "latest/mac/Test App ßW-1.1.0-mac.zip",
+  "latest/mac/Test App ßW-1.1.0-mac.zip.blockmap",
   "latest/mac/latest-mac.yml",
   "latest/linux/TestApp-1.1.0.zip",
 ]

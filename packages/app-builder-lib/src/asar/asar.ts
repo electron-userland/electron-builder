@@ -2,6 +2,18 @@ import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra"
 import * as path from "path"
 
+export interface ReadAsarHeader {
+  readonly header: string
+  readonly size: number
+}
+
+export interface NodeIntegrity {
+  algorithm: "SHA256"
+  hash: string
+  blockSize: number
+  blocks: Array<string>
+}
+
 /** @internal */
 export class Node {
   // we don't use Map because later it will be stringified
@@ -16,9 +28,10 @@ export class Node {
   executable?: boolean
 
   link?: string
+
+  integrity?: NodeIntegrity
 }
 
-/** @internal */
 export class AsarFilesystem {
   private offset = 0
 
@@ -66,20 +79,22 @@ export class AsarFilesystem {
     return result
   }
 
-  addFileNode(file: string, dirNode: Node, size: number, unpacked: boolean, stat: Stats): Node {
+  addFileNode(file: string, dirNode: Node, size: number, unpacked: boolean, stat: Stats, integrity?: NodeIntegrity): Node {
     if (size > 4294967295) {
       throw new Error(`${file}: file size cannot be larger than 4.2GB`)
     }
 
     const node = new Node()
     node.size = size
+    if (integrity) {
+      node.integrity = integrity
+    }
     if (unpacked) {
       node.unpacked = true
-    }
-    else {
+    } else {
       // electron expects string
       node.offset = this.offset.toString()
-      if (process.platform !== "win32" && (stat.mode & 0o100)) {
+      if (process.platform !== "win32" && stat.mode & 0o100) {
         node.executable = true
       }
       this.offset += node.size
@@ -96,11 +111,11 @@ export class AsarFilesystem {
   }
 
   getNode(p: string): Node | null {
-    const node = this.searchNodeFromDirectory(path.dirname(p), false)!!
-    return node.files!![path.basename(p)]
+    const node = this.searchNodeFromDirectory(path.dirname(p), false)!
+    return node.files![path.basename(p)]
   }
 
-  getFile(p: string, followLinks: boolean = true): Node {
+  getFile(p: string, followLinks = true): Node {
     const info = this.getNode(p)!
     // if followLinks is false we don't resolve symlinks
     return followLinks && info.link != null ? this.getFile(info.link) : info
@@ -115,7 +130,7 @@ export class AsarFilesystem {
   }
 }
 
-export async function readAsar(archive: string): Promise<AsarFilesystem> {
+export async function readAsarHeader(archive: string): Promise<ReadAsarHeader> {
   const fd = await open(archive, "r")
   let size: number
   let headerBuf
@@ -131,13 +146,16 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
     if ((await read(fd, headerBuf, 0, size, null as any)).bytesRead !== size) {
       throw new Error("Unable to read header")
     }
-  }
-  finally {
+  } finally {
     await close(fd)
   }
 
-  const headerPickle = createFromBuffer(headerBuf!)
-  const header = headerPickle.createIterator().readString()
+  const headerPickle = createFromBuffer(headerBuf)
+  return { header: headerPickle.createIterator().readString(), size }
+}
+
+export async function readAsar(archive: string): Promise<AsarFilesystem> {
+  const { header, size } = await readAsarHeader(archive)
   return new AsarFilesystem(archive, JSON.parse(header), size)
 }
 
@@ -147,7 +165,7 @@ export async function readAsarJson(archive: string, file: string): Promise<any> 
 }
 
 async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, info: Node): Promise<Buffer> {
-  const size = info.size!!
+  const size = info.size!
   const buffer = Buffer.allocUnsafe(size)
   if (size <= 0) {
     return buffer
@@ -159,10 +177,9 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
 
   const fd = await open(filesystem.src, "r")
   try {
-    const offset = 8 + filesystem.headerSize + parseInt(info.offset!!, 10)
+    const offset = 8 + filesystem.headerSize + parseInt(info.offset!, 10)
     await read(fd, buffer, 0, size, offset)
-  }
-  finally {
+  } finally {
     await close(fd)
   }
   return buffer

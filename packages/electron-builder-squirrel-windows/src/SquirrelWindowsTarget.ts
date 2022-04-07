@@ -1,14 +1,14 @@
+import { sanitizeFileName } from "app-builder-lib/out/util/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
-  readonly options: SquirrelWindowsOptions = {...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows} as SquirrelWindowsOptions
+  readonly options: SquirrelWindowsOptions = { ...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows } as SquirrelWindowsOptions
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("squirrel")
@@ -37,8 +37,8 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const distOptions = await this.computeEffectiveDistOptions()
-    const squirrelBuilder = new SquirrelBuilder(distOptions as SquirrelOptions, installerOutDir, packager)
-    await squirrelBuilder.buildInstaller({setupFile, packageFile}, appOutDir, this.outDir, arch)
+    const squirrelBuilder = new SquirrelBuilder(distOptions, installerOutDir, packager)
+    await squirrelBuilder.buildInstaller({ setupFile, packageFile }, appOutDir, this.outDir, arch)
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
@@ -86,7 +86,9 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new InvalidConfigurationError("squirrelWindows.iconUrl is not specified, please see https://www.electron.build/configuration/squirrel-windows#SquirrelWindowsOptions-iconUrl")
+        throw new InvalidConfigurationError(
+          "squirrelWindows.iconUrl is not specified, please see https://www.electron.build/configuration/squirrel-windows#SquirrelWindowsOptions-iconUrl"
+        )
       }
     }
 
@@ -108,7 +110,7 @@ export default class SquirrelWindowsTarget extends Target {
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
       vendorPath: await getBinFromUrl("Squirrel.Windows", "1.9.0", "zJHk4CMATM7jHJ2ojRH1n3LkOnaIezDk5FAzJmlSEQSiEdRuB4GGLCegLDtsRCakfHIVfKh3ysJHLjynPkXwhQ=="),
-      ...this.options as any,
+      ...(this.options as any),
     }
 
     if (isEmptyOrSpaces(options.description)) {
@@ -130,10 +132,9 @@ export default class SquirrelWindowsTarget extends Target {
       const info = await packager.info.repositoryInfo
       if (info == null) {
         log.warn("remoteReleases set to true, but cannot get repository info")
-      }
-      else {
+      } else {
         options.remoteReleases = `https://github.com/${info.user}/${info.project}`
-        log.info({remoteReleases: options.remoteReleases}, `remoteReleases is set`)
+        log.info({ remoteReleases: options.remoteReleases }, `remoteReleases is set`)
       }
     }
 

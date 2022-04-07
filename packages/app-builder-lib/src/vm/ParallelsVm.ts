@@ -12,7 +12,10 @@ export async function parseVmList(debugLogger: DebugLogger) {
 
   // let match: Array<string> | null
   const result: Array<ParallelsVm> = []
-  for (const info of rawList.split("\n\n").map(it => it.trim()).filter(it => it.length > 0)) {
+  for (const info of rawList
+    .split("\n\n")
+    .map(it => it.trim())
+    .filter(it => it.length > 0)) {
     const vm: any = {}
     for (const line of info.split("\n")) {
       const meta = /^([^:("]+): (.*)$/.exec(line)
@@ -58,14 +61,14 @@ export class ParallelsVmManager extends VmManager {
   async exec(file: string, args: Array<string>, options?: ExecFileOptions): Promise<string> {
     await this.ensureThatVmStarted()
     // it is important to use "--current-user" to execute command under logged in user - to access certs.
-    return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), options)
-      .catch(error => this.handleExecuteError(error))
+    return await exec("prlctl", ["exec", this.vm.id, "--current-user", file.startsWith("/") ? macPathToParallelsWindows(file) : file].concat(args), options).catch(error =>
+      this.handleExecuteError(error)
+    )
   }
 
   async spawn(file: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
     await this.ensureThatVmStarted()
-    return await spawn("prlctl", ["exec", this.vm.id, file].concat(args), options, extraOptions)
-      .catch(error => this.handleExecuteError(error))
+    return await spawn("prlctl", ["exec", this.vm.id, file].concat(args), options, extraOptions).catch(error => this.handleExecuteError(error))
   }
 
   private async doStartVm() {
@@ -82,11 +85,8 @@ export class ParallelsVmManager extends VmManager {
         const stopArgs = ["suspend", vmId]
         if (callback == null) {
           execFileSync("prlctl", stopArgs)
-        }
-        else {
-          exec("prlctl", stopArgs)
-            .then(callback)
-            .catch(callback)
+        } else {
+          exec("prlctl", stopArgs).then(callback).catch(callback)
         }
       })
     }
@@ -118,6 +118,6 @@ export function macPathToParallelsWindows(file: string) {
 export interface ParallelsVm {
   id: string
   name: string
-  os: "win-10" | "ubuntu" | "elementary"
+  os: "win-10" | "win-11" | "ubuntu" | "elementary"
   state: "running" | "suspended" | "stopped"
 }

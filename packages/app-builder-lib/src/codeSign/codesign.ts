@@ -13,26 +13,21 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   let file: string | null = null
   if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/") || urlOrBase64.startsWith(".")) {
     file = urlOrBase64
-  }
-  else if (urlOrBase64.startsWith("file://")) {
+  } else if (urlOrBase64.startsWith("file://")) {
     file = urlOrBase64.substring("file://".length)
-  }
-  else if (urlOrBase64.startsWith("~/")) {
+  } else if (urlOrBase64.startsWith("~/")) {
     file = path.join(homedir(), urlOrBase64.substring("~/".length))
-  }
-  else {
+  } else {
     const isUrl = urlOrBase64.startsWith("https://")
     if (isUrl || urlOrBase64.length > 2048 || urlOrBase64.endsWith("=")) {
-      const tempFile = await tmpDir.getTempFile({suffix: ".p12"})
+      const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
       if (isUrl) {
         await download(urlOrBase64, tempFile)
-      }
-      else {
+      } else {
         await outputFile(tempFile, Buffer.from(urlOrBase64, "base64"))
       }
       return tempFile
-    }
-    else {
+    } else {
       file = urlOrBase64
     }
   }
@@ -41,11 +36,9 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   const stat = await statOrNull(file)
   if (stat == null) {
     throw new InvalidConfigurationError(`${file} doesn't exist`)
-  }
-  else if (!stat.isFile()) {
+  } else if (!stat.isFile()) {
     throw new InvalidConfigurationError(`${file} not a file`)
-  }
-  else {
+  } else {
     return file
   }
 }

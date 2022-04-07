@@ -5,8 +5,8 @@ import { outputFile, outputJson, readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import * as semver from "semver"
-import { ReleaseInfo } from ".."
 import { Platform } from "../core"
+import { ReleaseInfo } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
@@ -14,9 +14,15 @@ import { hashFile } from "../util/hash"
 import { computeDownloadUrl, getPublishConfigsForUpdateInfo } from "./PublishManager"
 
 async function getReleaseInfo(packager: PlatformPackager<any>) {
-  const releaseInfo: ReleaseInfo = {...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo)}
+  const releaseInfo: ReleaseInfo = { ...(packager.platformSpecificBuildOptions.releaseInfo || packager.config.releaseInfo) }
   if (releaseInfo.releaseNotes == null) {
-    const releaseNotesFile = await packager.getResource(releaseInfo.releaseNotesFile, `release-notes-${packager.platform.buildConfigurationKey}.md`, `release-notes-${packager.platform.name}.md`, `release-notes-${packager.platform.nodeName}.md`, "release-notes.md")
+    const releaseNotesFile = await packager.getResource(
+      releaseInfo.releaseNotesFile,
+      `release-notes-${packager.platform.buildConfigurationKey}.md`,
+      `release-notes-${packager.platform.name}.md`,
+      `release-notes-${packager.platform.nodeName}.md`,
+      "release-notes.md"
+    )
     const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
     // to avoid undefined in the file, check for null
     if (releaseNotes != null) {
@@ -100,17 +106,15 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 
   const outDir = event.target!.outDir
   const version = packager.appInfo.version
-  const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
+  const sha2 = new Lazy<string>(() => hashFile(event.file, "sha256", "hex"))
   const isMac = packager.platform === Platform.MAC
   const createdFiles = new Set<string>()
   const sharedInfo = await createUpdateInfo(version, event, await getReleaseInfo(packager))
   const tasks: Array<UpdateInfoFileTask> = []
   const electronUpdaterCompatibility = packager.platformSpecificBuildOptions.electronUpdaterCompatibility || packager.config.electronUpdaterCompatibility || ">=2.15"
   for (const publishConfiguration of publishConfigs) {
-    const isBintray = publishConfiguration.provider === "bintray"
     let dir = outDir
-    // Bintray uses different variant of channel file info, better to generate it to a separate dir by always
-    if (isBintray || (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0])) {
+    if (publishConfigs.length > 1 && publishConfiguration !== publishConfigs[0]) {
       dir = path.join(outDir, publishConfiguration.provider)
     }
 
@@ -121,9 +125,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
     if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS) {
       info = {
         ...info,
-      };
+      }
       // noinspection JSDeprecatedSymbols
-      (info as WindowsUpdateInfo).sha2 = await sha2.value
+      ;(info as WindowsUpdateInfo).sha2 = await sha2.value
     }
 
     if (event.safeArtifactName != null && publishConfiguration.provider === "github") {
@@ -143,7 +147,7 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
         await writeOldMacInfo(publishConfiguration, outDir, dir, channel, createdFiles, version, packager)
       }
 
-      const updateInfoFile = path.join(dir, (isBintray ? `${version}_` : "") + getUpdateInfoFileName(channel, packager, event.arch))
+      const updateInfoFile = path.join(dir, getUpdateInfoFileName(channel, packager, event.arch))
       if (createdFiles.has(updateInfoFile)) {
         continue
       }
@@ -164,9 +168,9 @@ export async function createUpdateInfoTasks(event: ArtifactCreated, _publishConf
 
 async function createUpdateInfo(version: string, event: ArtifactCreated, releaseInfo: ReleaseInfo): Promise<UpdateInfo> {
   const customUpdateInfo = event.updateInfo
-  const url = path.basename(event.file!)
-  const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || await hashFile(event.file!)
-  const files = [{url, sha512}]
+  const url = path.basename(event.file)
+  const sha512 = (customUpdateInfo == null ? null : customUpdateInfo.sha512) || (await hashFile(event.file))
+  const files = [{ url, sha512 }]
   const result: UpdateInfo = {
     // @ts-ignore
     version,
@@ -176,7 +180,7 @@ async function createUpdateInfo(version: string, event: ArtifactCreated, release
     path: url /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
     // @ts-ignore
     sha512 /* backward compatibility, electron-updater 1.x - electron-updater 2.15.0 */,
-    ...releaseInfo as UpdateInfo,
+    ...(releaseInfo as UpdateInfo),
   }
 
   if (customUpdateInfo != null) {
@@ -204,44 +208,63 @@ export async function writeUpdateInfoFiles(updateInfoFileTasks: Array<UpdateInfo
   }
 
   const releaseDate = new Date().toISOString()
-  await BluebirdPromise.map(updateChannelFileToInfo.values(), async task => {
-    const publishConfig = task.publishConfiguration
-    if (publishConfig.publishAutoUpdate === false) {
-      log.debug({
-        provider: publishConfig.provider,
-        reason: "publishAutoUpdate is set to false"
-      }, "auto update metadata file not published")
-      return
-    }
+  await BluebirdPromise.map(
+    updateChannelFileToInfo.values(),
+    async task => {
+      const publishConfig = task.publishConfiguration
+      if (publishConfig.publishAutoUpdate === false) {
+        log.debug(
+          {
+            provider: publishConfig.provider,
+            reason: "publishAutoUpdate is set to false",
+          },
+          "auto update metadata file not published"
+        )
+        return
+      }
 
-    if (task.info.releaseDate == null) {
-      task.info.releaseDate = releaseDate
-    }
+      if (task.info.releaseDate == null) {
+        task.info.releaseDate = releaseDate
+      }
 
-    const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
-    await outputFile(task.file, fileContent)
-    packager.dispatchArtifactCreated({
-      file: task.file,
-      fileContent,
-      arch: null,
-      packager: task.packager,
-      target: null,
-      publishConfig,
-    })
-  }, {concurrency: 4})
+      const fileContent = Buffer.from(serializeToYaml(task.info, false, true))
+      await outputFile(task.file, fileContent)
+      packager.dispatchArtifactCreated({
+        file: task.file,
+        fileContent,
+        arch: null,
+        packager: task.packager,
+        target: null,
+        publishConfig,
+      })
+    },
+    { concurrency: 4 }
+  )
 }
 
 // backward compatibility - write json file
-async function writeOldMacInfo(publishConfig: PublishConfiguration, outDir: string, dir: string, channel: string, createdFiles: Set<string>, version: string, packager: PlatformPackager<any>) {
+async function writeOldMacInfo(
+  publishConfig: PublishConfiguration,
+  outDir: string,
+  dir: string,
+  channel: string,
+  createdFiles: Set<string>,
+  version: string,
+  packager: PlatformPackager<any>
+) {
   const isGitHub = publishConfig.provider === "github"
-  const updateInfoFile = (isGitHub && outDir === dir) ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
+  const updateInfoFile = isGitHub && outDir === dir ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
   if (!createdFiles.has(updateInfoFile)) {
     createdFiles.add(updateInfoFile)
-    await outputJson(updateInfoFile, {
-      version,
-      releaseDate: new Date().toISOString(),
-      url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
-    }, {spaces: 2})
+    await outputJson(
+      updateInfoFile,
+      {
+        version,
+        releaseDate: new Date().toISOString(),
+        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
+      },
+      { spaces: 2 }
+    )
 
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,

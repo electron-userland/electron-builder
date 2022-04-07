@@ -5,7 +5,7 @@ import { Identity } from "app-builder-lib/out/codeSign/macCodeSign"
 import MacPackager from "app-builder-lib/out/macPackager"
 import { DmgTarget } from "dmg-builder"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { SignOptions as MacSignOptions } from "app-builder-lib/electron-osx-sign"
+import { SignOptions as MacSignOptions } from "electron-osx-sign"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
@@ -18,7 +18,7 @@ export class CheckingWinPackager extends WinPackager {
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
     const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
-    this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
+    this.effectiveDistOptions = await new helperClass(this, outDir).computeEffectiveDistOptions()
 
     await this.sign(this.computeAppOutDir(outDir, arch))
   }
