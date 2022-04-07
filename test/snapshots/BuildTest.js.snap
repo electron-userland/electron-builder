@@ -961,7 +961,7 @@ Object {
               "size": 1073,
             },
             "index.js": Object {
-              "size": 7652,
+              "size": 7807,
             },
             "package.json": Object {
               "size": 722,
@@ -985,10 +985,10 @@ Object {
               },
             },
             "index.js": Object {
-              "size": 2644,
+              "size": 2825,
             },
             "package.json": Object {
-              "size": 548,
+              "size": 524,
             },
           },
         },
