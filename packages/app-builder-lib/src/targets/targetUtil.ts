@@ -39,3 +39,8 @@ export async function createStageDirPath(target: Target, packager: PlatformPacka
 export function getWindowsInstallationDirName(appInfo: AppInfo, isTryToUseProductName: boolean): string {
   return isTryToUseProductName && /^[-_+0-9a-zA-Z .]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.sanitizedName
 }
+
+// https://github.com/electron-userland/electron-builder/issues/6747
+export function getWindowsInstallationAppPackageName(appName: string): string {
+  return appName.replace(/\//g, "\\")
+}
