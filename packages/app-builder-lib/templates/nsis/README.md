@@ -19,7 +19,7 @@ One-click installer: http://forums.winamp.com/showthread.php?t=300479
 
 ## Localization (l10n)
 
-For translators, the strings to be displayed are included in [`assistedMessages.yml`](https://github.dev/l10n-tw/electron-builder/blob/master/packages/app-builder-lib/templates/nsis/assistedMessages.yml) and [`messages.yml`](https://github.dev/l10n-tw/electron-builder/blob/master/packages/app-builder-lib/templates/nsis/messages.yml).
+For translators, the strings to be displayed are included in [`assistedMessages.yml`](https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/nsis/assistedMessages.yml) and [`messages.yml`]https://github.com/electron-userland/electron-builder/blob/master/packages/app-builder-lib/templates/nsis/messages.yml).
 
 As for other strings in NSIS, head to [electron-userland/electron-builder-binaries](https://github.com/electron-userland/electron-builder-binaries) or the upstream repository on [Sorceforge](https://sourceforge.net/p/nsis/code/HEAD/tree/).
 
