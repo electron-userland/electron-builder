@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.0.1
+
+### Patch Changes
+
+- [#6743](https://github.com/electron-userland/electron-builder/pull/6743) [`27f18aa1`](https://github.com/electron-userland/electron-builder/commit/27f18aa1d890f3a82e856f4834b8387066fb697f) Thanks [@YanDevDe](https://github.com/YanDevDe)! - fix: Updater "Error: Could not connect to the server." in macOS. Don't close server directly at quitAndInstall #6743
+
 ## 5.0.0
 
 ### Major Changes
