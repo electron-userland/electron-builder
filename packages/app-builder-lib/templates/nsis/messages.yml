@@ -14,7 +14,7 @@ win7Required:
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
-  zh_TW: 需要 Windows 7 或以上系統
+  zh_TW: 需要 Windows 7 或更新的系統
   tr_TR: Windows 7 ve üstü gereklidir
   sv_SE: Windows 7 eller högre krävs
   no: Windows 7 og over er nødvendig
@@ -36,7 +36,7 @@ x64WinRequired:
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
-  zh_TW: 需要 64 位 Windows 系統
+  zh_TW: 需要 64 位元 Windows 系統
   tr_TR: 64 bit Windows gerekli
   sv_SE: 64-bitars Windows krävs
   no: 64-biters Windows er nødvendig
@@ -58,7 +58,7 @@ appRunning:
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
-  zh_TW: "${PRODUCT_NAME} 正在運行.\n點擊“確定”關閉."
+  zh_TW: "${PRODUCT_NAME} 正在執行。\n按一下「確定」來關閉。"
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
   sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
   no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
@@ -97,7 +97,7 @@ appCannotBeClosed:
   sv: "${PRODUCT_NAME} går inte att stängas. \nVänligen stäng det manuellt och klicka på Försök igen för att fortsätta."
   tr: "${PRODUCT_NAME} kapatılamaz. \nLütfen elle kapatın ve devam etmek için Tekrar'a tıklayın"
   zh_CN: "${PRODUCT_NAME} 无法关闭。\n请手动关闭它，然后单击重试以继续。"
-  zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後單擊重試以繼續。"
+  zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後按一下重試以繼續。"
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
@@ -134,7 +134,7 @@ areYouSureToUninstall:
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
-  zh_TW: 確定卸載 ${PRODUCT_NAME} 嗎？
+  zh_TW: 確定解除安裝 ${PRODUCT_NAME} 嗎？
   tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
   sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
   no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?
