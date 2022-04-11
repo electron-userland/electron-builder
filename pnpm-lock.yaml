@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@babel/plugin-transform-modules-commonjs': 7.15.4
-      '@changesets/changelog-github': 0.4.2
+      '@changesets/changelog-github': 0.4.4
       '@changesets/cli': 2.19.0
       '@milahu/patch-package-with-pnpm-support': github:milahu/patch-package#pnpm-support-2
       '@types/node': 16.7.10
@@ -37,7 +37,7 @@ importers:
       dmg-license: 1.0.9
     devDependencies:
       '@babel/plugin-transform-modules-commonjs': 7.15.4
-      '@changesets/changelog-github': 0.4.2
+      '@changesets/changelog-github': 0.4.4
       '@changesets/cli': 2.19.0
       '@milahu/patch-package-with-pnpm-support': github.com/milahu/patch-package/6b85a8bc1562d1482f30c1b65c9f4e91ba657d39
       '@types/node': 16.7.10
@@ -2022,11 +2022,11 @@ packages:
       semver: 5.7.1
     dev: true
 
-  /@changesets/changelog-github/0.4.2:
-    resolution: {integrity: sha512-qq8lJcq91ki7UT0fIfIcn5Yy7GJj19TmkLmGZ24/wEfxcD/nHHoTNRoi6nPt+Htf7qEudKxXLzQLi41B7Mt2vg==}
+  /@changesets/changelog-github/0.4.4:
+    resolution: {integrity: sha512-htSILqCkyYtTB5/LoVKwx7GCJQGxAiBcYbfUKWiz/QoDARuM01owYtMXhV6/iytJZq/Dqqz3PjMZUNB4MphpbQ==}
     dependencies:
       '@changesets/get-github-info': 0.5.0
-      '@changesets/types': 4.0.2
+      '@changesets/types': 5.0.0
       dotenv: 8.6.0
     dev: true
 
@@ -2167,6 +2167,10 @@ packages:
 
   /@changesets/types/4.0.2:
     resolution: {integrity: sha512-OeDaB7D+WVy/ErymPzFm58IeGvz4DOl+oedyZETfnkfMezF/Uhrm1Ub6MHrO5LcAaQTW+ptDmr0fmaVyoTxgHw==}
+    dev: true
+
+  /@changesets/types/5.0.0:
+    resolution: {integrity: sha512-IT1kBLSbAgTS4WtpU6P5ko054hq12vk4tgeIFRVE7Vnm4a/wgbNvBalgiKP0MjEXbCkZbItiGQHkCGxYWR55sA==}
     dev: true
 
   /@changesets/write/0.1.6:
@@ -10337,7 +10341,7 @@ packages:
     dev: false
 
   github.com/milahu/patch-package/6b85a8bc1562d1482f30c1b65c9f4e91ba657d39:
-    resolution: {tarball: https://codeload.github.com/milahu/patch-package/tar.gz/6b85a8bc1562d1482f30c1b65c9f4e91ba657d39}
+    resolution: {commit: 6b85a8bc1562d1482f30c1b65c9f4e91ba657d39, repo: git+ssh://git@github.com/milahu/patch-package.git, type: git}
     name: '@milahu/patch-package-with-pnpm-support'
     version: 6.4.8
     engines: {npm: '>5'}
