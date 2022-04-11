@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.0.4...v) (2022-04-11)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** Overriding OutgoingHttpHeaders schema props ([#6775](https://github.com/electron-userland/electron-builder/issues/6775)) ([e9a87a7](https://github.com/electron-userland/electron-builder/commit/e9a87a738ceb2b9e14cbc85b4c62e11edab3d0cf)), closes [#6635](https://github.com/electron-userland/electron-builder/issues/6635)
+* **nsis:** Update zh-tw translation ([#6773](https://github.com/electron-userland/electron-builder/issues/6773)) ([5a0bab1](https://github.com/electron-userland/electron-builder/commit/5a0bab115f4ede3f21e23e847c0d2dd7ecc99b16))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.0.3...v) (2022-04-08)
 
 
