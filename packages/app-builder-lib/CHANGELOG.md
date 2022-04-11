@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.0.5
+
+### Patch Changes
+
+- [#6775](https://github.com/electron-userland/electron-builder/pull/6775) [`e9a87a73`](https://github.com/electron-userland/electron-builder/commit/e9a87a738ceb2b9e14cbc85b4c62e11edab3d0cf) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(app-builder-lib): Overriding `additionalProperties` to allow electron-builder's schema validator to read `publish.requestHeaders`
+
 ## 23.0.4
 
 ### Patch Changes
