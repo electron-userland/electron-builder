@@ -8,8 +8,25 @@ let o = schema.definitions.PlugDescriptor.additionalProperties.anyOf[0]
 delete o.typeof
 o.type = "object"
 
+schema.definitions.OutgoingHttpHeaders.additionalProperties = {
+  "anyOf": [
+    {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    {
+      "type": [
+        "string",
+        "number"
+      ]
+    }
+  ]
+}
+
 o = schema.definitions.SnapOptions.properties.environment.anyOf[0] = {
-  additionalProperties: {type: "string"},
+  additionalProperties: { type: "string" },
   type: "object",
 }
 

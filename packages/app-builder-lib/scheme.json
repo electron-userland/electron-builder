@@ -4240,7 +4240,22 @@
       "type": "object"
     },
     "OutgoingHttpHeaders": {
-      "additionalProperties": false,
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        ]
+      },
       "type": "object"
     },
     "PkgBackgroundOptions": {
@@ -4405,7 +4420,7 @@
               "type": "null"
             }
           ],
-          "description": "Identifies applications that must be closed before the package is installed.\\n\\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)"
+          "description": "Identifies applications that must be closed before the package is installed.\n\nCorresponds to [must-close](https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW77)."
         },
         "overwriteAction": {
           "anyOf": [
