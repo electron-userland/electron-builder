@@ -147,6 +147,20 @@ test.ifNotCiMac(
   })
 )
 
+test.ifNotCiMac(
+  "assisted, only perMachine and elevated",
+  app({
+    targets: nsisTarget,
+    config: {
+      nsis: {
+        oneClick: false,
+        perMachine: true,
+        packElevateHelper: true
+      },
+    },
+  })
+)
+
 // test release notes also
 test.ifAll.ifNotCiMac(
   "allowToChangeInstallationDirectory",
