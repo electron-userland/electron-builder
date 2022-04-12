@@ -298,7 +298,11 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
   env.iconLocations = await computeDmgEntries(specification, volumePath, packager, asyncTaskManager)
   await asyncTaskManager.awaitTasks()
   const executePython = async (execName: string) => {
-    await exec(process.env.PYTHON_PATH || `/usr/bin/${execName}`, [path.join(getDmgVendorPath(), "dmgbuild/core.py")], {
+    let pythonPath = process.env.PYTHON_PATH
+    if (!pythonPath) {
+      pythonPath = await exec("which", [execName])
+    }
+    await exec(pythonPath, [path.join(getDmgVendorPath(), "dmgbuild/core.py")], {
       cwd: getDmgVendorPath(),
       env,
     })
