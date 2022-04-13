@@ -3,6 +3,7 @@ import { debug7z, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
 import { move } from "fs-extra"
 import * as path from "path"
+import { create, CreateOptions, FileOptions } from 'tar';
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
@@ -17,19 +18,24 @@ export async function tar(
   tempDirManager: TmpDir
 ): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
-  const tarArgs = debug7zArgs("a")
-  tarArgs.push(tarFile)
-  tarArgs.push(path.basename(dirToArchive))
+  const tarArgs: CreateOptions & FileOptions = {
+    file: tarFile,
+    portable: true,
+    cwd: dirToArchive,
+    prefix: path.basename(outFile, `.${format}`),
+  }
+  let tarDirectory = '.';
+  if (isMacApp) {
+    delete tarArgs.prefix;
+    tarArgs.cwd = path.dirname(dirToArchive);
+    tarDirectory = path.basename(dirToArchive);
+  }
 
   await Promise.all([
-    exec(path7za, tarArgs, { cwd: path.dirname(dirToArchive) }),
+    create(tarArgs, [tarDirectory]),
     // remove file before - 7z doesn't overwrite file, but update
     unlinkIfExists(outFile),
   ])
-
-  if (!isMacApp) {
-    await exec(path7za, ["rn", tarFile, path.basename(dirToArchive), path.basename(outFile, `.${format}`)])
-  }
 
   if (format === "tar.lz") {
     // noinspection SpellCheckingInspection

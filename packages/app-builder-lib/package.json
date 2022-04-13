@@ -71,6 +71,7 @@
     "read-config-file": "6.2.0",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.5",
+    "tar": "^6.1.11",
     "temp-file": "^3.4.0"
   },
   "///": "babel in devDependencies for proton tests",
@@ -101,6 +102,7 @@
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/semver": "7.3.8",
+    "@types/tar": "^6.1.1",
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*"
   },
