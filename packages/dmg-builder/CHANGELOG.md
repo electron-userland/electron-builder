@@ -1,5 +1,18 @@
 # dmg-builder
 
+## 23.0.6
+
+### Patch Changes
+
+- [`9a7ed436`](https://github.com/electron-userland/electron-builder/commit/9a7ed4360618e540810337c5f02d99cd2a9b8441) - chore: updating dependency tree
+
+* [#6789](https://github.com/electron-userland/electron-builder/pull/6789) [`76f3a1d1`](https://github.com/electron-userland/electron-builder/commit/76f3a1d102be04c0517a08826b8b1337478f766d) Thanks [@bytemain](https://github.com/bytemain)! - Fix cannot exec python in MacOS 12.3
+
+* Updated dependencies [[`9a7ed436`](https://github.com/electron-userland/electron-builder/commit/9a7ed4360618e540810337c5f02d99cd2a9b8441)]:
+  - app-builder-lib@23.0.6
+  - builder-util@23.0.6
+  - builder-util-runtime@9.0.1
+
 ## 23.0.5
 
 ### Patch Changes

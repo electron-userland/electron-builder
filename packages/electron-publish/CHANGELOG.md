@@ -1,5 +1,15 @@
 # electron-publish
 
+## 23.0.6
+
+### Patch Changes
+
+- [`9a7ed436`](https://github.com/electron-userland/electron-builder/commit/9a7ed4360618e540810337c5f02d99cd2a9b8441) - chore: updating dependency tree
+
+- Updated dependencies [[`9a7ed436`](https://github.com/electron-userland/electron-builder/commit/9a7ed4360618e540810337c5f02d99cd2a9b8441)]:
+  - builder-util@23.0.6
+  - builder-util-runtime@9.0.1
+
 ## 23.0.2
 
 ### Patch Changes
