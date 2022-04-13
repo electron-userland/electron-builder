@@ -12,9 +12,17 @@ Instead of duplicating the app dependencies in the development `package.json` it
 const path = require('path')
 const devMode = (process.argv || []).indexOf('--dev') !== -1
 
+// load the app dependencies in dev mode
 if (devMode) {
-  // load the app dependencies
   const PATH_APP_NODE_MODULES = path.join(__dirname, '..', '..', 'app', 'node_modules')
-  require('module').globalPaths.push(PATH_APP_NODE_MODULES)
+  const Module = require('module')
+  
+  // for electron 16 or lower
+  Module.globalPaths.push(PATH_APP_NODE_MODULES)
+  
+  // for electron 17 or higher
+  const nodeModulePaths = Module._nodeModulePaths
+  Module._nodeModulePaths = (from) =>
+    nodeModulePaths(from).concat([PATH_APP_NODE_MODULES])
 }
 ```
