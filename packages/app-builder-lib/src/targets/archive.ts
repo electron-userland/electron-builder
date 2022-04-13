@@ -3,7 +3,7 @@ import { debug7z, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
 import { move } from "fs-extra"
 import * as path from "path"
-import { create, CreateOptions, FileOptions } from 'tar';
+import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
@@ -24,11 +24,11 @@ export async function tar(
     cwd: dirToArchive,
     prefix: path.basename(outFile, `.${format}`),
   }
-  let tarDirectory = '.';
+  let tarDirectory = "."
   if (isMacApp) {
-    delete tarArgs.prefix;
-    tarArgs.cwd = path.dirname(dirToArchive);
-    tarDirectory = path.basename(dirToArchive);
+    delete tarArgs.prefix
+    tarArgs.cwd = path.dirname(dirToArchive)
+    tarDirectory = path.basename(dirToArchive)
   }
 
   await Promise.all([
