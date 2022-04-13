@@ -300,7 +300,7 @@ async function customizeDmg(volumePath: string, specification: DmgOptions, packa
   const executePython = async (execName: string) => {
     let pythonPath = process.env.PYTHON_PATH
     if (!pythonPath) {
-      pythonPath = await exec("which", [execName])
+      pythonPath = (await exec("which", [execName])).trim()
     }
     await exec(pythonPath, [path.join(getDmgVendorPath(), "dmgbuild/core.py")], {
       cwd: getDmgVendorPath(),
