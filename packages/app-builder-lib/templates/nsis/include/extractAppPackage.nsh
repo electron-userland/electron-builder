@@ -113,13 +113,21 @@
       # Try copying a few times before asking for a user action.
       Goto RetryExtract7za
     ${else}
-      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDCANCEL IDRETRY RetryExtract7za
+      MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "$(appCannotBeClosed)" /SD IDRETRY IDCANCEL AbortExtract7za
     ${endIf}
 
     # As an absolutely last resort after a few automatic attempts and user
     # intervention - we will just overwrite everything with `Nsis7z::Extract`
     # even though it is not atomic and will ignore errors.
+
+    # Clear the temporary folder first to make sure we don't use twice as
+    # much disk space.
+    RMDir /r "$PLUGINSDIR\7z-out"
+
     Nsis7z::Extract "${FILE}"
+    Goto DoneExtract7za
+
+  AbortExtract7za:
     Quit
 
   RetryExtract7za:
