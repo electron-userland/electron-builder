@@ -100,7 +100,7 @@
     "@types/fs-extra": "9.0.13",
     "@types/hosted-git-info": "3.0.2",
     "@types/is-ci": "3.0.0",
-    "@types/js-yaml": "4.0.3",
+    "@types/js-yaml": "4.0.5",
     "@types/semver": "7.3.8",
     "@types/tar": "^6.1.1",
     "dmg-builder": "workspace:*",
