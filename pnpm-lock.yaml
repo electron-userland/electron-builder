@@ -96,6 +96,7 @@ importers:
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/semver': 7.3.8
+      '@types/tar': ^6.1.1
       7zip-bin: ~5.1.1
       async-exit-hook: ^2.0.1
       bluebird-lst: ^1.0.9
@@ -119,6 +120,7 @@ importers:
       read-config-file: 6.2.0
       sanitize-filename: ^1.6.3
       semver: ^7.3.5
+      tar: ^6.1.11
       temp-file: ^3.4.0
     dependencies:
       '@develar/schema-utils': 2.6.5
@@ -145,6 +147,7 @@ importers:
       read-config-file: 6.2.0
       sanitize-filename: 1.6.3
       semver: 7.3.5
+      tar: 6.1.11
       temp-file: 3.4.0
     devDependencies:
       '@babel/core': 7.15.5
@@ -173,6 +176,7 @@ importers:
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/semver': 7.3.8
+      '@types/tar': 6.1.1
       dmg-builder: link:../dmg-builder
       electron-builder-squirrel-windows: link:../electron-builder-squirrel-windows
 
@@ -2739,6 +2743,12 @@ packages:
     resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
     dev: true
 
+  /@types/minipass/3.1.2:
+    resolution: {integrity: sha512-foLGjgrJkUjLG/o2t2ymlZGEoBNBa/TfoUZ7oCTkOjP1T43UGBJspovJou/l3ZuHvye2ewR5cZNtp2zyWgILMA==}
+    dependencies:
+      '@types/node': 16.11.12
+    dev: true
+
   /@types/ms/0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
 
@@ -2795,6 +2805,13 @@ packages:
 
   /@types/stack-utils/2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
+
+  /@types/tar/6.1.1:
+    resolution: {integrity: sha512-8mto3YZfVpqB1CHMaYz1TUYIQfZFbh/QbEq5Hsn6D0ilCfqRVCdalmc89B7vi3jhl9UYIk+dWDABShNfOkv5HA==}
+    dependencies:
+      '@types/minipass': 3.1.2
+      '@types/node': 16.11.12
+    dev: true
 
   /@types/update-notifier/5.1.0:
     resolution: {integrity: sha512-aGY5pH1Q/DcToKXl4MCj1c0uDUB+zSVFDRCI7Q7js5sguzBTqJV/5kJA2awofbtWYF3xnon1TYdZYnFditRPtQ==}
@@ -3814,6 +3831,11 @@ packages:
       readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.2
+    dev: false
+
+  /chownr/2.0.0:
+    resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
+    engines: {node: '>=10'}
     dev: false
 
   /chromium-pickle-js/0.2.0:
@@ -5772,6 +5794,13 @@ packages:
       graceful-fs: 4.2.9
       jsonfile: 6.1.0
       universalify: 2.0.0
+    dev: false
+
+  /fs-minipass/2.1.0:
+    resolution: {integrity: sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==}
+    engines: {node: '>= 8'}
+    dependencies:
+      minipass: 3.1.6
     dev: false
 
   /fs-then-native/2.0.0:
@@ -7915,6 +7944,21 @@ packages:
   /minimist/1.2.5:
     resolution: {integrity: sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==}
 
+  /minipass/3.1.6:
+    resolution: {integrity: sha512-rty5kpw9/z8SX9dmxblFA6edItUmwJgMeYDZRrwlIVN27i8gysGbznJwUggw2V/FVqFSDdWy040ZPS811DYAqQ==}
+    engines: {node: '>=8'}
+    dependencies:
+      yallist: 4.0.0
+    dev: false
+
+  /minizlib/2.1.2:
+    resolution: {integrity: sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==}
+    engines: {node: '>= 8'}
+    dependencies:
+      minipass: 3.1.6
+      yallist: 4.0.0
+    dev: false
+
   /mixin-deep/1.3.2:
     resolution: {integrity: sha512-WRoDn//mXBiJ1H40rqa3vH0toePwSsGb45iInWlTySa+Uu4k3tYUSxa2v1KqAiLtvlrSzaExqS1gtk96A9zvEA==}
     engines: {node: '>=0.10.0'}
@@ -9484,6 +9528,18 @@ packages:
       fs-constants: 1.0.0
       inherits: 2.0.4
       readable-stream: 3.6.0
+    dev: false
+
+  /tar/6.1.11:
+    resolution: {integrity: sha512-an/KZQzQUkZCkuoAA64hM92X0Urb6VpRhAFllDzz44U2mcD5scmT3zBc4VgVpkugF580+DQn8eAFSyoQt0tznA==}
+    engines: {node: '>= 10'}
+    dependencies:
+      chownr: 2.0.0
+      fs-minipass: 2.1.0
+      minipass: 3.1.6
+      minizlib: 2.1.2
+      mkdirp: 1.0.4
+      yallist: 4.0.0
     dev: false
 
   /temp-dir/2.0.0:
