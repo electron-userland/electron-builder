@@ -155,7 +155,7 @@ test.ifNotCiMac(
       nsis: {
         oneClick: false,
         perMachine: true,
-        packElevateHelper: true
+        packElevateHelper: true,
       },
     },
   })
