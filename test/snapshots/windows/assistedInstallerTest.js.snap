@@ -128,3 +128,29 @@ Object {
   ],
 }
 `;
+
+exports[`assisted, only perMachine and elevated 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "isAdminRightsRequired": true,
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;

@@ -159,6 +159,7 @@ export class NsisTarget extends Target {
         .join(", "),
     }
     const isPerMachine = options.perMachine === true
+
     if (!this.isPortable) {
       logFields.oneClick = oneClick
       logFields.perMachine = isPerMachine
@@ -319,7 +320,7 @@ export class NsisTarget extends Target {
       updateInfo = await createBlockmap(installerPath, this, packager, safeArtifactName)
     }
 
-    if (updateInfo != null && isPerMachine && oneClick) {
+    if (updateInfo != null && isPerMachine && (oneClick || options.packElevateHelper)) {
       updateInfo.isAdminRightsRequired = true
     }
 
