@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 23.0.7
+
+### Patch Changes
+
+- [#6793](https://github.com/electron-userland/electron-builder/pull/6793) [`85a3e559`](https://github.com/electron-userland/electron-builder/commit/85a3e5595e64346514dd7f5fade42e3632a18ee0) Thanks [@indutny-signal](https://github.com/indutny-signal)! - fix(nsis): cleanup temporary 7z folder before the last resort extraction. Fix last resort extraction exiting early.
+
+* [#6787](https://github.com/electron-userland/electron-builder/pull/6787) [`eb456a87`](https://github.com/electron-userland/electron-builder/commit/eb456a87b0603dcc0e6d777c2b8e1c2e7b64d3a6) Thanks [@HwangTaehyun](https://github.com/HwangTaehyun)! - If window service needs to run installer for update, the installer must have admin previlege. Electron-updater detects whether elevating or not using isAdminRightsRequired in update-info.json. And this isAdminRightsRequired true option should be added to latest.yml using nsis's packElevateHelper option
+
+- [#6791](https://github.com/electron-userland/electron-builder/pull/6791) [`95910f87`](https://github.com/electron-userland/electron-builder/commit/95910f87195f501eadda95c52cfa8e1816d211b6) Thanks [@devinbinnie](https://github.com/devinbinnie)! - feat: Use tar instead of 7zip to preserve file permissions in tar.gz packages
+
 ## 23.0.6
 
 ### Patch Changes
