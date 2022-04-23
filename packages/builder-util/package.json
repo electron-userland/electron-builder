@@ -23,7 +23,7 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.1",
     "cross-spawn": "^7.0.3",
-    "debug": "^4.3.2",
+    "debug": "^4.3.4",
     "fs-extra": "^10.0.0",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
