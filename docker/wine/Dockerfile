@@ -5,7 +5,7 @@ RUN dpkg --add-architecture i386 && \
   curl -Lo /usr/share/keyrings/winehq.asc https://dl.winehq.org/wine-builds/winehq.key && \
   echo 'deb [signed-by=/usr/share/keyrings/winehq.asc] https://dl.winehq.org/wine-builds/ubuntu/ focal main' > /etc/apt/sources.list.d/winehq.list && \
   apt-get update && \
-  apt-get install -y --no-install-recommends winehq-stable=6.0.2 && \
+  apt-get install -y --no-install-recommends winehq-stable=6.0.4~focal && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
