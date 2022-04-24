@@ -41,7 +41,7 @@
   "///": "All dependencies for all packages (hoisted)",
   "////": "All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).",
   "dependencies": {
-    "dmg-license": "1.0.9"
+    "dmg-license": "1.0.11"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.15.4",
