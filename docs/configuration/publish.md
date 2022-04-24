@@ -234,8 +234,8 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <a href="https://bitbucket.org/">https://bitbucket.org/</a>
 Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <p>For converting an app password to a usable token, you can utilize this</p>
-<pre><code class="hljs language-typescript"><span class="hljs-function"><span class="hljs-title">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>)</span> {
-<span class="hljs-keyword">const</span> base64encodedData = Buffer.from(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${token.trim()}</span>`</span>).toString(<span class="hljs-string">&quot;base64&quot;</span>)
+<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>) {
+<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${token.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
 <span class="hljs-keyword">return</span> <span class="hljs-string">`Basic <span class="hljs-subst">${base64encodedData}</span>`</span>
 }
 </code></pre>
@@ -263,14 +263,14 @@ AWS credentials are required, please see <a href="http://docs.aws.amazon.com/sdk
 Define <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html">environment variables</a>.
 Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html">~/.aws/credentials</a>.</p>
 <p>Example configuration:</p>
-<pre><code class="hljs language-json">{
-<span class="hljs-attr">&quot;build&quot;</span>:
-<span class="hljs-string">&quot;publish&quot;</span>: {
-<span class="hljs-attr">&quot;provider&quot;</span>: <span class="hljs-string">&quot;s3&quot;</span>,
-<span class="hljs-attr">&quot;bucket&quot;</span>: <span class="hljs-string">&quot;bucket-name&quot;</span>
-}
-}
-}
+<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+<span class="hljs-attr">&quot;build&quot;</span><span class="hljs-punctuation">:</span>
+<span class="hljs-attr">&quot;publish&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+<span class="hljs-attr">&quot;provider&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;s3&quot;</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">&quot;bucket&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;bucket-name&quot;</span>
+<span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span>
 </code></pre>
 <ul>
 <li>

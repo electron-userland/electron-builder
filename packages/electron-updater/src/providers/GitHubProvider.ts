@@ -57,7 +57,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     let tag: string | null = null
     try {
       if (this.updater.allowPrerelease) {
-        const currentChannel = this.updater?.channel || semver.prerelease(this.updater.currentVersion)?.[0] as string || null
+        const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null
         for (const element of feed.getElements("entry")) {
           // noinspection TypeScriptValidateJSTypes
           const hrefElement = hrefRegExp.exec(element.element("link").attribute("href"))!
@@ -68,7 +68,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           // This Release's Tag
           const hrefTag = hrefElement[1]
           //Get Channel from this release's tag
-          const hrefChannel = semver.prerelease(hrefTag)?.[0] as string || null
+          const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
 
           const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
           const isCustomChannel = !["alpha", "beta"].includes(String(hrefChannel))

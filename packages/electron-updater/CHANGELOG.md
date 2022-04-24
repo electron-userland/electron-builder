@@ -1,5 +1,14 @@
 ## 4.3.0
 
+## 5.0.3
+
+### Patch Changes
+
+- [#6810](https://github.com/electron-userland/electron-builder/pull/6810) [`817e68ba`](https://github.com/electron-userland/electron-builder/commit/817e68ba54f4fa60fec789fcfcfb527473a610fc) Thanks [@blakebyrnes](https://github.com/blakebyrnes)! - fix: github provider prerelease check incorrectly casts undefined to String. Resolves #6809
+
+- Updated dependencies [[`7af4c226`](https://github.com/electron-userland/electron-builder/commit/7af4c226af9f7759092cbd9d2c63d85e0c54ad43)]:
+  - builder-util-runtime@9.0.2
+
 ## 5.0.2
 
 ### Patch Changes
