@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.0.2
+
+### Patch Changes
+
+- [#6813](https://github.com/electron-userland/electron-builder/pull/6813) [`7af4c226`](https://github.com/electron-userland/electron-builder/commit/7af4c226af9f7759092cbd9d2c63d85e0c54ad43) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: Update dependencies and audit
+
 ## 9.0.1
 
 ### Patch Changes

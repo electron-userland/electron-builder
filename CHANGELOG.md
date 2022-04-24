@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.0.7...v) (2022-04-24)
+
+
+### Bug Fixes
+
+* github provider prerelease check incorrectly casts undefined to String. Fixes [#6809](https://github.com/electron-userland/electron-builder/issues/6809) ([#6810](https://github.com/electron-userland/electron-builder/issues/6810)) ([817e68b](https://github.com/electron-userland/electron-builder/commit/817e68ba54f4fa60fec789fcfcfb527473a610fc))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.0.6...v) (2022-04-19)
 
 
