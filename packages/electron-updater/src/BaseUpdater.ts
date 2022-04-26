@@ -15,10 +15,11 @@ export abstract class BaseUpdater extends AppUpdater {
     const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
     if (isInstalled) {
       setImmediate(() => {
+        // this event is normally emitted when calling quitAndInstall, this emulates that
+        require("electron").autoUpdater.emit("before-quit-for-update")
         this.app.quit()
       })
-    }
-    else {
+    } else {
       this.quitAndInstallCalled = false
     }
   }
@@ -26,10 +27,11 @@ export abstract class BaseUpdater extends AppUpdater {
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     return super.executeDownload({
       ...taskOptions,
-      done: async event => {
+      done: event => {
         this.dispatchUpdateDownloaded(event)
         this.addQuitHandler()
-      }
+        return Promise.resolve()
+      },
     })
   }
 
@@ -62,8 +64,7 @@ export abstract class BaseUpdater extends AppUpdater {
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
       })
-    }
-    catch (e) {
+    } catch (e) {
       this.dispatchError(e)
       return false
     }
@@ -79,6 +80,11 @@ export abstract class BaseUpdater extends AppUpdater {
     this.app.onQuit(exitCode => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
+        return
+      }
+
+      if (!this.autoInstallOnAppQuit) {
+        this._logger.info("Update will not be installed on quit because autoInstallOnAppQuit is set to false.")
         return
       }
 

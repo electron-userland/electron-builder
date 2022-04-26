@@ -372,16 +372,20 @@ Object {
                     },
                   },
                 },
-                "safe-buffer": Object {
+                "string_decoder": Object {
                   "files": Object {
                     "LICENSE": Object {
-                      "size": 1081,
+                      "size": 2338,
                     },
-                    "index.js": Object {
-                      "size": 1529,
+                    "lib": Object {
+                      "files": Object {
+                        "string_decoder.js": Object {
+                          "size": 9465,
+                        },
+                      },
                     },
                     "package.json": Object {
-                      "size": 500,
+                      "size": 514,
                     },
                   },
                 },
@@ -410,20 +414,20 @@ Object {
               "size": 1081,
             },
             "base64js.min.js": Object {
-              "size": 2372,
+              "size": 2192,
             },
             "index.js": Object {
-              "size": 3944,
+              "size": 3932,
             },
             "package.json": Object {
-              "size": 511,
+              "size": 814,
             },
           },
         },
         "bl": Object {
           "files": Object {
             "BufferList.js": Object {
-              "size": 9520,
+              "size": 9524,
             },
             "LICENSE.md": Object {
               "size": 1216,
@@ -439,16 +443,29 @@ Object {
         "buffer": Object {
           "files": Object {
             "AUTHORS.md": Object {
-              "size": 2328,
+              "size": 2672,
             },
             "LICENSE": Object {
               "size": 1106,
             },
             "index.js": Object {
-              "size": 49395,
+              "size": 50097,
             },
             "package.json": Object {
-              "size": 1030,
+              "size": 1306,
+            },
+          },
+        },
+        "chownr": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 765,
+            },
+            "chownr.js": Object {
+              "size": 4275,
+            },
+            "package.json": Object {
+              "size": 452,
             },
           },
         },
@@ -486,18 +503,15 @@ Object {
             "LICENSE": Object {
               "size": 1077,
             },
-            "float.patch": Object {
-              "size": 16278,
-            },
             "lib": Object {
               "files": Object {
                 "util.js": Object {
-                  "size": 3021,
+                  "size": 3039,
                 },
               },
             },
             "package.json": Object {
-              "size": 373,
+              "size": 402,
             },
           },
         },
@@ -679,6 +693,32 @@ Object {
             },
           },
         },
+        "emoji-regex": Object {
+          "files": Object {
+            "LICENSE-MIT.txt": Object {
+              "size": 1077,
+            },
+            "es2015": Object {
+              "files": Object {
+                "index.js": Object {
+                  "size": 11104,
+                },
+                "text.js": Object {
+                  "size": 11105,
+                },
+              },
+            },
+            "index.js": Object {
+              "size": 10286,
+            },
+            "package.json": Object {
+              "size": 852,
+            },
+            "text.js": Object {
+              "size": 10287,
+            },
+          },
+        },
         "end-of-stream": Object {
           "files": Object {
             "LICENSE": Object {
@@ -808,10 +848,10 @@ Object {
               "size": 1465,
             },
             "index.js": Object {
-              "size": 2064,
+              "size": 2154,
             },
             "package.json": Object {
-              "size": 500,
+              "size": 799,
             },
           },
         },
@@ -837,10 +877,10 @@ Object {
               "size": 765,
             },
             "ini.js": Object {
-              "size": 4767,
+              "size": 4976,
             },
             "package.json": Object {
-              "size": 458,
+              "size": 541,
             },
           },
         },
@@ -921,10 +961,34 @@ Object {
               "size": 1073,
             },
             "index.js": Object {
-              "size": 7652,
+              "size": 7807,
             },
             "package.json": Object {
               "size": 722,
+            },
+          },
+        },
+        "mkdirp": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 1141,
+            },
+            "bin": Object {
+              "files": Object {
+                "cmd.js": Object {
+                  "executable": true,
+                  "size": 731,
+                },
+                "usage.txt": Object {
+                  "size": 315,
+                },
+              },
+            },
+            "index.js": Object {
+              "size": 2825,
+            },
+            "package.json": Object {
+              "size": 524,
             },
           },
         },
@@ -944,13 +1008,13 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "size": 3023,
+              "size": 3024,
             },
             "license.md": Object {
-              "size": 1077,
+              "size": 1079,
             },
             "package.json": Object {
-              "size": 470,
+              "size": 497,
             },
           },
         },
@@ -1115,74 +1179,6 @@ Object {
             },
           },
         },
-        "node-abi": Object {
-          "files": Object {
-            ".github": Object {
-              "files": Object {
-                "workflows": Object {
-                  "files": Object {
-                    "update-abi.yml": Object {
-                      "size": 1309,
-                    },
-                  },
-                },
-              },
-            },
-            "CODE_OF_CONDUCT.md": Object {
-              "size": 3194,
-            },
-            "CONTRIBUTING.md": Object {
-              "size": 1646,
-            },
-            "LICENSE": Object {
-              "size": 1069,
-            },
-            "abi_registry.json": Object {
-              "size": 1450,
-            },
-            "index.js": Object {
-              "size": 5712,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "semver": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 765,
-                    },
-                    "bin": Object {
-                      "files": Object {
-                        "semver": Object {
-                          "executable": true,
-                          "size": 4418,
-                        },
-                      },
-                    },
-                    "package.json": Object {
-                      "size": 407,
-                    },
-                    "range.bnf": Object {
-                      "size": 619,
-                    },
-                    "semver.js": Object {
-                      "size": 38803,
-                    },
-                  },
-                },
-              },
-            },
-            "package.json": Object {
-              "size": 547,
-            },
-            "scripts": Object {
-              "files": Object {
-                "update-abi-registry.js": Object {
-                  "size": 2912,
-                },
-              },
-            },
-          },
-        },
         "noop-logger": Object {
           "files": Object {
             "History.md": Object {
@@ -1284,34 +1280,6 @@ Object {
             },
             "log.js": Object {
               "size": 232,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "mkdirp": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 1141,
-                    },
-                    "bin": Object {
-                      "files": Object {
-                        "cmd.js": Object {
-                          "executable": true,
-                          "size": 731,
-                        },
-                        "usage.txt": Object {
-                          "size": 315,
-                        },
-                      },
-                    },
-                    "index.js": Object {
-                      "size": 2644,
-                    },
-                    "package.json": Object {
-                      "size": 548,
-                    },
-                  },
-                },
-              },
             },
             "package.json": Object {
               "size": 1109,
@@ -1470,27 +1438,6 @@ Object {
                 },
               },
             },
-            "node_modules": Object {
-              "files": Object {
-                "string_decoder": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 2338,
-                    },
-                    "lib": Object {
-                      "files": Object {
-                        "string_decoder.js": Object {
-                          "size": 9465,
-                        },
-                      },
-                    },
-                    "package.json": Object {
-                      "size": 542,
-                    },
-                  },
-                },
-              },
-            },
             "package.json": Object {
               "size": 1299,
             },
@@ -1508,10 +1455,34 @@ Object {
               "size": 1081,
             },
             "index.js": Object {
-              "size": 1670,
+              "size": 1529,
             },
             "package.json": Object {
-              "size": 774,
+              "size": 500,
+            },
+          },
+        },
+        "semver": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 765,
+            },
+            "bin": Object {
+              "files": Object {
+                "semver": Object {
+                  "executable": true,
+                  "size": 4418,
+                },
+              },
+            },
+            "package.json": Object {
+              "size": 407,
+            },
+            "range.bnf": Object {
+              "size": 619,
+            },
+            "semver.js": Object {
+              "size": 38803,
             },
           },
         },
@@ -1534,10 +1505,10 @@ Object {
               "size": 748,
             },
             "index.js": Object {
-              "size": 4124,
+              "size": 5708,
             },
             "package.json": Object {
-              "size": 593,
+              "size": 567,
             },
             "signals.js": Object {
               "size": 1295,
@@ -1563,7 +1534,7 @@ Object {
               "size": 1081,
             },
             "index.js": Object {
-              "size": 3539,
+              "size": 3973,
             },
             "package.json": Object {
               "size": 789,
@@ -1603,17 +1574,17 @@ Object {
                       "size": 1081,
                     },
                     "index.js": Object {
-                      "size": 1529,
+                      "size": 1670,
                     },
                     "package.json": Object {
-                      "size": 500,
+                      "size": 774,
                     },
                   },
                 },
               },
             },
             "package.json": Object {
-              "size": 514,
+              "size": 542,
             },
           },
         },
@@ -1649,24 +1620,7 @@ Object {
               "size": 1078,
             },
             "index.js": Object {
-              "size": 9523,
-            },
-            "node_modules": Object {
-              "files": Object {
-                "chownr": Object {
-                  "files": Object {
-                    "LICENSE": Object {
-                      "size": 765,
-                    },
-                    "chownr.js": Object {
-                      "size": 4275,
-                    },
-                    "package.json": Object {
-                      "size": 452,
-                    },
-                  },
-                },
-              },
+              "size": 9587,
             },
             "package.json": Object {
               "size": 590,
@@ -1679,10 +1633,10 @@ Object {
               "size": 1078,
             },
             "extract.js": Object {
-              "size": 5935,
+              "size": 5960,
             },
             "headers.js": Object {
-              "size": 7910,
+              "size": 7969,
             },
             "index.js": Object {
               "size": 72,
@@ -1705,6 +1659,23 @@ Object {
             },
             "index.js": Object {
               "size": 6884,
+            },
+            "node_modules": Object {
+              "files": Object {
+                "safe-buffer": Object {
+                  "files": Object {
+                    "LICENSE": Object {
+                      "size": 1081,
+                    },
+                    "index.js": Object {
+                      "size": 1670,
+                    },
+                    "package.json": Object {
+                      "size": 774,
+                    },
+                  },
+                },
+              },
             },
             "package.json": Object {
               "size": 542,
@@ -1733,26 +1704,85 @@ Object {
         "which-pm-runs": Object {
           "files": Object {
             "LICENSE": Object {
-              "size": 1079,
+              "size": 1099,
             },
             "index.js": Object {
-              "size": 408,
+              "size": 467,
             },
             "package.json": Object {
-              "size": 533,
+              "size": 699,
             },
           },
         },
         "wide-align": Object {
           "files": Object {
             "LICENSE": Object {
+              "executable": true,
               "size": 752,
             },
             "align.js": Object {
+              "executable": true,
               "size": 1428,
             },
+            "node_modules": Object {
+              "files": Object {
+                "ansi-regex": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 350,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 470,
+                    },
+                  },
+                },
+                "is-fullwidth-code-point": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 1756,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 537,
+                    },
+                  },
+                },
+                "string-width": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 923,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 633,
+                    },
+                  },
+                },
+                "strip-ansi": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "size": 154,
+                    },
+                    "license": Object {
+                      "size": 1109,
+                    },
+                    "package.json": Object {
+                      "size": 511,
+                    },
+                  },
+                },
+              },
+            },
             "package.json": Object {
-              "size": 517,
+              "executable": true,
+              "size": 579,
             },
           },
         },

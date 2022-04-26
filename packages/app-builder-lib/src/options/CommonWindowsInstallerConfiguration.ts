@@ -1,5 +1,5 @@
 import { InvalidConfigurationError, isEmptyOrSpaces } from "builder-util"
-import sanitizeFileName from "sanitize-filename"
+import { sanitizeFileName } from "../util/filename"
 import { WinPackager } from "../winPackager"
 
 export interface CommonWindowsInstallerConfiguration {
@@ -63,9 +63,11 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
         throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
       }
       menuCategory = sanitizeFileName(companyName)
-    }
-    else {
-      menuCategory = (options.menuCategory as string).split(/[/\\]/).map(it => sanitizeFileName(it)).join("\\")
+    } else {
+      menuCategory = options.menuCategory
+        .split(/[/\\]/)
+        .map(it => sanitizeFileName(it))
+        .join("\\")
     }
   }
 
@@ -73,7 +75,7 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
     isPerMachine: options.perMachine === true,
     isAssisted: options.oneClick === false,
 
-    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.productFilename : packager.expandMacro(options.shortcutName!!),
+    shortcutName: isEmptyOrSpaces(options.shortcutName) ? appInfo.sanitizedProductName : packager.expandMacro(options.shortcutName),
     isCreateDesktopShortcut: convertToDesktopShortcutCreationPolicy(options.createDesktopShortcut),
     isCreateStartMenuShortcut: options.createStartMenuShortcut !== false,
     menuCategory,
@@ -83,15 +85,15 @@ export function getEffectiveOptions(options: CommonWindowsInstallerConfiguration
 function convertToDesktopShortcutCreationPolicy(value: boolean | undefined | string): DesktopShortcutCreationPolicy {
   if (value === false) {
     return DesktopShortcutCreationPolicy.NEVER
-  }
-  else if (value === "always") {
+  } else if (value === "always") {
     return DesktopShortcutCreationPolicy.ALWAYS
-  }
-  else {
+  } else {
     return DesktopShortcutCreationPolicy.FRESH_INSTALL
   }
 }
 
 export enum DesktopShortcutCreationPolicy {
-  FRESH_INSTALL, ALWAYS, NEVER
+  FRESH_INSTALL,
+  ALWAYS,
+  NEVER,
 }

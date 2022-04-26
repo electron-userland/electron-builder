@@ -12,30 +12,54 @@ const checkOptions: AssertPackOptions = {
   isInstallDepsBefore: false,
 }
 
-test.ifAll.ifMac("mac", app({
-  targets: Platform.MAC.createTarget(),
-  config: {
-    framework: "proton",
-  },
-}, checkOptions))
+test.ifAll.ifMac(
+  "mac",
+  app(
+    {
+      targets: Platform.MAC.createTarget(),
+      config: {
+        framework: "proton",
+      },
+    },
+    checkOptions
+  )
+)
 
-test.ifAll.ifLinuxOrDevMac("linux", app({
-  targets: Platform.LINUX.createTarget("appimage"),
-  config: {
-    framework: "proton",
-  },
-}, checkOptions))
+test.ifAll.ifLinuxOrDevMac(
+  "linux",
+  app(
+    {
+      targets: Platform.LINUX.createTarget("appimage"),
+      config: {
+        framework: "proton",
+      },
+    },
+    checkOptions
+  )
+)
 
-test.ifAll.ifDevOrWinCi("win", app({
-  targets: Platform.WINDOWS.createTarget("nsis"),
-  config: {
-    framework: "proton",
-  },
-}, checkOptions))
+test.ifAll.ifDevOrWinCi(
+  "win",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("nsis"),
+      config: {
+        framework: "proton",
+      },
+    },
+    checkOptions
+  )
+)
 
-test.ifAll.ifDevOrWinCi("win ia32", app({
-  targets: Platform.WINDOWS.createTarget("nsis", Arch.ia32),
-  config: {
-    framework: "proton",
-  },
-}, checkOptions))
+test.ifAll.ifDevOrWinCi(
+  "win ia32",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget("nsis", Arch.ia32),
+      config: {
+        framework: "proton",
+      },
+    },
+    checkOptions
+  )
+)

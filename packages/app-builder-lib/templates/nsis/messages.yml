@@ -14,7 +14,7 @@ win7Required:
   pl: Windows 7 lub nowszy jest wymagany
   pt_BR: Requer Windows 7 ou superior
   zh_CN: 需要 Windows 7 或以上系统
-  zh_TW: 需要 Windows 7 或以上系統
+  zh_TW: 需要 Windows 7 或更新的系統
   tr_TR: Windows 7 ve üstü gereklidir
   sv_SE: Windows 7 eller högre krävs
   no: Windows 7 og over er nødvendig
@@ -36,7 +36,7 @@ x64WinRequired:
   pl: Windows 64-bitowy jest wymagany
   pt_BR: Requer Windows 64 bits
   zh_CN: 需要 64 位 Windows 系统
-  zh_TW: 需要 64 位 Windows 系統
+  zh_TW: 需要 64 位元 Windows 系統
   tr_TR: 64 bit Windows gerekli
   sv_SE: 64-bitars Windows krävs
   no: 64-biters Windows er nødvendig
@@ -58,7 +58,7 @@ appRunning:
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
   pt_BR: "${PRODUCT_NAME} está em execução.\nClique em OK para fechar."
   zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
-  zh_TW: "${PRODUCT_NAME} 正在運行.\n點擊“確定”關閉."
+  zh_TW: "${PRODUCT_NAME} 正在執行。\n按一下「確定」來關閉。"
   tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
   sv_SE: "${PRODUCT_NAME} körs. \nKlicka på OK för att stänga det."
   no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
@@ -66,6 +66,38 @@ appRunning:
   fi: "${PRODUCT_NAME} on käynnissä. Napsauta OK sulkeaksesi sen."
   es: "${PRODUCT_NAME} se está ejecutando. Haz clic en Aceptar para cerrarlo."
   da: "${PRODUCT_NAME} er i gang. Klik OK for at lukke."
+appCannotBeClosed:
+  en: "${PRODUCT_NAME} cannot be closed. \nPlease close it manually and click Retry to continue."
+  ar: "‫لم يتمكن من إغلاق ${PRODUCT_NAME} \nيُرجى إغلاقه يدويا ثم الضغط مرة أخرى على إعادة المحاولة للاستمرار.‏"
+  az: "${PRODUCT_NAME}, bağlanıla bilmir. \nZəhmət olmasa əllə bağlayın və davam etmək üçün \"Yenidən sına\"ya klikləyin."
+  ca: "No es pot tancar el ${PRODUCT_NAME}. \nTanqueu-lo manualment i cliqueu a tornar-ho a provar per continuar."
+  cs: "Aplikaci ${PRODUCT_NAME} se nepodařilo zavřít. \nZavřete ji ručně a poté klikněte na Opakovat pro pokračování."
+  cy: "Nid oes modd cau ${PRODUCT_NAME}. \nCaewch ef â llaw a chliciwch ar Ailgynnig i barhau."
+  da: "${PRODUCT_NAME} kan ikke afsluttes \nLuk den manuelt og klik Prøv igen for at fortsætte"
+  de: "${PRODUCT_NAME} kann nicht geschlossen werden. \nSchließ es bitte manuell und klicke auf »Wiederholen«, um fortzufahren."
+  el: "Το ${PRODUCT_NAME} δεν μπορεί να κλείσει. \nΠαρακαλώ κλείστο χειροκίνητα και πάτα Δοκιμή Ξανά για να συνεχίσεις."
+  es: "No se puede cerrar ${PRODUCT_NAME}. \nPor favor cierra la aplicación manualmente y haz clic en reintentar para continuar."
+  et: "${PRODUCT_NAME} ei saa sulgeda. \nPalun sulge see käsitsi ja klõpsa jätkamiseks \"Proovi uuesti\"."
+  fi: "${PRODUCT_NAME} ei voi sulkea. \nSulje se itse ja napsauta Yritä uudelleen jatkaaksesi."
+  he: "${PRODUCT_NAME} לא יכול להיסגר. \nאנא סגור אותו באופן ידני ולחץ על נסה שוב כדי להמשיך."
+  is: "Ekki er hægt að loka ${PRODUCT_NAME}. \nLokaðu því handvirkt og ýttu á 'Reyna aftur' til að halda áfram."
+  it: "${PRODUCT_NAME} non può essere chiuso. \nPer favore, chiudilo manualmente e clicca su Riprova per continuare."
+  ja: "${PRODUCT_NAME}が終了できません。\n手動で閉じて、『再試行』をクリックしてください。"
+  lt: "Nepavyksta užverti ${PRODUCT_NAME}. \nPabandykite ją užverti rankiniu būdu ir norėdami tęsti spustelėkite „Bandyti dar kartą“."
+  nl_NL: "${PRODUCT_NAME} kan niet automatisch worden afgesloten. \nSluit zelf de ${PRODUCT_NAME} app en klik vervolgens op ‘Opnieuw proberen’."
+  pl: "Nie można zamknąć ${PRODUCT_NAME}. \nZamknij aplikację i kliknij Ponów, aby kontynuować."
+  pt_BR: "Não é possível fechar o ${PRODUCT_NAME}. \nFeche a janela do ${PRODUCT_NAME} e clique em Repetir para continuar."
+  pt_PT: "Não é possível fechar o ${PRODUCT_NAME}. \nPor favor, feche-o manualmente e clique em ´Tentar novamente' para continuar."
+  ro: "${PRODUCT_NAME} nu poate fi închis \nVă rugăm închideți-l manual și apăsați Reîncercare pentru a continua."
+  ru: "Не удалось закрыть ${PRODUCT_NAME}. \nПожалуйста, закройте ${PRODUCT_NAME} вручную и нажмите «Повторить», чтобы продолжить."
+  sk: "${PRODUCT_NAME} nie je možné zatvoriť. \nZatvorte ho ručne a pokračujte kliknutím na položku Opakovať."
+  sl: "${PRODUCT_NAME} se ne more zapreti. \nPoskusite ga zapreti ročno in kliknite Ponovi za nadaljevanje."
+  sq: "${PRODUCT_NAME} s’mund të mbyllet. \nQë të vazhdohet, ju lutemi, mbylleni dorazi dhe klikoni mbi Riprovo."
+  sr: "${PRODUCT_NAME} не може да се затвори. \nЗатворите га ручно и кликните на Покушај да наставите."
+  sv: "${PRODUCT_NAME} går inte att stängas. \nVänligen stäng det manuellt och klicka på Försök igen för att fortsätta."
+  tr: "${PRODUCT_NAME} kapatılamaz. \nLütfen elle kapatın ve devam etmek için Tekrar'a tıklayın"
+  zh_CN: "${PRODUCT_NAME} 无法关闭。\n请手动关闭它，然后单击重试以继续。"
+  zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後按一下重試以繼續。"
 installing:
   en: Installing, please wait...
   de: Installation läuft, bitte warten...
@@ -75,7 +107,7 @@ installing:
   ko: 설치하고 있습니다. 잠시 기다려주십시오...
   ru: Установка, пожалуйста, подождите...
   sk: Inštalujem, prosím počkajte...
-  cs: Instalování, prosím počkejte...
+  cs: Instaluje se, prosím vyčkejte...
   hu: Telepítés, kérem várjon...
   pl: Zaczekaj na ukończenie instalacji...
   pt_BR: Instalando, por favor aguarde...
@@ -97,12 +129,12 @@ areYouSureToUninstall:
   ko: ${PRODUCT_NAME}을(를) 제거 하시겠습니까?
   ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
   sk: Ste si istý že chcete odinštalovať ${PRODUCT_NAME}?
-  cs: Jste si jistí, že chcete odinstalovat ${PRODUCT_NAME}?
+  cs: Jste si jisti, že chcete odinstalovat ${PRODUCT_NAME}?
   hu: Biztos benne, hogy szeretné eltávolítani a ${PRODUCT_NAME} alkalmazást?
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
   pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
   zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
-  zh_TW: 確定卸載 ${PRODUCT_NAME} 嗎？
+  zh_TW: 確定解除安裝 ${PRODUCT_NAME} 嗎？
   tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
   sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
   no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?
@@ -110,3 +142,7 @@ areYouSureToUninstall:
   fi: Oletko varma, että haluat poistaa ${PRODUCT_NAME} asennuksen?
   es: ¿Seguro que quieres desinstalar ${PRODUCT_NAME}?
   da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
+decompressionFailed:
+  en: Failed to decompress files. Please try running the installer again.
+uninstallFailed:
+  en: Failed to uninstall old application files. Please try running the installer again.

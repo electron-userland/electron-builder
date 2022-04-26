@@ -4,8 +4,7 @@ import { serializeToYaml } from "./util"
 export class DebugLogger {
   readonly data: any = {}
 
-  constructor(readonly isEnabled = true) {
-  }
+  constructor(readonly isEnabled = true) {}
 
   add(key: string, value: any) {
     if (!this.isEnabled) {
@@ -19,23 +18,20 @@ export class DebugLogger {
       if (p === dataPath[dataPath.length - 1]) {
         lastName = p
         break
-      }
-      else {
+      } else {
         if (o[p] == null) {
           o[p] = Object.create(null)
-        }
-        else if (typeof o[p] === "string") {
+        } else if (typeof o[p] === "string") {
           o[p] = [o[p]]
         }
         o = o[p]
       }
     }
 
-    if (Array.isArray(o[lastName!!])) {
-      o[lastName!!].push(value)
-    }
-    else {
-      o[lastName!!] = value
+    if (Array.isArray(o[lastName!])) {
+      o[lastName!] = [...o[lastName!], value]
+    } else {
+      o[lastName!] = value
     }
   }
 
@@ -43,8 +39,7 @@ export class DebugLogger {
     // toml and json doesn't correctly output multiline string as multiline
     if (this.isEnabled && Object.keys(this.data).length > 0) {
       return outputFile(file, serializeToYaml(this.data))
-    }
-    else {
+    } else {
       return Promise.resolve()
     }
   }

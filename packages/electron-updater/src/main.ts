@@ -5,8 +5,7 @@ import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
-export { UpdateInfo }
-export { CancellationToken } from "builder-util-runtime"
+export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 export { Provider } from "./providers/Provider"
 export { AppImageUpdater } from "./AppImageUpdater"
 export { MacUpdater } from "./MacUpdater"
@@ -22,11 +21,9 @@ function doLoadAutoUpdater(): AppUpdater {
   // tslint:disable:prefer-conditional-expression
   if (process.platform === "win32") {
     _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
-  }
-  else if (process.platform === "darwin") {
+  } else if (process.platform === "darwin") {
     _autoUpdater = new (require("./MacUpdater").MacUpdater)()
-  }
-  else {
+  } else {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
   }
   return _autoUpdater
@@ -36,7 +33,7 @@ Object.defineProperty(exports, "autoUpdater", {
   enumerable: true,
   get: () => {
     return _autoUpdater || doLoadAutoUpdater()
-  }
+  },
 })
 
 export interface ResolvedUpdateFileInfo {
@@ -44,10 +41,6 @@ export interface ResolvedUpdateFileInfo {
   readonly info: UpdateFileInfo
 
   packageInfo?: PackageFileInfo
-}
-
-export function getChannelFilename(channel: string): string {
-  return `${channel}.yml`
 }
 
 export interface UpdateCheckResult {
@@ -61,7 +54,7 @@ export interface UpdateCheckResult {
   readonly versionInfo: UpdateInfo
 }
 
-export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
+export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
 export const DOWNLOAD_PROGRESS: UpdaterEvents = "download-progress"
 export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"
@@ -69,8 +62,7 @@ export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
 
 export class UpdaterSignal {
-  constructor(private emitter: EventEmitter) {
-  }
+  constructor(private emitter: EventEmitter) {}
 
   /**
    * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
@@ -104,8 +96,7 @@ function addHandler(emitter: EventEmitter, event: UpdaterEvents, handler: (...ar
       console.log("%s %s", event, args)
       handler(...args)
     })
-  }
-  else {
+  } else {
     emitter.on(event, handler)
   }
 }
@@ -118,29 +109,4 @@ export interface Logger {
   error(message?: any): void
 
   debug?(message: string): void
-}
-
-// if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
-/** @internal */
-export function newBaseUrl(url: string): URL {
-  const result = new URL(url)
-  if (!result.pathname.endsWith("/")) {
-    result.pathname += "/"
-  }
-  return result
-}
-
-// addRandomQueryToAvoidCaching is false by default because in most cases URL already contains version number,
-// so, it makes sense only for Generic Provider for channel files
-export function newUrlFromBase(pathname: string, baseUrl: URL, addRandomQueryToAvoidCaching = false): URL {
-  const result = new URL(pathname, baseUrl)
-  // search is not propagated (search is an empty string if not specified)
-  const search = baseUrl.search
-  if (search != null && search.length !== 0) {
-    result.search = search
-  }
-  else if (addRandomQueryToAvoidCaching) {
-    result.search = `noCache=${Date.now().toString(32)}`
-  }
-  return result
 }

@@ -3,11 +3,13 @@ import { BlockMap } from "builder-util-runtime/out/blockMapApi"
 import { close, open } from "fs-extra"
 import { createWriteStream } from "fs"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
+import { ProgressInfo, CancellationToken } from "builder-util-runtime"
 import { Logger } from "../main"
 import { copyData } from "./DataSplitter"
 import { URL } from "url"
 import { computeOperations, Operation, OperationKind } from "./downloadPlanBuilder"
 import { checkIsRangesSupported, executeTasksUsingMultipleRangeRequests } from "./multipleRangeDownloader"
+import { ProgressDifferentialDownloadCallbackTransform, ProgressDifferentialDownloadInfo } from "./ProgressDifferentialDownloadCallbackTransform"
 
 export interface DifferentialDownloaderOptions {
   readonly oldFile: string
@@ -18,6 +20,9 @@ export interface DifferentialDownloaderOptions {
   readonly requestHeaders: OutgoingHttpHeaders | null
 
   readonly isUseMultipleRangeRequest?: boolean
+
+  readonly cancellationToken: CancellationToken
+  onProgress?: (progress: ProgressInfo) => void
 }
 
 export abstract class DifferentialDownloader {
@@ -61,14 +66,13 @@ export abstract class DifferentialDownloader {
       const length = operation.end - operation.start
       if (operation.kind === OperationKind.DOWNLOAD) {
         downloadSize += length
-      }
-      else {
+      } else {
         copySize += length
       }
     }
 
     const newSize = this.blockAwareFileInfo.size
-    if ((downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length)) !== newSize) {
+    if (downloadSize + copySize + (this.fileMetadataBuffer == null ? 0 : this.fileMetadataBuffer.length) !== newSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newSize: ${newSize}`)
     }
 
@@ -80,12 +84,13 @@ export abstract class DifferentialDownloader {
   private downloadFile(tasks: Array<Operation>): Promise<any> {
     const fdList: Array<OpenedFile> = []
     const closeFiles = (): Promise<Array<void>> => {
-      return Promise.all(fdList.map(openedFile => {
-        return close(openedFile.descriptor)
-          .catch(e => {
+      return Promise.all(
+        fdList.map(openedFile => {
+          return close(openedFile.descriptor).catch(e => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
-      }))
+        })
+      )
     }
     return this.doDownloadFile(tasks, fdList)
       .then(closeFiles)
@@ -96,12 +101,10 @@ export abstract class DifferentialDownloader {
             // closeFiles never throw error, but just to be sure
             try {
               this.logger.error(`cannot close files: ${closeFilesError}`)
-            }
-            catch (errorOnLog) {
+            } catch (errorOnLog) {
               try {
                 console.error(errorOnLog)
-              }
-              catch (ignored) {
+              } catch (ignored) {
                 // ok, give up and ignore error
               }
             }
@@ -115,12 +118,36 @@ export abstract class DifferentialDownloader {
 
   private async doDownloadFile(tasks: Array<Operation>, fdList: Array<OpenedFile>): Promise<any> {
     const oldFileFd = await open(this.options.oldFile, "r")
-    fdList.push({descriptor: oldFileFd, path: this.options.oldFile})
+    fdList.push({ descriptor: oldFileFd, path: this.options.oldFile })
     const newFileFd = await open(this.options.newFile, "w")
-    fdList.push({descriptor: newFileFd, path: this.options.newFile})
-    const fileOut = createWriteStream(this.options.newFile, {fd: newFileFd})
+    fdList.push({ descriptor: newFileFd, path: this.options.newFile })
+    const fileOut = createWriteStream(this.options.newFile, { fd: newFileFd })
     await new Promise((resolve, reject) => {
       const streams: Array<any> = []
+
+      // Create our download info transformer if we have one
+      let downloadInfoTransform: ProgressDifferentialDownloadCallbackTransform | undefined = undefined
+      if (!this.options.isUseMultipleRangeRequest && this.options.onProgress) {
+        // TODO: Does not support multiple ranges (someone feel free to PR this!)
+        const expectedByteCounts: Array<number> = []
+        let grandTotalBytes = 0
+
+        for (const task of tasks) {
+          if (task.kind === OperationKind.DOWNLOAD) {
+            expectedByteCounts.push(task.end - task.start)
+            grandTotalBytes += task.end - task.start
+          }
+        }
+
+        const progressDifferentialDownloadInfo: ProgressDifferentialDownloadInfo = {
+          expectedByteCounts: expectedByteCounts,
+          grandTotal: grandTotalBytes,
+        }
+
+        downloadInfoTransform = new ProgressDifferentialDownloadCallbackTransform(progressDifferentialDownloadInfo, this.options.cancellationToken, this.options.onProgress)
+        streams.push(downloadInfoTransform)
+      }
+
       const digestTransform = new DigestTransform(this.blockAwareFileInfo.sha512)
       // to simply debug, do manual validation to allow file to be fully written
       digestTransform.isValidateOnEnd = false
@@ -128,18 +155,17 @@ export abstract class DifferentialDownloader {
 
       // noinspection JSArrowFunctionCanBeReplacedWithShorthand
       fileOut.on("finish", () => {
-        (fileOut.close as any)(() => {
+        ;(fileOut.close as any)(() => {
           // remove from fd list because closed successfully
           fdList.splice(1, 1)
           try {
             digestTransform.validate()
-          }
-          catch (e) {
+          } catch (e) {
             reject(e)
             return
           }
 
-          resolve()
+          resolve(undefined)
         })
       })
 
@@ -150,8 +176,7 @@ export abstract class DifferentialDownloader {
         stream.on("error", reject)
         if (lastStream == null) {
           lastStream = stream
-        }
-        else {
+        } else {
           lastStream = lastStream.pipe(stream)
         }
       }
@@ -169,8 +194,8 @@ export abstract class DifferentialDownloader {
       let actualUrl: string | null = null
       this.logger.info(`Differential download: ${this.options.newUrl}`)
 
-      const requestOptions = this.createRequestOptions();
-      (requestOptions as any).redirect = "manual"
+      const requestOptions = this.createRequestOptions()
+      ;(requestOptions as any).redirect = "manual"
 
       w = (index: number): void => {
         if (index >= tasks.length) {
@@ -183,16 +208,23 @@ export abstract class DifferentialDownloader {
 
         const operation = tasks[index++]
         if (operation.kind === OperationKind.COPY) {
+          // We are copying, let's not send status updates to the UI
+          if (downloadInfoTransform) {
+            downloadInfoTransform.beginFileCopy()
+          }
+
           copyData(operation, firstStream, oldFileFd, reject, () => w(index))
           return
         }
 
         const range = `bytes=${operation.start}-${operation.end - 1}`
-        requestOptions.headers!!.range = range
+        requestOptions.headers!.range = range
 
-        const debug = this.logger.debug
-        if (debug != null) {
-          debug(`download range: ${range}`)
+        this.logger?.debug?.(`download range: ${range}`)
+
+        // We are starting to download
+        if (downloadInfoTransform) {
+          downloadInfoTransform.beginRangeDownload()
         }
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
@@ -202,14 +234,18 @@ export abstract class DifferentialDownloader {
           }
 
           response.pipe(firstStream, {
-            end: false
+            end: false,
           })
           response.once("end", () => {
+            // Pass on that we are downloading a segment
+            if (downloadInfoTransform) {
+              downloadInfoTransform.endRangeDownload()
+            }
+
             if (++downloadOperationCount === 100) {
               downloadOperationCount = 0
               setTimeout(() => w(index), 1000)
-            }
-            else {
+            } else {
               w(index)
             }
           })
@@ -229,9 +265,9 @@ export abstract class DifferentialDownloader {
   }
 
   protected async readRemoteBytes(start: number, endInclusive: number): Promise<Buffer> {
-    const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
+    const buffer = Buffer.allocUnsafe(endInclusive + 1 - start)
     const requestOptions = this.createRequestOptions()
-    requestOptions.headers!!.range = `bytes=${start}-${endInclusive}`
+    requestOptions.headers!.range = `bytes=${start}-${endInclusive}`
     let position = 0
     await this.request(requestOptions, chunk => {
       chunk.copy(buffer, position)

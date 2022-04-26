@@ -5,7 +5,9 @@ import { unlinkSync } from "fs"
 import * as path from "path"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
+import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
 
 export class AppImageUpdater extends BaseUpdater {
@@ -14,11 +16,10 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   public isUpdaterActive(): boolean {
-    if (process.env.APPIMAGE == null) {
-      if (process.env.SNAP == null) {
+    if (process.env["APPIMAGE"] == null) {
+      if (process.env["SNAP"] == null) {
         this._logger.warn("APPIMAGE env is not defined, current application is not an AppImage")
-      }
-      else {
+      } else {
         this._logger.info("SNAP env is defined, updater is disabled")
       }
       return false
@@ -29,30 +30,35 @@ export class AppImageUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage")!!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage")!
     return this.executeDownload({
       fileExtension: "AppImage",
       fileInfo,
       downloadUpdateOptions,
       task: async (updateFile, downloadOptions) => {
-        const oldFile = process.env.APPIMAGE!!
+        const oldFile = process.env["APPIMAGE"]!
         if (oldFile == null) {
           throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
         }
 
         let isDownloadFull = false
         try {
-          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, {
+          const downloadOptions: DifferentialDownloaderOptions = {
             newUrl: fileInfo.url,
             oldFile,
             logger: this._logger,
             newFile: updateFile,
             isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
             requestHeaders: downloadUpdateOptions.requestHeaders,
-          })
-            .download()
-        }
-        catch (e) {
+            cancellationToken: downloadUpdateOptions.cancellationToken,
+          }
+
+          if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+            downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+          }
+
+          await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
+        } catch (e) {
           this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
           // during test (developer machine mac) we must throw error
           isDownloadFull = process.platform === "linux"
@@ -68,7 +74,7 @@ export class AppImageUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const appImageFile = process.env.APPIMAGE!!
+    const appImageFile = process.env["APPIMAGE"]!
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
     }
@@ -83,12 +89,14 @@ export class AppImageUpdater extends BaseUpdater {
     if (path.basename(options.installerPath) === existingBaseName || !/\d+\.\d+\.\d+/.test(existingBaseName)) {
       // no version in the file name, overwrite existing
       destination = appImageFile
-    }
-    else {
+    } else {
       destination = path.join(path.dirname(appImageFile), path.basename(options.installerPath))
     }
 
     execFileSync("mv", ["-f", options.installerPath, destination])
+    if (destination !== appImageFile) {
+      this.emit("appimage-filename-updated", destination)
+    }
 
     const env: any = {
       ...process.env,
@@ -100,12 +108,10 @@ export class AppImageUpdater extends BaseUpdater {
         detached: true,
         stdio: "ignore",
         env,
-      })
-        .unref()
-    }
-    else {
+      }).unref()
+    } else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], {env})
+      execFileSync(destination, [], { env })
     }
     return true
   }

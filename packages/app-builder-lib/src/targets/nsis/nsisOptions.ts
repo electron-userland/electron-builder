@@ -1,6 +1,30 @@
 import { TargetSpecificOptions } from "../../core"
 import { CommonWindowsInstallerConfiguration } from "../.."
 
+interface CustomNsisBinary {
+  /**
+   * @default https://github.com/electron-userland/electron-builder-binaries/releases/download
+   */
+  readonly url: string | null
+
+  /**
+   * @default VKMiizYdmNdJOWpRGz4trl4lD++BvYP2irAXpMilheUP0pc93iKlWAoP843Vlraj8YG19CVn0j+dCo/hURz9+Q==
+   */
+  readonly checksum?: string | null
+
+  /**
+   * @default 3.0.4.1
+   */
+  readonly version?: string | null
+
+  /**
+   * Whether or not to enable NSIS logging for debugging.
+   * Note: Requires a debug-enabled NSIS build.
+   * electron-builder's included `makensis` does not natively support debug-enabled NSIS installers currently, you must supply your own via `customNsisBinary?: CustomNsisBinary`
+   * In your custom nsis scripts, you can leverage this functionality via `LogSet` and `LogText`
+   */
+  readonly debugLogging?: boolean | null
+}
 export interface CommonNsisOptions {
   /**
    * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
@@ -24,6 +48,11 @@ export interface CommonNsisOptions {
    * @default false
    */
   readonly useZip?: boolean
+
+  /**
+   * Allows you to provide your own `makensis`, such as one with support for debug logging via LogSet and LogText. (Logging also requires option `debugLogging = true`)
+   */
+  readonly customNsisBinary?: CustomNsisBinary | null
 }
 
 export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerConfiguration, TargetSpecificOptions {
@@ -169,11 +198,14 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
   readonly requestExecutionLevel?: "user" | "highest" | "admin"
 
   /**
-   * The unpack directory name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory.
+   * The unpack directory for the portable app resources.
+   *
+   * If set to a string, it will be the name in [TEMP](https://www.askvg.com/where-does-windows-store-temporary-files-and-how-to-change-temp-folder-location/) directory
+   * If set explicitly to `false`, it will use the Windows temp directory ($PLUGINSDIR) that is unique to each launch of the portable application.
    *
    * Defaults to [uuid](https://github.com/segmentio/ksuid) of build (changed on each build of portable executable).
    */
-  readonly unpackDirName?: string
+  readonly unpackDirName?: string | boolean
 
   /**
    * The image to show while the portable executable is extracting. This image must be a bitmap (`.bmp`) image.

@@ -1,18 +1,22 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "22.8.1",
+  "version": "23.0.8",
   "main": "out/index.js",
   "files": [
     "out"
   ],
   "bin": {
-    "electron-builder": "./out/cli/cli.js",
-    "install-app-deps": "./out/cli/install-app-deps.js"
+    "electron-builder": "./cli.js",
+    "install-app-deps": "./install-app-deps.js"
   },
-  "repository": "electron-userland/electron-builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-builder"
+  },
   "engines": {
-    "node": ">=8.12.0"
+    "node": ">=14.0.0"
   },
   "keywords": [
     "electron",
@@ -35,6 +39,7 @@
     "Mac",
     "appx",
     "snap",
+    "flatpak",
     "portable"
   ],
   "author": "Vladimir Krivosheev",
@@ -45,24 +50,23 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^15.0.5",
+    "@types/yargs": "^17.0.1",
     "app-builder-lib": "workspace:*",
-    "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.0",
+    "chalk": "^4.1.1",
     "dmg-builder": "workspace:*",
-    "fs-extra": "^9.0.1",
-    "is-ci": "^2.0.0",
-    "lazy-val": "^1.0.4",
-    "read-config-file": "6.0.0",
-    "sanitize-filename": "^1.6.3",
-    "update-notifier": "^4.1.1",
-    "yargs": "^16.0.3"
+    "fs-extra": "^10.0.0",
+    "is-ci": "^3.0.0",
+    "lazy-val": "^1.0.5",
+    "read-config-file": "6.2.0",
+    "update-notifier": "^5.1.0",
+    "yargs": "^17.0.1"
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.1",
-    "@types/is-ci": "^2.0.0"
+    "@types/fs-extra": "9.0.13",
+    "@types/is-ci": "3.0.0",
+    "@types/update-notifier": "5.1.0"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

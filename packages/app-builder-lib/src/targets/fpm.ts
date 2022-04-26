@@ -1,13 +1,14 @@
 import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { ensureDir, outputFile, readFile } from "fs-extra"
+import { outputFile } from "fs-extra"
+import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
-import { DebOptions, LinuxTargetSpecificOptions } from ".."
 import { smarten } from "../appInfo"
 import { Target } from "../core"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
+import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { objectToArgs } from "../util/appBuilder"
 import { computeEnv } from "../util/bundledTool"
 import { isMacOsSierra } from "../util/macosVersion"
@@ -16,13 +17,14 @@ import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getLinuxToolsPath } from "./tools"
 
 interface FpmOptions {
+  name: string
   maintainer: string | undefined
   vendor: string
   url: string
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
+  readonly options: LinuxTargetSpecificOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
 
   private readonly scriptFiles: Promise<Array<string>>
 
@@ -39,7 +41,10 @@ export default class FpmTarget extends Target {
     const templateOptions = {
       // old API compatibility
       executable: packager.executableName,
-      productFilename: packager.appInfo.productFilename, ...packager.platformSpecificBuildOptions}
+      sanitizedProductName: packager.appInfo.sanitizedProductName,
+      productFilename: packager.appInfo.productFilename,
+      ...packager.platformSpecificBuildOptions,
+    }
 
     function getResource(value: string | null | undefined, defaultFile: string) {
       if (value == null) {
@@ -50,7 +55,7 @@ export default class FpmTarget extends Target {
 
     return await Promise.all<string>([
       writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
-      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions)
+      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions),
     ])
   }
 
@@ -72,8 +77,7 @@ export default class FpmTarget extends Target {
       const a = packager.info.metadata.author
       if (a == null || a.email == null) {
         errors.push(errorMessages.authorEmailIsMissed)
-      }
-      else {
+      } else {
         author = `${a.name} <${a.email}>`
       }
     }
@@ -83,9 +87,10 @@ export default class FpmTarget extends Target {
     }
 
     return {
-      maintainer: author!!,
-      url: projectUrl!!,
-      vendor: options.vendor || author!!,
+      name: options.packageName ?? this.packager.appInfo.linuxPackageName,
+      maintainer: author!,
+      url: projectUrl!,
+      vendor: options.vendor || author!,
     }
   }
 
@@ -98,8 +103,7 @@ export default class FpmTarget extends Target {
     if (target === "deb") {
       nameFormat = "${name}_${version}_${arch}.${ext}"
       isUseArchIfX64 = true
-    }
-    else if (target === "rpm") {
+    } else if (target === "rpm") {
       nameFormat = "${name}-${version}.${arch}.${ext}"
       isUseArchIfX64 = true
     }
@@ -115,7 +119,7 @@ export default class FpmTarget extends Target {
 
     await unlinkIfExists(artifactPath)
     if (packager.packagerOptions.prepackaged != null) {
-      await ensureDir(this.outDir)
+      await mkdir(this.outDir, { recursive: true })
     }
 
     const scripts = await this.scriptFiles
@@ -123,16 +127,21 @@ export default class FpmTarget extends Target {
     const options = this.options
     const synopsis = options.synopsis
     const args = [
-      "--architecture", toLinuxArchString(arch, target),
-      "--name", appInfo.linuxPackageName,
-      "--after-install", scripts[0],
-      "--after-remove", scripts[1],
-      "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
-      "--version", appInfo.version,
-      "--package", artifactPath,
+      "--architecture",
+      toLinuxArchString(arch, target),
+      "--after-install",
+      scripts[0],
+      "--after-remove",
+      scripts[1],
+      "--description",
+      smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
+      "--version",
+      appInfo.version,
+      "--package",
+      artifactPath,
     ]
 
-    objectToArgs(args, await this.computeFpmMetaInfoOptions() as any)
+    objectToArgs(args, (await this.computeFpmMetaInfoOptions()) as any)
 
     const packageCategory = options.packageCategory
     if (packageCategory != null) {
@@ -140,16 +149,16 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
-    }
-    else if (target === "rpm") {
+      args.push("--deb-priority", (options as DebOptions).priority ?? "optional")
+    } else if (target === "rpm") {
       if (synopsis != null) {
         args.push("--rpm-summary", smarten(synopsis))
       }
     }
 
     const fpmConfiguration: FpmConfiguration = {
-      args, target,
+      args,
+      target,
     }
 
     if (options.compression != null) {
@@ -161,13 +170,11 @@ export default class FpmTarget extends Target {
     if (depends != null) {
       if (Array.isArray(depends)) {
         fpmConfiguration.customDepends = depends
-      }
-      else {
+      } else {
         // noinspection SuspiciousTypeOfGuard
         if (typeof depends === "string") {
           fpmConfiguration.customDepends = [depends as string]
-        }
-        else {
+        } else {
           throw new Error(`depends must be Array or String, but specified as: ${depends}`)
         }
       }
@@ -176,10 +183,10 @@ export default class FpmTarget extends Target {
     use(packager.info.metadata.license, it => args.push("--license", it!))
     use(appInfo.buildNumber, it => args.push("--iteration", it!))
 
-    use(options.fpm, it => args.push(...it as any))
+    use(options.fpm, it => args.push(...(it as any)))
 
-    args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
-    for (const icon of (await this.helper.icons)) {
+    args.push(`${appOutDir}/=${installPrefix}/${appInfo.sanitizedProductName}`)
+    for (const icon of await this.helper.icons) {
       const extWithDot = path.extname(icon.file)
       const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`
       args.push(`${icon.file}=/usr/share/icons/hicolor/${sizeName}/apps/${packager.executableName}${extWithDot}`)
@@ -193,7 +200,7 @@ export default class FpmTarget extends Target {
     const desktopFilePath = await this.helper.writeDesktopEntry(this.options)
     args.push(`${desktopFilePath}=/usr/share/applications/${packager.executableName}.desktop`)
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath])) {
+    if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath]))) {
       return
     }
 
@@ -205,7 +212,7 @@ export default class FpmTarget extends Target {
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
     // so, for now, brew install rpm is still required.
-    if (target !== "rpm" && await isMacOsSierra()) {
+    if (target !== "rpm" && (await isMacOsSierra())) {
       const linuxToolsPath = await getLinuxToolsPath()
       Object.assign(env, {
         PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
@@ -213,7 +220,7 @@ export default class FpmTarget extends Target {
       })
     }
 
-    await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, {env})
+    await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, { env })
 
     await packager.dispatchArtifactCreated(artifactPath, this, arch)
   }
@@ -231,19 +238,16 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
   function replacer(match: string, p1: string) {
     if (p1 in options) {
       return options[p1]
-    }
-    else {
+    } else {
       throw new Error(`Macro ${p1} is not defined`)
     }
   }
-  const config = (await readFile(templatePath, "utf8"))
-    .replace(/\${([a-zA-Z]+)}/g, replacer)
-    .replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
-      log.warn("<%= varName %> is deprecated, please use ${varName} instead")
-      return replacer(match, p1.trim())
-    })
+  const config = (await readFile(templatePath, "utf8")).replace(/\${([a-zA-Z]+)}/g, replacer).replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
+    log.warn("<%= varName %> is deprecated, please use ${varName} instead")
+    return replacer(match, p1.trim())
+  })
 
-  const outputPath = await tmpDir.getTempFile({suffix: path.basename(templatePath, ".tpl")})
+  const outputPath = await tmpDir.getTempFile({ suffix: path.basename(templatePath, ".tpl") })
   await outputFile(outputPath, config)
   return outputPath
 }

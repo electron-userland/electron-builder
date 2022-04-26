@@ -1,7 +1,50 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-green.svg)](https://www.electron.build/donate) [![project chat](https://img.shields.io/badge/chat-on_zulip-brightgreen.svg)](https://electron-builder.zulipchat.com)
-A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box.
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate) [![project discussions](https://img.shields.io/badge/discuss-on_github-blue.svg)](https://github.com/electron-userland/electron-builder/discussions)
+A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
 
-See documentation on [electron.build](https://www.electron.build).
+:large_orange_diamond: - Looking for additional maintainers!
+
+**We condemn Russia’s military aggression against Ukraine. We stand with the people of Ukraine.**
+
+## Sponsors
+
+<div align="center">
+<a href="https://workflowy.com">
+<div>
+<img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
+</div>
+Notes, Tasks, Projects. All in a Single Place.
+</a>
+<br>
+<br>
+<a href="https://tidepool.org">
+<div>
+<img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
+</div>
+Your gateway to understanding your diabetes data
+</a>
+<br>
+<br>
+<a href="https://keygen.sh/?via=electron-builder">
+<div>
+<img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
+</div>
+A dead-simple software licensing and distribution API built for developers
+</a>
+<br>
+<br>
+<a href="https://www.todesktop.com/electron?utm_source=electron-builder">
+<div>
+<img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
+</div>
+ToDesktop: An all-in-one platform for building and releasing Electron apps
+</a>
+<br>
+<br>
+</div>
+
+## Documentation
+
+See the full documentation on [electron.build](https://www.electron.build).
 
 * NPM packages management:
     * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
@@ -27,7 +70,7 @@ See documentation on [electron.build](https://www.electron.build).
 | Question | Answer |
 |----------|-------|
 | “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
+| “I have a question” | [Join the discussions](https://github.com/electron-userland/electron-builder/discussions) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development” | [Donate](https://www.electron.build/donate) |
 
@@ -35,6 +78,19 @@ See documentation on [electron.build](https://www.electron.build).
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
 `yarn add electron-builder --dev`
+
+### Note for PNPM
+
+In order to use with `pnpm`, you'll need to adjust your `.npmrc` to use any one the following approaches in order for your dependencies to be bundled correctly (ref: [#6389](https://github.com/electron-userland/electron-builder/issues/6289#issuecomment-1042620422)):
+```
+node-linker=hoisted
+```
+```
+public-hoist-pattern=*
+```
+```
+shamefully-hoist=true
+```
 
 ## Quick Setup Guide
 
@@ -58,11 +114,11 @@ See documentation on [electron.build](https://www.electron.build).
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
     "scripts": {
-      "pack": "electron-builder --dir",
-      "dist": "electron-builder"
+      "app:dir": "electron-builder --dir",
+      "app:dist": "electron-builder"
     }
     ```
-    Then you can run `yarn dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn pack` (only generates the package directory without really packaging it. This is useful for testing purposes).
+    Then you can run `yarn app:dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn app:dir` (only generates the package directory without really packaging it. This is useful for testing purposes).
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
@@ -74,9 +130,4 @@ For an app that will be shipped to production, you should sign your application.
 
 ## Donate
 
-We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/donate). Donation can be used to increase some issue priority.
-
-## Sponsors
-
-<a href="https://workflowy.com"><img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" width="28" height="28" align="middle"/></a>
-<a href="https://tidepool.org"><img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" align="middle"/></a>
+We do this open source work in our free time. If you'd like us to invest more time on it, please [donate](https://www.electron.build/donate).

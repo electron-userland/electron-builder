@@ -20,6 +20,7 @@ chooseInstallationOptions:
   es: Elegir opciones de instalación
   da: Vælg Installeringsmuligheder
   ja: インストールオプションの選択
+  ko: 설치 옵션 선택
 chooseUninstallationOptions:
   en: Choose Uninstallation Options
   de: Deinstallationsoption wählen
@@ -30,7 +31,7 @@ chooseUninstallationOptions:
   hu_HU: Eltávolítási opciók kiválasztása
   pt_BR: Escolha uma opção de desinstalação
   zh_CN: 卸载选项
-  zh_TW: 卸載選項
+  zh_TW: 解除安裝選項
   tr_TR: Kaldırma Ayarlarını Seçin
   sv_SE: Välj alternativ för avinstallation
   pl_PL: Wybierz opcje dezinstalacji
@@ -41,12 +42,13 @@ chooseUninstallationOptions:
   es: Elegir opciones de desinstalación
   da: Vælg Afinstalleringsmuligheder
   ja: アンインストールオプションの選択
+  ko: 제거 옵션 선택
 whichInstallationShouldBeRemoved:
   en: Which installation should be removed?
   de: Welche Installation soll entfernt werden?
   ru: Какую из установленных программ следует удалить?
   sk: Ktorá inštalácia by mala byt odstránená?
-  cs: Která instalace by měla má být odstraněná?
+  cs: Která instalace by měla být odstraněna?
   fr: Quelle installation doit être supprimée ?
   hu_HU: Melyik telepítést távolítsuk el?
   pt_BR: Qual instalação deve ser removida?
@@ -62,6 +64,7 @@ whichInstallationShouldBeRemoved:
   es: ¿Qué tipo de instalación debe eliminarse?
   da: Hvilken installering skal fjernes?
   ja: どれをアンインストールしますか？
+  ko: 어떤 설치 버전을 제거할까요?
 whoShouldThisApplicationBeInstalledFor:
   en: Who should this application be installed for?
   de: Für wen soll diese Anwendung installiert werden?
@@ -72,7 +75,7 @@ whoShouldThisApplicationBeInstalledFor:
   hu_HU: Kinek legyen ez az alkalmazás telepítve?
   pt_BR: Para quem esta aplicação deve ser instalada?
   zh_CN: 为哪位用户安装该应用？
-  zh_TW: 為哪位用戶安裝該應用？
+  zh_TW: 需要為哪位使用者安裝該應用程式？
   tr_TR: Bu Uygulama Kimler için Kurulsun?
   sv_SE: Vem ska den här applikationen installeras för?
   pl_PL: Dla kogo zainstalować tę aplikację?
@@ -83,17 +86,18 @@ whoShouldThisApplicationBeInstalledFor:
   es: ¿Para quién se instalará esta aplicación?
   da: Hvem skal denne applikation installeres til?
   ja: どのユーザーにインストールしますか？
+  ko : 이 프로그램의 사용자는 누구인가요?
 selectUserMode:
   en: Please select whether you wish to make this software available to all users or just yourself
   de: Bitte wählen Sie, ob Sie die Anwendung nur für sich oder für alle Benutzer installieren möchten.
   ru: Выбери, хочешь ли ты сделать эту программу доступной для всех пользователей или только для себя
   sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
-  cs: Prosím vyberte, zda se má tento software instalovat jen proVás nebo pro všechny uživatele
+  cs: Prosím vyberte, zda se má tento software instalovat jen pro Vás, nebo pro všechny uživatele
   fr: "Choisis pour qui ce logiciel doit être accessible : pour tous les utilisateurs ou juste pour toi ?"
   hu_HU: Válaszd ki, hogy a szoftver elérhető legyen-e minden felhasználó számára, vagy csak neked
   pt_BR: Por favor, selecione se este software deve estar disponível apenas para você ou para todos usuários
   zh_CN: 请选择为当前用户还是所有用户安装该软件
-  zh_TW: 請選擇為當前用戶還是所有用戶安裝該軟件
+  zh_TW: 請選擇為目前使用者還是所有使用者安裝該軟體
   tr_TR: Lütfen bu yazılımı tüm kullanıcılar için mi yoksa sadece kendiniz mi kullanmak istediğinizi seçin
   sv_SE: Välj om du vill göra den här mjukvaran tillgänglig för alla användare eller bara för dig
   pl_PL: Wybierz, czy to oprogramowanie ma być dostępne dla wszystkich użytkowników, czy tylko dla Ciebie
@@ -104,17 +108,18 @@ selectUserMode:
   es: Elige si deseas que este software esté disponible para todos los usuarios o solo para ti.
   da: Vælg, om du vil gøre denne software tilgængelig for andre brugere, eller kun for dig selv
   ja: このソフトウェアをすべてのユーザーが使用できるようにするか、現在のユーザーのみ使用するかを選択してください
+  ko : 이 프로그램을 모든 사용자가 사용할 수 있도록 할 것인지 아니면 자신만 사용할 수 있도록 할 것인지 선택하십시오.
 whichInstallationRemove:
   en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
   de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
   ru: Эта программа установлена для всего компьютера (для всех пользователей) и для отдельного пользователя.\nКакую из установленных программ ты хочешь удалить?
   sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť?
-  cs: Tento software je nainstalovaný pro Vás a současně pro všechny uživatele.\nKterou instalace si přejete odstranit?
+  cs: Tento software je nainstalovaný pro Vás a současně pro všechny uživatele.\nKterou instalaci si přejete odstranit?
   fr: Ce logiciel est installé à la fois par machine (tous les utilisateurs) et par utilisateur.\nQuelle installation veux-tu supprimer ?
   hu_HU: Ez a szoftver számítógépenként (minden felhasználó) és felhasználónként is telepítve van.\nMelyik telepítést szeretnéd eltávolítani?
   pt_BR: Este software é instalado por máquina (todos os usuários) e por usuário. Qual instalação você deseja remover?
   zh_CN: 该软件已为所有用户和当前用户安装.\n您希望移除哪个安装?
-  zh_TW: 該軟件已為所有用戶和當前用戶安裝.\n您希望移除哪個安裝?
+  zh_TW: 該軟體已為所有使用者和目前使用者安裝。\n您希望移除哪一個？
   tr_TR: Bu yazılım hem makine başına (tüm kullanıcılar) hem de kullanıcı başına yüklenir.\nKaldırmak istediğiniz kurulum?
   sv_SE: Den här mjukvaran är installerad både ”per dator” (alla användare) och ”per användare”.\nVilken installation vill du ta bort?
   pl_PL: To oprogramowanie zostało zainstalowane zarówno dla urządzenia (wszyscy użytkownicy), jak i dla użytkownika.\nKtórą instalację chcesz usunąć?
@@ -125,17 +130,18 @@ whichInstallationRemove:
   es: Este software se ha instalado para la máquina (todos los usuarios) y para el usuario.\n¿Qué instalación quieres eliminar?
   da: Denne software er installeret både pr. maskine (alle brugere) og pr. bruger./nHvilken installering ønsker du at fjerne?
   ja: このソフトウェアは、マシンごと（すべてのユーザー）とユーザーごとにインストールされています。\ nどちらを削除しますか？
+  ko: 이 프로그램은 시스템당(모든 사용자)또는 사용자별로 설치됩니다.\n어떤 설치를 제거하시겠습니까?
 freshInstallForAll:
   en: Fresh install for all users. (will prompt for admin credentials)
   de: Neuinstallation für alle Benutzer durchführen. (Administratorrechte benötigt)
   ru: Новая установка для всех пользователей. (потребуются права администратора)
-  sk: Nová inštalácia pre všetkých uživateľov. (will prompt for admin credentials)
-  cs: Nová instalace pro všechny uživatele. (bude vyžadovat přihlášení administrátora)
+  sk: Nová inštalácia pre všetkých uživateľov. (Bude potrebovať prihlásenie administrátora)
+  cs: Nová instalace pro všechny uživatele. (Bude vyžadovat přihlášení administrátora)
   fr: Nouvelle installation pour tous les utilisateurs. (demandera les identifiants administrateur)
   hu_HU: Új telepítés minden felhasználó számára. (Az adminisztrátor hitelesítő adataira lesz szükség.)
   pt_BR: Instalação limpa para todos os usuários. (irá solicitar credenciais de administrador)
   zh_CN: 为所有用户进行全新安装. (需要管理员资格)
-  zh_TW: 為所有用戶進行全新安裝. (需要管理員資格)
+  zh_TW: 為所有使用者進行全新安裝 (需要系統管理員權限)
   tr_TR: Tüm kullanıcılar için yeni yükleme. (yönetici kimlik bilgilerini soracaktır)
   sv_SE: Ny installation för alla användare. (kommer att begära adminbehörighet)
   pl_PL: Nowa instalacja dla wszystkich użytkowników (potrzebne będą dane administratora).
@@ -146,6 +152,7 @@ freshInstallForAll:
   es: Instalación nueva para todos los usuarios (se pedirán los credenciales del administrador)
   da: Ny installering til alle brugere. (Vil medføre administrations-legitimationsoplysninger)
   ja: すべてのユーザーに新規インストール（管理者権限が必要）
+  ko: 모든 사용자를 위해 새로 설치. (관리자 자격 증명을 묻는 메시지가 표시됨)
 freshInstallForCurrent:
   en: Fresh install for current user only.
   de: Neuinstallation nur für den aktuellen Benutzer durchführen.
@@ -155,7 +162,7 @@ freshInstallForCurrent:
   hu_HU: Új telepítés csak a jelenlegi felhasználó számára.
   pt_BR: Instalação limpa somente para o usuário atual.
   zh_CN: 仅为当前用户进行全新安装.
-  zh_TW: 僅為當前用戶進行全新安裝.
+  zh_TW: 僅為目前使用者進行全新安裝
   tr_TR: Sadece mevcut kullanıcı için yeni yükleme.
   sv_SE: Ny installation endast för den aktuella användaren.
   pl_PL: Nowa instalacja wyłącznie dla obecnego użytkownika.
@@ -166,6 +173,7 @@ freshInstallForCurrent:
   es: Instalación nueva solo para el usuario actual.
   da: Ny installering kun til nuværende bruger.
   ja: 現在のユーザーのみ新規インストール
+  ko: 현재 사용자만 새로 설치합니다.
 onlyForMe:
   en: Only for &me
   de: Nur für &mich
@@ -187,6 +195,7 @@ onlyForMe:
   es: Solo para mí.
   da: Kun til mig
   ja: 現在のユーザーのみにインストールする
+  ko: &me 전용
 forAll:
   en: Anyone who uses this computer (&all users)
   de: Für alle Benutzer dieses Computers (&alle Benutzer)
@@ -197,7 +206,7 @@ forAll:
   hu_HU: Bárki számára, aki ezt a számítógépet használja (minden felhasználó)
   pt_BR: Para todos que usam esta máquina (&todos os usuários)
   zh_CN: 为使用这台电脑的任何人安装 (所有用户)
-  zh_TW: 為使用這台電腦的任何人安裝 (所有用戶)
+  zh_TW: 為使用這台電腦的任何人安裝 (所有使用者)
   tr_TR: Bu bilgisayarı kullanan herkes (ve tüm kullanıcılar)
   sv_SE: Alla som använder den här datorn (alla användare)
   pl_PL: Każdy korzystający z tego komputera (wszyscy użytkownicy)
@@ -208,17 +217,18 @@ forAll:
   es: Cualquiera que utilice este ordenador (todos los usuarios)
   da: Enhver, der bruger denne computer (alle brugere)
   ja: このコンピューターを使用しているすべてのユーザー用にインストールする
+  ko: 이 컴퓨터를 사용하는 모든 사람(&모든 사용자)
 loginWithAdminAccount:
   en: You need to login with an account that is a member of the admin group to continue...
   de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden...
   ru: Чтобы продолжить, тебе нужно войти в учетную запись, которая входит в группу администраторов...
   sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
-  cs: Pro pokračování se musíte přihlásit s účtem, který patří do skupiny administrátorů...
+  cs: Pro pokračování se musíte přihlásit účtem, který patří do skupiny administrátorů...
   fr: Tu dois te connecter avec un compte ayant des droits d'administrateur pour continuer...
   hu_HU: A folytatáshoz adminisztrátori jogokkal rendelkező fiókkal kell bejelentkezned...
   pt_BR: Você precisa realizar o login com uma conta que é membro do grupo de administração para continuar...
   zh_CN: 您需要用属于管理员群组的用户账户登录来继续...
-  zh_TW: 您需要用屬於管理員群組的用戶賬戶登錄來繼續...
+  zh_TW: 您需要以具系統管理員身分的帳號登入才能繼續...
   tr_TR: Devam etmek için yönetici grubunun üyesi olan bir hesapla giriş yapmanız gerekiyor..
   sv_SE: Du måste logga in med ett konto som är medlem i admingruppen för att fortsätta...
   pl_PL: Musisz się zalogować za pomocą konta będącego członkiem grupy administratora, by kontynuować...
@@ -229,6 +239,7 @@ loginWithAdminAccount:
   es: Para continuar, tienes que iniciar sesión con una cuenta que pertenezca al grupo de administradores...
   da: Du skal logge ind med en konto, der er medlem af administrationsgruppen for at kunne fortsætte...
   ja: 続行するには、管理者権限アカウントでログインする必要があります...
+  ko: 계속하려면 관리자 그룹의 구성원인 계정으로 로그인해야 합니다...
 perUserInstallExists:
   en: There is already a per-user installation.
   de: Es existiert bereits eine Installtion für den ausgewählten Benutzer.
@@ -238,7 +249,7 @@ perUserInstallExists:
   hu_HU: Már van egy felhasználónkénti telepítés.
   pt_BR: Já existe uma instalação por usuário.
   zh_CN: 已经存在一个安装到当前用户的安装.
-  zh_TW: 已經存在一個安裝到當前用戶的安裝.
+  zh_TW: 已經為目前使用者安裝過該軟體
   tr_TR: Her kullanıcı için zaten bir kurulum var.
   sv_SE: Det finns redan en ”per användare”-installation.
   pl_PL: Instalacja dla użytkownika już istnieje.
@@ -249,6 +260,7 @@ perUserInstallExists:
   es: Ya hay una instalación por usuario.
   da: Der er allerede en pr. bruger installation.
   ja: すでに現在のユーザーにインストールされています。
+  ko: 이미 사용자별 설치가 있습니다.
 perUserInstall:
   en: There is a per-user installation.
   de: Benutzerinstallation bereits vorhanden.
@@ -258,7 +270,7 @@ perUserInstall:
   hu_HU: Van felhasználónkénti telepítés.
   pt_BR: Existe uma instalação por usuário.
   zh_CN: 存在一个安装到当前用户的安装.
-  zh_TW: 存在一個安裝到當前用戶的安裝.
+  zh_TW: 存在一個對目前使用者的安裝
   tr_TR: Kullanıcı başına bir kurulum var.
   sv_SE: Det finns en ”per användare”-installation.
   pl_PL: Instalacja dla użytkownika istnieje.
@@ -269,6 +281,7 @@ perUserInstall:
   es: Hay una instalación por usuario.
   da: Der er en pr. bruger installation.
   ja: ユーザーごとのインストールがあります。
+  ko: 사용자별로 설치되어 있습니다.
 perMachineInstallExists:
   en: There is already a per-machine installation.
   de: Es existiert bereits eine Installation für diesen Computer.
@@ -278,7 +291,7 @@ perMachineInstallExists:
   hu_HU: Már van egy számítógépenkénti telepítés.
   pt_BR: Já existe uma instalação por máquina.
   zh_CN: 已经存在一个安装到所有用户的安装.
-  zh_TW: 已經存在一個安裝到所有用戶的安裝.
+  zh_TW: 已經為所有使用者安裝過該軟體
   tr_TR: Zaten makine başına bir kurulum var.
   sv_SE: Det finns redan en ”per dator”-installation.
   pl_PL: Instalacja dla urządzenia już istnieje.
@@ -289,6 +302,7 @@ perMachineInstallExists:
   es: Ya hay una instalación por máquina.
   da: Der er allerede en pr. maskine installation.
   ja: 既にすべてのユーザー用にインストールされています。
+  ko: 이미 머신별로 설치되어 있습니다.
 perMachineInstall:
   en: There is a per-machine installation.
   de: Es existiert eine Installation für diesen Computer.
@@ -298,7 +312,7 @@ perMachineInstall:
   hu_HU: Van számítógépenkénti telepítés.
   pt_BR: Existe uma instalação por máquina.
   zh_CN: 存在一个安装到所有用户的安装.
-  zh_TW: 存在一個安裝到所有用戶的安裝.
+  zh_TW: 存在一個對所有使用者的安裝
   tr_TR: Makine başına bir yükleme var.
   sv_SE: Det finns en ”per dator”-installation.
   pl_PL: Instalacja dla urządzenia istnieje.
@@ -309,6 +323,7 @@ perMachineInstall:
   es: Hay una instalación por máquina.
   da: Der er en pr. maskine installation.
   ja: すべてのユーザー用のインストールがあります。
+  ko: 머신별로 설치되어 있습니다.
 reinstallUpgrade:
   en: Will reinstall/upgrade.
   de: Die Anwendung wird aktualisiert.
@@ -318,7 +333,7 @@ reinstallUpgrade:
   hu_HU: Újratelepít/frissít.
   pt_BR: Irá reinstalar/atualizar.
   zh_CN: 即将重新安装/升级.
-  zh_TW: 即將重新安裝/升級.
+  zh_TW: 即將重新安裝/升級
   tr_TR: Yeniden yükleme/yükseltme
   sv_SE: Kommer att ominstallera/uppgradera.
   pl_PL: Nastąpi ponowna instalacja/aktualizacja.
@@ -329,6 +344,7 @@ reinstallUpgrade:
   es: Se reinstalará/actualizará.
   da: Reinstallerer/opgraderer.
   ja: 再インストール/アップグレードします。
+  ko: 재설치/업그레이드합니다.
 uninstall:
   en: Will uninstall.
   de: Die Anwendung wird deinstalliert.
@@ -338,7 +354,7 @@ uninstall:
   hu_HU: Eltávolít.
   pt_BR: Irá desinstalar.
   zh_CN: 即将卸载.
-  zh_TW: 即將卸載.
+  zh_TW: 即將解除安裝
   tr_TR: Kaldıralacak.
   sv_SE: Kommer att avinstallera.
   pl_PL: Nastąpi dezinstalacja.
@@ -349,3 +365,4 @@ uninstall:
   es: Se desinstalará.
   da: Afinstallerer.
   ja: アンインストールします。
+  ko: 제거합니다.

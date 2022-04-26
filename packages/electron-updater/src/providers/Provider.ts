@@ -1,8 +1,10 @@
-import { CancellationToken, HttpExecutor, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo, configureRequestUrl } from "builder-util-runtime"
+import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, UpdateFileInfo, UpdateInfo, WindowsUpdateInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
+import { load } from "js-yaml"
 import { URL } from "url"
-import { newUrlFromBase, ResolvedUpdateFileInfo } from "../main"
+import { ElectronHttpExecutor } from "../electronHttpExecutor"
+import { ResolvedUpdateFileInfo } from "../main"
+import { newUrlFromBase } from "../util"
 
 export type ProviderPlatform = "darwin" | "linux" | "win32"
 
@@ -10,12 +12,12 @@ export interface ProviderRuntimeOptions {
   isUseMultipleRangeRequest: boolean
   platform: ProviderPlatform
 
-  executor: HttpExecutor<any>
+  executor: ElectronHttpExecutor
 }
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
-  protected readonly executor: HttpExecutor<any>
+  protected readonly executor: ElectronHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
     this.executor = runtimeOptions.executor
@@ -27,11 +29,10 @@ export abstract class Provider<T extends UpdateInfo> {
 
   private getChannelFilePrefix(): string {
     if (this.runtimeOptions.platform === "linux") {
-      const arch = process.env.TEST_UPDATER_ARCH || process.arch
+      const arch = process.env["TEST_UPDATER_ARCH"] || process.arch
       const archSuffix = arch === "x64" ? "" : `-${arch}`
       return "-linux" + archSuffix
-    }
-    else {
+    } else {
       return this.runtimeOptions.platform === "darwin" ? "-mac" : ""
     }
   }
@@ -55,7 +56,7 @@ export abstract class Provider<T extends UpdateInfo> {
 
   abstract getLatestVersion(): Promise<T>
 
-  abstract resolveFiles(updateInfo: UpdateInfo): Array<ResolvedUpdateFileInfo>
+  abstract resolveFiles(updateInfo: T): Array<ResolvedUpdateFileInfo>
 
   /**
    * Method to perform API request only to resolve update info, but not to download update.
@@ -70,9 +71,8 @@ export abstract class Provider<T extends UpdateInfo> {
       if (headers != null) {
         result.headers = headers
       }
-    }
-    else {
-      result.headers = headers == null ? this.requestHeaders : {...this.requestHeaders, ...headers}
+    } else {
+      result.headers = headers == null ? this.requestHeaders : { ...this.requestHeaders, ...headers }
     }
 
     configureRequestUrl(url, result)
@@ -80,7 +80,7 @@ export abstract class Provider<T extends UpdateInfo> {
   }
 }
 
-export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined  {
+export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string, not?: Array<string>): ResolvedUpdateFileInfo | null | undefined {
   if (files.length === 0) {
     throw newError("No files provided", "ERR_UPDATER_NO_FILES_PROVIDED")
   }
@@ -88,11 +88,9 @@ export function findFile(files: Array<ResolvedUpdateFileInfo>, extension: string
   const result = files.find(it => it.url.pathname.toLowerCase().endsWith(`.${extension}`))
   if (result != null) {
     return result
-  }
-  else if (not == null) {
+  } else if (not == null) {
     return files[0]
-  }
-  else {
+  } else {
     return files.find(fileInfo => !not.some(ext => fileInfo.url.pathname.toLowerCase().endsWith(`.${ext}`)))
   }
 }
@@ -104,10 +102,12 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
 
   let result: UpdateInfo
   try {
-    result = safeLoad(rawData) as UpdateInfo
-  }
-  catch (e) {
-    throw newError(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`, "ERR_UPDATER_INVALID_UPDATE_INFO")
+    result = load(rawData) as UpdateInfo
+  } catch (e) {
+    throw newError(
+      `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
+      "ERR_UPDATER_INVALID_UPDATE_INFO"
+    )
   }
   return result
 }
@@ -128,8 +128,7 @@ export function getFileList(updateInfo: UpdateInfo): Array<UpdateFileInfo> {
         sha512: updateInfo.sha512,
       } as any,
     ]
-  }
-  else {
+  } else {
     throw newError(`No files provided: ${safeStringifyJson(updateInfo)}`, "ERR_UPDATER_NO_FILES_PROVIDED")
   }
 }
@@ -147,9 +146,9 @@ export function resolveFiles(updateInfo: UpdateInfo, baseUrl: URL, pathTransform
   })
 
   const packages = (updateInfo as WindowsUpdateInfo).packages
-  const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
+  const packageInfo = packages == null ? null : packages[process.arch] || packages.ia32
   if (packageInfo != null) {
-    (result[0] as any).packageInfo = {
+    ;(result[0] as any).packageInfo = {
       ...packageInfo,
       path: newUrlFromBase(pathTransformer(packageInfo.path), baseUrl).href,
     }

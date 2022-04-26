@@ -50,22 +50,21 @@ export default class AppXTarget extends Target {
     const stageDir = await createStageDir(this, packager, arch)
 
     const mappingFile = stageDir.getTempFile("mapping.txt")
-    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */,
-      "/f", vm.toVmFile(mappingFile),
-      "/p", vm.toVmFile(artifactPath),
-    ]
+    const makeAppXArgs = ["pack", "/o" /* overwrite the output file if it exists */, "/f", vm.toVmFile(mappingFile), "/p", vm.toVmFile(artifactPath)]
     if (packager.compression === "store") {
       makeAppXArgs.push("/nc")
     }
 
     const mappingList: Array<Array<string>> = []
-    mappingList.push(await BluebirdPromise.map(walk(appOutDir), file => {
-      let appxPath = file.substring(appOutDir.length + 1)
-      if (path.sep !== "\\") {
-        appxPath = appxPath.replace(/\//g, "\\")
-      }
-      return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
-    }))
+    mappingList.push(
+      await BluebirdPromise.map(walk(appOutDir), file => {
+        let appxPath = file.substring(appOutDir.length + 1)
+        if (path.sep !== "\\") {
+          appxPath = appxPath.replace(/\//g, "\\")
+        }
+        return `"${vm.toVmFile(file)}" "app\\${appxPath}"`
+      })
+    )
 
     const userAssetDir = await this.packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
     const assetInfo = await AppXTarget.computeUserAssets(vm, vendorPath, userAssetDir)
@@ -76,7 +75,7 @@ export default class AppXTarget extends Target {
     await packager.info.callAppxManifestCreated(manifestFile)
     mappingList.push(assetInfo.mappings)
     mappingList.push([`"${vm.toVmFile(manifestFile)}" "AppxManifest.xml"`])
-    const signToolArch = (arch === Arch.arm64 ? "x64" : Arch[arch])
+    const signToolArch = arch === Arch.arm64 ? "x64" : Arch[arch]
 
     if (isScaledAssetsProvided(userAssets)) {
       const outFile = vm.toVmFile(stageDir.getTempFile("resources.pri"))
@@ -86,12 +85,17 @@ export default class AppXTarget extends Target {
       await emptyDir(assetRoot)
       await BluebirdPromise.map(assetInfo.allAssets, it => copyOrLinkFile(it, path.join(assetRoot, path.basename(it))))
 
-      await vm.exec(makePriPath, ["new",
+      await vm.exec(makePriPath, [
+        "new",
         "/Overwrite",
-        "/Manifest", vm.toVmFile(manifestFile),
-        "/ProjectRoot", vm.toVmFile(path.dirname(assetRoot)),
-        "/ConfigXml", vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
-        "/OutputFile", outFile,
+        "/Manifest",
+        vm.toVmFile(manifestFile),
+        "/ProjectRoot",
+        vm.toVmFile(path.dirname(assetRoot)),
+        "/ConfigXml",
+        vm.toVmFile(path.join(getTemplatePath("appx"), "priconfig.xml")),
+        "/OutputFile",
+        outFile,
       ])
 
       // in addition to resources.pri, resources.scale-140.pri and other such files will be generated
@@ -132,8 +136,7 @@ export default class AppXTarget extends Target {
     const allAssets: Array<string> = []
     if (userAssetDir == null) {
       userAssets = []
-    }
-    else {
+    } else {
       userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
       for (const name of userAssets) {
         mappings.push(`"${vm.toVmFile(userAssetDir)}${vm.pathSep}${name}" "assets\\${name}"`)
@@ -150,13 +153,13 @@ export default class AppXTarget extends Target {
     }
 
     // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
-    return {userAssets, mappings, allAssets}
+    return { userAssets, mappings, allAssets }
   }
 
   // https://github.com/electron-userland/electron-builder/issues/2108#issuecomment-333200711
   private async computePublisherName() {
-    if (await this.packager.cscInfo.value == null) {
-      log.info({reason: "Windows Store only build"}, "AppX is not signed")
+    if ((await this.packager.cscInfo.value) == null) {
+      log.info({ reason: "Windows Store only build" }, "AppX is not signed")
       return this.options.publisher || "CN=ms"
     }
 
@@ -175,96 +178,93 @@ export default class AppXTarget extends Target {
     const displayName = options.displayName || appInfo.productName
     const extensions = await this.getExtensions(executable, displayName)
 
-    const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8"))
-      .replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
-        switch (p1) {
-          case "publisher":
-            return publisher
+    const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")).replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
+      switch (p1) {
+        case "publisher":
+          return publisher
 
-          case "publisherDisplayName": {
-            const name = options.publisherDisplayName || appInfo.companyName
-            if (name == null) {
-              throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
-            }
-            return name
+        case "publisherDisplayName": {
+          const name = options.publisherDisplayName || appInfo.companyName
+          if (name == null) {
+            throw new InvalidConfigurationError(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
           }
-
-          case "version":
-            return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
-
-          case "applicationId": {
-            const result = options.applicationId || options.identityName || appInfo.name
-            if (!isNaN(parseInt(result[0], 10))) {
-              let message = `AppX Application.Id can’t start with numbers: "${result}"`
-              if (options.applicationId == null) {
-                message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
-              }
-              throw new InvalidConfigurationError(message)
-            }
-            return result
-          }
-
-          case "identityName":
-            return options.identityName || appInfo.name
-
-          case "executable":
-            return executable
-
-          case "displayName":
-            return displayName
-
-          case "description":
-            return appInfo.description || appInfo.productName
-
-          case "backgroundColor":
-            return options.backgroundColor || "#464646"
-
-          case "logo":
-            return "assets\\StoreLogo.png"
-
-          case "square150x150Logo":
-            return "assets\\Square150x150Logo.png"
-
-          case "square44x44Logo":
-            return "assets\\Square44x44Logo.png"
-
-          case "lockScreen":
-            return lockScreenTag(userAssets)
-
-          case "defaultTile":
-            return defaultTileTag(userAssets, options.showNameOnTiles || false)
-
-          case "splashScreen":
-            return splashScreenTag(userAssets)
-
-          case "arch":
-            return arch === Arch.ia32 ? "x86" : (arch === Arch.arm64 ? "arm64" : "x64")
-
-          case "resourceLanguages":
-            return resourceLanguageTag(asArray(options.languages))
-
-          case "extensions":
-            return extensions
-
-          case "minVersion":
-            return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
-
-          case "maxVersionTested":
-            return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
-
-          default:
-            throw new Error(`Macro ${p1} is not defined`)
+          return name
         }
-      })
+
+        case "version":
+          return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
+
+        case "applicationId": {
+          const result = options.applicationId || options.identityName || appInfo.name
+          if (!isNaN(parseInt(result[0], 10))) {
+            let message = `AppX Application.Id can’t start with numbers: "${result}"`
+            if (options.applicationId == null) {
+              message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
+            }
+            throw new InvalidConfigurationError(message)
+          }
+          return result
+        }
+
+        case "identityName":
+          return options.identityName || appInfo.name
+
+        case "executable":
+          return executable
+
+        case "displayName":
+          return displayName
+
+        case "description":
+          return appInfo.description || appInfo.productName
+
+        case "backgroundColor":
+          return options.backgroundColor || "#464646"
+
+        case "logo":
+          return "assets\\StoreLogo.png"
+
+        case "square150x150Logo":
+          return "assets\\Square150x150Logo.png"
+
+        case "square44x44Logo":
+          return "assets\\Square44x44Logo.png"
+
+        case "lockScreen":
+          return lockScreenTag(userAssets)
+
+        case "defaultTile":
+          return defaultTileTag(userAssets, options.showNameOnTiles || false)
+
+        case "splashScreen":
+          return splashScreenTag(userAssets)
+
+        case "arch":
+          return arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64"
+
+        case "resourceLanguages":
+          return resourceLanguageTag(asArray(options.languages))
+
+        case "extensions":
+          return extensions
+
+        case "minVersion":
+          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+
+        case "maxVersionTested":
+          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+
+        default:
+          throw new Error(`Macro ${p1} is not defined`)
+      }
+    })
     await writeFile(outFile, manifest)
   }
 
   private async getExtensions(executable: string, displayName: string): Promise<string> {
-    const uriSchemes = asArray(this.packager.config.protocols)
-      .concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
+    const uriSchemes = asArray(this.packager.config.protocols).concat(asArray(this.packager.platformSpecificBuildOptions.protocols))
 
-    const fileAssociations = asArray(this.packager.config.fileAssociations)
-      .concat(asArray(this.packager.platformSpecificBuildOptions.fileAssociations))
+    const fileAssociations = asArray(this.packager.config.fileAssociations).concat(asArray(this.packager.platformSpecificBuildOptions.fileAssociations))
 
     let isAddAutoLaunchExtension = this.options.addAutoLaunchExtension
     if (isAddAutoLaunchExtension === undefined) {
@@ -272,10 +272,7 @@ export default class AppXTarget extends Target {
       isAddAutoLaunchExtension = deps != null && deps["electron-winstore-auto-launch"] != null
     }
 
-    if (!isAddAutoLaunchExtension
-      && uriSchemes.length === 0
-      && fileAssociations.length === 0
-      && this.options.customExtensionsPath === undefined) {
+    if (!isAddAutoLaunchExtension && uriSchemes.length === 0 && fileAssociations.length === 0 && this.options.customExtensionsPath === undefined) {
       return ""
     }
 
@@ -333,8 +330,7 @@ function resourceLanguageTag(userLanguages: Array<string> | null | undefined): s
 function lockScreenTag(userAssets: Array<string>): string {
   if (isDefaultAssetIncluded(userAssets, "BadgeLogo.png")) {
     return '<uap:LockScreen Notification="badgeAndTileText" BadgeLogo="assets\\BadgeLogo.png" />'
-  }
-  else {
+  } else {
     return ""
   }
 }
@@ -365,8 +361,7 @@ function defaultTileTag(userAssets: Array<string>, showNameOnTiles: boolean): st
 function splashScreenTag(userAssets: Array<string>): string {
   if (isDefaultAssetIncluded(userAssets, "SplashScreen.png")) {
     return '<uap:SplashScreen Image="assets\\SplashScreen.png" />'
-  }
-  else {
+  } else {
     return ""
   }
 }

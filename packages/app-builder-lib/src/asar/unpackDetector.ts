@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
 import { CONCURRENCY } from "builder-util/out/fs"
-import { ensureDir } from "fs-extra"
-import { isBinaryFile } from "isbinaryfile"
+import { mkdir } from "fs-extra"
+import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
 import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
@@ -12,8 +12,7 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   if (list == null) {
     list = [value]
     map.set(key, list)
-  }
-  else {
+  } else {
     list.push(value)
   }
 }
@@ -43,8 +42,7 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
         break
       }
       child = p
-    }
-    while (true)
+    } while (true)
 
     autoUnpackDirs.add(root)
   }
@@ -82,11 +80,10 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     let shouldUnpack = false
     // ffprobe-static and ffmpeg-static are known packages to always unpack
     const moduleName = path.basename(packageDir)
-    if (moduleName ===  "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
+    if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
-    }
-    else if (!file.includes(".", nextSlashIndex) && path.extname(file) === "") {
-      shouldUnpack = await isBinaryFile(file)
+    } else if (!file.includes(".", nextSlashIndex)) {
+      shouldUnpack = !!isBinaryFileSync(file)
     }
 
     if (!shouldUnpack) {
@@ -94,27 +91,30 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     }
 
     if (log.isDebugEnabled) {
-      log.debug({file: pathInArchive, reason: "contains executable code"}, "not packed into asar archive")
+      log.debug({ file: pathInArchive, reason: "contains executable code" }, "not packed into asar archive")
     }
 
     addParents(pathInArchive, packageDirPathInArchive)
   }
 
   if (dirToCreate.size > 0) {
-    await ensureDir(unpackedDest + path.sep + "node_modules")
+    await mkdir(`${unpackedDest + path.sep}node_modules`, { recursive: true })
     // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(dirToCreate.keys(), async parentDir => {
-      const base = unpackedDest + path.sep + parentDir
-      await ensureDir(base)
-      await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
-        if (dirToCreate.has(parentDir + path.sep + it)) {
-          // already created
-          return null
-        }
-        else {
-          return ensureDir(base + path.sep + it)
-        }
-      })
-    }, CONCURRENCY)
+    await BluebirdPromise.map(
+      dirToCreate.keys(),
+      async parentDir => {
+        const base = unpackedDest + path.sep + parentDir
+        await mkdir(base, { recursive: true })
+        await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
+          if (dirToCreate.has(parentDir + path.sep + it)) {
+            // already created
+            return null
+          } else {
+            return mkdir(base + path.sep + it, { recursive: true })
+          }
+        })
+      },
+      CONCURRENCY
+    )
   }
 }

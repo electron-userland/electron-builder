@@ -20,8 +20,7 @@ export function parseDn(seq: string): Map<string, string> {
         quoted = false
         continue
       }
-    }
-    else {
+    } else {
       if (ch === '"') {
         quoted = true
         continue
@@ -32,8 +31,7 @@ export function parseDn(seq: string): Map<string, string> {
         const ord = parseInt(seq.slice(i, i + 2), 16)
         if (Number.isNaN(ord)) {
           token += seq[i]
-        }
-        else {
+        } else {
           i++
           token += String.fromCharCode(ord)
         }
@@ -69,11 +67,12 @@ export function parseDn(seq: string): Map<string, string> {
         nextNonSpace = j
       }
 
-      if (nextNonSpace >= seq.length
-        || seq[nextNonSpace] === ","
-        || seq[nextNonSpace] === ";"
-        || (key === null && seq[nextNonSpace] === "=")
-        || (key !== null && seq[nextNonSpace] === "+")
+      if (
+        nextNonSpace >= seq.length ||
+        seq[nextNonSpace] === "," ||
+        seq[nextNonSpace] === ";" ||
+        (key === null && seq[nextNonSpace] === "=") ||
+        (key !== null && seq[nextNonSpace] === "+")
       ) {
         i = nextNonSpace - 1
         continue
