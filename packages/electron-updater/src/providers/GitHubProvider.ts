@@ -31,7 +31,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected computeGithubBasePath(result: string): string {
     // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
     const host = this.options.host
-    return host !== undefined && host !== null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
+    return host && !["github.com", "api.github.com"].includes(host) ? `/api/v3${result}` : result
   }
 }
 
