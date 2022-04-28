@@ -1,4 +1,5 @@
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
+import { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
 import ClientRequest = Electron.ClientRequest
@@ -15,7 +16,7 @@ export function getNetSession(): Session {
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   private cachedSession: Session | null = null
 
-  constructor(private readonly proxyLoginCallback?: (authInfo: any, callback: LoginCallback) => void) {
+  constructor(private readonly proxyLoginCallback?: (authInfo: AuthInfo, callback: LoginCallback) => void) {
     super()
   }
 

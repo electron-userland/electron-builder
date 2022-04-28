@@ -56,8 +56,8 @@ export interface UpdateCheckResult {
 
 export type UpdaterEvents = "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"
 
-export const DOWNLOAD_PROGRESS: UpdaterEvents = "download-progress"
-export const UPDATE_DOWNLOADED: UpdaterEvents = "update-downloaded"
+export const DOWNLOAD_PROGRESS = "download-progress"
+export const UPDATE_DOWNLOADED = "update-downloaded"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
 

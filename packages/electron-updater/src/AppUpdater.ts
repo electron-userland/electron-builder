@@ -1,4 +1,15 @@
-import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
+import {
+  AllPublishOptions,
+  asArray,
+  CancellationToken,
+  newError,
+  PublishConfiguration,
+  UpdateInfo,
+  UUID,
+  DownloadOptions,
+  CancellationError,
+  ProgressInfo,
+} from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { EventEmitter } from "events"
 import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
@@ -10,14 +21,28 @@ import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessT
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
-import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
+import { ElectronHttpExecutor, getNetSession, LoginCallback } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
+import type TypedEmitter from "typed-emitter"
 import Session = Electron.Session
+import { AuthInfo } from "electron"
 
-export abstract class AppUpdater extends EventEmitter {
+export type AppUpdaterEvents = {
+  error: (error: Error, message?: string) => void
+  login: (info: AuthInfo, callback: LoginCallback) => void
+  "checking-for-update": () => void
+  "update-not-available": (info: UpdateInfo) => void
+  "update-available": (info: UpdateInfo) => void
+  "update-downloaded": (event: UpdateDownloadedEvent) => void
+  "download-progress": (info: ProgressInfo) => void
+  "update-cancelled": (info: UpdateInfo) => void
+  "appimage-filename-updated": (path: string) => void
+}
+
+export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {
   /**
    * Whether to automatically download an update when it is found.
    */
