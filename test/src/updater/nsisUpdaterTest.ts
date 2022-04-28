@@ -26,7 +26,7 @@ test("downgrade (disallowed, beta)", async () => {
   })
 
   const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-not-available"]
+  const expectedEvents = ["checking-for-update", "update-not-available"] as const
   for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
