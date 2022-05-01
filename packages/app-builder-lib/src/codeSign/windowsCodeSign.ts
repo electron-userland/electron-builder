@@ -145,19 +145,18 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
 export async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
-
-  let tool: string
+  // unify logic of signtool path location
+  const toolInfo = await getToolPath()
+  const tool = toolInfo.path
+  // decide runtime argument by cases
   let args: Array<string>
   let env = process.env
   let vm: VmManager
   if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */) {
     vm = await packager.vm.value
-    tool = getWinSignTool(await getSignVendorPath())
     args = computeSignToolArgs(configuration, true, vm)
   } else {
     vm = new VmManager()
-    const toolInfo = await getToolPath()
-    tool = toolInfo.path
     args = configuration.computeSignToolArgs(process.platform === "win32")
     if (toolInfo.env != null) {
       env = toolInfo.env
