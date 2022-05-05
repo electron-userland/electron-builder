@@ -1417,7 +1417,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 </ul>
 </li>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:events.EventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -1458,8 +1458,6 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </ul>
 </li>
 <li><a href="#module_electron-updater.autoUpdater"><code>.autoUpdater</code></a> : <code><a href="#AppUpdater">AppUpdater</a></code></li>
-<li><a href="#module_electron-updater.DOWNLOAD_PROGRESS"><code>.DOWNLOAD_PROGRESS</code></a> : <code>“login”</code> | <code>“checking-for-update”</code> | <code>“update-available”</code> | <code>“update-not-available”</code> | <code>“update-cancelled”</code> | <code>“download-progress”</code> | <code>“update-downloaded”</code> | <code>“error”</code></li>
-<li><a href="#module_electron-updater.UPDATE_DOWNLOADED"><code>.UPDATE_DOWNLOADED</code></a> : <code>“login”</code> | <code>“checking-for-update”</code> | <code>“update-available”</code> | <code>“update-not-available”</code> | <code>“update-cancelled”</code> | <code>“download-progress”</code> | <code>“update-downloaded”</code> | <code>“error”</code></li>
 </ul>
 </li>
 </ul>
@@ -1574,9 +1572,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
 <h3 id="appimageupdater.isupdateractive()-%E2%87%92-boolean"><code>appImageUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="AppUpdater"></a></p>
-<h2 id="appupdater-%E2%87%90-module%3Aevents.eventemitter">AppUpdater ⇐ <code>module:events.EventEmitter</code></h2>
+<h2 id="appupdater-%E2%87%90-module%3Atyped-emitter%2Findex.typedeventemitter">AppUpdater ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:events.EventEmitter</code><br>
+<strong>Extends</strong>: <code>module:typed-emitter/index.TypedEventEmitter</code><br>
 <strong>Properties</strong></p>
 <ul>
 <li>
@@ -1630,7 +1628,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:events.EventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -1981,12 +1979,6 @@ This is different from the normal quit event sequence.</p>
 </table>
 <p><a name="module_electron-updater.autoUpdater"></a></p>
 <h2 id="electron-updater.autoupdater-%3A-appupdater"><code>electron-updater.autoUpdater</code> : <code><a href="#AppUpdater">AppUpdater</a></code></h2>
-<p><strong>Kind</strong>: constant of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<a name="module_electron-updater.DOWNLOAD_PROGRESS"></a></p>
-<h2 id="electron-updater.download_progress-%3A-%E2%80%9Clogin%E2%80%9D-%7C-%E2%80%9Cchecking-for-update%E2%80%9D-%7C-%E2%80%9Cupdate-available%E2%80%9D-%7C-%E2%80%9Cupdate-not-available%E2%80%9D-%7C-%E2%80%9Cupdate-cancelled%E2%80%9D-%7C-%E2%80%9Cdownload-progress%E2%80%9D-%7C-%E2%80%9Cupdate-downloaded%E2%80%9D-%7C-%E2%80%9Cerror%E2%80%9D"><code>electron-updater.DOWNLOAD_PROGRESS</code> : <code>“login”</code> | <code>“checking-for-update”</code> | <code>“update-available”</code> | <code>“update-not-available”</code> | <code>“update-cancelled”</code> | <code>“download-progress”</code> | <code>“update-downloaded”</code> | <code>“error”</code></h2>
-<p><strong>Kind</strong>: constant of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<a name="module_electron-updater.UPDATE_DOWNLOADED"></a></p>
-<h2 id="electron-updater.update_downloaded-%3A-%E2%80%9Clogin%E2%80%9D-%7C-%E2%80%9Cchecking-for-update%E2%80%9D-%7C-%E2%80%9Cupdate-available%E2%80%9D-%7C-%E2%80%9Cupdate-not-available%E2%80%9D-%7C-%E2%80%9Cupdate-cancelled%E2%80%9D-%7C-%E2%80%9Cdownload-progress%E2%80%9D-%7C-%E2%80%9Cupdate-downloaded%E2%80%9D-%7C-%E2%80%9Cerror%E2%80%9D"><code>electron-updater.UPDATE_DOWNLOADED</code> : <code>“login”</code> | <code>“checking-for-update”</code> | <code>“update-available”</code> | <code>“update-not-available”</code> | <code>“update-cancelled”</code> | <code>“download-progress”</code> | <code>“update-downloaded”</code> | <code>“error”</code></h2>
 <p><strong>Kind</strong>: constant of <a href="#module_electron-updater"><code>electron-updater</code></a><br/></p>
 
 <!-- end of generated block -->
