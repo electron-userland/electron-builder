@@ -30,7 +30,11 @@ function renderTypeNames(types, delimiter, root, isTypeAsCode, isSkipNull) {
     types = types.filter(it => !isSkipNull || it !== "null")
   }
   return types
-    .map(it => tagOpen + link2(catharsis.parse(it, {jsdoc: true}), delimiter, root, isSkipNull) + tagClose)
+    .map(it => {
+      const lastIndex = it.lastIndexOf("node_modules")
+      it = lastIndex < 0 ? it : `module:${it.substring(lastIndex + 13)}`;
+      return tagOpen + link2(catharsis.parse(it, {jsdoc: true}), delimiter, root, isSkipNull) + tagClose
+    })
     .join(delimiter)
 }
 

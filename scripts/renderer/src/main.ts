@@ -56,7 +56,11 @@ export class Renderer {
     const tagOpen = isTypeAsCode ? "<code>" : ""
     const tagClose = isTypeAsCode ? "</code>" : ""
     return types
-      .map(it => tagOpen + this.renderLink(catharsis.parse(it, {jsdoc: true}), delimiter, isSkipNull, inlinedTypeId) + tagClose)
+    .map(it => { 
+      const lastIndex = it.lastIndexOf("node_modules")
+      it = lastIndex < 0 ? it : `module:${it.substring(lastIndex + 13)}`;
+        return tagOpen + this.renderLink(catharsis.parse(it, {jsdoc: true}), delimiter, isSkipNull, inlinedTypeId) + tagClose
+      })
       .join(delimiter)
   }
 
