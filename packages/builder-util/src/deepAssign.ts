@@ -16,7 +16,12 @@ function assignKey(target: any, from: any, key: string) {
 
   const prevValue = target[key]
   if (prevValue == null || value == null || !isObject(prevValue) || !isObject(value)) {
-    target[key] = value
+    // Merge arrays.
+    if (Array.isArray(prevValue) && Array.isArray(value)) {
+      target[key] = prevValue.concat(value)
+    } else {
+      target[key] = value
+    }
   } else {
     target[key] = assign(prevValue, value)
   }
