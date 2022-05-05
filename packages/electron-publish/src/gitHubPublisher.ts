@@ -228,6 +228,7 @@ export class GitHubPublisher extends HttpPublisher {
   private createRelease() {
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
       tag_name: this.tag,
+      name: this.version,
       draft: this.releaseType === "draft",
       prerelease: this.releaseType === "prerelease",
     })
