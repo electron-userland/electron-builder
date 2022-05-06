@@ -1,5 +1,13 @@
 # builder-util
 
+## 23.0.9
+
+### Patch Changes
+
+- [#6841](https://github.com/electron-userland/electron-builder/pull/6841) [`9dc13ba2`](https://github.com/electron-userland/electron-builder/commit/9dc13ba2c1e7a852d3f743833f1bde17b62f1806) Thanks [@MrMYHuang](https://github.com/MrMYHuang)! - fix: Merge arrays from same config key in cascading electron-builder configs, such as `files`
+
+* [#6845](https://github.com/electron-userland/electron-builder/pull/6845) [`d3452b04`](https://github.com/electron-userland/electron-builder/commit/d3452b0427cb45035f6ed7f1266691db4accd5c4) Thanks [@Jai-JAP](https://github.com/Jai-JAP)! - fix: Add "arm" as an alias for armv7l as process.arch outputs arm on armv7l hosts
+
 ## 23.0.8
 
 ### Patch Changes

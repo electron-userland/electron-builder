@@ -1,5 +1,14 @@
 # electron-publish
 
+## 23.0.9
+
+### Patch Changes
+
+- [#6840](https://github.com/electron-userland/electron-builder/pull/6840) [`e9ba7500`](https://github.com/electron-userland/electron-builder/commit/e9ba75005dda39f03c04e37a5d46a1bbe634c189) Thanks [@adelphes](https://github.com/adelphes)! - fix: set github release name to match the app version
+
+- Updated dependencies [[`9dc13ba2`](https://github.com/electron-userland/electron-builder/commit/9dc13ba2c1e7a852d3f743833f1bde17b62f1806), [`d3452b04`](https://github.com/electron-userland/electron-builder/commit/d3452b0427cb45035f6ed7f1266691db4accd5c4)]:
+  - builder-util@23.0.9
+
 ## 23.0.8
 
 ### Patch Changes

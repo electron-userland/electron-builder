@@ -1,5 +1,13 @@
 ## 4.3.0
 
+## 5.0.4
+
+### Patch Changes
+
+- [#6822](https://github.com/electron-userland/electron-builder/pull/6822) [`bfe29a5e`](https://github.com/electron-userland/electron-builder/commit/bfe29a5e991c2719032877bd7225b15b6b836221) Thanks [@RoikkuTo](https://github.com/RoikkuTo)! - fix: Unable to find latest version on GitHub
+
+* [#6825](https://github.com/electron-userland/electron-builder/pull/6825) [`db075480`](https://github.com/electron-userland/electron-builder/commit/db0754805b4d6c5d8a4d86af7cb107db87bda303) Thanks [@Nokel81](https://github.com/Nokel81)! - Added types for AppUpdater's events
+
 ## 5.0.3
 
 ### Patch Changes
