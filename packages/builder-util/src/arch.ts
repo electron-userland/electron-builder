@@ -40,6 +40,7 @@ export function archFromString(name: string): Arch {
       return Arch.ia32
     case "arm64":
       return Arch.arm64
+    case "arm":
     case "armv7l":
       return Arch.armv7l
     case "universal":
