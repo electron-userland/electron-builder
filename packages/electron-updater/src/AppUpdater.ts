@@ -87,6 +87,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   disableWebInstaller = false
 
   /**
+   * Mac only. Force the updater to only upgrade to an x86 update.
+   *
+   * This doesn't work for universal builds.
+   *
+   * @default false
+   *
+   */
+  forceX86 = false
+
+  /**
    * The current application version.
    */
   readonly currentVersion: SemVer

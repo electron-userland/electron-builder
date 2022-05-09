@@ -63,7 +63,7 @@ export class MacUpdater extends AppUpdater {
       log.warn(`uname shell command to check for arm64 failed: ${e}`)
     }
 
-    isArm64Mac = isArm64Mac || process.arch === "arm64" || isRosetta
+    isArm64Mac = (isArm64Mac || process.arch === "arm64" || isRosetta) && !this.forceX86
 
     // allow arm64 macs to install universal or rosetta2(x64) - https://github.com/electron-userland/electron-builder/pull/5524
     const isArm64 = (file: ResolvedUpdateFileInfo) => file.url.pathname.includes("arm64") || file.info.url?.includes("arm64")
