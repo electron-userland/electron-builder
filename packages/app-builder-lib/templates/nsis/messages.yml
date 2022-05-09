@@ -47,7 +47,7 @@ x64WinRequired:
 appRunning:
   en: "${PRODUCT_NAME} is running.\nClick OK to close it.\nIf it doesn't close, try closing it manually."
   ar: "‫إن ${PRODUCT_NAME} يعمل حاليا.\n‫يُرجى الضغط على « موافق » لغلقه.\n‫إذا لم يُغلَق، يُرجى محاولة إغلاقه يدويا."
-  az: "${PRODUCT_NAME} işləyir.\nBağlamaq üçün "Oldu"ya klikləyin.\nƏgər bağlanmasa, əllə bağlamağa çalışın."
+  az: "${PRODUCT_NAME} işləyir.\nBağlamaq üçün \"Oldu\"ya klikləyin.\nƏgər bağlanmasa, əllə bağlamağa çalışın."
   ca: "${PRODUCT_NAME}s'executa.\nFeu clic a D'acord per tancar-la.\nSi no es tanca, proveu de tancar-la manualment."
   cs: "${PRODUCT_NAME} běží.\nPotvrďte zavření stisknutím OK.\nPokud se aplikace nezavře sama, zavřete ji ručně."
   cy: "Mae ${PRODUCT_NAME} yn rhedeg.\nCliciwch Iawn i'w gau.\nOs na fydd yn cau, ceisiwch ei gau â llaw."
