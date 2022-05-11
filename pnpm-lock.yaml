@@ -380,7 +380,6 @@ importers:
       lodash.escaperegexp: ^4.1.2
       lodash.isequal: ^4.5.0
       semver: ^7.3.5
-      typed-emitter: ^2.1.0
     dependencies:
       '@types/semver': 7.3.9
       builder-util-runtime: link:../builder-util-runtime
@@ -395,7 +394,6 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
-      typed-emitter: 2.1.0
 
   test:
     specifiers:
@@ -11119,12 +11117,6 @@ packages:
   /type-fest/0.8.1:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
-    dev: true
-
-  /typed-emitter/2.1.0:
-    resolution: {integrity: sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==}
-    optionalDependencies:
-      rxjs: 7.5.5
     dev: true
 
   /typedarray-to-buffer/3.1.5:

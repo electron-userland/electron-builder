@@ -29,8 +29,7 @@
     "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
-    "@types/lodash.isequal": "4.5.5",
-    "typed-emitter": "^2.1.0"
+    "@types/lodash.isequal": "4.5.5"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {

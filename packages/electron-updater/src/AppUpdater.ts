@@ -26,7 +26,6 @@ import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
-import type TypedEmitter from "typed-emitter"
 import Session = Electron.Session
 import { AuthInfo } from "electron"
 
@@ -42,7 +41,7 @@ export type AppUpdaterEvents = {
   "appimage-filename-updated": (path: string) => void
 }
 
-export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {
+export abstract class AppUpdater extends EventEmitter {
   /**
    * Whether to automatically download an update when it is found.
    */
@@ -220,6 +219,50 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         this.requestHeaders = options.requestHeaders
       }
     }
+  }
+
+  on<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.on(eventName, listener)
+    return this
+  }
+
+  off<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.off(eventName, listener)
+    return this
+  }
+
+  once<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.once(eventName, listener)
+    return this
+  }
+
+  addListener<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.addListener(eventName, listener)
+    return this
+  }
+
+  prependListener<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.prependListener(eventName, listener)
+    return this
+  }
+
+  prependOnceListener<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.prependOnceListener(eventName, listener)
+    return this
+  }
+
+  removeListener<EventName extends keyof AppUpdaterEvents>(eventName: EventName, listener: AppUpdaterEvents[EventName]): this {
+    super.removeListener(eventName, listener)
+    return this
+  }
+
+  removeAllListeners<EventName extends keyof AppUpdaterEvents>(eventName: EventName): this {
+    super.removeAllListeners(eventName)
+    return this
+  }
+
+  emit<EventName extends keyof AppUpdaterEvents>(eventName: EventName, ...args: Parameters<AppUpdaterEvents[EventName]>): boolean {
+    return super.emit(eventName, ...args)
   }
 
   //noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
