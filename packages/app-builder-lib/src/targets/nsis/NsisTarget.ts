@@ -19,6 +19,8 @@ import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
 import { appendBlockmap, configureDifferentialAwareArchiveOptions, createBlockmap, createNsisWebDifferentialUpdateInfo } from "../differentialUpdateInfoBuilder"
 import { getWindowsInstallationAppPackageName, getWindowsInstallationDirName } from "../targetUtil"
+import { Commands } from "./Commands"
+import { Defines } from "./Defines"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -71,7 +73,7 @@ export class NsisTarget extends Target {
     return Promise.resolve()
   }
 
-  get isBuildDifferentialAware() {
+  get isBuildDifferentialAware(): boolean {
     return !this.isPortable && this.options.differentialPackage !== false
   }
 
@@ -115,7 +117,7 @@ export class NsisTarget extends Target {
     return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
   }
 
-  private get isPortable() {
+  private get isPortable(): boolean {
     return this.name === "portable"
   }
 
@@ -176,7 +178,7 @@ export class NsisTarget extends Target {
 
     const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
     const uninstallAppKey = guid.replace(/\\/g, " - ")
-    const defines: any = {
+    const defines: Defines = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
       // Windows bug - entry in Software\Microsoft\Windows\CurrentVersion\Uninstall cannot have \ symbols (dir)
@@ -199,7 +201,7 @@ export class NsisTarget extends Target {
       defines.UNINSTALL_REGISTRY_KEY_2 = `Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\${guid}`
     }
 
-    const commands: any = {
+    const commands: Commands = {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.getVersionInWeirdWindowsForm(),
       VIAddVersionKey: this.computeVersionKey(),
@@ -231,9 +233,13 @@ export class NsisTarget extends Target {
         const file = fileInfo.path
         const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
         defines[defineKey] = file
-        defines[`${defineKey}_NAME`] = path.basename(file)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const defineNameKey = `${defineKey}_NAME` as "APP_64_NAME" | "APP_ARM64_NAME" | "APP_32_NAME"
+        defines[defineNameKey] = path.basename(file)
         // nsis expect a hexadecimal string
-        defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
+        defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
 
         if (this.isWebInstaller) {
           await packager.dispatchArtifactCreated(file, this, arch)
@@ -293,8 +299,8 @@ export class NsisTarget extends Target {
     }
 
     // prepare short-version variants of defines and commands, to make an uninstaller that doesn't differ much from the previous one
-    const definesUninstaller: any = { ...defines }
-    const commandsUninstaller: any = { ...commands }
+    const definesUninstaller = { ...defines }
+    const commandsUninstaller = { ...commands }
     if (appInfo.shortVersion != null) {
       definesUninstaller.VERSION = appInfo.shortVersion
       commandsUninstaller.VIProductVersion = appInfo.shortVersionWindows
@@ -335,13 +341,13 @@ export class NsisTarget extends Target {
     })
   }
 
-  protected generateGitHubInstallerName() {
+  protected generateGitHubInstallerName(): string {
     const appInfo = this.packager.appInfo
     const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
     return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}.exe`
   }
 
-  private get isUnicodeEnabled() {
+  private get isUnicodeEnabled(): boolean {
     return this.options.unicode !== false
   }
 
@@ -349,7 +355,7 @@ export class NsisTarget extends Target {
     return false
   }
 
-  private async computeScriptAndSignUninstaller(defines: any, commands: any, installerPath: string, sharedHeader: string, archs: Map<Arch, string>) {
+  private async computeScriptAndSignUninstaller(defines: Defines, commands: Commands, installerPath: string, sharedHeader: string, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
@@ -416,7 +422,7 @@ export class NsisTarget extends Target {
     return versionKey
   }
 
-  protected configureDefines(oneClick: boolean, defines: any): Promise<any> {
+  protected configureDefines(oneClick: boolean, defines: Defines): Promise<any> {
     const packager = this.packager
     const options = this.options
 
@@ -514,7 +520,7 @@ export class NsisTarget extends Target {
     return asyncTaskManager.awaitTasks()
   }
 
-  private configureDefinesForAllTypeOfInstaller(defines: any) {
+  private configureDefinesForAllTypeOfInstaller(defines: Defines): void {
     const appInfo = this.packager.appInfo
     const companyName = appInfo.companyName
     if (companyName != null) {
@@ -542,11 +548,11 @@ export class NsisTarget extends Target {
     }
   }
 
-  private async executeMakensis(defines: any, commands: any, script: string) {
+  private async executeMakensis(defines: Defines, commands: Commands, script: string): Promise<void> {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
     args.push("-INPUTCHARSET", "UTF8")
     for (const name of Object.keys(defines)) {
-      const value = defines[name]
+      const value = defines[name as keyof Defines]
       if (value == null) {
         args.push(`-D${name}`)
       } else {
@@ -555,7 +561,7 @@ export class NsisTarget extends Target {
     }
 
     for (const name of Object.keys(commands)) {
-      const value = commands[name]
+      const value = commands[name as keyof Commands]
       if (Array.isArray(value)) {
         for (const c of value) {
           args.push(`-X${name} ${c}`)
@@ -591,7 +597,7 @@ export class NsisTarget extends Target {
     })
   }
 
-  private async computeCommonInstallerScriptHeader() {
+  private async computeCommonInstallerScriptHeader(): Promise<string> {
     const packager = this.packager
     const options = this.options
     const scriptGenerator = new NsisScriptGenerator()
@@ -640,7 +646,7 @@ export class NsisTarget extends Target {
     return scriptGenerator.build()
   }
 
-  private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>) {
+  private async computeFinalScript(originalScript: string, isInstaller: boolean, archs: Map<Arch, string>): Promise<string> {
     const packager = this.packager
     const options = this.options
     const langConfigurator = new LangConfigurator(options)
@@ -703,7 +709,7 @@ export class NsisTarget extends Target {
   }
 }
 
-async function generateForPreCompressed(preCompressedFileExtensions: Array<string>, dir: string, arch: Arch, scriptGenerator: NsisScriptGenerator) {
+async function generateForPreCompressed(preCompressedFileExtensions: Array<string>, dir: string, arch: Arch, scriptGenerator: NsisScriptGenerator): Promise<void> {
   const resourcesDir = path.join(dir, "resources")
   const dirInfo = await statOrNull(resourcesDir)
   if (dirInfo == null || !dirInfo.isDirectory()) {
@@ -728,7 +734,7 @@ async function generateForPreCompressed(preCompressedFileExtensions: Array<strin
   }
 }
 
-async function ensureNotBusy(outFile: string) {
+async function ensureNotBusy(outFile: string): Promise<void> {
   function isBusy(wasBusyBefore: boolean): Promise<boolean> {
     return new Promise((resolve, reject) => {
       fs.open(outFile, "r+", (error, fd) => {
