@@ -132,7 +132,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         })
         await fs.rm(x64AppOutDir, { recursive: true, force: true })
         await fs.rm(arm64AppOutPath, { recursive: true, force: true })
-        
+
         // Give users a final opportunity to perform things on the combined universal package before signing
         const packContext: AfterPackContext = {
           appOutDir,
