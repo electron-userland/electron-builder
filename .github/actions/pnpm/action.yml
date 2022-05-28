@@ -4,7 +4,7 @@ inputs:
   version: # id of input
     description: 'The pnpm version to use'
     required: false
-    default: 6.25.1
+    default: 7.1.6
 
 runs:
   using: 'composite'

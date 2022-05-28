@@ -13,7 +13,7 @@ jobs:
           keys:
             - v-11.0.0-electron
       - run:
-          command: npm i --prefix=$HOME/.local -g pnpm@6.25.1
+          command: npm i --prefix=$HOME/.local -g pnpm@7.1.6
       - run:
           command: pnpm install --frozen-lockfile
       - run:

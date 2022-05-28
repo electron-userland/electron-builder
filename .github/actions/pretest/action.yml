@@ -13,7 +13,7 @@ runs:
   steps:
     - uses: pnpm/action-setup@v2
       with:
-        version: 6.25.1
+        version: 7.1.6
 
     - uses: actions/setup-node@v3
       with:
