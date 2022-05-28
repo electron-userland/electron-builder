@@ -7,7 +7,7 @@ DATE=$(date +%m.%y)
 docker build -t electronuserland/builder:base -t "electronuserland/builder:base-$DATE" docker/base
 
 # Node 14
-docker build --build-arg NODE_VERSION=14.19.1 -t electronuserland/builder:14 -t "electronuserland/builder:14-$DATE" -t electronuserland/builder:latest docker/node
+docker build --build-arg NODE_VERSION=14.19.3 -t electronuserland/builder:14 -t "electronuserland/builder:14-$DATE" -t electronuserland/builder:latest docker/node
 
 docker build --build-arg IMAGE_VERSION=14 -t electronuserland/builder:14-wine -t "electronuserland/builder:14-wine-$DATE" -t electronuserland/builder:wine docker/wine
 docker build --build-arg IMAGE_VERSION=14-wine -t electronuserland/builder:14-wine-mono -t "electronuserland/builder:14-wine-mono-$DATE" -t electronuserland/builder:wine-mono docker/wine-mono
