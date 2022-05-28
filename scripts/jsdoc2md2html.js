@@ -178,6 +178,9 @@ async function render2(files, jsdoc2MdOptions) {
     if (types.some(it => it.endsWith("LinuxConfiguration"))) {
       return "[LinuxConfiguration](linux)"
     }
+    if (types.some(it => it.endsWith("FlatpakOptions"))) {
+      return "[FlatpakOptions](flatpak)"
+    }
     if (types.some(it => it.endsWith("SnapOptions"))) {
       return "[SnapOptions](snap)"
     }
@@ -207,6 +210,7 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/squirrel-windows.md", "SquirrelWindowsOptions"),
 
     new Page("configuration/linux.md", "LinuxConfiguration"),
+    new Page("configuration/flatpak.md", "FlatpakOptions"),
     new Page("configuration/snap.md", "SnapOptions"),
 
     new Page("configuration/publish.md", null, {

@@ -65,6 +65,7 @@ nav:
       - Linux:
           - Any Linux Target: configuration/linux.md
           - AppImage: configuration/appimage.md
+          - Flatpak: configuration/flatpak.md
           - Snap: configuration/snap.md
 
       - Publish: configuration/publish.md
