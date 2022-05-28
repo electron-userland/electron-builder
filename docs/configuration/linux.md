@@ -3,7 +3,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 <!-- do not edit. start of generated block -->
 <ul>
 <li>
-<p><code id="LinuxConfiguration-target">target</code> = <code>AppImage</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - Target package type: list of <code>AppImage</code>, <code>snap</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>.</p>
+<p><code id="LinuxConfiguration-target">target</code> = <code>AppImage</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - Target package type: list of <code>AppImage</code>, <code>flatpak</code>, <code>snap</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>.</p>
 <p>electron-builder <a href="/multi-platform-build#docker">docker image</a> can be used to build Linux targets on any platform.</p>
 <p>Please <a href="https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake">do not put an AppImage into another archive</a> like a .zip or .tar.gz.</p>
 </li>

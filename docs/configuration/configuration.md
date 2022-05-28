@@ -69,7 +69,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li><code id="Configuration-deb">deb</code> <a href="/configuration/linux#de">DebOptions</a> - Debian package options.</li>
 <li><code id="Configuration-snap">snap</code> <a href="snap">SnapOptions</a> - Snap options.</li>
 <li><code id="Configuration-appImage">appImage</code> <a href="/configuration/linux#appimageoptions">AppImageOptions</a> - AppImage options.</li>
-<li><code id="Configuration-flatpak">flatpak</code> <a href="#FlatpakOptions">FlatpakOptions</a> | “undefined” - Flatpak options.</li>
+<li><code id="Configuration-flatpak">flatpak</code> <a href="flatpak">FlatpakOptions</a> - Flatpak options.</li>
 <li><code id="Configuration-pacman">pacman</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
 <li><code id="Configuration-rpm">rpm</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
 <li><code id="Configuration-freebsd">freebsd</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
