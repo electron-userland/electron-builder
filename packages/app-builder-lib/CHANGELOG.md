@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 23.1.0
+
+### Minor Changes
+
+- [#6887](https://github.com/electron-userland/electron-builder/pull/6887) [`4d590d30`](https://github.com/electron-userland/electron-builder/commit/4d590d302f6c3baacf9dabf338904fef337960a6) Thanks [@schetle](https://github.com/schetle)! - add afterPack call after macOS universal package is created
+
+### Patch Changes
+
+- [#6878](https://github.com/electron-userland/electron-builder/pull/6878) [`2ece89a0`](https://github.com/electron-userland/electron-builder/commit/2ece89a08e7fb74a11ba3d0f5980b2a57c8b34ad) Thanks [@genezys](https://github.com/genezys)! - Fix MSI build target to support ampersands in the product name
+
+* [#6892](https://github.com/electron-userland/electron-builder/pull/6892) [`5589eec7`](https://github.com/electron-userland/electron-builder/commit/5589eec797c2b2550e228ffaa7fb052ffde33947) Thanks [@KaminoRyo](https://github.com/KaminoRyo)! - docs: Improved CONTIRUBTING.md
+
+- [#6827](https://github.com/electron-userland/electron-builder/pull/6827) [`fa72861f`](https://github.com/electron-userland/electron-builder/commit/fa72861f6cd2de97d191f1b2bbfddc6edf48ab6d) Thanks [@indutny-signal](https://github.com/indutny-signal)! - fix(nsis): change strings, add translations
+
+* [#6868](https://github.com/electron-userland/electron-builder/pull/6868) [`13b078af`](https://github.com/electron-userland/electron-builder/commit/13b078af8c567d05bbd4bb24db44f38388af4e92) Thanks [@KaminoRyo](https://github.com/KaminoRyo)! - refactor(nsis): make ambiguous types strict for nsis DEFINES
+
 ## 23.0.9
 
 ### Patch Changes
