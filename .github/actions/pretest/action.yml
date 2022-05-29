@@ -7,20 +7,26 @@ inputs:
   cache-path:
     description: 'The path to the electron cache'
     required: true
+  version:
+    description: 'The pnpm version to use'
+    required: false
+    default: 7.1.6
 
 runs:
   using: 'composite'
   steps:
-    - uses: pnpm/action-setup@v2
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2.2.2
       with:
-        version: 6.25.1
+        version: ${{ inputs.version }}
 
-    - uses: actions/setup-node@v3
+    - name: Setup node
+      uses: actions/setup-node@v3
       with:
         node-version: '14'
         cache: 'pnpm'
 
-    - name: install dependencies
+    - name: Install dependencies
       run: pnpm install --frozen-lockfile
       shell: bash
 

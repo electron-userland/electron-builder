@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:14.17@sha256:b1c0b133fc872314dee5b24e34084693f0747850aad6ac0181b70061e198375f
+      - image: cimg/node:14.19
     steps:
       - checkout
       - restore_cache:
@@ -13,7 +13,7 @@ jobs:
           keys:
             - v-11.0.0-electron
       - run:
-          command: npm i --prefix=$HOME/.local -g pnpm@6.25.1
+          command: npm i --prefix=$HOME/.local -g pnpm@7.1.6
       - run:
           command: pnpm install --frozen-lockfile
       - run:

@@ -224,7 +224,9 @@ export default class MsiTarget extends Target {
         result += `>\n`
         const shortcutName = commonOptions.shortcutName
         if (isCreateDesktopShortcut) {
-          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${xmlAttr(shortcutName)}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
+          result += `${fileSpace}  <Shortcut Id="desktopShortcut" Directory="DesktopFolder" Name="${xmlAttr(
+            shortcutName
+          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}"/>\n`
         }
 
         const hasMenuCategory = commonOptions.menuCategory != null
@@ -233,7 +235,9 @@ export default class MsiTarget extends Target {
           if (hasMenuCategory) {
             dirs.push(`<Directory Id="${startMenuShortcutDirectoryId}" Name="ProgramMenuFolder:\\${commonOptions.menuCategory}\\"/>`)
           }
-          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${xmlAttr(shortcutName)}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
+          result += `${fileSpace}  <Shortcut Id="startMenuShortcut" Directory="${startMenuShortcutDirectoryId}" Name="${xmlAttr(
+            shortcutName
+          )}" WorkingDirectory="APPLICATIONFOLDER" Advertise="yes" Icon="${this.iconId}">\n`
           result += `${fileSpace}    <ShortcutProperty Key="System.AppUserModel.ID" Value="${xmlAttr(this.packager.appInfo.id)}"/>\n`
           result += `${fileSpace}  </Shortcut>\n`
         }
@@ -275,10 +279,5 @@ function listToString(list: Array<string>, indentLevel: number) {
 }
 
 function xmlAttr(str: string) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;")
 }
