@@ -15,16 +15,16 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: ${{ inputs.version }}
+
     - name: Setup node
       uses: actions/setup-node@v3
       with:
         node-version: '14'
         cache: 'pnpm'
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: ${{ inputs.version }}
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
