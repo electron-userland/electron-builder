@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.0.5
+
+### Patch Changes
+
+- [#6889](https://github.com/electron-userland/electron-builder/pull/6889) [`869ec27f`](https://github.com/electron-userland/electron-builder/commit/869ec27fd1d99b9913875cb4d7ae7c733c1f3e25) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: moving typed-emitter from devDependency to dependencies
+
 ## 5.0.4
 
 ### Patch Changes
