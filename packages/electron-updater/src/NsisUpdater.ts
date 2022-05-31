@@ -109,6 +109,11 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
+    if (this.installDirectory) {
+      // maybe check if folder exists
+      args.push(`/D=${this.installDirectory}`)
+    }
+
     const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
