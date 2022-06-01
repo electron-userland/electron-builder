@@ -7,10 +7,10 @@ RUN dpkg --add-architecture i386 && \
   apt-get update && \
   apt-get install -y --no-install-recommends \
     # We can't install `winehq-stable`, we must manually lock each dependency to v6 (ref: https://github.com/electron-userland/electron-builder/issues/6780),
-    winehq-stable  \
-    wine-stable  \
-    wine-stable-i386  \
-    wine-stable-amd64  \
+    winehq-stable=6.0.4~impish-1  \
+    wine-stable=6.0.4~impish-1  \
+    wine-stable-i386=6.0.4~impish-1  \
+    wine-stable-amd64=6.0.4~impish-1  \
   && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
