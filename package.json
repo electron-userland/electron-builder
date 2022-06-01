@@ -67,7 +67,7 @@
     "path-sort": "0.1.0",
     "prettier": "2.3.2",
     "replace-in-file": "6.2.0",
-    "source-map-support": "0.5.19",
+    "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
     "typescript": "4.3.5",
     "typescript-json-schema": "0.51.0",
