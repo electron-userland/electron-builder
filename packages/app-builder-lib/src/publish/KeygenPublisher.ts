@@ -59,6 +59,7 @@ export class KeygenPublisher extends HttpPublisher {
       headers: {
         Accept: "application/vnd.api+json",
         "Content-Length": dataLength,
+        "Keygen-Version": "1.0",
       },
     }
     await httpExecutor.doApiRequest(configureRequestOptions(upload, this.auth, "PUT"), this.context.cancellationToken, requestProcessor)
@@ -72,6 +73,7 @@ export class KeygenPublisher extends HttpPublisher {
       headers: {
         "Content-Type": "application/vnd.api+json",
         Accept: "application/vnd.api+json",
+        "Keygen-Version": "1.0",
       },
     }
     const data = {
@@ -105,6 +107,7 @@ export class KeygenPublisher extends HttpPublisher {
       path: `${this.basePath}/${releaseId}`,
       headers: {
         Accept: "application/vnd.api+json",
+        "Keygen-Version": "1.0",
       },
     }
     await httpExecutor.request(configureRequestOptions(req, this.auth, "DELETE"), this.context.cancellationToken)
