@@ -75,7 +75,8 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li><code id="Configuration-freebsd">freebsd</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
 <li><code id="Configuration-p5p">p5p</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
 <li><code id="Configuration-apk">apk</code> <a href="/configuration/linux#LinuxTargetSpecificOptions">LinuxTargetSpecificOptions</a></li>
-<li><code id="Configuration-includeSubNodeModules">includeSubNodeModules</code> = <code>false</code> Boolean - Whether to include <em>all</em> of the submodules node_modules directories</li>
+<li><code id="Configuration-includeSubNodeModules">includeSubNodeModules</code> = <code>false</code> Boolean - Whether to include <em>all</em> of the submodules <code>node_modules</code> directories</li>
+<li><code id="Configuration-includeYarnSubNodeModules">includeYarnSubNodeModules</code> = <code>false</code> Boolean - Whether to include <em>all</em> of the submodules <code>.yarn</code> directories</li>
 </ul>
 <hr>
 <ul>

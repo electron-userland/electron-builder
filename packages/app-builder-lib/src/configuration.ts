@@ -108,6 +108,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   includeSubNodeModules?: boolean
 
   /**
+   * Whether to include *all* of the submodules .yarn directories
+   * @default false
+   */
+  includeYarnSubNodeModules?: boolean
+
+  /**
    * Whether to build the application native dependencies from source.
    * @default false
    */

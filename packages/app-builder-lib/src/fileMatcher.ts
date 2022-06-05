@@ -187,7 +187,9 @@ export function getMainFileMatchers(
   if (isElectronCompile) {
     patterns.push("!.cache{,/**/*}")
   }
-  patterns.push("!.yarn{,/**/*}")
+  if (!packager.config.includeYarnSubNodeModules) {
+    patterns.push("!.yarn{,/**/*}")
+  }
 
   // https://github.com/electron-userland/electron-builder/issues/1969
   // exclude ony for app root, use .yarnclean to clean node_modules
