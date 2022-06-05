@@ -1,13 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder } from "builder-util"
-import { parseDn } from "builder-util-runtime"
-import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
-import { createHash } from "crypto"
-import { readdir } from "fs/promises"
+import {Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder} from "builder-util"
+import {parseDn} from "builder-util-runtime"
+import {CopyFileTransformer, FileTransformer, walk} from "builder-util/out/fs"
+import {createHash} from "crypto"
+import {readdir} from "fs/promises"
 import * as isCI from "is-ci"
-import { Lazy } from "lazy-val"
+import {Lazy} from "lazy-val"
 import * as path from "path"
-import { downloadCertificate } from "./codeSign/codesign"
+import {downloadCertificate} from "./codeSign/codesign"
 import {
   CertificateFromStoreInfo,
   CertificateInfo,
@@ -18,21 +18,21 @@ import {
   sign,
   WindowsSignOptions,
 } from "./codeSign/windowsCodeSign"
-import { AfterPackContext } from "./configuration"
-import { DIR_TARGET, Platform, Target } from "./core"
-import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
-import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
+import {AfterPackContext} from "./configuration"
+import {DIR_TARGET, Platform, Target} from "./core"
+import {RequestedExecutionLevel, WindowsConfiguration} from "./options/winOptions"
+import {Packager} from "./packager"
+import {chooseNotNull, PlatformPackager} from "./platformPackager"
 import AppXTarget from "./targets/AppxTarget"
-import { NsisTarget } from "./targets/nsis/NsisTarget"
-import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
-import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
-import { createCommonTarget } from "./targets/targetFactory"
-import { BuildCacheManager, digest } from "./util/cacheManager"
-import { isBuildCacheEnabled } from "./util/flags"
-import { time } from "./util/timer"
-import { getWindowsVm, VmManager } from "./vm/vm"
-import { execWine } from "./wine"
+import {NsisTarget} from "./targets/nsis/NsisTarget"
+import {AppPackageHelper, CopyElevateHelper} from "./targets/nsis/nsisUtil"
+import {WebInstallerTarget} from "./targets/nsis/WebInstallerTarget"
+import {createCommonTarget} from "./targets/targetFactory"
+import {BuildCacheManager, digest} from "./util/cacheManager"
+import {isBuildCacheEnabled} from "./util/flags"
+import {time} from "./util/timer"
+import {getWindowsVm, VmManager} from "./vm/vm"
+import {execWine} from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -45,7 +45,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           if (platformSpecificBuildOptions.sign == null) {
             throw e
           } else {
-            log.debug({ error: e }, "getCertificateFromStoreInfo error")
+            log.debug({error: e}, "getCertificateFromStoreInfo error")
             return null
           }
         })
@@ -258,7 +258,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
-          log.warn({ error: message, attempt: i + 1 }, `cannot sign`)
+          log.warn({error: message, attempt: i + 1}, `cannot sign`)
           continue
         }
         throw e
@@ -369,9 +369,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      return
-    }
+    // if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
+    //   return
+    // }
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
       if (file === exeFileName) {
@@ -382,7 +382,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           path.basename(exeFileName, ".exe"),
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
-      } else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      } else if ((this.platformSpecificBuildOptions
+        .signAndEditExecutable && file.endsWith(".exe")) || (this.isSignDlls() && file.endsWith(".dll"))) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
@@ -394,9 +395,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const signPromise = (filepath: string[]) => {
       const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
+      return walk(outDir, (file, stat) => stat.isDirectory() || (this.platformSpecificBuildOptions.signAndEditExecutable && file.endsWith(".exe")) || (this.isSignDlls() && file.endsWith(".dll")))
     }
     const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
-    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+    await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), {concurrency: 4})
   }
 }
