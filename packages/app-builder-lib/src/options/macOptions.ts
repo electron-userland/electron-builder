@@ -192,6 +192,15 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * only if `mergeASARs` is `true`.
    */
   readonly singleArchFiles?: string
+
+  /**
+   * Minimatch pattern of paths that are allowed to be x64 binaries in both
+   * ASAR files
+   *
+   * This option has no effect unless building for "universal" arch and applies
+   * only if `mergeASARs` is `true`.
+   */
+  readonly x64ArchFiles?: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
