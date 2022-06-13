@@ -28,7 +28,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
         channelUrl,
         {
           Accept: "application/vnd.api+json",
-          "Keygen-Version": "1.0",
+          "Keygen-Version": "1.1",
         },
         cancellationToken
       )

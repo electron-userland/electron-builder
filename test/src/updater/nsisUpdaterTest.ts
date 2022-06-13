@@ -55,8 +55,8 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
   updater.addAuthHeader(`Bearer ${process.env.KEYGEN_TOKEN}`)
   updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
     provider: "keygen",
-    product: "43981278-96e7-47de-b8c2-98d59987206b",
-    account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
+    product: process.env.KEYGEN_PRODUCT || "43981278-96e7-47de-b8c2-98d59987206b",
+    account: process.env.KEYGEN_ACCOUNT || "cdecda36-3ef0-483e-ad88-97e7970f3149",
   })
   await validateDownload(updater)
 })
