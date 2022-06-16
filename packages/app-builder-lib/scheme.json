@@ -27,7 +27,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "executableArgs": {
           "anyOf": [
