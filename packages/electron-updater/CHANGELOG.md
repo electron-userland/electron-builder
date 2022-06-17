@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.0.6
+
+### Patch Changes
+
+- [#6909](https://github.com/electron-userland/electron-builder/pull/6909) [`0b6db59e`](https://github.com/electron-userland/electron-builder/commit/0b6db59ec10dfe05903f29d6790972f55746bef7) Thanks [@ezekg](https://github.com/ezekg)! - Pin Keygen publisher/updater integration to API version v1.0.
+
 ## 5.0.5
 
 ### Patch Changes
