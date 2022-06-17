@@ -56,7 +56,7 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value).
    */
   readonly desktop?: any | null
 
