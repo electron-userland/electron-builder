@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.1.0...v) (2022-06-17)
+
+
+### Bug Fixes
+
+* pin Keygen.io integration to v1.0 ([#6909](https://github.com/electron-userland/electron-builder/issues/6909)) ([0b6db59](https://github.com/electron-userland/electron-builder/commit/0b6db59ec10dfe05903f29d6790972f55746bef7))
+
+
+### Features
+
+* electron/universal has a new minimatch option 'x64ArchFiles' ([#6913](https://github.com/electron-userland/electron-builder/issues/6913)) ([f3a56ef](https://github.com/electron-userland/electron-builder/commit/f3a56ef6f8132e0a7cc18ec58d1d6103683916dd))
+* Upgrade docker images to Ubuntu 22.04 and python 3.10 ([#6922](https://github.com/electron-userland/electron-builder/issues/6922)) ([03cc9b9](https://github.com/electron-userland/electron-builder/commit/03cc9b96e0be07ef3450e3992eafcb7fe903a853))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.0.9...v) (2022-05-29)
 
 

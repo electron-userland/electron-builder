@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 23.2.0
+
+### Minor Changes
+
+- [#6913](https://github.com/electron-userland/electron-builder/pull/6913) [`f3a56ef6`](https://github.com/electron-userland/electron-builder/commit/f3a56ef6f8132e0a7cc18ec58d1d6103683916dd) Thanks [@obra](https://github.com/obra)! - Expose electron/universal's new "x64ArchFiles" option to allow building universal binaries with single-architecture dependencies
+
+### Patch Changes
+
+- [#6909](https://github.com/electron-userland/electron-builder/pull/6909) [`0b6db59e`](https://github.com/electron-userland/electron-builder/commit/0b6db59ec10dfe05903f29d6790972f55746bef7) Thanks [@ezekg](https://github.com/ezekg)! - Pin Keygen publisher/updater integration to API version v1.0.
+
 ## 23.1.0
 
 ### Minor Changes
