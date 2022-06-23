@@ -198,12 +198,10 @@ export class GitHubPublisher extends HttpPublisher {
         requestProcessor
       )
       .catch(e => {
-        if (this.doesErrorMeanAlreadyExists(e)) {
-          return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber, parsedUrl, fileName, dataLength, requestProcessor, release))
-        }
-
         if (attemptNumber > 3) {
           return Promise.reject(e)
+        } else if (this.doesErrorMeanAlreadyExists(e)) {
+          return this.overwriteArtifact(fileName, release).then(() => this.doUploadFile(attemptNumber + 1, parsedUrl, fileName, dataLength, requestProcessor, release))
         } else {
           return new Promise((resolve, reject) => {
             const newAttemptNumber = attemptNumber + 1
