@@ -16,6 +16,13 @@ import { URL } from "url"
 import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
+  /**
+   * Install dir
+   *
+   */
+  installDirectory: string | null = null
+
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }

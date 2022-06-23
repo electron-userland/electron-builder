@@ -87,12 +87,6 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   disableWebInstaller = false
 
   /**
-   * Install dir for Nsis Updater
-   *
-   */
-  installDirectory: string | null = null
-
-  /**
    * The current application version.
    */
   readonly currentVersion: SemVer
