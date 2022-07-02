@@ -107,7 +107,8 @@ To build portable app, set target to `portable` (or pass `--win portable`).
 
 For portable app, following environment variables are available:
 
-* `PORTABLE_EXECUTABLE_DIR` - dir where portable executable located.
+* `PORTABLE_EXECUTABLE_FILE` - path to the portable executable.
+* `PORTABLE_EXECUTABLE_DIR` - directory where the portable executable is located.
 * `PORTABLE_EXECUTABLE_APP_FILENAME` - sanitized app name to use in [file paths](https://github.com/electron-userland/electron-builder/issues/3186#issue-345489962).
 
 ## Common Questions
