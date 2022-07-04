@@ -6,7 +6,8 @@
     "packages/**/*.ts": "eslint",
     "**/package.json": "pnpm lint-deps",
     "test/src/helpers/checkDeps.ts": "pnpm lint-deps",
-    "docs/**/*": "pnpm generate-docs"
+    "docs/**/*": "pnpm generate-docs",
+    "packages/app-builder-lib/src/options/**/*": "pnpm generate-schema"
   },
   "scripts": {
     "postinstall": "patch-package",
