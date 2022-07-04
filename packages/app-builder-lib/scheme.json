@@ -4919,6 +4919,13 @@
           ],
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
+        "allowNativeWayland": {
+          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "appPartStage": {
           "anyOf": [
             {
@@ -5124,7 +5131,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [

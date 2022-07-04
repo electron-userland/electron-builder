@@ -28,7 +28,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <p><code id="SnapOptions-hooks">hooks</code> = <code>build/snap-hooks</code> String | “undefined” - The <a href="https://docs.snapcraft.io/build-snaps/hooks">hooks</a> directory, relative to <code>build</code> (build resources directory).</p>
 </li>
 <li>
-<p><code id="SnapOptions-plugs">plugs</code> Array&lt;String | SnapOptions.PlugDescriptor&gt; - The list of <a href="https://snapcraft.io/docs/reference/interfaces">plugs</a>. Defaults to <code>[&quot;desktop&quot;, &quot;desktop-legacy&quot;, &quot;home&quot;, &quot;x11&quot;, &quot;unity7&quot;, &quot;browser-support&quot;, &quot;network&quot;, &quot;gsettings&quot;, &quot;audio-playback&quot;, &quot;pulseaudio&quot;, &quot;opengl&quot;]</code>.</p>
+<p><code id="SnapOptions-plugs">plugs</code> Array&lt;String | SnapOptions.PlugDescriptor&gt; - The list of <a href="https://snapcraft.io/docs/reference/interfaces">plugs</a>. Defaults to <code>[&quot;desktop&quot;, &quot;desktop-legacy&quot;, &quot;home&quot;, &quot;x11&quot;, &quot;wayland&quot;, &quot;unity7&quot;, &quot;browser-support&quot;, &quot;network&quot;, &quot;gsettings&quot;, &quot;audio-playback&quot;, &quot;pulseaudio&quot;, &quot;opengl&quot;]</code>.</p>
 <p>If list contains <code>default</code>, it will be replaced to default list, so, <code>[&quot;default&quot;, &quot;foo&quot;]</code> can be used to add custom plug <code>foo</code> in addition to defaults.</p>
 <p>Additional attributes can be specified using object instead of just name of plug: <code>[  {    &quot;browser-sandbox&quot;: {      &quot;interface&quot;: &quot;browser-support&quot;,      &quot;allow-sandbox&quot;: true    },  },  &quot;another-simple-plug-name&quot; ]</code></p>
 </li>
@@ -59,6 +59,9 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 </li>
 <li>
 <p><code id="SnapOptions-compression">compression</code> “xz” | “lzo” | “undefined” - Sets the compression type for the snap. Can be xz, lzo, or null.</p>
+</li>
+<li>
+<p><code id="SnapOptions-allowNativeWayland">allowNativeWayland</code> Boolean | “undefined” - Allow running the program with native wayland support with --ozone-platform=wayland. Disabled by default because of this issue in older Electron/Snap versions: <a href="https://github.com/electron-userland/electron-builder/issues/4007">https://github.com/electron-userland/electron-builder/issues/4007</a></p>
 </li>
 </ul>
 <p>Inherited from <code>CommonLinuxOptions</code>:</p>
