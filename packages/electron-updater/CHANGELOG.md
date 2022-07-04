@@ -1,5 +1,18 @@
 ## 4.3.0
 
+## 5.1.0
+
+### Minor Changes
+
+- [#6941](https://github.com/electron-userland/electron-builder/pull/6941) [`14503ceb`](https://github.com/electron-userland/electron-builder/commit/14503ceb99c1a31c54a261a1ae60a34980f36a50) Thanks [@ezekg](https://github.com/ezekg)! - Upgrade Keygen publisher/updater integration to API version v1.1.
+
+### Patch Changes
+
+- [#6975](https://github.com/electron-userland/electron-builder/pull/6975) [`8279d053`](https://github.com/electron-userland/electron-builder/commit/8279d053d520e7506d84bf9710972b998e70b752) Thanks [@ezekg](https://github.com/ezekg)! - Fix artifact conflicts for Keygen provider when multiple artifacts share the same filename across products.
+
+- Updated dependencies [[`adeaa347`](https://github.com/electron-userland/electron-builder/commit/adeaa347c03b8947b0812ecef23398c0822646bb)]:
+  - builder-util-runtime@9.0.3
+
 ## 5.0.6
 
 ### Patch Changes

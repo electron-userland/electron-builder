@@ -1,5 +1,15 @@
 # electron-publish
 
+## 23.3.0
+
+### Patch Changes
+
+- [#6958](https://github.com/electron-userland/electron-builder/pull/6958) [`8ffd9d42`](https://github.com/electron-userland/electron-builder/commit/8ffd9d42d89634be76fd4554f659f2b2512f2081) Thanks [@CCInc](https://github.com/CCInc)! - fix: prevent infinite error looping of overwriteArtifact during github artifact uploads
+
+- Updated dependencies [[`adeaa347`](https://github.com/electron-userland/electron-builder/commit/adeaa347c03b8947b0812ecef23398c0822646bb)]:
+  - builder-util-runtime@9.0.3
+  - builder-util@23.3.0
+
 ## 23.0.9
 
 ### Patch Changes
