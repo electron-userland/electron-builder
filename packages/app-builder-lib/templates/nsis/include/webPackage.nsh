@@ -5,7 +5,7 @@
   StrCpy $packageUrl "${APP_PACKAGE_URL}"
   StrCpy $packageArch "${APP_PACKAGE_URL}"
 
-  !ifdef APP_PACKAGE_URL_IS_INCOMLETE
+  !ifdef APP_PACKAGE_URL_IS_INCOMPLETE
     !ifdef APP_64_NAME
       !ifdef APP_32_NAME
 	    	!ifdef APP_ARM64_NAME
