@@ -24,7 +24,7 @@ parts:
   app:
     plugin: "nil"
       # cd ~ && rm -rf ~/squashfs-root && unsquashfs /media/psf/ramdisk/electron-builder-test/dist/__snap-x64/se-wo-template_1.1.0_amd64.snap
-      # comm -12 <(ls ~/squashfs-root/usr/lib/x86_64-linux-gnu/) <(ls /snap/gnome-3-28-1804/current/usr/lib/x86_64-linux-gnu/) > /media/psf/Home/f.txt
+      # comm -12 <(ls ~/squashfs-root/usr/lib/x86_64-linux-gnu/) <(ls /snap/gnome-3-38-2004/current/usr/lib/x86_64-linux-gnu/) > /media/psf/Home/f.txt
       # run snap-exclude-list.js
     stage:
       - '-usr/lib/python*'
