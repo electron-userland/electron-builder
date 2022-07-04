@@ -1,5 +1,14 @@
 # builder-util
 
+## 23.3.0
+
+### Patch Changes
+
+- [#6983](https://github.com/electron-userland/electron-builder/pull/6983) [`adeaa347`](https://github.com/electron-userland/electron-builder/commit/adeaa347c03b8947b0812ecef23398c0822646bb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: regenerate schema.json for `x64ArchFiles` in mac universal options
+
+- Updated dependencies [[`adeaa347`](https://github.com/electron-userland/electron-builder/commit/adeaa347c03b8947b0812ecef23398c0822646bb)]:
+  - builder-util-runtime@9.0.3
+
 ## 23.0.9
 
 ### Patch Changes
