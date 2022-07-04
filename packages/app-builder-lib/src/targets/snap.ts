@@ -123,9 +123,7 @@ export default class SnapTarget extends Target {
     } else {
       const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
-        // https://github.com/electron-userland/electron-builder/issues/4007
-        // https://github.com/electron/electron/issues/9056
-        DISABLE_WAYLAND: "1",
+        DISABLE_WAYLAND: options.allowNativeWayland ? "" : "1",
         TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
