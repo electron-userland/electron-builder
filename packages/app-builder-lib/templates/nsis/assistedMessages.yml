@@ -242,7 +242,7 @@ loginWithAdminAccount:
   ko: 계속하려면 관리자 그룹의 구성원인 계정으로 로그인해야 합니다...
 perUserInstallExists:
   en: There is already a per-user installation.
-  de: Es existiert bereits eine Installtion für den ausgewählten Benutzer.
+  de: Es existiert bereits eine Installation für den ausgewählten Benutzer.
   ru: Уже есть установленная программа для отдельного пользователя.
   cs: Již existuje instalace pro uživatele.
   fr: Il y a déjà une installation par utilisateur.
