@@ -16,6 +16,13 @@ import { URL } from "url"
 import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
+  /**
+   * Install dir
+   *
+   */
+  installDirectory: string | null = null
+
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
@@ -107,6 +114,11 @@ export class NsisUpdater extends BaseUpdater {
 
     if (options.isForceRunAfter) {
       args.push("--force-run")
+    }
+
+    if (this.installDirectory) {
+      // maybe check if folder exists
+      args.push(`/D=${this.installDirectory}`)
     }
 
     const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile

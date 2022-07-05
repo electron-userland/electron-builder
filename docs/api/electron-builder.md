@@ -1599,6 +1599,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
 </li>
 <li>
+<p><code id="AppUpdater-installDirectory">installDirectory</code> string | “undefined”- <em>NSIS updater only</em> - Install folder for NSIS updater</p>
+</li>
+<li>
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
 </li>
 <li>
