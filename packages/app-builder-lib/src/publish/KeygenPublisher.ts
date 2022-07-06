@@ -181,13 +181,25 @@ export class KeygenPublisher extends HttpPublisher {
 
   private async getOrCreateRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     try {
+      // First, we'll attempt to fetch the release.
       return await this.getRelease()
     } catch (e) {
-      if (e.statusCode === 404) {
-        return this.createRelease()
+      if (e.statusCode !== 404) {
+        throw e
       }
 
-      throw e
+      try {
+        // Next, if the release doesn't exist, we'll attempt to create it.
+        return await this.createRelease()
+      } catch (e) {
+        if (e.statusCode !== 409 && e.statusCode !== 422) {
+          throw e
+        }
+
+        // Lastly, when a conflict occurs (in the case of parallel uploads),
+        // we'll try to fetch it one last time.
+        return this.getRelease()
+      }
     }
   }
 

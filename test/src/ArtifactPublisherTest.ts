@@ -32,6 +32,7 @@ function versionNumber() {
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
+const icoPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),
@@ -138,7 +139,12 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
     } as KeygenOptions,
     versionNumber()
   )
-  const releaseId = await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  const [releaseId] = await Promise.all([
+    publisher.upload({ file: iconPath, arch: Arch.x64 }),
+    // test parallel artifact uploads for the same release
+    publisher.upload({ file: icoPath, arch: Arch.x64 }),
+  ])
+
   await publisher.deleteRelease(releaseId)
 })
 
