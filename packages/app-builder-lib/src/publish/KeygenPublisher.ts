@@ -194,7 +194,7 @@ export class KeygenPublisher extends HttpPublisher {
   private async getRelease(): Promise<{ data?: KeygenRelease; errors?: KeygenError[] }> {
     const req: RequestOptions = {
       hostname: this.hostname,
-      path: `${this.basePath}/releases/${this.version}`,
+      path: `${this.basePath}/releases/${this.version}?product=${this.info.product}`,
       headers: {
         Accept: "application/vnd.api+json",
         "Keygen-Version": "1.1",
