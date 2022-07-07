@@ -22,7 +22,6 @@ export class NsisUpdater extends BaseUpdater {
    */
   installDirectory: string | null = null
 
-
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
   }
