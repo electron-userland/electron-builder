@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.2.0
+
+### Minor Changes
+
+- [#6907](https://github.com/electron-userland/electron-builder/pull/6907) [`e7f28677`](https://github.com/electron-userland/electron-builder/commit/e7f286776643823f9c906738aade1d71eb1bdd9c) Thanks [@panther7](https://github.com/panther7)! - Add installDir property for NsisUpdater. Now is it posible change install folder from AppUpdater.
+
 ## 5.1.0
 
 ### Minor Changes

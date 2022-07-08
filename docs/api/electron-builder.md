@@ -1599,9 +1599,6 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
 </li>
 <li>
-<p><code id="AppUpdater-installDirectory">installDirectory</code> string | “undefined”- <em>NSIS updater only</em> - Install folder for NSIS updater</p>
-</li>
-<li>
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
 </li>
 <li>
@@ -1850,7 +1847,11 @@ This is different from the normal quit event sequence.</p>
 <h2 id="nsisupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">NsisUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
-<a name="Provider"></a></p>
+<strong>Properties</strong></p>
+<ul>
+<li><strong><code id="NsisUpdater-installDirectory">installDirectory</code></strong> String | “undefined” - Install dir</li>
+</ul>
+<p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Properties</strong></p>
