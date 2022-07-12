@@ -1,4 +1,6 @@
-!include "nsProcess.nsh"
+!ifndef nsProcess::FindProcess
+    !include "nsProcess.nsh"
+!endif
 
 !ifmacrondef customCheckAppRunning
   !include "getProcessInfo.nsh"
