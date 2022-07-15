@@ -17,10 +17,10 @@ import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
   /**
-   * Install dir
+   * Specify custom install directory path
    *
    */
-  installDirectory: string | null = null
+  installDirectory?: string
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
