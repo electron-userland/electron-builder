@@ -1,5 +1,13 @@
 ## 4.3.0
 
+## 5.2.1
+
+### Patch Changes
+
+- [#6998](https://github.com/electron-userland/electron-builder/pull/6998) [`d6115bc5`](https://github.com/electron-userland/electron-builder/commit/d6115bc5d066d6eee2638015be0c804b31ffcc18) Thanks [@matejkriz](https://github.com/matejkriz)! - fix(electron-updater): fix backward compatibility for GitHub provider without channels
+
+* [#6995](https://github.com/electron-userland/electron-builder/pull/6995) [`c9f0da51`](https://github.com/electron-userland/electron-builder/commit/c9f0da51cab25a60d4adea94f8c8e7e05362b0ca) Thanks [@panther7](https://github.com/panther7)! - Fix installDir definition #6907
+
 ## 5.2.0
 
 ### Minor Changes

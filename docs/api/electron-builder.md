@@ -1849,7 +1849,7 @@ This is different from the normal quit event sequence.</p>
 <strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
 <strong>Properties</strong></p>
 <ul>
-<li><strong><code id="NsisUpdater-installDirectory">installDirectory</code></strong> String | “undefined” - Install dir</li>
+<li><code id="NsisUpdater-installDirectory">installDirectory</code> String - Specify custom install directory path</li>
 </ul>
 <p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>

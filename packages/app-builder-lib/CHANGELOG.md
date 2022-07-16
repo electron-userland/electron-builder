@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 23.3.2
+
+### Patch Changes
+
+- [#6996](https://github.com/electron-userland/electron-builder/pull/6996) [`53015253`](https://github.com/electron-userland/electron-builder/commit/53015253939f450468a6d8e0405697ea70c2a138) Thanks [@titus-anromedonn](https://github.com/titus-anromedonn)! - fix: Wrap the nsProcess.nsh include in a !ifndef in case it has already been imported in a custom install script
+
 ## 23.3.1
 
 ### Patch Changes
