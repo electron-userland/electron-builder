@@ -58,7 +58,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     try {
       if (this.updater.allowPrerelease) {
         const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null
-        
+
         if (currentChannel === null) {
           // noinspection TypeScriptValidateJSTypes
           tag = hrefRegExp.exec(latestRelease.element("link").attribute("href"))![1]

@@ -42,24 +42,24 @@ test("downgrade (disallowed, beta)", async () => {
 })
 
 test("github allowPrerelease=true", async () => {
-  const updater = await createNsisUpdater('1.0.1')
+  const updater = await createNsisUpdater("1.0.1")
   updater.allowPrerelease = true
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
-    repo: "electron-builder-test"
+    repo: "electron-builder-test",
   })
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
 })
 
 test("github allowPrerelease=false", async () => {
-  const updater = await createNsisUpdater('1.0.1')
+  const updater = await createNsisUpdater("1.0.1")
   updater.allowPrerelease = false
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
-    repo: "electron-builder-test"
+    repo: "electron-builder-test",
   })
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()

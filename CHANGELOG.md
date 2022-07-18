@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.3.1...v) (2022-07-16)
+
+
+### Bug Fixes
+
+* **electron-updater:** fix backward compatibility for GitHub provider without channels ([#6998](https://github.com/electron-userland/electron-builder/issues/6998)) ([d6115bc](https://github.com/electron-userland/electron-builder/commit/d6115bc5d066d6eee2638015be0c804b31ffcc18))
+* Wrap the nsProcess include in a !ifndef ([#6996](https://github.com/electron-userland/electron-builder/issues/6996)) ([5301525](https://github.com/electron-userland/electron-builder/commit/53015253939f450468a6d8e0405697ea70c2a138))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.3.0...v) (2022-07-07)
 
 
