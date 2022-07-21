@@ -18,7 +18,7 @@ function assignKey(target: any, from: any, key: string) {
   if (prevValue == null || value == null || !isObject(prevValue) || !isObject(value)) {
     // Merge arrays.
     if (Array.isArray(prevValue) && Array.isArray(value)) {
-      target[key] = prevValue.concat(value)
+      target[key] = Array.from(new Set(prevValue.concat(value)))
     } else {
       target[key] = value
     }
