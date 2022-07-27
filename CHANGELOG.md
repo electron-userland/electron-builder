@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.3.2...v) (2022-07-21)
+
+
+### Bug Fixes
+
+* Duplicate values during deep assign of extra files ([#7019](https://github.com/electron-userland/electron-builder/issues/7019)) ([98d3a63](https://github.com/electron-userland/electron-builder/commit/98d3a6361d500e85e443ee292529c27f0b4a0b59))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.3.1...v) (2022-07-16)
 
 

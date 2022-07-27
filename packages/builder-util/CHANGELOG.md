@@ -1,5 +1,11 @@
 # builder-util
 
+## 23.3.3
+
+### Patch Changes
+
+- [#7019](https://github.com/electron-userland/electron-builder/pull/7019) [`98d3a636`](https://github.com/electron-userland/electron-builder/commit/98d3a6361d500e85e443ee292529c27f0b4a0b59) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: Filter out duplicate values during deep assign of extra files by converting to Set first
+
 ## 23.3.0
 
 ### Patch Changes
