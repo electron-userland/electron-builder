@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.3.3...v) (2022-07-28)
+
+
+### Features
+
+* Adding timeout to publisher config for api requests and uploads ([#7028](https://github.com/electron-userland/electron-builder/issues/7028)) ([e7179b5](https://github.com/electron-userland/electron-builder/commit/e7179b57bdba192acfdb439c03099e6629e98f6a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.3.2...v) (2022-07-21)
 
 
