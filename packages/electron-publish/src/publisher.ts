@@ -32,6 +32,7 @@ export interface UploadTask {
 
   arch: Arch | null
   safeArtifactName?: string | null
+  timeout?: number | null
 }
 
 export abstract class Publisher {
@@ -77,7 +78,21 @@ export abstract class HttpPublisher extends Publisher {
     const fileName = (this.useSafeArtifactName ? task.safeArtifactName : null) || basename(task.file)
 
     if (task.fileContent != null) {
-      await this.doUpload(fileName, task.arch || Arch.x64, task.fileContent.length, it => it.end(task.fileContent), task.file)
+      await this.doUpload(
+        fileName,
+        task.arch || Arch.x64,
+        task.fileContent.length,
+        (request, reject) => {
+          if (task.timeout) {
+            request.setTimeout(task.timeout, () => {
+              request.destroy()
+              reject(new Error("Request timed out"))
+            })
+          }
+          return request.end(task.fileContent)
+        },
+        task.file
+      )
       return
     }
 
@@ -92,6 +107,12 @@ export abstract class HttpPublisher extends Publisher {
         if (progressBar != null) {
           // reset (because can be called several times (several attempts)
           progressBar.update(0)
+        }
+        if (task.timeout) {
+          request.setTimeout(task.timeout, () => {
+            request.destroy()
+            reject(new Error("Request timed out"))
+          })
         }
         return this.createReadStreamAndProgressBar(task.file, fileStat, progressBar, reject).pipe(request)
       },

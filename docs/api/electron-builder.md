@@ -1304,6 +1304,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><code id="UploadTask-fileContent">fileContent</code> module:global.Buffer | “undefined”</li>
 <li><strong><code id="UploadTask-arch">arch</code></strong> <a href="#Arch">Arch</a> | “undefined”</li>
 <li><code id="UploadTask-safeArtifactName">safeArtifactName</code> String | “undefined”</li>
+<li><code id="UploadTask-timeout">timeout</code> Number | “undefined”</li>
 </ul>
 <p><a name="HttpPublisher"></a></p>
 <h2 id="httppublisher-%E2%87%90-publisher">HttpPublisher ⇐ <code><a href="#Publisher">Publisher</a></code></h2>

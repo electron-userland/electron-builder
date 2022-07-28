@@ -111,11 +111,11 @@ export abstract class HttpExecutor<T extends Request> {
       const request = this.createRequest(options, (response: any) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
-        } catch (e) {
+        } catch (e: any) {
           reject(e)
         }
       })
-      this.addErrorAndTimeoutHandlers(request, reject)
+      this.addErrorAndTimeoutHandlers(request, reject, options.timeout)
       this.addRedirectHandlers(request, options, reject, redirectCount, options => {
         this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount).then(resolve).catch(reject)
       })
@@ -130,8 +130,8 @@ export abstract class HttpExecutor<T extends Request> {
     // not required for NodeJS
   }
 
-  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void) {
-    this.addTimeOutHandler(request, reject)
+  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void, timeout = 60 * 1000) {
+    this.addTimeOutHandler(request, reject, timeout)
     request.on("error", reject)
     request.on("aborted", () => {
       reject(new Error("Request has been aborted by the server"))
@@ -213,7 +213,7 @@ Please double check that your authentication token is correct. Due to security r
   }
 
   // noinspection JSUnusedLocalSymbols
-  abstract createRequest(options: any, callback: (response: any) => void): T
+  abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
@@ -313,7 +313,7 @@ Please double check that your authentication token is correct. Due to security r
         options.responseHandler(response, options.callback)
       }
     })
-    this.addErrorAndTimeoutHandlers(request, options.callback)
+    this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount++)
     })
@@ -324,9 +324,9 @@ Please double check that your authentication token is correct. Due to security r
     return new Error(`Too many redirects (> ${this.maxRedirects})`)
   }
 
-  private addTimeOutHandler(request: any, callback: (error: Error) => void) {
+  private addTimeOutHandler(request: any, callback: (error: Error) => void, timeout: number) {
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(60 * 1000, () => {
+      socket.setTimeout(timeout, () => {
         request.abort()
         callback(new Error("Request timed out"))
       })

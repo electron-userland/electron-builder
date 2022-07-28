@@ -167,6 +167,10 @@ export class PublishManager implements PublishContext {
       return
     }
 
+    if (publishConfig.timeout) {
+      event.timeout = publishConfig.timeout
+    }
+
     this.taskManager.addTask(publisher.upload(event))
   }
 
