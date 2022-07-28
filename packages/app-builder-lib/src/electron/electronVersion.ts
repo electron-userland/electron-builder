@@ -31,7 +31,7 @@ export async function getElectronVersionFromInstalled(projectDir: string) {
   for (const name of electronPackages) {
     try {
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
-    } catch (e) {
+    } catch (e: any) {
       if (e.code !== "ENOENT") {
         log.warn({ name, error: e }, `cannot read electron version package.json`)
       }
@@ -44,7 +44,7 @@ export async function getElectronPackage(projectDir: string) {
   for (const name of electronPackages) {
     try {
       return await readJson(path.join(projectDir, "node_modules", name, "package.json"))
-    } catch (e) {
+    } catch (e: any) {
       if (e.code !== "ENOENT") {
         log.warn({ name, error: e }, `cannot find electron in package.json`)
       }

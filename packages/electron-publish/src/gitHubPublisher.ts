@@ -191,6 +191,7 @@ export class GitHubPublisher extends HttpPublisher {
               "Content-Type": mime.getType(fileName) || "application/octet-stream",
               "Content-Length": dataLength,
             },
+            timeout: this.info.timeout || undefined,
           },
           this.token
         ),
@@ -277,6 +278,7 @@ export class GitHubPublisher extends HttpPublisher {
             port: baseUrl.port as any,
             path: this.info.host != null && this.info.host !== "github.com" ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
             headers: { accept: "application/vnd.github.v3+json" },
+            timeout: this.info.timeout || undefined,
           },
           token,
           method

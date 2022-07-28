@@ -381,6 +381,14 @@
           "description": "Repository slug/name",
           "type": "string"
         },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "token": {
           "description": "The access token to support auto-update from private bitbucket repositories.",
           "type": [
@@ -477,6 +485,14 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
@@ -1358,6 +1374,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -1482,6 +1506,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "token": {
           "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
           "type": [
@@ -1572,6 +1604,14 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "updaterCacheDirName": {
           "type": [
@@ -4876,6 +4916,14 @@
           "default": "STANDARD",
           "description": "The type of storage to use for the object."
         },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -5324,6 +5372,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -5408,6 +5464,14 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 60000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "updaterCacheDirName": {
           "type": [

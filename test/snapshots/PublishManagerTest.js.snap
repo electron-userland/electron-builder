@@ -328,6 +328,7 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0.zip",
+      "timeout": undefined,
     },
   ],
   "mac": Array [
@@ -346,11 +347,13 @@ Object {
         "sha512": "@sha512",
         "version": "1.1.0",
       },
+      "timeout": undefined,
     },
     Object {
       "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "timeout": undefined,
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -359,6 +362,7 @@ Object {
     Object {
       "file": "Test App ßW-1.1.0-mac.zip.blockmap",
       "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "timeout": undefined,
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",

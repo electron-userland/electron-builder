@@ -132,6 +132,9 @@ In all publish options <a href="/file-patterns#file-macros">File Macros</a> are 
 <li>
 <p><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="GenericServerOptions-timeout">timeout</code> = <code>60000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="githuboptions">GithubOptions</h2>
 <p><a href="https://help.github.com/articles/about-releases/">GitHub</a> options.</p>
@@ -179,6 +182,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 <li>
 <p><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="GithubOptions-timeout">timeout</code> = <code>60000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="snapstoreoptions">SnapStoreOptions</h2>
 <p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
@@ -195,6 +201,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 </li>
 <li>
 <p><code id="SnapStoreOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="SnapStoreOptions-timeout">timeout</code> = <code>60000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
 </li>
 </ul>
 <h2 id="spacesoptions">SpacesOptions</h2>
@@ -228,6 +237,9 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <li>
 <p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="KeygenOptions-timeout">timeout</code> = <code>60000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="bitbucketoptions">BitbucketOptions</h2>
 <p>Bitbucket options.
@@ -255,6 +267,9 @@ Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 </li>
 <li>
 <p><code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="BitbucketOptions-timeout">timeout</code> = <code>60000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
 </li>
 </ul>
 <h2 id="s3options">S3Options</h2>

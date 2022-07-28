@@ -46,6 +46,13 @@ export interface PublishConfiguration {
    * Any custom request headers
    */
   readonly requestHeaders?: OutgoingHttpHeaders
+
+  /**
+   * Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+   *
+   * @default 60000
+   */
+  readonly timeout?: number | null
 }
 
 // https://github.com/electron-userland/electron-builder/issues/3261
