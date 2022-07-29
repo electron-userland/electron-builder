@@ -51,6 +51,7 @@
     "@develar/schema-utils": "~2.6.5",
     "@electron/universal": "1.2.1",
     "@malept/flatpak-bundler": "^0.4.0",
+    "asar": "^3.1.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
     "builder-util": "workspace:*",
