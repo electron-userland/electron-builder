@@ -59,7 +59,7 @@
     "eslint": "7.30.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-prettier": "3.4.0",
-    "fs-extra": "10.0.0",
+    "fs-extra": "10.1.0",
     "globby": "11.0.4",
     "husky": "7.0.4",
     "jest-cli": "27.0.6",
