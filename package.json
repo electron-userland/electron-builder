@@ -54,7 +54,7 @@
     "@typescript-eslint/eslint-plugin": "4.33.0",
     "@typescript-eslint/parser": "4.33.0",
     "catharsis": "0.9.0",
-    "conventional-changelog-cli": "2.1.1",
+    "conventional-changelog-cli": "2.2.2",
     "dmd": "6.0.0",
     "eslint": "7.30.0",
     "eslint-config-prettier": "8.3.0",
