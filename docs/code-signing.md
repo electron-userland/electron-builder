@@ -17,6 +17,9 @@ On a macOS development machine, a valid and appropriate identity from your keych
 | `CSC_KEYCHAIN`| The keychain name. Used if `CSC_LINK` is not specified. Defaults to system default keychain.
 
 !!! tip
+    If you are wrapping app to installer (pkg), you need to have `INSTALLER ID` identity in your keychain or provide according `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD`.
+
+!!! tip
     If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
 
 ## Windows
