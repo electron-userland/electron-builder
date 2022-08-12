@@ -1,15 +1,17 @@
+import { CreateOptions, createPackage, createPackageFromFiles, createPackageWithOptions } from "asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { symlink, createReadStream, createWriteStream, Stats } from "fs"
-import { writeFile, readFile, mkdir } from "fs/promises"
+import { symlink, createReadStream, createWriteStream, Stats, rmSync } from "fs"
+import { writeFile, readFile, mkdir, rm } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
+import { copyAppFiles, getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
+import * as fs from "fs-extra"
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
@@ -19,34 +21,57 @@ export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
   private readonly unpackedDest: string
-
+  private readonly fileCopier = new FileCopier()
+  private readonly rootForAppFilesWithoutAsar: string
   constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
-    this.unpackedDest = `${this.outFile}.unpacked`
+    this.unpackedDest = path.join(destination, "app")
+    this.rootForAppFilesWithoutAsar = path.join(this.destination, "app")
+    // this.unpackedDest = `${this.outFile}.unpacked`
   }
 
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
+    // console.error('fileSets', JSON.stringify(fileSets))
     if (this.options.ordering != null) {
       // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
       await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
     }
     await mkdir(path.dirname(this.outFile), { recursive: true })
+
     const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
     for (const fileSet of fileSets) {
       unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
     }
-    await this.writeAsarFile(fileSets, unpackedFileIndexMap)
+    // await this.writeAsarFile(fileSets, unpackedFileIndexMap)
+    await this.writeAsarFile2(fileSets, unpackedFileIndexMap, packager)
+    const options: CreateOptions = {
+      // unpack: Array.from(unpackedFileIndexMap.keys()).map(k => k.destination).join(','),
+      // unpackDir: this.unpackedDest
+      // ordering: this.options.ordering || undefined,
+      // pattern: "node_modules/**/*",
+      // globOptions: {
+      //   root: this.src,
+      // }
+    }
+    // const files1 = [...fileSets.flatMap(f => f.files).map(f => path.relative(this.src, f))]
+    // console.log('options', JSON.stringify(options))
+    // console.log('files', files1)
+    // await createPackageFromFiles(this.src, this.outFile,
+    //   files1,
+    //   undefined,
+    //   options
+    //   )
+    // await createPackageWithOptions(this.unpackedDest, this.outFile, options)
   }
 
   private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
     const metadata = fileSet.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
-    const rootForAppFilesWithoutAsar = path.join(this.destination, "app")
 
     if (this.options.smartUnpack !== false) {
-      await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, rootForAppFilesWithoutAsar)
+      await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, this.rootForAppFilesWithoutAsar)
     }
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
@@ -66,7 +91,6 @@ export class AsarPackager {
 
     const transformedFiles = fileSet.transformedFiles
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
-    const fileCopier = new FileCopier()
 
     let currentDirNode: Node | null = null
     let currentDirPath: string | null = null
@@ -80,7 +104,7 @@ export class AsarPackager {
         continue
       }
 
-      const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+      const pathInArchive = path.relative(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
 
       if (stat.isSymbolicLink()) {
         const s = stat as any
@@ -124,7 +148,7 @@ export class AsarPackager {
         }
 
         const unpackedFile = path.join(this.unpackedDest, pathInArchive)
-        taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
+        taskManager.addTask(copyFileOrData(this.fileCopier, newData, file, unpackedFile, stat))
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
@@ -138,6 +162,80 @@ export class AsarPackager {
     }
 
     return unpackedFileIndexSet
+  }
+
+  private async writeAsarFile2(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>, packager: PlatformPackager<any>): Promise<any> {
+    console.log("unpackedFileIndexMap", JSON.stringify(unpackedFileIndexMap))
+    let fileSetIndex = 0
+
+    let files = fileSets[0].files
+    let metadata = fileSets[0].metadata
+    let transformedFiles = fileSets[0].transformedFiles
+    let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!
+    const unpackGlob: string[] = []
+    const unneededDirs: string[] = []
+    const w = async (index: number) => {
+      while (true) {
+        if (index >= files.length) {
+          if (++fileSetIndex >= fileSets.length) {
+            // writeStream.end()
+            return
+          } else {
+            files = fileSets[fileSetIndex].files
+            metadata = fileSets[fileSetIndex].metadata
+            transformedFiles = fileSets[fileSetIndex].transformedFiles
+            unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!
+            index = 0
+          }
+        }
+
+        if (!unpackedFileIndexSet.has(index)) {
+          break
+        } else {
+          const stat = metadata.get(files[index])
+          if (stat != null && stat.isSymbolicLink()) {
+            // await new Promise(resolve => {
+            //   symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), resolve)
+            // })
+            unpackGlob.push((stat as any).pathInArchive)
+            await w(index + 1)
+            return
+          }
+        }
+        index++
+      }
+
+      const data = transformedFiles == null ? null : transformedFiles.get(index)
+      const file = files[index]
+      const destination = fileSets[fileSetIndex].destination
+      const src = fileSets[fileSetIndex].src
+      const subpath = path.relative(src, file)
+      const destPath = path.join(destination, subpath)
+      unneededDirs.push(destPath)
+      await mkdir(path.dirname(destPath), { recursive: true })
+      await copyFileOrData(this.fileCopier, data, file, destPath, metadata.get(file)!)
+      await w(index + 1)
+    }
+
+    await w(0)
+    const options: CreateOptions = {
+      unpack: unpackGlob.join(","),
+      ordering: this.options.ordering || undefined,
+    }
+    const files1 = fileSets.flatMap(f => f.files).map(f => path.join(this.unpackedDest, f))
+    console.log("options", options)
+    // console.log('files', files1)
+    // await createPackageFromFiles(this.src, this.outFile,
+    //   files1,
+    //   undefined,
+    //   options
+    //   )
+    await createPackageWithOptions(this.unpackedDest, this.outFile, options)
+    for await (const file of unneededDirs) {
+      // console.log(file)
+      rmSync(file)
+    }
+    cleanEmptyFoldersRecursively(this.unpackedDest)
   }
 
   private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
@@ -263,5 +361,27 @@ function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefine
     return fileCopier.copy(source, destination, stats)
   } else {
     return writeFile(destination, data)
+  }
+}
+
+function cleanEmptyFoldersRecursively(folder: string) {
+  const isDir = fs.statSync(folder).isDirectory()
+  if (!isDir) {
+    return
+  }
+  let files = fs.readdirSync(folder)
+  if (files.length > 0) {
+    files.forEach(function (file) {
+      const fullPath = path.join(folder, file)
+      cleanEmptyFoldersRecursively(fullPath)
+    })
+
+    // re-evaluate files; after deleting subfolder, we may have parent folder empty now
+    files = fs.readdirSync(folder)
+  }
+
+  if (files.length == 0) {
+    fs.rmdirSync(folder)
+    return
   }
 }
