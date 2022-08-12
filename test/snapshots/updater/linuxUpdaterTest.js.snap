@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`test deb download 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "blockMapSize": 83221,
+      "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
+      "size": 79889665,
+      "url": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+    },
+    Object {
+      "sha512": "iWuuVzFj0P9HKxvsOPiCBSIfq0+yABHYBnNH/+JXHc+Z04dC+ZavPSxIC2OL+IUOL1+584LPi1e31fDwt8RNJg==",
+      "size": 56602934,
+      "url": "electron-quick-start-typescript-1.0.3-amd64.deb",
+    },
+    Object {
+      "sha512": "Ue321YyA6n1NyrVoeIBbO0Jack49JI6m2vhd95GPswzcbz1gKJ97qZW1CH59u9t6xILRX+Zy0FsMswWrAbkNOA==",
+      "size": 56545685,
+      "url": "electron-quick-start-typescript-1.0.3-x86_64.rpm",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+  "releaseDate": "2022-08-16T04:24:52.260Z",
+  "releaseName": "1.0.3",
+  "releaseNotes": "",
+  "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
+  "tag": "v1.0.3",
+  "version": "1.0.3",
+}
+`;
+
+exports[`test deb download 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`test rpm download 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "blockMapSize": 83221,
+      "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
+      "size": 79889665,
+      "url": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+    },
+    Object {
+      "sha512": "iWuuVzFj0P9HKxvsOPiCBSIfq0+yABHYBnNH/+JXHc+Z04dC+ZavPSxIC2OL+IUOL1+584LPi1e31fDwt8RNJg==",
+      "size": 56602934,
+      "url": "electron-quick-start-typescript-1.0.3-amd64.deb",
+    },
+    Object {
+      "sha512": "Ue321YyA6n1NyrVoeIBbO0Jack49JI6m2vhd95GPswzcbz1gKJ97qZW1CH59u9t6xILRX+Zy0FsMswWrAbkNOA==",
+      "size": 56545685,
+      "url": "electron-quick-start-typescript-1.0.3-x86_64.rpm",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.3-x86_64.AppImage",
+  "releaseDate": "2022-08-16T04:24:52.260Z",
+  "releaseName": "1.0.3",
+  "releaseNotes": "",
+  "sha512": "3aexf/dJdq/59UstA8MhJuDTe6WYMqmuHdTwpYJiElC7b+wuscjg44T9DS0wP0L/JVe/6bbys1O7kPYQZOPCrg==",
+  "tag": "v1.0.3",
+  "version": "1.0.3",
+}
+`;
+
+exports[`test rpm download 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;

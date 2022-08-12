@@ -5,11 +5,109 @@ Object {
   "linux": Array [
     Object {
       "arch": "x64",
-      "file": "TestApp-1.1.0.zip",
+      "file": "TestApp_1.1.0_amd64.deb",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "latest-linux.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp_1.1.0_amd64.deb",
+          },
+        ],
+        "path": "TestApp_1.1.0_amd64.deb",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.1.0",
+      },
     },
   ],
 }
 `;
+
+exports[`custom provider 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app-update.yml",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/resources/package-type",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/testapp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/testapp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/testapp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/testapp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/testapp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/testapp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/testapp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/testapp.png",
+]
+`;
+
+exports[`custom provider 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`custom provider 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`dotted s3 bucket 1`] = `
 Object {

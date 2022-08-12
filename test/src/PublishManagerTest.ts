@@ -140,7 +140,7 @@ test.ifAll.ifNotWindows(
   "custom provider",
   app(
     {
-      targets: createTargets([Platform.LINUX], "zip"),
+      targets: createTargets([Platform.LINUX], "deb"),
       config: {
         publish: {
           provider: "custom",
