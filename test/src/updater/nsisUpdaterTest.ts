@@ -47,7 +47,7 @@ test("github allowPrerelease=true", async () => {
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
-    repo: "electron-builder-test",
+    repo: "electron-builder-test-prerelease",
   })
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
@@ -59,7 +59,7 @@ test("github allowPrerelease=false", async () => {
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
-    repo: "electron-builder-test",
+    repo: "electron-builder-test-prerelease",
   })
   const updateCheckResult = await updater.checkForUpdates()
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
