@@ -57,7 +57,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/fpm").default
+            return require("./targets/FpmTarget").default
           default:
             return null
         }

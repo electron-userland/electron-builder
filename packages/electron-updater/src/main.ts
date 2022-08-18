@@ -1,6 +1,6 @@
 import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
-import { readFileSync } from "fs-extra"
+import { existsSync, readFileSync } from "fs-extra"
 import path from "path"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
@@ -30,10 +30,12 @@ function doLoadAutoUpdater(): AppUpdater {
   } else {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
     try {
-      const fileType = readFileSync(path.resolve(process.resourcesPath!, "package-type"))
-        .toString()
-        .trim()
-      console.info("Checking for beta autoupdate feature for deb/rpm distributions, please use at your own risk")
+      const identity = path.resolve(process.resourcesPath!, "package-type")
+      if (!existsSync(identity)) {
+        return _autoUpdater
+      }
+      console.info("Checking for beta autoupdate feature for deb/rpm distributions")
+      const fileType = readFileSync(identity).toString().trim()
       switch (fileType) {
         case "deb":
           _autoUpdater = new (require("./DebUpdater").DebUpdater)()
@@ -45,7 +47,10 @@ function doLoadAutoUpdater(): AppUpdater {
           break
       }
     } catch (error: any) {
-      console.error("Unable to detect package-type for deb/rpm autoUpdater (beta). If you'd like to expand support, please consider conrtributing to electron-builder", error.message)
+      console.warn(
+        "Unable to detect 'package-type' for autoUpdater (beta rpm/deb support). If you'd like to expand support, please consider conrtributing to electron-builder",
+        error.message
+      )
     }
   }
   return _autoUpdater

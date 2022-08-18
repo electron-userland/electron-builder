@@ -4,7 +4,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { createTestAppAdapter, tuneTestUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 const runTest = async (updaterClass: any, expectedExtension: "deb" | "rpm" | "AppImage") => {
-  const testAppAdapter = await createTestAppAdapter('1.0.1')
+  const testAppAdapter = await createTestAppAdapter("1.0.1")
   const updater = new updaterClass(null, testAppAdapter)
   tuneTestUpdater(updater, { platform: "linux" })
 

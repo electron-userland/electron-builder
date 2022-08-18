@@ -126,7 +126,9 @@ export default class FpmTarget extends Target {
       await mkdir(this.outDir, { recursive: true })
     }
 
-    const publishConfig = this.supportsAutoUpdate(target) ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */) : null
+    const publishConfig = this.supportsAutoUpdate(target)
+      ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
+      : null
     if (publishConfig != null) {
       const linuxDistType = this.packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
       const resourceDir = packager.getResourcesDir(linuxDistType)
@@ -257,7 +259,7 @@ export default class FpmTarget extends Target {
   }
 
   private supportsAutoUpdate(target: string) {
-    return ['deb', 'rpm'].includes(target)
+    return ["deb", "rpm"].includes(target)
   }
 }
 
