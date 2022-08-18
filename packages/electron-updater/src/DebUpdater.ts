@@ -29,7 +29,7 @@ export class DebUpdater extends BaseUpdater {
 
   protected doInstall(options: InstallOptions): boolean {
     const sudo = this.wrapSudo()
-    const cmd = ['"', "dpkg", "-i", options.installerPath, "||", "apt-get", "install", "-f", "-y", '"']
+    const cmd = ['"', "dpkg", "-i", `'${options.installerPath}'`, "||", "apt-get", "install", "-f", "-y", '"']
     this.spawnSyncLog(sudo, ["/bin/bash", "-c", cmd.join(" ")])
 
     return true

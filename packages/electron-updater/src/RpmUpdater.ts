@@ -32,7 +32,7 @@ export class RpmUpdater extends BaseUpdater {
     const packageManager = this.spawnSyncLog("which zypper")
     if (!packageManager) {
       const packageManager = this.spawnSyncLog("which dnf || which yum")
-      const cmd = ['"', packageManager, "-y", "remove", this.app.name, ";", packageManager, "-y", "install", options.installerPath, '"']
+      const cmd = ['"', packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", `'${options.installerPath}'`, '"']
       this.spawnSyncLog(sudo, ["/bin/bash", "-c", cmd.join(" ")])
     } else {
       const cmd = [
@@ -40,7 +40,7 @@ export class RpmUpdater extends BaseUpdater {
         packageManager,
         "remove",
         "-y",
-        this.app.name,
+        `'${this.app.name}'`,
         ";",
         packageManager,
         "clean",
@@ -52,7 +52,7 @@ export class RpmUpdater extends BaseUpdater {
         "--allow-unsigned-rpm",
         "-y",
         "-f",
-        options.installerPath,
+        `'${options.installerPath}'`,
         '"',
       ]
       this.spawnSyncLog(sudo, ["/bin/bash", "-c", cmd.join(" ")])
