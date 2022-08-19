@@ -12,7 +12,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
+    const isInstalled = this.install(isSilent, isForceRunAfter)
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that

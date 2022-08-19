@@ -504,7 +504,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * This is different from the normal quit event sequence.
    *
    * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
-   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
+   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS.
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
