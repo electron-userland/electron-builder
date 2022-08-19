@@ -180,10 +180,17 @@ export default class FpmTarget extends Target {
       }
     }
 
-    use(packager.info.metadata.license, it => args.push("--license", it!))
-    use(appInfo.buildNumber, it => args.push("--iteration", it!))
+    use(packager.info.metadata.license, it => args.push("--license", it))
+    use(appInfo.buildVersion, it =>
+      args.push(
+        "--iteration",
+        // dashes are not supported for iteration in older versions of fpm
+        // https://github.com/jordansissel/fpm/issues/1833
+        it.split("-").join("_")
+      )
+    )
 
-    use(options.fpm, it => args.push(...(it as any)))
+    use(options.fpm, it => args.push(...it))
 
     args.push(`${appOutDir}/=${installPrefix}/${appInfo.sanitizedProductName}`)
     for (const icon of await this.helper.icons) {
