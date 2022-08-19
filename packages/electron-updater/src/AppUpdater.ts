@@ -548,7 +548,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
       await outputFile(file, id)
-    } catch (e: any) {
+    } catch (e) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)
     }
     return id
@@ -660,7 +660,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)
-    } catch (e: any) {
+    } catch (e) {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {

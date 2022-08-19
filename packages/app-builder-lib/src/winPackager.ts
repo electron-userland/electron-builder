@@ -170,7 +170,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
             case "squirrel":
               try {
                 return require("electron-builder-squirrel-windows").default
-              } catch (e: any) {
+              } catch (e) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
@@ -254,7 +254,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       try {
         await sign(options, this)
         break
-      } catch (e: any) {
+      } catch (e) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {

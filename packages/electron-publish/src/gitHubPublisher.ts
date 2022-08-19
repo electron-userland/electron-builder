@@ -249,7 +249,7 @@ export class GitHubPublisher extends HttpPublisher {
     for (let i = 0; i < 3; i++) {
       try {
         return await this.githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
-      } catch (e: any) {
+      } catch (e) {
         if (e instanceof HttpError) {
           if (e.statusCode === 404) {
             log.warn({ releaseId: release.id, reason: "doesn't exist" }, "cannot delete release")

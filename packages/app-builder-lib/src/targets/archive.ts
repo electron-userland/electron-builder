@@ -182,7 +182,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       },
       debug7z.enabled
     )
-  } catch (e: any) {
+  } catch (e) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
       throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
     } else {

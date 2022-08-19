@@ -135,7 +135,7 @@ test.ifMac.ifAll("png icon small", () => {
       packed: async () => {
         try {
           await platformPackager!!.getIconPath()
-        } catch (e: any) {
+        } catch (e) {
           if (!e.message.includes("must be at least 512x512")) {
             throw e
           }

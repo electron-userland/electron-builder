@@ -103,7 +103,7 @@ export function parseUpdateInfo(rawData: string | null, channelFile: string, cha
   let result: UpdateInfo
   try {
     result = load(rawData) as UpdateInfo
-  } catch (e: any) {
+  } catch (e) {
     throw newError(
       `Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`,
       "ERR_UPDATER_INVALID_UPDATE_INFO"

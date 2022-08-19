@@ -160,7 +160,7 @@ export abstract class DifferentialDownloader {
           fdList.splice(1, 1)
           try {
             digestTransform.validate()
-          } catch (e: any) {
+          } catch (e) {
             reject(e)
             return
           }

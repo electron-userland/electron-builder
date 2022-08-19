@@ -71,7 +71,7 @@ ipcMain.on("saveAppData", () => {
     // electron doesn't escape / in the product name
     fs.writeFileSync(path.join(app.getPath("appData"), "Test App ßW", "testFile"), "test")
   }
-  catch (e: any) {
+  catch (e) {
     mainWindow.webContents.executeJavaScript(`console.log(\`userData: ${e}\`)`)
   }
 })

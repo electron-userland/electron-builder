@@ -30,7 +30,7 @@ async function readEmbeddedBlockMapData(file: string): Promise<BlockMap> {
     await close(fd)
 
     return readBlockMap(dataBuffer)
-  } catch (e: any) {
+  } catch (e) {
     await close(fd)
     throw e
   }

@@ -39,7 +39,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     let result: any
     try {
       result = load((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!)
-    } catch (e: any) {
+    } catch (e) {
       if (e instanceof HttpError && e.statusCode === 404) {
         throw newError(`Cannot find ${channelFile} in the latest release artifacts (${url}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
       }
@@ -77,7 +77,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       } else {
         return version
       }
-    } catch (e: any) {
+    } catch (e) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

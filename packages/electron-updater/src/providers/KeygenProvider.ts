@@ -33,7 +33,7 @@ export class KeygenProvider extends Provider<UpdateInfo> {
         cancellationToken
       )
       return parseUpdateInfo(updateInfo, channelFile, channelUrl)
-    } catch (e: any) {
+    } catch (e) {
       throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

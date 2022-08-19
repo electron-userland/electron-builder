@@ -48,7 +48,7 @@ export class MacUpdater extends AppUpdater {
       const result = execFileSync("sysctl", [sysctlRosettaInfoKey], { encoding: "utf8" })
       isRosetta = result.includes(`${sysctlRosettaInfoKey}: 1`)
       log.info(`Checked for macOS Rosetta environment (isRosetta=${isRosetta})`)
-    } catch (e: any) {
+    } catch (e) {
       log.warn(`sysctl shell command to check for macOS Rosetta environment failed: ${e}`)
     }
 
@@ -59,7 +59,7 @@ export class MacUpdater extends AppUpdater {
       const isArm = result.includes("ARM")
       log.info(`Checked 'uname -a': arm64=${isArm}`)
       isArm64Mac = isArm64Mac || isArm
-    } catch (e: any) {
+    } catch (e) {
       log.warn(`uname shell command to check for arm64 failed: ${e}`)
     }
 
@@ -171,7 +171,7 @@ export class MacUpdater extends AppUpdater {
         readStream.on("error", error => {
           try {
             response.end()
-          } catch (e: any) {
+          } catch (e) {
             log.warn(`cannot end response: ${e}`)
           }
           errorOccurred = true

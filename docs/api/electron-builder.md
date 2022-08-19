@@ -1097,7 +1097,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 <tr>
 <td>outputFormat</td>
-<td><code>“set”</code> | <code>“icns”</code> | <code>“ico”</code></td>
+<td><code>“icns”</code> | <code>“ico”</code> | <code>“set”</code></td>
 </tr>
 </tbody>
 </table>

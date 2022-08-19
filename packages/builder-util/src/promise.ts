@@ -13,7 +13,7 @@ export async function executeFinally<T>(promise: Promise<T>, task: (isErrorOccur
   } catch (originalError) {
     try {
       await task(true)
-    } catch (taskError: any) {
+    } catch (taskError) {
       throw new NestedError([originalError, taskError])
     }
 

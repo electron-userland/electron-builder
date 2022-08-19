@@ -99,7 +99,7 @@ function cleanupPackageJson(data: any, options: CleanupPackageFileOptions): any 
     if (changed) {
       return JSON.stringify(data, null, 2)
     }
-  } catch (e: any) {
+  } catch (e) {
     debug(e)
   }
 

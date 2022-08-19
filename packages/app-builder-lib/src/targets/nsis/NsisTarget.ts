@@ -749,7 +749,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
           } else {
             fs.close(fd, () => resolve(true))
           }
-        } catch (error: any) {
+        } catch (error) {
           reject(error)
         }
       })
