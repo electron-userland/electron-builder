@@ -36,7 +36,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
 export async function detach(name: string) {
   try {
     await exec("hdiutil", ["detach", "-quiet", name])
-  } catch (e) {
+  } catch (e: any) {
     await new Promise((resolve, reject) => {
       setTimeout(() => {
         exec("hdiutil", ["detach", "-force", name]).then(resolve).catch(reject)

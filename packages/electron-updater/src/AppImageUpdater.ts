@@ -58,7 +58,7 @@ export class AppImageUpdater extends BaseUpdater {
           }
 
           await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
-        } catch (e) {
+        } catch (e: any) {
           this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
           // during test (developer machine mac) we must throw error
           isDownloadFull = process.platform === "linux"

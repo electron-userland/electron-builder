@@ -3,11 +3,11 @@
 import { InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { pathExists, readJson } from "fs-extra"
+import { readJson } from "fs-extra"
 import * as isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "read-config-file"
-import * as updateNotifier from "update-notifier"
+import UpdateNotifier from "simple-update-notifier"
 import { ExecError } from "builder-util/out/util"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
@@ -73,17 +73,7 @@ function checkIsOutdated() {
       if (it.version === "0.0.0-semantic-release") {
         return
       }
-
-      const packageManager = (await pathExists(path.join(__dirname, "..", "..", "package-lock.json"))) ? "npm" : "yarn"
-
-      const notifier = updateNotifier({ pkg: it })
-      if (notifier.update != null) {
-        notifier.notify({
-          message: `Update available ${chalk.dim(notifier.update.current)}${chalk.reset(" → ")}${chalk.green(notifier.update.latest)} \nRun ${chalk.cyan(
-            `${packageManager} upgrade electron-builder`
-          )} to update`,
-        })
-      }
+      await UpdateNotifier({ pkg: it })
     })
     .catch(e => log.warn({ error: e }, "cannot check updates"))
 }

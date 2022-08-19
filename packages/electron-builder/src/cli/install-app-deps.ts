@@ -37,7 +37,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
 export async function installAppDeps(args: any) {
   try {
     log.info({ version: PACKAGE_VERSION }, "electron-builder")
-  } catch (e) {
+  } catch (e: any) {
     // error in dev mode without babel
     if (!(e instanceof ReferenceError)) {
       throw e

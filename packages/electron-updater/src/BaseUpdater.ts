@@ -64,7 +64,7 @@ export abstract class BaseUpdater extends AppUpdater {
         isForceRunAfter,
         isAdminRightsRequired: downloadedFileInfo.isAdminRightsRequired,
       })
-    } catch (e) {
+    } catch (e: any) {
       this.dispatchError(e)
       return false
     }

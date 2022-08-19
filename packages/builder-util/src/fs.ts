@@ -35,7 +35,7 @@ export async function exists(file: string): Promise<boolean> {
   try {
     await access(file)
     return true
-  } catch (e) {
+  } catch (e: any) {
     return false
   }
 }

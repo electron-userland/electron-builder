@@ -231,7 +231,7 @@ export class Packager {
 
     try {
       log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
-    } catch (e) {
+    } catch (e: any) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
         throw e
