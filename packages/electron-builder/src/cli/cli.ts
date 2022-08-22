@@ -7,7 +7,6 @@ import { readJson } from "fs-extra"
 import * as isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "read-config-file"
-import UpdateNotifier from "simple-update-notifier"
 import { ExecError } from "builder-util/out/util"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
@@ -47,7 +46,7 @@ void createYargs()
 
 function wrap(task: (args: any) => Promise<any>) {
   return (args: any) => {
-    checkIsOutdated()
+    checkIsOutdated().catch(e => log.warn({ error: e }, "cannot check updates"))
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {
@@ -63,20 +62,17 @@ function wrap(task: (args: any) => Promise<any>) {
   }
 }
 
-function checkIsOutdated() {
+async function checkIsOutdated() {
   if (isCi || process.env.NO_UPDATE_NOTIFIER != null) {
     return
   }
 
-  readJson(path.join(__dirname, "..", "..", "package.json"))
-    .then(async it => {
-      if (it.version === "0.0.0-semantic-release") {
-        return
-      }
-
-      await UpdateNotifier({ pkg: it })
-    })
-    .catch(e => log.warn({ error: e }, "cannot check updates"))
+  const pkg = await readJson(path.join(__dirname, "..", "..", "package.json"))
+  if (pkg.version === "0.0.0-semantic-release") {
+    return
+  }
+  const UpdateNotifier = require("simple-update-notifier")
+  await UpdateNotifier({ pkg })
 }
 
 async function rebuildAppNativeCode(args: any) {
