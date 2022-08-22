@@ -50,7 +50,7 @@ export async function installAppDeps(args: any) {
   const [appDir, version] = await Promise.all<string>([
     computeDefaultAppDirectory(
       projectDir,
-      use(config.directories, it => it!.app)
+      use(config.directories, it => it.app)
     ),
     getElectronVersion(projectDir, config, packageMetadata),
   ])
