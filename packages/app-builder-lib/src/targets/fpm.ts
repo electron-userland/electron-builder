@@ -181,7 +181,7 @@ export default class FpmTarget extends Target {
     }
 
     use(packager.info.metadata.license, it => args.push("--license", it))
-    use(appInfo.buildVersion, it =>
+    use(appInfo.buildNumber, it =>
       args.push(
         "--iteration",
         // dashes are not supported for iteration in older versions of fpm

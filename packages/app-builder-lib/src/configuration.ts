@@ -130,8 +130,14 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly npmRebuild?: boolean
 
   /**
+   * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
+   * If not defined then will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
+   */
+  readonly buildNumber?: string | null
+
+  /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
-   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).
+   * If `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber envs) is defined, it will be used as a build version (`version.buildNumber`).
    */
   readonly buildVersion?: string | null
 
