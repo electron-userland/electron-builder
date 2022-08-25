@@ -131,13 +131,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
-   * If not defined then will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
+   * If not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
    */
   readonly buildNumber?: string | null
 
   /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
-   * If `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber envs) is defined, it will be used as a build version (`version.buildNumber`).
+   * If `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber` envs) is defined, it will be used as a build version (`version.buildNumber`).
    */
   readonly buildVersion?: string | null
 
