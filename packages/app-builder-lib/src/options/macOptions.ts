@@ -329,13 +329,15 @@ export interface DmgContent {
 export interface MasConfiguration extends MacConfiguration {
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
-   * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
+   * Otherwise [default](https://github.com/electron/osx-sign/blob/main/entitlements/default.darwin.plist) is used. 
+   * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
+   * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
    */
   readonly entitlements?: string | null
 
   /**
    * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).
-   * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
+   * Otherwise [default](https://github.com/electron/osx-sign/blob/main/entitlements/default.mas.child.plist).
    */
   readonly entitlementsInherit?: string | null
 
