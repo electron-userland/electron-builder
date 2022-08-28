@@ -39,13 +39,14 @@ export class AppInfo {
       buildVersion = info.config.buildVersion
     }
 
-    this.buildNumber =
+    const buildNumberEnvs =
       process.env.BUILD_NUMBER ||
       process.env.TRAVIS_BUILD_NUMBER ||
       process.env.APPVEYOR_BUILD_NUMBER ||
       process.env.CIRCLE_BUILD_NUM ||
       process.env.BUILD_BUILDNUMBER ||
       process.env.CI_PIPELINE_IID
+    this.buildNumber = info.config.buildNumber || buildNumberEnvs
     if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {

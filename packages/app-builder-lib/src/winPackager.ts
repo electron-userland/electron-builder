@@ -297,7 +297,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it))
-    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it))
     const iconPath = await this.getIconPath()
     use(iconPath, it => {
       files.push(it)
