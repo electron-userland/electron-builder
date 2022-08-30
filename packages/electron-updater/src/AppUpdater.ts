@@ -444,9 +444,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<string>} Path to downloaded file.
+   * @returns {Promise<Array<string>>} Paths to downloaded files.
    */
-  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
