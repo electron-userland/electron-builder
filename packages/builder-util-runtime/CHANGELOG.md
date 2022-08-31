@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.1.1
+
+### Patch Changes
+
+- [#7094](https://github.com/electron-userland/electron-builder/pull/7094) [`1023a93e`](https://github.com/electron-userland/electron-builder/commit/1023a93e92eaa26bf33b52edda5b22e56ed1ec18) Thanks [@HppZ](https://github.com/HppZ)! - fix: close file stream when error
+
 ## 9.1.0
 
 ### Minor Changes

@@ -1,5 +1,21 @@
 # electron-builder
 
+## 23.5.0
+
+### Minor Changes
+
+- [#7075](https://github.com/electron-userland/electron-builder/pull/7075) [`8166267d`](https://github.com/electron-userland/electron-builder/commit/8166267d487cd26b154e28cf60d89102a487a353) Thanks [@davej](https://github.com/davej)! - Allow explicit `buildNumber` in config. `buildNumber` will take precedence over any environment variables (#6945)
+
+### Patch Changes
+
+- [#7078](https://github.com/electron-userland/electron-builder/pull/7078) [`48cbb120`](https://github.com/electron-userland/electron-builder/commit/48cbb120dc11994889f4aa61c8431531ce274006) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: replace update-notifier with simple-update-notifier due to security alert
+
+- Updated dependencies [[`1023a93e`](https://github.com/electron-userland/electron-builder/commit/1023a93e92eaa26bf33b52edda5b22e56ed1ec18), [`e78a65c4`](https://github.com/electron-userland/electron-builder/commit/e78a65c46a55f794da2dd0d2f6e838f8421174b9), [`8166267d`](https://github.com/electron-userland/electron-builder/commit/8166267d487cd26b154e28cf60d89102a487a353), [`a1d86fd7`](https://github.com/electron-userland/electron-builder/commit/a1d86fd75bbc7b252403c16966430a2e3562205d)]:
+  - builder-util-runtime@9.1.1
+  - builder-util@23.5.0
+  - app-builder-lib@23.5.0
+  - dmg-builder@23.5.0
+
 ## 23.4.0
 
 ### Patch Changes

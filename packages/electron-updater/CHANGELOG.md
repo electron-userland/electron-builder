@@ -1,5 +1,14 @@
 ## 4.3.0
 
+## 5.2.3
+
+### Patch Changes
+
+- [#7099](https://github.com/electron-userland/electron-builder/pull/7099) [`cd21b091`](https://github.com/electron-userland/electron-builder/commit/cd21b0918843fe1269ddaf8dde099c8faeb54b80) Thanks [@alefoll](https://github.com/alefoll)! - fix(docs): improve `downloadUpdate` typing to match the doc
+
+- Updated dependencies [[`1023a93e`](https://github.com/electron-userland/electron-builder/commit/1023a93e92eaa26bf33b52edda5b22e56ed1ec18)]:
+  - builder-util-runtime@9.1.1
+
 ## 5.2.2
 
 ### Patch Changes
