@@ -1,7 +1,7 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import { createReadStream } from "fs"
-import { createServer, IncomingMessage, ServerResponse } from "http"
+import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AddressInfo } from "net"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
@@ -10,10 +10,60 @@ import { findFile } from "./providers/Provider"
 import AutoUpdater = Electron.AutoUpdater
 import { execFileSync } from "child_process"
 
+/** 安装包发送给 squirrel 的安全操作时间间隔 */
+const SEND_TO_SQUIRREL_SAFE_TIME = 6000
+
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
   private squirrelDownloadedUpdate = false
+
+  /** 是否正在退出。退出时不会判断是否需需要 abort squirrel */
+  private isQuitting = false
+
+  /** 最近一次下载好的文件信息 */
+  private lastDownloadZipFileInfo: ResolvedUpdateFileInfo | null = null
+  /** 最近一次下载好的事件 */
+  private lastDownloadEvent: UpdateDownloadedEvent | null = null
+
+  /** squirrel 使用的本地 server 实例 */
+  private server: Server | null = null
+
+  /** 上次尝试调用发送到 squirrel 的时间 */
+  private sendToSquirrelTime = 0
+  /** 已发送给 squirrel 的 server 引用 */
+  private sendToSquirrelServer: Server | null = null
+  /** 发送给 squirrel 的定时任务 id */
+  private squirrelServerScheduleId: NodeJS.Timeout | null = null
+
+  public get autoInstallOnAppQuit() {
+    return this._autoInstallOnAppQuit
+  }
+
+  public set autoInstallOnAppQuit(value: boolean) {
+    if (this._autoInstallOnAppQuit === value) {
+      // 去重
+      return
+    }
+    this._autoInstallOnAppQuit = value
+    if (value) {
+      this.debug("turn on auto install")
+      // 打开自动升级
+      if (this.squirrelDownloadedUpdate) {
+        // squirrel 已准备好，无需操作
+        this.debug("squirrel update is ready, do nothing")
+      } else {
+        // squirrel 未准备好，尝试开启
+        // 反复调用时，可能存在重复 server
+        this.debug("squirrel is not ready, try start it")
+        this.scheduleSquirrelServerSafely()
+      }
+    } else {
+      this.debug("turn off auto install")
+      // 关掉自动升级
+      this.abortSquirrelMacAutoUpdate()
+    }
+  }
 
   constructor(options?: AllPublishOptions, app?: AppAdapter) {
     super(options, app)
@@ -24,6 +74,13 @@ export class MacUpdater extends AppUpdater {
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
+      this.debug("receive squirrel update ready")
+      // 非退出的情况下，当 update 准备好时，如果没有开启自动升级，则 abort squirrel
+      if (!this.isQuitting && !this._autoInstallOnAppQuit) {
+        this.debug("now its not quitting and not auto update, try abort squirrel")
+        this.abortSquirrelMacAutoUpdate()
+        return
+      }
     })
   }
 
@@ -31,6 +88,72 @@ export class MacUpdater extends AppUpdater {
     if (this._logger.debug != null) {
       this._logger.debug(message)
     }
+  }
+
+  /**
+   * 放弃 squirrel mac 已注册的服务
+   *  ~/Library/Caches/<bundleId>.ShipIt/
+   */
+  private abortSquirrelMacAutoUpdate() {
+    if (!this._bundleId) {
+      this.debug("bundle id need to be set before prevent squirrel mac auto update")
+      return
+    }
+    try {
+      const result = execFileSync("launchctl", ["remove", `${this._bundleId}.ShipIt`], { encoding: "utf8" })
+      this.debug(`remove squirrel service if possible: ${result}`)
+    } catch (err) {
+      this.debug(`remove squirrel service error: ${err instanceof Error ? err.message : String(err)}`)
+    }
+    this.squirrelDownloadedUpdate = false
+    this.cancelScheduledSquirrelServer()
+    this.debug("squirrel update aborted")
+  }
+
+  /** 发送安装包到 squirrel */
+  private sendUpdateToSquirrel() {
+    this.nativeUpdater.checkForUpdates()
+    this.sendToSquirrelTime = Date.now()
+  }
+
+  /** 开启尽量安全创建 squirrel server 的定时任务 */
+  private scheduleSquirrelServerSafely() {
+    this.cancelScheduledSquirrelServer()
+    const remainTime = SEND_TO_SQUIRREL_SAFE_TIME - (Date.now() - this.sendToSquirrelTime)
+    // 等待时间由距离上次尝试的时间决定
+    const timeout = remainTime < 0 ? 0 : remainTime
+
+    this.debug(`schedule server in ${timeout}ms`)
+    this.squirrelServerScheduleId = setTimeout(() => {
+      this.startSquirrelServer().catch(err => {
+        this.debug(`start squirrel server error: ${err.message}`)
+      })
+    }, timeout)
+  }
+
+  /** 取消已创建的 squirrel server 定时任务 */
+  private cancelScheduledSquirrelServer() {
+    if (this.squirrelServerScheduleId) {
+      this.debug(`find scheduled server ${this.squirrelServerScheduleId}, cancel it`)
+      clearTimeout(this.squirrelServerScheduleId)
+      this.squirrelServerScheduleId = null
+    }
+  }
+
+  /** 清除 server. 手动 quitAndInstall 时可能需要维持 server 实例 */
+  private clearServer() {
+    if (!this.server) {
+      return
+    }
+    this.server.close()
+    this.server = null
+  }
+
+  /** 创建 server */
+  private getServer() {
+    this.clearServer()
+    this.server = createServer()
+    return this.server
   }
 
   protected async doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
@@ -84,18 +207,32 @@ export class MacUpdater extends AppUpdater {
       task: (destinationFile, downloadOptions) => {
         return this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
       },
-      done: event => this.updateDownloaded(zipFileInfo, event),
+      done: event => this.afterUpdateDownloaded(zipFileInfo, event),
     })
   }
 
-  private async updateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
+  private async afterUpdateDownloaded(zipFileInfo: ResolvedUpdateFileInfo, event: UpdateDownloadedEvent): Promise<Array<string>> {
+    this.lastDownloadZipFileInfo = zipFileInfo
+    this.lastDownloadEvent = event
+    return this.startSquirrelServer(true)
+  }
+
+  private async startSquirrelServer(dispatchEvent = true): Promise<Array<string>> {
+    if (!this.lastDownloadZipFileInfo || !this.lastDownloadEvent) {
+      this.debug("cannot find last downloaded update files, give up squirrel setup")
+      return []
+    }
+
+    const zipFileInfo = this.lastDownloadZipFileInfo
+    const event = this.lastDownloadEvent
+
     const downloadedFile = event.downloadedFile
     const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    const server = createServer()
+    const server = this.getServer()
     this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     server.on("close", () => {
       log.info(`Proxy server for native Squirrel.Mac is closed (${logContext})`)
@@ -169,12 +306,15 @@ export class MacUpdater extends AppUpdater {
         })
 
         // The update has been downloaded and is ready to be served to Squirrel
-        this.dispatchUpdateDownloaded(event)
+        if (dispatchEvent) {
+          this.dispatchUpdateDownloaded(event)
+        }
 
-        if (this.autoInstallOnAppQuit) {
+        if (this._autoInstallOnAppQuit) {
           this.nativeUpdater.once("error", reject)
           // This will trigger fetching and installing the file on Squirrel side
-          this.nativeUpdater.checkForUpdates()
+          this.sendToSquirrelServer = server
+          this.sendUpdateToSquirrel()
         } else {
           resolve([])
         }
@@ -183,21 +323,27 @@ export class MacUpdater extends AppUpdater {
   }
 
   quitAndInstall(): void {
+    this.isQuitting = true
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.nativeUpdater.quitAndInstall()
     } else {
       // Quit and install as soon as Squirrel get the update
       this.nativeUpdater.on("update-downloaded", () => {
+        this.debug("quit and install receive update downloaded")
         this.nativeUpdater.quitAndInstall()
       })
-
-      if (!this.autoInstallOnAppQuit) {
-        /**
-         * If this was not `true` previously then MacUpdater.doDownloadUpdate()
-         * would not actually initiate the downloading by electron's autoUpdater
-         */
-        this.nativeUpdater.checkForUpdates()
+      this._autoInstallOnAppQuit = true
+      // 服务在监听状态，且未发送到 squirrel, 则发送给 squirrel
+      // 应对未选择自动更新，但又手动调用了该方法的情况
+      // 防止重复触发 checkForUpdate 导致的报错 The command is disabled and cannot be executed
+      if (this.server?.listening && this.sendToSquirrelServer !== this.server) {
+        this.debug("server is listening and not used yet, send update to squirrel")
+        this.sendUpdateToSquirrel()
+      } else {
+        // 其他情况存在 squirrel 真实状态的不确定性，等待几秒降低不确定性
+        this.debug("server is not listening, schedule server")
+        this.scheduleSquirrelServerSafely()
       }
     }
   }

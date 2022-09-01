@@ -8,6 +8,8 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
+    // FIXME: make sure the quit handler is ready no matter when and how the `autoInstallOnAppQuit` is changed
+    this.addQuitHandler()
   }
 
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
@@ -94,7 +96,8 @@ export abstract class BaseUpdater extends AppUpdater {
       }
 
       this._logger.info("Auto install update on quit")
-      this.install(true, false)
+      // FIXME: do not use silent mode to start installer because of installation progress
+      this.install(false, false)
     })
   }
 }

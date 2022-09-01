@@ -1,8 +1,8 @@
 import { AllPublishOptions, asArray, CancellationToken, newError, PublishConfiguration, UpdateInfo, UUID, DownloadOptions, CancellationError } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { EventEmitter } from "events"
-import { outputFile } from "fs-extra"
-import { mkdir, readFile, rename, unlink } from "fs/promises"
+import { outputFile, mkdir, readFile, rename, unlink } from "fs-extra"
+// import { mkdir, readFile, rename, unlink } from "fs/promises"
 import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -11,12 +11,38 @@ import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessT
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
-import { ElectronHttpExecutor, getNetSession } from "./electronHttpExecutor"
 import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
-import Session = Electron.Session
+import { NodeHttpExecutor } from "./nodeHttpExecutor"
+
+async function wait(timeInMilliseconds: number) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(undefined)
+    }, timeInMilliseconds)
+  })
+}
+
+async function renameGraceful(tempUpdateFile: string, updateFile: string) {
+  const maxRetryTimes = 3
+  async function doRename(retryCounter: number) {
+    try {
+      await rename(tempUpdateFile, updateFile)
+    } catch (e: any) {
+      if (e.code === "EBUSY" && retryCounter > 1) {
+        await wait(3000)
+        await doRename(retryCounter - 1)
+      } else {
+        e.message = `Rename Graceful: ${e.message}`
+        throw e
+      }
+    }
+  }
+
+  await doRename(maxRetryTimes)
+}
 
 export abstract class AppUpdater extends EventEmitter {
   /**
@@ -25,9 +51,27 @@ export abstract class AppUpdater extends EventEmitter {
   autoDownload = true
 
   /**
+   * FIXME: make autoInstallOnAppQuit reactive on mac
+   */
+  protected _autoInstallOnAppQuit = true
+
+  /**
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
    */
-  autoInstallOnAppQuit = true
+  public get autoInstallOnAppQuit() {
+    return this._autoInstallOnAppQuit
+  }
+
+  public set autoInstallOnAppQuit(value: boolean) {
+    this._autoInstallOnAppQuit = value
+  }
+
+  protected _bundleId: string | null = null
+
+  /** 设置应用 bundleId。据此找到 mac squirrel 安装包暂存地址，以便需要时删除等操作 */
+  public setAppBundleID(bundleId: string) {
+    this._bundleId = bundleId
+  }
 
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
@@ -103,9 +147,10 @@ export abstract class AppUpdater extends EventEmitter {
   protected _logger: Logger = console
 
   // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
-  get netSession(): Session {
-    return getNetSession()
-  }
+  // cant get net session any more
+  // get netSession(): Session {
+  //   return getNetSession()
+  // }
 
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
@@ -153,7 +198,7 @@ export abstract class AppUpdater extends EventEmitter {
   protected updateInfoAndProvider: UpdateInfoAndProvider | null = null
 
   /** @internal */
-  readonly httpExecutor: ElectronHttpExecutor
+  readonly httpExecutor: NodeHttpExecutor
 
   protected constructor(options: AllPublishOptions | null | undefined, app?: AppAdapter) {
     super()
@@ -164,7 +209,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     if (app == null) {
       this.app = new ElectronAppAdapter()
-      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      this.httpExecutor = new NodeHttpExecutor()
     } else {
       this.app = app
       this.httpExecutor = null as any
@@ -624,7 +669,7 @@ export abstract class AppUpdater extends EventEmitter {
     const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
-      await rename(tempUpdateFile, updateFile)
+      await renameGraceful(tempUpdateFile, updateFile)
     } catch (e) {
       await removeFileIfAny()
 

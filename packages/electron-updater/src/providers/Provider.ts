@@ -2,7 +2,7 @@ import { CancellationToken, configureRequestUrl, newError, safeStringifyJson, Up
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { load } from "js-yaml"
 import { URL } from "url"
-import { ElectronHttpExecutor } from "../electronHttpExecutor"
+import { NodeHttpExecutor } from "../nodeHttpExecutor"
 import { ResolvedUpdateFileInfo } from "../main"
 import { newUrlFromBase } from "../util"
 
@@ -12,12 +12,12 @@ export interface ProviderRuntimeOptions {
   isUseMultipleRangeRequest: boolean
   platform: ProviderPlatform
 
-  executor: ElectronHttpExecutor
+  executor: NodeHttpExecutor
 }
 
 export abstract class Provider<T extends UpdateInfo> {
   private requestHeaders: OutgoingHttpHeaders | null = null
-  protected readonly executor: ElectronHttpExecutor
+  protected readonly executor: NodeHttpExecutor
 
   protected constructor(private readonly runtimeOptions: ProviderRuntimeOptions) {
     this.executor = runtimeOptions.executor
