@@ -92,7 +92,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * @default false
    */
-   forceDevUpdateConfig = false
+  forceDevUpdateConfig = false
 
   /**
    * The current application version.
