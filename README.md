@@ -91,6 +91,13 @@ public-hoist-pattern=*
 ```
 shamefully-hoist=true
 ```
+### Note for Yarn 3
+
+Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [#7106](https://github.com/electron-userland/electron-builder/issues/7106)). Add configuration in the `.yarnrc.yaml` as follows:
+```
+nodeLinker: "node-modules"
+```
+will declare to use node-modules instead of PnP.
 
 ## Quick Setup Guide
 
