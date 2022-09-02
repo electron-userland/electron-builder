@@ -9,7 +9,7 @@ import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
-import { downloadCertificate } from "./codesign"
+import { importCertificate } from "./codesign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -191,7 +191,7 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
 
   await Promise.all([
     // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
+    BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
     BluebirdPromise.mapSeries(securityCommands, it => exec("security", it)),
   ])
   return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
