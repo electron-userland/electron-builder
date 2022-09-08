@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.2.4
+
+### Patch Changes
+
+- [#7117](https://github.com/electron-userland/electron-builder/pull/7117) [`0c528411`](https://github.com/electron-userland/electron-builder/commit/0c528411fb8a7de23e974f44e36c5e69bd3bb167) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allow dev update config to be forced for testing auto-updater flow
+
 ## 5.2.3
 
 ### Patch Changes
