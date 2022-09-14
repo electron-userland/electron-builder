@@ -517,6 +517,17 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
+  /**
+   * Quit the app and explicit installs the update after it has been downloaded.
+   * It should only be called after `update-downloaded` has been emitted.
+   *
+   * **Note:** `autoUpdater.quitAppAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
+   * This is different from the normal quit event sequence.
+   *
+   * @param isForceRunAfter Run the app after finish. Defaults to `false`. Not applicable for macOS.
+   */
+  abstract quitAppAndInstall(isForceRunAfter?: boolean): void
+
   private async loadUpdateConfig(): Promise<any> {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = this.app.appUpdateConfigPath

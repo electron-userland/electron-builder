@@ -24,6 +24,18 @@ export abstract class BaseUpdater extends AppUpdater {
     }
   }
 
+  quitAppAndInstall(isForceRunAfter = false): void {
+    const isInstalled = this.install(false, isForceRunAfter);
+    if (isInstalled) {
+      setImmediate(() => {
+        require("electron").autoUpdater.emit("before-quit-for-update")
+        this.app.quit()
+      })
+    } else {
+      this.quitAndInstallCalled = false
+    }
+  }
+
   protected executeDownload(taskOptions: DownloadExecutorTask): Promise<Array<string>> {
     return super.executeDownload({
       ...taskOptions,

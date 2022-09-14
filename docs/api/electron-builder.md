@@ -1,5 +1,5 @@
 Developer API only. See [Configuration](../configuration/configuration.md) for user documentation.
-  
+
 <!-- do not edit. start of generated block -->
 <h1 id="modules">Modules</h1>
 <dl>
@@ -1428,11 +1428,13 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 <li><a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+quitAppAndInstall"><code>.quitAppAndInstall(isForceRunAfter)</code></a></li>
 </ul>
 </li>
 <li><a href="#MacUpdater">.MacUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.MacUpdater+quitAndInstall"><code>.quitAndInstall()</code></a></li>
+<li><a href="#module_electron-updater.MacUpdater+quitAppAndInstall"><code>.quitAppAndInstall()</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -1642,6 +1644,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 <li><a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+quitAppAndInstall"><code>.quitAppAndInstall(isForceRunAfter)</code></a></li>
 </ul>
 </li>
 </ul>
@@ -1749,6 +1752,28 @@ This is different from the normal quit event sequence.</p>
 </tr>
 </tbody>
 </table>
+<p><a name="module_electron-updater.AppUpdater+quitAppAndInstall"></a></p>
+<h3 id="appupdater.quitAppAndInstall(isforcerunafter)"><code>appUpdater.quitAppAndInstall(isForceRunAfter)</code></h3>
+<p>Quit the app and explicit installs the update after it has been downloaded.
+It should only be called after <code>update-downloaded</code> has been emitted.</p>
+<p><strong>Note:</strong> <code>autoUpdater.quitAppAndInstall()</code> will close all application windows first and only emit <code>before-quit</code> event on <code>app</code> after that.
+This is different from the normal quit event sequence.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isForceRunAfter</td>
+<td><code>Boolean</code></td>
+<td>Run the app after finish even on silent install. Not applicable for macOS.</td>
+</tr>
+</tbody>
+</table>
 <p><a name="MacUpdater"></a></p>
 <h2 id="macupdater-%E2%87%90-appupdater">MacUpdater ⇐ <code><a href="#AppUpdater">AppUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
@@ -1757,6 +1782,7 @@ This is different from the normal quit event sequence.</p>
 <li><a href="#MacUpdater">.MacUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.MacUpdater+quitAndInstall"><code>.quitAndInstall()</code></a></li>
+<li><a href="#module_electron-updater.MacUpdater+quitAppAndInstall"><code>.quitAppAndInstall()</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -1770,6 +1796,9 @@ This is different from the normal quit event sequence.</p>
 <p><a name="module_electron-updater.MacUpdater+quitAndInstall"></a></p>
 <h3 id="macupdater.quitandinstall()"><code>macUpdater.quitAndInstall()</code></h3>
 <p><strong>Overrides</strong>: <a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>quitAndInstall</code></a><br>
+<p><a name="module_electron-updater.MacUpdater+quitAppAndInstall"></a></p>
+<h3 id="macupdater.quitandinstall()"><code>macUpdater.quitAppAndInstall()</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_electron-updater.AppUpdater+quitAppAndInstall"><code>quitAppAndInstall</code></a><br>
 <a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
 <h3 id="macupdater.addauthheader(token)"><code>macUpdater.addAuthHeader(token)</code></h3>
 <p>Shortcut for explicitly adding auth tokens to request headers</p>
