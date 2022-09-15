@@ -76,6 +76,8 @@ export type Defines = {
 
   allowToChangeInstallationDirectory?: null
 
+  removeDefaultUninstallWelcomePage?: null
+
   MENU_FILENAME?: string
 
   SHORTCUT_NAME?: string

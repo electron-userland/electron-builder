@@ -39,12 +39,12 @@
       ${endIf}
     FunctionEnd
   !endif
-  
+
   # after change installation directory and before install start, you can show custom page here.
   !ifmacrodef customPageAfterChangeDir
     !insertmacro customPageAfterChangeDir
   !endif
-  
+
   !insertmacro MUI_PAGE_INSTFILES
   !ifmacrodef customFinishPage
     !insertmacro customFinishPage
@@ -65,7 +65,9 @@
     !insertmacro MUI_PAGE_FINISH
   !endif
 !else
-  !insertmacro MUI_UNPAGE_WELCOME
+  !ifndef removeDefaultUninstallWelcomePage
+    !insertmacro MUI_UNPAGE_WELCOME
+  !endif
   !ifndef INSTALL_MODE_PER_ALL_USERS
     !insertmacro PAGE_INSTALL_MODE
   !endif
