@@ -265,7 +265,8 @@ export class ExecError extends Error {
   }
 }
 
-export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
+type Nullish = null | undefined
+export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
 }
 

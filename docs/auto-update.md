@@ -837,7 +837,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
         * [`.addAuthHeader(token)`](#module_electron-updater.AppUpdater+addAuthHeader)
         * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
         * [`.checkForUpdatesAndNotify(downloadNotification)`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.isUpdaterActive()`](#module_electron-updater.AppUpdater+isUpdaterActive) ⇒ <code>Boolean</code>
@@ -847,7 +847,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
         * [`.addAuthHeader(token)`](#module_electron-updater.AppUpdater+addAuthHeader)
         * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
         * [`.checkForUpdatesAndNotify(downloadNotification)`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.isUpdaterActive()`](#module_electron-updater.AppUpdater+isUpdaterActive) ⇒ <code>Boolean</code>
@@ -954,7 +954,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
     * [`.addAuthHeader(token)`](#module_electron-updater.AppUpdater+addAuthHeader)
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.checkForUpdatesAndNotify(downloadNotification)`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
     * [`.isUpdaterActive()`](#module_electron-updater.AppUpdater+isUpdaterActive) ⇒ <code>Boolean</code>
@@ -977,10 +977,10 @@ Asks the server whether there is an update.
 - downloadNotification <code>module:electron-updater/out/AppUpdater.DownloadNotification</code>
 
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
-#### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Returns**: <code>Promise&lt;any&gt;</code> - Path to downloaded file.  
+**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.  
 
 - cancellationToken <code>CancellationToken</code>
 
@@ -1017,7 +1017,7 @@ This is different from the normal quit event sequence.
     * [`.addAuthHeader(token)`](#module_electron-updater.AppUpdater+addAuthHeader)
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.checkForUpdatesAndNotify(downloadNotification)`](#module_electron-updater.AppUpdater+checkForUpdatesAndNotify) ⇒ <code>Promise&lt; \| [UpdateCheckResult](#UpdateCheckResult)&gt;</code>
-    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;/code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
     * [`.isUpdaterActive()`](#module_electron-updater.AppUpdater+isUpdaterActive) ⇒ <code>Boolean</code>
@@ -1042,10 +1042,10 @@ Asks the server whether there is an update.
 - downloadNotification <code>module:electron-updater/out/AppUpdater.DownloadNotification</code>
 
 <a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
-#### `macUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `macUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Returns**: <code>Promise&lt;any&gt;</code> - Path to downloaded file.  
+**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.  
 
 - cancellationToken <code>CancellationToken</code>
 

@@ -7,29 +7,28 @@ import { statOrNull } from "builder-util/out/fs"
 import { download } from "../binDownload"
 
 /** @private */
-export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
-  urlOrBase64 = urlOrBase64.trim()
+export async function importCertificate(cscLink: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
+  cscLink = cscLink.trim()
 
   let file: string | null = null
-  if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/") || urlOrBase64.startsWith(".")) {
-    file = urlOrBase64
-  } else if (urlOrBase64.startsWith("file://")) {
-    file = urlOrBase64.substring("file://".length)
-  } else if (urlOrBase64.startsWith("~/")) {
-    file = path.join(homedir(), urlOrBase64.substring("~/".length))
+  if ((cscLink.length > 3 && cscLink[1] === ":") || cscLink.startsWith("/") || cscLink.startsWith(".")) {
+    file = cscLink
+  } else if (cscLink.startsWith("file://")) {
+    file = cscLink.substring("file://".length)
+  } else if (cscLink.startsWith("~/")) {
+    file = path.join(homedir(), cscLink.substring("~/".length))
+  } else if (cscLink.startsWith("https://")) {
+    const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
+    await download(cscLink, tempFile)
+    return tempFile
   } else {
-    const isUrl = urlOrBase64.startsWith("https://")
-    if (isUrl || urlOrBase64.length > 2048 || urlOrBase64.endsWith("=")) {
+    const mimeType = /data:.*;base64,/.exec(cscLink)?.[0]
+    if (mimeType || cscLink.length > 2048 || cscLink.endsWith("=")) {
       const tempFile = await tmpDir.getTempFile({ suffix: ".p12" })
-      if (isUrl) {
-        await download(urlOrBase64, tempFile)
-      } else {
-        await outputFile(tempFile, Buffer.from(urlOrBase64, "base64"))
-      }
+      await outputFile(tempFile, Buffer.from(cscLink.substring(mimeType?.length ?? 0), "base64"))
       return tempFile
-    } else {
-      file = urlOrBase64
     }
+    file = cscLink
   }
 
   file = path.resolve(currentDir, file)

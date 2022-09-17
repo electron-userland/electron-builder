@@ -1423,7 +1423,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1437,7 +1437,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1602,6 +1602,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
 </li>
 <li>
+<p><code id="AppUpdater-forceDevUpdateConfig">forceDevUpdateConfig</code> = <code>false</code> Boolean - Allows developer to force the updater to work in “dev” mode, looking for “dev-app-update.yml” instead of “app-update.yml” Dev: <code>path.join(this.app.getAppPath(), &quot;dev-app-update.yml&quot;)</code> Prod: <code>path.join(process.resourcesPath!, &quot;app-update.yml&quot;)</code></p>
+</li>
+<li>
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
 </li>
 <li>
@@ -1636,7 +1639,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1681,9 +1684,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tbody>
 </table>
 <p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
-<h3 id="appupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Cany%3E"><code>appUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<h3 id="appupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>appUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
 <p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
-<p><strong>Returns</strong>: <code>Promise&lt;any&gt;</code> - Path to downloaded file.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
 <table>
 <thead>
 <tr>
@@ -1763,7 +1766,7 @@ This is different from the normal quit event sequence.</p>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1810,9 +1813,9 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
-<h3 id="macupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Cany%3E"><code>macUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<h3 id="macupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>macUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
 <p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
-<p><strong>Returns</strong>: <code>Promise&lt;any&gt;</code> - Path to downloaded file.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
 <table>
 <thead>
 <tr>

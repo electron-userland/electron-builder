@@ -83,8 +83,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * @default false
    */
-
   disableWebInstaller = false
+
+  /**
+   * Allows developer to force the updater to work in "dev" mode, looking for "dev-app-update.yml" instead of "app-update.yml"
+   * Dev: `path.join(this.app.getAppPath(), "dev-app-update.yml")`
+   * Prod: `path.join(process.resourcesPath!, "app-update.yml")`
+   *
+   * @default false
+   */
+  forceDevUpdateConfig = false
 
   /**
    * The current application version.
@@ -279,8 +287,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   public isUpdaterActive(): boolean {
-    if (!this.app.isPackaged) {
-      this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
+    const isEnabled = this.app.isPackaged || this.forceDevUpdateConfig
+    if (!isEnabled) {
+      this._logger.info("Skip checkForUpdates because application is not packed and dev update config is not forced")
       return false
     }
     return true
@@ -444,9 +453,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<string>} Path to downloaded file.
+   * @returns {Promise<Array<string>>} Paths to downloaded files.
    */
-  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")

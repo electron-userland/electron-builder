@@ -1,4 +1,4 @@
-FROM buildpack-deps:22.04-curl
+FROM buildpack-deps:focal-curl
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -12,7 +12,7 @@ RUN apt-get -qq update && apt-get -qq dist-upgrade && \
   # libsecret-1-dev is required even for prebuild keytar (https://atom.github.io/node-keytar/)
   apt-get -qq install --no-install-recommends \
         qtbase5-dev build-essential autoconf libssl-dev gcc-multilib g++-multilib \
-        lzip rpm python3.10 libcurl4 git git-lfs ssh unzip libarchive-tools \
+        lzip rpm python libcurl4 git git-lfs ssh unzip libarchive-tools \
         libxtst6 libsecret-1-dev libopenjp2-tools liblzo2-2 \
   && \
   # git-lfs

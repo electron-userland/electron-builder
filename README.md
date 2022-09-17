@@ -92,6 +92,14 @@ public-hoist-pattern=*
 shamefully-hoist=true
 ```
 
+### Note for Yarn 3
+
+Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+```
+nodeLinker: "node-modules"
+```
+will declare to use node-modules instead of PnP.
+
 ## Quick Setup Guide
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).

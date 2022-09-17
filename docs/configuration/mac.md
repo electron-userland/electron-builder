@@ -17,10 +17,10 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-icon">icon</code> = <code>build/icon.icns</code> String | “undefined” - The path to application icon.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-entitlements">entitlements</code> String | “undefined” - The path to entitlements file for signing the app. <code>build/entitlements.mac.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the <a href="/configuration/mas">mas</a>.</p>
+<p><code id="MacConfiguration-entitlements">entitlements</code> String | “undefined” - The path to entitlements file for signing the app. <code>build/entitlements.mac.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the <a href="/configuration/mas">mas</a>. See <a href="https://github.com/electron/osx-sign/tree/main/entitlements">this folder in osx-sign’s repository</a> for examples. Be aware that your app may crash if the right entitlements are not set like <code>com.apple.security.cs.allow-jit</code> for example on arm64 builds with Electron 20+. See <a href="https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds">Signing and Notarizing macOS Builds from the Electron documentation</a> for more information.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-entitlementsInherit">entitlementsInherit</code> String | “undefined” - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.mac.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise <a href="https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist">default</a>.</p>
+<p><code id="MacConfiguration-entitlementsInherit">entitlementsInherit</code> String | “undefined” - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.mac.inherit.plist</code> will be used if exists (it is a recommended way to set). See <a href="https://github.com/electron/osx-sign/tree/main/entitlements">this folder in osx-sign’s repository</a> for examples.</p>
 <p>This option only applies when signing with <code>entitlements</code> provided.</p>
 </li>
 <li>

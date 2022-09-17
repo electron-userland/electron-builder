@@ -71,7 +71,7 @@ jobs:
   
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v3
