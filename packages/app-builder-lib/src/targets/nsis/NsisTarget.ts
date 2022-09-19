@@ -481,6 +481,10 @@ export class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
+    if (options.removeDefaultUninstallWelcomePage) {
+      defines.removeDefaultUninstallWelcomePage = null
+    }
+
     const commonOptions = getEffectiveOptions(options, packager)
 
     if (commonOptions.menuCategory != null) {

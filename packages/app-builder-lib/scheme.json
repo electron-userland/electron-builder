@@ -3914,6 +3914,11 @@
             }
           ]
         },
+        "removeDefaultUninstallWelcomePage": {
+          "default": false,
+          "description": "*assisted installer only.* remove the default uninstall welcome page.",
+          "type": "boolean"
+        },
         "runAfterFinish": {
           "default": true,
           "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
@@ -4231,6 +4236,11 @@
               ]
             }
           ]
+        },
+        "removeDefaultUninstallWelcomePage": {
+          "default": false,
+          "description": "*assisted installer only.* remove the default uninstall welcome page.",
+          "type": "boolean"
         },
         "runAfterFinish": {
           "default": true,

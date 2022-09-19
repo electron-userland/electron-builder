@@ -87,6 +87,12 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly allowToChangeInstallationDirectory?: boolean
 
   /**
+   * *assisted installer only.* remove the default uninstall welcome page.
+   * @default false
+   */
+  readonly removeDefaultUninstallWelcomePage?: boolean
+
+  /**
    * The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerIcon.ico` or application icon.
    */
