@@ -327,7 +327,11 @@ export function isPullRequest() {
   }
 
   return (
-    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+    isSet(process.env.TRAVIS_PULL_REQUEST) ||
+    isSet(process.env.CIRCLE_PULL_REQUEST) ||
+    isSet(process.env.BITRISE_PULL_REQUEST) ||
+    isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER) ||
+    isSet(process.env.GITHUB_BASE_REF)
   )
 }
 
