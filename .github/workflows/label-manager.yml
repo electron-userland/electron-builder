@@ -1,7 +1,12 @@
 on: issues
 name: Create Default Labels
+permissions: {}
 jobs:
   labels:
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+      issues: write # to add label to issues 
+
     name: DefaultLabelsActions
     runs-on: ubuntu-latest
     steps:
