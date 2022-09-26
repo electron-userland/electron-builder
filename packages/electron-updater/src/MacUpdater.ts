@@ -233,8 +233,4 @@ export class MacUpdater extends AppUpdater {
       }
     }
   }
-
-  quitAppAndInstall(): void {
-    this.quitAndInstall();
-  }
 }

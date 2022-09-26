@@ -12,22 +12,11 @@ export abstract class BaseUpdater extends AppUpdater {
 
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
+    // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
+    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
-        this.app.quit()
-      })
-    } else {
-      this.quitAndInstallCalled = false
-    }
-  }
-
-  quitAppAndInstall(isForceRunAfter = false): void {
-    const isInstalled = this.install(false, isForceRunAfter);
-    if (isInstalled) {
-      setImmediate(() => {
         require("electron").autoUpdater.emit("before-quit-for-update")
         this.app.quit()
       })
