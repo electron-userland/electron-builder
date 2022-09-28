@@ -47,6 +47,7 @@ public-hoist-pattern=*
 shamefully-hoist=true
 ```
 
+Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
 
 ## Boilerplates
 
