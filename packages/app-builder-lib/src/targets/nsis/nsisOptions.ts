@@ -87,6 +87,12 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly allowToChangeInstallationDirectory?: boolean
 
   /**
+   * *assisted installer only.* remove the default uninstall welcome page.
+   * @default false
+   */
+  readonly removeDefaultUninstallWelcomePage?: boolean
+
+  /**
    * The path to installer icon, relative to the [build resources](/configuration/configuration#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerIcon.ico` or application icon.
    */
@@ -132,9 +138,9 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly script?: string | null
 
   /**
-   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
+   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
    *
-   * Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
+   * Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
    * If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
    *
    * Appropriate license file will be selected by user OS language.

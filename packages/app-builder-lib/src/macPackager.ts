@@ -468,5 +468,5 @@ function getCertificateTypes(isMas: boolean, isDevelopment: boolean): CertType[]
   if (isDevelopment) {
     return isMas ? ["Mac Developer", "Apple Development"] : ["Mac Developer", "Developer ID Application"]
   }
-  return isMas ? ["3rd Party Mac Developer Application", "Apple Distribution"] : ["Developer ID Application"]
+  return isMas ? ["Apple Distribution", "3rd Party Mac Developer Application"] : ["Developer ID Application"]
 }

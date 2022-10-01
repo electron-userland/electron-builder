@@ -8,8 +8,13 @@ on:
 env:
   HUSKY: 0 # Bypass husky commit hook for CI
 
+permissions: {}
 jobs:
   pr-release:
+    permissions:
+      contents: write # to create release (changesets/action)
+      pull-requests: write # to create pull request (changesets/action)
+
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:

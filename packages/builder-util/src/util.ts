@@ -265,7 +265,8 @@ export class ExecError extends Error {
   }
 }
 
-export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
+type Nullish = null | undefined
+export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
 }
 
@@ -326,7 +327,11 @@ export function isPullRequest() {
   }
 
   return (
-    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+    isSet(process.env.TRAVIS_PULL_REQUEST) ||
+    isSet(process.env.CIRCLE_PULL_REQUEST) ||
+    isSet(process.env.BITRISE_PULL_REQUEST) ||
+    isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER) ||
+    isSet(process.env.GITHUB_BASE_REF)
   )
 }
 

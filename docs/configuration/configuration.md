@@ -92,11 +92,14 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li>
 <p><code id="Configuration-npmRebuild">npmRebuild</code> = <code>true</code> Boolean - Whether to <a href="https://docs.npmjs.com/cli/rebuild">rebuild</a> native dependencies before starting to package the app.</p>
 </li>
+<li>
+<p><code id="Configuration-buildNumber">buildNumber</code> String | “undefined” - The build number. Maps to the <code>--iteration</code> flag for builds using FPM on Linux. If not defined, then it will fallback to <code>BUILD_NUMBER</code> or <code>TRAVIS_BUILD_NUMBER</code> or <code>APPVEYOR_BUILD_NUMBER</code> or <code>CIRCLE_BUILD_NUM</code> or <code>BUILD_BUILDNUMBER</code> or <code>CI_PIPELINE_IID</code> env.</p>
+</li>
 </ul>
 <hr>
 <ul>
 <li>
-<p><code id="Configuration-buildVersion">buildVersion</code> String | “undefined” - The build version. Maps to the <code>CFBundleVersion</code> on macOS, and <code>FileVersion</code> metadata property on Windows. Defaults to the <code>version</code>. If <code>TRAVIS_BUILD_NUMBER</code> or <code>APPVEYOR_BUILD_NUMBER</code> or <code>CIRCLE_BUILD_NUM</code> or <code>BUILD_NUMBER</code> or <code>bamboo.buildNumber</code> or <code>CI_PIPELINE_IID</code> env defined, it will be used as a build version (<code>version.build_number</code>).</p>
+<p><code id="Configuration-buildVersion">buildVersion</code> String | “undefined” - The build version. Maps to the <code>CFBundleVersion</code> on macOS, and <code>FileVersion</code> metadata property on Windows. Defaults to the <code>version</code>. If <code>buildVersion</code> is not defined and <code>buildNumber</code> (or one of the <code>buildNumber</code> envs) is defined, it will be used as a build version (<code>version.buildNumber</code>).</p>
 </li>
 <li>
 <p><code id="Configuration-electronCompile">electronCompile</code> Boolean - Whether to use <a href="http://github.com/electron/electron-compile">electron-compile</a> to compile app. Defaults to <code>true</code> if <code>electron-compile</code> in the dependencies. And <code>false</code> if in the <code>devDependencies</code> or doesn’t specified.</p>

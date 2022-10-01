@@ -24,7 +24,7 @@ The top-level [pkg](configuration.md#Configuration-pkg) key contains set of opti
 <p><code id="PkgOptions-identity">identity</code> String | “undefined” - The name of certificate to use when signing. Consider using environment variables <a href="/code-signing">CSC_LINK or CSC_NAME</a> instead of specifying this option.</p>
 </li>
 <li>
-<p><code id="PkgOptions-license">license</code> String | “undefined” - The path to EULA license file. Defaults to <code>license.txt</code> or <code>eula.txt</code> (or uppercase variants). In addition to <code>txt, </code>rtf<code>and</code>html<code>supported (don't forget to use</code>target=&quot;_blank&quot;` for links).</p>
+<p><code id="PkgOptions-license">license</code> String | “undefined” - The path to EULA license file. Defaults to <code>license.txt</code> or <code>eula.txt</code> (or uppercase variants). In addition to <code>txt</code>, <code>rtf</code> and <code>html</code> supported (don’t forget to use <code>target=&quot;_blank&quot;</code> for links).</p>
 </li>
 <li>
 <p><code id="PkgOptions-background">background</code> <a href="#PkgBackgroundOptions">PkgBackgroundOptions</a> | “undefined” - Options for the background image for the installer.</p>

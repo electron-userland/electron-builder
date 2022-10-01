@@ -124,7 +124,6 @@ export default class SnapTarget extends Target {
       const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
         DISABLE_WAYLAND: options.allowNativeWayland ? "" : "1",
-        TMPDIR: "$XDG_RUNTIME_DIR",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
@@ -175,9 +174,6 @@ export default class SnapTarget extends Target {
     })
 
     const snap = await this.createDescriptor(arch)
-    if (this.isUseTemplateApp) {
-      delete snap.parts
-    }
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
@@ -208,6 +204,14 @@ export default class SnapTarget extends Target {
 
     if (snap.compression != null) {
       args.push("--compression", snap.compression)
+    }
+
+    if (this.isUseTemplateApp) {
+      // remove fields that are valid in snapcraft.yaml, but not snap.yaml
+      const fieldsToStrip = ["compression", "contact", "donation", "issues", "parts", "source-code", "website"]
+      for (const field of fieldsToStrip) {
+        delete snap[field]
+      }
     }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {

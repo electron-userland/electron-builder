@@ -13,7 +13,8 @@ export abstract class BaseUpdater extends AppUpdater {
 
   quitAndInstall(isSilent = false, isForceRunAfter = false): void {
     this._logger.info(`Install on explicit quitAndInstall`)
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : true)
+    // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
+    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that

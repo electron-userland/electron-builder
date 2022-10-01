@@ -7,7 +7,7 @@ import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { downloadCertificate } from "./codeSign/codesign"
+import { importCertificate } from "./codeSign/codesign"
 import {
   CertificateFromStoreInfo,
   CertificateInfo,
@@ -66,7 +66,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return (
-      downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+      importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
         // before then
         .catch(e => {
           if (e instanceof InvalidConfigurationError) {
@@ -297,7 +297,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it))
-    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it))
     const iconPath = await this.getIconPath()
     use(iconPath, it => {
       files.push(it)

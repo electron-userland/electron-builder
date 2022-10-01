@@ -27,7 +27,7 @@ if (process.env.TRAVIS !== "true") {
 }
 
 export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
-export const snapTarget = Platform.LINUX.createTarget("snap")
+export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
