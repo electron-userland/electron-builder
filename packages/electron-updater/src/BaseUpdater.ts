@@ -102,14 +102,14 @@ export abstract class BaseUpdater extends AppUpdater {
 
   protected wrapSudo() {
     const { name } = this.app
+    const installComment = `"${name} would like to update"`
     const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
     const command = [sudo]
     if (/kdesudo/i.test(sudo)) {
-      command.push("--comment", `"${name}" wants to update. Enter your password to allow this.`)
-      command.push("-d") // Do not show the command to be run in the dialog.
-      command.push("--")
+      command.push("--comment", installComment)
+      command.push("-c")
     } else if (/gksudo/i.test(sudo)) {
-      command.push("--description", `"${name}"`)
+      command.push("--message", installComment)
     } else if (/pkexec/i.test(sudo)) {
       command.push("--disable-internal-agent")
     }

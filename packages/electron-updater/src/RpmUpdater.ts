@@ -28,15 +28,17 @@ export class RpmUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
+    const upgradePath = options.installerPath
     const sudo = this.wrapSudo()
+    // pkexec doesn't want the command to be wrapped in " quotes
+    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
     const packageManager = this.spawnSyncLog("which zypper")
+    let cmd: string[]
     if (!packageManager) {
       const packageManager = this.spawnSyncLog("which dnf || which yum")
-      const cmd = ['"', packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", `'${options.installerPath}'`, '"']
-      this.spawnSyncLog(sudo, ["/bin/bash", "-c", cmd.join(" ")])
+      cmd = [packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", upgradePath]
     } else {
-      const cmd = [
-        '"',
+      cmd = [
         packageManager,
         "remove",
         "-y",
@@ -52,11 +54,10 @@ export class RpmUpdater extends BaseUpdater {
         "--allow-unsigned-rpm",
         "-y",
         "-f",
-        `'${options.installerPath}'`,
-        '"',
+        upgradePath,
       ]
-      this.spawnSyncLog(sudo, ["/bin/bash", "-c", cmd.join(" ")])
     }
+    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     return true
   }
 }
