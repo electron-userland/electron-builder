@@ -14,7 +14,7 @@ docker build --build-arg IMAGE_VERSION=14-wine -t electronuserland/builder:14-wi
 docker build --build-arg IMAGE_VERSION=14-wine -t electronuserland/builder:14-wine-chrome -t "electronuserland/builder:14-wine-chrome-$DATE" -t electronuserland/builder:wine-chrome docker/wine-chrome
 
 # Node 16
-docker build --build-arg NODE_VERSION=16.14.2 -t electronuserland/builder:16 -t "electronuserland/builder:16-$DATE" docker/node
+docker build --build-arg NODE_VERSION=16.17.1 -t electronuserland/builder:16 -t "electronuserland/builder:16-$DATE" docker/node
 
 docker build --build-arg IMAGE_VERSION=16 -t electronuserland/builder:16-wine -t "electronuserland/builder:16-wine-$DATE" docker/wine
 docker build --build-arg IMAGE_VERSION=16-wine -t electronuserland/builder:16-wine-mono -t "electronuserland/builder:16-wine-mono-$DATE" docker/wine-mono
