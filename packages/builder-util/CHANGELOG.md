@@ -1,5 +1,11 @@
 # builder-util
 
+## 23.6.0
+
+### Patch Changes
+
+- [#7152](https://github.com/electron-userland/electron-builder/pull/7152) [`4583273e`](https://github.com/electron-userland/electron-builder/commit/4583273ebe5cabfd1c14f647dc9edb7bff3c3bf3) Thanks [@kuidaoring](https://github.com/kuidaoring)! - feat: add Github Actions environment variable to isPullRequest method to detect if build is a PR
+
 ## 23.5.0
 
 ### Patch Changes

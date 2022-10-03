@@ -17,6 +17,9 @@
 <li>
 <p><code id="NsisOptions-allowToChangeInstallationDirectory">allowToChangeInstallationDirectory</code> = <code>false</code> Boolean - <em>assisted installer only.</em> Whether to allow user to change installation directory.</p>
 </li>
+<li>
+<p><code id="NsisOptions-removeDefaultUninstallWelcomePage">removeDefaultUninstallWelcomePage</code> = <code>false</code> Boolean - <em>assisted installer only.</em> remove the default uninstall welcome page.</p>
+</li>
 </ul>
 <hr>
 <ul>
@@ -27,7 +30,6 @@
 <li><code id="NsisOptions-installerSidebar">installerSidebar</code> String | “undefined” - <em>assisted installer only.</em> <code>MUI_WELCOMEFINISHPAGE_BITMAP</code>, relative to the <a href="/configuration/configuration#MetadataDirectories-buildResources">build resources</a> or to the project directory. Defaults to <code>build/installerSidebar.bmp</code> or <code>${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp</code>. Image size 164 × 314 pixels.</li>
 <li><code id="NsisOptions-uninstallerSidebar">uninstallerSidebar</code> String | “undefined” - <em>assisted installer only.</em> <code>MUI_UNWELCOMEFINISHPAGE_BITMAP</code>, relative to the <a href="/configuration/configuration#MetadataDirectories-buildResources">build resources</a> or to the project directory. Defaults to <code>installerSidebar</code> option or <code>build/uninstallerSidebar.bmp</code> or <code>build/installerSidebar.bmp</code> or <code>${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp</code></li>
 <li><code id="NsisOptions-uninstallDisplayName">uninstallDisplayName</code> = <code>${productName} ${version}</code> String - The uninstaller display name in the control panel.</li>
-<li><code id="NsisOptions-removeDefaultUninstallWelcomePage">removeDefaultUninstallWelcomePage</code> = <code>false</code> Boolean - <em>assisted installer only.</em> remove the default uninstall welcome page</li>
 </ul>
 <hr>
 <ul>

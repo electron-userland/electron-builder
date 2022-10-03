@@ -1585,7 +1585,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p><code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = <code>true</code> Boolean - Whether to automatically install a downloaded update on app quit (if <code>quitAndInstall</code> was not called before).</p>
 </li>
 <li>
-<p><code id="AppUpdater-autoRunAppAfterInstall">autoRunAppAfterInstall</code> = <code>true</code> Boolean - <em>windows-only</em> Whether to run the app after finish install when run the installer <em>NOT in silent mode</em>.</p>
+<p><code id="AppUpdater-autoRunAppAfterInstall">autoRunAppAfterInstall</code> = <code>true</code> Boolean - <em>windows-only</em> Whether to run the app after finish install when run the installer NOT in silent mode.</p>
 </li>
 <li>
 <p><code id="AppUpdater-allowPrerelease">allowPrerelease</code> = <code>false</code> Boolean - <em>GitHub provider only.</em> Whether to allow update to pre-release versions. Defaults to <code>true</code> if application version contains prerelease components (e.g. <code>0.12.1-alpha.1</code>, here <code>alpha</code> is a prerelease component), otherwise <code>false</code>.</p>
@@ -1748,7 +1748,7 @@ This is different from the normal quit event sequence.</p>
 <tr>
 <td>isForceRunAfter</td>
 <td><code>Boolean</code></td>
-<td>Run the app after finish even on silent install. Not applicable for macOS. Ignored if <code>isSilent</code> is set to <code>false</code>(In this case you can still set <code>autoRunAppAfterInstall</code> to <code>false</code> to prevent run the app)</td>
+<td>Run the app after finish even on silent install. Not applicable for macOS. Ignored if <code>isSilent</code> is set to <code>false</code>(In this case you can still set <code>autoRunAppAfterInstall</code> to <code>false</code> to prevent run the app after finish).</td>
 </tr>
 </tbody>
 </table>
