@@ -1,5 +1,12 @@
 # electron-publish
 
+## 23.6.0
+
+### Patch Changes
+
+- Updated dependencies [[`4583273e`](https://github.com/electron-userland/electron-builder/commit/4583273ebe5cabfd1c14f647dc9edb7bff3c3bf3)]:
+  - builder-util@23.6.0
+
 ## 23.5.0
 
 ### Patch Changes
