@@ -92,6 +92,8 @@ public-hoist-pattern=*
 shamefully-hoist=true
 ```
 
+Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
+
 ### Note for Yarn 3
 
 Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
