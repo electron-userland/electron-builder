@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 patchedDependencies:
   '@changesets/cli@2.19.0':
-    hash: eobtypqu7ixl72zfdz5pnvyiye
+    hash: gpad3hme2oppiguycfylt6i6ey
     path: patches/@changesets__cli@2.19.0.patch
 
 importers:
@@ -42,7 +42,7 @@ importers:
     devDependencies:
       '@babel/plugin-transform-modules-commonjs': 7.15.4
       '@changesets/changelog-github': 0.4.2
-      '@changesets/cli': 2.19.0_eobtypqu7ixl72zfdz5pnvyiye
+      '@changesets/cli': 2.19.0_gpad3hme2oppiguycfylt6i6ey
       '@types/node': 16.11.43
       '@typescript-eslint/eslint-plugin': 4.33.0_mxo4duoyrmtssqwgtnlqtynn34
       '@typescript-eslint/parser': 4.33.0_2cx4cdmmwelthzpkksdgbikuti
@@ -2323,7 +2323,7 @@ packages:
       - encoding
     dev: true
 
-  /@changesets/cli/2.19.0_eobtypqu7ixl72zfdz5pnvyiye:
+  /@changesets/cli/2.19.0_gpad3hme2oppiguycfylt6i6ey:
     resolution: {integrity: sha512-AqtWiarNSUD42pv7ldTAFMU7pa/39t78VDAWFy78RgUJQyFmXktOG8fzjMhksJ+G5+pWLVSXaLSj6cCbpeWivg==}
     hasBin: true
     dependencies:

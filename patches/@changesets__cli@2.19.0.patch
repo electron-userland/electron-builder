@@ -28,3 +28,18 @@ index d6303927c8ac508650cf90aba54ea60327c9dc9a..e18f1050e83926e633bbd96ec290e93a
      allExistingTags.has(tag) ? logger.log("Skipping tag (already exists): ", tag) : (logger.log("New tag: ", tag), 
      await git.tag(tag, cwd));
    }
+diff --git a/dist/cli.esm.js b/dist/cli.esm.js
+index abaa3c80216fa7eada35656b8df2763a67ea3359..c7131b5349070a557f91a801842c8fe32e7fe6b0 100644
+--- a/dist/cli.esm.js
++++ b/dist/cli.esm.js
+@@ -1119,8 +1119,8 @@ async function run$1(cwd) {
+   } = await getPackages(cwd);
+   const allExistingTags = await getAllTags(cwd);
+ 
+-  for (const pkg of packages) {
+-    const tag$1 = tool !== "root" ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`;
++  for (const pkg of packages.filter(pkg => ["electron-builder", "electron-updater"].includes(pkg.packageJson.name))) {
++    const tag$1 = (tool !== "root" && pkg.packageJson.name !== 'electron-builder') ? `${pkg.packageJson.name}@${pkg.packageJson.version}` : `v${pkg.packageJson.version}`;
+ 
+     if (allExistingTags.has(tag$1)) {
+       log("Skipping tag (already exists): ", tag$1);
