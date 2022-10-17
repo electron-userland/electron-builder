@@ -67,6 +67,7 @@ importers:
 
   packages/app-builder-lib:
     specifiers:
+      7zip-bin: ~5.1.1
       '@babel/core': 7.15.5
       '@babel/plugin-proposal-class-properties': 7.14.5
       '@babel/plugin-proposal-decorators': 7.15.4
@@ -97,7 +98,6 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/semver': 7.3.8
       '@types/tar': ^6.1.1
-      7zip-bin: ~5.1.1
       async-exit-hook: ^2.0.1
       bluebird-lst: ^1.0.9
       builder-util: workspace:*
@@ -117,16 +117,16 @@ importers:
       js-yaml: ^4.1.0
       lazy-val: ^1.0.5
       minimatch: ^3.1.2
-      read-config-file: 6.2.0
+      read-config-file: 6.3.2
       sanitize-filename: ^1.6.3
       semver: ^7.3.7
       tar: ^6.1.11
       temp-file: ^3.4.0
     dependencies:
+      7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
       '@electron/universal': 1.2.1
       '@malept/flatpak-bundler': 0.4.0
-      7zip-bin: 5.1.1
       async-exit-hook: 2.0.1
       bluebird-lst: 1.0.9
       builder-util: link:../builder-util
@@ -144,7 +144,7 @@ importers:
       js-yaml: 4.1.0
       lazy-val: 1.0.5
       minimatch: 3.1.2
-      read-config-file: 6.2.0
+      read-config-file: 6.3.2
       sanitize-filename: 1.6.3
       semver: 7.3.7
       tar: 6.1.11
@@ -182,13 +182,13 @@ importers:
 
   packages/builder-util:
     specifiers:
+      7zip-bin: ~5.1.1
       '@types/cross-spawn': 6.0.2
       '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
-      7zip-bin: ~5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
@@ -204,9 +204,9 @@ importers:
       stat-mode: ^1.0.0
       temp-file: ^3.4.0
     dependencies:
+      7zip-bin: 5.1.1
       '@types/debug': 4.1.7
       '@types/fs-extra': 9.0.13
-      7zip-bin: 5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
@@ -279,7 +279,7 @@ importers:
       fs-extra: ^10.0.0
       is-ci: ^3.0.0
       lazy-val: ^1.0.5
-      read-config-file: 6.2.0
+      read-config-file: 6.3.2
       simple-update-notifier: ^1.0.7
       yargs: ^17.5.1
     dependencies:
@@ -292,7 +292,7 @@ importers:
       fs-extra: 10.0.0
       is-ci: 3.0.1
       lazy-val: 1.0.5
-      read-config-file: 6.2.0
+      read-config-file: 6.3.2
       simple-update-notifier: 1.0.7
       yargs: 17.5.1
     devDependencies:
@@ -301,9 +301,9 @@ importers:
 
   packages/electron-builder-squirrel-windows:
     specifiers:
+      7zip-bin: ~5.1.1
       '@types/archiver': 5.3.1
       '@types/fs-extra': 9.0.13
-      7zip-bin: ~5.1.1
       app-builder-lib: workspace:*
       archiver: ^5.3.1
       builder-util: workspace:*
@@ -397,12 +397,12 @@ importers:
 
   test:
     specifiers:
+      7zip-bin: ~5.1.1
       '@jest/core': ^27.0.6
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
       '@types/semver': ^7.3.6
-      7zip-bin: ~5.1.1
       app-builder-lib: workspace:*
       builder-util: workspace:*
       builder-util-runtime: workspace:*
@@ -428,8 +428,8 @@ importers:
       temp-file: ^3.4.0
       yargs: ^17.0.1
     dependencies:
-      '@jest/core': 27.4.4
       7zip-bin: 5.1.1
+      '@jest/core': 27.4.4
       app-builder-lib: link:../packages/app-builder-lib
       builder-util: link:../packages/builder-util
       builder-util-runtime: link:../packages/builder-util-runtime
@@ -2814,7 +2814,7 @@ packages:
       chalk: 4.1.2
       collect-v8-coverage: 1.0.1
       exit: 0.1.2
-      glob: 7.2.0
+      glob: 7.2.3
       graceful-fs: 4.2.10
       istanbul-lib-coverage: 3.2.0
       istanbul-lib-instrument: 5.2.0
@@ -4654,6 +4654,13 @@ packages:
       typedarray: 0.0.6
     dev: true
 
+  /config-file-ts/0.2.4:
+    resolution: {integrity: sha512-cKSW0BfrSaAUnxpgvpXPLaaW/umg4bqg4k3GO1JqlRfpx+d5W0GDXznCMkWotJQek5Mmz1MJVChQnz3IVaeMZQ==}
+    dependencies:
+      glob: 7.2.3
+      typescript: 4.8.4
+    dev: false
+
   /config-master/3.1.0:
     resolution: {integrity: sha1-ZnZjWQUFooO/JqSE1oSJ10xUhdo=}
     dependencies:
@@ -4810,8 +4817,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      is-text-path: 1.0.1
       JSONStream: 1.3.5
+      is-text-path: 1.0.1
       lodash: 4.17.21
       meow: 8.1.2
       split2: 3.2.2
@@ -6215,7 +6222,7 @@ packages:
   /filelist/1.0.3:
     resolution: {integrity: sha512-LwjCsruLWQULGYKy7TX0OPtrL9kLpojOFKc5VCTxdFTV7w5zbsgqVKfnkKG7Qgjtq50gKfO56hJv88OfcGb70Q==}
     dependencies:
-      minimatch: 5.0.1
+      minimatch: 5.1.0
     dev: false
 
   /fill-range/4.0.0:
@@ -6501,6 +6508,16 @@ packages:
       once: 1.4.0
       path-is-absolute: 1.0.1
 
+  /glob/7.2.3:
+    resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 3.1.2
+      once: 1.4.0
+      path-is-absolute: 1.0.1
+
   /globals/11.12.0:
     resolution: {integrity: sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA==}
     engines: {node: '>=4'}
@@ -6554,7 +6571,7 @@ packages:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.15.4
+      uglify-js: 3.17.3
     dev: true
 
   /hard-rejection/2.1.0:
@@ -7310,7 +7327,7 @@ packages:
       chalk: 4.1.2
       ci-info: 3.3.0
       deepmerge: 4.2.2
-      glob: 7.2.0
+      glob: 7.2.3
       graceful-fs: 4.2.10
       jest-circus: 27.5.1
       jest-environment-jsdom: 27.5.1
@@ -7484,12 +7501,12 @@ packages:
       '@types/node': 16.11.12
       anymatch: 3.1.2
       fb-watchman: 2.0.1
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
       jest-regex-util: 26.0.0
       jest-serializer: 26.6.2
       jest-util: 26.6.2
       jest-worker: 26.6.2
-      micromatch: 4.0.4
+      micromatch: 4.0.5
       sane: 4.1.0
       walker: 1.0.8
     optionalDependencies:
@@ -7888,7 +7905,7 @@ packages:
       cjs-module-lexer: 1.2.2
       collect-v8-coverage: 1.0.1
       execa: 5.1.1
-      glob: 7.2.0
+      glob: 7.2.3
       graceful-fs: 4.2.10
       jest-haste-map: 27.5.1
       jest-message-util: 27.5.1
@@ -7908,7 +7925,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@types/node': 16.11.12
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
     dev: true
 
   /jest-serializer/27.4.0:
@@ -7984,7 +8001,7 @@ packages:
       jest-util: 27.5.1
       natural-compare: 1.4.0
       pretty-format: 27.5.1
-      semver: 7.3.7
+      semver: 7.3.8
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7996,9 +8013,9 @@ packages:
       '@jest/types': 26.6.2
       '@types/node': 16.11.12
       chalk: 4.1.2
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
       is-ci: 2.0.0
-      micromatch: 4.0.4
+      micromatch: 4.0.5
     dev: true
 
   /jest-util/27.4.2:
@@ -8955,8 +8972,8 @@ packages:
     dependencies:
       brace-expansion: 1.1.11
 
-  /minimatch/5.0.1:
-    resolution: {integrity: sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==}
+  /minimatch/5.1.0:
+    resolution: {integrity: sha512-9TPBGGak4nHfGZsPBohm9AWg6NoT7QTCehS3BIJABslyZbzxfV78QM2Y6+i741OPZIafFAaiiEMh5OyIrJPgtg==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
@@ -9143,7 +9160,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.9.0
-      semver: 7.3.7
+      semver: 7.3.8
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -9222,7 +9239,7 @@ packages:
     dev: true
 
   /once/1.4.0:
-    resolution: {integrity: sha1-WDsap3WWHUsROsF9nFC6753Xa9E=}
+    resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
     dependencies:
       wrappy: 1.0.2
 
@@ -9386,7 +9403,7 @@ packages:
     engines: {node: '>=8'}
 
   /path-is-absolute/1.0.1:
-    resolution: {integrity: sha1-F0uSaHNVNP+8es5r9TpanhtcX18=}
+    resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
 
   /path-key/2.0.1:
@@ -9655,14 +9672,15 @@ packages:
   /react-is/17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
-  /read-config-file/6.2.0:
-    resolution: {integrity: sha512-gx7Pgr5I56JtYz+WuqEbQHj/xWo+5Vwua2jhb1VwM4Wid5PqYmZ4i00ZB0YEGIfkVBsCv9UrjgyqCiQfS/Oosg==}
+  /read-config-file/6.3.2:
+    resolution: {integrity: sha512-M80lpCjnE6Wt6zb98DoW8WHR09nzMSpu8XHtPkiTHrJ5Az9CybfeQhTJ8D7saeBHpGhLPIVyA8lcL6ZmdKwY6Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
+      config-file-ts: 0.2.4
       dotenv: 9.0.2
       dotenv-expand: 5.1.0
       js-yaml: 4.1.0
-      json5: 2.2.0
+      json5: 2.2.1
       lazy-val: 1.0.5
     dev: false
 
@@ -9958,14 +9976,14 @@ packages:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
     hasBin: true
     dependencies:
-      glob: 7.2.0
+      glob: 7.2.3
     dev: true
 
   /rimraf/3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
     hasBin: true
     dependencies:
-      glob: 7.2.0
+      glob: 7.2.3
 
   /robust-predicates/3.0.1:
     resolution: {integrity: sha512-ndEIpszUHiG4HtDsQLeIuMvRsDnn8c8rYStabochtUeCvfuvNptb5TUbVD68LRAILPX7p9nqQGh4xJgn3EHS/g==}
@@ -10090,6 +10108,14 @@ packages:
     dependencies:
       lru-cache: 6.0.0
 
+  /semver/7.3.8:
+    resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: true
+
   /set-blocking/2.0.0:
     resolution: {integrity: sha1-BF+XgtARrppoA93TgrJDkrPYkPc=}
     dev: true
@@ -10126,8 +10152,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  /shlex/2.1.0:
-    resolution: {integrity: sha512-Tk8PjohJbWpGu2NtAlsEi/9AS4GU2zW2ZWLFrWRDskZpSJmyBIU3nTkBtocxD90r3w4BwRevsNtIqIP9HMuYiQ==}
+  /shlex/2.1.2:
+    resolution: {integrity: sha512-Nz6gtibMVgYeMEhUjp2KuwAgqaJA1K155dU/HuDaEJUGgnmYfVtVZah+uerVWdH8UGnyahhDCgABbYTbs254+w==}
     dev: true
 
   /signal-exit/3.0.6:
@@ -10595,7 +10621,7 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       '@istanbuljs/schema': 0.1.3
-      glob: 7.2.0
+      glob: 7.2.3
       minimatch: 3.1.2
 
   /test-value/1.1.0:
@@ -10914,6 +10940,12 @@ packages:
     hasBin: true
     dev: true
 
+  /typescript/4.8.4:
+    resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: false
+
   /typical/2.6.1:
     resolution: {integrity: sha1-XAgOXWYcu+OCWdLnCjxyU+hziB0=}
     dev: true
@@ -10932,8 +10964,8 @@ packages:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
     dev: true
 
-  /uglify-js/3.15.4:
-    resolution: {integrity: sha512-vMOPGDuvXecPs34V74qDKk4iJ/SN4vL3Ow/23ixafENYvtrNvtbcgUeugTcUGRGsOF/5fU8/NYSL5Hyb3l1OJA==}
+  /uglify-js/3.17.3:
+    resolution: {integrity: sha512-JmMFDME3iufZnBpyKL+uS78LRiC+mK55zWfM5f/pWBJfpOttXAqYfdDGRukYhJuyRinvPVAtUhvy7rlDybNtFg==}
     engines: {node: '>=0.8.0'}
     hasBin: true
     requiresBuild: true
@@ -11209,7 +11241,7 @@ packages:
       strip-ansi: 6.0.1
 
   /wrappy/1.0.2:
-    resolution: {integrity: sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=}
+    resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
   /write-file-atomic/3.0.3:
     resolution: {integrity: sha512-AvHcyZ5JnSfq3ioSyjrBkH9yW4m7Ayk8/9My/DD9onKeu/94fwrMocemO2QAJFAlnnDN+ZDS+ZjAR5ua1/PV/Q==}
@@ -11431,7 +11463,7 @@ packages:
       open: 7.4.2
       rimraf: 2.7.1
       semver: 5.7.1
-      shlex: 2.1.0
+      shlex: 2.1.2
       slash: 2.0.0
       tmp: 0.0.33
     dev: true
