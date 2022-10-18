@@ -10,7 +10,6 @@
     "packages/app-builder-lib/src/options/**/*": "pnpm generate-schema"
   },
   "scripts": {
-    "postinstall": "patch-package",
     "//": "do not wrap into single quotes - windows doesn't unwrap arg in this case",
     "compile": "tsc --build",
     "lint": "eslint packages --ext .ts",
@@ -49,7 +48,6 @@
     "@babel/plugin-transform-modules-commonjs": "7.15.4",
     "@changesets/changelog-github": "0.4.2",
     "@changesets/cli": "2.19.0",
-    "@milahu/patch-package-with-pnpm-support": "github:milahu/patch-package#pnpm-support-2",
     "@types/node": "16.11.43",
     "@typescript-eslint/eslint-plugin": "4.33.0",
     "@typescript-eslint/parser": "4.33.0",
@@ -77,6 +75,11 @@
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=6"
+    "pnpm": ">=7.4.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@changesets/cli@2.19.0": "patches/@changesets__cli@2.19.0.patch"
+    }
   }
 }
