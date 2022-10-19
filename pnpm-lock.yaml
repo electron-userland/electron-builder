@@ -23,7 +23,7 @@ importers:
       eslint-config-prettier: 8.3.0
       eslint-plugin-prettier: 3.4.0
       fs-extra: 10.0.0
-      globby: 11.0.4
+      globby: 11.1.0
       husky: 7.0.4
       jest-cli: 27.0.6
       jsdoc-to-markdown: 7.0.1
@@ -53,7 +53,7 @@ importers:
       eslint-config-prettier: 8.3.0_eslint@7.30.0
       eslint-plugin-prettier: 3.4.0_aryphpgqdcqelwqr2c53q2gwyy
       fs-extra: 10.0.0
-      globby: 11.0.4
+      globby: 11.1.0
       husky: 7.0.4
       jest-cli: 27.0.6
       jsdoc-to-markdown: 7.0.1
@@ -2914,7 +2914,7 @@ packages:
       jest-haste-map: 26.6.2
       jest-regex-util: 26.0.0
       jest-util: 26.6.2
-      micromatch: 4.0.4
+      micromatch: 4.0.5
       pirates: 4.0.4
       slash: 3.0.0
       source-map: 0.6.1
@@ -3050,7 +3050,7 @@ packages:
       '@changesets/types': 4.1.0
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
-      globby: 11.0.4
+      globby: 11.1.0
       read-yaml-file: 1.1.0
     dev: true
 
@@ -3485,7 +3485,7 @@ packages:
       '@typescript-eslint/types': 4.33.0
       '@typescript-eslint/visitor-keys': 4.33.0
       debug: 4.3.4
-      globby: 11.0.4
+      globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.7
       tsutils: 3.21.0_typescript@4.3.5
@@ -6513,8 +6513,8 @@ packages:
       type-fest: 0.20.2
     dev: true
 
-  /globby/11.0.4:
-    resolution: {integrity: sha512-9O4MVG9ioZJ08ffbcyVYyLOJLk5JQ688pJ4eMGLpdWLHq/Wr1D9BlriLQyL0E+jbkuePVZXYFj47QM/v093wHg==}
+  /globby/11.1.0:
+    resolution: {integrity: sha512-jhIXaOzy1sb8IyocaruWSn1TjmnBVs8Ayhcy83rmxNJ8q2uWKCAj3CnJY+KpGSXCueAPc0i05kVvVKtP1t9S3g==}
     engines: {node: '>=10'}
     dependencies:
       array-union: 2.1.0
@@ -8875,14 +8875,6 @@ packages:
       - supports-color
     dev: true
 
-  /micromatch/4.0.4:
-    resolution: {integrity: sha512-pRmzw/XUcwXGpD9aI9q/0XOwLNygjETJ8y0ao0wdqprrzDa4YnxLcz7fQRZr8voh8V10kGhABbNcHVk5wHgWwg==}
-    engines: {node: '>=8.6'}
-    dependencies:
-      braces: 3.0.2
-      picomatch: 2.3.1
-    dev: true
-
   /micromatch/4.0.5:
     resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
     engines: {node: '>=8.6'}
@@ -11239,7 +11231,7 @@ packages:
     dev: false
 
   /xmlbuilder/9.0.7:
-    resolution: {integrity: sha1-Ey7mPS7FVlxVfiD0wi35rKaGsQ0=}
+    resolution: {integrity: sha512-7YXTQc3P2l9+0rjaUbLwMKRhtmwg1M1eDf6nag7urC7pIPYLD9W/jmzQ4ptRSUbodw5S0jfoGTflLemQibSpeQ==}
     engines: {node: '>=4.0'}
     requiresBuild: true
     dev: false
