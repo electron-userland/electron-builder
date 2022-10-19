@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "23.5.1",
+  "version": "23.6.0",
   "main": "out/index.js",
   "files": [
     "out",
@@ -68,7 +68,7 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "minimatch": "^3.1.2",
-    "read-config-file": "6.2.0",
+    "read-config-file": "6.3.2",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.7",
     "tar": "^6.1.11",

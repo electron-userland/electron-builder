@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 5.3.0
+
+### Minor Changes
+
+- [#7136](https://github.com/electron-userland/electron-builder/pull/7136) [`4d989a8a`](https://github.com/electron-userland/electron-builder/commit/4d989a8a52bf7baac22742769abcc795ce193fbd) Thanks [@shenglianlee](https://github.com/shenglianlee)! - feat: non-silent mode allow not to run the app when the installation is complete
+
 ## 5.2.4
 
 ### Patch Changes
