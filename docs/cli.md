@@ -25,7 +25,7 @@ Building:
   --projectDir, --project  The path to project directory. Defaults to current
                            working directory.
   --config, -c             The path to an electron-builder config. Defaults to
-                           `electron-builder.yml` (or `json`, or `json5`), see
+                           `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see
                            https://goo.gl/YFRJOM
 
 Publishing:

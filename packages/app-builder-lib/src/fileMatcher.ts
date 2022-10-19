@@ -181,7 +181,7 @@ export function getMainFileMatchers(
 
   patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
-  patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
+  patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 
   if (isElectronCompile) {
