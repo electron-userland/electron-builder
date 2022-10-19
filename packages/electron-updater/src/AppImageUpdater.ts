@@ -104,10 +104,10 @@ export class AppImageUpdater extends BaseUpdater {
 
     if (options.isForceRunAfter) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.spawnLog(destination, [], { env })
+      this.spawnLog(destination, [], env)
     } else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], { env })
+      execFileSync(destination, [], env)
     }
     return true
   }
