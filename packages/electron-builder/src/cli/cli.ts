@@ -2,7 +2,6 @@
 
 import { InvalidConfigurationError, log } from "builder-util"
 import * as chalk from "chalk"
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 import { readJson } from "fs-extra"
 import * as isCi from "is-ci"
 import * as path from "path"
@@ -76,7 +75,6 @@ async function checkIsOutdated() {
 }
 
 async function rebuildAppNativeCode(args: any) {
-  const projectDir = process.cwd()
   // this script must be used only for electron
-  return nodeGypRebuild(args.platform, args.arch, { version: await getElectronVersion(projectDir), useCustomDist: true })
+  return nodeGypRebuild(args.arch)
 }
