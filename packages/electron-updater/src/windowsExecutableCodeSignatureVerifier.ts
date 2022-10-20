@@ -42,6 +42,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
       ],
       {
         timeout: 20 * 1000,
+        shell: true,
       },
       (error, stdout, stderr) => {
         try {
