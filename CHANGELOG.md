@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v23.6.0...v) (2022-10-21)
+
+
+### Bug Fixes
+
+* Migrate to electron-rebuild for handling native dependencies to fix compatibility with newer versions of electron ([#7196](https://github.com/electron-userland/electron-builder/issues/7196)) ([5616f23](https://github.com/electron-userland/electron-builder/commit/5616f23ce3d03a4e71c7b7bd515ec958b1631b8b))
+* use proper cache directory for `electron-updater` on macOS ([#7032](https://github.com/electron-userland/electron-builder/issues/7032)) ([caa32e0](https://github.com/electron-userland/electron-builder/commit/caa32e0708ba4347dd37e93174fce1d2c5660160))
+
+
+### Features
+
+* enabling support for typescript config files (i.e. electron-builder.ts) ([#7180](https://github.com/electron-userland/electron-builder/issues/7180)) ([edb28c0](https://github.com/electron-userland/electron-builder/commit/edb28c093ab251470e9f1579cd58b4f2ed89e21d))
+* Extending `linux` executableArgs option to be utilized for Snap target (fixes [#4587](https://github.com/electron-userland/electron-builder/issues/4587)) ([#7198](https://github.com/electron-userland/electron-builder/issues/7198)) ([a2ce9a7](https://github.com/electron-userland/electron-builder/commit/a2ce9a77c04868e9c01ad76b10955499f1f42eb3))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.5.1...v) (2022-10-03)
 
 

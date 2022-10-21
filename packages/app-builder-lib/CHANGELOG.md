@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 24.0.0-alpha.0
+
+### Major Changes
+
+- [#7198](https://github.com/electron-userland/electron-builder/pull/7198) [`a2ce9a77`](https://github.com/electron-userland/electron-builder/commit/a2ce9a77c04868e9c01ad76b10955499f1f42eb3) Thanks [@fangpenlin](https://github.com/fangpenlin)! - Extending `linux` executableArgs option to be utilized for Snap target
+
+* [#7196](https://github.com/electron-userland/electron-builder/pull/7196) [`5616f23c`](https://github.com/electron-userland/electron-builder/commit/5616f23ce3d03a4e71c7b7bd515ec958b1631b8b) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: Migrate to electron-rebuild for handling native dependencies
+
+### Minor Changes
+
+- [#7180](https://github.com/electron-userland/electron-builder/pull/7180) [`edb28c09`](https://github.com/electron-userland/electron-builder/commit/edb28c093ab251470e9f1579cd58b4f2ed89e21d) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: enabling typescript config files (i.e. electron-builder.ts)
+
+### Patch Changes
+
+- [#7188](https://github.com/electron-userland/electron-builder/pull/7188) [`3816d4f3`](https://github.com/electron-userland/electron-builder/commit/3816d4f30371345def83a0667d67648790259605) Thanks [@taratatach](https://github.com/taratatach)! - docs: Warn users not to disable zip for macos if using auto-update
+
 ## 23.6.0
 
 ### Minor Changes
