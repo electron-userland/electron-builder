@@ -17,6 +17,7 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "chilled-queens-think",
     "empty-ligers-turn",
     "shy-lizards-beam",
     "silly-cycles-cheer",
