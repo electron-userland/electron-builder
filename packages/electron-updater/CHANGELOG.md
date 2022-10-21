@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.0-alpha.0
+
+### Major Changes
+
+- [#7032](https://github.com/electron-userland/electron-builder/pull/7032) [`caa32e07`](https://github.com/electron-userland/electron-builder/commit/caa32e0708ba4347dd37e93174fce1d2c5660160) Thanks [@kidonng](https://github.com/kidonng)! - fix: use appropriate `electron-updater` cache directory on macOS
+
 ## 5.3.0
 
 ### Minor Changes
