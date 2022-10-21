@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.0.0-alpha.1
+
+### Patch Changes
+
+- [#7174](https://github.com/electron-userland/electron-builder/pull/7174) [`0f9865dc`](https://github.com/electron-userland/electron-builder/commit/0f9865dc0775f9d80d3bd64cf3e2131be3ae9acb) Thanks [@faern](https://github.com/faern)! - Allow non-semver version formats on Windows
+
 ## 24.0.0-alpha.0
 
 ### Major Changes
