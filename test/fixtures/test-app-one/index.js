@@ -21,7 +21,7 @@ function handleSquirrelEvent() {
 
     try {
       spawnedProcess = ChildProcess.spawn(command, args, {detached: true});
-    } catch (error: any) {}
+    } catch (error) {}
 
     return spawnedProcess;
   };
@@ -132,7 +132,7 @@ function main() {
       // electron doesn't escape / in the product name
       fs.writeFileSync(path.join(app.getPath("appData"), "Test App ßW", "testFile"), "test")
     }
-    catch (e: any) {
+    catch (e) {
       mainWindow.webContents.executeJavaScript(`console.log(\`userData: ${e}\`)`)
     }
   })
