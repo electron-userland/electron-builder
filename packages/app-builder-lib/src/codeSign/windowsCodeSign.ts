@@ -82,7 +82,7 @@ export async function getCertInfo(file: string, password: string): Promise<Certi
   const errorMessagePrefix = "Cannot extract publisher name from code signing certificate. As workaround, set win.publisherName. Error: "
   try {
     result = await executeAppBuilderAsJson<any>(["certificate-info", "--input", file, "--password", password])
-  } catch (e) {
+  } catch (e: any) {
     throw new Error(`${errorMessagePrefix}${e.stack || e}`)
   }
 
@@ -165,7 +165,7 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
 
   try {
     await vm.exec(tool, args, { timeout, env })
-  } catch (e) {
+  } catch (e: any) {
     if (e.message.includes("The file is being used by another process") || e.message.includes("The specified timestamp server either could not be reached")) {
       log.warn(`First attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
       await new Promise((resolve, reject) => {

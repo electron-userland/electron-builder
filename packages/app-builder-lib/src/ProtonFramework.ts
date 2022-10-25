@@ -36,7 +36,7 @@ export class ProtonFramework extends LibUiFramework {
     } else {
       try {
         babel = require("babel-core")
-      } catch (e) {
+      } catch (e: any) {
         // babel isn't installed
         log.debug(null, "don't transpile source code using Babel")
         return null

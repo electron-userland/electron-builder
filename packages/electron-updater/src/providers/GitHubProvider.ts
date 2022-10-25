@@ -102,7 +102,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       throw newError(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`, "ERR_UPDATER_INVALID_RELEASE_FEED")
     }
 
@@ -119,7 +119,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
       const requestOptions = this.createRequestOptions(channelFileUrl)
       try {
         return (await this.executor.request(requestOptions, cancellationToken))!
-      } catch (e) {
+      } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
           throw newError(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         }
@@ -130,7 +130,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
     try {
       const channel = this.updater.allowPrerelease ? this.getCustomChannelName(String(semver.prerelease(tag)?.[0] || "latest")) : this.getDefaultChannelName()
       rawData = await fetchData(channel)
-    } catch (e) {
+    } catch (e: any) {
       if (this.updater.allowPrerelease) {
         // Allow fallback to `latest.yml`
         rawData = await fetchData(this.getDefaultChannelName())
@@ -168,7 +168,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
 
       const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return releaseInfo.tag_name
-    } catch (e) {
+    } catch (e: any) {
       throw newError(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

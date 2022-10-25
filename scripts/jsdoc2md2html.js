@@ -419,7 +419,7 @@ async function writeDocFile(docOutFile, content) {
   try {
     existingContent = await fs.readFile(docOutFile, "utf8")
   }
-  catch (e) {
+  catch (e: any) {
   }
 
   console.log(`Write doc to ${docOutFile}`)
