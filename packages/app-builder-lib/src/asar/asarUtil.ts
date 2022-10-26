@@ -12,6 +12,7 @@ import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
 import * as fs from "fs-extra"
+import { promisify } from "util"
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
@@ -25,9 +26,9 @@ export class AsarPackager {
   private readonly rootForAppFilesWithoutAsar: string
   constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
-    this.unpackedDest = path.join(destination, "app")
+    // this.unpackedDest = path.join(destination, "app")
     this.rootForAppFilesWithoutAsar = path.join(this.destination, "app")
-    // this.unpackedDest = `${this.outFile}.unpacked`
+    this.unpackedDest = `${this.outFile}.unpacked`
   }
 
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
@@ -45,24 +46,25 @@ export class AsarPackager {
     }
     // await this.writeAsarFile(fileSets, unpackedFileIndexMap)
     await this.writeAsarFile2(fileSets, unpackedFileIndexMap, packager)
+    const files1 = [...fileSets.flatMap(f => f.files).map(f => path.relative(this.src, f))]
     const options: CreateOptions = {
       // unpack: Array.from(unpackedFileIndexMap.keys()).map(k => k.destination).join(','),
       // unpackDir: this.unpackedDest
       // ordering: this.options.ordering || undefined,
-      // pattern: "node_modules/**/*",
+      // pattern: `/out/**/*`,
       // globOptions: {
       //   root: this.src,
       // }
     }
-    // const files1 = [...fileSets.flatMap(f => f.files).map(f => path.relative(this.src, f))]
     // console.log('options', JSON.stringify(options))
     // console.log('files', files1)
+    // const [filenames, metadata] = await crawlFilesystem(files1)
     // await createPackageFromFiles(this.src, this.outFile,
-    //   files1,
-    //   undefined,
+    //   // filenames,metadata,
+    //   files1, undefined,
     //   options
     //   )
-    // await createPackageWithOptions(this.unpackedDest, this.outFile, options)
+    // await createPackageWithOptions(path.join(this.src), this.outFile, options)
   }
 
   private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
@@ -194,9 +196,9 @@ export class AsarPackager {
         } else {
           const stat = metadata.get(files[index])
           if (stat != null && stat.isSymbolicLink()) {
-            // await new Promise(resolve => {
-            //   symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), resolve)
-            // })
+            await new Promise(resolve => {
+              symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), resolve)
+            })
             unpackGlob.push((stat as any).pathInArchive)
             await w(index + 1)
             return
@@ -224,7 +226,7 @@ export class AsarPackager {
     }
     const files1 = fileSets.flatMap(f => f.files).map(files => path.relative(this.src, files))
     console.log("options", options)
-    console.log('files', files1)
+    console.log('files', files1.filter(f => f.includes('mac')))
     await createPackageFromFiles(this.src, this.outFile,
       files1,
       undefined,
@@ -384,4 +386,40 @@ function cleanEmptyFoldersRecursively(folder: string) {
     fs.rmdirSync(folder)
     return
   }
+}
+
+async function crawlFilesystem (crawled: any[]) {
+  const metadata: any = {}
+  const results = await Promise.all(crawled.map(async filename => [filename, await determineFileType(filename)]))
+  const links: any[] = []
+  const filenames = results.map(([filename, type]) => {
+    if (type) {
+      metadata[filename] = type
+      if (type.type === 'link') links.push(filename)
+    }
+    return filename
+  }).filter((filename) => {
+    // Newer glob can return files inside symlinked directories, to avoid
+    // those appearing in archives we need to manually exclude theme here
+    const exactLinkIndex = links.findIndex(link => filename === link)
+    return links.every((link, index) => {
+      if (index === exactLinkIndex) return true
+      return !filename.startsWith(link)
+    })
+  })
+  return [filenames, metadata]
+}
+
+const glob = promisify(require('glob'))
+
+async function determineFileType (filename: string) {
+  const stat = await fs.lstat(filename)
+  if (stat.isFile()) {
+    return { type: 'file', stat }
+  } else if (stat.isDirectory()) {
+    return { type: 'directory', stat }
+  } else if (stat.isSymbolicLink()) {
+    return { type: 'link', stat }
+  }
+  return undefined
 }
