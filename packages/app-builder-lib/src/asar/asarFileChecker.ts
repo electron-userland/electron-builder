@@ -10,14 +10,14 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   let fs
   try {
     fs = await readAsar(asarFile)
-  } catch (e) {
+  } catch (e: any) {
     throw error(`is corrupted: ${e}`)
   }
 
   let stat: Node | null
   try {
     stat = fs.getFile(relativeFile)
-  } catch (e) {
+  } catch (e: any) {
     const fileStat = await statOrNull(asarFile)
     if (fileStat == null) {
       throw error(`does not exist. Seems like a wrong configuration.`)
