@@ -7,7 +7,7 @@ import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { getElectronVersion } from "../electron/electronVersion"
 import * as electronRebuild from "electron-rebuild"
-import * as searchModule from 'electron-rebuild/lib/src/search-module'
+import * as searchModule from "electron-rebuild/lib/src/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   let isDependenciesInstalled = false
@@ -120,7 +120,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
 }
 
 export async function nodeGypRebuild(arch: string) {
-  return rebuild(await searchModule.getProjectRootPath(process.cwd()), false, arch)
+  return rebuild(process.cwd(), false, arch)
 }
 
 function getPackageToolPath() {
@@ -157,6 +157,7 @@ export async function rebuild(appDir: string, buildFromSource: boolean, arch = p
     arch,
     force: true,
     debug: log.isDebugEnabled,
+    projectRootPath: await searchModule.getProjectRootPath(appDir),
   }
   if (buildFromSource) {
     options.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
