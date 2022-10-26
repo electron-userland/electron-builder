@@ -168,7 +168,7 @@ function mergeFilters(value: Filter, other: Filter): string[] {
 }
 
 function mergeFileSets(lists: FileSet[][]): FileSet[] {
-  const result = []
+  const result: FileSet[] = []
 
   for (const list of lists) {
     for (const item of list) {

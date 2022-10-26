@@ -219,22 +219,22 @@ export class AsarPackager {
 
     await w(0)
     const options: CreateOptions = {
-      unpack: unpackGlob.join(","),
-      ordering: this.options.ordering || undefined,
+      // unpack: unpackGlob.join(","),
+      // ordering: this.options.ordering || undefined,
     }
-    const files1 = fileSets.flatMap(f => f.files).map(f => path.join(this.unpackedDest, f))
+    const files1 = fileSets.flatMap(f => f.files).map(files => path.relative(this.src, files))
     console.log("options", options)
-    // console.log('files', files1)
-    // await createPackageFromFiles(this.src, this.outFile,
-    //   files1,
-    //   undefined,
-    //   options
-    //   )
-    await createPackageWithOptions(this.unpackedDest, this.outFile, options)
-    for await (const file of unneededDirs) {
-      // console.log(file)
-      rmSync(file)
-    }
+    console.log('files', files1)
+    await createPackageFromFiles(this.src, this.outFile,
+      files1,
+      undefined,
+      options
+      )
+    // await createPackageWithOptions(this.unpackedDest, this.outFile, options)
+    // for await (const file of unneededDirs) {
+    //   // console.log(file)
+    //   rmSync(file)
+    // }
     cleanEmptyFoldersRecursively(this.unpackedDest)
   }
 
