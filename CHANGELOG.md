@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.1...v) (2022-10-26)
+
+
+### Bug Fixes
+
+* properly configure electron-rebuild for monorepos ([#7215](https://github.com/electron-userland/electron-builder/issues/7215)) ([0d3b87f](https://github.com/electron-userland/electron-builder/commit/0d3b87f7b89eb2e8f43613acec0e7e057bca88ab))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v23.6.0...v) (2022-10-21)
 
 
