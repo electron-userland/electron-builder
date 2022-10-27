@@ -108,5 +108,11 @@
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
-  "typings": "./out/index.d.ts"
+  "typings": "./out/index.d.ts",
+  "pnpm": {
+    "overrides": {
+      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+      "minimatch@<3.0.5": ">=3.0.5"
+    }
+  }
 }

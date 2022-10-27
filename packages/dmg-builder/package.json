@@ -32,5 +32,11 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts"
+	"typings": "./out/dmg.d.ts",
+	"pnpm": {
+		"overrides": {
+			"ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+			"minimatch@<3.0.5": ">=3.0.5"
+		}
+	}
 }

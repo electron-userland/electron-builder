@@ -26,5 +26,11 @@
   "typings": "./out/publisher.d.ts",
   "devDependencies": {
     "@types/mime": "2.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+      "minimatch@<3.0.5": ">=3.0.5"
+    }
   }
 }
