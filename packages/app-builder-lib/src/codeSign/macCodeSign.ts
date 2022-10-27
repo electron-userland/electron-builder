@@ -146,7 +146,7 @@ export interface CreateKeychainOptions {
 }
 
 export function removeKeychain(keychainFile: string, printWarn = true): Promise<any> {
-  return exec("security", ["delete-keychain", keychainFile]).catch(e => {
+  return exec("security", ["delete-keychain", keychainFile]).catch((e: any) => {
     if (printWarn) {
       log.warn({ file: keychainFile, error: e.stack || e }, "cannot delete keychain")
     }

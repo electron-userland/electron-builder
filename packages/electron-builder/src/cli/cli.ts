@@ -45,7 +45,7 @@ void createYargs()
 
 function wrap(task: (args: any) => Promise<any>) {
   return (args: any) => {
-    checkIsOutdated().catch(e => log.warn({ error: e }, "cannot check updates"))
+    checkIsOutdated().catch((e: any) => log.warn({ error: e }, "cannot check updates"))
     loadEnv(path.join(process.cwd(), "electron-builder.env"))
       .then(() => task(args))
       .catch(error => {

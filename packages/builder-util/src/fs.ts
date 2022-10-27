@@ -35,7 +35,7 @@ export async function exists(file: string): Promise<boolean> {
   try {
     await access(file)
     return true
-  } catch (e) {
+  } catch (e: any) {
     return false
   }
 }
@@ -185,7 +185,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
   }
 
   if (isUseHardLink) {
-    return link(src, dest).catch(e => {
+    return link(src, dest).catch((e: any) => {
       if (e.code === "EXDEV") {
         const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
         if (isLog && log.isDebugEnabled) {

@@ -51,7 +51,7 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
         log.debug({ lang: item.langName, data }, `overwriting license buttons`)
       }
       return data
-    } catch (e) {
+    } catch (e: any) {
       log.debug({ error: e }, "cannot overwrite license buttons")
       return data
     }
@@ -81,7 +81,7 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
         hex = "3F" //?
       }
       result += hex
-    } catch (e) {
+    } catch (e: any) {
       log.debug({ error: e, char: str[i] }, "cannot convert")
       result += "3F" //?
     }

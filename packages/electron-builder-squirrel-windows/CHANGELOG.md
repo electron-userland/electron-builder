@@ -1,5 +1,15 @@
 # electron-builder-squirrel-windows
 
+## 24.0.0-alpha.2
+
+### Patch Changes
+
+- [#7214](https://github.com/electron-userland/electron-builder/pull/7214) [`53327d51`](https://github.com/electron-userland/electron-builder/commit/53327d51101b83641ece9f497577c3ac93d3e91d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(dep): upgrading typescript and eslint dependencies
+
+- Updated dependencies [[`0d3b87f7`](https://github.com/electron-userland/electron-builder/commit/0d3b87f7b89eb2e8f43613acec0e7e057bca88ab), [`53327d51`](https://github.com/electron-userland/electron-builder/commit/53327d51101b83641ece9f497577c3ac93d3e91d)]:
+  - app-builder-lib@24.0.0-alpha.2
+  - builder-util@24.0.0-alpha.2
+
 ## 24.0.0-alpha.1
 
 ### Patch Changes
