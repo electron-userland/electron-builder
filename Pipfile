@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mkdocs-material = "<8"
+mkdocs-material = "<9"
 mkdocs = "<1.3"
 markdown-include = "<1"
 pymdown-extensions = "~=9.0"
