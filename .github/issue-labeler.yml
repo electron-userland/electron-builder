@@ -1,11 +1,7 @@
-critical:
-  - '(critical|urgent)'
 appimage:
   - appimage
 appx:
   - appx
-bug:
-  - ' bug '
 docker:
   - docker
 linux:
@@ -26,8 +22,4 @@ readme:
 snap:
   - '(snap|snaps|snapcraft)'
 flatpak:
-  - '(flat|flatpak|flatpack)'
-squirrel.windows:
-  - squirrel
-electron-publish:
-  - publish
+  - '(flatpak|flatpack)'
