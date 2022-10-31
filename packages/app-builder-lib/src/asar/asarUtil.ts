@@ -112,12 +112,12 @@ export class AsarPackager {
       //   root: this.src,
       // }
     }
-    console.log('options', options)
-    const allFiles = Array.from(files2).map(file => {
-      const srcRelative = path.relative(this.src, file)
-      const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
-      return dest
-    })
+    // console.log('options', options)
+    // const allFiles = Array.from(files2).map(file => {
+    //   const srcRelative = path.relative(this.src, file)
+    //   const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
+    //   return dest
+    // })
     // console.log('allFiles', allFiles)
     // console.log('files2', Array.from(new Set(files2.filter(f => f.destination.includes('node-mac-permissions')))))
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile,
@@ -498,38 +498,38 @@ function cleanEmptyFoldersRecursively(folder: string) {
   }
 }
 
-async function crawlFilesystem (crawled: any[]) {
-  const metadata: any = {}
-  const results = await Promise.all(crawled.map(async filename => [filename, await determineFileType(filename)]))
-  const links: any[] = []
-  const filenames = results.map(([filename, type]) => {
-    if (type) {
-      metadata[filename] = type
-      if (type.type === 'link') links.push(filename)
-    }
-    return filename
-  }).filter((filename) => {
-    // Newer glob can return files inside symlinked directories, to avoid
-    // those appearing in archives we need to manually exclude theme here
-    const exactLinkIndex = links.findIndex(link => filename === link)
-    return links.every((link, index) => {
-      if (index === exactLinkIndex) return true
-      return !filename.startsWith(link)
-    })
-  })
-  return [filenames, metadata]
-}
+// async function crawlFilesystem (crawled: any[]) {
+//   const metadata: any = {}
+//   const results = await Promise.all(crawled.map(async filename => [filename, await determineFileType(filename)]))
+//   const links: any[] = []
+//   const filenames = results.map(([filename, type]) => {
+//     if (type) {
+//       metadata[filename] = type
+//       if (type.type === 'link') links.push(filename)
+//     }
+//     return filename
+//   }).filter((filename) => {
+//     // Newer glob can return files inside symlinked directories, to avoid
+//     // those appearing in archives we need to manually exclude theme here
+//     const exactLinkIndex = links.findIndex(link => filename === link)
+//     return links.every((link, index) => {
+//       if (index === exactLinkIndex) return true
+//       return !filename.startsWith(link)
+//     })
+//   })
+//   return [filenames, metadata]
+// }
 
-const glob = promisify(require('glob'))
+// const glob = promisify(require('glob'))
 
-async function determineFileType (filename: string) {
-  const stat = await fs.lstat(filename)
-  if (stat.isFile()) {
-    return { type: 'file', stat }
-  } else if (stat.isDirectory()) {
-    return { type: 'directory', stat }
-  } else if (stat.isSymbolicLink()) {
-    return { type: 'link', stat }
-  }
-  return undefined
-}
+// async function determineFileType (filename: string) {
+//   const stat = await fs.lstat(filename)
+//   if (stat.isFile()) {
+//     return { type: 'file', stat }
+//   } else if (stat.isDirectory()) {
+//     return { type: 'directory', stat }
+//   } else if (stat.isSymbolicLink()) {
+//     return { type: 'link', stat }
+//   }
+//   return undefined
+// }
