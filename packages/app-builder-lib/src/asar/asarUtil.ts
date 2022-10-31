@@ -42,22 +42,18 @@ export class AsarPackager {
     const unpack = Array.from(unpackedDirs).map(fileOrDir => {
       let p = fileOrDir
       if (statSync(p).isDirectory()) {
-        p = path.join(fileOrDir, '**/*')
+        p = path.join(fileOrDir, "**/*")
       }
       return path.isAbsolute(fileOrDir) ? p : path.join(this.rootForAppFilesWithoutAsar, p)
     })
 
     const options: CreateOptions = {
-      unpack: "{" + unpack.join(',') + "}",
-      ordering: this.options.ordering || undefined
+      unpack: "{" + unpack.join(",") + "}",
+      ordering: this.options.ordering || undefined,
     }
 
-    await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile,
-      Array.from(copiedFiles),
-      undefined,
-      options
-    )
-    rmSync(this.rootForAppFilesWithoutAsar, { recursive: true})
+    await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, Array.from(copiedFiles), undefined, options)
+    rmSync(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
   private async detectAndCopy(packager: Packager, fileSets: ResolvedFileSet[]) {
@@ -85,7 +81,7 @@ export class AsarPackager {
       }
       await taskManager.awaitTasks()
     }
-    console.log('unpackedDirs', unpackedDirs)
+    console.log("unpackedDirs", unpackedDirs)
     return { unpackedDirs, copiedFiles }
   }
 }
