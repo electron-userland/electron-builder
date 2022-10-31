@@ -1,7 +1,7 @@
 import { CreateOptions, createPackage, createPackageFromFiles, createPackageWithOptions } from "asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { symlink, createReadStream, createWriteStream, Stats, rmSync } from "fs"
+import { symlink, createReadStream, createWriteStream, Stats, rmSync, fstatSync, statSync, rmdir, rmdirSync } from "fs"
 import { writeFile, readFile, mkdir, rm } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
@@ -13,6 +13,7 @@ import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
 import * as fs from "fs-extra"
 import { promisify } from "util"
+import { nextTick } from "process"
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
@@ -40,31 +41,102 @@ export class AsarPackager {
     }
     await mkdir(path.dirname(this.outFile), { recursive: true })
 
-    const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
-    for (const fileSet of fileSets) {
-      unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
-    }
+    // const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
+    // for (const fileSet of fileSets) {
+    //   unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
+    // }
     // await this.writeAsarFile(fileSets, unpackedFileIndexMap)
-    await this.writeAsarFile2(fileSets, unpackedFileIndexMap, packager)
-    const files1 = [...fileSets.flatMap(f => f.files).map(f => path.relative(this.src, f))]
+    // await this.writeAsarFile2(fileSets, unpackedFileIndexMap, packager)
+    await this.pack2(fileSets, packager.info)
+  }
+
+  private async pack2(fileSets: ResolvedFileSet[], packager: Packager) {
+    const taskManager = new AsyncTaskManager(packager.cancellationToken)
+    const unpackedDirs = new Set<string>()
+    const files1 = new Set<string>()
+    for await (const fileSet of fileSets) {
+      if (this.options.smartUnpack !== false) {
+        await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, this.rootForAppFilesWithoutAsar)
+      }
+      for await (const file of fileSet.files) {
+        if (this.unpackPattern != null && this.unpackPattern(file, await fs.stat(file))) {
+          unpackedDirs.add(path.relative(this.src, file))
+        }
+      }
+      for await (const file of fileSet.files) {
+        const srcRelative = path.relative(this.src, file)
+        const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
+        await mkdir(path.dirname(dest), {recursive: true})
+        taskManager.addTask(copyFileOrData(this.fileCopier, undefined, file, dest, await fs.stat(file)))
+        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+          await taskManager.awaitTasks()
+        }
+        files1.add(dest)
+      }
+      await taskManager.awaitTasks()
+    }
+    console.log('unpackedDirs', unpackedDirs)
+    const files2 = new Set<string>()
+    for await (const fileSet of fileSets) {
+      // console.log('purge?', fileSet.src, fileSet.files)
+      for (const file of fileSet.files) {
+        const p = path.dirname(file)
+        const r = path.relative(this.src, p)
+
+        const f = path.relative(this.src, file)
+        const shouldntUnpack = !unpackedDirs.has(r) && !unpackedDirs.has(f)
+        if (shouldntUnpack) {
+          files2.add(f)
+        } else {
+          // if (p.includes('node-mac-permissions')) {
+          // console.log('pr', file, r)
+          // }
+        }
+      }
+    }
+    const unpack = Array.from(unpackedDirs).map(fileOrDir => {
+      let p = fileOrDir
+      if (statSync(p).isDirectory()) {
+        p = path.join(fileOrDir, '**/*')
+      }
+      return path.isAbsolute(fileOrDir) ? p : path.join(this.rootForAppFilesWithoutAsar, p)
+    }).join(',')
     const options: CreateOptions = {
-      // unpack: Array.from(unpackedFileIndexMap.keys()).map(k => k.destination).join(','),
-      // unpackDir: this.unpackedDest
-      // ordering: this.options.ordering || undefined,
+      unpack: "{" + unpack + "}",
+      // unpack: '**/node_modules/electron-updater/**/*',
+      // unpack: path.join(this.rootForAppFilesWithoutAsar, 'node_modules/electron-updater/**/*'),
+      // unpackDir: this.unpackedDest,
+      ordering: this.options.ordering || undefined,
       // pattern: `/out/**/*`,
       // globOptions: {
       //   root: this.src,
       // }
     }
-    // console.log('options', JSON.stringify(options))
-    // console.log('files', files1)
-    // const [filenames, metadata] = await crawlFilesystem(files1)
-    // await createPackageFromFiles(this.src, this.outFile,
-    //   // filenames,metadata,
-    //   files1, undefined,
-    //   options
-    //   )
-    // await createPackageWithOptions(path.join(this.src), this.outFile, options)
+    console.log('options', options)
+    const allFiles = Array.from(files2).map(file => {
+      const srcRelative = path.relative(this.src, file)
+      const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
+      return dest
+    })
+    // console.log('allFiles', allFiles)
+    // console.log('files2', Array.from(new Set(files2.filter(f => f.destination.includes('node-mac-permissions')))))
+    await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile,
+      // allFiles,
+      Array.from(files1),
+      undefined,
+      options
+    )
+    // for await (const file of Array.from(files1)) {
+    //   await rm(path.join(this.rootForAppFilesWithoutAsar, file))
+    // }
+    rmSync(this.rootForAppFilesWithoutAsar, { recursive: true})
+    // await createPackageWithOptions(this.unpackedDest, this.outFile, options)
+    // for await (const file of unneededDirs) {
+    //   // console.log(file)
+    //   rmSync(file)
+    // }
+    // cleanEmptyFoldersRecursively(this.rootForAppFilesWithoutAsar)
+    // cleanEmptyFoldersRecursively(this.unpackedDest)
   }
 
   private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
@@ -75,6 +147,8 @@ export class AsarPackager {
     if (this.options.smartUnpack !== false) {
       await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, this.rootForAppFilesWithoutAsar)
     }
+
+    // console.log('unpackedDirs', unpackedDirs.entries())
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
 
@@ -167,7 +241,6 @@ export class AsarPackager {
   }
 
   private async writeAsarFile2(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>, packager: PlatformPackager<any>): Promise<any> {
-    console.log("unpackedFileIndexMap", JSON.stringify(unpackedFileIndexMap))
     let fileSetIndex = 0
 
     let files = fileSets[0].files
@@ -197,6 +270,7 @@ export class AsarPackager {
           const stat = metadata.get(files[index])
           if (stat != null && stat.isSymbolicLink()) {
             await new Promise(resolve => {
+              console.log('symlink', (stat as any).linkRelativeToFile, (stat as any).pathInArchive)
               symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), resolve)
             })
             unpackGlob.push((stat as any).pathInArchive)
@@ -220,23 +294,59 @@ export class AsarPackager {
     }
 
     await w(0)
-    const options: CreateOptions = {
-      // unpack: unpackGlob.join(","),
-      // ordering: this.options.ordering || undefined,
+    const unpackedDirs = new Set<string>()
+
+    const files2 = new Set<string>()
+    // unpackedFileIndexMap.forEach((value, key)=> {
+    //   if (key.destination.includes(this.rootForAppFilesWithoutAsar)) {
+    //     files2.push(key)
+    //   }
+    // })
+    for await (const fileSet of fileSets) {
+      if (this.options.smartUnpack !== false) {
+        await detectUnpackedDirs(fileSet, unpackedDirs, this.unpackedDest, this.rootForAppFilesWithoutAsar)
+      }
+      for await (const file of fileSet.files) {
+        if (this.unpackPattern != null && this.unpackPattern(file, await fs.stat(file))) {
+          unpackedDirs.add(path.relative(this.src, file))
+        }
+      }
     }
-    const files1 = fileSets.flatMap(f => f.files).map(files => path.relative(this.src, files))
-    console.log("options", options)
-    console.log('files', files1.filter(f => f.includes('mac')))
-    await createPackageFromFiles(this.src, this.outFile,
-      files1,
+    console.log('unpackedDirs', unpackedDirs)
+    for await (const fileSet of fileSets) {
+      // console.log('purge?', fileSet.src, fileSet.files)
+      for (const file of fileSet.files) {
+        const p = path.dirname(file)
+        const r = path.relative(this.src, p)
+
+        const f = path.relative(this.src, file)
+        const shouldntUnpack = !unpackedDirs.has(r) && !unpackedDirs.has(f)
+        if (shouldntUnpack) {
+          files2.add(f)
+        } else {
+          // if (p.includes('node-mac-permissions')) {
+          console.log('pr', file, r)
+          // }
+        }
+      }
+    }
+    const options: CreateOptions = {
+      unpack: '(' + Array.from(unpackedDirs).join(')/!(') + ')',
+      unpackDir: this.unpackedDest,
+      ordering: this.options.ordering || undefined,
+      // pattern: `/out/**/*`,
+      // globOptions: {
+      //   root: this.rootForAppFilesWithoutAsar,
+      // }
+    }
+    console.log('files2', Array.from(new Set(files2)))
+    // console.log('files2', Array.from(new Set(files2.filter(f => f.destination.includes('node-mac-permissions')))))
+    await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile,
+      // Array.from(files2),
+      fileSets.flatMap(f => f.files).map(f => path.join(this.rootForAppFilesWithoutAsar, path.relative(this.src, f))),
       undefined,
       options
-      )
-    // await createPackageWithOptions(this.unpackedDest, this.outFile, options)
-    // for await (const file of unneededDirs) {
-    //   // console.log(file)
-    //   rmSync(file)
-    // }
+    )
     cleanEmptyFoldersRecursively(this.unpackedDest)
   }
 
