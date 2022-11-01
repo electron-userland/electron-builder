@@ -1,5 +1,4 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
 import { walk } from "builder-util/out/fs"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
@@ -9,6 +8,7 @@ import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
+import { readAsarJson } from "app-builder-lib/src/asar/integrity"
 
 test("cli", async () => {
   // because these methods are internal
@@ -341,11 +341,10 @@ export function removeUnstableProperties(data: any) {
 }
 
 async function verifySmartUnpack(resourceDir: string) {
-  const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
-  expect(await asarFs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
+  const json = readAsarJson(path.join(resourceDir, "app.asar"), `node_modules${path.sep}debug${path.sep}package.json`)
+  expect(json).toMatchObject({
     name: "debug",
   })
-  expect(removeUnstableProperties(asarFs.header)).toMatchSnapshot()
 
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`))).map(it => {
     const name = toSystemIndependentPath(it.substring(resourceDir.length + 1))

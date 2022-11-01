@@ -62,7 +62,7 @@ export class AsarPackager {
         const srcRelative = path.relative(this.src, file)
         const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-        taskManager.addTask(copyFileOrData(this.fileCopier, undefined, file, dest))
+        taskManager.addTask(this.copyFileOrData(this.fileCopier, undefined, file, dest))
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
@@ -75,12 +75,12 @@ export class AsarPackager {
       copiedFiles: Array.from(copiedFiles),
     }
   }
-}
-
-async function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string) {
-  if (data == null) {
-    return fileCopier.copy(source, destination, await fs.stat(source))
-  } else {
-    return writeFile(destination, data)
+  
+  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string) {
+    if (data == null) {
+      return fileCopier.copy(source, destination, await fs.stat(source))
+    } else {
+      return writeFile(destination, data)
+    }
   }
 }

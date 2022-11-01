@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { readAsarFile } from "app-builder-lib/out/asar/integrity"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
@@ -97,7 +97,7 @@ test.ifNotWindows(
         return fs.symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
       },
       packed: async context => {
-        expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
+        expect(readAsarFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js")).toMatchSnapshot()
       },
     }
   )
@@ -116,7 +116,7 @@ test.ifNotWindows(
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
       packed: async context => {
-        const file = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)
+        const file = readAsarFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo")
         expect(removeUnstableProperties(file)).toMatchSnapshot()
       },
     }
@@ -190,7 +190,7 @@ test.ifAll.ifDevOrLinuxCi("asarUnpack node_modules", () => {
           }
         }),
       packed: async context => {
-        const nodeModulesNode = (await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getNode("node_modules")
+        const nodeModulesNode = readAsarFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules")
         expect(removeUnstableProperties(nodeModulesNode)).toMatchSnapshot()
         await assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked/node_modules/ci-info")).isDirectory()
       },

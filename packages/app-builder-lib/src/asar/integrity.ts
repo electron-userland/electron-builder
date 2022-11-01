@@ -40,8 +40,15 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
   return stat
 }
 
-/** @internal */
 export function readAsarJson(archive: string, file: string) {
-  const buffer = asar.extractFile(archive, file)
+  const buffer = readAsarFile(archive, file)
   return JSON.parse(buffer.toString())
+}
+
+export function readAsarFile(archive: string, file: string) {
+  return asar.extractFile(archive, file)
+}
+
+export function readAsarHeader(archive: string) {
+  return asar.getRawHeader(archive)
 }
