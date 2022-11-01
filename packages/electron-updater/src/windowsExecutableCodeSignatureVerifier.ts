@@ -31,16 +31,17 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
     execFile(
-      "powershell.exe",
+      "chcp 65001 >NUL & powershell.exe",
       [
         "-NoProfile",
         "-NonInteractive",
         "-InputFormat",
         "None",
         "-Command",
-        `Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress | ForEach-Object { [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($_)) }`,
+        `Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`,
       ],
       {
+        shell: true,
         timeout: 20 * 1000,
       },
       (error, stdout, stderr) => {
@@ -51,7 +52,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
             return
           }
 
-          const data = parseOut(Buffer.from(stdout, "base64").toString("utf-8"))
+          const data = parseOut(stdout)
           if (data.Status === 0) {
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
