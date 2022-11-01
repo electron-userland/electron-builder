@@ -5,8 +5,9 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
-import * as electronRebuild from "electron-rebuild"
 import { getElectronVersion } from "../electron/electronVersion"
+import * as electronRebuild from "electron-rebuild"
+import * as searchModule from "electron-rebuild/lib/src/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   let isDependenciesInstalled = false
@@ -156,6 +157,7 @@ export async function rebuild(appDir: string, buildFromSource: boolean, arch = p
     arch,
     force: true,
     debug: log.isDebugEnabled,
+    projectRootPath: await searchModule.getProjectRootPath(appDir),
   }
   if (buildFromSource) {
     options.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"

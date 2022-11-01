@@ -1,6 +1,6 @@
 {
 	"name": "dmg-builder",
-	"version": "24.0.0-alpha.1",
+	"version": "24.0.0-alpha.2",
 	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
@@ -19,7 +19,8 @@
 	"dependencies": {
 		"app-builder-lib": "workspace:*",
 		"builder-util": "workspace:*",
-		"fs-extra": "^10.0.0",
+		"builder-util-runtime": "workspace:*",
+		"fs-extra": "^10.1.0",
 		"iconv-lite": "^0.6.2",
 		"js-yaml": "^4.1.0"
 	},
@@ -31,5 +32,11 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts"
+	"typings": "./out/dmg.d.ts",
+	"pnpm": {
+		"overrides": {
+			"ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+			"minimatch@<3.0.5": ">=3.0.5"
+		}
+	}
 }

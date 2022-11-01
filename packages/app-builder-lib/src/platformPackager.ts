@@ -756,7 +756,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
 
   try {
     p = require.resolve(p)
-  } catch (e) {
+  } catch (e: any) {
     debug(e)
     p = path.resolve(p)
   }

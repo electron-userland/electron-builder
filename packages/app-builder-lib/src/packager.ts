@@ -231,7 +231,7 @@ export class Packager {
 
     try {
       log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
-    } catch (e) {
+    } catch (e: any) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
         throw e
@@ -381,7 +381,7 @@ export class Packager {
       const toDispose = this.toDispose.slice()
       this.toDispose.length = 0
       for (const disposer of toDispose) {
-        await disposer().catch(e => {
+        await disposer().catch((e: any) => {
           log.warn({ error: e }, "cannot dispose")
         })
       }

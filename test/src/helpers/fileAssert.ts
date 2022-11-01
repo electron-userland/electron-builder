@@ -61,7 +61,7 @@ class Assertions {
     let result: any
     try {
       result = await this.actual
-    } catch (e) {
+    } catch (e: any) {
       actualError = e
     }
 

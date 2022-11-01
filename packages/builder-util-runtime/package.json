@@ -1,6 +1,6 @@
 {
   "name": "builder-util-runtime",
-  "version": "9.1.1",
+  "version": "9.1.2-alpha.0",
   "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -25,5 +25,11 @@
     "@types/debug": "4.1.7",
     "@types/sax": "1.2.3"
   },
-  "types": "./out/index.d.ts"
+  "types": "./out/index.d.ts",
+  "pnpm": {
+    "overrides": {
+      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+      "minimatch@<3.0.5": ">=3.0.5"
+    }
+  }
 }

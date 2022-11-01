@@ -15,7 +15,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 </ul>
 <hr>
 <ul>
-<li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha1” | “sha256”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
+<li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha256” | “sha1”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
 <li><code id="WindowsConfiguration-sign">sign</code> String | (configuration: CustomWindowsSignTaskConfiguration) =&gt; Promise - The custom function (or path to file or module id) to sign Windows executable.</li>
 <li><code id="WindowsConfiguration-certificateFile">certificateFile</code> String | “undefined” - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
 <li><code id="WindowsConfiguration-certificatePassword">certificatePassword</code> String | “undefined” - The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
