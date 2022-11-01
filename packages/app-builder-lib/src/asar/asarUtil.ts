@@ -1,7 +1,6 @@
 import { CreateOptions, createPackageFromFiles } from "asar"
-import { AsyncTaskManager, log } from "builder-util"
+import { AsyncTaskManager } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { Stats } from "fs"
 import * as fs from "fs-extra"
 import { mkdir, rmdir, stat, writeFile } from "fs/promises"
 import * as path from "path"
@@ -62,7 +61,7 @@ export class AsarPackager {
 
         const srcRelative = path.relative(this.src, file)
         const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
-        taskManager.addTask(mkdir(path.dirname(dest), { recursive: true }))
+        await mkdir(path.dirname(dest), { recursive: true })
         taskManager.addTask(copyFileOrData(this.fileCopier, undefined, file, dest))
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -73,7 +72,7 @@ export class AsarPackager {
     await taskManager.awaitTasks()
     return {
       unpackedDirs: Array.from(unpackedDirs),
-      copiedFiles: Array.from(copiedFiles)
+      copiedFiles: Array.from(copiedFiles),
     }
   }
 }
