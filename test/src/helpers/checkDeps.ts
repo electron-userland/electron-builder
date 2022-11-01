@@ -17,13 +17,16 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
   // console.log(`Checking ${projectDir}`)
 
   const result = await new Promise<Results>(resolve => {
-    depCheck(projectDir, { ignoreDirs: ["out", "test", "docs", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
+    depCheck(projectDir, { ignoreDirs: ["test", "docs", "typings", "docker", "certs", "templates", "vendor"] }, resolve)
   })
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
     if (packageName === "electron-builder") {
       unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder")
+    }
+    if (packageName === "electron-updater") {
+      unusedDependencies = result.dependencies.filter(it => it !== "typed-emitter")
     }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)

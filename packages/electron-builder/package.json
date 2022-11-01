@@ -50,7 +50,6 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^17.0.1",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -64,6 +63,7 @@
     "yargs": "^17.5.1"
   },
   "devDependencies": {
+    "@types/yargs": "^17.0.1",
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0"
   },

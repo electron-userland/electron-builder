@@ -212,8 +212,6 @@ importers:
       temp-file: ^3.4.0
     dependencies:
       7zip-bin: 5.1.1
-      '@types/debug': 4.1.7
-      '@types/fs-extra': 9.0.13
       app-builder-bin: 4.0.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
@@ -230,6 +228,8 @@ importers:
       temp-file: 3.4.0
     devDependencies:
       '@types/cross-spawn': 6.0.2
+      '@types/debug': 4.1.7
+      '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
@@ -253,7 +253,6 @@ importers:
       '@types/js-yaml': 4.0.3
       app-builder-lib: workspace:*
       builder-util: workspace:*
-      builder-util-runtime: workspace:*
       dmg-license: ^1.0.11
       fs-extra: ^10.0.0
       iconv-lite: ^0.6.2
@@ -262,7 +261,6 @@ importers:
     dependencies:
       app-builder-lib: link:../app-builder-lib
       builder-util: link:../builder-util
-      builder-util-runtime: link:../builder-util-runtime
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
       js-yaml: 4.1.0
@@ -290,7 +288,6 @@ importers:
       simple-update-notifier: ^1.0.7
       yargs: ^17.5.1
     dependencies:
-      '@types/yargs': 17.0.7
       app-builder-lib: link:../app-builder-lib
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
@@ -305,6 +302,7 @@ importers:
     devDependencies:
       '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
+      '@types/yargs': 17.0.7
 
   packages/electron-builder-squirrel-windows:
     specifiers:
@@ -361,7 +359,6 @@ importers:
       lazy-val: ^1.0.5
       mime: ^2.5.2
     dependencies:
-      '@types/fs-extra': 9.0.13
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
@@ -369,6 +366,7 @@ importers:
       lazy-val: 1.0.5
       mime: 2.6.0
     devDependencies:
+      '@types/fs-extra': 9.0.13
       '@types/mime': 2.0.3
 
   packages/electron-updater:
@@ -387,7 +385,6 @@ importers:
       semver: ^7.3.5
       typed-emitter: ^2.1.0
     dependencies:
-      '@types/semver': 7.3.9
       builder-util-runtime: link:../builder-util-runtime
       fs-extra: 10.1.0
       js-yaml: 4.1.0
@@ -395,12 +392,13 @@ importers:
       lodash.escaperegexp: 4.1.2
       lodash.isequal: 4.5.0
       semver: 7.3.5
-      typed-emitter: 2.1.0
     devDependencies:
       '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
+      '@types/semver': 7.3.9
+      typed-emitter: 2.1.0
 
   test:
     specifiers:
@@ -3267,6 +3265,7 @@ packages:
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
     dependencies:
       '@types/ms': 0.7.31
+    dev: true
 
   /@types/ejs/3.1.0:
     resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
@@ -3276,6 +3275,7 @@ packages:
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==}
     dependencies:
       '@types/node': 16.11.12
+    dev: true
 
   /@types/glob/7.2.0:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
@@ -3400,6 +3400,7 @@ packages:
 
   /@types/ms/0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
+    dev: true
 
   /@types/node/12.20.55:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -3458,6 +3459,7 @@ packages:
 
   /@types/semver/7.3.9:
     resolution: {integrity: sha512-L/TMpyURfBkf+o/526Zb6kd/tchUP3iBDEPjqjb+U2MAJhVRxxrmr2fwpe08E7QsV7YLcpq0tUaQ9O9x97ZIxQ==}
+    dev: true
 
   /@types/source-map-support/0.5.4:
     resolution: {integrity: sha512-9zGujX1sOPg32XLyfgEB/0G9ZnrjthL/Iv1ZfuAjj8LEilHZEpQSQs1scpRXPhHzGYgWiLz9ldF1cI8JhL+yMw==}
@@ -3482,7 +3484,7 @@ packages:
 
   /@types/yargs-parser/20.2.1:
     resolution: {integrity: sha512-7tFImggNeNBVMsn0vLrpn1H1uPrUBdnARPTpZoitY37ZrdJREzf7I16tMrlK3hen349gr1NYh8CmZQa7CTG6Aw==}
-    dev: false
+    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -3502,7 +3504,7 @@ packages:
     resolution: {integrity: sha512-OvLKmpKdea1aWtqHv9bxVVcMoT6syAeK+198dfETIFkAevYRGwqh4H+KFxfjUETZuUuE5sQCAFwdOdoHUdo8eg==}
     dependencies:
       '@types/yargs-parser': 20.2.1
-    dev: false
+    dev: true
 
   /@typescript-eslint/eslint-plugin/4.33.0_mxo4duoyrmtssqwgtnlqtynn34:
     resolution: {integrity: sha512-aINiAxGVdOl1eJyVjaWn/YcVAq4Gi/Yo35qHGCnqbWVz61g39D0h23veY/MA0rFFGfxK7TySg2uwDeNv+JgVpg==}
@@ -10246,6 +10248,7 @@ packages:
     resolution: {integrity: sha512-z9MzKh/UcOqB3i20H6rtrlaE/CgjLOvheWK/9ILrbhROGTweAi1BaFsTT9FbwZi5Trr1qNRs+MXkhmR06awzQA==}
     dependencies:
       tslib: 2.4.0
+    dev: true
 
   /safe-buffer/5.1.2:
     resolution: {integrity: sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==}
@@ -11074,6 +11077,7 @@ packages:
 
   /tslib/2.4.0:
     resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
+    dev: true
 
   /tsutils/3.21.0_typescript@4.3.5:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
@@ -11148,7 +11152,7 @@ packages:
     resolution: {integrity: sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==}
     optionalDependencies:
       rxjs: 7.5.7
-    dev: false
+    dev: true
 
   /typedarray-to-buffer/3.1.5:
     resolution: {integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==}
