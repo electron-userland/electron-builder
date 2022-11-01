@@ -78,7 +78,8 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch",
+      "asar@3.2.0": "patches/asar@3.2.0.patch"
     },
     "overrides": {
       "markdown-it@<12.3.2": ">=12.3.2",
