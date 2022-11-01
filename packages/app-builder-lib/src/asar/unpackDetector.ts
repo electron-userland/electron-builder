@@ -1,7 +1,4 @@
-import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
-import { CONCURRENCY } from "builder-util/out/fs"
-import { mkdir } from "fs-extra"
 import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"
 import { NODE_MODULES_PATTERN } from "../fileTransformer"
@@ -22,7 +19,7 @@ export function isLibOrExe(file: string): boolean {
 }
 
 /** @internal */
-export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string, rootForAppFilesWithoutAsar: string) {
+export function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, rootForAppFilesWithoutAsar: string) {
   const dirToCreate = new Map<string, Array<string>>()
   const metadata = fileSet.metadata
 
@@ -95,26 +92,5 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     }
 
     addParents(pathInArchive, packageDirPathInArchive)
-  }
-
-  if (dirToCreate.size > 0) {
-    await mkdir(`${unpackedDest + path.sep}node_modules`, { recursive: true })
-    // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(
-      dirToCreate.keys(),
-      async parentDir => {
-        const base = unpackedDest + path.sep + parentDir
-        await mkdir(base, { recursive: true })
-        await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
-          if (dirToCreate.has(parentDir + path.sep + it)) {
-            // already created
-            return null
-          } else {
-            return mkdir(base + path.sep + it, { recursive: true })
-          }
-        })
-      },
-      CONCURRENCY
-    )
   }
 }

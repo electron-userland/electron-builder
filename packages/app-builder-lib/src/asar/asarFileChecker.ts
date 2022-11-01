@@ -1,5 +1,5 @@
 import { statOrNull } from "builder-util/out/fs"
-import { Node, readAsar } from "./asar"
+import { Node, readAsar } from "./asarFilesystem"
 
 /** @internal */
 export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {

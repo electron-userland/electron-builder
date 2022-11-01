@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { createReadStream } from "fs"
 import { readdir } from "fs/promises"
 import * as path from "path"
-import { readAsarHeader, NodeIntegrity } from "./asar"
+import { readAsarHeader, NodeIntegrity } from "./asarFilesystem"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string
