@@ -30,7 +30,7 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
   }
   let stat: asar.FileMetadata
   try {
-    stat = asar.statFile(asarFile, relativeFile, true) as asar.FileMetadata
+    stat = asar.statFile(asarFile, relativeFile, false) as asar.FileMetadata
   } catch (e) {
     throw error(`is corrupted: ${e}`)
   }
