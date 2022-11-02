@@ -42,7 +42,7 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
 
 export function readAsarJson(archive: string, file: string) {
   const buffer = readAsarFile(archive, file)
-  return JSON.parse(buffer.toString())
+  return Promise.resolve(JSON.parse(buffer.toString()))
 }
 
 export function readAsarFile(archive: string, file: string) {

@@ -8,7 +8,7 @@ import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { readAsarJson } from "app-builder-lib/src/asar/integrity"
+import { readAsarJson } from "app-builder-lib/out/asar/integrity"
 
 test("cli", async () => {
   // because these methods are internal
