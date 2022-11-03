@@ -38,8 +38,10 @@ export class AsarPackager {
       })
     )
 
+    const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.length === 1 ? unpack[0] : undefined
+
     const options: CreateOptions = {
-      unpack: "{" + unpack.join(",") + "}",
+      unpack: unpackGlob,
       ordering: this.options.ordering || undefined,
     }
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, copiedFiles, undefined, options)
@@ -54,7 +56,10 @@ export class AsarPackager {
       if (this.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
       }
-      for await (const file of fileSet.files) {
+      const transformedFiles = fileSet.transformedFiles
+      for (let i = 0; i < fileSet.files.length; i++) {
+        const file = fileSet.files[i]
+
         if (this.unpackPattern != null && this.unpackPattern(file, await fs.stat(file))) {
           unpackedDirs.add(path.relative(this.src, file))
         }
@@ -62,7 +67,10 @@ export class AsarPackager {
         const srcRelative = path.relative(this.src, file)
         const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-        taskManager.addTask(this.copyFileOrData(this.fileCopier, undefined, file, dest))
+
+        const newData = transformedFiles?.get(i)
+        taskManager.addTask(this.copyFileOrData(this.fileCopier, newData, file, dest))
+
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
@@ -75,12 +83,12 @@ export class AsarPackager {
       copiedFiles: Array.from(copiedFiles),
     }
   }
-  
-  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string) {
-    if (data == null) {
-      return fileCopier.copy(source, destination, await fs.stat(source))
-    } else {
+
+  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined, source: string, destination: string) {
+    if (data) {
       return writeFile(destination, data)
+    } else {
+      return fileCopier.copy(source, destination, await fs.stat(source))
     }
   }
 }
