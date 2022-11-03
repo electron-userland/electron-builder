@@ -1,11 +1,13 @@
 diff --git a/lib/filesystem.js b/lib/filesystem.js
-index 552055e2b735a38d818d06aff12f252aaa789efa..7283dcfbced2717a0352e8615506940e705777a5 100644
+index 552055e2b735a38d818d06aff12f252aaa789efa..37f4ca5b38cf56b906f048f3b95200f5151fb793 100644
 --- a/lib/filesystem.js
 +++ b/lib/filesystem.js
-@@ -23,6 +23,9 @@ class Filesystem {
+@@ -22,7 +22,10 @@ class Filesystem {
+     let json = this.header
      const dirs = p.split(path.sep)
      for (const dir of dirs) {
-       if (dir !== '.') {
+-      if (dir !== '.') {
++      if (dir !== '.' && dir !== '..') {
 +        if (!json.files[dir]) {
 +          json.files[dir] = { files: {} }
 +        }

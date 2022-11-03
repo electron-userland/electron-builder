@@ -59,21 +59,19 @@ export class AsarPackager {
       const transformedFiles = fileSet.transformedFiles
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
+        const srcRelative = path.relative(this.src, file)
 
-        if (this.unpackPattern != null && this.unpackPattern(file, await fs.stat(file))) {
-          unpackedDirs.add(path.relative(this.src, file))
+        if (this.unpackPattern?.(file, await fs.stat(file))) {
+          unpackedDirs.add(srcRelative)
         }
 
-        const srcRelative = path.relative(this.src, file)
         const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-
-        const newData = transformedFiles?.get(i)
-        taskManager.addTask(this.copyFileOrData(this.fileCopier, newData, file, dest))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
+        taskManager.addTask(this.copyFileOrData(transformedFiles?.get(i), file, dest))
         copiedFiles.add(dest)
       }
     }
@@ -84,11 +82,11 @@ export class AsarPackager {
     }
   }
 
-  private async copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined, source: string, destination: string) {
+  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string) {
     if (data) {
       return writeFile(destination, data)
     } else {
-      return fileCopier.copy(source, destination, await fs.stat(source))
+      return this.fileCopier.copy(source, destination, await fs.stat(source))
     }
   }
 }

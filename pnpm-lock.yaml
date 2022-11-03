@@ -14,7 +14,7 @@ patchedDependencies:
     hash: nye7dcohy6yzxjscpnrszvchra
     path: patches/@changesets__cli@2.25.0.patch
   asar@3.2.0:
-    hash: pgdeaxbxurkgvncminyvlkaxka
+    hash: 6tyujxv2tbaxm4vhd5um74xjn4
     path: patches/asar@3.2.0.patch
 
 importers:
