@@ -49,6 +49,14 @@ shamefully-hoist=true
 
 Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
 
+### Note for Yarn 3
+
+Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+```
+nodeLinker: "node-modules"
+```
+will declare to use node-modules instead of PnP.
+
 ## Boilerplates
 
 * [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
