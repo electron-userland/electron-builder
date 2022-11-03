@@ -34,7 +34,7 @@ export class AsarPackager {
         if (stats.isDirectory()) {
           p = path.join(fileOrDir, "**/*")
         }
-        return path.isAbsolute(fileOrDir) ? p : path.join(this.rootForAppFilesWithoutAsar, p)
+        return path.isAbsolute(fileOrDir) ? p : path.resolve(this.rootForAppFilesWithoutAsar, p)
       })
     )
 
@@ -65,7 +65,7 @@ export class AsarPackager {
           unpackedDirs.add(srcRelative)
         }
 
-        const dest = path.join(this.rootForAppFilesWithoutAsar, srcRelative)
+        const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {

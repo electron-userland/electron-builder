@@ -7,7 +7,7 @@ index 552055e2b735a38d818d06aff12f252aaa789efa..37f4ca5b38cf56b906f048f3b95200f5
      const dirs = p.split(path.sep)
      for (const dir of dirs) {
 -      if (dir !== '.') {
-+      if (dir !== '.' && dir !== '..') {
++      if (dir !== '.') {
 +        if (!json.files[dir]) {
 +          json.files[dir] = { files: {} }
 +        }
