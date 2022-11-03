@@ -341,7 +341,7 @@ export function removeUnstableProperties(data: any) {
 }
 
 async function verifySmartUnpack(resourceDir: string) {
-  const json = readAsarJson(path.join(resourceDir, "app.asar"), `node_modules${path.sep}debug${path.sep}package.json`)
+  const json = await readAsarJson(path.join(resourceDir, "app.asar"), `node_modules${path.sep}debug${path.sep}package.json`)
   expect(json).toMatchObject({
     name: "debug",
   })
