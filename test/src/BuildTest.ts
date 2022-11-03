@@ -8,7 +8,7 @@ import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { readAsarJson } from "app-builder-lib/out/asar/integrity"
+import { listFiles, readAsarJson } from "app-builder-lib/out/asar/integrity"
 
 test("cli", async () => {
   // because these methods are internal
@@ -341,10 +341,12 @@ export function removeUnstableProperties(data: any) {
 }
 
 async function verifySmartUnpack(resourceDir: string) {
-  const json = await readAsarJson(path.join(resourceDir, "app.asar"), `node_modules${path.sep}debug${path.sep}package.json`)
+  const archive = path.join(resourceDir, "app.asar")
+  const json = await readAsarJson(archive, `node_modules${path.sep}debug${path.sep}package.json`)
   expect(json).toMatchObject({
     name: "debug",
   })
+  expect(listFiles(archive)).toMatchSnapshot()
 
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`))).map(it => {
     const name = toSystemIndependentPath(it.substring(resourceDir.length + 1))

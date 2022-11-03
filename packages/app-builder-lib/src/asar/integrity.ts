@@ -31,7 +31,10 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
   let stat: asar.FileMetadata
   try {
     stat = asar.statFile(asarFile, relativeFile, false) as asar.FileMetadata
-  } catch (e) {
+  } catch (e: any) {
+    if (e.message.includes("Cannot read property 'link' of undefined")) {
+      throw error("does not exist. Seems like a wrong configuration.")
+    }
     throw error(`is corrupted: ${e}`)
   }
   if (stat.size === 0) {
@@ -51,4 +54,8 @@ export function readAsarFile(archive: string, file: string) {
 
 export function readAsarHeader(archive: string) {
   return asar.getRawHeader(archive)
+}
+
+export function listFiles(archive: string, options?: asar.ListOptions) {
+  return asar.listPackage(archive, options)
 }
