@@ -30,16 +30,16 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "8080",
-              "size": 3034,
+              "offset": "3770",
+              "size": 2764,
             },
             "license.md": Object {
-              "offset": "11114",
+              "offset": "6534",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "12191",
-              "size": 470,
+              "offset": "7611",
+              "size": 469,
             },
           },
         },

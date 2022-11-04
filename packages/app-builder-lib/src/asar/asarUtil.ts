@@ -59,7 +59,10 @@ export class AsarPackager {
       const transformedFiles = fileSet.transformedFiles
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        const srcRelative = path.normalize(path.relative(this.src, file)).replace('../', '')
+        
+        let srcRelative = path.normalize(path.relative(this.src, file))
+        // Remove all nesting "../" in the file patth
+        srcRelative = srcRelative.split(path.sep).filter(p => !p.includes('..')).join(path.sep)
         
         if (this.unpackPattern?.(file, await fs.stat(file))) {
           unpackedDirs.add(srcRelative)
@@ -72,8 +75,10 @@ export class AsarPackager {
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
-        taskManager.addTask(this.copyFileOrData(transformedFiles?.get(i), file, dest))
-        copiedFiles.add(dest)
+        if (!copiedFiles.has(dest)){
+          taskManager.addTask(this.copyFileOrData(transformedFiles?.get(i), file, dest))
+          copiedFiles.add(dest)
+        }
       }
     }
     await taskManager.awaitTasks()
