@@ -59,16 +59,16 @@ export class AsarPackager {
       const transformedFiles = fileSet.transformedFiles
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        const srcRelative = path.normalize(path.relative(this.src, file))
-        log.info({ src: this.src, srcRelative, file }, 'Relative Source')
-
+        const srcRelative = path.normalize(path.relative(this.src, file)).replace('../', '')
+        
         if (this.unpackPattern?.(file, await fs.stat(file))) {
           unpackedDirs.add(srcRelative)
         }
-
+        
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-
+        log.info({ src: this.src, srcRelative, file, dest }, 'Relative Source')
+        
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }

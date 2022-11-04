@@ -13,7 +13,8 @@ on:
         type: boolean
         description: Force rebuild docker images for CI tests
         required: false
-
+        default: false
+        
 permissions:
   contents: read # to fetch code (actions/checkout)
 
