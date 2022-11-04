@@ -1,5 +1,5 @@
 import { CreateOptions, createPackageFromFiles } from "asar"
-import { AsyncTaskManager } from "builder-util"
+import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fs from "fs-extra"
 import { mkdir, rmdir, stat, writeFile } from "fs/promises"
@@ -59,7 +59,8 @@ export class AsarPackager {
       const transformedFiles = fileSet.transformedFiles
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        const srcRelative = path.relative(this.src, file)
+        const srcRelative = path.normalize(path.relative(this.src, file))
+        log.info({ src: this.src, srcRelative, file }, 'Relative Source')
 
         if (this.unpackPattern?.(file, await fs.stat(file))) {
           unpackedDirs.add(srcRelative)
