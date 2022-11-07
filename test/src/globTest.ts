@@ -1,5 +1,5 @@
 import { DIR_TARGET, Platform } from "app-builder-lib"
-import { readAsarFile } from "app-builder-lib/out/asar/integrity"
+import { checkFileInArchive, readAsarFile } from "app-builder-lib/out/asar/integrity"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import * as fs from "fs/promises"
@@ -116,7 +116,7 @@ test.ifNotWindows(
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
       packed: async context => {
-        const file = readAsarFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo")
+        const file = checkFileInArchive(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo",  "outside link")
         expect(removeUnstableProperties(file)).toMatchSnapshot()
       },
     }

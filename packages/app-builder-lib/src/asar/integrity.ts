@@ -23,7 +23,6 @@ export async function computeData({ resourcesPath, resourcesRelativePath }: Asar
   return result
 }
 
-/** @internal */
 export function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
   function error(text: string) {
     return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
@@ -44,12 +43,12 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
 }
 
 export function readAsarJson(archive: string, file: string) {
-  const buffer = readAsarFile(archive, file)
-  return Promise.resolve(JSON.parse(buffer.toString()))
+  const fileString = readAsarFile(archive, file)
+  return Promise.resolve(JSON.parse(fileString))
 }
 
 export function readAsarFile(archive: string, file: string) {
-  return asar.extractFile(archive, file)
+  return asar.extractFile(archive, file).toString()
 }
 
 export function readAsarHeader(archive: string) {

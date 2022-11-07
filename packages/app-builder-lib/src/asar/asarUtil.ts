@@ -60,9 +60,10 @@ export class AsarPackager {
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
         
-        let srcRelative = path.normalize(path.relative(this.src, file))
-        // Remove all nesting "../" in the file patth
-        srcRelative = srcRelative.split(path.sep).filter(p => !p.includes('..')).join(path.sep)
+        let projectDir = path.resolve(this.src, packager.projectDir)
+        let srcRelative = path.normalize(path.relative(projectDir, file))
+        // Remove all nesting "../" in the file patth, such as for yarn workspaces
+        srcRelative = srcRelative.split(path.sep).filter(p => p !== '..').join(path.sep)
         
         if (this.unpackPattern?.(file, await fs.stat(file))) {
           unpackedDirs.add(srcRelative)
@@ -70,7 +71,7 @@ export class AsarPackager {
         
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-        log.info({ src: this.src, srcRelative, file, dest }, 'Relative Source')
+        // log.info({ src: this.src, srcRelative, file, dest, projectDir }, 'Relative Source')
         
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
