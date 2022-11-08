@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, executeAppBuilder, log } from "builder-util"
+import { asArray, executeAppBuilder, isEmptyOrSpaces, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, readdir, rename } from "fs-extra"
 import { Lazy } from "lazy-val"
@@ -181,6 +181,18 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       return
     }
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
+    if (packager.config.downloadAlternateFFmpeg) {
+      log.info("downloading and unpacking alternate FFmpeg")
+      const ffmpegOptions = Object.assign({}, options)
+      ffmpegOptions.customFilename = `ffmpeg-v${options.version}-${options.platform}-${options.arch}.zip`
+      let ffmpegLocation = path.join(appOutDir, "..")
+      if (!isEmptyOrSpaces(process.env.ELECTRON_BUILDER_CACHE)) {
+        ffmpegLocation = process.env.ELECTRON_BUILDER_CACHE
+      }
+      ffmpegOptions.cache = ffmpegLocation
+      await executeAppBuilder(["download-electron", "--configuration", JSON.stringify([ffmpegOptions])])
+      await executeAppBuilder(["unzip", "--input", path.join(ffmpegLocation, ffmpegOptions.customFilename), "--output", appOutDir])
+    }
   } else {
     isFullCleanup = true
     const source = packager.getElectronSrcDir(dist)

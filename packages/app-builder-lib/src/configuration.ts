@@ -142,6 +142,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly buildVersion?: string | null
 
   /**
+   * Whether to download the alternate FFmpeg library from Electron's release assets and replace the default FFmpeg library prior to signing
+   */
+  readonly downloadAlternateFFmpeg?: boolean
+
+  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean
