@@ -40,7 +40,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
       return this.vm.value
         .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-        .catch(e => {
+        .catch((e: any) => {
           // https://github.com/electron-userland/electron-builder/pull/2397
           if (platformSpecificBuildOptions.sign == null) {
             throw e
@@ -68,7 +68,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return (
       importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
         // before then
-        .catch(e => {
+        .catch((e: any) => {
           if (e instanceof InvalidConfigurationError) {
             throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
           } else {
@@ -170,7 +170,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
             case "squirrel":
               try {
                 return require("electron-builder-squirrel-windows").default
-              } catch (e) {
+              } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
@@ -254,7 +254,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       try {
         await sign(options, this)
         break
-      } catch (e) {
+      } catch (e: any) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {

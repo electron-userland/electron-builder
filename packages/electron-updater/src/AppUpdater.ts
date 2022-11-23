@@ -282,7 +282,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         nullizePromise()
         return it
       })
-      .catch(e => {
+      .catch((e: any) => {
         nullizePromise()
         this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
         throw e
@@ -493,7 +493,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
         disableWebInstaller: this.disableWebInstaller,
-      }).catch(e => {
+      }).catch((e: any) => {
         throw errorHandler(e)
       })
     } catch (e: any) {
@@ -564,7 +564,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
       await outputFile(file, id)
-    } catch (e) {
+    } catch (e: any) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)
     }
     return id
@@ -676,7 +676,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)
-    } catch (e) {
+    } catch (e: any) {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {

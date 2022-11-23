@@ -185,7 +185,7 @@ export class KeygenPublisher extends HttpPublisher {
     try {
       // First, we'll attempt to fetch the release.
       return await this.getRelease()
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode !== 404) {
         throw e
       }
@@ -193,7 +193,7 @@ export class KeygenPublisher extends HttpPublisher {
       try {
         // Next, if the release doesn't exist, we'll attempt to create it.
         return await this.createRelease()
-      } catch (e) {
+      } catch (e: any) {
         if (e.statusCode !== 409 && e.statusCode !== 422) {
           throw e
         }

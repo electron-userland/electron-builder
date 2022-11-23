@@ -42,7 +42,7 @@ const publishContext: PublishContext = {
 test("GitHub unauthorized", async () => {
   try {
     await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token" }, versionNumber())._release.value
-  } catch (e) {
+  } catch (e: any) {
     expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
     return
   }
@@ -63,7 +63,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   test.skip(name, async () => {
     try {
       await testFunction()
-    } catch (e) {
+    } catch (e: any) {
       if (isApiRateError(e)) {
         console.warn(e.description.message)
       } else {

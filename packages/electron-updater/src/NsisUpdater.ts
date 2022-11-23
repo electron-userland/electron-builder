@@ -62,16 +62,16 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
+          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
             try {
-              await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
+              await this.httpExecutor.download(new URL(packageInfo.path), packageFile, {
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
-                sha512: packageInfo!.sha512,
+                sha512: packageInfo.sha512,
               })
-            } catch (e) {
+            } catch (e: any) {
               try {
-                await unlink(packageFile!)
+                await unlink(packageFile)
               } catch (ignored) {
                 // ignore
               }
@@ -94,7 +94,7 @@ export class NsisUpdater extends BaseUpdater {
       if (publisherName == null) {
         return null
       }
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === "ENOENT") {
         // no app-update.yml
         return null
@@ -174,7 +174,7 @@ export class NsisUpdater extends BaseUpdater {
 
         try {
           return JSON.parse(gunzipSync(data).toString())
-        } catch (e) {
+        } catch (e: any) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
         }
       }
@@ -196,7 +196,7 @@ export class NsisUpdater extends BaseUpdater {
       const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
       return false
-    } catch (e) {
+    } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
@@ -232,7 +232,7 @@ export class NsisUpdater extends BaseUpdater {
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
-    } catch (e) {
+    } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"

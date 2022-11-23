@@ -46,21 +46,21 @@
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "7.15.4",
-    "@changesets/changelog-github": "0.4.2",
-    "@changesets/cli": "2.19.0",
+    "@changesets/changelog-github": "0.4.7",
+    "@changesets/cli": "2.25.0",
     "@types/node": "16.11.43",
-    "@typescript-eslint/eslint-plugin": "4.33.0",
-    "@typescript-eslint/parser": "4.33.0",
+    "@typescript-eslint/eslint-plugin": "5.41.0",
+    "@typescript-eslint/parser": "5.41.0",
     "catharsis": "0.9.0",
-    "conventional-changelog-cli": "2.1.1",
-    "dmd": "6.0.0",
-    "eslint": "7.30.0",
-    "eslint-config-prettier": "8.3.0",
-    "eslint-plugin-prettier": "3.4.0",
-    "fs-extra": "10.0.0",
-    "globby": "11.0.4",
+    "conventional-changelog-cli": "2.2.2",
+    "dmd": "6.1.0",
+    "fs-extra": "10.1.0",
+    "eslint": "8.26.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "globby": "11.1.0",
     "husky": "7.0.4",
-    "jest-cli": "27.0.6",
+    "jest-cli": "27.5.1",
     "jsdoc-to-markdown": "7.0.1",
     "lint-staged": "11.1.2",
     "markdown2html-pro": "1.0.6",
@@ -69,7 +69,7 @@
     "replace-in-file": "6.2.0",
     "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
-    "typescript": "4.3.5",
+    "typescript": "4.8.4",
     "typescript-json-schema": "0.51.0",
     "v8-compile-cache": "2.3.0"
   },
@@ -79,7 +79,16 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.19.0": "patches/@changesets__cli@2.19.0.patch"
+      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+    },
+    "overrides": {
+      "markdown-it@<12.3.2": ">=12.3.2",
+      "@braintree/sanitize-url@<6.0.0": ">=6.0.0",
+      "mermaid@>=8.0.0 <9.1.2": ">=9.1.2",
+      "d3-color@<3.1.0": ">=3.1.0",
+      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+      "minimatch@<3.0.5": ">=3.0.5",
+      "@types/keyv": "3.1.4"
     }
   }
 }

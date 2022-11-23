@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "5.3.0",
+  "version": "6.0.0-alpha.3",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
@@ -18,7 +18,7 @@
   "dependencies": {
     "@types/semver": "^7.3.6",
     "builder-util-runtime": "workspace:*",
-    "fs-extra": "^10.0.0",
+    "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "lodash.escaperegexp": "^4.1.2",
@@ -35,5 +35,11 @@
   "typings": "./out/main.d.ts",
   "publishConfig": {
     "tag": "next"
+  },
+  "pnpm": {
+    "overrides": {
+      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
+      "minimatch@<3.0.5": ">=3.0.5"
+    }
   }
 }

@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.1.2-alpha.0
+
+### Patch Changes
+
+- [#7214](https://github.com/electron-userland/electron-builder/pull/7214) [`53327d51`](https://github.com/electron-userland/electron-builder/commit/53327d51101b83641ece9f497577c3ac93d3e91d) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(dep): upgrading typescript and eslint dependencies
+
 ## 9.1.1
 
 ### Patch Changes

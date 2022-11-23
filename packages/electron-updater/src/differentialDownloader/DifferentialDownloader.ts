@@ -86,7 +86,7 @@ export abstract class DifferentialDownloader {
     const closeFiles = (): Promise<Array<void>> => {
       return Promise.all(
         fdList.map(openedFile => {
-          return close(openedFile.descriptor).catch(e => {
+          return close(openedFile.descriptor).catch((e: any) => {
             this.logger.error(`cannot close file "${openedFile.path}": ${e}`)
           })
         })
@@ -94,7 +94,7 @@ export abstract class DifferentialDownloader {
     }
     return this.doDownloadFile(tasks, fdList)
       .then(closeFiles)
-      .catch(e => {
+      .catch((e: any) => {
         // then must be after catch here (since then always throws error)
         return closeFiles()
           .catch(closeFilesError => {
@@ -160,7 +160,7 @@ export abstract class DifferentialDownloader {
           fdList.splice(1, 1)
           try {
             digestTransform.validate()
-          } catch (e) {
+          } catch (e: any) {
             reject(e)
             return
           }

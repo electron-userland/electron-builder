@@ -1,5 +1,5 @@
 import * as chalk from "chalk"
-import { Results } from "depcheck"
+import type { Results } from "depcheck"
 import * as depCheck from "depcheck"
 import { readJson } from "fs-extra"
 import * as fs from "fs/promises"

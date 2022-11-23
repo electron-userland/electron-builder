@@ -27,7 +27,7 @@ export class BitbucketProvider extends Provider<UpdateInfo> {
     try {
       const updateInfo = await this.httpRequest(channelUrl, undefined, cancellationToken)
       return parseUpdateInfo(updateInfo, channelFile, channelUrl)
-    } catch (e) {
+    } catch (e: any) {
       throw newError(`Unable to find latest version on ${this.toString()}, please ensure release exists: ${e.stack || e.message}`, "ERR_UPDATER_LATEST_VERSION_NOT_FOUND")
     }
   }

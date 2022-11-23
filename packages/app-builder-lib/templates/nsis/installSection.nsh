@@ -26,6 +26,9 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
     FindWindow $0 "#32770" "" $hwndparent $0
     GetDlgItem $0 $0 1000
     SendMessage $0 ${WM_SETTEXT} 0 "STR:$(installing)"
+
+    StrCpy $1 $hwndparent
+		System::Call 'user32::ShutdownBlockReasonCreate(${SYSTYPE_PTR}r1, w "$(installing)")'
   ${endif}
   !insertmacro CHECK_APP_RUNNING
 !else
