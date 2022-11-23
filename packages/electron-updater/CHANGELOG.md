@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.0-alpha.3
+
+### Patch Changes
+
+- [#7230](https://github.com/electron-userland/electron-builder/pull/7230) [`346af1d4`](https://github.com/electron-userland/electron-builder/commit/346af1d470ebbf12733a9619a2389bcfdf452bc6) Thanks [@jeremyspiegel](https://github.com/jeremyspiegel)! - fix: support powershell constrained language mode
+
 ## 6.0.0-alpha.2
 
 ### Patch Changes

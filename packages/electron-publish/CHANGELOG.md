@@ -1,5 +1,11 @@
 # electron-publish
 
+## 24.0.0-alpha.4
+
+### Patch Changes
+
+- [#7231](https://github.com/electron-userland/electron-builder/pull/7231) [`c21e3b37`](https://github.com/electron-userland/electron-builder/commit/c21e3b37e0dd064c12dbd38065a548441d7c5a9e) Thanks [@laprasdrum](https://github.com/laprasdrum)! - fix: get CI tag in GitHub Actions
+
 ## 24.0.0-alpha.3
 
 ### Patch Changes
