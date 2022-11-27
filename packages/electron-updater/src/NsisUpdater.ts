@@ -1,5 +1,4 @@
 import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
-import { spawn } from "child_process"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
@@ -127,7 +126,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      _spawn(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch((e: any) => this.dispatchError(e))
+      this.spawnLog(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -136,7 +135,7 @@ export class NsisUpdater extends BaseUpdater {
       return true
     }
 
-    _spawn(options.installerPath, args).catch((e: Error) => {
+    this.spawnLog(options.installerPath, args).catch((e: Error) => {
       // https://github.com/electron-userland/electron-builder/issues/1129
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
@@ -240,30 +239,4 @@ export class NsisUpdater extends BaseUpdater {
     }
     return false
   }
-}
-
-/**
- * This handles both node 8 and node 10 way of emitting error when spawning a process
- *   - node 8: Throws the error
- *   - node 10: Emit the error(Need to listen with on)
- */
-async function _spawn(exe: string, args: Array<string>): Promise<any> {
-  return new Promise((resolve, reject) => {
-    try {
-      const process = spawn(exe, args, {
-        detached: true,
-        stdio: "ignore",
-      })
-      process.on("error", error => {
-        reject(error)
-      })
-      process.unref()
-
-      if (process.pid !== undefined) {
-        resolve(true)
-      }
-    } catch (error: any) {
-      reject(error)
-    }
-  })
 }

@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
@@ -69,7 +69,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,protonTest
+          TEST_FILES: masTest,dmgTest,protonTest,filesTest
           FORCE_COLOR: 1
   
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
@@ -88,7 +88,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

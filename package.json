@@ -20,7 +20,7 @@
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher",
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
-    "test-linux": "docker run --rm -e UPDATE_SNAPSHOT=${UPDATE_SNAPSHOT:-false} -e TEST_FILES=\"${TEST_FILES:-HoistedNodeModuleTest}\" -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine-mono /bin/bash -c \"pnpm install && node ./test/out/helpers/runTests.js\"",
+    "test-linux": "docker run --rm -e DEBUG=${DEBUG:-} -e UPDATE_SNAPSHOT=${UPDATE_SNAPSHOT:-false} -e TEST_FILES=\"${TEST_FILES:-HoistedNodeModuleTest}\" -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine-mono /bin/bash -c \"pnpm install && node ./test/out/helpers/runTests.js\"",
     "test-update": "UPDATE_SNAPSHOT=true pnpm test-all",
     "docker-images": "docker/build.sh",
     "docker-push": "docker/push.sh",

@@ -1430,6 +1430,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
 </ul>
 </li>
+<li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
 <li><a href="#MacUpdater">.MacUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.MacUpdater+quitAndInstall"><code>.quitAndInstall()</code></a></li>
@@ -1450,6 +1451,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.Provider+resolveFiles"><code>.resolveFiles(updateInfo)</code></a> ⇒ <code>Array&lt;<a href="#ResolvedUpdateFileInfo">ResolvedUpdateFileInfo</a>&gt;</code></li>
 </ul>
 </li>
+<li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
 <li><a href="#UpdaterSignal">.UpdaterSignal</a>
 <ul>
 <li><a href="#module_electron-updater.UpdaterSignal+login"><code>.login(handler)</code></a></li>
@@ -1752,7 +1754,11 @@ This is different from the normal quit event sequence.</p>
 </tr>
 </tbody>
 </table>
-<p><a name="MacUpdater"></a></p>
+<p><a name="DebUpdater"></a></p>
+<h2 id="debupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">DebUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
+<a name="MacUpdater"></a></p>
 <h2 id="macupdater-%E2%87%90-appupdater">MacUpdater ⇐ <code><a href="#AppUpdater">AppUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Extends</strong>: <code><a href="#AppUpdater">AppUpdater</a></code></p>
@@ -1910,7 +1916,11 @@ This is different from the normal quit event sequence.</p>
 </tr>
 </tbody>
 </table>
-<p><a name="UpdaterSignal"></a></p>
+<p><a name="RpmUpdater"></a></p>
+<h2 id="rpmupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">RpmUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
+<a name="UpdaterSignal"></a></p>
 <h2 id="updatersignal">UpdaterSignal</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/></p>
 <ul>

@@ -50,7 +50,7 @@ export interface PublishConfiguration {
   /**
    * Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
    *
-   * @default 60000
+   * @default 120000
    */
   readonly timeout?: number | null
 }
