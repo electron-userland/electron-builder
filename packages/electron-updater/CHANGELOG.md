@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.0-alpha.4
+
+### Minor Changes
+
+- [#7060](https://github.com/electron-userland/electron-builder/pull/7060) [`1d130012`](https://github.com/electron-userland/electron-builder/commit/1d130012737e77b57c8923fcc0e6ad2cbc5da0e8) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Introducing deb and rpm auto-updates as beta feature
+
 ## 6.0.0-alpha.3
 
 ### Patch Changes
