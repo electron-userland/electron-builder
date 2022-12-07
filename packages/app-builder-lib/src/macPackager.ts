@@ -1,5 +1,6 @@
+import { LegacyNotarizeStartOptions, NotaryToolStartOptions } from "@electron/notarize/lib/types"
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, doSpawn, spawn } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -19,6 +20,8 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
+import { notarize, NotarizeOptions } from "@electron/notarize"
+import { execSync } from "child_process"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -442,9 +445,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const appFileName = `${this.appInfo.productFilename}.app`
 
-    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+    await BluebirdPromise.map(readdir(packContext.appOutDir), async (file: string): Promise<any> => {
       if (file === appFileName) {
-        return this.sign(path.join(packContext.appOutDir, file), null, null, null)
+        const appPath = path.join(packContext.appOutDir, file)
+        await this.sign(appPath, null, null, null)
+        await this.notarizeIfProvided(appPath)
       }
       return null
     })
@@ -461,6 +466,45 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         return null
       }
     })
+  }
+
+  private async notarizeIfProvided(appPath: string) {
+    const notarizeOptions = this.platformSpecificBuildOptions.notarizeOptions
+    if (!notarizeOptions) {
+      log.info("Skipping notarization step, no `notarizeOptions` were provided")
+      return
+    }
+    const appleId = process.env.APPLE_ID
+    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    if (!appleId) {
+      throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
+    }
+    if (!appleIdPassword) {
+      throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
+    }
+    let options: NotarizeOptions
+    if (notarizeOptions.teamId) {
+      options = {
+        tool: "notarytool",
+        appPath,
+        appleId,
+        appleIdPassword,
+        teamId: notarizeOptions.teamId,
+      }
+    } else {
+      options = {
+        tool: "legacy",
+        appBundleId: this.appInfo.id,
+        appPath,
+        appleId,
+        appleIdPassword,
+        ...notarizeOptions,
+      }
+    }
+    await notarize(options)
+    // Verify
+    await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", appPath])
+    log.info(null, "Notarization successful")
   }
 }
 

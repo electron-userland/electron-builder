@@ -1,3 +1,4 @@
+import { LegacyNotarizeCredentials, LegacyNotarizeStartOptions, NotaryToolCredentials, NotaryToolStartOptions, TransporterOptions } from "@electron/notarize/lib/types"
 import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
@@ -204,6 +205,20 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * only if `mergeASARs` is `true`.
    */
   readonly x64ArchFiles?: string
+
+  /**
+   * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
+   * Supports both `legacy` and `notarytool`
+   * `appBundleId` and `ascProvider` are required for `legacy` tool
+   * `teamId` is all that is required for `notarytool`
+   *
+   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables
+   */
+  readonly notarizeOptions?: {
+    readonly appBundleId?: string
+    readonly ascProvider?: string
+    readonly teamId?: string
+  }
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

@@ -382,7 +382,7 @@
           "type": "string"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -487,7 +487,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1375,7 +1375,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1507,7 +1507,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1606,7 +1606,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -2637,6 +2637,10 @@
             "string"
           ]
         },
+        "notarizeOptions": {
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool`\n`appBundleId` and `ascProvider` are required for `legacy` tool\n`teamId` is all that is required for `notarytool`\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables",
+          "typeof": "function"
+        },
         "protocols": {
           "anyOf": [
             {
@@ -3254,6 +3258,10 @@
             "null",
             "string"
           ]
+        },
+        "notarizeOptions": {
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool`\n`appBundleId` and `ascProvider` are required for `legacy` tool\n`teamId` is all that is required for `notarytool`\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables",
+          "typeof": "function"
         },
         "protocols": {
           "anyOf": [
@@ -4927,7 +4935,7 @@
           "description": "The type of storage to use for the object."
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -5383,7 +5391,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -5476,7 +5484,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
