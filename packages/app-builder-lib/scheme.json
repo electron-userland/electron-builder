@@ -382,7 +382,7 @@
           "type": "string"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -487,7 +487,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1375,7 +1375,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1507,7 +1507,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -1606,7 +1606,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -2549,7 +2549,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -2774,7 +2774,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not."
         },
         "target": {
           "anyOf": [
@@ -3167,7 +3167,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3392,7 +3392,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not."
         },
         "target": {
           "anyOf": [
@@ -4927,7 +4927,7 @@
           "description": "The type of storage to use for the object."
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -5383,7 +5383,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",
@@ -5476,7 +5476,7 @@
           "description": "Any custom request headers"
         },
         "timeout": {
-          "default": 60000,
+          "default": 120000,
           "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
           "type": [
             "null",

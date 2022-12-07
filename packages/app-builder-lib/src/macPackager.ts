@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
-import { signAsync, SignOptions } from "electron-osx-sign"
+import { signAsync } from "@electron/osx-sign"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"

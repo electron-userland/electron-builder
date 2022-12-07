@@ -16,14 +16,14 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.3.6",
+    "@types/semver": "^7.3.13",
     "builder-util-runtime": "workspace:*",
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "lodash.escaperegexp": "^4.1.2",
     "lodash.isequal": "^4.5.0",
-    "semver": "^7.3.5",
+    "semver": "^7.3.8",
     "typed-emitter": "^2.1.0"
   },
   "devDependencies": {
@@ -35,11 +35,5 @@
   "typings": "./out/main.d.ts",
   "publishConfig": {
     "tag": "next"
-  },
-  "pnpm": {
-    "overrides": {
-      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
-      "minimatch@<3.0.5": ">=3.0.5"
-    }
   }
 }
