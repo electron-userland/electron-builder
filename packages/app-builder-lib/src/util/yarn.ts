@@ -6,8 +6,8 @@ import * as path from "path"
 import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import { getElectronVersion } from "../electron/electronVersion"
-import * as electronRebuild from "electron-rebuild"
-import * as searchModule from "electron-rebuild/lib/src/search-module"
+import * as electronRebuild from "@electron/rebuild"
+import * as searchModule from "@electron/rebuild/lib/src/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   let isDependenciesInstalled = false
@@ -150,7 +150,7 @@ export interface RebuildOptions {
 
 /** @internal */
 export async function rebuild(appDir: string, buildFromSource: boolean, arch = process.arch) {
-  log.info({ appDir, arch }, "executing electron-rebuild")
+  log.info({ appDir, arch }, "executing @electron/rebuild")
   const options: electronRebuild.RebuildOptions = {
     buildPath: appDir,
     electronVersion: await getElectronVersion(appDir),

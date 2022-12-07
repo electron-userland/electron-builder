@@ -15,7 +15,7 @@ const certType = "Developer ID Installer"
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
 // to use --scripts, we must build .app bundle separately using pkgbuild
 // productbuild --scripts doesn't work (because scripts in this case not added to our package)
-// https://github.com/electron-userland/electron-osx-sign/issues/96#issuecomment-274986942
+// https://github.com/electron-userland/@electron/osx-sign/issues/96#issuecomment-274986942
 export class PkgTarget extends Target {
   readonly options: PkgOptions = {
     allowAnywhere: true,
@@ -197,7 +197,7 @@ export class PkgTarget extends Target {
 export function prepareProductBuildArgs(identity: Identity | null, keychain: string | null | undefined): Array<string> {
   const args: Array<string> = []
   if (identity != null) {
-    args.push("--sign", identity.hash)
+    args.push("--sign", identity.hash!)
     if (keychain != null) {
       args.push("--keychain", keychain)
     }
