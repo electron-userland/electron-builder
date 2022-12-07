@@ -18,6 +18,9 @@ test.ifMac.ifAll("two-package", () =>
           electronUpdaterCompatibility: ">=2.16",
           electronLanguages: ["bn", "en"],
           timestamp: undefined,
+          notarizeOptions: {
+            teamId: "UF32X3Z5FV"
+          }
         },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
