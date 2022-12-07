@@ -338,6 +338,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
       await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
     }
+
+    await this.notarizeIfProvided(appPath)
   }
 
   private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
@@ -449,7 +451,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (file === appFileName) {
         const appPath = path.join(packContext.appOutDir, file)
         await this.sign(appPath, null, null, null)
-        await this.notarizeIfProvided(appPath)
       }
       return null
     })
@@ -471,7 +472,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   private async notarizeIfProvided(appPath: string) {
     const notarizeOptions = this.platformSpecificBuildOptions.notarizeOptions
     if (!notarizeOptions) {
-      log.info("Skipping notarization step, no `notarizeOptions` were provided")
+      log.info({ reason: "`notarizeOptions` is null" }, 'skipped macOS notarization')
       return
     }
     const appleId = process.env.APPLE_ID
