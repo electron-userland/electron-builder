@@ -90,16 +90,16 @@ test.ifNotCiMac(
         return Promise.all([
           modifyPackageJson(projectDir, data => {
             data.devDependencies = {
-              "electron-osx-sign": "*",
+              "@electron/osx-sign": "*",
               ...data.devDependencies,
             }
           }),
-          outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
+          outputFile(path.join(projectDir, "node_modules", "@electron/osx-sign", "package.json"), "{}"),
         ])
       },
       packed: context => {
         return Promise.all([
-          assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign")).doesNotExist(),
+          assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "@electron/osx-sign")).doesNotExist(),
           assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
         ])
       },

@@ -81,10 +81,10 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-hardenedRuntime">hardenedRuntime</code> = <code>true</code> Boolean - Whether your app has to be signed with hardened runtime.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let electron-osx-sign validate the signing or not.</p>
+<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let @electron/osx-sign validate the signing or not.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Array&lt;String&gt; | String | Boolean - Whether to let electron-osx-sign verify the contents or not.</p>
+<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Array&lt;String&gt; | String | Boolean - Whether to let @electron/osx-sign verify the contents or not.</p>
 </li>
 <li>
 <p><code id="MacConfiguration-signIgnore">signIgnore</code> Array&lt;String&gt; | String | “undefined” - Regex or an array of regex’s that signal skipping signing a file.</p>
@@ -105,7 +105,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p>This option has no effect unless building for “universal” arch and applies only if <code>mergeASARs</code> is <code>true</code>.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-notarizeOptions">notarizeOptions</code> Object&lt;String, any&gt; - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> <code>appBundleId</code> and <code>ascProvider</code> are required for <code>legacy</code> tool <code>teamId</code> is all that is required for <code>notarytool</code></p>
+<p><code id="MacConfiguration-notarizeOptions">notarizeOptions</code> module:app-builder-lib/out/options/macOptions.NotarizeOptions - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools</p>
 <p>Note: You MUST specify <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code> via environment variables</p>
 </li>
 </ul>

@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-nsis-web",
-  "version": "24.0.0-alpha.5",
+  "version": "24.0.0-alpha.6",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -16,11 +16,5 @@
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*"
-  },
-  "pnpm": {
-    "overrides": {
-      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
-      "minimatch@<3.0.5": ">=3.0.5"
-    }
   }
 }

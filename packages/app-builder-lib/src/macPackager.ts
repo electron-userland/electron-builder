@@ -1,7 +1,7 @@
-import { LegacyNotarizeStartOptions, NotaryToolStartOptions } from "@electron/notarize/lib/types"
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, doSpawn, spawn } from "builder-util"
-import { signAsync, SignOptions } from "electron-osx-sign"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, spawn } from "builder-util"
+import { signAsync } from "@electron/osx-sign"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -21,7 +21,6 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
-import { execSync } from "child_process"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {

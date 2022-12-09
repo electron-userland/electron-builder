@@ -115,7 +115,7 @@ export class DmgTarget extends Target {
       }
     }
 
-    const args = ["--sign", identity.hash]
+    const args = ["--sign", identity.hash!]
     if (keychainFile != null) {
       args.push("--keychain", keychainFile)
     }

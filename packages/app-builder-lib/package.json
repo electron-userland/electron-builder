@@ -1,7 +1,7 @@
 {
   "name": "app-builder-lib",
   "description": "electron-builder lib",
-  "version": "24.0.0-alpha.5",
+  "version": "24.0.0-alpha.6",
   "main": "out/index.js",
   "files": [
     "out",
@@ -50,6 +50,8 @@
     "7zip-bin": "~5.1.1",
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "^1.2.3",
+    "@electron/osx-sign": "^1.0.4",
+    "@electron/rebuild": "^3.2.10",
     "@electron/universal": "1.3.3",
     "@malept/flatpak-bundler": "^0.4.0",
     "async-exit-hook": "^2.0.1",
@@ -59,9 +61,7 @@
     "chromium-pickle-js": "^0.2.0",
     "debug": "^4.3.4",
     "ejs": "^3.1.8",
-    "electron-osx-sign": "^0.6.0",
     "electron-publish": "workspace:*",
-    "electron-rebuild": "^3.2.9",
     "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
     "hosted-git-info": "^4.1.0",
@@ -69,11 +69,11 @@
     "isbinaryfile": "^5.0.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
-    "minimatch": "^3.1.2",
+    "minimatch": "^5.1.1",
     "read-config-file": "6.3.2",
     "sanitize-filename": "^1.6.3",
-    "semver": "^7.3.7",
-    "tar": "^6.1.11",
+    "semver": "^7.3.8",
+    "tar": "^6.1.12",
     "temp-file": "^3.4.0"
   },
   "///": "babel in devDependencies for proton tests",
@@ -104,16 +104,10 @@
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/semver": "7.3.8",
-    "@types/tar": "^6.1.1",
+    "@types/tar": "^6.1.3",
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*"
   },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
-  "typings": "./out/index.d.ts",
-  "pnpm": {
-    "overrides": {
-      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
-      "minimatch@<3.0.5": ">=3.0.5"
-    }
-  }
+  "typings": "./out/index.d.ts"
 }

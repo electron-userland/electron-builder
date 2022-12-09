@@ -2549,7 +2549,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -2778,7 +2778,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not."
         },
         "target": {
           "anyOf": [
@@ -3171,7 +3171,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3400,7 +3400,7 @@
             }
           ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not."
         },
         "target": {
           "anyOf": [

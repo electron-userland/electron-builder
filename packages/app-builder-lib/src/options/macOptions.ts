@@ -159,13 +159,13 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly hardenedRuntime?: boolean
 
   /**
-   * Whether to let electron-osx-sign validate the signing or not.
+   * Whether to let @electron/osx-sign validate the signing or not.
    * @default false
    */
   readonly gatekeeperAssess?: boolean
 
   /**
-   * Whether to let electron-osx-sign verify the contents or not.
+   * Whether to let @electron/osx-sign verify the contents or not.
    * @default true
    */
   readonly strictVerify?: Array<string> | string | boolean
@@ -208,17 +208,29 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
-   * Supports both `legacy` and `notarytool`
-   * `appBundleId` and `ascProvider` are required for `legacy` tool
-   * `teamId` is all that is required for `notarytool`
+   * Supports both `legacy` and `notarytool` notarization tools
    *
    * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables
    */
-  readonly notarizeOptions?: {
-    readonly appBundleId?: string
-    readonly ascProvider?: string
-    readonly teamId?: string
-  }
+  readonly notarizeOptions?: NotarizeOptions
+}
+
+export interface NotarizeOptions {
+  /**
+   * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
+   * Only used by `legacy` notarization tool
+   */
+  readonly appBundleId?: string
+
+  /**
+   * Your Team Short Name. Only used by `legacy` notarization tool
+   */
+  readonly ascProvider?: string
+
+  /**
+   * The team ID you want to notarize under. Only needed if using `notarytool`
+   */
+  readonly teamId?: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
