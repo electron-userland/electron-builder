@@ -207,11 +207,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
-   * Supports both `legacy` and `notarytool` notarization tools
+   * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
    *
-   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables
+   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
    */
-  readonly notarizeOptions?: NotarizeOptions | null
+  readonly notarize?: NotarizeOptions | boolean | null
 }
 
 export interface NotarizeOptions {

@@ -469,42 +469,53 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   private async notarizeIfProvided(appPath: string) {
-    const notarizeOptions = this.platformSpecificBuildOptions.notarizeOptions
-    if (!notarizeOptions) {
-      log.info({ reason: "`notarizeOptions` is null" }, "skipped macOS notarization")
+    const notarizeOptions = this.platformSpecificBuildOptions.notarize
+    if (notarizeOptions === false) {
+      log.info({ reason: "`notarizeOptions` is explicitly set to false" }, "skipped macOS notarization")
       return
     }
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    if (!appleId && !appleIdPassword) {
+      // if no credentials provided, skip silently
+      return
+    }
     if (!appleId) {
       throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
     }
     if (!appleIdPassword) {
       throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
     }
-    let options: NotarizeOptions
-    if (notarizeOptions.teamId) {
-      options = {
-        tool: "notarytool",
-        appPath,
-        appleId,
-        appleIdPassword,
-        teamId: notarizeOptions.teamId,
-      }
-    } else {
-      options = {
-        tool: "legacy",
-        appPath,
-        appleId,
-        appleIdPassword,
-        appBundleId: notarizeOptions.appBundleId || this.appInfo.id,
-        ascProvider: notarizeOptions.ascProvider || undefined,
-      }
-    }
+    const options = this.generateOptions(appPath, appleId, appleIdPassword)
     await notarize(options)
     // Verify
     await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", `"${appPath}"`])
     log.info(null, "notarization successful")
+  }
+
+  private generateOptions(appPath: string, appleId: string, appleIdPassword: string): NotarizeOptions {
+    const baseOptions = { appPath, appleId, appleIdPassword }
+    const options = this.platformSpecificBuildOptions.notarize
+    if (typeof options === "boolean") {
+      return {
+        ...baseOptions,
+        tool: "legacy",
+        appBundleId: this.appInfo.id,
+      }
+    }
+    if (options?.teamId) {
+      return {
+        ...baseOptions,
+        tool: "notarytool",
+        teamId: options.teamId,
+      }
+    }
+    return {
+      ...baseOptions,
+      tool: "legacy",
+      appBundleId: options?.appBundleId || this.appInfo.id,
+      ascProvider: options?.ascProvider || undefined,
+    }
   }
 }
 

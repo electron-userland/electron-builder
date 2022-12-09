@@ -2637,16 +2637,19 @@
             "string"
           ]
         },
-        "notarizeOptions": {
+        "notarize": {
           "anyOf": [
             {
               "$ref": "#/definitions/NotarizeOptions"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
         },
         "protocols": {
           "anyOf": [
@@ -3272,16 +3275,19 @@
             "string"
           ]
         },
-        "notarizeOptions": {
+        "notarize": {
           "anyOf": [
             {
               "$ref": "#/definitions/NotarizeOptions"
             },
             {
-              "type": "null"
+              "type": [
+                "null",
+                "boolean"
+              ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
         },
         "protocols": {
           "anyOf": [
