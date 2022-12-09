@@ -203,12 +203,12 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-arm64.dmg",
+            "url": "TestApp-1.1.0-mac-x64.dmg",
           },
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-x64.dmg",
+            "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
           Object {
             "sha512": "@sha512",
