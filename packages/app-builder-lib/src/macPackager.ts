@@ -503,8 +503,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     await notarize(options)
     // Verify
-    await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", appPath])
-    log.info(null, "Notarization successful")
+    await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", `"${appPath}"`])
+    log.info(null, "notarization successful")
   }
 }
 
