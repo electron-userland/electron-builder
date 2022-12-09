@@ -195,7 +195,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * This option has no effect unless building for "universal" arch and applies
    * only if `mergeASARs` is `true`.
    */
-  readonly singleArchFiles?: string
+  readonly singleArchFiles?: string | null
 
   /**
    * Minimatch pattern of paths that are allowed to be x64 binaries in both
@@ -204,7 +204,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * This option has no effect unless building for "universal" arch and applies
    * only if `mergeASARs` is `true`.
    */
-  readonly x64ArchFiles?: string
+  readonly x64ArchFiles?: string | null
 
   /**
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
@@ -212,7 +212,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables
    */
-  readonly notarizeOptions?: NotarizeOptions
+  readonly notarizeOptions?: NotarizeOptions | null
 }
 
 export interface NotarizeOptions {
@@ -220,17 +220,17 @@ export interface NotarizeOptions {
    * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
    * Only used by `legacy` notarization tool
    */
-  readonly appBundleId?: string
+  readonly appBundleId?: string | null
 
   /**
    * Your Team Short Name. Only used by `legacy` notarization tool
    */
-  readonly ascProvider?: string
+  readonly ascProvider?: string | null
 
   /**
    * The team ID you want to notarize under. Only needed if using `notarytool`
    */
-  readonly teamId?: string
+  readonly teamId?: string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

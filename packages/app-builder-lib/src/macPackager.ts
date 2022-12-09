@@ -471,7 +471,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   private async notarizeIfProvided(appPath: string) {
     const notarizeOptions = this.platformSpecificBuildOptions.notarizeOptions
     if (!notarizeOptions) {
-      log.info({ reason: "`notarizeOptions` is null" }, 'skipped macOS notarization')
+      log.info({ reason: "`notarizeOptions` is null" }, "skipped macOS notarization")
       return
     }
     const appleId = process.env.APPLE_ID
@@ -494,11 +494,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     } else {
       options = {
         tool: "legacy",
-        appBundleId: this.appInfo.id,
         appPath,
         appleId,
         appleIdPassword,
-        ...notarizeOptions,
+        appBundleId: notarizeOptions.appBundleId || this.appInfo.id,
+        ascProvider: notarizeOptions.ascProvider || undefined,
       }
     }
     await notarize(options)

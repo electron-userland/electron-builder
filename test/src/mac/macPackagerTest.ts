@@ -17,7 +17,7 @@ test.ifMac.ifAll("two-package", () =>
         mac: {
           electronUpdaterCompatibility: ">=2.16",
           electronLanguages: ["bn", "en"],
-          timestamp: undefined
+          timestamp: undefined,
         },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
