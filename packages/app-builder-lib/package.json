@@ -52,7 +52,7 @@
     "@electron/notarize": "^1.2.3",
     "@electron/osx-sign": "^1.0.4",
     "@electron/rebuild": "^3.2.10",
-    "@electron/universal": "1.3.3",
+    "@electron/universal": "1.3.4",
     "@malept/flatpak-bundler": "^0.4.0",
     "async-exit-hook": "^2.0.1",
     "bluebird-lst": "^1.0.9",
