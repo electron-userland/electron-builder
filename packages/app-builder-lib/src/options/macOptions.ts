@@ -1,4 +1,3 @@
-import { LegacyNotarizeCredentials, LegacyNotarizeStartOptions, NotaryToolCredentials, NotaryToolStartOptions, TransporterOptions } from "@electron/notarize/lib/types"
 import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
