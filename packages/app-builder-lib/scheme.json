@@ -2637,6 +2637,20 @@
             "string"
           ]
         },
+        "notarize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NotarizeOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
         "protocols": {
           "anyOf": [
             {
@@ -2756,7 +2770,10 @@
         },
         "singleArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "strictVerify": {
           "anyOf": [
@@ -2856,7 +2873,10 @@
         },
         "x64ArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -3255,6 +3275,20 @@
             "string"
           ]
         },
+        "notarize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NotarizeOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
         "protocols": {
           "anyOf": [
             {
@@ -3374,7 +3408,10 @@
         },
         "singleArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "strictVerify": {
           "anyOf": [
@@ -3474,7 +3511,10 @@
         },
         "x64ArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -3655,6 +3695,33 @@
           "default": true,
           "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
           "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "NotarizeOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "appBundleId": {
+          "description": "The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).\nOnly used by `legacy` notarization tool",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "ascProvider": {
+          "description": "Your Team Short Name. Only used by `legacy` notarization tool",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "teamId": {
+          "description": "The team ID you want to notarize under. Only needed if using `notarytool`",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
