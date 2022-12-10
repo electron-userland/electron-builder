@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.6...v) (2022-12-10)
+
+
+### Features
+
+* integrating @electron/notarize into mac signing flow ([#7310](https://github.com/electron-userland/electron-builder/issues/7310)) ([00d0dbc](https://github.com/electron-userland/electron-builder/commit/00d0dbc2d74fbac3e9ce7a046427c1e1d9a11301))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.5...v) (2022-12-07)
 
 
