@@ -367,10 +367,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      return
+      return false
     }
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
@@ -389,7 +389,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     if (!isAsar) {
-      return
+      return false
     }
 
     const signPromise = (filepath: string[]) => {
@@ -398,5 +398,6 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
     const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+    return true
   }
 }

@@ -194,9 +194,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, arch: Arch | null): Promise<void> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null, arch: Arch | null): Promise<boolean> {
     if (!isSignAllowed()) {
-      return
+      return false
     }
 
     const isMas = masOptions != null
@@ -208,7 +208,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
       log.info({ reason: "identity explicitly is set to null" }, "skipped macOS code signing")
-      return
+      return false
     }
 
     const keychainFile = (await this.codeSigningInfo.value).keychainFile
@@ -235,7 +235,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
       if (identity == null) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
-        return
+        return false
       }
     }
 
@@ -336,6 +336,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainFile)
       await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
     }
+
+    return true
   }
 
   private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
