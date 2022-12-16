@@ -42,7 +42,7 @@ jobs:
 
       - name: Determine if Dockerfiles changed
         id: changed-files
-        uses: tj-actions/changed-files@3b6c057cd82d1dafab565df2ba9fa489574a03b8 # v34
+        uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7 # v34
 
       - name: Dockerfile has changed, rebuild for tests
         if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
