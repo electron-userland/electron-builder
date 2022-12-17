@@ -318,7 +318,7 @@ test.ifDevOrLinuxCi(
     config: {
       productName: "Sep",
       snap: {
-        base: 'core22',
+        base: "core22",
       },
     },
     effectiveOptionComputed: async ({ snap }) => {

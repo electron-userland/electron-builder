@@ -5094,6 +5094,13 @@
           "description": "Whether or not the snap should automatically start on login.",
           "type": "boolean"
         },
+        "base": {
+          "description": "A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`. Defaults to `core18`",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "buildPackages": {
           "anyOf": [
             {

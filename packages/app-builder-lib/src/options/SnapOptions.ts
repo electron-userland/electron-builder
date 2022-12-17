@@ -2,7 +2,6 @@ import { TargetSpecificOptions } from "../core"
 import { CommonLinuxOptions } from "./linuxOptions"
 
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
-
   /**
    * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`. Defaults to `core18`
    */
