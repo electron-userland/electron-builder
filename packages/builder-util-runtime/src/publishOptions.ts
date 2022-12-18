@@ -349,6 +349,13 @@ export interface S3Options extends BaseS3Options {
    * The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
    */
   readonly endpoint?: string | null
+
+  /**
+   * If set to true, this will enable the s3 accelerated endpoint
+   * These endpoints have a particular format of:
+   *  ${bucketname}.s3-accelerate.amazonaws.com
+   */
+  readonly accelerate?: boolean
 }
 
 /**
@@ -385,7 +392,9 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
 
 function s3Url(options: S3Options) {
   let url: string
-  if (options.endpoint != null) {
+  if (options.accelerate == true) {
+    url = `https://${options.bucket}.s3-accelerate.amazonaws.com`
+  } else if (options.endpoint != null) {
     url = `${options.endpoint}/${options.bucket}`
   } else if (options.bucket.includes(".")) {
     if (options.region == null) {
