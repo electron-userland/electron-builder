@@ -246,15 +246,15 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <a href="https://bitbucket.org/">https://bitbucket.org/</a>
 Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <p>For converting an app password to a usable token, you can utilize this</p>
-<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>) {
-<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${token.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
+<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">username: <span class="hljs-built_in">string</span>, appPassword: <span class="hljs-built_in">string</span></span>) {
+<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${username}</span>:<span class="hljs-subst">${appPassword.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
 <span class="hljs-keyword">return</span> <span class="hljs-string">`Basic <span class="hljs-subst">${base64encodedData}</span>`</span>
 }
 </code></pre>
 <ul>
 <li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
 <li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
-<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The access token to support auto-update from private bitbucket repositories.</li>
+<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The app password (account>>settings>app-passwords) to support auto-update from private bitbucket repositories.</li>
 <li><code id="BitbucketOptions-username">username</code> String | “undefined” - The user name to support auto-update from private bitbucket repositories.</li>
 <li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
 <li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
