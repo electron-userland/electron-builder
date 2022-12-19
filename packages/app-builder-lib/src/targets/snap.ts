@@ -69,6 +69,9 @@ export default class SnapTarget extends Target {
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
+    if (options.base != null) {
+      snap.base = options.base
+    }
     if (options.grade != null) {
       snap.grade = options.grade
     }
