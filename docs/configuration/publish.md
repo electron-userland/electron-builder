@@ -311,6 +311,9 @@ Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-gu
 <p><code id="S3Options-endpoint">endpoint</code> String | “undefined” - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like <code>https://{service}.{region}.amazonaws.com</code>.</p>
 </li>
 <li>
+<p><code id="S3Options-accelerate">accelerate</code> Boolean - If set to true, this will enable the s3 accelerated endpoint These endpoints have a particular format of:  ${bucketname}.s3-accelerate.amazonaws.com</p>
+</li>
+<li>
 <p><code id="S3Options-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</p>
 </li>
 <li>

@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.0-alpha.2
+
+### Minor Changes
+
+- [#7314](https://github.com/electron-userland/electron-builder/pull/7314) [`cc1ddabd`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa) Thanks [@lbestftr](https://github.com/lbestftr)! - added the accelerate option to handle accelerated s3 buckets
+
 ## 9.1.2-alpha.1
 
 ### Patch Changes
