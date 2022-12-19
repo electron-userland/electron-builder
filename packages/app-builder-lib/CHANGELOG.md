@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 24.0.0-alpha.8
+
+### Major Changes
+
+- [#7320](https://github.com/electron-userland/electron-builder/pull/7320) [`2852cb56`](https://github.com/electron-userland/electron-builder/commit/2852cb56a337709f8b7f0bcbf92b034ec8a07e7f) Thanks [@filfreire](https://github.com/filfreire)! - Add base option for snapcraft
+
+### Minor Changes
+
+- [#7314](https://github.com/electron-userland/electron-builder/pull/7314) [`cc1ddabd`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa) Thanks [@lbestftr](https://github.com/lbestftr)! - added the accelerate option to handle accelerated s3 buckets
+
+### Patch Changes
+
+- Updated dependencies [[`cc1ddabd`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa)]:
+  - builder-util-runtime@9.2.0-alpha.2
+  - builder-util@24.0.0-alpha.8
+  - electron-publish@24.0.0-alpha.8
+
 ## 24.0.0-alpha.7
 
 ### Minor Changes
