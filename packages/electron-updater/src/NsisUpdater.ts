@@ -102,8 +102,8 @@ export class NsisUpdater extends BaseUpdater {
       throw e
     }
     const result = verifySignatureByPublishName(tempUpdateFile, Array.isArray(publisherName) ? publisherName : [publisherName] )
+    this.logger?.info(result.message)
     if (result.signed){
-      this.logger?.info(result)
       return null
     }
     return result.message;
