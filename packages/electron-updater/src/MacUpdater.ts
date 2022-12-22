@@ -95,6 +95,15 @@ export class MacUpdater extends AppUpdater {
     const updateFileSize = zipFileInfo.info.size ?? (await stat(downloadedFile)).size
 
     const log = this._logger
+
+    try {
+      this.debug("Clearing quarantine bit")
+      const result = execFileSync("xattr", ["-r", "-d", "com.apple.quarantine", downloadedFile])
+      log.info(`Quarantine bit is cleared: ${result}`)
+    } catch (e) {
+      log.warn(`xattr shell command for clearing quarantine bit failed: ${e}`)
+    }
+
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
     this.server?.close()
