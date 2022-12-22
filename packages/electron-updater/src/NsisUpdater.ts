@@ -101,12 +101,12 @@ export class NsisUpdater extends BaseUpdater {
       }
       throw e
     }
-    const result = verifySignatureByPublishName(tempUpdateFile, Array.isArray(publisherName) ? publisherName : [publisherName] )
+    const result = verifySignatureByPublishName(tempUpdateFile, Array.isArray(publisherName) ? publisherName : [publisherName])
     this.logger?.info(result.message)
-    if (result.signed){
+    if (result.signed) {
       return null
     }
-    return result.message;
+    return result.message
   }
 
   protected doInstall(options: InstallOptions): boolean {
