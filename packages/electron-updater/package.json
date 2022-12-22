@@ -15,6 +15,9 @@
   "files": [
     "out"
   ],
+  "optionalDependencies": {
+    "win-verify-signature": "^1.1.2"
+  },
   "dependencies": {
     "@types/semver": "^7.3.13",
     "builder-util-runtime": "workspace:*",
@@ -24,7 +27,8 @@
     "lodash.escaperegexp": "^4.1.2",
     "lodash.isequal": "^4.5.0",
     "semver": "^7.3.8",
-    "typed-emitter": "^2.1.0"
+    "typed-emitter": "^2.1.0",
+    "win-verify-signature": "^1.1.2"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",

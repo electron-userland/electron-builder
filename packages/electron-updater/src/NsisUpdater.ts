@@ -10,9 +10,9 @@ import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
 import { blockmapFiles } from "./util"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
-import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 import { URL } from "url"
 import { gunzipSync } from "zlib"
+import { verifySignatureByPublishName } from "win-verify-signature"
 
 export class NsisUpdater extends BaseUpdater {
   /**
@@ -101,7 +101,12 @@ export class NsisUpdater extends BaseUpdater {
       }
       throw e
     }
-    return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
+    const result = verifySignatureByPublishName(tempUpdateFile, Array.isArray(publisherName) ? publisherName : [publisherName] )
+    if (result.signed){
+      this.logger?.info(result)
+      return null
+    }
+    return result.message;
   }
 
   protected doInstall(options: InstallOptions): boolean {
