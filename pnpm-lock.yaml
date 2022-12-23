@@ -386,7 +386,7 @@ importers:
       lodash.isequal: ^4.5.0
       semver: ^7.3.8
       typed-emitter: ^2.1.0
-      win-verify-signature: ^1.2.0
+      win-verify-signature: ^1.2.2
     dependencies:
       '@types/semver': 7.3.13
       builder-util-runtime: link:../builder-util-runtime
@@ -397,7 +397,7 @@ importers:
       lodash.isequal: 4.5.0
       semver: 7.3.8
       typed-emitter: 2.1.0
-      win-verify-signature: 1.2.0
+      win-verify-signature: 1.2.2
     devDependencies:
       '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
@@ -11242,8 +11242,8 @@ packages:
       string-width: 4.2.3
     dev: false
 
-  /win-verify-signature/1.2.0:
-    resolution: {integrity: sha512-bK9oRO9cabTLHexuVEjnbB9O31W4mNOeKnkCcnrbM+XIQn3WvUslVq2kF3KBxB0MaKclJARcpWYl7vz4EncScA==}
+  /win-verify-signature/1.2.2:
+    resolution: {integrity: sha512-HRKob2Q57dAzjmEmOvXxZI/01KO/9Mgdh8f+S4KJyJFrV7rJLzStd3lS45TEqGt2vmt6JFgvMMP4cxWY4Frc3Q==}
     requiresBuild: true
     dependencies:
       node-addon-api: 4.3.0
