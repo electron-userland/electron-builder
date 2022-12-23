@@ -25,7 +25,7 @@
     "lodash.isequal": "^4.5.0",
     "semver": "^7.3.8",
     "typed-emitter": "^2.1.0",
-    "win-verify-signature": "^1.2.2"
+    "win-verify-signature": "^1.2.4"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
