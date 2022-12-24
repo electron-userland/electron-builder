@@ -29,8 +29,8 @@ export class NsisUpdater extends BaseUpdater {
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
   /**
-   * The verifyUpdateCodeSignature. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
-   * Set it to `null` if you would like to disable a logging feature.
+   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust), [winston](https://github.com/winstonjs/winston) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    */
   get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
     return this._verifyUpdateCodeSignature
