@@ -138,3 +138,5 @@ export interface Logger {
 
   debug?(message: string): void
 }
+
+export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
