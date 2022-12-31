@@ -29,7 +29,7 @@ export class NsisUpdater extends BaseUpdater {
     verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
 
   /**
-   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust), [winston](https://github.com/winstonjs/winston) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
    * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
    */
   get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
