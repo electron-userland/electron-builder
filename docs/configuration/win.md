@@ -60,9 +60,7 @@ exports.default = async function(configuration) {
 
 #### How do use a custom verify function to enable nsis signature verification alternatives instead of powershell?
 
-You need to pass a custom verify function to the nsis updater. For example, if you want to use a native verify function, you can use [win-verify-signature](https://github.com/beyondkmp/win-verify-trust).
-
-The `verifyUpdateCodeSignature` interface
+Use the `verifyUpdateCodeSignature` interface:
 
 ```js
 /**
@@ -72,7 +70,8 @@ The `verifyUpdateCodeSignature` interface
 export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
 ```
 
-pass a custom verify function to the nsis updater
+Pass a custom verify function to the nsis updater. For example, if you want to use a native verify function, you can use [win-verify-signature](https://github.com/beyondkmp/win-verify-trust).
+
 
 ```js
 import { NsisUpdater } from "electron-updater"
