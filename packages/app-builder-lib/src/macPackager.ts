@@ -270,7 +270,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const signOptions: any = {
-      "identity-validation": false,
+      identityValidation: false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
@@ -294,7 +294,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
-      identity: identity,
+      identity: identity ? identity.name : undefined,
       type,
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion,
@@ -307,7 +307,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
       "gatekeeper-assess": options.gatekeeperAssess === true,
       // https://github.com/electron-userland/electron-builder/issues/1480
-      "strict-verify": options.strictVerify,
+      strictVerify: options.strictVerify,
       hardenedRuntime: isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false,
     }
 
