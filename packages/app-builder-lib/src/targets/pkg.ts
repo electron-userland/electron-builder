@@ -172,7 +172,7 @@ export class PkgTarget extends Target {
     const args = [
       "--root",
       rootPath,
-      // "--identifier", this.packager.appInfo.id,
+      "--identifier", this.packager.appInfo.id,
       "--component-plist",
       propertyListOutputFile,
     ]
