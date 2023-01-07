@@ -1,6 +1,6 @@
 {
   "name": "electron-forge-maker-nsis",
-  "version": "24.0.0-alpha.8",
+  "version": "24.0.0-alpha.9",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
