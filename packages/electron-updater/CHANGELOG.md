@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.0-alpha.7
+
+### Minor Changes
+
+- [#7337](https://github.com/electron-userland/electron-builder/pull/7337) [`9c0c4228`](https://github.com/electron-userland/electron-builder/commit/9c0c422834369f42b311b5d9ecd301f8b50bccfa) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: Provide a custom verify function interface to enable nsis signature verification alternatives instead of powershell
+
 ## 6.0.0-alpha.6
 
 ### Patch Changes

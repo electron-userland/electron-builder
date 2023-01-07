@@ -1,3 +1,20 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.8...v) (2023-01-07)
+
+
+### Bug Fixes
+
+* Ensure parent directories of symlinks are created ([#7327](https://github.com/electron-userland/electron-builder/issues/7327)) ([973a004](https://github.com/electron-userland/electron-builder/commit/973a0048b46b8367864241a903453f927c158304))
+* missing html extension for multi language license files in nsis target ([#7339](https://github.com/electron-userland/electron-builder/issues/7339)) ([8f94978](https://github.com/electron-userland/electron-builder/commit/8f94978c41d63e9fb4aa70a1df67f25804fdaf84))
+* re-add `--identifier` to mac pkg build to address issue [#7348](https://github.com/electron-userland/electron-builder/issues/7348) ([#7352](https://github.com/electron-userland/electron-builder/issues/7352)) ([c08db0a](https://github.com/electron-userland/electron-builder/commit/c08db0a92b5e251229a424c1c00559086d860dde))
+* Update MacOS signOptions on macPackager [#7317](https://github.com/electron-userland/electron-builder/issues/7317) ([#7351](https://github.com/electron-userland/electron-builder/issues/7351)) ([1e8dad8](https://github.com/electron-userland/electron-builder/commit/1e8dad8bc58f53780c9fac3b0c48e248a8b5467c))
+
+
+### Features
+
+* Provide a custom verify function interface in NsisUpdater for native verification of nsis signatures ([#7337](https://github.com/electron-userland/electron-builder/issues/7337)) ([9c0c422](https://github.com/electron-userland/electron-builder/commit/9c0c422834369f42b311b5d9ecd301f8b50bccfa))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.7...v) (2022-12-19)
 
 
