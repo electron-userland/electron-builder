@@ -230,11 +230,6 @@ export interface NotarizeOptions {
    * The team ID you want to notarize under. Only needed if using `notarytool`
    */
   readonly teamId?: string | null
-
-  /**
-   * Skip spctl verification when notarizing. Needed in some edge-cases when running electron-builder in CI
-   */
-  readonly skipVerification?: boolean | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

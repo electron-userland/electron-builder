@@ -2,4 +2,4 @@
 "app-builder-lib": major
 ---
 
-Add skipVerification flag in Mac's notarize options
+Remove spctl check from Mac notarization step
