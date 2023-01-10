@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, spawn } from "builder-util"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
 import { signAsync } from "@electron/osx-sign"
 import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
@@ -488,8 +488,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     const options = this.generateOptions(appPath, appleId, appleIdPassword)
     await notarize(options)
-    // Verify
-    await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", `"${appPath}"`])
     log.info(null, "notarization successful")
   }
 
