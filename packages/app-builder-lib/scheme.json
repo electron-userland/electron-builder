@@ -3716,6 +3716,13 @@
             "string"
           ]
         },
+        "skipVerification": {
+          "description": "Skip spctl verification when notarizing. Needed in some edge-cases when running electron-builder in CI",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "teamId": {
           "description": "The team ID you want to notarize under. Only needed if using `notarytool`",
           "type": [

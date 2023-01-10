@@ -489,7 +489,11 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const options = this.generateOptions(appPath, appleId, appleIdPassword)
     await notarize(options)
     // Verify
-    await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", `"${appPath}"`])
+    if (typeof notarizeOptions === "object" && notarizeOptions?.skipVerification) {
+      log.info({ reason: "`skipVerification` is explicitly set to true" }, "skipped spctl verification")
+    } else {
+      await spawn("spctl", ["-a", "-t", "open", "--context", "context:primary-signature", "-v", `"${appPath}"`])
+    }
     log.info(null, "notarization successful")
   }
 
