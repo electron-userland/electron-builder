@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.0.0-alpha.10
+
+### Major Changes
+
+- [#7361](https://github.com/electron-userland/electron-builder/pull/7361) [`f9f23bef`](https://github.com/electron-userland/electron-builder/commit/f9f23bef64efd429f6dfd1ec81f2d73927f63a8e) Thanks [@filfreire](https://github.com/filfreire)! - Remove spctl check from Mac notarization step
+
 ## 24.0.0-alpha.9
 
 ### Minor Changes
