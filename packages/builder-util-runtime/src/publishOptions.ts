@@ -208,8 +208,8 @@ export interface KeygenOptions extends PublishConfiguration {
  * 
  * For converting an app password to a usable token, you can utilize this
 ```typescript
-convertAppPassword(owner: string, token: string) {
-  const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+convertAppPassword(owner: string, appPassword: string) {
+  const base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString("base64")
   return `Basic ${base64encodedData}`
 }
 ```
@@ -226,7 +226,7 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The access token to support auto-update from private bitbucket repositories.
+   * The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.
    */
   readonly token?: string | null
 

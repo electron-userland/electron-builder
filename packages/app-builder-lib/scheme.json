@@ -334,7 +334,7 @@
     },
     "BitbucketOptions": {
       "additionalProperties": false,
-      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, token: string) {\nconst base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
+      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, appPassword: string) {\nconst base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
       "properties": {
         "channel": {
           "default": "latest",
@@ -390,7 +390,7 @@
           ]
         },
         "token": {
-          "description": "The access token to support auto-update from private bitbucket repositories.",
+          "description": "The app password (account>>settings>app-passwords) to support auto-update from private bitbucket repositories.",
           "type": [
             "null",
             "string"
