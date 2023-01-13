@@ -4874,6 +4874,10 @@
             "null",
             "string"
           ]
+        },
+        "vendor": {
+          "description": "Vendor-specific informaton",
+          "type": "object"
         }
       },
       "type": "object"
