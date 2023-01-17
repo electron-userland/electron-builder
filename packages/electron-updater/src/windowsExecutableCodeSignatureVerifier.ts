@@ -7,7 +7,7 @@ import { Logger } from "./main"
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
-  return new Promise<string | null>(resolve => {
+  return new Promise<string | null>((resolve, reject) => {
     // Escape quotes and backticks in filenames to prevent user from breaking the
     // arguments and perform a remote command injection.
     //
@@ -40,7 +40,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
       (error, stdout, stderr) => {
         try {
           if (error != null || stderr) {
-            handleError(logger, error, stderr)
+            handleError(logger, error, stderr, reject)
             resolve(null)
             return
           }
@@ -72,7 +72,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
           resolve(result)
         } catch (e: any) {
-          handleError(logger, e, null)
+          handleError(logger, e, null, reject)
           resolve(null)
           return
         }
@@ -99,7 +99,7 @@ function parseOut(out: string): any {
   return data
 }
 
-function handleError(logger: Logger, error: Error | null, stderr: string | null): void {
+function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): void {
   if (isOldWin6()) {
     logger.warn(
       `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
@@ -117,11 +117,11 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null)
   }
 
   if (error != null) {
-    throw error
+    reject(error)
   }
 
   if (stderr) {
-    throw new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`)
+    reject(new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`))
   }
 }
 
