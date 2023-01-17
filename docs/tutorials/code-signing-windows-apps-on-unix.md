@@ -32,7 +32,7 @@ URLs:
 
 Full command for signing:
 ```
-java -jar jsign-2.1.jar --keystore hardwareToken.cfg --storepass "your password here" --storetype PKCS11 --tsaurl http://timestamp.digicert.com --alias /link/to/cert.pem
+java -jar jsign-2.1.jar --keystore hardwareToken.cfg --storepass "your password here" --storetype PKCS11 --tsaurl http://timestamp.digicert.com --alias /link/to/cert.pem /link/to/app.exe
 ```
 
 ## Signing Windows app on Mac using osslsigncode
@@ -123,7 +123,8 @@ exports.default = async function(configuration) {
   const TOKEN_PASSWORD = process.env.WINDOWS_SIGN_TOKEN_PASSWORD;
 
   require("child_process").execSync(
-    `your command here ${CERTIFICATE_NAME} ${TOKEN_PASSWORD}`,
+    // your commande here ! For exemple and with JSign :
+    `java -jar jsign-2.1.jar --keystore hardwareToken.cfg --storepass "${TOKEN_PASSWORD}" --storetype PKCS11 --tsaurl http://timestamp.digicert.com --alias "${CERTIFICATE_NAME}" "${configuration.path}"`,
     {
       stdio: "inherit"
     }
