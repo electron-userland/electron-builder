@@ -147,7 +147,7 @@ export interface ReleaseInfo {
   /**
    * Vendor specific information.
    */
-  vendor?: Record<string, unknown>
+  vendor?: Record<string, unknown> | null
 }
 
 /**
