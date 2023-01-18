@@ -181,7 +181,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch)}`)
+      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
       if (prepackaged == null) {
         await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
         await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, arch)
