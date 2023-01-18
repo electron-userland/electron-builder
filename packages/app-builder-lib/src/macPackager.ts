@@ -204,7 +204,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
     const qualifier = options.identity
 
-    if (!isMas && qualifier === null) {
+    if (qualifier === null) {
       if (this.forceCodeSigning) {
         throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
