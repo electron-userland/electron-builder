@@ -71,6 +71,10 @@ export default class SnapTarget extends Target {
     }
     if (options.base != null) {
       snap.base = options.base
+      // from core22 onwards adapter is legacy
+      if (Number(snap.base.split("core")[1]) >= 22) {
+        delete appDescriptor.adapter
+      }
     }
     if (options.grade != null) {
       snap.grade = options.grade
