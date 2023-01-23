@@ -297,6 +297,39 @@ test.ifDevOrLinuxCi(
 )
 
 test.ifDevOrLinuxCi(
+  "default base",
+  app({
+    targets: snapTarget,
+    config: {
+      productName: "Sep",
+    },
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.base).toBe("core18")
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "base option",
+  app({
+    targets: snapTarget,
+    config: {
+      productName: "Sep",
+      snap: {
+        base: "core22",
+      },
+    },
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.base).toBe("core22")
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
   "use template app",
   app({
     targets: snapTarget,

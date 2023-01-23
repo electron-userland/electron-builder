@@ -20,6 +20,7 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
+import { notarize, NotarizeOptions } from "@electron/notarize"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -180,7 +181,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         })
       }
 
-      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch)}`)
+      const targetOutDir = path.join(outDir, `${targetName}${getArchSuffix(arch, this.platformSpecificBuildOptions.defaultArch)}`)
       if (prepackaged == null) {
         await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
         await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions, arch)
@@ -203,7 +204,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
     const qualifier = options.identity
 
-    if (!isMas && qualifier === null) {
+    if (qualifier === null) {
       if (this.forceCodeSigning) {
         throw new InvalidConfigurationError("identity explicitly is set to null, but forceCodeSigning is set to true")
       }
@@ -269,7 +270,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     const signOptions: any = {
-      "identity-validation": false,
+      identityValidation: false,
       // https://github.com/electron-userland/electron-builder/issues/1699
       // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
       ignore: (file: string) => {
@@ -293,7 +294,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
-      identity: identity,
+      identity: identity ? identity.name : undefined,
       type,
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion,
@@ -306,7 +307,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       // will fail on 10.14.5+ because a signed but unnotarized app is also rejected.
       "gatekeeper-assess": options.gatekeeperAssess === true,
       // https://github.com/electron-userland/electron-builder/issues/1480
-      "strict-verify": options.strictVerify,
+      strictVerify: options.strictVerify,
       hardenedRuntime: isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false,
     }
 
@@ -337,6 +338,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
     }
 
+    await this.notarizeIfProvided(appPath)
     return true
   }
 
@@ -445,9 +447,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
     const appFileName = `${this.appInfo.productFilename}.app`
 
-    await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
+    await BluebirdPromise.map(readdir(packContext.appOutDir), async (file: string): Promise<any> => {
       if (file === appFileName) {
-        return this.sign(path.join(packContext.appOutDir, file), null, null, null)
+        const appPath = path.join(packContext.appOutDir, file)
+        await this.sign(appPath, null, null, null)
       }
       return null
     })
@@ -464,6 +467,54 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         return null
       }
     })
+  }
+
+  private async notarizeIfProvided(appPath: string) {
+    const notarizeOptions = this.platformSpecificBuildOptions.notarize
+    if (notarizeOptions === false) {
+      log.info({ reason: "`notarizeOptions` is explicitly set to false" }, "skipped macOS notarization")
+      return
+    }
+    const appleId = process.env.APPLE_ID
+    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    if (!appleId && !appleIdPassword) {
+      // if no credentials provided, skip silently
+      return
+    }
+    if (!appleId) {
+      throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
+    }
+    if (!appleIdPassword) {
+      throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
+    }
+    const options = this.generateOptions(appPath, appleId, appleIdPassword)
+    await notarize(options)
+    log.info(null, "notarization successful")
+  }
+
+  private generateOptions(appPath: string, appleId: string, appleIdPassword: string): NotarizeOptions {
+    const baseOptions = { appPath, appleId, appleIdPassword }
+    const options = this.platformSpecificBuildOptions.notarize
+    if (typeof options === "boolean") {
+      return {
+        ...baseOptions,
+        tool: "legacy",
+        appBundleId: this.appInfo.id,
+      }
+    }
+    if (options?.teamId) {
+      return {
+        ...baseOptions,
+        tool: "notarytool",
+        teamId: options.teamId,
+      }
+    }
+    return {
+      ...baseOptions,
+      tool: "legacy",
+      appBundleId: options?.appBundleId || this.appInfo.id,
+      ascProvider: options?.ascProvider || undefined,
+    }
   }
 }
 

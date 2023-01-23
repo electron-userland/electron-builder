@@ -169,13 +169,7 @@ export class PkgTarget extends Target {
     }
 
     // now build the package
-    const args = [
-      "--root",
-      rootPath,
-      // "--identifier", this.packager.appInfo.id,
-      "--component-plist",
-      propertyListOutputFile,
-    ]
+    const args = ["--root", rootPath, "--identifier", this.packager.appInfo.id, "--component-plist", propertyListOutputFile]
 
     use(this.options.installLocation || "/Applications", it => args.push("--install-location", it))
     if (options.scripts != null) {

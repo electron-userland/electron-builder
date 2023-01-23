@@ -138,3 +138,8 @@ export interface Logger {
 
   debug?(message: string): void
 }
+
+// return null if verify signature succeed
+// return error message if verify signature failed
+
+export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>

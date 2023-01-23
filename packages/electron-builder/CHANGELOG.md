@@ -1,5 +1,39 @@
 # electron-builder
 
+## 24.0.0-alpha.10
+
+### Patch Changes
+
+- Updated dependencies [[`f9f23bef`](https://github.com/electron-userland/electron-builder/commit/f9f23bef64efd429f6dfd1ec81f2d73927f63a8e)]:
+  - app-builder-lib@24.0.0-alpha.10
+  - dmg-builder@24.0.0-alpha.10
+
+## 24.0.0-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [[`1e8dad8b`](https://github.com/electron-userland/electron-builder/commit/1e8dad8bc58f53780c9fac3b0c48e248a8b5467c), [`8f94978c`](https://github.com/electron-userland/electron-builder/commit/8f94978c41d63e9fb4aa70a1df67f25804fdaf84), [`973a0048`](https://github.com/electron-userland/electron-builder/commit/973a0048b46b8367864241a903453f927c158304), [`c08db0a9`](https://github.com/electron-userland/electron-builder/commit/c08db0a92b5e251229a424c1c00559086d860dde)]:
+  - app-builder-lib@24.0.0-alpha.9
+  - dmg-builder@24.0.0-alpha.9
+
+## 24.0.0-alpha.8
+
+### Patch Changes
+
+- Updated dependencies [[`cc1ddabd`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa), [`2852cb56`](https://github.com/electron-userland/electron-builder/commit/2852cb56a337709f8b7f0bcbf92b034ec8a07e7f)]:
+  - app-builder-lib@24.0.0-alpha.8
+  - builder-util-runtime@9.2.0-alpha.2
+  - dmg-builder@24.0.0-alpha.8
+  - builder-util@24.0.0-alpha.8
+
+## 24.0.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies [[`00d0dbc2`](https://github.com/electron-userland/electron-builder/commit/00d0dbc2d74fbac3e9ce7a046427c1e1d9a11301)]:
+  - app-builder-lib@24.0.0-alpha.7
+  - dmg-builder@24.0.0-alpha.7
+
 ## 24.0.0-alpha.6
 
 ### Patch Changes

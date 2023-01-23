@@ -2,7 +2,8 @@ import BluebirdPromise from "bluebird-lst"
 import { AsyncTaskManager, log } from "builder-util"
 import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
 import { Stats } from "fs"
-import { mkdir, readlink, symlink } from "fs/promises"
+import { mkdir, readlink } from "fs/promises"
+import { ensureSymlink } from "fs-extra"
 import * as path from "path"
 import { isLibOrExe } from "../asar/unpackDetector"
 import { Platform } from "../core"
@@ -82,7 +83,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager,
     await taskManager.awaitTasks()
   }
   if (links.length > 0) {
-    await BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY)
+    await BluebirdPromise.map(links, it => ensureSymlink(it.link, it.file), CONCURRENCY)
   }
 }
 

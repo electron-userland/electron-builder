@@ -6,7 +6,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, verifyUpdateCodeSignature } from "./main"
 import { blockmapFiles } from "./util"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
@@ -23,6 +23,23 @@ export class NsisUpdater extends BaseUpdater {
 
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
+  }
+
+  protected _verifyUpdateCodeSignature: verifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+    verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+
+  /**
+   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
+   */
+  get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
+    return this._verifyUpdateCodeSignature
+  }
+
+  set verifyUpdateCodeSignature(value: verifyUpdateCodeSignature) {
+    if (value) {
+      this._verifyUpdateCodeSignature = value
+    }
   }
 
   /*** @private */
@@ -101,7 +118,7 @@ export class NsisUpdater extends BaseUpdater {
       }
       throw e
     }
-    return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
+    return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
   }
 
   protected doInstall(options: InstallOptions): boolean {

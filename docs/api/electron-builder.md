@@ -1863,6 +1863,7 @@ This is different from the normal quit event sequence.</p>
 <strong>Properties</strong></p>
 <ul>
 <li><code id="NsisUpdater-installDirectory">installDirectory</code> String - Specify custom install directory path</li>
+<li><strong><code id="NsisUpdater-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code></strong> module:electron-updater.__type - The verifyUpdateCodeSignature. You can pass <a href="https://github.com/beyondkmp/win-verify-trust">win-verify-signature</a> or another custom verify function: <code> (publisherName: string[], path: string) =&gt; Promise&lt;string | null&gt;</code>. The default verify function uses <a href="https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts">windowsExecutableCodeSignatureVerifier</a></li>
 </ul>
 <p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>

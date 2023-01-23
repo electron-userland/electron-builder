@@ -45,7 +45,7 @@ export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<
   return getLicenseAssets(
     (await packager.resourceList).filter(it => {
       const name = it.toLowerCase()
-      return (name.startsWith("license_") || name.startsWith("eula_")) && (name.endsWith(".rtf") || name.endsWith(".txt"))
+      return (name.startsWith("license_") || name.startsWith("eula_")) && (name.endsWith(".rtf") || name.endsWith(".txt") || name.endsWith(".html"))
     }),
     packager
   )
