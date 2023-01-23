@@ -4874,6 +4874,17 @@
             "null",
             "string"
           ]
+        },
+        "vendor": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Vendor specific information."
         }
       },
       "type": "object"
