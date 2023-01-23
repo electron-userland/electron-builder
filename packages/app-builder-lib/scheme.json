@@ -390,7 +390,7 @@
           ]
         },
         "token": {
-          "description": "The app password (account>>settings>app-passwords) to support auto-update from private bitbucket repositories.",
+          "description": "The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.",
           "type": [
             "null",
             "string"
