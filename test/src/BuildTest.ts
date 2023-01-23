@@ -256,7 +256,8 @@ test.ifLinuxOrDevMac("afterSign", () => {
     },
     {
       packed: async () => {
-        expect(called).toEqual(2)
+        // afterSign is only called when an app is actually signed and ignored otherwise.
+        expect(called).toEqual(1)
       },
     }
   )

@@ -329,10 +329,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       packager: this,
       electronPlatformName: platformName,
     }
-    await this.signApp(packContext, isAsar)
-    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
-    if (afterSign != null) {
-      await Promise.resolve(afterSign(packContext))
+    const didSign = await this.signApp(packContext, isAsar)
+    if (didSign) {
+      const afterSign = resolveFunction(this.config.afterSign, "afterSign")
+      if (afterSign != null) {
+        await Promise.resolve(afterSign(packContext))
+      }
     }
   }
 
@@ -426,7 +428,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
-    return Promise.resolve()
+    return Promise.resolve(true)
   }
 
   getIconPath(): Promise<string | null> {

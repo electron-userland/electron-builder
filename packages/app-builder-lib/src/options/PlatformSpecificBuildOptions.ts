@@ -143,6 +143,11 @@ export interface ReleaseInfo {
    * The release date.
    */
   releaseDate?: string
+
+  /**
+   * Vendor specific information.
+   */
+  vendor?: Record<string, unknown> | null
 }
 
 /**

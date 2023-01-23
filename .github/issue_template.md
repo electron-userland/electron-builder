@@ -1,6 +1,6 @@
 <!--
 issue_labeler_regex_version=0
---!>
+-->
 
 <!-- Which version of electron-builder are you using? -->
 <!-- Please always try to use latest version before reporting any issue. -->
