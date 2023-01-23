@@ -4876,8 +4876,15 @@
           ]
         },
         "vendor": {
-          "description": "Vendor-specific informaton",
-          "type": "object"
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Vendor specific information."
         }
       },
       "type": "object"
