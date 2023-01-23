@@ -201,6 +201,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
+    // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
+    delete process.env.GYP_MSVS_VERSION
+
     const beforePack = resolveFunction(this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
