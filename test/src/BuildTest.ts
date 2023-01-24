@@ -241,12 +241,12 @@ test.ifLinuxOrDevMac("afterPack", () => {
   )
 })
 
-test.ifLinuxOrDevMac("afterSign", () => {
+test.ifWindows("afterSign", () => {
   let called = 0
   return assertPack(
     "test-app-one",
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
+      targets: createTargets([Platform.LINUX, Platform.WINDOWS], DIR_TARGET),
       config: {
         afterSign: () => {
           called++

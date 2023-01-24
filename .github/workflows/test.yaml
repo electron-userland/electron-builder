@@ -100,7 +100,7 @@ jobs:
       matrix:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v3

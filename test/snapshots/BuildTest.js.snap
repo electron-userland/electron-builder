@@ -10,7 +10,7 @@ Object {
 exports[`afterSign 1`] = `
 Object {
   "linux": Array [],
-  "mac": Array [],
+  "win": Array [],
 }
 `;
 

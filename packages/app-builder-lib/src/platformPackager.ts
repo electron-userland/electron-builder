@@ -330,10 +330,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
     const didSign = await this.signApp(packContext, isAsar)
-    if (didSign) {
-      const afterSign = resolveFunction(this.config.afterSign, "afterSign")
-      if (afterSign != null) {
+    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
+    if (afterSign != null) {
+      if (didSign) {
         await Promise.resolve(afterSign(packContext))
+      } else {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
       }
     }
   }
@@ -428,7 +430,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
-    return Promise.resolve(true)
+    return Promise.resolve(false)
   }
 
   getIconPath(): Promise<string | null> {
