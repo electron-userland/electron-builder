@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
+          - ArtifactPublisherTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
@@ -51,7 +51,6 @@ jobs:
       - name: Run tests in docker image
         run: pnpm test-linux
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
   
@@ -70,7 +69,8 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,protonTest,filesTest,macPackagerTest
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          TEST_FILES: BuildTest,masTest,dmgTest,protonTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
   
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
