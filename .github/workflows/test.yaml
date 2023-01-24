@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
@@ -69,8 +69,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          TEST_FILES: BuildTest,masTest,dmgTest,protonTest,filesTest,macPackagerTest
+          TEST_FILES: masTest,dmgTest,protonTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
   
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
@@ -101,7 +100,7 @@ jobs:
       matrix:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@v3
