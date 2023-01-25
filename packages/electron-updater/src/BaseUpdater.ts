@@ -119,7 +119,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
-      stdio: "pipe",
+      stdio: "inherit",
       env: { ...process.env, ...env },
       encoding: "utf-8",
       shell: true,
@@ -139,7 +139,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return new Promise<boolean>((resolve, reject) => {
       try {
         const p = spawn(cmd, args, {
-          stdio: "pipe",
+          stdio: "inherit",
           env: { ...process.env, ...env },
           detached: true,
         })
