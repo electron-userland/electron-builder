@@ -1,0 +1,9 @@
+[Settings]
+  ID = "e6f8cb2b-77d6-4681-bf16-7f120ea5c4e2"
+
+[Build]
+  Publish = ""
+  Functions = ""
+
+[build.environment]
+  NPM_FLAGS = "--version"

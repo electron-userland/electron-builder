@@ -1,0 +1,20 @@
+{
+  "name": "electron-forge-maker-nsis",
+  "version": "24.0.0-alpha.11",
+  "main": "main.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-forge-maker-nsis"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "*.js"
+  ],
+  "dependencies": {
+    "app-builder-lib": "workspace:*"
+  }
+}

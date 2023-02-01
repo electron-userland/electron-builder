@@ -1,0 +1,33 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "rootDir": "src"
+  },
+  "references": [
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    },
+    {
+      "path": "../app-builder-lib"
+    },
+    {
+      "path": "../dmg-builder"
+    }
+  ],
+  "jsdoc": {
+    "out": "../../scripts/jsdoc/out/builder",
+    "examples": "../../scripts/jsdoc/examples",
+    "access": "public"
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../typings/*.d.ts"
+  ],
+  "exclude": [
+    "../../typings/electron.d.ts"
+  ]
+}

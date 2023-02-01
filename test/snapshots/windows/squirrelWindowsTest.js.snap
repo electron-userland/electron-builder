@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Squirrel.Windows 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+  ],
+}
+`;
+
+exports[`Squirrel.Windows 2`] = `
+Array [
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/Update.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/app.asar",
+  "lib/net45/swiftshader/libEGL.dll",
+  "lib/net45/swiftshader/libGLESv2.dll",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/.rels",
+]
+`;
+
+exports[`artifactName 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "RELEASES",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test TestApp foo.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test TestApp foo.zip",
+      "safeArtifactName": "Test-TestApp-foo.zip",
+    },
+  ],
+}
+`;
+
+exports[`artifactName 2`] = `
+Array [
+  "lib/net45/chrome_100_percent.pak",
+  "lib/net45/chrome_200_percent.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/Test App ßW.exe",
+  "lib/net45/Test App ßW_ExecutionStub.exe",
+  "lib/net45/Update.exe",
+  "lib/net45/v8_context_snapshot.bin",
+  "lib/net45/vk_swiftshader.dll",
+  "lib/net45/vk_swiftshader_icd.json",
+  "lib/net45/vulkan-1.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/app.asar",
+  "lib/net45/swiftshader/libEGL.dll",
+  "lib/net45/swiftshader/libGLESv2.dll",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/.rels",
+]
+`;

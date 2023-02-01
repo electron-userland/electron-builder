@@ -1,0 +1,23 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "rootDir": "src"
+  },
+  "references": [
+    {
+      "path": "../builder-util"
+    },
+    {
+      "path": "../builder-util-runtime"
+    }
+  ],
+  "jsdoc": {
+    "out": "../../scripts/jsdoc/out/publisher",
+    "access": "public"
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../typings/mime.d.ts"
+  ]
+}

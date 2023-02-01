@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`repo slug from APPVEYOR 1`] = `
+Object {
+  "project": "travis-build",
+  "user": "travis-ci",
+}
+`;
+
+exports[`repo slug from TRAVIS_REPO_SLUG 1`] = `
+Object {
+  "project": "travis-build",
+  "user": "travis-ci",
+}
+`;

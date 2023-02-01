@@ -1,0 +1,53 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`2 ignore 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`copied all submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`copied no submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`copied select submodule node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore build resources 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore known ignored files 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore known ignored files 2`] = `
+Array [
+  "index.html",
+  "index.js",
+  "package.json",
+  "app/readme.md",
+  "app/package.json/readme.md",
+]
+`;
+
+exports[`ignore node_modules dev dep 1`] = `
+Object {
+  "linux": Array [],
+}
+`;

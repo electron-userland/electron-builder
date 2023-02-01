@@ -1,0 +1,237 @@
+# one-click installer messages, see assistedMessages.yml for assisted installer messages
+# en must be first (https://github.com/electron-userland/electron-builder/issues/2517)
+win7Required:
+  en: Windows 7 and above is required
+  de: Windows 7 oder höher wird vorausgesetzt
+  it: È necessario disporre del sistema operativo Windows 7 e successivi
+  fr: Windows 7 (ou une version ultérieure) est requis
+  ja: Windows 7 以降が必要です
+  ko: Windows 7 이상이 필요합니다
+  ru: Требуется Windows 7 и выше
+  sk: Iba Windows 7 a vyššie je podporovaný
+  cs: Jsou podporovány pouze Windows 7 a vyšší
+  hu: Windows 7 vagy újabb szükséges
+  pl: Windows 7 lub nowszy jest wymagany
+  pt_BR: Requer Windows 7 ou superior
+  zh_CN: 需要 Windows 7 或以上系统
+  zh_TW: 需要 Windows 7 或更新的系統
+  tr_TR: Windows 7 ve üstü gereklidir
+  sv_SE: Windows 7 eller högre krävs
+  no: Windows 7 og over er nødvendig
+  nl_NL: Windows 7 en hoger is vereist
+  fi: Windows 7 tai uudempi vaaditaan
+  es: Se necesita Windows 7 o una versión superior.
+  da: Windows 7 og højere er nødvendig
+x64WinRequired:
+  en: 64-bit Windows is required
+  de: 64-Bit-Windows wird vorausgesetzt
+  it: È necessario disporre di un sistema operativo Windows a 64 bit
+  fr: Windows 64 bits est requis
+  ja: 64 ビット バージョンの Windows が必要です
+  ko: 64 비트 버전의 Windows가 필요합니다
+  ru: Требуется Windows 64-bit
+  sk: Potrebujete 64-bit Windows
+  cs: Potřebujete 64-bit Windows
+  hu: 64-bit Windows szükséges
+  pl: Windows 64-bitowy jest wymagany
+  pt_BR: Requer Windows 64 bits
+  zh_CN: 需要 64 位 Windows 系统
+  zh_TW: 需要 64 位元 Windows 系統
+  tr_TR: 64 bit Windows gerekli
+  sv_SE: 64-bitars Windows krävs
+  no: 64-biters Windows er nødvendig
+  nl_NL: 64-bit Windows is vereist
+  fi: 64-bittinen Windows on pakollinen
+  es: Windows de 64 bits es requerido
+  da: 64-bit Windows er påkrævet
+appRunning:
+  en: "${PRODUCT_NAME} is running.\nClick OK to close it.\nIf it doesn't close, try closing it manually."
+  ar: "‫إن ${PRODUCT_NAME} يعمل حاليا.\n‫يُرجى الضغط على « موافق » لغلقه.\n‫إذا لم يُغلَق، يُرجى محاولة إغلاقه يدويا."
+  az: "${PRODUCT_NAME} işləyir.\nBağlamaq üçün \"Oldu\"ya klikləyin.\nƏgər bağlanmasa, əllə bağlamağa çalışın."
+  ca: "${PRODUCT_NAME}s'executa.\nFeu clic a D'acord per tancar-la.\nSi no es tanca, proveu de tancar-la manualment."
+  cs: "${PRODUCT_NAME} běží.\nPotvrďte zavření stisknutím OK.\nPokud se aplikace nezavře sama, zavřete ji ručně."
+  cy: "Mae ${PRODUCT_NAME} yn rhedeg.\nCliciwch Iawn i'w gau.\nOs na fydd yn cau, ceisiwch ei gau â llaw."
+  da: "${PRODUCT_NAME} kører.\nKlik OK for at lukke den.\nHvis den ikke lukker, kan du prøve at lukke den manuelt."
+  de: "${PRODUCT_NAME} wird gerade ausgeführt.\nKlicke auf »OK«, um es zu schließen.\nFalls es sich nicht schließen lässt, versuche es manuell zu schließen."
+  el: "Το ${PRODUCT_NAME} εκτελείται ήδη. \nΚάντε κλικ στο ΟΚ για κλείσιμο.\nΑν δεν κλείνει, δοκιμάστε να το κλείσετε εσείς."
+  eo: "${PRODUCT_NAME} funkcias.\nAlklaku Bone („OK“) por fermi ĝin.\nSe ĝi ne fermiĝas, provu fermi ĝin permane."
+  es: "${PRODUCT_NAME} está activa.\nHaz clic en Aceptar para cerrarla.\nSi no se cierra, inténtalo manualmente."
+  fi: "${PRODUCT_NAME} on käynnissä.\nValitse OK sulkeaksesi sen.\nJos se ei sulkeudu, yritä sulkea se manuaalisesti."
+  fr: "${PRODUCT_NAME} est en cours d’utilisation. \nCliquez sur «OK» pour fermer ce programme."
+  he: "${PRODUCT_NAME} רץ.\nלחץ בסדר כדי לסגור אותו.\nאם הוא לא נסגר, נסה לסגור אותו באופן ידני."
+  hu: "A ${PRODUCT_NAME} alkalmazás fut.\nKattints az OK gombra a bezárásához.\nHa így sem áll le, zárd be manuálisan."
+  it: "${PRODUCT_NAME} è in esecuzione.\nClicca su OK per chiuderla.\nSe non si chiude, prova a chiuderla manualmente."
+  ja: "${PRODUCT_NAME} が起動しています。\nOKをクリックして、閉じてください。\n閉じない場合は、手動で閉じてください。"
+  ko: "${PRODUCT_NAME}이(가) 실행 중입니다. \nOK을 클릭하면 종료됩니다."
+  lt: "${PRODUCT_NAME} vis dar veikia.\nSpustelėkite „Gerai“, kad ją užvertumėte.\nJeigu ji neužsiveria, pabandykite ją užverti rankiniu būdu."
+  nl_NL: "${PRODUCT_NAME} is nog actief.\nKlik op OK om de applicatie te sluiten.\nAls de applicatie vervolgens nog niet sluit, probeer dan om de applicatie zelf te sluiten."
+  no: "${PRODUCT_NAME} kjører. \nKlikk OK for å lukke det."
+  pl: "Aplikacja ${PRODUCT_NAME} jest uruchomiona.\nKliknij OK, aby ją zamknąć.\nJeśli nie zostanie zamknięta, spróbuj zamknąć ją ręcznie."
+  pt_BR: "${PRODUCT_NAME} está funcionando.\nClique no OK para fechar.\nSe não fechar, tente fechá-lo manualmente."
+  pt_PT: "${PRODUCT_NAME} está a correr.\nClique em OK para o encerrar.\nSe não encerrar, tente encerrá-lo manualmente."
+  ro: "${PRODUCT_NAME} este pornit.\nApasă OK pentru a-l opri.\nDacă nu se oprește, încearcă să-l oprești manual."
+  ru: "Приложение ${PRODUCT_NAME} запущено.\nНажмите «OK», чтобы закрыть его.\nЕсли оно не закрывается, попробуйте закрыть его вручную."
+  sk: "${PRODUCT_NAME} beží.\nKliknutím na tlačidlo OK ho zatvoríte.\nAk sa nezavrie, skúste ho zatvoriť ručne."
+  sl: "${PRODUCT_NAME} teče.\nKliknite OK za prekinitev.\nČe se ne zapre, ga poskusite zapreti ročno."
+  sq: "${PRODUCT_NAME} po xhiron.\nKlikoni mbi OK që të mbyllet.\nNëse s’mbyllet, provoni dorazi."
+  sr: "${PRODUCT_NAME} је у току.\nКликнути OK да би се затворило.\nАко се не затвори, покушајте да га ручно затворите."
+  sv_SE: "${PRODUCT_NAME} är igång.\nKlicka på OK för att stänga det.\nOm det inte stängs, försök att stänga det manuellt."
+  tr_TR: "${PRODUCT_NAME} çalışıyor.\nKapatmak için Tamam'ı tıklayın."
+  uk: "${PRODUCT_NAME} запущено.\nКлацніть ОК для завершення.\nЯкщо завершення не вдалось — спробуйте вручну."
+  zh_CN: "${PRODUCT_NAME} 正在运行.\n点击“确定”关闭."
+  zh_TW: "${PRODUCT_NAME} 正在執行。\n點擊 OK 關閉。\n如果無法關閉，試著手動關閉。"
+appCannotBeClosed:
+  en: "${PRODUCT_NAME} cannot be closed. \nPlease close it manually and click Retry to continue."
+  ar: "‫لم يتمكن من إغلاق ${PRODUCT_NAME} \nيُرجى إغلاقه يدويا ثم الضغط مرة أخرى على إعادة المحاولة للاستمرار.‏"
+  az: "${PRODUCT_NAME}, bağlanıla bilmir. \nZəhmət olmasa əllə bağlayın və davam etmək üçün \"Yenidən sına\"ya klikləyin."
+  af: "${PRODUCT_NAME} kan nie toegemaak word nie. \nMaak dit asb. handmatig toe en klik Probeer weer om voort te gaan."
+  bn: "${PRODUCT_NAME} বন্ধ করা যাবে না। \nঅনুগ্রহ করে ম্যানুয়ালি এটি বন্ধ করুন এবং চালিয়ে যেতে Retry এ ক্লিক করুন।"
+  ca: "No es pot tancar el ${PRODUCT_NAME}. \nTanqueu-lo manualment i cliqueu a tornar-ho a provar per continuar."
+  cs: "Aplikaci ${PRODUCT_NAME} se nepodařilo zavřít. \nZavřete ji ručně a poté klikněte na Opakovat pro pokračování."
+  cy: "Nid oes modd cau ${PRODUCT_NAME}. \nCaewch ef â llaw a chliciwch ar Ailgynnig i barhau."
+  da: "${PRODUCT_NAME} kan ikke afsluttes \nLuk den manuelt og klik Prøv igen for at fortsætte"
+  de: "${PRODUCT_NAME} kann nicht geschlossen werden. \nSchließ es bitte manuell und klicke auf »Wiederholen«, um fortzufahren."
+  eo: "${PRODUCT_NAME} ne povas esti fermita. \nFermu ĝin permane, kaj alklaku „Reprovi“ por daŭrigi."
+  el: "Το ${PRODUCT_NAME} δεν μπορεί να κλείσει. \nΠαρακαλώ κλείστο χειροκίνητα και πάτα Δοκιμή Ξανά για να συνεχίσεις."
+  es: "No se puede cerrar ${PRODUCT_NAME}. \nPor favor cierra la aplicación manualmente y haz clic en reintentar para continuar."
+  et: "${PRODUCT_NAME} ei saa sulgeda. \nPalun sulge see käsitsi ja klõpsa jätkamiseks \"Proovi uuesti\"."
+  fa: "سیگنال بسته نمی شود \nلطفاً آن را بصورت دستی ببندید و برای ادامه روی تلاش مجدد کلیک کنید"
+  fi: "${PRODUCT_NAME} ei voi sulkea. \nSulje se itse ja napsauta Yritä uudelleen jatkaaksesi."
+  fr: "${PRODUCT_NAME} ne peut pas être fermé. \nVeuillez la fermer manuellement et cliquez sur Réessayer pour continuer."
+  gd: "Cha b’ urrainn dhuinn ${PRODUCT_NAME} a dhùnadh. \nDùin a làimh e agus briog air “Feuch ris a-rithist” a leantainn air adhart."
+  he: "${PRODUCT_NAME} לא יכול להיסגר. \nאנא סגור אותו באופן ידני ולחץ על נסה שוב כדי להמשיך."
+  hi: "सिग्नल बंद नहीं किया जा सकता. \nकृपया इसे मैन्युअल रूप से बंद करें और जारी रखने के लिए रिट्राई पर क्लिक करें."
+  hu: "Nem sikerült bezárni a ${PRODUCT_NAME}t. \nZárd be kézzel, majd kattints az Újra gombra a folytatáshoz!"
+  id: "${PRODUCT_NAME} tidak dapat ditutup. \nMohon tutup secara manual dan klik Coba Lagi untuk melanjutkan."
+  is: "Ekki er hægt að loka ${PRODUCT_NAME}. \nLokaðu því handvirkt og ýttu á 'Reyna aftur' til að halda áfram."
+  it: "${PRODUCT_NAME} non può essere chiuso. \nPer favore, chiudilo manualmente e clicca su Riprova per continuare."
+  ja: "${PRODUCT_NAME}が終了できません。\n手動で閉じて、『再試行』をクリックしてください。"
+  lt: "Nepavyksta užverti ${PRODUCT_NAME}. \nPabandykite ją užverti rankiniu būdu ir norėdami tęsti spustelėkite „Bandyti dar kartą“."
+  mr: "${PRODUCT_NAME} बंद करता येत नाही. \nकृपया हाताने/मॅन्युअली बंद करा आणि पुढे चालू ठेवण्यासाठी पुन्हा प्रयत्न/रिट्राय वर क्लिक करा"
+  ms: "${PRODUCT_NAME} tidak boleh ditutup. \nSila tutup secara manual dan klik Cuba Semula untuk meneruskan."
+  nl_NL: "${PRODUCT_NAME} kan niet automatisch worden afgesloten. \nSluit zelf de ${PRODUCT_NAME} app en klik vervolgens op ‘Opnieuw proberen’."
+  nn: "Kan ikkje lukka ${PRODUCT_NAME}. \nPlease close it manually and click Retry to continue."
+  pl: "Nie można zamknąć ${PRODUCT_NAME}. \nZamknij aplikację i kliknij Ponów, aby kontynuować."
+  ps: "${PRODUCT_NAME} نشي تړل کېدای. \nد مهرباني له مخې په مانول ډول یې وتړئ او د ادامې لپاره پر بیا هڅې باندې کلیک وکړئ."
+  pt_BR: "Não é possível fechar o ${PRODUCT_NAME}. \nFeche a janela do ${PRODUCT_NAME} e clique em Repetir para continuar."
+  pt_PT: "Não é possível fechar o ${PRODUCT_NAME}. \nPor favor, feche-o manualmente e clique em ´Tentar novamente' para continuar."
+  ro: "${PRODUCT_NAME} nu poate fi închis \nVă rugăm închideți-l manual și apăsați Reîncercare pentru a continua."
+  ru: "Не удалось закрыть ${PRODUCT_NAME}. \nПожалуйста, закройте ${PRODUCT_NAME} вручную и нажмите «Повторить», чтобы продолжить."
+  sk: "${PRODUCT_NAME} nie je možné zatvoriť. \nZatvorte ho ručne a pokračujte kliknutím na položku Opakovať."
+  sl: "${PRODUCT_NAME} se ne more zapreti. \nPoskusite ga zapreti ročno in kliknite Ponovi za nadaljevanje."
+  sq: "${PRODUCT_NAME} s’mund të mbyllet. \nQë të vazhdohet, ju lutemi, mbylleni dorazi dhe klikoni mbi Riprovo."
+  sr: "${PRODUCT_NAME} не може да се затвори. \nЗатворите га ручно и кликните на Покушај да наставите."
+  sv: "${PRODUCT_NAME} går inte att stängas. \nVänligen stäng det manuellt och klicka på Försök igen för att fortsätta."
+  tr: "${PRODUCT_NAME} kapatılamaz. \nLütfen elle kapatın ve devam etmek için Tekrar'a tıklayın"
+  uk: "Неможливо закрити ${PRODUCT_NAME}. \nЗакрийте його вручну та натисніть Повторити, щоб продовжити."
+  vi: "${PRODUCT_NAME} không thể đóng \nVui lòng đóng nó theo cách thủ công và nhấp vào Thử lại để tiếp tục."
+  zh_CN: "${PRODUCT_NAME} 无法关闭。\n请手动关闭它，然后单击重试以继续。"
+  zh_TW: "${PRODUCT_NAME} 無法關閉。\n請手動關閉它，然後按一下重試以繼續。"
+installing:
+  en: Installing, please wait...
+  de: Installation läuft, bitte warten...
+  it: Attendere prego. Installazione in corso...
+  fr: En cours d’installation... Veuillez patienter s'il vous plaît.
+  ja: インストールしています。しばらくお待ちください...
+  ko: 설치하고 있습니다. 잠시 기다려주십시오...
+  ru: Установка, пожалуйста, подождите...
+  sk: Inštalujem, prosím počkajte...
+  cs: Instaluje se, prosím vyčkejte...
+  hu: Telepítés, kérem várjon...
+  pl: Zaczekaj na ukończenie instalacji...
+  pt_BR: Instalando, por favor aguarde...
+  zh_CN: 正在安装, 请稍候...
+  zh_TW: 正在安裝, 請稍候...
+  tr_TR: Yükleniyor, lütfen bekleyin...
+  sv_SE: Installerar, vänligen vänta...
+  no: Installerer, vennligst vent...
+  nl_NL: Installeren, even geduld...
+  fi: Asennetaan, odota...
+  es: Instalando, espera un momento...
+  da: Installerer, vent venligst...
+areYouSureToUninstall:
+  en: Are you sure you want to uninstall ${PRODUCT_NAME}?
+  de: Sind Sie sicher, dass Sie ${PRODUCT_NAME} deinstallieren möchten?
+  it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
+  fr: Etes-vous sûr(e) de vouloir désinstaller ${PRODUCT_NAME}?
+  ja: ${PRODUCT_NAME} をアンインストールしてもよろしいですか？
+  ko: ${PRODUCT_NAME}을(를) 제거 하시겠습니까?
+  ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
+  sk: Ste si istý že chcete odinštalovať ${PRODUCT_NAME}?
+  cs: Jste si jisti, že chcete odinstalovat ${PRODUCT_NAME}?
+  hu: Biztos benne, hogy szeretné eltávolítani a ${PRODUCT_NAME} alkalmazást?
+  pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
+  pt_BR: Tem certeza que deseja desinstalar ${PRODUCT_NAME}?
+  zh_CN: 确定卸载 ${PRODUCT_NAME} 吗？
+  zh_TW: 確定解除安裝 ${PRODUCT_NAME} 嗎？
+  tr_TR: ${PRODUCT_NAME} kaldırmak istediğinize Eminmisiniz?
+  sv_SE: Är du säker på att du vill avinstallera ${PRODUCT_NAME}?
+  no: Er du sikker på at du vil avinstallere ${PRODUCT_NAME}?
+  nl_NL: Weet je zeker dat je ${PRODUCT_NAME} wilt verwijderen?
+  fi: Oletko varma, että haluat poistaa ${PRODUCT_NAME} asennuksen?
+  es: ¿Seguro que quieres desinstalar ${PRODUCT_NAME}?
+  da: Er du sikker på, at du vil afinstallere ${PRODUCT_NAME}?
+decompressionFailed:
+  en: Failed to decompress files. Please try running the installer again.
+  ar: "‫لقد فشل وينْدوزْ في فك ضغط الملفات. يُرجى محاولة تشغيل أداة التثبيت مرة أخرى."
+  az: Faylların sıxışdırması açılmadı. Zəhmət olmasa quraşdırıcını yenidən işə salmağa çalışın.
+  ca: No s'han pogut descomprimir els fitxers. Si us plau, proveu d'executar l'instal·lador un altre cop.
+  cs: Nepodařilo se rozbalit soubory. Zkuste prosím instalátor spustit znovu.
+  cy: Wedi methu â datgywasgu ffeiliau. Ceisiwch redeg y gosodwr eto.
+  da: Det lykkedes ikke at udpakke filer. Prøv venligst at køre installationsprogrammet igen.
+  de: Die Dateien konnten nicht entpackt werden. Bitte versuche, das Installationsprogramm erneut auszuführen.
+  el: Αποτυχία αποσυμπίεσης των αρχείων. Παρακαλούμε ξαναπροσπαθήστε την εγκατάσταση.
+  eo: Maldensigo de dosieroj malsukcesis. Provu relanĉi la instalilon.
+  es: Fallo al descomprimir archivos. Inténtalo de nuevo más tarde.
+  fi: Tiedostojen purkaminen ei onnistunut. Yritä ajaa asennusohjelma uudelleen.
+  fr: Échec de décompression des fichiers. Veuillez réessayer d’exécuter l'installeur.
+  he: נכשל בחילוץ קבצים. אנא נסה להריץ את המתקין שוב.
+  hu: Kicsomagolási hiba. Kérlek futtasd a telepítőt újra!
+  it: Impossibile decomprimere i file. Per favore, prova ad eseguire di nuovo il programma di installazione.
+  ja: ファイルの解凍に失敗しました。もう一度インストーラーを実行してみてください。
+  lt: Nepavyko išglaudinti failų. Bandykite paleisti diegimo programą dar kartą.
+  nl_NL: Het decomprimeren van bestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
+  pl: Nie udało się rozpakować plików. Spróbuj ponownie uruchomić instalator.
+  pt_BR: Falha ao descompactar os arquivos. Por favor, tente iniciar o instalador novamente.
+  pt_PT: Falha ao descomprimir ficheiros. Por favor, experimente correr o instalador de novo.
+  ro: Fișierele nu au putut fi dezarhivate. Te rugăm să încerci din nou instalarea.
+  ru: Не удалось разархивировать файлы. Пожалуйста, попробуйте запустить установщик заново.
+  sk: Nepodarilo sa rozbaliť súbory. Skúste znova spustiť inštalačný program.
+  sl: Neuspešno razširjanje datotek. Poskusite ponovno zagnati inštalacijo.
+  sq: S’u arrit të çngjeshen kartela. Ju lutemi, provoni të xhironi sërish instaluesin.
+  sr: Декомпримовање датотека није успело. Покушајте поново да покренете инсталатер.
+  sv_SE: Det gick inte att dekomprimera filer. Försök att köra installationsprogrammet igen.
+  uk: Не вдалось розархівувати файли. Будь ласка, спробуйте запустити встановлювач знов.
+  zh_TW: 解壓縮檔案失敗。 請嘗試再次執行安裝程式。
+uninstallFailed:
+  en: Failed to uninstall old application files. Please try running the installer again.
+  ar: ‫لقد فشل إلغاء التثبيت ملفات التطبيق. يُرجى محاولة تشغيل أداة التثبيت مرة أخرى.
+  az: Köhnə tətbiq faylları silinmədi. Zəhmət olmasa quraşdırıcını yenidən işə salmağa çalışın.
+  ca: No s'han pogut desinstal·lar els fitxers d'aplicacions antics. Si us plau, proveu d'executar l'instal·lador un altre cop.
+  cs: Nepodařilo se odinstalovat staré soubory aplikace. Zkuste prosím instalátor spustit znovu.
+  cy: Wedi methu â dadosod hen ffeiliau rhaglen. Ceisiwch redeg y gosodwr eto.
+  da: Det lykkedes ikke at afinstallere gamle applikationsfiler. Prøv venligst at køre installationsprogrammet igen.
+  de: Die alten Anwendungsdateien konnten nicht deinstalliert werden. Bitte versuche, das Installationsprogramm erneut auszuführen.
+  el: Δεν ήταν δυνατή η απεγκατάσταση των παλιών αρχείων εφαρμογής. Ξαναπροσπαθήστε την απεγκατάσταση αργότερα.
+  eo: Malinstalo de malnovaj aplikaĵaj dosieroj malsukcesis. Provu relanĉi la instalilon.
+  es: Fallo al desinstalar archivos antiguos de la aplicación. Inténtalo de nuevo más tarde.
+  fi: Vanhojen sovellustiedostojen poisto epäonnistui. Yritä ajaa asennusohjelma uudelleen.
+  fr: Échec de désinstallation des anciens fichiers d'application . Veuillez réessayer d’exécuter l'installeur.
+  he: נכשל בהסרת קבצים של היישום הישן. אנא נסה להריץ את המתקין שוב.
+  hu: A régi alkalmazás állományait nem sikerült törölni. Kérlek futtasd a telepítőt újra!
+  it: Impossibile disinstallare i vecchi file dell'applicazione. Per favore, prova ad eseguire di nuovo il programma di installazione.
+  ja: 古いアプリケーションファイルのアンインストールに失敗しました。もう一度インストーラーを実行してみてください。
+  lt: Nepavyko pašalinti senos programos failų. Bandykite paleisti diegimo programą dar kartą.
+  nl: Het deïnstalleren van oude applicatiebestanden is mislukt. Voer het installatiebestand opnieuw uit om te proberen dit probleem te verhelpen.
+  pl: Nie udało się usunąć plików starej wersji aplikacji. Spróbuj ponownie uruchomić instalator.
+  pt_BR: Falha ao desinstalar os arquivos do aplicativo antigo. Por favor, tente iniciar o instalador novamente.
+  pt_PT: Falha ao desinstalar os ficheiros da aplicação antiga. Por favor, experimente correr novamente o instalador.
+  ro: Nu s-a putut dezinstala vechea aplicație. Te rugăm să încerci din nou instalarea.
+  ru: Не удалось удалить старые файлы приложения. Пожалуйста, попробуйте запустить установщик заново.
+  sk: Nepodarilo sa odinštalovať staré súbory aplikácie. Skúste znova spustiť inštalačný program.
+  sl: Neuspešno odnameščanje starih datotek. Poskusite ponovno zagnati inštalacijo.
+  sq: S’u arrit të çinstalohen kartela të vjetra aplikacioni. Ju lutemi, xhironi sërish instaluesin.
+  sr: Деинсталирање старих датотека апликације није успело. Покушајте поново да покренете инсталатер.
+  sv: Det gick inte att avinstallera gamla programfiler. Försök att köra installationsprogrammet igen.
+  uk: Не вдалось видалити старі файли застосунку. Будь ласка, спробуйте запустити встановлювач знов.
+  zh_TW: 無法俺安裝舊的應用程式檔案。 請嘗試再次執行安裝程式。

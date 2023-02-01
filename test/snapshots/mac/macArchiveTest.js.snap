@@ -1,0 +1,825 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`empty installLocation 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`empty installLocation 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`extraDistFiles 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`extraDistFiles 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`invalid target 1`] = `
+"Invalid configuration object. electron-builder <appVersion> has been initialized using a configuration object that does not match the API schema.
+ - configuration.mac should be one of these:
+   object { appId?, artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, compression?, cscInstallerKeyPassword?, cscInstallerLink?, cscKeyPassword?, cscLink?, darkModeSupport?, defaultArch?, detectUpdateChannel?, electronLanguages?, electronUpdaterCompatibility?, entitlements?, entitlementsInherit?, entitlementsLoginHelper?, executableName?, extendInfo?, extraDistFiles?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, gatekeeperAssess?, generateUpdatesFilesForAllChannels?, hardenedRuntime?, helperBundleId?, helperEHBundleId?, helperGPUBundleId?, helperNPBundleId?, helperPluginBundleId?, helperRendererBundleId?, icon?, identity?, minimumSystemVersion?, protocols?, provisioningProfile?, publish?, releaseInfo?, requirements?, signIgnore?, strictVerify?, target?, type? } | null
+   -> Options related to how build macOS targets.
+   Details:
+    * configuration.mac.target[0] should be one of these:
+      object { target, arch? } | \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+      Details:
+       * configuration.mac.target[0] should be an object:
+         object { target, arch? }
+       * configuration.mac.target[0] should be one of these:
+         \\"7z\\" | \\"default\\" | \\"dir\\" | \\"dmg\\" | \\"mas\\" | \\"mas-dev\\" | \\"pkg\\" | \\"tar.bz2\\" | \\"tar.gz\\" | \\"tar.lz\\" | \\"tar.xz\\" | \\"zip\\"
+     How to fix:
+     1. Open https://www.electron.build/configuration/mac
+     2. Search the option name on the page (or type in into Search to find across the docs).
+       * Not found? The option was deprecated or not exists (check spelling).
+       * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+"
+`;
+
+exports[`only zip 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`only zip 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`pkg 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`pkg 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`pkg extended configuration 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`pkg extended configuration 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`pkg scripts 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`pkg scripts 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`pkg scripts 3`] = `
+Array [
+  "Test App ßW.app",
+  "Test App ßW.app/Contents",
+  "Test App ßW.app/Contents/Frameworks",
+  "Test App ßW.app/Contents/Info.plist",
+  "Test App ßW.app/Contents/MacOS",
+  "Test App ßW.app/Contents/PkgInfo",
+  "Test App ßW.app/Contents/Resources",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app",
+  "Test App ßW.app/Contents/MacOS/Test App ßW",
+  "Test App ßW.app/Contents/Resources/am.lproj",
+  "Test App ßW.app/Contents/Resources/app.asar",
+  "Test App ßW.app/Contents/Resources/ar.lproj",
+  "Test App ßW.app/Contents/Resources/bg.lproj",
+  "Test App ßW.app/Contents/Resources/bn.lproj",
+  "Test App ßW.app/Contents/Resources/ca.lproj",
+  "Test App ßW.app/Contents/Resources/cs.lproj",
+  "Test App ßW.app/Contents/Resources/da.lproj",
+  "Test App ßW.app/Contents/Resources/de.lproj",
+  "Test App ßW.app/Contents/Resources/el.lproj",
+  "Test App ßW.app/Contents/Resources/en.lproj",
+  "Test App ßW.app/Contents/Resources/en_GB.lproj",
+  "Test App ßW.app/Contents/Resources/es.lproj",
+  "Test App ßW.app/Contents/Resources/es_419.lproj",
+  "Test App ßW.app/Contents/Resources/et.lproj",
+  "Test App ßW.app/Contents/Resources/fa.lproj",
+  "Test App ßW.app/Contents/Resources/fi.lproj",
+  "Test App ßW.app/Contents/Resources/fil.lproj",
+  "Test App ßW.app/Contents/Resources/fr.lproj",
+  "Test App ßW.app/Contents/Resources/gu.lproj",
+  "Test App ßW.app/Contents/Resources/he.lproj",
+  "Test App ßW.app/Contents/Resources/hi.lproj",
+  "Test App ßW.app/Contents/Resources/hr.lproj",
+  "Test App ßW.app/Contents/Resources/hu.lproj",
+  "Test App ßW.app/Contents/Resources/id.lproj",
+  "Test App ßW.app/Contents/Resources/it.lproj",
+  "Test App ßW.app/Contents/Resources/ja.lproj",
+  "Test App ßW.app/Contents/Resources/kn.lproj",
+  "Test App ßW.app/Contents/Resources/ko.lproj",
+  "Test App ßW.app/Contents/Resources/lt.lproj",
+  "Test App ßW.app/Contents/Resources/lv.lproj",
+  "Test App ßW.app/Contents/Resources/ml.lproj",
+  "Test App ßW.app/Contents/Resources/mr.lproj",
+  "Test App ßW.app/Contents/Resources/ms.lproj",
+  "Test App ßW.app/Contents/Resources/nb.lproj",
+  "Test App ßW.app/Contents/Resources/nl.lproj",
+  "Test App ßW.app/Contents/Resources/pl.lproj",
+  "Test App ßW.app/Contents/Resources/pt_BR.lproj",
+  "Test App ßW.app/Contents/Resources/pt_PT.lproj",
+  "Test App ßW.app/Contents/Resources/ro.lproj",
+  "Test App ßW.app/Contents/Resources/ru.lproj",
+  "Test App ßW.app/Contents/Resources/sk.lproj",
+  "Test App ßW.app/Contents/Resources/sl.lproj",
+  "Test App ßW.app/Contents/Resources/sr.lproj",
+  "Test App ßW.app/Contents/Resources/sv.lproj",
+  "Test App ßW.app/Contents/Resources/sw.lproj",
+  "Test App ßW.app/Contents/Resources/ta.lproj",
+  "Test App ßW.app/Contents/Resources/te.lproj",
+  "Test App ßW.app/Contents/Resources/icon.icns",
+  "Test App ßW.app/Contents/Resources/th.lproj",
+  "Test App ßW.app/Contents/Resources/tr.lproj",
+  "Test App ßW.app/Contents/Resources/uk.lproj",
+  "Test App ßW.app/Contents/Resources/vi.lproj",
+  "Test App ßW.app/Contents/Resources/zh_CN.lproj",
+  "Test App ßW.app/Contents/Resources/zh_TW.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Electron Framework",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Helpers",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Libraries",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Resources",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Mantle",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Resources",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/ReactiveObjC",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Resources",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Resources",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Squirrel",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app/Contents",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app/Contents",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app/Contents",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/Current",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/Current",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/Current",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/Current",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app/Contents/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app/Contents/MacOS",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app/Contents/PkgInfo",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app/Contents/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app/Contents/MacOS",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app/Contents/PkgInfo",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app/Contents/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app/Contents/MacOS",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app/Contents/PkgInfo",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/MacOS",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/PkgInfo",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Mantle",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Resources",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/ReactiveObjC",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/Resources",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Squirrel",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (GPU).app/Contents/MacOS/Test App ßW Helper (GPU)",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Plugin).app/Contents/MacOS/Test App ßW Helper (Plugin)",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper (Renderer).app/Contents/MacOS/Test App ßW Helper (Renderer)",
+  "Test App ßW.app/Contents/Frameworks/Test App ßW Helper.app/Contents/MacOS/Test App ßW Helper",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Helpers/chrome_crashpad_handler",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libEGL.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libffmpeg.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libGLESv2.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libswiftshader_libEGL.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libswiftshader_libGLESv2.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/libvk_swiftshader.dylib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries/vk_swiftshader_icd.json",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bn.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ca.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_100_percent.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/chrome_200_percent.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/cs.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/da.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/de.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/el.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/en.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/en_GB.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/es.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/es_419.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/et.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fa.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fi.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fil.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fr.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/gu.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/he.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hi.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hr.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hu.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/icudtl.dat",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/id.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/it.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ja.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/kn.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ko.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/lt.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/lv.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/MainMenu.nib",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ml.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/mr.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ms.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/nb.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/nl.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pl.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_BR.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_PT.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/resources.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ro.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ru.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sk.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sl.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sr.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sv.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sw.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ta.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/te.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/v8_context_snapshot.x86_64.bin",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW.lproj",
+  "Test App ßW.app/Contents/Frameworks/Mantle.framework/Versions/A/Resources/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/ReactiveObjC.framework/Versions/A/Resources/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/Info.plist",
+  "Test App ßW.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/am.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ar.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bg.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/bn.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ca.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/cs.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/da.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/de.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/el.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/en.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/en_GB.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/es.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/es_419.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/et.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fa.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fi.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fil.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/fr.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/gu.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/he.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hi.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hr.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/hu.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/id.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/it.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ja.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/kn.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ko.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/lt.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/lv.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ml.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/mr.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ms.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/nb.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/nl.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pl.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_BR.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/pt_PT.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ro.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ru.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sk.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sl.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sr.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sv.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/sw.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/ta.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/te.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/th.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/tr.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/uk.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/vi.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_CN.lproj/locale.pak",
+  "Test App ßW.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Resources/zh_TW.lproj/locale.pak",
+]
+`;
+
+exports[`pkg scripts 4`] = `
+XElement {
+  "attributes": Object {
+    "minSpecVersion": "2",
+  },
+  "elements": Array [
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+      },
+      "elements": Array [
+        XElement {
+          "attributes": Object {},
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "CFBundleShortVersionString": "1.1.0",
+                "id": "org.electron-builder.testApp",
+                "path": "Test App ßW.app",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "bundle",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "bundle-version",
+          "value": "
+        ",
+        },
+      ],
+      "isCData": false,
+      "name": "pkg-ref",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "product",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": null,
+      "isCData": false,
+      "name": "title",
+      "value": "Test App ßW",
+    },
+    XElement {
+      "attributes": Object {
+        "customize": "never",
+        "hostArchitectures": "x86_64",
+        "require-scripts": "false",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "options",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": Array [
+        XElement {
+          "attributes": Object {},
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "min": "10.10.0",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "os-version",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "allowed-os-versions",
+          "value": "
+        ",
+        },
+      ],
+      "isCData": false,
+      "name": "volume-check",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {},
+      "elements": Array [
+        XElement {
+          "attributes": Object {
+            "choice": "default",
+          },
+          "elements": Array [
+            XElement {
+              "attributes": Object {
+                "choice": "org.electron-builder.testApp",
+              },
+              "elements": null,
+              "isCData": false,
+              "name": "line",
+              "value": "",
+            },
+          ],
+          "isCData": false,
+          "name": "line",
+          "value": "
+        ",
+        },
+      ],
+      "isCData": false,
+      "name": "choices-outline",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "default",
+        "title": "Test App ßW",
+        "versStr": "1.1.0",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "choice",
+      "value": "",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+        "title": "Test App ßW",
+        "visible": "false",
+      },
+      "elements": Array [
+        XElement {
+          "attributes": Object {
+            "id": "org.electron-builder.testApp",
+          },
+          "elements": null,
+          "isCData": false,
+          "name": "pkg-ref",
+          "value": "",
+        },
+      ],
+      "isCData": false,
+      "name": "choice",
+      "value": "
+    ",
+    },
+    XElement {
+      "attributes": Object {
+        "id": "org.electron-builder.testApp",
+        "onConclusion": "none",
+        "version": "1.1.0",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "pkg-ref",
+      "value": "#org.electron-builder.testApp.pkg",
+    },
+    XElement {
+      "attributes": Object {
+        "enable_anywhere": "true",
+        "enable_currentUserHome": "true",
+        "enable_localSystem": "true",
+      },
+      "elements": null,
+      "isCData": false,
+      "name": "domains",
+      "value": "",
+    },
+  ],
+  "isCData": false,
+  "name": "installer-gui-script",
+  "value": "
+",
+}
+`;
+
+exports[`tar.gz 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.tar.gz",
+      "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
+    },
+  ],
+}
+`;
+
+exports[`tar.gz 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;

@@ -1,0 +1,61 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`assisted 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI Assisted-1.1.0.msi",
+      "safeArtifactName": "TestApp-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`msi no asar 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`per-user 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI Per User 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-Per-User-1.1.0.msi",
+    },
+  ],
+}
+`;
+
+exports[`wix args 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test WiX Args 1.1.0.msi",
+      "safeArtifactName": "Test-WiX-Args-1.1.0.msi",
+    },
+  ],
+}
+`;

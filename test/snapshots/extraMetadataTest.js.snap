@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`cli 1`] = `
+Object {
+  "config": Object {
+    "extraMetadata": Object {
+      "foo": "bar",
+    },
+  },
+}
+`;
+
+exports[`cli 2`] = `
+Object {
+  "config": Object {
+    "extraMetadata": Object {
+      "dev": Object {
+        "login-url": true,
+      },
+    },
+  },
+}
+`;
+
+exports[`extra metadata (no asar) 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extra metadata (no asar) 2`] = `
+Object {
+  "author": "Foo Bar <foo@example.com>",
+  "description": "Test Application (test quite \\" #378)",
+  "foo": Object {
+    "bar": 12,
+    "disabled": false,
+    "existingProp": 22,
+    "updated": true,
+  },
+  "homepage": "http://foo.example.com",
+  "license": "MIT",
+  "name": "TestApp",
+  "private": true,
+  "productName": "Test App ßW",
+  "rootKey": false,
+  "rootKeyN": null,
+  "rootKeyT": true,
+  "version": "1.0.0-beta.19",
+}
+`;
+
+exports[`extra metadata 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extra metadata 2`] = `
+Object {
+  "author": "Foo Bar <foo@example.com>",
+  "description": "Test Application (test quite \\" #378)",
+  "foo": Object {
+    "bar": 12,
+    "disabled": false,
+    "existingProp": 22,
+    "updated": true,
+  },
+  "homepage": "http://foo.example.com",
+  "license": "MIT",
+  "name": "TestApp",
+  "private": true,
+  "productName": "Test App ßW",
+  "rootKey": false,
+  "rootKeyN": null,
+  "rootKeyT": true,
+  "version": "1.0.0-beta.19",
+}
+`;

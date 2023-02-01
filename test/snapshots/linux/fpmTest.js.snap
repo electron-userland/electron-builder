@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`rpm and tar.gz 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.x86_64.rpm",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.gz",
+    },
+  ],
+}
+`;
+
+exports[`targets 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.7z",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.freebsd",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.pacman",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.sh",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+    },
+  ],
+}
+`;

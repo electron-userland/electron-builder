@@ -1,0 +1,14 @@
+{
+    "extends": "../tsconfig-base.json",
+    "compilerOptions": {
+        "outDir": "out",
+        "rootDir": "src",
+    },
+    "include": [
+        "src/**/*.ts",
+        "../../typings/*.d.ts"
+    ],
+    "exclude": [
+        "../../typings/electron.d.ts"
+    ]
+}

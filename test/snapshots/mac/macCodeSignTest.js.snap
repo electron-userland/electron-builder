@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`remove password from log 1`] = `"seq -P 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash) -B"`;
+
+exports[`remove password from log 2`] = `"pass:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash)"`;
+
+exports[`remove password from log 3`] = `"/usr/bin/productbuild -P 56ef615b2e26c3b9a10dc2824238fb8b8a154ec7db4907ec6ee357ed7bb350b7 (sha256 hash)"`;
+
+exports[`remove password from log 4`] = `" /p 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash)"`;
+
+exports[`remove password from log 5`] = `"ConvertTo-SecureString -String 4d967a30111bf29f0eba01c448b375c1629b2fed01cdfcc3aed91f1b57d5dd5e (sha256 hash)"`;
+
+exports[`remove password from log 6`] = `"(Get-PfxData \\"C:\\\\Users\\\\develar\\\\AppData\\\\Local\\\\Temp\\\\electron-builder-yBY8D2\\\\0-1.p12\\" -Password (ConvertTo-SecureString -String 4d967a30111bf29f0eba01c448b375c1629b2fed01cdfcc3aed91f1b57d5dd5e (sha256 hash) -Force -AsPlainText)).EndEntityCertificates.Subject"`;

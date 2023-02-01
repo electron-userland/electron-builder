@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="build deb remote" type="NodeJSConfigurationType" application-parameters="-i -t deb$ --testPathPattern=[/\\]{1}debTest\.\w+$" path-to-js-file="node_modules/jest-cli/bin/jest.js" working-dir="$PROJECT_DIR$">
+    <envs>
+      <env name="TEST_APP_TMP_DIR" value="$PROJECT_DIR$/../../../ramdisk/electron-builder-test" />
+      <env name="DEBUG" value="electron-builder" />
+      <env name="_REMOTE_BUILD" value="true" />
+      <env name="BUILD_AGENT_HOST" value="localhost" />
+      <env name="USE_BUILD_SERVICE_LOCAL_CA" value="true" />
+    </envs>
+    <method v="2">
+      <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="true" />
+    </method>
+  </configuration>
+</component>

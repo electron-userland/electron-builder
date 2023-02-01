@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "main": "./build/app/main.js",
+  "author": "true",
+  "name": "Foo"
+}

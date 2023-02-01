@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-13 -13 58.2 58.4">
+	<style>
+		.st0{
+			fill: #000;
+		}
+		.circ{
+			stroke: #000;
+			fill: white;
+			stroke-wdith: 1;
+		}
+	</style>
+	<circle class="circ" cx="16.1" cy="16.1" r="25"/>
+	<g> <!-- viewBox="0 0 32.2 32.4" -->
+		<circle class="st0" cx="5.5" cy="5.5" r="5.5"/>
+		<circle class="st0" cx="26.6" cy="5.5" r="5.5"/>
+		<circle class="st0" cx="5.5" cy="26.9" r="5.5"/>
+		<circle class="st0" cx="26.6" cy="26.9" r="5.5"/>
+		<path transform="rotate(-45.361 16.087 16.23)" class="st0" d="M1.1 15.1h30v2.3h-30z"/>
+	</g>
+</svg>

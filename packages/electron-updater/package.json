@@ -1,0 +1,39 @@
+{
+  "name": "electron-updater",
+  "version": "6.0.0-alpha.8",
+  "description": "Cross platform updater for electron applications",
+  "main": "out/main.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-updater"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "out"
+  ],
+  "dependencies": {
+    "@types/semver": "^7.3.13",
+    "builder-util-runtime": "workspace:*",
+    "fs-extra": "^10.1.0",
+    "js-yaml": "^4.1.0",
+    "lazy-val": "^1.0.5",
+    "lodash.escaperegexp": "^4.1.2",
+    "lodash.isequal": "^4.5.0",
+    "semver": "^7.3.8",
+    "typed-emitter": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "9.0.13",
+    "@types/js-yaml": "4.0.3",
+    "@types/lodash.escaperegexp": "4.1.6",
+    "@types/lodash.isequal": "4.5.5"
+  },
+  "typings": "./out/main.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
+}

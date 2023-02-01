@@ -1,0 +1,35 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "out",
+    "skipLibCheck": true,
+    "baseUrl": "../packages"
+  },
+  "references": [
+    {
+      "path": "../packages/builder-util"
+    },
+    {
+      "path": "../packages/builder-util-runtime"
+    },
+    {
+      "path": "../packages/electron-builder"
+    },
+    {
+      "path": "../packages/electron-publish"
+    },
+    {
+      "path": "../packages/electron-updater"
+    }
+  ],
+  "declaration": false,
+  "include": [
+    "../typings/*.d.ts",
+    "typings/*.d.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "../typings/electron.d.ts"
+  ]
+}

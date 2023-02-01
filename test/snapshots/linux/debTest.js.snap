@@ -1,0 +1,643 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`arm 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "arm64",
+      "file": "TestApp_1.1.0_arm64.deb",
+    },
+    Object {
+      "arch": "armv7l",
+      "file": "TestApp_1.1.0_armv7l.deb",
+    },
+  ],
+}
+`;
+
+exports[`arm 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/testapp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/testapp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/testapp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/testapp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/testapp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/testapp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/testapp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/testapp.png",
+]
+`;
+
+exports[`arm 3`] = `
+Object {
+  "Architecture": "armhf",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`arm 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`arm 5`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/testapp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/testapp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/testapp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/testapp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/testapp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/testapp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/testapp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/testapp.png",
+]
+`;
+
+exports[`arm 6`] = `
+Object {
+  "Architecture": "armhf",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`arm 7`] = `"Test Application (test quite “ #378)"`;
+
+exports[`custom depends 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`custom depends 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/Boo",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`custom depends 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "foo",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`custom depends 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`deb 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`deb 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/testapp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/testapp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/testapp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/testapp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/testapp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/testapp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/testapp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/testapp.png",
+]
+`;
+
+exports[`deb 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`deb 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`deb file associations 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`deb file associations 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/Test App ßW/",
+  "/opt/Test App ßW/chrome-sandbox",
+  "/opt/Test App ßW/chrome_100_percent.pak",
+  "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/icudtl.dat",
+  "/opt/Test App ßW/libEGL.so",
+  "/opt/Test App ßW/libffmpeg.so",
+  "/opt/Test App ßW/libGLESv2.so",
+  "/opt/Test App ßW/libvk_swiftshader.so",
+  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/LICENSE.electron.txt",
+  "/opt/Test App ßW/LICENSES.chromium.html",
+  "/opt/Test App ßW/resources.pak",
+  "/opt/Test App ßW/snapshot_blob.bin",
+  "/opt/Test App ßW/testapp",
+  "/opt/Test App ßW/v8_context_snapshot.bin",
+  "/opt/Test App ßW/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/Test App ßW/resources/",
+  "/opt/Test App ßW/resources/app.asar",
+  "/opt/Test App ßW/swiftshader/",
+  "/opt/Test App ßW/swiftshader/libEGL.so",
+  "/opt/Test App ßW/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/testapp.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/mime/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/mime/packages/",
+  "/usr/share/mime/packages/testapp.xml",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/testapp.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/testapp.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/testapp.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/testapp.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/testapp.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/testapp.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/testapp.png",
+]
+`;
+
+exports[`deb file associations 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`deb file associations 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`deb file associations 5`] = `
+"<?xml version=\\"1.0\\" encoding=\\"utf-8\\"?>
+<mime-info xmlns=\\"http://www.freedesktop.org/standards/shared-mime-info\\">
+<mime-type type=\\"application/x-example\\">
+  <glob pattern=\\"*.my-app\\"/>
+    
+  <icon name=\\"x-office-document\\" />
+</mime-type>
+</mime-info>"
+`;
+
+exports[`executable path in postinst script 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`executable path in postinst script 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/foo/",
+  "/opt/foo/Boo",
+  "/opt/foo/chrome-sandbox",
+  "/opt/foo/chrome_100_percent.pak",
+  "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/icudtl.dat",
+  "/opt/foo/libEGL.so",
+  "/opt/foo/libffmpeg.so",
+  "/opt/foo/libGLESv2.so",
+  "/opt/foo/libvk_swiftshader.so",
+  "/opt/foo/libvulkan.so",
+  "/opt/foo/LICENSE.electron.txt",
+  "/opt/foo/LICENSES.chromium.html",
+  "/opt/foo/resources.pak",
+  "/opt/foo/snapshot_blob.bin",
+  "/opt/foo/v8_context_snapshot.bin",
+  "/opt/foo/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/foo/resources/",
+  "/opt/foo/resources/app.asar",
+  "/opt/foo/swiftshader/",
+  "/opt/foo/swiftshader/libEGL.so",
+  "/opt/foo/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`executable path in postinst script 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`executable path in postinst script 4`] = `"Test Application (test quite “ #378)"`;
+
+exports[`executable path in postinst script 5`] = `
+"#!/bin/bash
+
+# Link to the binary
+ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
+
+# SUID chrome-sandbox for Electron 5+
+chmod 4755 '/opt/foo/chrome-sandbox' || true
+
+update-mime-database /usr/share/mime || true
+update-desktop-database /usr/share/applications || true"
+`;
+
+exports[`no quotes for safe exec name 1`] = `
+"[Desktop Entry]
+Name=foo
+Exec=/opt/foo/Boo %U
+Terminal=false
+Type=Application
+Icon=Boo
+StartupWMClass=foo
+Comment=Test Application (test quite “ #378)
+Categories=Development;
+"
+`;
+
+exports[`no quotes for safe exec name 2`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`no quotes for safe exec name 3`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/foo/",
+  "/opt/foo/Boo",
+  "/opt/foo/chrome-sandbox",
+  "/opt/foo/chrome_100_percent.pak",
+  "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/icudtl.dat",
+  "/opt/foo/libEGL.so",
+  "/opt/foo/libffmpeg.so",
+  "/opt/foo/libGLESv2.so",
+  "/opt/foo/libvk_swiftshader.so",
+  "/opt/foo/libvulkan.so",
+  "/opt/foo/LICENSE.electron.txt",
+  "/opt/foo/LICENSES.chromium.html",
+  "/opt/foo/resources.pak",
+  "/opt/foo/snapshot_blob.bin",
+  "/opt/foo/v8_context_snapshot.bin",
+  "/opt/foo/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/foo/resources/",
+  "/opt/foo/resources/app.asar",
+  "/opt/foo/swiftshader/",
+  "/opt/foo/swiftshader/libEGL.so",
+  "/opt/foo/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`no quotes for safe exec name 4`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`no quotes for safe exec name 5`] = `"Test Application (test quite “ #378)"`;

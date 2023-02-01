@@ -1,0 +1,12 @@
+electronVersion: 11.0.0
+appId: org.electron-builder.testApp
+compression: store
+npmRebuild: false
+mac:
+  category: your.app.category.type
+directories:
+  output: build/dist
+files:
+- build/app/**/*.js
+- build/app/**/*.html
+asar: false

@@ -1,0 +1,29 @@
+{
+  "name": "builder-util-runtime",
+  "version": "9.2.0-alpha.3",
+  "main": "out/index.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/builder-util-runtime"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "out"
+  ],
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "debug": "^4.3.4",
+    "sax": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/debug": "4.1.7",
+    "@types/sax": "1.2.3"
+  },
+  "types": "./out/index.d.ts"
+}

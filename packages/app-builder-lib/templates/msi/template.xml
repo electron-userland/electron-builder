@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- https://blogs.msdn.microsoft.com/gremlininthemachine/2006/12/05/msi-wix-and-unicode/ -->
+  <Product Id="*" Name="${productName}" UpgradeCode="${upgradeCode}" Version="${version}" Language="1033" Codepage="65001" Manufacturer="${manufacturer}">
+    <Package Compressed="yes" InstallerVersion="500"/>
+
+    <Condition Message="Windows 7 and above is required"><![CDATA[Installed OR VersionNT >= 601]]></Condition>
+
+    <!--
+    AllowSameVersionUpgrades:
+      When set to no (the default), installing a product with the same version and upgrade code (but different product code) is allowed and treated by MSI as two products.
+      When set to yes, WiX sets the msidbUpgradeAttributesVersionMaxInclusive attribute, which tells MSI to treat a product with the same version as a major upgrade.
+
+      So, AllowSameVersionUpgrades="yes" allows to build and test MSI with the same version, and previously installed app will be removed.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage='A newer version of "[ProductName]" is already installed.'/>
+    <MediaTemplate CompressionLevel="${compressionLevel}" EmbedCab="yes"/>
+
+    <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}"/>
+    <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
+    <Property Id="DISABLEADVTSHORTCUTS" Value="1"/>
+
+    {{ if (iconPath) { }}
+    <Icon Id="${iconId}" SourceFile="${iconPath}"/>
+    <Property Id="ARPPRODUCTICON" Value="${iconId}"/>
+    {{ } -}}
+
+    {{ if (isRunAfterFinish) { }}
+      <CustomAction Id="runAfterFinish" FileKey="mainExecutable" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait"/>
+      {{ if (!isAssisted) { }}
+        <!-- https://stackoverflow.com/questions/1871531/launch-after-install-with-no-ui -->
+        <InstallExecuteSequence>
+          <Custom Action="runAfterFinish" After="InstallFinalize">NOT Installed AND UILevel >= 4</Custom>
+        </InstallExecuteSequence>
+      {{ } -}}
+    {{ } -}}
+
+    {{ if (isPerMachine) { }}
+      <Property Id="ALLUSERS" Secure="yes" Value="1"/>
+    {{ } else { }}
+      <Property Id="ALLUSERS" Secure="yes" Value="2"/>
+    {{ } -}}
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+
+    {{ if (isAssisted) { }}
+      <WixVariable Id="WixUISupportPerUser" Value="1" Overridable="yes"/>
+      <WixVariable Id="WixUISupportPerMachine" Value="1" Overridable="yes"/>
+      {{ if (isPerMachine) { }}
+        <WixVariable Id="WixUISupportPerUser" Value="0"/>
+      {{ } -}}
+
+      {{ if (isRunAfterFinish) { }}
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1"/>
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Run ${productName}"/>
+        <UI>
+          <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="runAfterFinish">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed</Publish>
+        </UI>
+      {{ } -}}
+
+      <UIRef Id="WixUI_InstallDir"/>
+      <UI>
+        <Publish Dialog="WelcomeDlg" Control="Next" Event="SpawnWaitDialog" Value="WaitForCostingDlg" Order="2">1 OR CostingComplete = 1</Publish>
+        <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallScopeDlg" Order="2">NOT Installed</Publish>
+
+        <Publish Dialog="InstallScopeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="1">1</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="WixAppFolder" Value="WixPerUserFolder" Order="1">!(wix.WixUISupportPerUser) AND NOT Privileged</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="WixAppFolder" Value="WixPerMachineFolder" Order="2">NOT !(wix.WixUISupportPerUser)</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="ALLUSERS" Value="{}" Order="3">WixAppFolder = "WixPerUserFolder"</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Property="ALLUSERS" Value="1" Order="4">WixAppFolder = "WixPerMachineFolder"</Publish>
+        <!-- Run 'FindRelatedProducts' again after changing the install scope, because its first run might have ignored an existing installation based on the default scope at the time. https://stackoverflow.com/a/35064434 -->
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="DoAction" Value="FindRelatedProducts" Order="5">1</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="6">1</Publish>
+
+        <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallScopeDlg" Order="2">NOT Installed</Publish>
+      </UI>
+    {{ } -}}
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="${programFilesId}">
+        {{ if (menuCategory) { }}
+          <Directory Id="COMPANYDIR" Name="${menuCategory}">
+        {{ } -}}
+              <Directory Id="APPLICATIONFOLDER" Name="${installationDirectoryWixName}"/>
+        {{ if (menuCategory) { }}
+          </Directory>
+        {{ } -}}
+      </Directory>
+
+      <!-- Desktop link -->
+      {{ if (isCreateDesktopShortcut) { }}
+      <Directory Id="DesktopFolder" Name="Desktop"/>
+      {{ } -}}
+
+      <!-- Start menu link -->
+      {{ if (isCreateStartMenuShortcut) { }}
+      <Directory Id="ProgramMenuFolder"/>
+      {{ } }}
+    </Directory>
+
+    <!-- Files -->
+    <Feature Id="ProductFeature" Absent="disallow">
+      <ComponentGroupRef Id="ProductComponents"/>
+    </Feature>
+
+    {{-dirs}}
+
+    <ComponentGroup Id="ProductComponents" Directory="APPLICATIONFOLDER">
+      {{-files}}
+    </ComponentGroup>
+  </Product>
+</Wix>

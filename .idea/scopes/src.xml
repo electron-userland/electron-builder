@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="src" pattern="file[electron-builder]:packages/electron-builder/src//*||file[electron-builder]:typings//*||file:tsconfig.json||file[electron-builder]:test/typings//*||file[electron-builder]:test/packages/electron-builder/src//*" />
+</component>

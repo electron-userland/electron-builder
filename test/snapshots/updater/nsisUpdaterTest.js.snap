@@ -1,0 +1,570 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`1 staging percentage 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "stagingPercentage": 1,
+  "version": "1.1.0",
+}
+`;
+
+exports[`1 staging percentage 2`] = `
+Array [
+  "checking-for-update",
+]
+`;
+
+exports[`90 staging percentage 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "stagingPercentage": 90,
+  "version": "1.1.0",
+}
+`;
+
+exports[`90 staging percentage 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`DigitalOcean Spaces 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`DigitalOcean Spaces 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`cancel download with progress 1`] = `"cancelled"`;
+
+exports[`checkForUpdates several times 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`checkForUpdates several times 2`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`checkForUpdates several times 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`downgrade (disallowed, beta) 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": "",
+  "tag": "v1.5.2-beta.3",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`file url bitbucket 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "jgS5EI08u/fsS9XfqpJtmV2ctAFQF+6BQjGUZmWq93Nyg+Z/aPxQT0zkCWPaCdIqJdEDHB91JjYquK/tS3fcDw==",
+      "size": 69549503,
+      "url": "electron-quick-start-typescript-1.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.0-x64.exe",
+  "releaseDate": "2022-02-26T18:50:44.444Z",
+  "sha512": "jgS5EI08u/fsS9XfqpJtmV2ctAFQF+6BQjGUZmWq93Nyg+Z/aPxQT0zkCWPaCdIqJdEDHB91JjYquK/tS3fcDw==",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url bitbucket 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url generic - manual download 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`file url generic - manual download 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+]
+`;
+
+exports[`file url generic 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`file url generic 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`file url github 2`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`file url github 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github pre-release and fullChangelog 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": Array [
+    Object {
+      "note": "",
+      "version": "1.5.2-beta.3",
+    },
+    Object {
+      "note": "<p>Test pre-release. qefr</p>",
+      "version": "1.5.0",
+    },
+  ],
+  "tag": "v1.5.2-beta.3",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`file url github pre-release and fullChangelog 2`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": Array [
+    Object {
+      "note": "",
+      "version": "1.5.2-beta.3",
+    },
+    Object {
+      "note": "<p>Test pre-release. qefr</p>",
+      "version": "1.5.0",
+    },
+  ],
+  "tag": "v1.5.2-beta.3",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`file url github pre-release and fullChangelog 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github pre-release and fullChangelog 4`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.5.2-beta.3.exe",
+    },
+  ],
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": Array [
+    Object {
+      "note": "",
+      "version": "1.5.2-beta.3",
+    },
+    Object {
+      "note": "<p>Test pre-release. qefr</p>",
+      "version": "1.5.0",
+    },
+  ],
+  "tag": "v1.5.2-beta.3",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`file url github private 1`] = `
+Object {
+  "assets": Array [
+    Object {
+      "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/latest.yml",
+      "content_type": "application/octet-stream",
+      "created_at": "2017-12-05T08:01:23Z",
+      "id": 5530341,
+      "label": null,
+      "name": "latest.yml",
+      "size": 156,
+      "state": "uploaded",
+      "updated_at": "2017-12-05T08:01:24Z",
+      "uploader": Object {
+        "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
+        "events_url": "https://api.github.com/users/develar/events{/privacy}",
+        "followers_url": "https://api.github.com/users/develar/followers",
+        "following_url": "https://api.github.com/users/develar/following{/other_user}",
+        "gists_url": "https://api.github.com/users/develar/gists{/gist_id}",
+        "gravatar_id": "",
+        "html_url": "https://github.com/develar",
+        "id": 350686,
+        "login": "develar",
+        "organizations_url": "https://api.github.com/users/develar/orgs",
+        "received_events_url": "https://api.github.com/users/develar/received_events",
+        "repos_url": "https://api.github.com/users/develar/repos",
+        "site_admin": false,
+        "starred_url": "https://api.github.com/users/develar/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/develar/subscriptions",
+        "type": "User",
+        "url": "https://api.github.com/users/develar",
+      },
+      "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530341",
+    },
+    Object {
+      "browser_download_url": "https://github.com/develar/__test_nsis_release_private/releases/download/v1.0.0/TestApp-Setup-1.0.0.exe",
+      "content_type": "application/octet-stream",
+      "created_at": "2017-12-05T08:01:53Z",
+      "id": 5530346,
+      "label": null,
+      "name": "TestApp-Setup-1.0.0.exe",
+      "size": 9248,
+      "state": "uploaded",
+      "updated_at": "2017-12-05T08:01:55Z",
+      "uploader": Object {
+        "avatar_url": "https://avatars0.githubusercontent.com/u/350686?v=4",
+        "events_url": "https://api.github.com/users/develar/events{/privacy}",
+        "followers_url": "https://api.github.com/users/develar/followers",
+        "following_url": "https://api.github.com/users/develar/following{/other_user}",
+        "gists_url": "https://api.github.com/users/develar/gists{/gist_id}",
+        "gravatar_id": "",
+        "html_url": "https://github.com/develar",
+        "id": 350686,
+        "login": "develar",
+        "organizations_url": "https://api.github.com/users/develar/orgs",
+        "received_events_url": "https://api.github.com/users/develar/received_events",
+        "repos_url": "https://api.github.com/users/develar/repos",
+        "site_admin": false,
+        "starred_url": "https://api.github.com/users/develar/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/develar/subscriptions",
+        "type": "User",
+        "url": "https://api.github.com/users/develar",
+      },
+      "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/5530346",
+    },
+  ],
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.0.0.exe",
+    },
+  ],
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url github private 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url keygen 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "r0NdvVubzJWAN56nqjTdLkBWV/dq0HQOKz9A6QFplUozu3uSVXA2t731miy/S29mY4MD18iLxKD6GXnPfNNbNw==",
+      "size": 59865147,
+      "url": "electron-quick-start-typescript-1.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.0-x64.exe",
+  "releaseDate": "2021-08-19T04:34:01.089Z",
+  "sha512": "r0NdvVubzJWAN56nqjTdLkBWV/dq0HQOKz9A6QFplUozu3uSVXA2t731miy/S29mY4MD18iLxKD6GXnPfNNbNw==",
+  "version": "1.0.0",
+}
+`;
+
+exports[`file url keygen 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`github allowPrerelease=false 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "electron-quick-start-typescript-1.0.2-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.2-x64.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "1.0.2",
+  "releaseNotes": "",
+  "sha512": "@sha512",
+  "tag": "v1.0.2",
+  "version": "1.0.2",
+}
+`;
+
+exports[`github allowPrerelease=true 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "electron-quick-start-typescript-2.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-2.0.0-x64.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "2.0.0",
+  "releaseNotes": "",
+  "sha512": "@sha512",
+  "tag": "v2.0.0",
+  "version": "2.0.0",
+}
+`;
+
+exports[`invalid signature 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
+
+exports[`invalid signature 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
+`;
+
+exports[`sha512 mismatch error event 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`sha512 mismatch error event 2`] = `"ERR_CHECKSUM_MISMATCH"`;
+
+exports[`sha512 mismatch error event 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
+`;
+
+exports[`test download and install 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+      "url": "TestApp Setup 1.1.0.exe",
+    },
+  ],
+  "version": "1.1.0",
+}
+`;
+
+exports[`test download and install 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`test error 1`] = `"ERR_INVALID_ARG_TYPE"`;
+
+exports[`test error 2`] = `
+Array [
+  "checking-for-update",
+  "error",
+]
+`;
+
+exports[`valid signature - multiple publisher DNs 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`valid signature - multiple publisher DNs 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`valid signature 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`valid signature 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`valid signature using DN 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`valid signature using DN 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;

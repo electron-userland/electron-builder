@@ -1,0 +1,119 @@
+name: Test
+
+on:
+  push:
+    branches:
+      master
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      build-docker-locally:
+        type: boolean
+        description: Force rebuild docker images for CI tests
+        required: false
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        testFiles:
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
+          - snapTest,debTest,fpmTest,protonTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/.cache/electron
+          cache-key: v-11.0.0-linux-electron
+
+      - name: Lint
+        run: pnpm pretest
+
+      - name: Determine if Dockerfiles changed
+        id: changed-files
+        uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7 # v34
+
+      - name: Dockerfile has changed, rebuild for tests
+        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
+        run: pnpm docker-images
+
+      - name: Run tests in docker image
+        run: pnpm test-linux
+        env:
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1
+  
+  test-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v3
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-11.0.0-macos-electron
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: masTest,dmgTest,protonTest,filesTest,macPackagerTest
+          FORCE_COLOR: 1
+  
+  # Need to separate from other tests because logic is specific to when TOKEN env vars are set
+  test-updater:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v3
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-path: ~/Library/Caches/electron
+          cache-key: v-11.0.0-update-electron
+
+      - name: Test
+        run: pnpm ci:test
+        env:
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
+          KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          FORCE_COLOR: 1
+
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        testFiles:
+          - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
+          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+    steps:
+      - name: Checkout code repository
+        uses: actions/checkout@v3
+
+      - name: Setup Tests
+        uses: ./.github/actions/pretest
+        with:
+          cache-key: v-11.0.0-windows-electron
+          cache-path: ~\AppData\Local\electron\Cache
+      
+      - name: Test
+        run: pnpm ci:test
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          TEST_FILES: ${{ matrix.testFiles }}
+          FORCE_COLOR: 1

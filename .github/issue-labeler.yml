@@ -1,0 +1,25 @@
+appimage:
+  - appimage
+appx:
+  - appx
+docker:
+  - docker
+linux:
+  - linux
+  - ubuntu
+  - fedora
+mac:
+  - mac
+  - macos
+windows:
+  - windows
+msi:
+  - msi
+nsis:
+  - nsis
+readme:
+  - '(docs|readme)'
+snap:
+  - '(snap|snaps|snapcraft)'
+flatpak:
+  - '(flatpak|flatpack)'

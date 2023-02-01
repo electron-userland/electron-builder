@@ -1,0 +1,17 @@
+[*]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+ij_javascript_use_double_quotes = true
+ij_typescript_use_double_quotes = true
+charset = utf-8
+
+ij_any_else_on_new_line = false
+ij_any_block_comment_at_first_column = false
+ij_any_line_comment_at_first_column = false
+ij_javascript_force_semicolon_style = true
+ij_javascript_use_semicolon_after_statement = false
+ij_typescript_force_semicolon_style = true
+ij_typescript_use_semicolon_after_statement = false
+ij_javascript_force_quote_style = true
+ij_typescript_force_quote_style = true

@@ -1,0 +1,11 @@
+{{#if properties}}**Properties**
+
+{{tableHead properties "name|Name" "type|Type" "description|Description" ~}}
+
+{{#tableRow properties "name" "type" "defaultvalue" "description" ~}}
+| {{#if @col1}}{{#unless optional}}**{{/unless~}}{{name}}{{#unless optional}}**{{/unless~}}{{#if defaultvalue}} = {{>defaultvalue}}{{/if~}} | {{/if~}}
+{{#if @col2}}{{>linked-type-list types=type.names delimiter=" \| " }} | {{/if~}}
+{{#if @col4}}{{{propertyAnchor name ../../name }}}{{{stripNewlines (inlineLinks description)}}} |{{/if}}
+{{/tableRow}}
+
+{{/if}}

@@ -1,0 +1,10 @@
+{
+  "name": "foo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "ms": "2.0.0",
+    "electron-log": "2.2.8"
+  }
+}

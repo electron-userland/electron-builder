@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="Go" enabled="true" />
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/_book" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
+      <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/app-builder-lib/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/app-package-builder/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/asar-integrity/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/builder-util-runtime/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/builder-util/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/dmg-builder/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/dmg-builder/vendor" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-core/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-lib/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-publisher/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-squirrel-windows/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-publish/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-publisher-s3/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-updater/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/proton-builder/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/wine-bin/out" />
+      <excludeFolder url="file://$MODULE_DIR$/scripts/jsdoc/out" />
+      <excludeFolder url="file://$MODULE_DIR$/scripts/renderer/out" />
+      <excludeFolder url="file://$MODULE_DIR$/site" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/app/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app-one/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/app/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/test/out" />
+      <excludeFolder url="file://$MODULE_DIR$/test/snapshots" />
+      <excludeFolder url="file://$MODULE_DIR$/test/vendor" />
+      <excludeFolder url="file://$MODULE_DIR$/.pnpm-store" />
+      <excludePattern pattern="yarn.lock" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

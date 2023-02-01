@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tar 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.bz2",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.lz",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.tar.xz",
+    },
+  ],
+}
+`;

@@ -1,0 +1,19 @@
+on: issues
+name: Create Default Labels
+permissions: {}
+jobs:
+  labels:
+    permissions:
+      contents: read # to fetch code (actions/checkout)
+      issues: write # to add label to issues 
+
+    name: DefaultLabelsActions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: lannonbr/issue-label-manager-action@e8dbcd8198e86a1e98d5372e55db976fed9ba6f7 # 4.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          delete: false # will delete any labels that aren't in the .github/labels.json (this is set to false by default)

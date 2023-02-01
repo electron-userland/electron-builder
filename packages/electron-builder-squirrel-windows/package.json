@@ -1,0 +1,31 @@
+{
+  "name": "electron-builder-squirrel-windows",
+  "version": "24.0.0-alpha.11",
+  "main": "out/SquirrelWindowsTarget.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-userland/electron-builder.git",
+    "directory": "packages/electron-builder-squirrel-windows"
+  },
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "out"
+  ],
+  "dependencies": {
+    "app-builder-lib": "workspace:*",
+    "archiver": "^5.3.1",
+    "builder-util": "workspace:*",
+    "fs-extra": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/archiver": "5.3.1",
+    "@types/fs-extra": "9.0.13"
+  },
+  "optionalDependencies": {
+    "7zip-bin": "~5.1.1"
+  },
+  "types": "./out/SquirrelWindowsTarget.d.ts"
+}

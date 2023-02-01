@@ -1,0 +1,15 @@
+- &defaults
+  files: ["test/src/**/*", "!**/helpers/**/*"]
+  script: "node_modules/jest-cli/bin/jest.js"
+  scriptArgs: ["-i", &filePattern '--testPathPattern=[/\\]{1}${fileNameWithoutExt}\.\w+$']
+  rcName: "${fileNameWithoutExt}"
+  beforeRun: typescript
+
+-
+  <<: *defaults
+  lineRegExp: '^\s*(?:test|it|testAndIgnoreApiRate)(?:\.[\w.]+)?\("([^"'']+)'
+  scriptArgs: ["-i", "-t", "${0regExp}", *filePattern]
+  rcName: "${fileNameWithoutExt}.${0}"
+  env:
+    TEST_APP_TMP_DIR: /tmp/electron-builder-test
+    DEBUG: electron-builder

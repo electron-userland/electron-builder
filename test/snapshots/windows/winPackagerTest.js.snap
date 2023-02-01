@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`icon < 256 1`] = `"ERR_ICON_TOO_SMALL"`;
+
+exports[`icon not an image 1`] = `"ERR_ICON_UNKNOWN_FORMAT"`;
+
+exports[`win zip 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;
+
+exports[`zip artifactName 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-win-x64.zip",
+      "safeArtifactName": "TestApp-1.1.0-win.zip",
+    },
+  ],
+}
+`;

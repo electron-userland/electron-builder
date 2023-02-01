@@ -1,0 +1,30 @@
+app-builder-lib:
+- packages/app-builder-lib/**/*
+builder-util:
+- packages/builder-util/**/*
+- packages/builder-util-runtime/**/*
+dmg-builder:
+- packages/dmg-builder/**/*
+mac:
+- packages/dmg-builder/**/*
+- '**/mac*.ts'
+linux:
+- '**/linux*.ts'
+windows:
+- '**/win*.ts'
+squirrel.windows:
+- packages/electron-builder-squirrel-windows/**/*
+appimage:
+- packages/electron-forge-maker-appimage/**/*
+nsis:
+- packages/app-builder-lib/src/targets/nsis/*
+- packages/electron-forge-maker-nsis/**/*
+- packages/electron-forge-maker-nsis-web/**/*
+snap:
+- packages/electron-forge-maker-snap/**/*
+electron-publish:
+- packages/electron-publish/**/*
+electron-updater:
+- packages/electron-updater/**/*
+
+

@@ -1,0 +1,166 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom icon set 1`] = `
+Array [
+  Object {
+    "file": "icon_16x16.png",
+    "size": 16,
+  },
+  Object {
+    "file": "icon_32x32.png",
+    "size": 32,
+  },
+  Object {
+    "file": "icon_48x48.png",
+    "size": 48,
+  },
+  Object {
+    "file": "icon_64x64.png",
+    "size": 64,
+  },
+  Object {
+    "file": "icon_128x128.png",
+    "size": 128,
+  },
+  Object {
+    "file": "icon_256x256.png",
+    "size": 256,
+  },
+  Object {
+    "file": "icon_512x512.png",
+    "size": 512,
+  },
+]
+`;
+
+exports[`custom icon set with only 512 and 128 1`] = `
+Array [
+  Object {
+    "file": "icon_16x16.png",
+    "size": 16,
+  },
+  Object {
+    "file": "icon_32x32.png",
+    "size": 32,
+  },
+  Object {
+    "file": "icon_48x48.png",
+    "size": 48,
+  },
+  Object {
+    "file": "icon_64x64.png",
+    "size": 64,
+  },
+  Object {
+    "file": "icon_128x128.png",
+    "size": 128,
+  },
+  Object {
+    "file": "icon_256x256.png",
+    "size": 256,
+  },
+  Object {
+    "file": "icon_512x512.png",
+    "size": 512,
+  },
+]
+`;
+
+exports[`default png icon 1`] = `
+Array [
+  Object {
+    "file": "icon_16x16.png",
+    "size": 16,
+  },
+  Object {
+    "file": "icon_32x32.png",
+    "size": 32,
+  },
+  Object {
+    "file": "icon_48x48.png",
+    "size": 48,
+  },
+  Object {
+    "file": "icon_64x64.png",
+    "size": 64,
+  },
+  Object {
+    "file": "icon_128x128.png",
+    "size": 128,
+  },
+  Object {
+    "file": "icon_256x256.png",
+    "size": 256,
+  },
+  Object {
+    "file": "icon_512x512.png",
+    "size": 512,
+  },
+]
+`;
+
+exports[`icon set 1`] = `
+Array [
+  Object {
+    "file": "icon_16x16.png",
+    "size": 16,
+  },
+  Object {
+    "file": "icon_32x32.png",
+    "size": 32,
+  },
+  Object {
+    "file": "icon_48x48.png",
+    "size": 48,
+  },
+  Object {
+    "file": "icon_64x64.png",
+    "size": 64,
+  },
+  Object {
+    "file": "icon_128x128.png",
+    "size": 128,
+  },
+  Object {
+    "file": "icon_256x256.png",
+    "size": 256,
+  },
+  Object {
+    "file": "icon_512x512.png",
+    "size": 512,
+  },
+]
+`;
+
+exports[`png icon 1`] = `
+Array [
+  Object {
+    "file": "icon_16x16.png",
+    "size": 16,
+  },
+  Object {
+    "file": "icon_32x32.png",
+    "size": 32,
+  },
+  Object {
+    "file": "icon_48x48.png",
+    "size": 48,
+  },
+  Object {
+    "file": "icon_64x64.png",
+    "size": 64,
+  },
+  Object {
+    "file": "icon_128x128.png",
+    "size": 128,
+  },
+  Object {
+    "file": "icon_256x256.png",
+    "size": 256,
+  },
+  Object {
+    "file": "icon_512x512.png",
+    "size": 512,
+  },
+]
+`;

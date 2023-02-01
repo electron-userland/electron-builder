@@ -1,0 +1,25 @@
+{
+  "name": "test-app",
+  "productName": "Test App ßW",
+  "version": "1.1.0",
+  "homepage": "http://foo.example.com",
+  "description": "Test Application (test quite \" #378)",
+  "author": "Foo Bar <foo@example.com>",
+  "license": "MIT",
+  "build": {
+    "electronVersion": "11.0.0",
+    "appId": "org.electron-builder.testApp",
+    "compression": "store",
+    "npmRebuild": false,
+    "mac": {
+      "category": "your.app.category.type"
+    },
+    "linux": {
+      "category": "Development"
+    }
+  },
+  "dependencies": {
+    "ms": "2.0.0",
+    "electron-log": "2.2.9"
+  }
+}

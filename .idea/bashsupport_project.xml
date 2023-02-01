@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="BashSupportProjectSettings">
+    <option name="globalVariables">
+      <set>
+        <option value="APPDIR" />
+        <option value="APPIMAGE" />
+        <option value="DEBUG" />
+        <option value="DESKTOPINTEGRATION" />
+        <option value="SKIP" />
+        <option value="XDG_DATA_DIRS" />
+      </set>
+    </option>
+  </component>
+</project>
