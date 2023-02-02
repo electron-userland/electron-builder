@@ -412,6 +412,7 @@ export class Packager {
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
+    const syncTargetsIfAny = [] as Target[]
 
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
@@ -446,11 +447,20 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
-        taskManager.addTask(target.finishBuild())
+        if (target.isAsyncSupported) {
+          taskManager.addTask(target.finishBuild())
+        }
+        else {
+          syncTargetsIfAny.push(target)
+        }
       }
     }
 
     await taskManager.awaitTasks()
+
+    for (const target of syncTargetsIfAny) {
+      await target.finishBuild()
+    }
     return platformToTarget
   }
 

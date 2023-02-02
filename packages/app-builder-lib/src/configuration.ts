@@ -6,6 +6,7 @@ import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
+import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 import { PkgOptions } from "./options/pkgOptions"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { SnapOptions } from "./options/SnapOptions"
@@ -73,6 +74,8 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly appx?: AppXOptions | null
   /** @private */
   readonly msi?: MsiOptions | null
+  /** @private */
+  readonly msiWrapped?: MsiWrappedOptions | null
   readonly squirrelWindows?: SquirrelWindowsOptions | null
 
   /**

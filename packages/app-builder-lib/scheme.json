@@ -3699,6 +3699,167 @@
       },
       "type": "object"
     },
+    "MsiWrappedOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalWixArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "createDesktopShortcut": {
+          "default": true,
+          "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
+          "enum": [
+            "always",
+            false,
+            true
+          ]
+        },
+        "createStartMenuShortcut": {
+          "default": true,
+          "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "impersonate": {
+          "default": false,
+          "description": "Determines if the wrapped installer should be executed with impersonation",
+          "type": "boolean"
+        },
+        "menuCategory": {
+          "default": false,
+          "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "oneClick": {
+          "type": "boolean"
+        },
+        "perMachine": {
+          "default": false,
+          "description": "Whether to install per all users (per-machine).",
+          "type": "boolean"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BitbucketOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "runAfterFinish": {
+          "default": true,
+          "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
+          "type": "boolean"
+        },
+        "shortcutName": {
+          "description": "The name that will be used for all shortcuts. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "upgradeCode": {
+          "description": "The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
+          "type": "boolean"
+        },
+        "wrappedInstallerArgs": {
+          "description": "Extra arguments to provide to the wrapped installer (ie: /S for silent install)",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "NotarizeOptions": {
       "additionalProperties": false,
       "properties": {
@@ -6790,6 +6951,16 @@
         }
       ],
       "description": "MSI project created on disk - not packed into .msi package yet."
+    },
+    "msiWrapped": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MsiWrappedOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "nodeGypRebuild": {
       "default": false,

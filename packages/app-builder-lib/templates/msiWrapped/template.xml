@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- https://blogs.msdn.microsoft.com/gremlininthemachine/2006/12/05/msi-wix-and-unicode/ -->
+  <!-- https://mistake.computer/2020/04/05/msi-exe-wrapper.html -->
+  <Product Id="${productId}" Name="${productName}" UpgradeCode="${upgradeCode}" Version="${version}" Language="1033" Codepage="65001" Manufacturer="${manufacturer}">
+    <Package Compressed="yes" InstallerVersion="500"/>
+
+    <Condition Message="Windows 7 and above is required"><![CDATA[Installed OR VersionNT >= 601]]></Condition>
+
+    <!--
+    AllowSameVersionUpgrades:
+      When set to no (the default), installing a product with the same version and upgrade code (but different product code) is allowed and treated by MSI as two products.
+      When set to yes, WiX sets the msidbUpgradeAttributesVersionMaxInclusive attribute, which tells MSI to treat a product with the same version as a major upgrade.
+
+      So, AllowSameVersionUpgrades="yes" allows to build and test MSI with the same version, and previously installed app will be removed.
+    -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage='A newer version of "[ProductName]" is already installed.'/>
+    <MediaTemplate CompressionLevel="${compressionLevel}" EmbedCab="yes"/>
+
+    <Property Id="DISABLEADVTSHORTCUTS" Value="1"/>
+
+    {{ if (iconPath) { }}
+    <Icon Id="${iconId}" SourceFile="${iconPath}"/>
+    <Property Id="ARPPRODUCTICON" Value="${iconId}"/>
+    {{ } -}}
+
+    <Property Id="MSIINSTALLPERUSER" Secure="yes" Value="1"/>
+
+    <!-- Exe path will be embedded directly -->
+    <Binary Id="WrappedExe" SourceFile="${exeSourcePath}" />
+
+    <!-- Custom Action to Execute embedded exe -->
+    <CustomAction Id="RunInstaller" Return="check" Execute="deferred"
+      HideTarget="no" Impersonate="${impersonate}" BinaryKey="WrappedExe" ExeCommand="${wrappedInstallerArgs}" />
+
+    <!-- This is just a dummy component to allow wrapping the exe installer -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="TempFolder">
+        <Component Id="EmptyComponent" Guid="7145262D-7149-4F1A-9A69-F377E38F04DA" KeyPath="yes">
+          <CreateFolder />
+        </Component>
+      </Directory>
+    </Directory>
+
+    <!-- Setting the feature to level 0 marks it hidden, so it can't be installed.
+     That prevents getting this MSI registered as an installed product,
+     because it has no features of its own to install. -->
+    <Feature Id="EmptyFeature" Level="0">
+      <ComponentRef Id="EmptyComponent" />
+    </Feature>
+
+    <InstallExecuteSequence>
+      <Custom Action="RunInstaller" After="ProcessComponents" />
+    </InstallExecuteSequence>
+  </Product>
+</Wix>
