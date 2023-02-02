@@ -16,7 +16,6 @@ import { createStageDir } from "./targetUtil"
 
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("44a7d685-ff0b-4877-b761-5dc194e7f071")
 const ELECTRON_MSI_WRAPPED_NS_UUID = UUID.parse("467f7bb2-a83c-442f-b776-394d316e8e53")
-// const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
 const projectTemplate = new Lazy<(data: any) => string>(async () => {
   const template = (await readFile(path.join(getTemplatePath("msiWrapped"), "template.xml"), "utf8"))
@@ -105,7 +104,7 @@ export default class MsiWrappedTarget extends Target {
 
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
-    await writeFile(projectFile, await this.writeManifest(/*appOutDir,*/ arch, commonOptions))
+    await writeFile(projectFile, await this.writeManifest(arch, commonOptions))
 
     await packager.info.callMsiProjectCreated(projectFile)
 
@@ -194,11 +193,9 @@ export default class MsiWrappedTarget extends Target {
     return artifactPath
   }
 
-  private async writeManifest(/*appOutDir: string,*/ arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
+  private async writeManifest(arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
     const appInfo = this.packager.appInfo
     const exeSourcePath = this.getExeSourcePath(arch)
-    // UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase()
-    // const { files, dirs } = await this.computeFileDeclaration(appOutDir)
 
     const companyName = appInfo.companyName
     if (!companyName) {
