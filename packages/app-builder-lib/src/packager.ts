@@ -449,8 +449,7 @@ export class Packager {
       for (const target of nameToTarget.values()) {
         if (target.isAsyncSupported) {
           taskManager.addTask(target.finishBuild())
-        }
-        else {
+        } else {
           syncTargetsIfAny.push(target)
         }
       }

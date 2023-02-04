@@ -9,7 +9,6 @@ const parser = new XMLParser({
   parseTagValue: true,
 })
 
-
 test.ifAll.ifDevOrWinCi(
   "msiWrapped requires nsis",
   appThrows(
