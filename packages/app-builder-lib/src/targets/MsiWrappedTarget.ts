@@ -75,27 +75,11 @@ export default class MsiWrappedTarget extends MsiTarget {
   }
 
   protected async writeManifest(_appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
-    const appInfo = this.packager.appInfo
     const exeSourcePath = this.getExeSourcePath(arch)
-
-    const companyName = appInfo.companyName
-    if (!companyName) {
-      log.warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
-    }
-
-    const compression = this.packager.compression
     const options = this.options
-    const iconPath = await this.packager.getIconPath()
+
     return (await this.projectTemplate.value)({
-      ...commonOptions,
-      iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
-      iconId: this.iconId,
-      compressionLevel: compression === "store" ? "none" : "high",
-      version: appInfo.getVersionInWeirdWindowsForm(),
-      productName: appInfo.productName,
-      upgradeCode: this.upgradeCode,
-      manufacturer: companyName || appInfo.productName,
-      appDescription: appInfo.description,
+      ...(await this.getBaseOptions(commonOptions)),
       exeSourcePath: exeSourcePath,
       productId: this.productId,
       impersonate: options.impersonate === true ? "yes" : "no",

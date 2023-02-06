@@ -148,19 +148,33 @@ export default class MsiTarget extends Target {
   protected async writeManifest(appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
     const appInfo = this.packager.appInfo
     const { files, dirs } = await this.computeFileDeclaration(appOutDir)
+    const options = this.options
+
+    return (await this.projectTemplate.value)({
+      ...(await this.getBaseOptions(commonOptions)),
+      isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
+      isRunAfterFinish: options.runAfterFinish !== false,
+      // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
+      programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
+      // wix in the name because special wix format can be used in the name
+      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
+      dirs,
+      files,
+    })
+  }
+
+  protected async getBaseOptions(commonOptions: FinalCommonWindowsInstallerOptions): Promise<any> {
+    const appInfo = this.packager.appInfo
+    const iconPath = await this.packager.getIconPath()
+    const compression = this.packager.compression
 
     const companyName = appInfo.companyName
     if (!companyName) {
       log.warn(`Manufacturer is not set for MSI — please set "author" in the package.json`)
     }
 
-    const compression = this.packager.compression
-    const options = this.options
-    const iconPath = await this.packager.getIconPath()
-    return (await this.projectTemplate.value)({
+    return {
       ...commonOptions,
-      isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
-      isRunAfterFinish: options.runAfterFinish !== false,
       iconPath: iconPath == null ? null : this.vm.toVmFile(iconPath),
       iconId: this.iconId,
       compressionLevel: compression === "store" ? "none" : "high",
@@ -169,13 +183,7 @@ export default class MsiTarget extends Target {
       upgradeCode: this.upgradeCode,
       manufacturer: companyName || appInfo.productName,
       appDescription: appInfo.description,
-      // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
-      programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
-      // wix in the name because special wix format can be used in the name
-      installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
-      dirs,
-      files,
-    })
+    }
   }
 
   private async computeFileDeclaration(appOutDir: string) {
