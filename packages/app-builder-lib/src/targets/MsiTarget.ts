@@ -21,23 +21,23 @@ import { createStageDir, getWindowsInstallationDirName } from "./targetUtil"
 const ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID = UUID.parse("d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc")
 const ROOT_DIR_ID = "APPLICATIONFOLDER"
 
-const projectTemplate = new Lazy<(data: any) => string>(async () => {
-  const template = (await readFile(path.join(getTemplatePath("msi"), "template.xml"), "utf8"))
-    .replace(/{{/g, "<%")
-    .replace(/}}/g, "%>")
-    .replace(/\${([^}]+)}/g, "<%=$1%>")
-  return ejs.compile(template)
-})
-
 // WiX doesn't support Mono, so, dontnet462 is required to be installed for wine (preinstalled in our bundled wine)
 export default class MsiTarget extends Target {
-  private readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
+  protected readonly vm = process.platform === "win32" ? new VmManager() : new WineVmManager()
 
   readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
 
-  constructor(private readonly packager: WinPackager, readonly outDir: string) {
-    super("msi")
+  constructor(protected readonly packager: WinPackager, readonly outDir: string, name = "msi", isAsyncSupported = true) {
+    super(name, isAsyncSupported)
   }
+
+  protected projectTemplate = new Lazy<(data: any) => string>(async () => {
+    const template = (await readFile(path.join(getTemplatePath(this.name), "template.xml"), "utf8"))
+      .replace(/{{/g, "<%")
+      .replace(/}}/g, "%>")
+      .replace(/\${([^}]+)}/g, "<%=$1%>")
+    return ejs.compile(template)
+  })
 
   /**
    * A product-specific string that can be used in an [MSI Identifier](https://docs.microsoft.com/en-us/windows/win32/msi/identifier).
@@ -47,11 +47,11 @@ export default class MsiTarget extends Target {
     return sanitizedId.length > 0 ? sanitizedId : "App" + this.upgradeCode.replace(/-/g, "")
   }
 
-  private get iconId() {
+  protected get iconId() {
     return `${this.productMsiIdPrefix}Icon.exe`
   }
 
-  private get upgradeCode(): string {
+  protected get upgradeCode(): string {
     return (this.options.upgradeCode || UUID.v5(this.packager.appInfo.id, ELECTRON_BUILDER_UPGRADE_CODE_NS_UUID)).toUpperCase()
   }
 
@@ -145,7 +145,7 @@ export default class MsiTarget extends Target {
     return args
   }
 
-  private async writeManifest(appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
+  protected async writeManifest(appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
     const appInfo = this.packager.appInfo
     const { files, dirs } = await this.computeFileDeclaration(appOutDir)
 
@@ -157,7 +157,7 @@ export default class MsiTarget extends Target {
     const compression = this.packager.compression
     const options = this.options
     const iconPath = await this.packager.getIconPath()
-    return (await projectTemplate.value)({
+    return (await this.projectTemplate.value)({
       ...commonOptions,
       isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
