@@ -1,4 +1,4 @@
-import { Arch, log, deepAssign } from "builder-util"
+import { Arch, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import * as path from "path"
 import { MsiWrappedOptions } from "../"
