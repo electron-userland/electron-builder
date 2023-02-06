@@ -57,7 +57,6 @@
     "eslint": "8.26.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
-    "fast-xml-parser": "^4.0.15",
     "fs-extra": "10.1.0",
     "globby": "11.1.0",
     "husky": "7.0.4",
