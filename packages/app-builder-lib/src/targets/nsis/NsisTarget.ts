@@ -691,10 +691,17 @@ export class NsisTarget extends Target {
               registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
+            // NB: In an effort to preserve backward-compatibility, `item.nsisDefaultOpener`/`makeDefaultOpener`
+            // is intepreted to be `true` by default.
+            const makeDefaultOpener = item.nsisDefaultOpener !== false
+
             const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${packager.appInfo.productName}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
+            registerFileAssociationsScript.insertMacro(
+              "APP_ASSOCIATE",
+              `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${makeDefaultOpener} ${commandText} ${command}`
+            )
           }
         }
         scriptGenerator.macro("registerFileAssociations", registerFileAssociationsScript)

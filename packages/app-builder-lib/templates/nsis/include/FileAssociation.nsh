@@ -62,8 +62,14 @@
 ;                 command = <"command string">
 ;
 
-!macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON COMMANDTEXT COMMAND
-  WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
+!macro APP_ASSOCIATE EXT FILECLASS DESCRIPTION ICON MAKE_DEFAULT_OPENER COMMANDTEXT COMMAND
+  !ifdef MAKE_DEFAULT_OPENER == "true"
+    ; Backup the previously associated file class
+    ReadRegStr $R0 SHELL_CONTEXT "Software\Classes\.${EXT}" ""
+    WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "${FILECLASS}_backup" "$R0"
+
+    WriteRegStr SHELL_CONTEXT "Software\Classes\.${EXT}" "" "${FILECLASS}"
+  !endif
 
   WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}" "" `${DESCRIPTION}`
   WriteRegStr SHELL_CONTEXT "Software\Classes\${FILECLASS}\DefaultIcon" "" `${ICON}`

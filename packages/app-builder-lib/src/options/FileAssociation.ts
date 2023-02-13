@@ -27,6 +27,16 @@ export interface FileAssociation {
   readonly mimeType?: string | null
 
   /**
+   * *windows-only*
+   * Whether the app should be made to be the default opener of the given file extension.
+   * NB:
+   * - Specific to installations that are made using NSIS.
+   * - Does not supersede manually set defaults.
+   * @default true
+   */
+  readonly nsisDefaultOpener?: boolean
+
+  /**
    * The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
    *
    * Not supported on Linux, file issue if need (default icon will be `x-office-document`). Not supported on MSI.
