@@ -352,8 +352,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  private isSignDlls(): boolean {
-    return this.platformSpecificBuildOptions.signDlls === true
+  private shouldSignFile(file: string): boolean {
+    const shouldSignDll = this.platformSpecificBuildOptions.signDlls === true && file.endsWith(".dll")
+    return shouldSignDll || file.endsWith(".exe") || file.endsWith(".node")
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
@@ -362,7 +363,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return file => {
-      if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
           return new CopyFileTransformer(file => this.sign(file))
@@ -387,7 +388,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           path.basename(exeFileName, ".exe"),
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
-      } else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      } else if (this.shouldSignFile(file)) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
@@ -399,7 +400,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const signPromise = (filepath: string[]) => {
       const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
+      return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
     const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
