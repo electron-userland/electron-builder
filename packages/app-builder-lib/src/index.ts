@@ -31,6 +31,7 @@ export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScalin
 export { WindowsConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
 export { MsiOptions } from "./options/MsiOptions"
+export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions } from "./targets/nsis/nsisOptions"
 export { LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions, FlatpakOptions } from "./options/linuxOptions"
