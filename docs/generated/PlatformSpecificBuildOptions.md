@@ -21,11 +21,11 @@
 <p><code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> The <a href="/configuration/contents#extrafiles">extra files</a> configuration.</p>
 </li>
 <li>
-<p><code id="PlatformSpecificBuildOptions-asar">asar</code> = <code>true</code> <a href="#AsarOptions">AsarOptions</a> | Boolean | “undefined” - Whether to package the application’s source code into an archive, using <a href="https://www.electronjs.org/docs/latest/tutorial/application-distribution/">Electron’s archive format</a>.</p>
+<p><code id="PlatformSpecificBuildOptions-asar">asar</code> = <code>true</code> <a href="#AsarOptions">AsarOptions</a> | Boolean | “undefined” - Whether to package the application’s source code into an archive, using <a href="http://electron.atom.io/docs/tutorial/application-packaging/">Electron’s archive format</a>.</p>
 <p>Node modules, that must be unpacked, will be detected automatically, you don’t need to explicitly set <a href="#configuration-asarUnpack">asarUnpack</a> - please file an issue if this doesn’t work.</p>
 </li>
 <li>
-<p><code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String | “undefined” - A <a href="/file-patterns">glob patterns</a> relative to the <a href="#MetadataDirectories-app">app directory</a>, which specifies which files to unpack when creating the <a href="https://www.electronjs.org/docs/latest/tutorial/application-distribution/">asar</a> archive.</p>
+<p><code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String | “undefined” - A <a href="/file-patterns">glob patterns</a> relative to the <a href="#MetadataDirectories-app">app directory</a>, which specifies which files to unpack when creating the <a href="http://electron.atom.io/docs/tutorial/application-packaging/">asar</a> archive.</p>
 </li>
 </ul>
 <hr>
