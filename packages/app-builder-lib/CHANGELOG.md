@@ -1,5 +1,13 @@
 # app-builder-lib
 
+## 24.0.0-alpha.12
+
+### Patch Changes
+
+- [`45c07e3e`](https://github.com/electron-userland/electron-builder/commit/45c07e3e063e89a6f8a82e8ae5ef7a2453ff161a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: enable signing of .node modules in order to support WDAC
+
+- [#7407](https://github.com/electron-userland/electron-builder/pull/7407) [`a3387309`](https://github.com/electron-userland/electron-builder/commit/a3387309f0297cb824926bd7fa5cb653da9f24ca) Thanks [@ghost1face](https://github.com/ghost1face)! - feat: Allow for NSIS windows installer to be wrapped in an MSI
+
 ## 24.0.0-alpha.11
 
 ### Major Changes

@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.0-alpha.9
+
+### Patch Changes
+
+- [#7394](https://github.com/electron-userland/electron-builder/pull/7394) [`1bbcfb3d`](https://github.com/electron-userland/electron-builder/commit/1bbcfb3dc5f36b0803c69e9170db16ded52a0043) Thanks [@ganthern](https://github.com/ganthern)! - fix: inherit stdio for updated processes (#7393)
+
 ## 6.0.0-alpha.8
 
 ### Patch Changes
