@@ -24,7 +24,7 @@ autoUpdater.on('update-available', () => {
     message: 'Found updates, do you want update now?',
     buttons: ['Sure', 'No']
   }).then((buttonIndex) => {
-    if (buttonIndex === 0) {
+    if (buttonIndex.response === 0) {
       autoUpdater.downloadUpdate()
     }
     else {
