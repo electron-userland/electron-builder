@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: cimg/node:14.19
+      - image: cimg/node:14.19@sha256:529d618877cb283d38fdaa3aa3c725ebba662702e704fcefefbbadd99a5bf6b6
     steps:
       - checkout
       - restore_cache:
