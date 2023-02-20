@@ -70,7 +70,6 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
       await rename(taskConfiguration.resultOutputPath, options.path)
     }
   }
-
   return true
 }
 
