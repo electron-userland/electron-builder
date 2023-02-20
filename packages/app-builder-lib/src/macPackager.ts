@@ -153,7 +153,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
@@ -444,29 +444,28 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
-    const appFileName = `${this.appInfo.productFilename}.app`
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    const readDirectoryAndSign = async (sourceDirectory: string, directories: string[], filter: (file: string) => boolean): Promise<boolean> => {
+      await BluebirdPromise.map(directories, async (file: string): Promise<null> => {
+        if (filter(file)) {
+          await this.sign(path.join(sourceDirectory, file), null, null, null)
+        }
+        return null
+      })
+      return true
+    }
 
-    await BluebirdPromise.map(readdir(packContext.appOutDir), async (file: string): Promise<any> => {
-      if (file === appFileName) {
-        const appPath = path.join(packContext.appOutDir, file)
-        await this.sign(appPath, null, null, null)
-      }
-      return null
-    })
+    const appFileName = `${this.appInfo.productFilename}.app`
+    await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
 
     if (!isAsar) {
-      return
+      return true
     }
 
     const outResourcesDir = path.join(packContext.appOutDir, "resources", "app.asar.unpacked")
-    await BluebirdPromise.map(orIfFileNotExist(readdir(outResourcesDir), []), (file: string): any => {
-      if (file.endsWith(".app")) {
-        return this.sign(path.join(outResourcesDir, file), null, null, null)
-      } else {
-        return null
-      }
-    })
+    await readDirectoryAndSign(outResourcesDir, await orIfFileNotExist(readdir(outResourcesDir), []), file => file.endsWith(".app"))
+
+    return true
   }
 
   private async notarizeIfProvided(appPath: string) {

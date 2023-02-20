@@ -199,7 +199,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
-  async sign(file: string, logMessagePrefix?: string): Promise<void> {
+  async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       name: this.appInfo.productName,
@@ -216,7 +216,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
         )
       }
-      return
+      return true
     }
 
     if (logMessagePrefix == null) {
@@ -245,7 +245,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       )
     }
 
-    await this.doSign({
+    return this.doSign({
       ...signOptions,
       cscInfo,
       options: {
@@ -258,7 +258,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     for (let i = 0; i < 3; i++) {
       try {
         await sign(options, this)
-        break
+        return true
       } catch (e: any) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
@@ -269,6 +269,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         throw e
       }
     }
+    return false
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
@@ -395,15 +396,16 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
 
     if (!isAsar) {
-      return false
+      return true
     }
 
-    const signPromise = (filepath: string[]) => {
+    const filesPromise = (filepath: string[]) => {
       const outDir = path.join(packContext.appOutDir, ...filepath)
       return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
-    const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
+    const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+
     return true
   }
 }
