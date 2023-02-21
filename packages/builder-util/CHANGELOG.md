@@ -1,5 +1,11 @@
 # builder-util
 
+## 24.0.0-alpha.13
+
+### Patch Changes
+
+- [#7432](https://github.com/electron-userland/electron-builder/pull/7432) [`4d3fdfcf`](https://github.com/electron-userland/electron-builder/commit/4d3fdfcfe5c6b75cdb8fa8e89f6169c986949bcb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: report the correct status result when `doSign` exits early from macPackager and winPackager. Updated function definition to return `Promise<boolean>` to properly flag intellisense
+
 ## 24.0.0-alpha.11
 
 ### Patch Changes
