@@ -39,7 +39,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
   computeSignToolArgs(isWin: boolean): Array<string>
 }
 
-export async function sign(options: WindowsSignOptions, packager: WinPackager) {
+export async function sign(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -70,6 +70,8 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
       await rename(taskConfiguration.resultOutputPath, options.path)
     }
   }
+
+  return true
 }
 
 export interface FileCodeSigningInfo {

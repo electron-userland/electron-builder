@@ -429,7 +429,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
+  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     return Promise.resolve(false)
   }
 
