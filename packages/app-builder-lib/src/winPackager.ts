@@ -255,13 +255,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   private async doSign(options: WindowsSignOptions) {
-    let didSign = true
     for (let i = 0; i < 3; i++) {
       try {
         await sign(options, this)
         return true
       } catch (e: any) {
-        didSign = false
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
@@ -369,9 +367,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
-          return new CopyFileTransformer(async file => {
-            await this.sign(file)
-          })
+          return new CopyFileTransformer(file => this.sign(file))
         }
       }
       return null
