@@ -4,7 +4,7 @@ import { log, InvalidConfigurationError } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
-import { resolveFunction } from "./platformPackager"
+import { importFunction } from "./platformPackager"
 import { PublishManager } from "./publish/PublishManager"
 
 export { Packager, BuildResult } from "./packager"
@@ -76,7 +76,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
   process.once("SIGINT", sigIntHandler)
 
   const promise = packager.build().then(async buildResult => {
-    const afterAllArtifactBuild = resolveFunction(buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+    const afterAllArtifactBuild = await importFunction(buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
     if (afterAllArtifactBuild != null) {
       const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
       if (newArtifacts.length === 0 || !publishManager.isPublish) {
