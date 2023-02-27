@@ -278,15 +278,18 @@ AWS credentials are required, please see <a href="http://docs.aws.amazon.com/sdk
 Define <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html">environment variables</a>.
 Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html">~/.aws/credentials</a>.</p>
 <p>Example configuration:</p>
-<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
-<span class="hljs-attr">&quot;build&quot;</span><span class="hljs-punctuation">:</span>
-<span class="hljs-attr">&quot;publish&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
-<span class="hljs-attr">&quot;provider&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;s3&quot;</span><span class="hljs-punctuation">,</span>
-<span class="hljs-attr">&quot;bucket&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;bucket-name&quot;</span>
-<span class="hljs-punctuation">}</span>
-<span class="hljs-punctuation">}</span>
-<span class="hljs-punctuation">}</span>
-</code></pre>
+
+```json
+{
+  "build": {
+    "publish": {
+      "provider": "s3",
+      "bucket": "bucket-name"
+      }
+  }
+}
+```
+
 <ul>
 <li>
 <p><strong><code id="S3Options-provider">provider</code></strong> “s3” - The provider. Must be <code>s3</code>.</p>
