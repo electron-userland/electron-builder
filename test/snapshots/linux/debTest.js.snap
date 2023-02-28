@@ -533,10 +533,10 @@ exports[`executable path in postinst script 5`] = `
 "#!/bin/bash
 
 # Link to the binary
-ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
+ln -sf "/opt/foo/Boo" "/usr/bin/Boo"
 
 # SUID chrome-sandbox for Electron 5+
-chmod 4755 '/opt/foo/chrome-sandbox' || true
+chmod 4755 "/opt/foo/chrome-sandbox" || true
 
 update-mime-database /usr/share/mime || true
 update-desktop-database /usr/share/applications || true"
