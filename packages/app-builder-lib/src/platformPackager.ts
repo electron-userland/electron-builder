@@ -752,6 +752,22 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
+/**
+ * NOTE: this is required because tsc converts the following:
+ *
+ * ```ts
+ * await import("path/to/some/module");
+ * ```
+ *
+ * to
+ *
+ * ```ts
+ * Promise.resolve().then(() => require("path/to/some/module"))
+ * ```
+ */
+/* eslint-disable @typescript-eslint/no-implied-eval */
+const importDynamic = new Function("modulePath", "return import(modulePath)")
+
 export async function importFunction<T>(executor: T | string, name: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     return executor
@@ -769,7 +785,7 @@ export async function importFunction<T>(executor: T | string, name: string): Pro
     p = path.resolve(p)
   }
 
-  const m = await import(p)
+  const m = await importDynamic(p)
   const namedExport = m[name]
   if (namedExport == null) {
     return m.default || m
