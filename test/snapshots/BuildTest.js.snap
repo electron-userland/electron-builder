@@ -924,7 +924,7 @@ Object {
                   "files": Object {
                     "keytar.node": Object {
                       "executable": true,
-                      "size": "<size>"size>",
+                      "size": "<size>",
                     },
                   },
                 },
