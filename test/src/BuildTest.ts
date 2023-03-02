@@ -328,8 +328,8 @@ export function removeUnstableProperties(data: any) {
       if (name === "offset") {
         return undefined
       }
-      if (name.endsWith(".node") && value.size != null) {
-        // size differs on various OS
+      if (value.size != null) {
+        // size differs on various OS and subdependencies aren't pinned, so this will randomly fail when subdependency resolution versions change
         value.size = "<size>"
       }
       // Keep existing test coverage
