@@ -29,7 +29,7 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
@@ -41,11 +41,13 @@ jobs:
         run: pnpm pretest
 
       - name: Determine if Dockerfiles changed
-        id: changed-files
+        id: changed-files-specific
         uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7 # v34
+        with:
+          files: docker/**
 
       - name: Dockerfile has changed, rebuild for tests
-        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
+        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || steps.changed-files-specific.outputs.any_changed == 'true'
         run: pnpm docker-images
 
       - name: Run tests in docker image
