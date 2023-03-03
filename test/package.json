@@ -5,7 +5,7 @@
   "dependencies": {
     "7zip-bin": "~5.1.1",
     "@jest/core": "^27.0.6",
-    "app-builder-lib": "workspace:*",
+    "@swiftmr/app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.1",
@@ -13,7 +13,7 @@
     "decompress-zip": "^0.3.3",
     "depcheck": "1.4.2",
     "dmg-builder": "workspace:*",
-    "electron-builder": "workspace:*",
+    "@swiftmr/electron-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*",
     "electron-osx-sign": "^0.6.0",
     "electron-publish": "workspace:*",

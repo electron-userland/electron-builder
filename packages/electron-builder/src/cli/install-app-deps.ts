@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 
-import { PACKAGE_VERSION } from "app-builder-lib/out/version"
+import { PACKAGE_VERSION } from "@swiftmr/app-builder-lib/out/version"
 import { log, use, getArchCliNames } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config"
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
+import { computeDefaultAppDirectory, getConfig } from "@swiftmr/app-builder-lib/out/util/config"
+import { getElectronVersion } from "@swiftmr/app-builder-lib/out/electron/electronVersion"
+import { createLazyProductionDeps } from "@swiftmr/app-builder-lib/out/util/packageDependencies"
+import { installOrRebuild } from "@swiftmr/app-builder-lib/out/util/yarn"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"

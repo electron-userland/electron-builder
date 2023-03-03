@@ -67,6 +67,7 @@ importers:
 
   packages/app-builder-lib:
     specifiers:
+      7zip-bin: ~5.1.1
       '@babel/core': 7.15.5
       '@babel/plugin-proposal-class-properties': 7.14.5
       '@babel/plugin-proposal-decorators': 7.15.4
@@ -97,18 +98,17 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/semver': 7.3.8
       '@types/tar': ^6.1.1
-      7zip-bin: ~5.1.1
       async-exit-hook: ^2.0.1
       bluebird-lst: ^1.0.9
-      builder-util: workspace:*
-      builder-util-runtime: workspace:*
+      builder-util: 23.0.9
+      builder-util-runtime: 9.0.2
       chromium-pickle-js: ^0.2.0
       debug: ^4.3.4
-      dmg-builder: workspace:*
+      dmg-builder: 23.1.0
       ejs: ^3.1.7
-      electron-builder-squirrel-windows: workspace:*
+      electron-builder-squirrel-windows: 23.1.0
       electron-osx-sign: ^0.6.0
-      electron-publish: workspace:*
+      electron-publish: 23.0.9
       form-data: ^4.0.0
       fs-extra: ^10.1.0
       hosted-git-info: ^4.1.0
@@ -123,10 +123,10 @@ importers:
       tar: ^6.1.11
       temp-file: ^3.4.0
     dependencies:
+      7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
       '@electron/universal': 1.2.1
       '@malept/flatpak-bundler': 0.4.0
-      7zip-bin: 5.1.1
       async-exit-hook: 2.0.1
       bluebird-lst: 1.0.9
       builder-util: link:../builder-util
@@ -182,13 +182,13 @@ importers:
 
   packages/builder-util:
     specifiers:
+      7zip-bin: ~5.1.1
       '@types/cross-spawn': 6.0.2
       '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
-      7zip-bin: ~5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
@@ -204,9 +204,9 @@ importers:
       stat-mode: ^1.0.0
       temp-file: ^3.4.0
     dependencies:
+      7zip-bin: 5.1.1
       '@types/debug': 4.1.7
       '@types/fs-extra': 9.0.13
-      7zip-bin: 5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
@@ -242,9 +242,9 @@ importers:
 
   packages/dmg-builder:
     specifiers:
+      '@swiftmr/app-builder-lib': workspace:*
       '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
-      app-builder-lib: workspace:*
       builder-util: workspace:*
       builder-util-runtime: workspace:*
       dmg-license: ^1.0.11
@@ -253,7 +253,7 @@ importers:
       js-yaml: ^4.1.0
       temp-file: 3.4.0
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       fs-extra: 10.0.0
@@ -268,15 +268,15 @@ importers:
 
   packages/electron-builder:
     specifiers:
+      '@swiftmr/app-builder-lib': 23.1.0
       '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
       '@types/update-notifier': 5.1.0
       '@types/yargs': ^17.0.1
-      app-builder-lib: workspace:*
-      builder-util: workspace:*
-      builder-util-runtime: workspace:*
+      builder-util: 23.0.9
+      builder-util-runtime: 9.0.2
       chalk: ^4.1.1
-      dmg-builder: workspace:*
+      dmg-builder: 23.1.0
       fs-extra: ^10.0.0
       is-ci: ^3.0.0
       lazy-val: ^1.0.5
@@ -284,8 +284,8 @@ importers:
       update-notifier: ^5.1.0
       yargs: ^17.0.1
     dependencies:
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
       '@types/yargs': 17.0.7
-      app-builder-lib: link:../app-builder-lib
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
@@ -303,15 +303,15 @@ importers:
 
   packages/electron-builder-squirrel-windows:
     specifiers:
+      7zip-bin: ~5.1.1
+      '@swiftmr/app-builder-lib': workspace:*
       '@types/archiver': 5.1.1
       '@types/fs-extra': 9.0.13
-      7zip-bin: ~5.1.1
-      app-builder-lib: workspace:*
       archiver: ^5.3.1
       builder-util: workspace:*
       fs-extra: ^10.0.0
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
       archiver: 5.3.1
       builder-util: link:../builder-util
       fs-extra: 10.0.0
@@ -323,27 +323,27 @@ importers:
 
   packages/electron-forge-maker-appimage:
     specifiers:
-      app-builder-lib: workspace:*
+      '@swiftmr/app-builder-lib': workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
 
   packages/electron-forge-maker-nsis:
     specifiers:
-      app-builder-lib: workspace:*
+      '@swiftmr/app-builder-lib': workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
 
   packages/electron-forge-maker-nsis-web:
     specifiers:
-      app-builder-lib: workspace:*
+      '@swiftmr/app-builder-lib': workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
 
   packages/electron-forge-maker-snap:
     specifiers:
-      app-builder-lib: workspace:*
+      '@swiftmr/app-builder-lib': workspace:*
     dependencies:
-      app-builder-lib: link:../app-builder-lib
+      '@swiftmr/app-builder-lib': link:../app-builder-lib
 
   packages/electron-publish:
     specifiers:
@@ -399,13 +399,14 @@ importers:
 
   test:
     specifiers:
+      7zip-bin: ~5.1.1
       '@jest/core': ^27.0.6
+      '@swiftmr/app-builder-lib': workspace:*
+      '@swiftmr/electron-builder': workspace:*
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
       '@types/semver': ^7.3.6
-      7zip-bin: ~5.1.1
-      app-builder-lib: workspace:*
       builder-util: workspace:*
       builder-util-runtime: workspace:*
       chalk: ^4.1.1
@@ -413,7 +414,6 @@ importers:
       decompress-zip: ^0.3.3
       depcheck: 1.4.2
       dmg-builder: workspace:*
-      electron-builder: workspace:*
       electron-builder-squirrel-windows: workspace:*
       electron-osx-sign: ^0.6.0
       electron-publish: workspace:*
@@ -430,9 +430,10 @@ importers:
       temp-file: ^3.4.0
       yargs: ^17.0.1
     dependencies:
-      '@jest/core': 27.4.4
       7zip-bin: 5.1.1
-      app-builder-lib: link:../packages/app-builder-lib
+      '@jest/core': 27.4.4
+      '@swiftmr/app-builder-lib': link:../packages/app-builder-lib
+      '@swiftmr/electron-builder': link:../packages/electron-builder
       builder-util: link:../packages/builder-util
       builder-util-runtime: link:../packages/builder-util-runtime
       chalk: 4.1.2
@@ -440,7 +441,6 @@ importers:
       decompress-zip: 0.3.3
       depcheck: 1.4.2
       dmg-builder: link:../packages/dmg-builder
-      electron-builder: link:../packages/electron-builder
       electron-builder-squirrel-windows: link:../packages/electron-builder-squirrel-windows
       electron-osx-sign: 0.6.0
       electron-publish: link:../packages/electron-publish
@@ -4914,8 +4914,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      is-text-path: 1.0.1
       JSONStream: 1.3.5
+      is-text-path: 1.0.1
       lodash: 4.17.21
       meow: 8.1.2
       split2: 3.2.2
@@ -7681,12 +7681,12 @@ packages:
       '@types/node': 16.11.12
       anymatch: 3.1.2
       fb-watchman: 2.0.1
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
       jest-regex-util: 26.0.0
       jest-serializer: 26.6.2
       jest-util: 26.6.2
       jest-worker: 26.6.2
-      micromatch: 4.0.4
+      micromatch: 4.0.5
       sane: 4.1.0
       walker: 1.0.8
     optionalDependencies:
@@ -8105,7 +8105,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@types/node': 16.11.12
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
     dev: true
 
   /jest-serializer/27.4.0:
@@ -8193,9 +8193,9 @@ packages:
       '@jest/types': 26.6.2
       '@types/node': 16.11.12
       chalk: 4.1.2
-      graceful-fs: 4.2.8
+      graceful-fs: 4.2.10
       is-ci: 2.0.0
-      micromatch: 4.0.4
+      micromatch: 4.0.5
     dev: true
 
   /jest-util/27.4.2:
@@ -9497,7 +9497,7 @@ packages:
     dev: true
 
   /os-tmpdir/1.0.2:
-    resolution: {integrity: sha1-u+Z0BseaqFxc/sdm/lc0VV36EnQ=}
+    resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -9638,7 +9638,7 @@ packages:
     engines: {node: '>=0.10.0'}
 
   /path-key/2.0.1:
-    resolution: {integrity: sha1-QRyttXTFoUDTpLGRDUDYDMn0C0A=}
+    resolution: {integrity: sha512-fEHGKCSmUSDPv4uoj8AlD+joPlq3peND+HRYyxFz4KPw4z926S/b8rIuFs2FYJg3BwsxJf6A9/3eIdLaYC+9Dw==}
     engines: {node: '>=4'}
     dev: true
 
@@ -10402,7 +10402,7 @@ packages:
     dev: true
 
   /shebang-command/1.2.0:
-    resolution: {integrity: sha1-RKrGW2lbAzmJaMOfNj/uXer98eo=}
+    resolution: {integrity: sha512-EV3L1+UQWGor21OmnvojK36mhg+TyIKDh3iFBKBohr5xeXIhNBcx8oWdgkTEEQ+BEFFYdLRuqMfd5L84N1V5Vg==}
     engines: {node: '>=0.10.0'}
     dependencies:
       shebang-regex: 1.0.0
@@ -10415,7 +10415,7 @@ packages:
       shebang-regex: 3.0.0
 
   /shebang-regex/1.0.0:
-    resolution: {integrity: sha1-2kL0l0DAtC2yypcoVxyxkMmO/qM=}
+    resolution: {integrity: sha512-wpoSFAxys6b2a2wHZ1XpDSgD7N9iVjg29Ph9uV/uaP9Ex/KXlkTZTeddxDPSYQpgvzKLGJke2UU0AzoGCjNIvQ==}
     engines: {node: '>=0.10.0'}
     dev: true
 

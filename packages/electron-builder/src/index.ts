@@ -63,6 +63,6 @@ export {
   PublishManager,
   PublishOptions,
   ProgressInfo,
-} from "app-builder-lib"
-export { buildForge, ForgeOptions } from "app-builder-lib"
+} from "@swiftmr/app-builder-lib"
+export { buildForge, ForgeOptions } from "@swiftmr/app-builder-lib"
 export { CancellationToken } from "builder-util-runtime"
