@@ -69,9 +69,9 @@
 
       # https://github.com/electron-userland/electron-builder/issues/2516#issuecomment-372009092
       !ifdef INSTALL_MODE_PER_ALL_USERS
-        nsExec::Exec `taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
+        nsExec::Exec `taskkill /im "${APP_EXECUTABLE_FILENAME}" /t /fi "PID ne $pid"`
       !else
-        nsExec::Exec `cmd /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
+        nsExec::Exec `cmd /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /t /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
       !endif
       # to ensure that files are not "in-use"
       Sleep 300
@@ -87,9 +87,9 @@
           # wait to give a chance to exit gracefully
           Sleep 1000
           !ifdef INSTALL_MODE_PER_ALL_USERS
-            nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
+            nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /t /fi "PID ne $pid"`
           !else
-            nsExec::Exec `cmd /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
+            nsExec::Exec `cmd /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /t /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
           !endif
           !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
           ${If} $R0 == 0
