@@ -1,4 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate) [![project discussions](https://img.shields.io/badge/discuss-on_github-blue.svg)](https://github.com/electron-userland/electron-builder/discussions)
+
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
 
 :large_orange_diamond: - Looking for additional maintainers!
@@ -46,35 +47,36 @@ ToDesktop: An all-in-one platform for building and releasing Electron apps
 
 See the full documentation on [electron.build](https://www.electron.build).
 
-* NPM packages management:
-    * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
-    * Development dependencies are never included. You don't need to ignore them explicitly.
-    * [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.
-* [Code Signing](https://www.electron.build/code-signing) on a CI server or development machine.
-* [Auto Update](https://www.electron.build/auto-update) ready application packaging.
-* Numerous target formats:
-    * All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-    * [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
-    * [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-    * [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
-* [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
-* Advanced building:
-    * Pack in a distributable format [already packaged app](https://www.electron.build/#pack-only-in-a-distributable-format).
-    * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
-    * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
-    * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
-* [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
-* [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) support.
-* Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
+- NPM packages management:
+  - [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
+  - Development dependencies are never included. You don't need to ignore them explicitly.
+  - [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.
+- [Code Signing](https://www.electron.build/code-signing) on a CI server or development machine.
+- [Auto Update](https://www.electron.build/auto-update) ready application packaging.
+- Numerous target formats:
+  - All platforms: `7z`, `zip`, `tar.xz`, `tar.7z`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
+  - [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
+  - [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+  - [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), MSI, Squirrel.Windows.
+- [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+- Advanced building:
+  - Pack in a distributable format [already packaged app](https://www.electron.build/#pack-only-in-a-distributable-format).
+  - Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
+  - Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
+  - [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
+- [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
+- [Proton Native](https://www.electron.build/configuration/configuration/#proton-native) support.
+- Downloads all required tools files on demand automatically (e.g. to code sign windows application, to make AppX), no need to setup.
 
-| Question | Answer |
-|----------|-------|
-| “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
-| “I have a question” | [Join the discussions](https://github.com/electron-userland/electron-builder/discussions) |
-| “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to support development” | [Donate](https://www.electron.build/donate) |
+| Question                               | Answer                                                                                    |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration)                         |
+| “I have a question”                    | [Join the discussions](https://github.com/electron-userland/electron-builder/discussions) |
+| “I found a bug”                        | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new)         |
+| “I want to support development”        | [Donate](https://www.electron.build/donate)                                               |
 
 ## Installation
+
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
 `yarn add electron-builder --dev`
@@ -82,12 +84,15 @@ See the full documentation on [electron.build](https://www.electron.build).
 ### Note for PNPM
 
 In order to use with `pnpm`, you'll need to adjust your `.npmrc` to use any one the following approaches in order for your dependencies to be bundled correctly (ref: [#6389](https://github.com/electron-userland/electron-builder/issues/6289#issuecomment-1042620422)):
+
 ```
 node-linker=hoisted
 ```
+
 ```
 public-hoist-pattern=*
 ```
+
 ```
 shamefully-hoist=true
 ```
@@ -99,28 +104,32 @@ shamefully-hoist=true
 1. Specify the standard fields in the application `package.json` — [name](https://electron.build/configuration/configuration#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
 2. Specify the [build](https://electron.build/configuration/configuration#build) configuration in the `package.json` as follows:
-    ```json
-    "build": {
-      "appId": "your.id",
-      "mac": {
-        "category": "your.app.category.type"
-      }
-    }
-    ```
+
+   ```json
+   "build": {
+     "appId": "your.id",
+     "mac": {
+       "category": "your.app.category.type"
+     }
+   }
+   ```
+
    See [all options](https://www.electron.build/configuration/configuration). Option [files](https://www.electron.build/configuration/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
 
 3. Add [icons](https://www.electron.build/icons).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
-    ```json
-    "scripts": {
-      "app:dir": "electron-builder --dir",
-      "app:dist": "electron-builder"
-    }
-    ```
-    Then you can run `yarn app:dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn app:dir` (only generates the package directory without really packaging it. This is useful for testing purposes).
 
-    To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
+   ```json
+   "scripts": {
+     "app:dir": "electron-builder --dir",
+     "app:dist": "electron-builder"
+   }
+   ```
+
+   Then you can run `yarn app:dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn app:dir` (only generates the package directory without really packaging it. This is useful for testing purposes).
+
+   To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
 
