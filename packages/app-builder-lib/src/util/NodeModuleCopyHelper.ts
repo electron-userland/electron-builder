@@ -4,7 +4,7 @@ import { lstat, readdir } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
-import { importFunction } from "../platformPackager"
+import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
 
 const excludedFiles = new Set(
@@ -42,7 +42,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const filter = this.filter
     const metadata = this.metadata
 
-    const onNodeModuleFile = await importFunction(this.packager.config.onNodeModuleFile, "onNodeModuleFile")
+    const onNodeModuleFile = resolveFunction(this.packager.config.onNodeModuleFile, "onNodeModuleFile")
 
     const result: Array<string> = []
     const queue: Array<string> = []
