@@ -6,7 +6,7 @@ import { computeToolEnv, ToolInfo } from "../util/bundledTool"
 import { rename } from "fs-extra"
 import * as os from "os"
 import * as path from "path"
-import { importFunction } from "../platformPackager"
+import { resolveFunction } from "../platformPackager"
 import { isUseSystemSigncode } from "../util/flags"
 import { VmManager } from "../vm/vm"
 import { WinPackager } from "../winPackager"
@@ -52,7 +52,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  const executor = (await importFunction(options.options.sign, "sign")) || doSign
+  const executor = resolveFunction(options.options.sign, "sign") || doSign
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }

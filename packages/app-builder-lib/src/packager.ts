@@ -16,7 +16,7 @@ import { Framework } from "./Framework"
 import { LibUiFramework } from "./frameworks/LibUiFramework"
 import { Metadata } from "./options/metadata"
 import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packagerApi"
-import { PlatformPackager, importFunction } from "./platformPackager"
+import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
@@ -257,7 +257,7 @@ export class Packager {
       },
       "building"
     )
-    const handler = await importFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
+    const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
@@ -271,7 +271,7 @@ export class Packager {
   }
 
   async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
-    const handler = await importFunction(this.config.artifactBuildCompleted, "artifactBuildCompleted")
+    const handler = resolveFunction(this.config.artifactBuildCompleted, "artifactBuildCompleted")
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
@@ -280,14 +280,14 @@ export class Packager {
   }
 
   async callAppxManifestCreated(path: string): Promise<void> {
-    const handler = await importFunction(this.config.appxManifestCreated, "appxManifestCreated")
+    const handler = resolveFunction(this.config.appxManifestCreated, "appxManifestCreated")
     if (handler != null) {
       await Promise.resolve(handler(path))
     }
   }
 
   async callMsiProjectCreated(path: string): Promise<void> {
-    const handler = await importFunction(this.config.msiProjectCreated, "msiProjectCreated")
+    const handler = resolveFunction(this.config.msiProjectCreated, "msiProjectCreated")
     if (handler != null) {
       await Promise.resolve(handler(path))
     }
@@ -503,7 +503,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = await importFunction(config.beforeBuild, "beforeBuild")
+    const beforeBuild = resolveFunction(config.beforeBuild, "beforeBuild")
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -532,7 +532,7 @@ export class Packager {
   }
 
   async afterPack(context: AfterPackContext): Promise<any> {
-    const afterPack = await importFunction(this.config.afterPack, "afterPack")
+    const afterPack = resolveFunction(this.config.afterPack, "afterPack")
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last
