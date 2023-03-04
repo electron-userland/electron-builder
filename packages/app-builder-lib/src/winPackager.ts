@@ -210,7 +210,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.platformSpecificBuildOptions.sign != null) {
-        await sign(signOptions, this)
+        return await sign(signOptions, this)
       } else if (this.forceCodeSigning) {
         throw new InvalidConfigurationError(
           `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`

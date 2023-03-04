@@ -376,7 +376,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions): Promise<any> {
+  protected doSign(opts: SignOptions): Promise<any> {
     return signAsync(opts)
   }
 
@@ -457,7 +457,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const appFileName = `${this.appInfo.productFilename}.app`
     await readDirectoryAndSign(packContext.appOutDir, await readdir(packContext.appOutDir), file => file === appFileName)
-
     if (!isAsar) {
       return true
     }
