@@ -17,7 +17,7 @@ export function toLinuxArchString(arch: Arch, targetName: string): string {
     case Arch.armv7l:
       return targetName === "snap" || targetName === "deb" ? "armhf" : targetName === "flatpak" ? "arm" : "armv7l"
     case Arch.arm64:
-      return targetName === "pacman" || targetName === "flatpak" ? "aarch64" : "arm64"
+      return targetName === "pacman" || targetName === "rpm" || targetName === "flatpak" ? "aarch64" : "arm64"
 
     default:
       throw new Error(`Unsupported arch ${arch}`)
