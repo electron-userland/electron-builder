@@ -26,7 +26,7 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
     }
     await installDependencies(appDir, effectiveOptions)
   } else {
-    await rebuild(appDir, config.buildDependenciesFromSource === true, options.arch)
+    await rebuild(appDir, config.buildDependenciesFromSource === true, options)
   }
 }
 
@@ -149,18 +149,19 @@ export interface RebuildOptions {
 }
 
 /** @internal */
-export async function rebuild(appDir: string, buildFromSource: boolean, arch = process.arch) {
-  log.info({ appDir, arch }, "executing @electron/rebuild")
-  const options: electronRebuild.RebuildOptions = {
+export async function rebuild(appDir: string, buildFromSource: boolean, options: RebuildOptions) {
+  log.info({ appDir, arch: options.arch, platform: options.platform }, "executing @electron/rebuild")
+  const effectiveOptions: electronRebuild.RebuildOptions = {
     buildPath: appDir,
     electronVersion: await getElectronVersion(appDir),
-    arch,
+    arch: options.arch,
+    platform: options.platform,
     force: true,
     debug: log.isDebugEnabled,
     projectRootPath: await searchModule.getProjectRootPath(appDir),
   }
   if (buildFromSource) {
-    options.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
+    effectiveOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
   }
-  return electronRebuild.rebuild(options)
+  return electronRebuild.rebuild(effectiveOptions)
 }
