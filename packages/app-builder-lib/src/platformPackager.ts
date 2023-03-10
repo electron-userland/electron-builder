@@ -204,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
 
-    const beforePack = await importFunction(this.config.beforePack, "beforePack")
+    const beforePack = resolveFunction(this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
         appOutDir,
@@ -330,7 +330,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
     const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = await importFunction(this.config.afterSign, "afterSign")
+    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
     if (afterSign != null) {
       if (didSign) {
         await Promise.resolve(afterSign(packContext))
@@ -752,23 +752,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-/**
- * NOTE: this is required because tsc converts the following:
- *
- * ```ts
- * await import("path/to/some/module");
- * ```
- *
- * to
- *
- * ```ts
- * Promise.resolve().then(() => require("path/to/some/module"))
- * ```
- */
-/* eslint-disable @typescript-eslint/no-implied-eval */
-const importDynamic = new Function("modulePath", "return import(modulePath)")
-
-export async function importFunction<T>(executor: T | string, name: string): Promise<T> {
+export function resolveFunction<T>(executor: T | string, name: string): T {
   if (executor == null || typeof executor !== "string") {
     return executor
   }
@@ -785,7 +769,8 @@ export async function importFunction<T>(executor: T | string, name: string): Pro
     p = path.resolve(p)
   }
 
-  const m = await importDynamic(p)
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const m = require(p)
   const namedExport = m[name]
   if (namedExport == null) {
     return m.default || m

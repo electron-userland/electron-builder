@@ -1,5 +1,32 @@
 ## 4.3.0
 
+## 6.0.0
+
+### Major Changes
+
+- [#7032](https://github.com/electron-userland/electron-builder/pull/7032) [`caa32e07`](https://github.com/electron-userland/electron-builder/commit/caa32e0708ba4347dd37e93174fce1d2c5660160) Thanks [@kidonng](https://github.com/kidonng)! - fix: use appropriate `electron-updater` cache directory on macOS
+
+### Minor Changes
+
+- [#7060](https://github.com/electron-userland/electron-builder/pull/7060) [`1d130012`](https://github.com/electron-userland/electron-builder/commit/1d130012737e77b57c8923fcc0e6ad2cbc5da0e8) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Introducing deb and rpm auto-updates as beta feature
+
+- [#7337](https://github.com/electron-userland/electron-builder/pull/7337) [`9c0c4228`](https://github.com/electron-userland/electron-builder/commit/9c0c422834369f42b311b5d9ecd301f8b50bccfa) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: Provide a custom verify function interface to enable nsis signature verification alternatives instead of powershell
+
+### Patch Changes
+
+- [#7380](https://github.com/electron-userland/electron-builder/pull/7380) [`7862e388`](https://github.com/electron-userland/electron-builder/commit/7862e388a2049ccbe1e01a5624c6a8a5f2942d54) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: add reject in handleError in Windows `verifySignature` function
+
+- [#7230](https://github.com/electron-userland/electron-builder/pull/7230) [`346af1d4`](https://github.com/electron-userland/electron-builder/commit/346af1d470ebbf12733a9619a2389bcfdf452bc6) Thanks [@jeremyspiegel](https://github.com/jeremyspiegel)! - fix: support powershell constrained language mode
+
+- [#7394](https://github.com/electron-userland/electron-builder/pull/7394) [`1bbcfb3d`](https://github.com/electron-userland/electron-builder/commit/1bbcfb3dc5f36b0803c69e9170db16ded52a0043) Thanks [@ganthern](https://github.com/ganthern)! - fix: inherit stdio for updated processes (#7393)
+
+- [#7306](https://github.com/electron-userland/electron-builder/pull/7306) [`01c67910`](https://github.com/electron-userland/electron-builder/commit/01c679107435c6afd0b2de8c44d3f140d20c5577) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: Update dependencies per audit/outdated
+
+- [#7213](https://github.com/electron-userland/electron-builder/pull/7213) [`17863671`](https://github.com/electron-userland/electron-builder/commit/1786367194272dff90e63d0a43f3ad5c3cc151f0) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): Updating dependencies and fixing `pnpm audit` with dependency overrides
+
+- Updated dependencies [[`cc1ddabd`](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa), [`93930cf0`](https://github.com/electron-userland/electron-builder/commit/93930cf0b04b60896835e1d9feeab20722cd1b98), [`01c67910`](https://github.com/electron-userland/electron-builder/commit/01c679107435c6afd0b2de8c44d3f140d20c5577), [`53327d51`](https://github.com/electron-userland/electron-builder/commit/53327d51101b83641ece9f497577c3ac93d3e91d)]:
+  - builder-util-runtime@9.2.0
+
 ## 6.0.0-alpha.9
 
 ### Patch Changes
