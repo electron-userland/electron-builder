@@ -61,6 +61,7 @@
     "chromium-pickle-js": "^0.2.0",
     "debug": "^4.3.4",
     "ejs": "^3.1.8",
+    "electron-packager-plugin-non-proprietary-codecs-ffmpeg": "^1.0.2",
     "electron-publish": "workspace:*",
     "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",

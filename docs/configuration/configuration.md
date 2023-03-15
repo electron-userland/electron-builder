@@ -102,6 +102,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-buildVersion">buildVersion</code> String | “undefined” - The build version. Maps to the <code>CFBundleVersion</code> on macOS, and <code>FileVersion</code> metadata property on Windows. Defaults to the <code>version</code>. If <code>buildVersion</code> is not defined and <code>buildNumber</code> (or one of the <code>buildNumber</code> envs) is defined, it will be used as a build version (<code>version.buildNumber</code>).</p>
 </li>
 <li>
+<p><code id="Configuration-downloadAlternateFFmpeg">downloadAlternateFFmpeg</code> Boolean - Whether to download the alternate FFmpeg library from Electron’s release assets and replace the default FFmpeg library prior to signing</p>
+</li>
+<li>
 <p><code id="Configuration-electronCompile">electronCompile</code> Boolean - Whether to use <a href="http://github.com/electron/electron-compile">electron-compile</a> to compile app. Defaults to <code>true</code> if <code>electron-compile</code> in the dependencies. And <code>false</code> if in the <code>devDependencies</code> or doesn’t specified.</p>
 </li>
 <li>

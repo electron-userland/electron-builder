@@ -14,6 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
+import replaceFFMPEG from "electron-packager-plugin-non-proprietary-codecs-ffmpeg"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -132,8 +133,12 @@ class ElectronFramework implements Framework {
     }
   }
 
-  prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    return unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
+  async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
+    await unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
+    if (options.packager.config.downloadAlternateFFmpeg) {
+      log.info(null, "downloading non-proprietary FFMPEG, piping output")
+      await new Promise<void>(resolve => replaceFFMPEG(options.appOutDir, options.version, options.platformName, options.arch, resolve))
+    }
   }
 
   beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
