@@ -6666,6 +6666,10 @@
       ],
       "description": "macOS DMG options."
     },
+    "downloadAlternateFFmpeg": {
+      "description": "Whether to download the alternate FFmpeg library from Electron's release assets and replace the default FFmpeg library prior to signing",
+      "type": "boolean"
+    },
     "electronBranding": {
       "$ref": "#/definitions/ElectronBrandingOptions",
       "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
