@@ -342,7 +342,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const entitlementsSuffix = masOptions == null ? "mac" : "mas"
 
     const getEntitlements = (filePath: string) => {
-      if (filePath === appPath) {
+      // check if root app, then use main entitlements
+      if (filePath.includes(appPath)) {
         if (customSignOptions.entitlements) {
           return customSignOptions.entitlements
         }
@@ -354,10 +355,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
+      // It's a login helper...
       if (filePath.includes("Library/LoginItems")) {
         return customSignOptions.entitlementsLoginHelper
       }
 
+      // Only remaining option is that it's inherited entitlements
       if (customSignOptions.entitlementsInherit) {
         return customSignOptions.entitlementsInherit
       }
