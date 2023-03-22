@@ -268,6 +268,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       )
       log.info("Signing addtional user-defined binaries: " + JSON.stringify(binaries, null, 1))
     }
+    const customSignOptions = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
     const signOptions: SignOptions = {
       identityValidation: false,
@@ -303,7 +304,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       binaries,
       // https://github.com/electron-userland/electron-builder/issues/1480
       strictVerify: options.strictVerify,
-      optionsForFile: await this.getOptionsForFile(appPath, isMas, options, masOptions),
+      optionsForFile: await this.getOptionsForFile(appPath, isMas, customSignOptions),
+      provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }
 
     log.info(
@@ -336,10 +338,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
-  private async getOptionsForFile(appPath: string, isMas: boolean, options: MacConfiguration, masOptions: MasConfiguration | null) {
+  private async getOptionsForFile(appPath: string, isMas: boolean, customSignOptions: MacConfiguration) {
     const resourceList = await this.resourceList
-    const customSignOptions = masOptions || this.platformSpecificBuildOptions
-    const entitlementsSuffix = masOptions == null ? "mac" : "mas"
+    const entitlementsSuffix = isMas ? "mas" : "mac"
 
     const getEntitlements = (filePath: string) => {
       // check if root app, then use main entitlements
@@ -372,55 +373,23 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
-    const hardenedRuntime = isMas ? masOptions && masOptions.hardenedRuntime === true : options.hardenedRuntime !== false
-    const timestamp = isMas ? masOptions?.timestamp : options.timestamp
     const requirements = isMas || this.platformSpecificBuildOptions.requirements == null ? undefined : await this.getResource(this.platformSpecificBuildOptions.requirements)
+
+    // harden by default for mac builds. Only harden mas builds if explicitly true (backward compatibility)
+    const hardenedRuntime = isMas ? customSignOptions.hardenedRuntime === true : customSignOptions.hardenedRuntime !== false
 
     const optionsForFile: (filePath: string) => PerFileSignOptions = filePath => {
       const entitlements = getEntitlements(filePath)
       const args = {
         entitlements: entitlements || undefined,
         hardenedRuntime: hardenedRuntime || undefined,
-        timestamp: timestamp || undefined,
+        timestamp: customSignOptions.timestamp || undefined,
         requirements: requirements || undefined,
       }
       log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
       return args
     }
     return optionsForFile
-  }
-
-  private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
-    const resourceList = await this.resourceList
-    const customSignOptions = masOptions || this.platformSpecificBuildOptions
-    const entitlementsSuffix = masOptions == null ? "mac" : "mas"
-
-    let entitlements = customSignOptions.entitlements
-    if (entitlements == null) {
-      const p = `entitlements.${entitlementsSuffix}.plist`
-      if (resourceList.includes(p)) {
-        entitlements = path.join(this.info.buildResourcesDir, p)
-      } else {
-        entitlements = getTemplatePath("entitlements.mac.plist")
-      }
-    }
-    signOptions.entitlements = entitlements
-
-    let entitlementsInherit = customSignOptions.entitlementsInherit
-    if (entitlementsInherit == null) {
-      const p = `entitlements.${entitlementsSuffix}.inherit.plist`
-      if (resourceList.includes(p)) {
-        entitlementsInherit = path.join(this.info.buildResourcesDir, p)
-      } else {
-        entitlementsInherit = getTemplatePath("entitlements.mac.plist")
-      }
-    }
-    signOptions["entitlements-inherit"] = entitlementsInherit
-
-    if (customSignOptions.provisioningProfile != null) {
-      signOptions["provisioning-profile"] = customSignOptions.provisioningProfile
-    }
-    signOptions["entitlements-loginhelper"] = customSignOptions.entitlementsLoginHelper
   }
 
   //noinspection JSMethodCanBeStatic
