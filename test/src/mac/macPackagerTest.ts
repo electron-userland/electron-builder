@@ -1,5 +1,5 @@
 import { copyOrLinkFile } from "builder-util/out/fs"
-import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -9,7 +9,7 @@ test.ifMac.ifAll("two-package", () =>
   assertPack(
     "test-app",
     {
-      targets: createTargets([Platform.MAC], "zip", "x64"),
+      targets: createTargets([Platform.MAC], null, "all"),
       config: {
         extraMetadata: {
           repository: "foo/bar",
@@ -37,7 +37,7 @@ test.ifMac(
   "one-package",
   app(
     {
-      targets: Platform.MAC.createTarget("dir", Arch.x64),
+      targets: Platform.MAC.createTarget(),
       config: {
         appId: "bar",
         publish: {
