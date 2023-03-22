@@ -2,8 +2,6 @@ import { Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
-import * as fs from "fs/promises"
-import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {
@@ -19,6 +17,13 @@ test("mas", createMacTargetTest(["mas"]))
 test.ifNotCi.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifNotCi.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
+const entitlement = (fileName: string) => path.join("build", fileName)
+const entitlementsConfig = {
+  entitlements: entitlement("entitlements.mac.plist"),
+  entitlementsInherit: entitlement("entitlements.mac.inherit.plist"),
+  entitlementsLoginHelper: entitlement("entitlements.mac.login.plist"),
+}
+
 test.skip.ifAll("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
@@ -30,19 +35,18 @@ test.skip.ifAll("custom mas", () => {
         mac: {
           target: ["mas"],
         },
-        mas: {
-          entitlements: "mas-entitlements file path",
-          entitlementsInherit: "mas-entitlementsInherit file path",
-        },
+        mas: entitlementsConfig,
       },
     }),
     {
-      packed: () => {
-        expect(platformPackager!!.effectiveSignOptions).toMatchObject({
-          entitlements: "mas-entitlements file path",
-          "entitlements-inherit": "mas-entitlementsInherit file path",
-        } as Partial<SignOptions>)
-        return Promise.resolve(null)
+      checkMacApp(appDir, info) {
+        const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
+        expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
+        expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
+        expect(appEntitlements("anything")?.entitlements).toBe(entitlementsConfig.entitlementsInherit)
+
+        expect(appEntitlements(appDir)?.hardenedRuntime).toBe(false)
+        return Promise.resolve()
       },
     }
   )
@@ -50,33 +54,30 @@ test.skip.ifAll("custom mas", () => {
 
 test.ifAll.ifNotCi("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
-  let entitlement = (fileName: string) => path.join(__dirname, "..", "..", "fixtures", "test-app-one", "build", fileName)
   return assertPack(
     "test-app-one",
     signed({
       targets: Platform.MAC.createTarget(),
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
       config: {
-        mac: {
-          entitlements: entitlement("entitlements.mac.plist"),
-          entitlementsInherit: entitlement("entitlements.mac.inherit.plist"),
-          entitlementsLoginHelper: entitlement("entitlements.mac.login.plist"),
-        },
+        mac: entitlementsConfig,
       },
     }),
     {
-      packed: () => {
-        expect(platformPackager!!.effectiveSignOptions).toMatchObject({
-          entitlements: "osx-entitlements file path",
-          "entitlements-inherit": "osx-entitlementsInherit file path",
-        })
+      checkMacApp(appDir, info) {
+        const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
+        expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
+        expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlementsLoginHelper)
+        expect(appEntitlements("anything")?.entitlements).toBe(entitlementsConfig.entitlementsInherit)
+
+        expect(appEntitlements(appDir)?.hardenedRuntime).toBe(true)
         return Promise.resolve()
       },
     }
   )
 })
 
-test.ifAll.ifNotCi("entitlements in build dir", () => {
+test.ifAll.ifNotCi("entitlements template", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
@@ -85,16 +86,11 @@ test.ifAll.ifNotCi("entitlements in build dir", () => {
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
     }),
     {
-      projectDirCreated: projectDir =>
-        Promise.all([
-          fs.writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
-          fs.writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
-        ]),
-      packed: context => {
-        expect(platformPackager!!.effectiveSignOptions).toMatchObject({
-          entitlements: path.join(context.projectDir, "build", "entitlements.mac.plist"),
-          "entitlements-inherit": path.join(context.projectDir, "build", "entitlements.mac.inherit.plist"),
-        })
+      checkMacApp(appDir, info) {
+        const appEntitlements = (filePath: string) => platformPackager!.effectiveSignOptions?.optionsForFile?.(filePath)
+        expect(appEntitlements(appDir)?.entitlements).toBe(entitlementsConfig.entitlements)
+        expect(appEntitlements("Library/LoginItems")?.entitlements).toBe(entitlementsConfig.entitlements)
+        expect(appEntitlements("anything")?.entitlements).toBe(entitlementsConfig.entitlements)
         return Promise.resolve()
       },
     }
