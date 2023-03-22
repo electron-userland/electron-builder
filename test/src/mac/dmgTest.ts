@@ -9,6 +9,7 @@ import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
 const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
+const defaultTarget = Platform.MAC.createTarget(undefined, Arch.x64)
 
 test.ifMac(
   "dmg",
@@ -79,7 +80,7 @@ test.ifMac("custom background - new way", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: dmgTarget,
+      targets: defaultTarget,
       config: {
         publish: null,
         mac: {
@@ -116,7 +117,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: dmgTarget,
+      targets: defaultTarget,
       config: {
         publish: null,
       },
@@ -149,7 +150,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
 
 test.skip.ifMac.ifAll("no Applications link", () => {
   return assertPack("test-app-one", {
-    targets: dmgTarget,
+    targets: defaultTarget,
     config: {
       publish: null,
       productName: "NoApplicationsLink",
@@ -258,7 +259,7 @@ test.ifAll.ifMac(
 
 test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
-    targets: dmgTarget,
+    targets: defaultTarget,
     config: {
       publish: null,
       dmg: {
