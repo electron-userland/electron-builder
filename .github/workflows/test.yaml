@@ -71,7 +71,6 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
   
