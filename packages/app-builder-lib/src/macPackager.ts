@@ -344,7 +344,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     const getEntitlements = (filePath: string) => {
       // check if root app, then use main entitlements
-      if (filePath.includes(appPath)) {
+      if (filePath === appPath) {
         if (customSignOptions.entitlements) {
           return customSignOptions.entitlements
         }

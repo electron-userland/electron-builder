@@ -3,6 +3,7 @@ import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
 import * as fs from "fs/promises"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {
@@ -40,7 +41,7 @@ test.skip.ifAll("custom mas", () => {
         expect(platformPackager!!.effectiveSignOptions).toMatchObject({
           entitlements: "mas-entitlements file path",
           "entitlements-inherit": "mas-entitlementsInherit file path",
-        })
+        } as Partial<SignOptions>)
         return Promise.resolve(null)
       },
     }
@@ -49,6 +50,7 @@ test.skip.ifAll("custom mas", () => {
 
 test.ifAll.ifNotCi("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager | null = null
+  let entitlement = (fileName: string) => path.join(__dirname, "..", "..", "fixtures", "test-app-one", "build", fileName)
   return assertPack(
     "test-app-one",
     signed({
@@ -56,8 +58,9 @@ test.ifAll.ifNotCi("entitlements in the package.json", () => {
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
       config: {
         mac: {
-          entitlements: "osx-entitlements file path",
-          entitlementsInherit: "osx-entitlementsInherit file path",
+          entitlements: entitlement("entitlements.mac.plist"),
+          entitlementsInherit: entitlement("entitlements.mac.inherit.plist"),
+          entitlementsLoginHelper: entitlement("entitlements.mac.login.plist"),
         },
       },
     }),
