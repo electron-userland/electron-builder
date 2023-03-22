@@ -115,7 +115,7 @@ Function un.restoreFiles
       Goto continue
 
     isNotDir:
-      Rename $PLUGINSDIR\old-install$R0\$R2" "$INSTDIR$R0\$R2"
+      Rename "$PLUGINSDIR\old-install$R0\$R2" "$INSTDIR$R0\$R2"
 
     continue:
       FindNext $R1 $R2
