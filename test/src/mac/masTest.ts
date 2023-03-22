@@ -1,4 +1,4 @@
-import { Platform } from "electron-builder"
+import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
 import { assertPack, createMacTargetTest, signed } from "../helpers/packTester"
@@ -24,12 +24,14 @@ const entitlementsConfig = {
   entitlementsLoginHelper: entitlement("entitlements.mac.login.plist"),
 }
 
+const targets = Platform.MAC.createTarget(undefined, Arch.x64)
+
 test.skip.ifAll("custom mas", () => {
   let platformPackager: CheckingMacPackager | null = null
   return assertPack(
     "test-app-one",
     signed({
-      targets: Platform.MAC.createTarget(),
+      targets,
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
       config: {
         mac: {
@@ -57,7 +59,7 @@ test.ifAll.ifNotCi("entitlements in the package.json", () => {
   return assertPack(
     "test-app-one",
     signed({
-      targets: Platform.MAC.createTarget(),
+      targets,
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
       config: {
         mac: entitlementsConfig,
@@ -82,7 +84,7 @@ test.ifAll.ifNotCi("entitlements template", () => {
   return assertPack(
     "test-app-one",
     signed({
-      targets: Platform.MAC.createTarget(),
+      targets,
       platformPackagerFactory: (packager, platform) => (platformPackager = new CheckingMacPackager(packager)),
     }),
     {

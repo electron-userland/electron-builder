@@ -1,4 +1,4 @@
-import { exec } from "builder-util"
+import { Arch, exec } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
@@ -8,7 +8,7 @@ import * as fs from "fs/promises"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
-const dmgTarget = Platform.MAC.createTarget("dmg")
+const dmgTarget = Platform.MAC.createTarget("dmg", Arch.x64)
 
 test.ifMac(
   "dmg",
@@ -79,7 +79,7 @@ test.ifMac("custom background - new way", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.MAC.createTarget(),
+      targets: dmgTarget,
       config: {
         publish: null,
         mac: {
@@ -116,7 +116,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.MAC.createTarget(),
+      targets: dmgTarget,
       config: {
         publish: null,
       },
@@ -149,7 +149,7 @@ test.ifAll.ifMac("retina background as 2 png", () => {
 
 test.skip.ifMac.ifAll("no Applications link", () => {
   return assertPack("test-app-one", {
-    targets: Platform.MAC.createTarget(),
+    targets: dmgTarget,
     config: {
       publish: null,
       productName: "NoApplicationsLink",
@@ -258,7 +258,7 @@ test.ifAll.ifMac(
 
 test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
-    targets: Platform.MAC.createTarget(),
+    targets: dmgTarget,
     config: {
       publish: null,
       dmg: {
