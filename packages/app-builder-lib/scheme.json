@@ -2776,22 +2776,9 @@
           ]
         },
         "strictVerify": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "string",
-                "boolean"
-              ]
-            }
-          ],
           "default": true,
-          "description": "Whether to let @electron/osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "type": "boolean"
         },
         "target": {
           "anyOf": [
@@ -3414,22 +3401,9 @@
           ]
         },
         "strictVerify": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "string",
-                "boolean"
-              ]
-            }
-          ],
           "default": true,
-          "description": "Whether to let @electron/osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "type": "boolean"
         },
         "target": {
           "anyOf": [

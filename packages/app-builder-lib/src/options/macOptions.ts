@@ -167,7 +167,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Whether to let @electron/osx-sign verify the contents or not.
    * @default true
    */
-  readonly strictVerify?: Array<string> | string | boolean
+  readonly strictVerify?: boolean
 
   /**
    * Regex or an array of regex's that signal skipping signing a file.

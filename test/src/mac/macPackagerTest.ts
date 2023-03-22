@@ -1,5 +1,5 @@
 import { copyOrLinkFile } from "builder-util/out/fs"
-import { createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -37,7 +37,7 @@ test.ifMac(
   "one-package",
   app(
     {
-      targets: Platform.MAC.createTarget(),
+      targets: Platform.MAC.createTarget(undefined, Arch.x64),
       config: {
         appId: "bar",
         publish: {
@@ -95,7 +95,7 @@ test.ifMac(
 test.ifMac.ifAll(
   "electronDist",
   appThrows({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
+    targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
     config: {
       electronDist: "foo",
     },
