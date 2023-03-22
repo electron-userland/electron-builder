@@ -8,18 +8,18 @@ A complete solution to package and build a ready for distribution [Electron](htt
 ## Sponsors
 
 <table>
-   <tr>
+   <tr align="center">
       <td>
          <a href="https://workflowy.com">
             <div>
                <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
             </div>
-            Notes, Tasks, Projects. All in a Single Place.
+            Notes, Tasks, Projects.<br>All in a Single Place.
          </a>
          <br>
       </td>
    </tr>
-   <tr>
+   <tr align="center">
       <td>
          <br>
          <a href="https://tidepool.org">
@@ -41,7 +41,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
          <br>
       </td>
    </tr>
-   <tr>
+   <tr align="center">
       <td>
          <br>
          <a href="https://www.todesktop.com/electron?utm_source=electron-builder">
