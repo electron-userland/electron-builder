@@ -1,29 +1,33 @@
-import unzip from "cross-unzip"
-import fs, { mkdirSync } from "fs"
+import { unzip } from "cross-unzip"
+import * as fs from "fs"
 import fetch from "node-fetch"
 import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
 
-import { log } from "builder-util"
+import { isEmptyOrSpaces, log } from "builder-util"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import * as cacheManager from "../util/cacheManager"
+import { homedir } from "os"
+// import { getCacheDirectory } from "../util/cacheManager"
+// import { tmpdir } from "os"
+ function getCacheDirectory(): string {
+  const env = process.env.ELECTRON_BUILDER_CACHE
+  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
+}
 
 // NOTE: Migrated from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
+  const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
+  const url = `https://github.com/electron/electron/releases/download/v${electronVersion}/${ffmpegFileName}`
 
-  const ffmpegFileName = `ffmpeg-v${ electronVersion }-${ platform }-${ arch }.zip`
-  const url = `https://github.com/electron/electron/releases/download/v${ electronVersion }/${ ffmpegFileName }`
-  log.info({ url }, "downloading non-proprietary FFMPEG")
-
-  const tmpPath = cacheManager.getCacheDirectory()
+  const tmpPath = getCacheDirectory()
   const downloadPath = path.resolve(tmpPath, ffmpegFileName)
 
   if (fs.existsSync(downloadPath)) {
     return downloadPath
   }
 
-
+  log.info({ url }, "downloading non-proprietary FFMPEG")
   const res = await fetch(url, {
     redirect: "follow",
     compress: true,
@@ -41,10 +45,9 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
   return downloadPath
 }
 
-const extractFFMPEG = (targetPath: string) => (ffmpegPath: any) =>
-  new Promise<string>((resolve, reject) => {
-    mkdirSync(targetPath)
-
+const extractFFMPEG = (targetPath: string) => (ffmpegPath: any) => {
+  log.info({ file: ffmpegPath }, "loaded non-proprietary FFMPEG")
+  return new Promise<string>((resolve, reject) => {
     unzip(ffmpegPath, targetPath, (zipError: Error) => {
       if (zipError) {
         return reject(zipError)
@@ -52,10 +55,11 @@ const extractFFMPEG = (targetPath: string) => (ffmpegPath: any) =>
       resolve(targetPath)
     })
   })
+}
 
 const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
   let fileName = "libffmpeg.dll"
-  if (platform === "darwin") {
+  if (["darwin", "mas"].includes(platform)) {
     fileName = "libffmpeg.dylib"
   } else if (platform === "linux") {
     fileName = "libffmpeg.so"
