@@ -1,1 +1,0 @@
-declare module 'electron-packager-plugin-non-proprietary-codecs-ffmpeg';
