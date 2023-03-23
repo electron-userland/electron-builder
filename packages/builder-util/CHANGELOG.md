@@ -1,5 +1,11 @@
 # builder-util
 
+## 24.1.0
+
+### Patch Changes
+
+- [#7466](https://github.com/electron-userland/electron-builder/pull/7466) [`1342f872`](https://github.com/electron-userland/electron-builder/commit/1342f872f98229cf6c31069253fcf0f435bfd9df) Thanks [@jkroepke](https://github.com/jkroepke)! - fix(arm64): use RPM architecture `aarch64` in name
+
 ## 24.0.0
 
 ### Patch Changes

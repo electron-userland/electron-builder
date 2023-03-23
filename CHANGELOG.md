@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0...v) (2023-03-22)
+
+
+### Bug Fixes
+
+* **arm64:** set RPM architecture as `aarch64` in name ([#7466](https://github.com/electron-userland/electron-builder/issues/7466)) ([1342f87](https://github.com/electron-userland/electron-builder/commit/1342f872f98229cf6c31069253fcf0f435bfd9df))
+* missing quote syntax error in nsis uninstaller ([#7490](https://github.com/electron-userland/electron-builder/issues/7490)) ([278a3df](https://github.com/electron-userland/electron-builder/commit/278a3df3c738dbe0d2240f338e901774b7d578c5))
+* updating SignOptions typesafety and leverage `optionsForFile` for entitlements ([#7491](https://github.com/electron-userland/electron-builder/issues/7491)) ([c1deace](https://github.com/electron-userland/electron-builder/commit/c1deace1de707faacb02ae49cfaa59d60ab6ac06))
+
+
+### Features
+
+* Adding new downloadAlternateFFmpeg option to download non-proprietary ffmpeg library ([#7210](https://github.com/electron-userland/electron-builder/issues/7210)) ([#7477](https://github.com/electron-userland/electron-builder/issues/7477)) ([1dd26cc](https://github.com/electron-userland/electron-builder/commit/1dd26cc646c1a9708ff880920319bdaad17d20ba))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.13...v) (2023-03-04)
 
 
