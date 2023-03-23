@@ -14,7 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
-import downloadFFMPEG from "./downloadFFMPEG"
+import injectFFMPEG from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -137,15 +137,7 @@ class ElectronFramework implements Framework {
     await unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
     if (options.packager.config.downloadAlternateFFmpeg) {
       log.info(null, "downloading non-proprietary FFMPEG, piping output")
-      // await new Promise<void>(resolve => replaceFFMPEG(options.appOutDir, options.version, options.platformName, options.arch, resolve))
-      let libPath = options.appOutDir;
-      if (options.platformName === 'darwin') {
-        libPath = path.resolve(options.appOutDir, 'Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries');
-      }
-    
-      await downloadFFMPEG(this.version, options.platformName, options.arch)
-        .then(extractFFMPEG(options.appOutDir))
-        .then(moveFFMPEG(libPath, options.platformName))
+      await injectFFMPEG(options, this.version)
     }
   }
 

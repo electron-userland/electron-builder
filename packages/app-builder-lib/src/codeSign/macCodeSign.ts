@@ -5,12 +5,13 @@ import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes, createHash } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
-import { homedir, tmpdir } from "os"
+import { tmpdir } from "os"
 import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { getCacheDirectory } from "../util/cacheManager"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -119,11 +120,6 @@ const bundledCertKeychainAdded = new Lazy<void>(async () => {
     await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
   }
 })
-
-function getCacheDirectory(): string {
-  const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
-}
 
 function listUserKeychains(): Promise<Array<string>> {
   return exec("security", ["list-keychains", "-d", "user"]).then(it =>
