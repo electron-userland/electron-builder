@@ -1,15 +1,18 @@
-import fs, { mkdir } from "fs"
+import unzip from "cross-unzip"
+import fs, { mkdirSync } from "fs"
+import fetch from "node-fetch"
 import path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
-import fetch from "node-fetch"
-import unzip from "cross-unzip"
+
+import { PrepareApplicationStageDirectoryOptions } from "../Framework"
+import { getCacheDirectory } from "../util/cacheManager"
 
 // NOTE: Migrated from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
   const tmpPath = getCacheDirectory()
 
-  const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
+  const ffmpegFileName = `ffmpeg-v${ electronVersion }-${ platform }-${ arch }.zip`
   const downloadPath = path.resolve(tmpPath, ffmpegFileName)
 
   if (fs.existsSync(downloadPath)) {
@@ -23,8 +26,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
 
   await new Promise<string>((resolve, reject) => {
     if (!res.body) {
-      reject(new Error("Response body is empty"))
-      return
+      return reject(new Error("Response body is empty"))
     }
     const downloadStream = fs.createWriteStream(downloadPath)
     res.body.pipe(downloadStream)
@@ -49,19 +51,15 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
 
 const extractFFMPEG = (targetPath: string) => (ffmpegPath: any) =>
   new Promise<string>((resolve, reject) => {
-    mkdirp(targetPath, (err: any) => {
-      if (err) return reject(err)
+    mkdirSync(targetPath)
 
-      unzip(ffmpegPath, targetPath, (zipError: any) => {
-        if (zipError) return reject(zipError)
-
-        resolve(targetPath)
-      })
+    unzip(ffmpegPath, targetPath, (zipError: Error) => {
+      if (zipError) {
+        return reject(zipError)
+      }
+      resolve(targetPath)
     })
   })
-
-import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { getCacheDirectory } from "../util/cacheManager"
 
 const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
   let fileName = "libffmpeg.dll"
@@ -88,7 +86,7 @@ const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
 }
 
 const moveFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
-  return new Promise<Error | undefined>(callback => {
+  return new Promise<Error | undefined>(resolve => {
     let doneCalled = false
 
     // If the target exists we should delete it
@@ -97,10 +95,11 @@ const moveFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
     }
 
     const done = (err: Error | undefined) => {
-      if (!doneCalled) {
-        callback(err)
-        doneCalled = true
+      if (doneCalled) {
+        return
       }
+      resolve(err)
+      doneCalled = true
     }
 
     const readStream = fs.createReadStream(sourceFile)
