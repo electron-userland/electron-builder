@@ -1,25 +1,30 @@
 import unzip from "cross-unzip"
 import fs, { mkdirSync } from "fs"
 import fetch from "node-fetch"
-import path from "path"
+import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
 
+import { log } from "builder-util"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { getCacheDirectory } from "../util/cacheManager"
+import * as cacheManager from "../util/cacheManager"
 
 // NOTE: Migrated from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
-  const tmpPath = getCacheDirectory()
 
   const ffmpegFileName = `ffmpeg-v${ electronVersion }-${ platform }-${ arch }.zip`
+  const url = `https://github.com/electron/electron/releases/download/v${ electronVersion }/${ ffmpegFileName }`
+  log.info({ url }, "downloading non-proprietary FFMPEG")
+
+  const tmpPath = cacheManager.getCacheDirectory()
   const downloadPath = path.resolve(tmpPath, ffmpegFileName)
 
   if (fs.existsSync(downloadPath)) {
     return downloadPath
   }
 
-  const res = await fetch("https://assets-cdn.github.com/images/modules/logos_page/Octocat.png", {
+
+  const res = await fetch(url, {
     redirect: "follow",
     compress: true,
   })
@@ -32,19 +37,6 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
     res.body.pipe(downloadStream)
     res.body.on("end", () => resolve(downloadPath))
     downloadStream.on("error", reject)
-    // request({
-    //   url: `https://github.com/electron/electron/releases/download/v${ electronVersion }/${ ffmpegFileName }`,
-    //   followAllRedirects: true,
-    //   timeout: 10000,
-    //   gzip: true,
-    // })
-    //   .on("error", (downloadError: any) => {
-    //     reject(downloadError)
-    //   })
-    //   .pipe(downloadStream)
-    //   .on("close", () => {
-    //     resolve(downloadPath)
-    //   })
   })
   return downloadPath
 }

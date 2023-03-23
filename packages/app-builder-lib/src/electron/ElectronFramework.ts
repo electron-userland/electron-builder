@@ -136,7 +136,6 @@ class ElectronFramework implements Framework {
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
     if (options.packager.config.downloadAlternateFFmpeg) {
-      log.info(null, "downloading non-proprietary FFMPEG, piping output")
       await injectFFMPEG(options, this.version)
     }
   }
