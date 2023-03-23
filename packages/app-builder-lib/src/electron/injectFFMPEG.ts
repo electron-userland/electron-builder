@@ -7,9 +7,9 @@ import { ElectronPlatformName } from "./ElectronFramework"
 import { isEmptyOrSpaces, log } from "builder-util"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { homedir } from "os"
-// import { getCacheDirectory } from "../util/cacheManager"
-// import { tmpdir } from "os"
- function getCacheDirectory(): string {
+
+// Copied from `cacheManager.ts` otherwise there's a runtime error `(0 , cacheManager_1.getCacheDirectory) is not a function`??
+function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
   return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
 }

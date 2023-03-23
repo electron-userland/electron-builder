@@ -14,6 +14,7 @@ test.ifMac.ifAll("two-package", () =>
         extraMetadata: {
           repository: "foo/bar",
         },
+        downloadAlternateFFmpeg: true,
         mac: {
           electronUpdaterCompatibility: ">=2.16",
           electronLanguages: ["bn", "en"],
@@ -46,6 +47,7 @@ test.ifMac(
           //tslint:disable-next-line:no-invalid-template-strings
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
+        downloadAlternateFFmpeg: false,
         mac: {
           // test appId per platform
           appId: "foo",
