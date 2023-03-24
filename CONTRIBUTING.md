@@ -77,7 +77,7 @@ If you are using Windows and Visual Studio Code(Powershell), please use this.
 ```PowerShell
 pushd ..\electron-builder
 pnpm compile
-Get-ChildItem packages -Directory | Foreach-Object{pushd "./packages/$_"; yalc push; popd;}
+Get-ChildItem packages -Directory | Foreach-Object{pushd "$_"; yalc push; popd;}
 popd
 ```
 
