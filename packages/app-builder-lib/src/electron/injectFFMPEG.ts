@@ -6,12 +6,21 @@ import { ElectronPlatformName } from "./ElectronFramework"
 
 import { isEmptyOrSpaces, log } from "builder-util"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
-import { homedir } from "os"
+import * as os from "os"
 
 // Copied from `cacheManager.ts` otherwise there's a runtime error `(0 , cacheManager_1.getCacheDirectory) is not a function`??
 function getCacheDirectory(): string {
   const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
+  if (!isEmptyOrSpaces(env)) {
+    return path.resolve(env)
+  }
+  if (process.platform === "win32") {
+    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Cache", "electron-builder")
+  } else if (process.platform === "darwin") {
+    return path.join(os.homedir(), "Library", "Caches", "electron-builder")
+  } else {
+    return path.join(os.homedir(), ".cache", "electron-builder")
+  }
 }
 
 // NOTE: Migrated from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
@@ -20,8 +29,8 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
   const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
   const url = `https://github.com/electron/electron/releases/download/v${electronVersion}/${ffmpegFileName}`
 
-  const tmpPath = getCacheDirectory()
-  const downloadPath = path.resolve(tmpPath, ffmpegFileName)
+  const cacheDir = getCacheDirectory()
+  const downloadPath = path.resolve(cacheDir, ffmpegFileName)
 
   if (fs.existsSync(downloadPath)) {
     return downloadPath
@@ -33,6 +42,9 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
     compress: true,
   })
 
+  if (!fs.existsSync(downloadPath)) {
+    fs.mkdirSync(cacheDir)
+  }
   await new Promise<string>((resolve, reject) => {
     if (!res.body) {
       return reject(new Error("Response body is empty"))
@@ -45,7 +57,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
   return downloadPath
 }
 
-const extractFFMPEG = (targetPath: string) => (ffmpegPath: any) => {
+const extractFFMPEG = (targetPath: string) => (ffmpegPath: string) => {
   log.info({ file: ffmpegPath }, "loaded non-proprietary FFMPEG")
   return new Promise<string>((resolve, reject) => {
     unzip(ffmpegPath, targetPath, (zipError: Error) => {
