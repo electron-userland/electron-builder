@@ -44,10 +44,10 @@ jobs:
         id: changed-files-specific
         uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7 # v34
         with:
-          files: docker/**
+          files: docker/**/*
 
       - name: Dockerfile has changed, rebuild for tests
-        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || steps.changed-files-specific.outputs.any_changed == 'true'
+        if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: pnpm docker-images
 
       - name: Run tests in docker image
@@ -84,7 +84,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-path: ~/Library/Caches/electron
+          cache-path: ~/.cache/electron
           cache-key: v-11.0.0-update-electron
 
       - name: Test

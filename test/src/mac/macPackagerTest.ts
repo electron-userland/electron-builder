@@ -14,6 +14,7 @@ test.ifMac.ifAll("two-package", () =>
         extraMetadata: {
           repository: "foo/bar",
         },
+        downloadAlternateFFmpeg: true,
         mac: {
           electronUpdaterCompatibility: ">=2.16",
           electronLanguages: ["bn", "en"],
@@ -27,7 +28,8 @@ test.ifMac.ifAll("two-package", () =>
     {
       signed: true,
       checkMacApp: async appDir => {
-        expect((await fs.readdir(path.join(appDir, "Contents", "Resources"))).filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+        const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
+        expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
       },
     }
   )
@@ -45,6 +47,7 @@ test.ifMac(
           //tslint:disable-next-line:no-invalid-template-strings
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
+        downloadAlternateFFmpeg: false,
         mac: {
           // test appId per platform
           appId: "foo",

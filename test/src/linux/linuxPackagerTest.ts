@@ -20,6 +20,7 @@ test.ifNotWindows(
   app({
     targets: appImageTarget,
     config: {
+      downloadAlternateFFmpeg: true,
       publish: testPublishConfig,
     },
   })

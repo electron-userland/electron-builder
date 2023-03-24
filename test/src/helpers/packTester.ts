@@ -1,6 +1,6 @@
 import { path7x, path7za } from "7zip-bin"
 import { addValue, deepAssign, exec, log, spawn } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
@@ -88,7 +88,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
-  } else if ((configuration as Configuration).cscLink == null) {
+  } else if (configuration.cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
@@ -191,11 +191,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   }
 
   function sortKey(a: ArtifactCreated) {
-    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!!.toString("hex") : path.basename(a.file)}`
+    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!.toString("hex") : path.basename(a.file)}`
   }
 
   const objectToCompare: any = {}
-  for (const platform of packagerOptions.targets!!.keys()) {
+  for (const platform of packagerOptions.targets!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || [])
         .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "en"))
@@ -228,8 +228,12 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
             result.arch = Arch[result.arch]
           }
 
-          if (Buffer.isBuffer(result.fileContent)) {
-            delete result.fileContent
+          if (result.fileContent) {
+            if (Buffer.isBuffer(result.fileContent)) {
+              delete result.fileContent
+            } else if (Array.isArray(result.fileContent.files)) {
+              result.fileContent.files = result.fileContent.files.sort((a: UpdateFileInfo, b: UpdateFileInfo) => a.url.localeCompare(b.url, "en"))
+            }
           }
 
           delete result.isWriteUpdateInfo
@@ -243,7 +247,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   expect(objectToCompare).toMatchSnapshot()
 
-  c: for (const [platform, archToType] of packagerOptions.targets!!) {
+  c: for (const [platform, archToType] of packagerOptions.targets!) {
     for (const [arch, targets] of computeArchToTargetNamesMap(
       archToType,
       { platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
@@ -253,14 +257,14 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         continue c
       }
 
-      const nameToTarget = platformToTargets.get(platform)!!
+      const nameToTarget = platformToTargets.get(platform)!
       if (platform === Platform.MAC) {
         const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       } else if (platform === Platform.LINUX) {
         await checkLinuxResult(outDir, packager, arch, nameToTarget)
       } else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!!, nameToTarget)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!, nameToTarget)
       }
     }
   }
@@ -381,8 +385,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     return
   }
 
-  const packageFile = artifacts.find(it => it.file!!.endsWith("-full.nupkg"))!.file!!
-  const unZipper = new DecompressZip(packageFile!!)
+  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
+  const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)

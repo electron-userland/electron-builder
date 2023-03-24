@@ -188,12 +188,17 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-x64.zip",
+            "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
           Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.zip",
+          },
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.dmg",
           },
           Object {
             "sha512": "@sha512",
@@ -208,12 +213,7 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-arm64.dmg",
-          },
-          Object {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-universal.dmg",
+            "url": "TestApp-1.1.0-mac-x64.zip",
           },
         ],
         "path": "TestApp-1.1.0-mac-x64.zip",
