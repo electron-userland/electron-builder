@@ -1,65 +1,18 @@
-import * as extract from "extract-zip"
 import * as fs from "fs"
-import fetch from "node-fetch"
 import * as path from "path"
 import { ElectronPlatformName } from "./ElectronFramework"
 
-import { isEmptyOrSpaces, log } from "builder-util"
-import * as os from "os"
+import { log } from "builder-util"
+import { getBin } from "../binDownload"
 import { PrepareApplicationStageDirectoryOptions } from "../Framework"
 
-// Copied from `cacheManager.ts` otherwise there's a runtime error `(0 , cacheManager_1.getCacheDirectory) is not a function`??
-function getCacheDirectory(): string {
-  let p = process.env.ELECTRON_BUILDER_CACHE
-  if (!isEmptyOrSpaces(p)) {
-    p = path.resolve(p)
-  } else if (process.platform === "win32") {
-    p = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "electron-builder")
-  } else if (process.platform === "darwin") {
-    p = path.join(os.homedir(), "Library", "Caches", "electron-builder")
-  } else {
-    p = path.join(os.homedir(), ".cache", "electron-builder")
-  }
-  if (!fs.existsSync(p)) {
-    fs.mkdirSync(p)
-  }
-  return p
-}
-
-// NOTE: Migrated from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
+// NOTE: Adapted from https://github.com/MarshallOfSound/electron-packager-plugin-non-proprietary-codecs-ffmpeg to resolve dependency vulnerabilities
 const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatformName, arch: string) => {
   const ffmpegFileName = `ffmpeg-v${electronVersion}-${platform}-${arch}.zip`
   const url = `https://github.com/electron/electron/releases/download/v${electronVersion}/${ffmpegFileName}`
 
-  const cacheDir = getCacheDirectory()
-  const downloadPath = path.resolve(cacheDir, ffmpegFileName)
-
-  if (fs.existsSync(downloadPath)) {
-    return downloadPath
-  }
-
   log.info({ url }, "downloading non-proprietary FFMPEG")
-  const res = await fetch(url, {
-    redirect: "follow",
-    compress: true,
-  })
-
-  await new Promise<string>((resolve, reject) => {
-    if (!res.body) {
-      return reject(new Error("Response body is empty"))
-    }
-    const downloadStream = fs.createWriteStream(downloadPath)
-    res.body.pipe(downloadStream)
-    res.body.on("end", () => resolve(downloadPath))
-    downloadStream.on("error", reject)
-  })
-  return downloadPath
-}
-
-const extractFFMPEG = (targetPath: string) => async (downloadPath: string) => {
-  log.info({ file: downloadPath }, "extracting non-proprietary FFMPEG")
-  await extract(downloadPath, { dir: targetPath })
-  return targetPath
+  return getBin(ffmpegFileName, url)
 }
 
 const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
@@ -72,7 +25,7 @@ const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
 
   const libTargetPath = path.resolve(targetPath, fileName)
   const libPath = path.resolve(sourcePath, fileName)
-  log.info({ file: libTargetPath }, "loaded non-proprietary FFMPEG")
+  log.info({ lib: libPath, target: libTargetPath }, "copying non-proprietary FFMPEG")
 
   // If we are copying to the source we can stop immediately
   if (libPath === libTargetPath) {
@@ -84,10 +37,10 @@ const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
     throw new Error("Failed to find FFMPEG library file")
   }
 
-  return moveFile(libPath, libTargetPath)
+  return copyFile(libPath, libTargetPath)
 }
 
-const moveFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
+const copyFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
   return new Promise<Error | undefined>(resolve => {
     let doneCalled = false
 
@@ -113,10 +66,6 @@ const moveFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
       done(err)
     })
     writeStream.on("close", () => {
-      // If the copy was successfull we should delete the source file
-      if (!doneCalled) {
-        fs.unlinkSync(sourceFile)
-      }
       done(undefined)
     })
     readStream.pipe(writeStream)
@@ -129,5 +78,5 @@ export default function injectFFMPEG(options: PrepareApplicationStageDirectoryOp
     libPath = path.resolve(options.appOutDir, "Electron.app/Contents/Frameworks/Electron Framework.framework/Versions/A/Libraries")
   }
 
-  return downloadFFMPEG(electrionVersion, options.platformName, options.arch).then(extractFFMPEG(options.appOutDir)).then(moveFFMPEG(libPath, options.platformName))
+  return downloadFFMPEG(electrionVersion, options.platformName, options.arch).then(moveFFMPEG(libPath, options.platformName))
 }
