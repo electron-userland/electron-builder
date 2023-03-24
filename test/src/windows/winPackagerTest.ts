@@ -20,6 +20,9 @@ test.ifNotCiMac(
   "win zip",
   app({
     targets: Platform.WINDOWS.createTarget(["zip"]),
+    config: {
+      downloadAlternateFFmpeg: true,
+    },
   })
 )
 

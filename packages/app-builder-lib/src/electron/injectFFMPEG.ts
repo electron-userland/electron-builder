@@ -42,7 +42,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
     compress: true,
   })
 
-  if (!fs.existsSync(downloadPath)) {
+  if (!fs.existsSync(cacheDir)) {
     fs.mkdirSync(cacheDir)
   }
   await new Promise<string>((resolve, reject) => {
