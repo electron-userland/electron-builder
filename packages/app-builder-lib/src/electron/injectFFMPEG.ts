@@ -15,7 +15,7 @@ function getCacheDirectory(): string {
     return path.resolve(env)
   }
   if (process.platform === "win32") {
-    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Cache", "electron-builder")
+    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "electron-builder")
   } else if (process.platform === "darwin") {
     return path.join(os.homedir(), "Library", "Caches", "electron-builder")
   } else {
