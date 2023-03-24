@@ -16,7 +16,7 @@ const downloadFFMPEG = async (electronVersion: string, platform: ElectronPlatfor
 }
 
 const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sourcePath: string) => {
-  let fileName = "libffmpeg.dll"
+  let fileName = "ffmpeg.dll"
   if (["darwin", "mas"].includes(platform)) {
     fileName = "libffmpeg.dylib"
   } else if (platform === "linux") {
@@ -26,18 +26,16 @@ const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
   const libPath = path.resolve(sourcePath, fileName)
   const libTargetPath = path.resolve(targetPath, fileName)
   log.info({ lib: libPath, target: libTargetPath }, "copying non-proprietary FFMPEG")
-
-  // If we are copying to the source we can stop immediately
-  if (libPath === libTargetPath) {
-    return libTargetPath
-  }
-
+  
   // If the source doesn't exist we have a problem
   if (!fs.existsSync(libPath)) {
-    throw new Error("Failed to find FFMPEG library file")
+    throw new Error(`Failed to find FFMPEG library file at path: ${libPath}`)
   }
 
-  fs.copyFileSync(libPath, libTargetPath)
+  // If we are copying to the source we can stop immediately
+  if (libPath !== libTargetPath) {
+    fs.copyFileSync(libPath, libTargetPath)
+  }
   return libTargetPath
 }
 
