@@ -36,7 +36,7 @@ pnpm install
 popd
 ```
 
-You must publish and link `yalc`'s local "packages" to your project via the one-liner below (run from your project folder).
+Publish the electron-builder packages to `yalc`'s local store via these commands that you need to run from `electron-builder/packages`.
 Unfortunately,the `yalc publish` command cannot pass multiple packages.
 
 ```
@@ -52,7 +52,11 @@ yalc publish electron-forge-maker-nsis
 yalc publish electron-forge-maker-nsis-web
 yalc publish electron-forge-maker-snap
 yalc publish electron-updater
+```
 
+Now link those packages to your project via the one-liner below (run from your project folder).
+
+```
 yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
 ```
 
