@@ -40,7 +40,7 @@ const moveFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
   return copyFile(libPath, libTargetPath)
 }
 
-const copyFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
+const copyFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike, deleteAfter = false) => {
   return new Promise<Error | undefined>(resolve => {
     let doneCalled = false
 
@@ -66,6 +66,9 @@ const copyFile = (sourceFile: fs.PathLike, targetFile: fs.PathLike) => {
       done(err)
     })
     writeStream.on("close", () => {
+      if (!doneCalled && deleteAfter) {
+        fs.unlinkSync(sourceFile)
+      }
       done(undefined)
     })
     readStream.pipe(writeStream)
