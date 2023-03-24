@@ -110,12 +110,12 @@ importers:
       builder-util: workspace:*
       builder-util-runtime: workspace:*
       chromium-pickle-js: ^0.2.0
-      cross-unzip: ^0.2.1
       debug: ^4.3.4
       dmg-builder: workspace:*
       ejs: ^3.1.8
       electron-builder-squirrel-windows: workspace:*
       electron-publish: workspace:*
+      extract-zip: ^2.0.1
       form-data: ^4.0.0
       fs-extra: ^10.1.0
       hosted-git-info: ^4.1.0
@@ -130,7 +130,6 @@ importers:
       semver: ^7.3.8
       tar: ^6.1.12
       temp-file: ^3.4.0
-      win-7zip: ^0.1.1
     dependencies:
       7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
@@ -145,10 +144,10 @@ importers:
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       chromium-pickle-js: 0.2.0
-      cross-unzip: 0.2.1
       debug: 4.3.4
       ejs: 3.1.9
       electron-publish: link:../electron-publish
+      extract-zip: 2.0.1
       form-data: 4.0.0
       fs-extra: 10.1.0
       hosted-git-info: 4.1.0
@@ -163,7 +162,6 @@ importers:
       semver: 7.3.8
       tar: 6.1.13
       temp-file: 3.4.0
-      win-7zip: 0.1.1
     devDependencies:
       '@babel/core': 7.15.5
       '@babel/plugin-proposal-class-properties': 7.14.5_@babel+core@7.15.5
@@ -2906,6 +2904,14 @@ packages:
       '@types/yargs-parser': 21.0.0
     dev: false
 
+  /@types/yauzl/2.10.0:
+    resolution: {integrity: sha512-Cn6WYCm0tXv8p6k+A8PvbDG763EDpBoTzHdA+Q/MF6H3sapGjCm9NzoaJncJS9tUKSuCoDs9XHxYYsQDgxR6kw==}
+    requiresBuild: true
+    dependencies:
+      '@types/node': 16.11.43
+    dev: false
+    optional: true
+
   /@typescript-eslint/eslint-plugin/5.41.0_huremdigmcnkianavgfk3x6iou:
     resolution: {integrity: sha512-DXUS22Y57/LAFSg3x7Vi6RNAuLpTXwxB9S2nIA7msBb/Zt8p7XqMwdpdc1IU7CkOQUPgAqR5fWvxuKCbneKGmA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -4372,10 +4378,6 @@ packages:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  /cross-unzip/0.2.1:
-    resolution: {integrity: sha512-Z/m7H2+T0ObyDiYjNL6Zb/60N6wMcV4RZmPj+gEA7gDegQRk+l2HfJXeUP41zn+rlSRhLPkQIYuHw95SE+fbKQ==}
-    dev: false
-
   /cssom/0.3.8:
     resolution: {integrity: sha512-b0tGHbfegbhPJpxpiBPU2sCkigAqtM9O121le6bbOlgyV+NyGyCmVfJ6QW9eRjz8CpNfWEOYBIMIGRYkLwsIYg==}
 
@@ -5642,6 +5644,20 @@ packages:
       - supports-color
     dev: true
 
+  /extract-zip/2.0.1:
+    resolution: {integrity: sha512-GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==}
+    engines: {node: '>= 10.17.0'}
+    hasBin: true
+    dependencies:
+      debug: 4.3.4
+      get-stream: 5.2.0
+      yauzl: 2.10.0
+    optionalDependencies:
+      '@types/yauzl': 2.10.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /extsprintf/1.4.1:
     resolution: {integrity: sha512-Wrk35e8ydCKDj/ArClo1VrPVmN8zph5V4AtHwIuHhvMXsKf73UT3BOD+azBIW+3wOJ4FhEH7zyaJCFvChjYvMA==}
     engines: {'0': node >=0.6.0}
@@ -5694,7 +5710,6 @@ packages:
     resolution: {integrity: sha512-cE1qsB/VwyQozZ+q1dGxR8LBYNZeofhEdUNGSMbQD3Gw2lAzX9Zb3uIU6Ebc/Fmyjo9AWWfnn0AUCHqtevs/8g==}
     dependencies:
       pend: 1.2.0
-    dev: true
 
   /file-entry-cache/6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
@@ -8752,7 +8767,6 @@ packages:
 
   /pend/1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
-    dev: true
 
   /picocolors/1.0.0:
     resolution: {integrity: sha512-1fygroTLlHu66zi26VoTDv8yRgm0Fccecssto+MhsZ0D/DGW2sm8E8AjW7NU5VVTRt5GxbeZ5qBuJr+HyLYkjQ==}
@@ -10579,11 +10593,6 @@ packages:
       string-width: 4.2.3
     dev: false
 
-  /win-7zip/0.1.1:
-    resolution: {integrity: sha512-+8uw8n9ovnR+/0InuoMdJxxqH9qwWc1yNRzaYRLJNkFpm1uEDlewn/Q+L52mUPuVY0P/nh3ewg5b73mzIvsu9A==}
-    hasBin: true
-    dev: false
-
   /word-wrap/1.2.3:
     resolution: {integrity: sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==}
     engines: {node: '>=0.10.0'}
@@ -10762,7 +10771,6 @@ packages:
     dependencies:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
-    dev: true
 
   /yn/3.1.1:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}

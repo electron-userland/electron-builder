@@ -22,14 +22,9 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
 
   let unusedDependencies = result.dependencies
   if (unusedDependencies.length > 0) {
-    unusedDependencies = result.dependencies.filter(it => {
-      if (packageName === "electron-builder") {
-        return it !== "dmg-builder" // option dep needed for mac
-      } else if (packageName === "app-builder-lib") {
-        return it !== "win-7zip" // used by cross-unzip
-      }
-      return true
-    } )
+    if (packageName === "electron-builder") {
+      unusedDependencies = result.dependencies.filter(it => it !== "dmg-builder")
+    }
     if (unusedDependencies.length > 0) {
       console.error(`${chalk.bold(packageName)} Unused dependencies: ${JSON.stringify(unusedDependencies, null, 2)}`)
       return false

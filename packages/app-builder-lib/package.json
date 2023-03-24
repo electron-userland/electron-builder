@@ -59,10 +59,10 @@
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chromium-pickle-js": "^0.2.0",
-    "cross-unzip": "^0.2.1",
     "debug": "^4.3.4",
     "ejs": "^3.1.8",
     "electron-publish": "workspace:*",
+    "extract-zip": "^2.0.1",
     "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
     "hosted-git-info": "^4.1.0",
@@ -76,8 +76,7 @@
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
-    "temp-file": "^3.4.0",
-    "win-7zip": "^0.1.1"
+    "temp-file": "^3.4.0"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {
