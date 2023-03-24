@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.1.1
+
+### Patch Changes
+
+- [#7495](https://github.com/electron-userland/electron-builder/pull/7495) [`91f86aed`](https://github.com/electron-userland/electron-builder/commit/91f86aed093a78cd43e60126ebd48fa88ce7727a) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: removing ffmpeg dependency due to dependency vulnerability
+
 ## 24.1.0
 
 ### Minor Changes

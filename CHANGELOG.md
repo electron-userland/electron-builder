@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.0...v) (2023-03-24)
+
+
+### Bug Fixes
+
+* refactoring ffmpeg implementation and removing related npm dependency ([#7495](https://github.com/electron-userland/electron-builder/issues/7495)) ([91f86ae](https://github.com/electron-userland/electron-builder/commit/91f86aed093a78cd43e60126ebd48fa88ce7727a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.0.0...v) (2023-03-22)
 
 

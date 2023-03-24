@@ -26,7 +26,7 @@ const copyFFMPEG = (targetPath: string, platform: ElectronPlatformName) => (sour
   const libPath = path.resolve(sourcePath, fileName)
   const libTargetPath = path.resolve(targetPath, fileName)
   log.info({ lib: libPath, target: libTargetPath }, "copying non-proprietary FFMPEG")
-  
+
   // If the source doesn't exist we have a problem
   if (!fs.existsSync(libPath)) {
     throw new Error(`Failed to find FFMPEG library file at path: ${libPath}`)
