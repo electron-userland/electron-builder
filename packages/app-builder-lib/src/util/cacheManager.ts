@@ -1,11 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, isEmptyOrSpaces, log } from "builder-util"
+import { Arch, log } from "builder-util"
 import { copyFile } from "builder-util/out/fs"
 import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { Hash } from "crypto"
 import { readJson, writeJson } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
-import { homedir } from "os"
 import * as path from "path"
 
 export interface BuildCacheInfo {
@@ -81,9 +80,4 @@ export async function digest(hash: Hash, files: Array<string>) {
 
   hash.update(BuildCacheManager.VERSION)
   return hash.digest("base64")
-}
-
-export function getCacheDirectory(): string {
-  const env = process.env.ELECTRON_BUILDER_CACHE
-  return isEmptyOrSpaces(env) ? path.join(homedir(), "Library", "Caches", "electron-builder") : path.resolve(env)
 }
