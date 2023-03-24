@@ -76,7 +76,8 @@
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
-    "temp-file": "^3.4.0"
+    "temp-file": "^3.4.0",
+    "win-7zip": "^0.1.1"
   },
   "///": "babel in devDependencies for proton tests",
   "devDependencies": {

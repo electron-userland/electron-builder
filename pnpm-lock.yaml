@@ -130,6 +130,7 @@ importers:
       semver: ^7.3.8
       tar: ^6.1.12
       temp-file: ^3.4.0
+      win-7zip: ^0.1.1
     dependencies:
       7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
@@ -162,6 +163,7 @@ importers:
       semver: 7.3.8
       tar: 6.1.13
       temp-file: 3.4.0
+      win-7zip: 0.1.1
     devDependencies:
       '@babel/core': 7.15.5
       '@babel/plugin-proposal-class-properties': 7.14.5_@babel+core@7.15.5
@@ -10575,6 +10577,11 @@ packages:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}
     dependencies:
       string-width: 4.2.3
+    dev: false
+
+  /win-7zip/0.1.1:
+    resolution: {integrity: sha512-+8uw8n9ovnR+/0InuoMdJxxqH9qwWc1yNRzaYRLJNkFpm1uEDlewn/Q+L52mUPuVY0P/nh3ewg5b73mzIvsu9A==}
+    hasBin: true
     dev: false
 
   /word-wrap/1.2.3:

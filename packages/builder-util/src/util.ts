@@ -271,7 +271,7 @@ export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
 }
 
 export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | undefined {
-  return !s?.trim().length
+  return s == null || s.trim().length === 0
 }
 
 export function isTokenCharValid(token: string) {
