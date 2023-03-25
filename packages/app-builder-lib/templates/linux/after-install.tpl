@@ -1,7 +1,11 @@
 #!/bin/bash
 
 # Link to the binary
-ln -sf '/opt/${sanitizedProductName}/${executable}' '/usr/bin/${executable}'
+if type update-alternatives 2>/dev/null >&1; then
+   update-alternatives --install '/usr/bin/${executable}' '${executable}' '/opt/${sanitizedProductName}/${executable}' 100
+else
+    ln -sf '/opt/${sanitizedProductName}/${executable}' '/usr/bin/${executable}'
+fi
 
 # SUID chrome-sandbox for Electron 5+
 chmod 4755 '/opt/${sanitizedProductName}/chrome-sandbox' || true
