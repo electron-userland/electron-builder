@@ -1,5 +1,5 @@
 import { AllPublishOptions } from "builder-util-runtime"
-import { spawn, spawnSync } from "child_process"
+import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
 
@@ -134,20 +134,19 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-  protected async spawnLog(cmd: string, args: string[] = [], env: any = {}): Promise<boolean> {
+  protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     return new Promise<boolean>((resolve, reject) => {
       try {
-        const p = spawn(cmd, args, {
-          stdio: "inherit",
-          env: { ...process.env, ...env },
-          detached: true,
-        })
+        const params: SpawnOptions = { stdio, env, detached: true }
+        const p = spawn(cmd, args, params)
         p.on("error", error => {
           reject(error)
         })
         p.unref()
-        resolve(p.pid !== undefined)
+        if (process.pid !== undefined) {
+          resolve(true)
+        }
       } catch (error) {
         reject(error)
       }
