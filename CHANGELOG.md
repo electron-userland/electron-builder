@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.1...v) (2023-03-26)
+
+
+### Bug Fixes
+
+* NsisUpdater - only resolving true if pid !== undefined ([#7503](https://github.com/electron-userland/electron-builder/issues/7503)) ([a2ab1ff](https://github.com/electron-userland/electron-builder/commit/a2ab1ff36dbe99a9c9d22bde15e83482eb5be340)), closes [#7502](https://github.com/electron-userland/electron-builder/issues/7502)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.1.0...v) (2023-03-24)
 
 

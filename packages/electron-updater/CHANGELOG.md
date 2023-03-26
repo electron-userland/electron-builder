@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.0.1
+
+### Patch Changes
+
+- [#7503](https://github.com/electron-userland/electron-builder/pull/7503) [`a2ab1ff3`](https://github.com/electron-userland/electron-builder/commit/a2ab1ff36dbe99a9c9d22bde15e83482eb5be340) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: NsisUpdater - only resolving true if pid !== undefined
+
 ## 6.0.0
 
 ### Major Changes
