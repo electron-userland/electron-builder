@@ -16,7 +16,6 @@
     "out"
   ],
   "dependencies": {
-    "@types/semver": "^7.3.13",
     "builder-util-runtime": "workspace:*",
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
@@ -30,7 +29,8 @@
     "@types/fs-extra": "9.0.13",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
-    "@types/lodash.isequal": "4.5.5"
+    "@types/lodash.isequal": "4.5.5",
+    "@types/semver": "^7.3.13"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {
