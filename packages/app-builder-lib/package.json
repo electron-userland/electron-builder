@@ -63,6 +63,7 @@
     "electron-publish": "workspace:*",
     "form-data": "^4.0.0",
     "fs-extra": "^10.1.0",
+    "galactus": "^1.0.0",
     "hosted-git-info": "^4.1.0",
     "is-ci": "^3.0.0",
     "isbinaryfile": "^5.0.0",
