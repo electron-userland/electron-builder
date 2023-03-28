@@ -1,16 +1,12 @@
 // 'use strict'
 
 // import common from './common'
-import galactus from 'galactus'
-import fs from 'fs-extra'
-import path from 'path'
-import { log } from 'builder-util/src/log'
+import galactus from "galactus"
+import fs from "fs-extra"
+import path from "path"
+import { log } from "builder-util/src/log"
 
-const ELECTRON_MODULES = [
-  'electron',
-  'electron-prebuilt',
-  'electron-prebuilt-compile'
-]
+const ELECTRON_MODULES = ["electron", "electron-prebuilt", "electron-prebuilt-compile"]
 
 class Pruner {
   baseDir: string
@@ -19,22 +15,22 @@ class Pruner {
   walkedTree = false
   modules = new Set<string>()
 
-  constructor (dir: any, quiet: boolean) {
+  constructor(dir: any, quiet: boolean) {
     this.baseDir = path.normalize(dir)
     this.quiet = quiet
     this.galactus = new galactus.DestroyerOfModules({
       rootDirectory: dir,
-      shouldKeepModuleTest: (module: any, isDevDep: boolean) => this.shouldKeepModule(module, isDevDep)
+      shouldKeepModuleTest: (module: galactus.Module, isDevDep: boolean) => this.shouldKeepModule(module, isDevDep),
     })
   }
 
-  setModules (moduleMap: galactus.ModuleMap) {
+  private setModules(moduleMap: galactus.ModuleMap) {
     const modulePaths = Array.from(moduleMap.keys()).map((modulePath: string) => `/${path.normalize(modulePath)}`)
     this.modules = new Set(modulePaths)
     this.walkedTree = true
   }
 
-  async pruneModule (name: string) {
+  async pruneModule(name: string) {
     if (this.walkedTree) {
       return this.isProductionModule(name)
     } else {
@@ -44,7 +40,7 @@ class Pruner {
     }
   }
 
-  shouldKeepModule (module: { depType: galactus.DepType; name: string }, isDevDep: any) {
+  private shouldKeepModule(module: galactus.Module, isDevDep: any) {
     if (isDevDep || module.depType === galactus.DepType.ROOT) {
       return false
     }
@@ -57,19 +53,21 @@ class Pruner {
     return true
   }
 
-  isProductionModule (name: string) {
+  private isProductionModule(name: string) {
     return this.modules.has(name)
   }
 }
 
-function isNodeModuleFolder (pathToCheck: string) {
-  return path.basename(path.dirname(pathToCheck)) === 'node_modules' ||
-    (path.basename(path.dirname(pathToCheck)).startsWith('@') && path.basename(path.resolve(pathToCheck, `..${path.sep}..`)) === 'node_modules')
+function isNodeModuleFolder(pathToCheck: string) {
+  return (
+    path.basename(path.dirname(pathToCheck)) === "node_modules" ||
+    (path.basename(path.dirname(pathToCheck)).startsWith("@") && path.basename(path.resolve(pathToCheck, `..${path.sep}..`)) === "node_modules")
+  )
 }
 
-module.exports = {
-  isModule: async function isModule (pathToCheck: string) {
-    return (await fs.pathExists(path.join(pathToCheck, 'package.json'))) && isNodeModuleFolder(pathToCheck)
+export default {
+  isModule: async function isModule(pathToCheck: string) {
+    return (await fs.pathExists(path.join(pathToCheck, "package.json"))) && isNodeModuleFolder(pathToCheck)
   },
-  Pruner: Pruner
+  Pruner: Pruner,
 }
