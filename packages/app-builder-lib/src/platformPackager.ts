@@ -200,6 +200,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
+    // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
+    delete process.env.GYP_MSVS_VERSION
+
     const beforePack = resolveFunction(this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
@@ -325,10 +328,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       packager: this,
       electronPlatformName: platformName,
     }
-    await this.signApp(packContext, isAsar)
+    const didSign = await this.signApp(packContext, isAsar)
     const afterSign = resolveFunction(this.config.afterSign, "afterSign")
     if (afterSign != null) {
-      await Promise.resolve(afterSign(packContext))
+      if (didSign) {
+        await Promise.resolve(afterSign(packContext))
+      } else {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
     }
   }
 
@@ -421,8 +428,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
-    return Promise.resolve()
+  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
   getIconPath(): Promise<string | null> {

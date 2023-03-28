@@ -241,12 +241,12 @@ test.ifLinuxOrDevMac("afterPack", () => {
   )
 })
 
-test.ifLinuxOrDevMac("afterSign", () => {
+test.ifWindows("afterSign", () => {
   let called = 0
   return assertPack(
     "test-app-one",
     {
-      targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
+      targets: createTargets([Platform.LINUX, Platform.WINDOWS], DIR_TARGET),
       config: {
         afterSign: () => {
           called++
@@ -256,7 +256,8 @@ test.ifLinuxOrDevMac("afterSign", () => {
     },
     {
       packed: async () => {
-        expect(called).toEqual(2)
+        // afterSign is only called when an app is actually signed and ignored otherwise.
+        expect(called).toEqual(1)
       },
     }
   )
@@ -327,8 +328,8 @@ export function removeUnstableProperties(data: any) {
       if (name === "offset") {
         return undefined
       }
-      if (name.endsWith(".node") && value.size != null) {
-        // size differs on various OS
+      if (value.size != null) {
+        // size differs on various OS and subdependencies aren't pinned, so this will randomly fail when subdependency resolution versions change
         value.size = "<size>"
       }
       // Keep existing test coverage

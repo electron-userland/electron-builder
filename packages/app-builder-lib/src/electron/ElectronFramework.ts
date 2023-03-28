@@ -14,6 +14,7 @@ import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
+import injectFFMPEG from "./injectFFMPEG"
 
 export type ElectronPlatformName = "darwin" | "linux" | "win32" | "mas"
 
@@ -132,8 +133,11 @@ class ElectronFramework implements Framework {
     }
   }
 
-  prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
-    return unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
+  async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
+    await unpack(options, createDownloadOpts(options.packager.config, options.platformName, options.arch, this.version), this.distMacOsAppName)
+    if (options.packager.config.downloadAlternateFFmpeg) {
+      await injectFFMPEG(options, this.version)
+    }
   }
 
   beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {

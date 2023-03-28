@@ -188,7 +188,7 @@ async function render2(files, jsdoc2MdOptions) {
       return "[AppImageOptions](/configuration/linux#appimageoptions)"
     }
     if (types.some(it => it.endsWith("DebOptions"))) {
-      return "[DebOptions](/configuration/linux#de)"
+      return "[DebOptions](/configuration/linux#deb)"
     }
     if (types.some(it => it.endsWith("LinuxTargetSpecificOptions"))) {
       return "[LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)"

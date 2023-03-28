@@ -1,4 +1,4 @@
-import { createTargets, Platform } from "electron-builder"
+import { Arch, createTargets, Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
 import * as path from "path"
 import { GithubOptions, GenericServerOptions, SpacesOptions, KeygenOptions } from "builder-util-runtime"
@@ -39,7 +39,7 @@ function keygenPublisher(): KeygenOptions {
 test.ifNotWindows.ifDevOrLinuxCi(
   "generic, github and spaces",
   app({
-    targets: Platform.MAC.createTarget("zip"),
+    targets: Platform.MAC.createTarget("zip", Arch.x64),
     config: {
       generateUpdatesFilesForAllChannels: true,
       mac: {
@@ -67,7 +67,7 @@ test.ifMac(
   "mac artifactName ",
   app(
     {
-      targets: Platform.MAC.createTarget("zip"),
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
         // tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${productName}_${version}_${os}.${ext}",
@@ -140,7 +140,7 @@ test.ifAll.ifNotWindows(
   "custom provider",
   app(
     {
-      targets: createTargets([Platform.LINUX], "zip"),
+      targets: createTargets([Platform.LINUX], "deb"),
       config: {
         publish: {
           provider: "custom",

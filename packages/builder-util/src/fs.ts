@@ -12,7 +12,7 @@ import * as isCI from "is-ci"
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
 
-export type AfterCopyFileTransformer = (file: string) => Promise<void>
+export type AfterCopyFileTransformer = (file: string) => Promise<boolean>
 
 export class CopyFileTransformer {
   constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {}
@@ -220,7 +220,7 @@ export class FileCopier {
     }
   }
 
-  async copy(src: string, dest: string, stat: Stats | undefined) {
+  async copy(src: string, dest: string, stat: Stats | undefined): Promise<void> {
     let afterCopyTransformer: AfterCopyFileTransformer | null = null
     if (this.transformer != null && stat != null && stat.isFile()) {
       let data = this.transformer(src)

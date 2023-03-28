@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "24.0.0-alpha.2",
+  "version": "24.1.1",
   "main": "out/index.js",
   "files": [
     "out"
@@ -50,17 +50,18 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
+    "@types/yargs": "^17.0.16",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
-    "chalk": "^4.1.1",
+    "chalk": "^4.1.2",
     "dmg-builder": "workspace:*",
     "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
     "read-config-file": "6.3.2",
-    "simple-update-notifier": "^1.0.7",
-    "yargs": "^17.5.1"
+    "simple-update-notifier": "^1.1.0",
+    "yargs": "^17.6.2"
   },
   "devDependencies": {
     "@types/yargs": "^17.0.1",
@@ -70,11 +71,5 @@
   "typings": "./out/index.d.ts",
   "publishConfig": {
     "tag": "next"
-  },
-  "pnpm": {
-    "overrides": {
-      "ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
-      "minimatch@<3.0.5": ">=3.0.5"
-    }
   }
 }

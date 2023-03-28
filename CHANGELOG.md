@@ -1,3 +1,184 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.1...v) (2023-03-26)
+
+
+### Bug Fixes
+
+* NsisUpdater - only resolving true if pid !== undefined ([#7503](https://github.com/electron-userland/electron-builder/issues/7503)) ([a2ab1ff](https://github.com/electron-userland/electron-builder/commit/a2ab1ff36dbe99a9c9d22bde15e83482eb5be340)), closes [#7502](https://github.com/electron-userland/electron-builder/issues/7502)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.0...v) (2023-03-24)
+
+
+### Bug Fixes
+
+* refactoring ffmpeg implementation and removing related npm dependency ([#7495](https://github.com/electron-userland/electron-builder/issues/7495)) ([91f86ae](https://github.com/electron-userland/electron-builder/commit/91f86aed093a78cd43e60126ebd48fa88ce7727a))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0...v) (2023-03-22)
+
+
+### Bug Fixes
+
+* **arm64:** set RPM architecture as `aarch64` in name ([#7466](https://github.com/electron-userland/electron-builder/issues/7466)) ([1342f87](https://github.com/electron-userland/electron-builder/commit/1342f872f98229cf6c31069253fcf0f435bfd9df))
+* missing quote syntax error in nsis uninstaller ([#7490](https://github.com/electron-userland/electron-builder/issues/7490)) ([278a3df](https://github.com/electron-userland/electron-builder/commit/278a3df3c738dbe0d2240f338e901774b7d578c5))
+* updating SignOptions typesafety and leverage `optionsForFile` for entitlements ([#7491](https://github.com/electron-userland/electron-builder/issues/7491)) ([c1deace](https://github.com/electron-userland/electron-builder/commit/c1deace1de707faacb02ae49cfaa59d60ab6ac06))
+
+
+### Features
+
+* Adding new downloadAlternateFFmpeg option to download non-proprietary ffmpeg library ([#7210](https://github.com/electron-userland/electron-builder/issues/7210)) ([#7477](https://github.com/electron-userland/electron-builder/issues/7477)) ([1dd26cc](https://github.com/electron-userland/electron-builder/commit/1dd26cc646c1a9708ff880920319bdaad17d20ba))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.13...v) (2023-03-04)
+
+
+### Bug Fixes
+
+* **packager:** return success status from doSign function calls ([48747ac](https://github.com/electron-userland/electron-builder/commit/48747ac9e1fe08f84b2335a8263eebc8f4c35561))
+* **packager:** return success status from doSign function calls ([#7431](https://github.com/electron-userland/electron-builder/issues/7431)) ([eb842f7](https://github.com/electron-userland/electron-builder/commit/eb842f7faee3a261635fb3e59230e09c98840e40))
+* Removing file size from BuildTest smart unpack ([#7456](https://github.com/electron-userland/electron-builder/issues/7456)) ([25dc0bb](https://github.com/electron-userland/electron-builder/commit/25dc0bbb19637add4c47be88934f70b0e84a122e))
+* Revert "feat: Support mjs files for lifecycle operations" ([#7461](https://github.com/electron-userland/electron-builder/issues/7461)) ([0f9da20](https://github.com/electron-userland/electron-builder/commit/0f9da20dbf8a229242ad9247ca89ef90241512f5)), closes [#7442](https://github.com/electron-userland/electron-builder/issues/7442)
+
+
+### Features
+
+* Support mjs files for lifecycle operations ([#7442](https://github.com/electron-userland/electron-builder/issues/7442)) ([37d6db3](https://github.com/electron-userland/electron-builder/commit/37d6db389e76c61462cb3578ec4abece1a07d0c2)), closes [#7441](https://github.com/electron-userland/electron-builder/issues/7441)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.12...v) (2023-02-21)
+
+
+### Bug Fixes
+
+* **packager:** report the correct status result when `doSign` exits early ([4d3fdfc](https://github.com/electron-userland/electron-builder/commit/4d3fdfcfe5c6b75cdb8fa8e89f6169c986949bcb))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.11...v) (2023-02-15)
+
+
+### Bug Fixes
+
+* `inherit` stdio for electron-updater `exec` ([#7393](https://github.com/electron-userland/electron-builder/issues/7393)) ([#7394](https://github.com/electron-userland/electron-builder/issues/7394)) ([1bbcfb3](https://github.com/electron-userland/electron-builder/commit/1bbcfb3dc5f36b0803c69e9170db16ded52a0043))
+* **docs:** PlatformSpecificBuildOptions.md broken link ([#7405](https://github.com/electron-userland/electron-builder/issues/7405)) ([ece7f88](https://github.com/electron-userland/electron-builder/commit/ece7f889f93921894cbbcb02b924dc90d793be7c))
+* enable signing of .node modules in order to support WDAC ([#7421](https://github.com/electron-userland/electron-builder/issues/7421)) ([d1e0c34](https://github.com/electron-userland/electron-builder/commit/d1e0c348283b5f099217aa247f9af24c77a3e415)), closes [#7329](https://github.com/electron-userland/electron-builder/issues/7329)
+* update docs for updated electron API ([b7a53d0](https://github.com/electron-userland/electron-builder/commit/b7a53d0f69f1350b47cef118b1ef4aaf9885f88f))
+
+
+### Features
+
+* Allow for NSIS windows installer to be wrapped in an MSI ([#7407](https://github.com/electron-userland/electron-builder/issues/7407)) ([a338730](https://github.com/electron-userland/electron-builder/commit/a3387309f0297cb824926bd7fa5cb653da9f24ca))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.10...v) (2023-01-24)
+
+
+### Bug Fixes
+
+* add reject in handleError in Windows `verifySignature` function ([#7380](https://github.com/electron-userland/electron-builder/issues/7380)) ([7862e38](https://github.com/electron-userland/electron-builder/commit/7862e388a2049ccbe1e01a5624c6a8a5f2942d54))
+* adding log warning in case `afterSign` exists but no signing occurred ([#7388](https://github.com/electron-userland/electron-builder/issues/7388)) ([1cb8f50](https://github.com/electron-userland/electron-builder/commit/1cb8f50c3551b398e20b798aba0c60bb34860b49))
+* Allow MAS builds to be unsigned if `identity: null` is explicitly passed ([#7382](https://github.com/electron-userland/electron-builder/issues/7382)) ([bb37687](https://github.com/electron-userland/electron-builder/commit/bb37687540aa254bce6a92a86c56b606cc16f2be))
+* Execute `afterSign` hook only when signing is complete (i.e. if the signing step wasn't explicitly skipped) (BREAKING) ([#7311](https://github.com/electron-userland/electron-builder/issues/7311)) ([fd93fce](https://github.com/electron-userland/electron-builder/commit/fd93fce96f476c09af3379d964bf9092bd20787e))
+* incorrect html comment in issue_template.md ([#7386](https://github.com/electron-userland/electron-builder/issues/7386)) ([d07b98a](https://github.com/electron-userland/electron-builder/commit/d07b98accba0c1afea12d18e850fde02dcf8ea51))
+* Manually reseting `GYP_MSVS_VERSION` for multi-arch builds before `beforePack` ([#7387](https://github.com/electron-userland/electron-builder/issues/7387)) ([aeffe08](https://github.com/electron-userland/electron-builder/commit/aeffe080e07f11057134947e09021cd9d6712935))
+* MAS builds should respect arch suffix per `defaultArch` config ([#7383](https://github.com/electron-userland/electron-builder/issues/7383)) ([e5748b3](https://github.com/electron-userland/electron-builder/commit/e5748b3df35676cf6e411c6c47fc4fc56e0a26f2))
+* Remove `adapter` if core22+ is set as base on snapcraft ([#7378](https://github.com/electron-userland/electron-builder/issues/7378)) ([db69a18](https://github.com/electron-userland/electron-builder/commit/db69a1875d219310b3050b35cdc46c20ec45cc04))
+
+
+### Features
+
+* enable having vendor information in `releaseInfo` ([#7373](https://github.com/electron-userland/electron-builder/issues/7373)) ([9700c75](https://github.com/electron-userland/electron-builder/commit/9700c75331e7d8de4efd257d8774b8c2a422538b))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.9...v) (2023-01-10)
+
+
+### Bug Fixes
+
+* Remove spctl check from Mac's notarization ([#7361](https://github.com/electron-userland/electron-builder/issues/7361)) ([f9f23be](https://github.com/electron-userland/electron-builder/commit/f9f23bef64efd429f6dfd1ec81f2d73927f63a8e))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.8...v) (2023-01-07)
+
+
+### Bug Fixes
+
+* Ensure parent directories of symlinks are created ([#7327](https://github.com/electron-userland/electron-builder/issues/7327)) ([973a004](https://github.com/electron-userland/electron-builder/commit/973a0048b46b8367864241a903453f927c158304))
+* missing html extension for multi language license files in nsis target ([#7339](https://github.com/electron-userland/electron-builder/issues/7339)) ([8f94978](https://github.com/electron-userland/electron-builder/commit/8f94978c41d63e9fb4aa70a1df67f25804fdaf84))
+* re-add `--identifier` to mac pkg build to address issue [#7348](https://github.com/electron-userland/electron-builder/issues/7348) ([#7352](https://github.com/electron-userland/electron-builder/issues/7352)) ([c08db0a](https://github.com/electron-userland/electron-builder/commit/c08db0a92b5e251229a424c1c00559086d860dde))
+* Update MacOS signOptions on macPackager [#7317](https://github.com/electron-userland/electron-builder/issues/7317) ([#7351](https://github.com/electron-userland/electron-builder/issues/7351)) ([1e8dad8](https://github.com/electron-userland/electron-builder/commit/1e8dad8bc58f53780c9fac3b0c48e248a8b5467c))
+
+
+### Features
+
+* Provide a custom verify function interface in NsisUpdater for native verification of nsis signatures ([#7337](https://github.com/electron-userland/electron-builder/issues/7337)) ([9c0c422](https://github.com/electron-userland/electron-builder/commit/9c0c422834369f42b311b5d9ecd301f8b50bccfa))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.7...v) (2022-12-19)
+
+
+### Features
+
+* Add base option for snapcraft ([#7320](https://github.com/electron-userland/electron-builder/issues/7320)) ([2852cb5](https://github.com/electron-userland/electron-builder/commit/2852cb56a337709f8b7f0bcbf92b034ec8a07e7f))
+* Add the accelerate option for s3 buckets ([#7314](https://github.com/electron-userland/electron-builder/issues/7314)) ([cc1ddab](https://github.com/electron-userland/electron-builder/commit/cc1ddabd45f239ee06fde9b2d1534467908791fa))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.6...v) (2022-12-10)
+
+
+### Features
+
+* integrating @electron/notarize into mac signing flow ([#7310](https://github.com/electron-userland/electron-builder/issues/7310)) ([00d0dbc](https://github.com/electron-userland/electron-builder/commit/00d0dbc2d74fbac3e9ce7a046427c1e1d9a11301))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.5...v) (2022-12-07)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.4...v) (2022-12-01)
+
+
+### Bug Fixes
+
+* **app-builder-lib:** export missing TS types ([#7297](https://github.com/electron-userland/electron-builder/issues/7297)) ([9ce7448](https://github.com/electron-userland/electron-builder/commit/9ce74482ef0f4abc1206dc96dca559eb9f03d50c))
+
+
+### Features
+
+* Introducing deb and rpm auto-updates ([#7060](https://github.com/electron-userland/electron-builder/issues/7060)) ([1d13001](https://github.com/electron-userland/electron-builder/commit/1d130012737e77b57c8923fcc0e6ad2cbc5da0e8))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.3...v) (2022-11-22)
+
+
+### Bug Fixes
+
+* get CI tag in GitHub Actions ([#7231](https://github.com/electron-userland/electron-builder/issues/7231)) ([c21e3b3](https://github.com/electron-userland/electron-builder/commit/c21e3b37e0dd064c12dbd38065a548441d7c5a9e))
+* support powershell constrained language mode ([#7230](https://github.com/electron-userland/electron-builder/issues/7230)) ([346af1d](https://github.com/electron-userland/electron-builder/commit/346af1d470ebbf12733a9619a2389bcfdf452bc6))
+* windowsCodeSign - don't use osslsigncode in a vm! ([#7275](https://github.com/electron-userland/electron-builder/issues/7275)) ([5668dc2](https://github.com/electron-userland/electron-builder/commit/5668dc204b83ae0c1edf79a4998f41292007d230))
+
+
+### Features
+
+* **nsis:** add ShutdownBlockReasonCreate for blocking Win Shutdown prompt ([#7251](https://github.com/electron-userland/electron-builder/issues/7251)) ([45a0f82](https://github.com/electron-userland/electron-builder/commit/45a0f82ac3a14fedfb03880fb43d525a51cec864))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.2...v) (2022-11-01)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.0.0-alpha.1...v) (2022-10-26)
 
 

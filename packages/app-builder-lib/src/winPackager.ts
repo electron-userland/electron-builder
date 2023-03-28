@@ -24,6 +24,8 @@ import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOpti
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/AppxTarget"
+import MsiTarget from "./targets/MsiTarget"
+import MsiWrappedTarget from "./targets/MsiWrappedTarget"
 import { NsisTarget } from "./targets/nsis/NsisTarget"
 import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
 import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
@@ -165,7 +167,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
           switch (name) {
             case "squirrel":
               try {
@@ -179,6 +181,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
             case "msi":
               return require("./targets/MsiTarget").default
+
+            case "msiwrapped":
+              return require("./targets/MsiWrappedTarget").default
 
             default:
               return null
@@ -194,7 +199,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
-  async sign(file: string, logMessagePrefix?: string): Promise<void> {
+  async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       name: this.appInfo.productName,
@@ -205,13 +210,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.platformSpecificBuildOptions.sign != null) {
-        await sign(signOptions, this)
+        return sign(signOptions, this)
       } else if (this.forceCodeSigning) {
         throw new InvalidConfigurationError(
           `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
         )
       }
-      return
+      return false
     }
 
     if (logMessagePrefix == null) {
@@ -240,7 +245,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       )
     }
 
-    await this.doSign({
+    return this.doSign({
       ...signOptions,
       cscInfo,
       options: {
@@ -253,7 +258,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     for (let i = 0; i < 3; i++) {
       try {
         await sign(options, this)
-        break
+        return true
       } catch (e: any) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
@@ -264,6 +269,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         throw e
       }
     }
+    return false
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
@@ -347,8 +353,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  private isSignDlls(): boolean {
-    return this.platformSpecificBuildOptions.signDlls === true
+  private shouldSignFile(file: string): boolean {
+    const shouldSignDll = this.platformSpecificBuildOptions.signDlls === true && file.endsWith(".dll")
+    return shouldSignDll || file.endsWith(".exe") || file.endsWith(".node")
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
@@ -357,7 +364,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return file => {
-      if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
           return new CopyFileTransformer(file => this.sign(file))
@@ -367,10 +374,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
     if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
-      return
+      return false
     }
 
     await BluebirdPromise.map(readdir(packContext.appOutDir), (file: string): any => {
@@ -382,21 +389,23 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           path.basename(exeFileName, ".exe"),
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
-      } else if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      } else if (this.shouldSignFile(file)) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
     })
 
     if (!isAsar) {
-      return
+      return true
     }
 
-    const signPromise = (filepath: string[]) => {
+    const filesPromise = (filepath: string[]) => {
       const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll")))
+      return walk(outDir, (file, stat) => stat.isDirectory() || this.shouldSignFile(file))
     }
-    const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
+    const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), { concurrency: 4 })
+
+    return true
   }
 }

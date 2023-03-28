@@ -92,6 +92,7 @@
 <li><code id="ReleaseInfo-releaseNotes">releaseNotes</code> String | “undefined” - The release notes.</li>
 <li><code id="ReleaseInfo-releaseNotesFile">releaseNotesFile</code> String | “undefined” - The path to release notes file. Defaults to <code>release-notes-${platform}.md</code> (where <code>platform</code> it is current platform — <code>mac</code>, <code>linux</code> or <code>windows</code>) or <code>release-notes.md</code> in the <a href="#MetadataDirectories-buildResources">build resources</a>.</li>
 <li><code id="ReleaseInfo-releaseDate">releaseDate</code> String - The release date.</li>
+<li><code id="ReleaseInfo-vendor">vendor</code> Object&lt;String, any&gt; | “undefined” - Vendor specific information.</li>
 </ul>
 </li>
 <li>

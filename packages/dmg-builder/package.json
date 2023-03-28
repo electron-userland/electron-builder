@@ -1,6 +1,6 @@
 {
 	"name": "dmg-builder",
-	"version": "24.0.0-alpha.2",
+	"version": "24.1.1",
 	"main": "out/dmgUtil.js",
 	"author": "Vladimir Krivosheev",
 	"license": "MIT",
@@ -32,11 +32,5 @@
 		"@types/js-yaml": "4.0.3",
 		"temp-file": "3.4.0"
 	},
-	"typings": "./out/dmg.d.ts",
-	"pnpm": {
-		"overrides": {
-			"ansi-regex@>=4.0.0 <4.1.1": ">=4.1.1",
-			"minimatch@<3.0.5": ">=3.0.5"
-		}
-	}
+	"typings": "./out/dmg.d.ts"
 }

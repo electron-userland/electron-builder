@@ -39,7 +39,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
   computeSignToolArgs(isWin: boolean): Array<string>
 }
 
-export async function sign(options: WindowsSignOptions, packager: WinPackager) {
+export async function sign(options: WindowsSignOptions, packager: WinPackager): Promise<boolean> {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -70,6 +70,8 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager) {
       await rename(taskConfiguration.resultOutputPath, options.path)
     }
   }
+
+  return true
 }
 
 export interface FileCodeSigningInfo {
@@ -145,19 +147,20 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
 export async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
-  // unify logic of signtool path location
-  const toolInfo = await getToolPath()
-  const tool = toolInfo.path
   // decide runtime argument by cases
   let args: Array<string>
   let env = process.env
   let vm: VmManager
-  if (configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */) {
+  const vmRequired = configuration.path.endsWith(".appx") || !("file" in configuration.cscInfo!) /* certificateSubjectName and other such options */
+  const isWin = process.platform === "win32" || vmRequired
+  const toolInfo = await getToolPath(isWin)
+  const tool = toolInfo.path
+  if (vmRequired) {
     vm = await packager.vm.value
-    args = computeSignToolArgs(configuration, true, vm)
+    args = computeSignToolArgs(configuration, isWin, vm)
   } else {
     vm = new VmManager()
-    args = configuration.computeSignToolArgs(process.platform === "win32")
+    args = configuration.computeSignToolArgs(isWin)
     if (toolInfo.env != null) {
       env = toolInfo.env
     }
@@ -292,7 +295,7 @@ function getWinSignTool(vendorPath: string): string {
   }
 }
 
-async function getToolPath(): Promise<ToolInfo> {
+async function getToolPath(isWin = process.platform === "win32"): Promise<ToolInfo> {
   if (isUseSystemSigncode()) {
     return { path: "osslsigncode" }
   }
@@ -303,7 +306,7 @@ async function getToolPath(): Promise<ToolInfo> {
   }
 
   const vendorPath = await getSignVendorPath()
-  if (process.platform === "win32") {
+  if (isWin) {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     return { path: getWinSignTool(vendorPath) }
   } else if (process.platform === "darwin") {

@@ -7,7 +7,7 @@ import { Logger } from "./main"
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
 // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
 export function verifySignature(publisherNames: Array<string>, unescapedTempUpdateFile: string, logger: Logger): Promise<string | null> {
-  return new Promise<string | null>(resolve => {
+  return new Promise<string | null>((resolve, reject) => {
     // Escape quotes and backticks in filenames to prevent user from breaking the
     // arguments and perform a remote command injection.
     //
@@ -31,27 +31,21 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
     execFile(
-      "powershell.exe",
-      [
-        "-NoProfile",
-        "-NonInteractive",
-        "-InputFormat",
-        "None",
-        "-Command",
-        `Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress | ForEach-Object { [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($_)) }`,
-      ],
+      "chcp 65001 >NUL & powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`],
       {
+        shell: true,
         timeout: 20 * 1000,
       },
       (error, stdout, stderr) => {
         try {
           if (error != null || stderr) {
-            handleError(logger, error, stderr)
+            handleError(logger, error, stderr, reject)
             resolve(null)
             return
           }
 
-          const data = parseOut(Buffer.from(stdout, "base64").toString("utf-8"))
+          const data = parseOut(stdout)
           if (data.Status === 0) {
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
@@ -78,7 +72,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           logger.warn(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
           resolve(result)
         } catch (e: any) {
-          handleError(logger, e, null)
+          handleError(logger, e, null, reject)
           resolve(null)
           return
         }
@@ -105,7 +99,7 @@ function parseOut(out: string): any {
   return data
 }
 
-function handleError(logger: Logger, error: Error | null, stderr: string | null): void {
+function handleError(logger: Logger, error: Error | null, stderr: string | null, reject: (reason: any) => void): void {
   if (isOldWin6()) {
     logger.warn(
       `Cannot execute Get-AuthenticodeSignature: ${error || stderr}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`
@@ -123,11 +117,11 @@ function handleError(logger: Logger, error: Error | null, stderr: string | null)
   }
 
   if (error != null) {
-    throw error
+    reject(error)
   }
 
   if (stderr) {
-    throw new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`)
+    reject(new Error(`Cannot execute Get-AuthenticodeSignature, stderr: ${stderr}. Failing signature validation due to unknown stderr.`))
   }
 }
 

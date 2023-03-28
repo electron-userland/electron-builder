@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
-import { Arch, executeAppBuilder, log, TmpDir, toLinuxArchString, use } from "builder-util"
+import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { outputFile } from "fs-extra"
+import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
@@ -15,6 +15,9 @@ import { isMacOsSierra } from "../util/macosVersion"
 import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getLinuxToolsPath } from "./tools"
+import { hashFile } from "../util/hash"
+import { ArtifactCreated } from "../packagerApi"
+import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
 
 interface FpmOptions {
   name: string
@@ -109,7 +112,8 @@ export default class FpmTarget extends Target {
     }
 
     const packager = this.packager
-    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
+    const artifactName = packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64)
+    const artifactPath = path.join(this.outDir, artifactName)
 
     await packager.info.callArtifactBuildStarted({
       targetPresentableName: target,
@@ -120,6 +124,18 @@ export default class FpmTarget extends Target {
     await unlinkIfExists(artifactPath)
     if (packager.packagerOptions.prepackaged != null) {
       await mkdir(this.outDir, { recursive: true })
+    }
+
+    const publishConfig = this.supportsAutoUpdate(target)
+      ? await getAppUpdatePublishConfiguration(packager, arch, false /* in any case validation will be done on publish */)
+      : null
+    if (publishConfig != null) {
+      const linuxDistType = this.packager.packagerOptions.prepackaged || path.join(this.outDir, `linux${getArchSuffix(arch)}-unpacked`)
+      const resourceDir = packager.getResourcesDir(linuxDistType)
+      log.info({ resourceDir }, `adding autoupdate files for: ${target}. (Beta feature)`)
+      await outputFile(path.join(resourceDir, "app-update.yml"), serializeToYaml(publishConfig))
+      // Extra file needed for auto-updater to detect installation method
+      await outputFile(path.join(resourceDir, "package-type"), target)
     }
 
     const scripts = await this.scriptFiles
@@ -229,7 +245,28 @@ export default class FpmTarget extends Target {
 
     await executeAppBuilder(["fpm", "--configuration", JSON.stringify(fpmConfiguration)], undefined, { env })
 
-    await packager.dispatchArtifactCreated(artifactPath, this, arch)
+    let info: ArtifactCreated = {
+      file: artifactPath,
+      target: this,
+      arch,
+      packager,
+    }
+    if (publishConfig != null) {
+      info = {
+        ...info,
+        safeArtifactName: packager.computeSafeArtifactName(artifactName, target, arch, !isUseArchIfX64),
+        isWriteUpdateInfo: true,
+        updateInfo: {
+          sha512: await hashFile(artifactPath),
+          size: (await stat(artifactPath)).size,
+        },
+      }
+    }
+    await packager.info.callArtifactBuildCompleted(info)
+  }
+
+  private supportsAutoUpdate(target: string) {
+    return ["deb", "rpm"].includes(target)
   }
 }
 

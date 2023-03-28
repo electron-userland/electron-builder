@@ -109,9 +109,6 @@ export class PublishManager implements PublishContext {
         if (!event.targets.some(it => isSuitableWindowsTarget(it))) {
           return
         }
-      } else {
-        // AppImage writes data to AppImage stage dir, not to linux-unpacked
-        return
       }
 
       const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch, this.isPublish)

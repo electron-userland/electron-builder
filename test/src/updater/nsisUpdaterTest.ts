@@ -232,8 +232,9 @@ test("test error", async () => {
 test.skip("test download progress", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
-    provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
   })
   updater.autoDownload = false
 

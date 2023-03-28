@@ -1,4 +1,4 @@
-import { exec } from "builder-util"
+import { Arch, exec } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { Platform } from "electron-builder"
 import { outputFile } from "fs-extra"
@@ -22,7 +22,7 @@ test.ifAll.ifMac(
   "empty installLocation",
   app(
     {
-      targets: Platform.MAC.createTarget("pkg"),
+      targets: Platform.MAC.createTarget("pkg", Arch.x64),
       config: {
         pkg: {
           installLocation: "",
@@ -42,7 +42,7 @@ test.ifAll.ifMac(
   "extraDistFiles",
   app(
     {
-      targets: Platform.MAC.createTarget("zip"),
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
         mac: {
           extraDistFiles: "extra.txt",
@@ -62,7 +62,7 @@ test.ifAll.ifMac(
   "pkg extended configuration",
   app(
     {
-      targets: Platform.MAC.createTarget("pkg"),
+      targets: Platform.MAC.createTarget("pkg", Arch.x64),
       config: {
         pkg: {
           isRelocatable: false,
@@ -110,7 +110,7 @@ test.ifAll.ifMac(
   "pkg scripts",
   app(
     {
-      targets: Platform.MAC.createTarget("pkg"),
+      targets: Platform.MAC.createTarget("pkg", Arch.x64),
     },
     {
       signed: false,

@@ -176,7 +176,7 @@ test.skip("dmg", async () => {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   if (process.env.__SKIP_BUILD == null) {
-    await doBuild(outDirs, Platform.MAC.createTarget(), tmpDir, {
+    await doBuild(outDirs, Platform.MAC.createTarget(undefined, Arch.x64), tmpDir, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },

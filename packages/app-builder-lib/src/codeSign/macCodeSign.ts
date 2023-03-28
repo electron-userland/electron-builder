@@ -10,6 +10,7 @@ import * as path from "path"
 import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
+import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -309,12 +310,10 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
 
 export declare class Identity {
   readonly name: string
-  readonly hash: string
+  readonly hash?: string
 
-  constructor(name: string, hash: string)
+  constructor(name: string, hash?: string)
 }
-
-const _Identity = require("electron-osx-sign/util-identities").Identity
 
 function parseIdentity(line: string): Identity {
   const firstQuoteIndex = line.indexOf('"')

@@ -1,5 +1,5 @@
 import { copyOrLinkFile } from "builder-util/out/fs"
-import { createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -14,10 +14,12 @@ test.ifMac.ifAll("two-package", () =>
         extraMetadata: {
           repository: "foo/bar",
         },
+        downloadAlternateFFmpeg: true,
         mac: {
           electronUpdaterCompatibility: ">=2.16",
           electronLanguages: ["bn", "en"],
           timestamp: undefined,
+          notarize: false,
         },
         //tslint:disable-next-line:no-invalid-template-strings
         artifactName: "${name}-${version}-${os}-${arch}.${ext}",
@@ -26,7 +28,8 @@ test.ifMac.ifAll("two-package", () =>
     {
       signed: true,
       checkMacApp: async appDir => {
-        expect((await fs.readdir(path.join(appDir, "Contents", "Resources"))).filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
+        const resources = await fs.readdir(path.join(appDir, "Contents", "Resources"))
+        expect(resources.filter(it => !it.startsWith(".")).sort()).toMatchSnapshot()
       },
     }
   )
@@ -36,7 +39,7 @@ test.ifMac(
   "one-package",
   app(
     {
-      targets: Platform.MAC.createTarget(),
+      targets: Platform.MAC.createTarget(undefined, Arch.x64),
       config: {
         appId: "bar",
         publish: {
@@ -44,6 +47,7 @@ test.ifMac(
           //tslint:disable-next-line:no-invalid-template-strings
           url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
         },
+        downloadAlternateFFmpeg: false,
         mac: {
           // test appId per platform
           appId: "foo",
@@ -94,7 +98,7 @@ test.ifMac(
 test.ifMac.ifAll(
   "electronDist",
   appThrows({
-    targets: Platform.MAC.createTarget(DIR_TARGET),
+    targets: Platform.MAC.createTarget(DIR_TARGET, Arch.x64),
     config: {
       electronDist: "foo",
     },

@@ -1,4 +1,4 @@
-import { Platform, DIR_TARGET } from "electron-builder"
+import { Platform, DIR_TARGET, Arch } from "electron-builder"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
@@ -7,7 +7,7 @@ import * as fs from "fs/promises"
 test.ifWinCi(
   "beta version",
   app({
-    targets: Platform.WINDOWS.createTarget(["nsis"]),
+    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
     config: {
       extraMetadata: {
         version: "3.0.0-beta.2",
@@ -19,14 +19,17 @@ test.ifWinCi(
 test.ifNotCiMac(
   "win zip",
   app({
-    targets: Platform.WINDOWS.createTarget(["zip"]),
+    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
+    config: {
+      downloadAlternateFFmpeg: true,
+    },
   })
 )
 
 test.ifNotCiMac.ifAll(
   "zip artifactName",
   app({
-    win: ["zip"],
+    targets: Platform.WINDOWS.createTarget(["zip"], Arch.x64),
     config: {
       //tslint:disable-next-line:no-invalid-template-strings
       artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
@@ -58,7 +61,7 @@ test.ifMac("custom icon", () => {
   return assertPack(
     "test-app-one",
     {
-      targets: Platform.WINDOWS.createTarget("squirrel"),
+      targets: Platform.WINDOWS.createTarget("squirrel", Arch.x64),
       platformPackagerFactory: packager => (platformPackager = new CheckingWinPackager(packager)),
       config: {
         win: {
@@ -79,7 +82,7 @@ test.ifAll("win icon from icns", () => {
   let platformPackager: CheckingWinPackager | null = null
   return app(
     {
-      targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+      targets: Platform.WINDOWS.createTarget(DIR_TARGET, Arch.x64),
       config: {
         mac: {
           icon: "icons/icon.icns",

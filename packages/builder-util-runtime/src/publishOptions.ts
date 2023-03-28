@@ -50,7 +50,7 @@ export interface PublishConfiguration {
   /**
    * Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
    *
-   * @default 60000
+   * @default 120000
    */
   readonly timeout?: number | null
 }
@@ -208,8 +208,8 @@ export interface KeygenOptions extends PublishConfiguration {
  * 
  * For converting an app password to a usable token, you can utilize this
 ```typescript
-convertAppPassword(owner: string, token: string) {
-  const base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString("base64")
+convertAppPassword(owner: string, appPassword: string) {
+  const base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString("base64")
   return `Basic ${base64encodedData}`
 }
 ```
@@ -226,7 +226,7 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The access token to support auto-update from private bitbucket repositories.
+   * The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.
    */
   readonly token?: string | null
 
@@ -349,6 +349,13 @@ export interface S3Options extends BaseS3Options {
    * The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
    */
   readonly endpoint?: string | null
+
+  /**
+   * If set to true, this will enable the s3 accelerated endpoint
+   * These endpoints have a particular format of:
+   *  ${bucketname}.s3-accelerate.amazonaws.com
+   */
+  readonly accelerate?: boolean
 }
 
 /**
@@ -385,7 +392,9 @@ export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
 
 function s3Url(options: S3Options) {
   let url: string
-  if (options.endpoint != null) {
+  if (options.accelerate == true) {
+    url = `https://${options.bucket}.s3-accelerate.amazonaws.com`
+  } else if (options.endpoint != null) {
     url = `${options.endpoint}/${options.bucket}`
   } else if (options.bucket.includes(".")) {
     if (options.region == null) {
