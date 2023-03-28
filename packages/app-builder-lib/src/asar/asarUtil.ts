@@ -1,8 +1,8 @@
-import { CreateOptions, createPackageFromFiles } from "asar"
+import { CreateOptions, createPackageFromFiles } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fs from "fs-extra"
-import { mkdir, rmdir, stat, writeFile } from "fs/promises"
+import { mkdir, rm, stat, writeFile } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
@@ -16,7 +16,7 @@ export class AsarPackager {
   private readonly fileCopier = new FileCopier()
   private readonly rootForAppFilesWithoutAsar: string
   constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
-    this.outFile = path.join(destination, "app.asar")
+    this.outFile = path.join(this.destination, "app.asar")
     this.rootForAppFilesWithoutAsar = path.join(this.destination, "app")
   }
 
@@ -45,7 +45,7 @@ export class AsarPackager {
       ordering: this.options.ordering || undefined,
     }
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, copiedFiles, undefined, options)
-    await rmdir(this.rootForAppFilesWithoutAsar, { recursive: true })
+    await rm(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
   private async detectAndCopy(packager: Packager, fileSets: ResolvedFileSet[]) {

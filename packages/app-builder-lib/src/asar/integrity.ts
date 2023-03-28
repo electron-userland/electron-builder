@@ -1,6 +1,6 @@
 import { readdir } from "fs/promises"
 import * as path from "path"
-import * as asar from "asar"
+import * as asar from "@electron/asar"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string
