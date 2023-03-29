@@ -1,4 +1,4 @@
-import { getProjectRootPath,  } from "@electron/rebuild/lib/src/search-module"
+import { getProjectRootPath } from "@electron/rebuild/lib/src/search-module"
 import { InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -52,22 +52,19 @@ export async function getElectronPackage(projectDir: string) {
 
 /** @internal */
 export async function computeElectronVersion(projectDir: string): Promise<string> {
-  // const nodeModuleDirs = await searchForNodeModules(projectDir, process.cwd())
-  // const dir = nodeModuleDirs.find(async dir => (await getElectronVersionFromInstalled(dir)) !== null)!
-  // if (dir) {
-  //   const result = await getElectronVersionFromInstalled(path.resolve('../', dir))
-  //   if (result != null) {
-  //     return result
-  //   }
-  // }
+  const result = await getElectronVersionFromInstalled(projectDir)
+  if (result != null) {
+    return result
+  }
 
   const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
-  const metadataDir = potentialRootDirs.find(async dir => {
-    return (await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))) !== null
-  })!
-  const metadata = await orNullIfFileNotExist(readJson(path.join(metadataDir, "package.json")))
-  log.warn({ metadataDir }, JSON.stringify({ metadata }))
-
+  let metadata: any
+  for await (const dir of potentialRootDirs) {
+    metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
+    if (metadata) {
+      break
+    }
+  }
   const dependency = findFromPackageMetadata(metadata)
   if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
