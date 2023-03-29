@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <script>
+      const {ipcRenderer} = require("electron")
+      function saveAppData() {
+        ipcRenderer.send("saveAppData")
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    We are using node <script>document.write(process.versions.node)</script>,
+    Chrome <script>document.write(process.versions.chrome)</script>,
+    and Electron <script>document.write(process.versions.electron)</script>.
+
+    Args: <script>document.write("<br><br><pre>" + JSON.stringify(require("electron").remote.process.argv, null, 2) + "</pre>")</script>.
+
+    Env: <script>document.write("<br><br><pre>" + JSON.stringify(process.env, null, 2) + "</pre>")</script>.
+
+    <button onclick="saveAppData()">Save app data</button>
+  </body>
+</html>

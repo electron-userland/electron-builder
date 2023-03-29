@@ -2,7 +2,6 @@ import BluebirdPromise from "bluebird-lst"
 import { asArray, executeAppBuilder, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, readdir, rename } from "fs-extra"
-import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
@@ -155,7 +154,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
         throw new Error(`Cannot compute electron version for prepacked asar`)
       }
     } else {
-      version = await computeElectronVersion(packager.projectDir, new Lazy(() => Promise.resolve(packager.metadata)))
+      version = await computeElectronVersion(packager.projectDir)
     }
     configuration.electronVersion = version
   }

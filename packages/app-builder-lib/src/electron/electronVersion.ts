@@ -1,3 +1,4 @@
+import { getProjectRootPath,  } from "@electron/rebuild/lib/src/search-module"
 import { InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -13,21 +14,17 @@ export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
 const electronPackages = ["electron", "electron-prebuilt", "electron-prebuilt-compile", "electron-nightly"]
 
-export async function getElectronVersion(
-  projectDir: string,
-  config?: Configuration,
-  projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
-): Promise<string> {
+export async function getElectronVersion(projectDir: string, config?: Configuration): Promise<string> {
   if (config == null) {
     config = await getConfig(projectDir, null, null)
   }
   if (config.electronVersion != null) {
     return config.electronVersion
   }
-  return await computeElectronVersion(projectDir, projectMetadata)
+  return computeElectronVersion(projectDir)
 }
 
-export async function getElectronVersionFromInstalled(projectDir: string) {
+export async function getElectronVersionFromInstalled(projectDir: string): Promise<string | null> {
   for (const name of electronPackages) {
     try {
       return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
@@ -54,13 +51,24 @@ export async function getElectronPackage(projectDir: string) {
 }
 
 /** @internal */
-export async function computeElectronVersion(projectDir: string, projectMetadata: MetadataValue): Promise<string> {
-  const result = await getElectronVersionFromInstalled(projectDir)
-  if (result != null) {
-    return result
-  }
+export async function computeElectronVersion(projectDir: string): Promise<string> {
+  // const nodeModuleDirs = await searchForNodeModules(projectDir, process.cwd())
+  // const dir = nodeModuleDirs.find(async dir => (await getElectronVersionFromInstalled(dir)) !== null)!
+  // if (dir) {
+  //   const result = await getElectronVersionFromInstalled(path.resolve('../', dir))
+  //   if (result != null) {
+  //     return result
+  //   }
+  // }
 
-  const dependency = findFromPackageMetadata(await projectMetadata.value)
+  const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
+  const metadataDir = potentialRootDirs.find(async dir => {
+    return (await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))) !== null
+  })!
+  const metadata = await orNullIfFileNotExist(readJson(path.join(metadataDir, "package.json")))
+  log.warn({ metadataDir }, JSON.stringify({ metadata }))
+
+  const dependency = findFromPackageMetadata(metadata)
   if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
@@ -95,7 +103,6 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
 
     throw new InvalidConfigurationError(`Cannot find electron dependency to get electron version in the '${path.join(projectDir, "package.json")}'`)
   }
-
   const version = dependency?.version
   if (version == null || !/^\d/.test(version)) {
     const versionMessage = version == null ? "" : ` and version ("${version}") is not fixed in project`

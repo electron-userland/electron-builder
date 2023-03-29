@@ -166,6 +166,12 @@ Object {
 }
 `;
 
+exports[`yarn two package.json w/ native module 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`yarn workspace 1`] = `
 Object {
   "linux": Array [],
