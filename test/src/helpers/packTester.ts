@@ -546,8 +546,6 @@ export async function verifyAsarFileTree(resourceDir: string) {
       return value
     })
   )
-
-  // console.log(resourceDir + " " + JSON.stringify(stableHeader, null, 2))
   expect(stableHeader).toMatchSnapshot()
 }
 

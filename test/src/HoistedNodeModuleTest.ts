@@ -40,7 +40,7 @@ test.ifAll("yarn several workspaces", () =>
   )
 )
 
-test.ifAll.only("yarn two package.json w/ native module", () =>
+test.ifAll("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {

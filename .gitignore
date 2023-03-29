@@ -28,4 +28,3 @@ tsconfig.tsbuildinfo
 
 .pnpm-store/
 **/node_modules
-test/fixtures/test-app-two-native-modules/app/node_modules
