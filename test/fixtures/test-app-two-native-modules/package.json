@@ -17,6 +17,11 @@
     "directories": {
       "app": "app"
     },
+    "files": [
+      "index.html",
+      "index.js",
+      "package.json"
+    ],
     "mac": {
       "category": "your.app.category.type"
     },

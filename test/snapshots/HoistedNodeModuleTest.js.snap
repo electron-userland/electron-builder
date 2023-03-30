@@ -188,31 +188,31 @@ Object {
         "install": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "3766",
+              "offset": "3479",
               "size": 1101,
             },
             "install.js": Object {
-              "offset": "4867",
+              "offset": "4580",
               "size": 19880,
             },
             "install.min.js": Object {
-              "offset": "24747",
+              "offset": "24460",
               "size": 3663,
             },
             "package.json": Object {
-              "offset": "28410",
+              "offset": "28123",
               "size": 529,
             },
             "scripts": Object {
               "files": Object {
                 "docs.sh": Object {
                   "executable": true,
-                  "offset": "28939",
+                  "offset": "28652",
                   "size": 99,
                 },
                 "prepublish.sh": Object {
                   "executable": true,
-                  "offset": "29038",
+                  "offset": "28751",
                   "size": 83,
                 },
               },
@@ -224,10 +224,6 @@ Object {
     "package.json": Object {
       "offset": "3342",
       "size": 137,
-    },
-    "pnpm-lock.yaml": Object {
-      "offset": "3479",
-      "size": 287,
     },
   },
 }
