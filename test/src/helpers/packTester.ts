@@ -26,7 +26,7 @@ if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
 
-export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
+export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
 export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
@@ -546,8 +546,6 @@ export async function verifyAsarFileTree(resourceDir: string) {
       return value
     })
   )
-
-  // console.log(resourceDir + " " + JSON.stringify(stableHeader, null, 2))
   expect(stableHeader).toMatchSnapshot()
 }
 
