@@ -58,14 +58,14 @@ export async function computeElectronVersion(projectDir: string): Promise<string
   }
 
   const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
-  let metadata: any
+  let dependency: NameAndVersion | null = null
   for await (const dir of potentialRootDirs) {
-    metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
-    if (metadata) {
+    const metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
+    dependency = metadata ? findFromPackageMetadata(metadata) : null
+    if (dependency) {
       break
     }
   }
-  const dependency = findFromPackageMetadata(metadata)
   if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
