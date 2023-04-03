@@ -66,6 +66,7 @@
 <li><code id="Protocol-role">role</code> = <code>Editor</code> “Editor” | “Viewer” | “Shell” | “None” - <em>macOS-only</em> The app’s role with respect to the type.</li>
 </ul>
 </li>
+<li><code id="PlatformSpecificBuildOptions-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales to keep. By default, all Electron locales used as-is.</li>
 </ul>
 <hr>
 <ul>

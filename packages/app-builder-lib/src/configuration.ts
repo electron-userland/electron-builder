@@ -256,12 +256,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
 
   /**
-   * Whether to build using Electron Build Service if target not supported on current OS.
-   * @default true
-   */
-  readonly remoteBuild?: boolean
-
-  /**
    * Whether to include PDB files.
    * @default false
    */

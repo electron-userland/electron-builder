@@ -8,7 +8,6 @@ import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirector
 import { Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
 import MacPackager from "../macPackager"
-import { isSafeToUnpackElectronOnRemoteBuildServer } from "../platformPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
@@ -70,44 +69,54 @@ function createDownloadOpts(opts: Configuration, platform: ElectronPlatformName,
 }
 
 async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
-  const packager = options.packager
-  const appOutDir = options.appOutDir
+  const { appOutDir, packager } = options
   const electronBranding = createBrandingOpts(packager.config)
   if (packager.platform === Platform.LINUX) {
-    if (!isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
-      const linuxPackager = packager as LinuxPackager
-      const executable = path.join(appOutDir, linuxPackager.executableName)
-      await rename(path.join(appOutDir, electronBranding.projectName), executable)
-    }
+    const linuxPackager = packager as LinuxPackager
+    const executable = path.join(appOutDir, linuxPackager.executableName)
+    await rename(path.join(appOutDir, electronBranding.projectName), executable)
+    await removeUnusedLanguagesIfNeeded(options, ".pak")
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+    await removeUnusedLanguagesIfNeeded(options, ".pak")
   } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
+    await removeUnusedLanguagesIfNeeded(options, ".lproj")
+  }
+}
 
-    const wantedLanguages = asArray(packager.platformSpecificBuildOptions.electronLanguages)
-    if (wantedLanguages.length === 0) {
-      return
-    }
+async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions, langFileExt: string) {
+  const wantedLanguages = asArray(options.packager.config.electronLanguages)
+  if (wantedLanguages.length === 0) {
+    return
+  }
 
-    // noinspection SpellCheckingInspection
-    const langFileExt = ".lproj"
-    const resourcesDir = packager.getResourcesDir(appOutDir)
-    await BluebirdPromise.map(
-      readdir(resourcesDir),
-      file => {
-        if (!file.endsWith(langFileExt)) {
-          return
-        }
-
-        const language = file.substring(0, file.length - langFileExt.length)
-        if (!wantedLanguages.includes(language)) {
-          return fs.rm(path.join(resourcesDir, file), { recursive: true, force: true })
-        }
+  const dir = getLocalesDir(options)
+  // noinspection SpellCheckingInspection
+  await BluebirdPromise.map(
+    readdir(dir),
+    file => {
+      if (!file.endsWith(langFileExt)) {
         return
-      },
-      CONCURRENCY
-    )
+      }
+
+      const language = file.substring(0, file.length - langFileExt.length)
+      if (!wantedLanguages.includes(language)) {
+        return fs.rm(path.join(dir, file), { recursive: true, force: true })
+      }
+      return
+    },
+    CONCURRENCY
+  )
+
+  function getLocalesDir(options: BeforeCopyExtraFilesOptions) {
+    const { appOutDir, packager } = options
+    if (packager.platform === Platform.MAC) {
+      return packager.getResourcesDir(appOutDir)
+    } else {
+      return path.join(packager.getResourcesDir(appOutDir), "..", "locales")
+    }
   }
 }
 
@@ -172,7 +181,7 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
     const zipFile = `electron-v${options.version}-${platformName}-${options.arch}.zip`
     const resolvedDist = path.isAbsolute(dist) ? dist : path.resolve(packager.projectDir, dist)
     if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
-      log.info({ resolvedDist, zipFile }, "Resolved electronDist")
+      log.info({ resolvedDist, zipFile }, "resolved electronDist")
       options.cache = resolvedDist
       dist = null
     }
@@ -180,9 +189,6 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
 
   let isFullCleanup = false
   if (dist == null) {
-    if (isSafeToUnpackElectronOnRemoteBuildServer(packager)) {
-      return
-    }
     await executeAppBuilder(["unpack-electron", "--configuration", JSON.stringify([options]), "--output", appOutDir, "--distMacOsAppName", distMacOsAppName])
   } else {
     isFullCleanup = true

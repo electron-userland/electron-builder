@@ -72,9 +72,6 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-requirements">requirements</code> String | “undefined” - Path of <a href="https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html">requirements file</a> used in signing. Not applicable for MAS.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-electronLanguages">electronLanguages</code> Array&lt;String&gt; | String - The electron locales. By default Electron locales used as is.</p>
-</li>
-<li>
 <p><code id="MacConfiguration-extraDistFiles">extraDistFiles</code> Array&lt;String&gt; | String | “undefined” - Extra files to put in archive. Not applicable for <code>tar.*</code>.</p>
 </li>
 <li>
