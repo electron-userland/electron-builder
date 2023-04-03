@@ -75,27 +75,25 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
     const linuxPackager = packager as LinuxPackager
     const executable = path.join(appOutDir, linuxPackager.executableName)
     await rename(path.join(appOutDir, electronBranding.projectName), executable)
-    await removeUnusedLanguagesIfNeeded(options, ".pak")
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
-    await removeUnusedLanguagesIfNeeded(options, ".pak")
   } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
-    await removeUnusedLanguagesIfNeeded(options, ".lproj")
   }
+  await removeUnusedLanguagesIfNeeded(options)
 }
 
-async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions, langFileExt: string) {
+async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions) {
   const {
     packager: { config, platformSpecificBuildOptions },
   } = options
   const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
-  if (wantedLanguages.length === 0) {
+  if (!wantedLanguages.length) {
     return
   }
 
-  const dir = getLocalesDir(options)
+  const { dir, langFileExt } = getLocalesConfig(options)
   // noinspection SpellCheckingInspection
   await BluebirdPromise.map(
     readdir(dir),
@@ -113,12 +111,12 @@ async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOption
     CONCURRENCY
   )
 
-  function getLocalesDir(options: BeforeCopyExtraFilesOptions) {
+  function getLocalesConfig(options: BeforeCopyExtraFilesOptions) {
     const { appOutDir, packager } = options
     if (packager.platform === Platform.MAC) {
-      return packager.getResourcesDir(appOutDir)
+      return { dir: packager.getResourcesDir(appOutDir), langFileExt: ".lproj" }
     } else {
-      return path.join(packager.getResourcesDir(appOutDir), "..", "locales")
+      return { dir: path.join(packager.getResourcesDir(appOutDir), "..", "locales"), langFileExt: ".pak" }
     }
   }
 }
