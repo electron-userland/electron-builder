@@ -52,7 +52,7 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  const executor = resolveFunction(options.options.sign, "sign") || doSign
+  const executor = resolveFunction(options.options.sign, "sign") || DoSign
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = { ...options, hash, isNest }
@@ -144,7 +144,7 @@ export async function getCertificateFromStoreInfo(options: WindowsConfiguration,
   throw new Error(`Cannot find certificate ${certificateSubjectName || certificateSha1}, all certs: ${rawResult}`)
 }
 
-export async function doSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
+export async function DoSign(configuration: CustomWindowsSignTaskConfiguration, packager: WinPackager) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
   // decide runtime argument by cases
