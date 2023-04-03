@@ -87,7 +87,10 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
 }
 
 async function removeUnusedLanguagesIfNeeded(options: BeforeCopyExtraFilesOptions, langFileExt: string) {
-  const wantedLanguages = asArray(options.packager.config.electronLanguages)
+  const {
+    packager: { config, platformSpecificBuildOptions },
+  } = options
+  const wantedLanguages = asArray(platformSpecificBuildOptions.electronLanguages || config.electronLanguages)
   if (wantedLanguages.length === 0) {
     return
   }
