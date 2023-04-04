@@ -525,7 +525,7 @@ export class Packager {
       await installOrRebuild(config, this.appDir, {
         frameworkInfo,
         platform: platform.nodeName,
-        arch: Arch[arch]
+        arch: Arch[arch],
       })
     }
   }
