@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 24.1.2
+
+### Patch Changes
+
+- [#7511](https://github.com/electron-userland/electron-builder/pull/7511) [`16283cca`](https://github.com/electron-userland/electron-builder/commit/16283ccaf5788b1a60c28f6d1424f72eebecea46) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: utilizing frameworkInfo as primary manner of fetching electron version for installation. (fixes: #7494)
+
+- Updated dependencies [[`d4c90b67`](https://github.com/electron-userland/electron-builder/commit/d4c90b676aa22c745de4129f98453b97f264805c)]:
+  - builder-util@24.1.2
+  - electron-publish@24.1.2
+
 ## 24.1.1
 
 ### Patch Changes

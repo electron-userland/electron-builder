@@ -98,7 +98,8 @@ export class AppImageUpdater extends BaseUpdater {
       this.emit("appimage-filename-updated", destination)
     }
 
-    const env: any = {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
       APPIMAGE_SILENT_INSTALL: "true",
     }
 
@@ -107,7 +108,7 @@ export class AppImageUpdater extends BaseUpdater {
       this.spawnLog(destination, [], env)
     } else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], env)
+      execFileSync(destination, [], { env })
     }
     return true
   }

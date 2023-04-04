@@ -27,3 +27,4 @@ electron-builder-*.d.ts
 tsconfig.tsbuildinfo
 
 .pnpm-store/
+**/node_modules

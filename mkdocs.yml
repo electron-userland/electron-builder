@@ -60,6 +60,8 @@ nav:
           - Any Windows Target: configuration/win.md
           - NSIS: configuration/nsis.md
           - AppX: configuration/appx.md
+          - MSI: configuration/msi.md
+          - MSI Wrapped: configuration/msi-wrapped.md
           - Squirrel.Windows: configuration/squirrel-windows.md
 
       - Linux:

@@ -52,7 +52,7 @@ export async function installAppDeps(args: any) {
       projectDir,
       use(config.directories, it => it.app)
     ),
-    getElectronVersion(projectDir, config, packageMetadata),
+    getElectronVersion(projectDir, config),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)

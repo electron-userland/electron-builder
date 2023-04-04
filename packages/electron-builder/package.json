@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "24.1.1",
+  "version": "24.1.2",
   "main": "out/index.js",
   "files": [
     "out"
@@ -50,7 +50,6 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^17.0.16",
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
@@ -65,7 +64,8 @@
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
-    "@types/is-ci": "3.0.0"
+    "@types/is-ci": "3.0.0",
+    "@types/yargs": "^17.0.16"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {
