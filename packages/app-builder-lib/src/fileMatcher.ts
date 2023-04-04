@@ -22,7 +22,7 @@ export const excludedNames =
 export const excludedExts =
   "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts," +
   // https://github.com/electron-userland/electron-builder/issues/7512
-  "mk,a,o,h,forge-meta"
+  "mk,a,o,forge-meta"
 
 function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {
