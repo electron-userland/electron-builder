@@ -15,17 +15,17 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
     }
   }
 
-  // if (forceInstall || !isDependenciesInstalled) {
-  //   const effectiveOptions: RebuildOptions = {
-  //     buildFromSource: config.buildDependenciesFromSource === true,
-  //     additionalArgs: asArray(config.npmArgs),
-  //     ...options,
-  //   }
-  //   await installDependencies(appDir, effectiveOptions)
-  // } else {
+  if (forceInstall || !isDependenciesInstalled) {
+    const effectiveOptions: RebuildOptions = {
+      buildFromSource: config.buildDependenciesFromSource === true,
+      additionalArgs: asArray(config.npmArgs),
+      ...options,
+    }
+    await installDependencies(appDir, effectiveOptions)
+  } else {
     const arch = archFromString(options.arch || process.arch)
     await rebuild(appDir, config.buildDependenciesFromSource === true, options.frameworkInfo, arch)
-  // }
+  }
 }
 
 export interface DesktopFrameworkInfo {
@@ -153,9 +153,8 @@ export async function rebuild(appDir: string, buildFromSource: boolean, framewor
     buildPath: appDir,
     electronVersion: frameworkInfo.version,
     arch: Arch[arch],
-    force: true,
     projectRootPath: rootPath,
-    useCache: false
+    disablePreGypCopy: true,
   }
   if (buildFromSource) {
     options.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"

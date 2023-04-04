@@ -19,7 +19,9 @@ export const excludedNames =
   ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
   "appveyor.yml,.travis.yml,circle.yml,.nyc_output"
 
-export const excludedExts = "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts"
+export const excludedExts = "iml,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,suo,xproj,cc,d.ts," +
+  // https://github.com/electron-userland/electron-builder/issues/7512
+  "mk,a,o,h,forge-meta"
 
 function ensureNoEndSlash(file: string): string {
   if (path.sep !== "/") {
@@ -177,12 +179,12 @@ export function getMainFileMatchers(
       break
     }
   }
+
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
   patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
-  patterns.push("!**/*.{mk,a,o,h}")
-  patterns.push("!**/.{forge-meta}")
+
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 
