@@ -179,12 +179,10 @@ export function getMainFileMatchers(
       break
     }
   }
-
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
   patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
-
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 
