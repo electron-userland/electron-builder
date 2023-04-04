@@ -957,13 +957,6 @@ Object {
         },
         "minimist": Object {
           "files": Object {
-            ".github": Object {
-              "files": Object {
-                "FUNDING.yml": Object {
-                  "size": "<size>",
-                },
-              },
-            },
             ".nycrc": Object {
               "size": "<size>",
             },

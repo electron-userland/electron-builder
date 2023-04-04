@@ -147,7 +147,7 @@ export interface RebuildOptions {
 
 /** @internal */
 export async function rebuild(appDir: string, buildFromSource: boolean, frameworkInfo: DesktopFrameworkInfo, arch: Arch) {
-  log.info({ arch, version: frameworkInfo.version, appDir }, "executing @electron/rebuild")
+  log.info({ arch: Arch[arch], version: frameworkInfo.version, appDir }, "executing @electron/rebuild")
   const rootPath = await searchModule.getProjectRootPath(appDir)
   const options: electronRebuild.RebuildOptions = {
     buildPath: appDir,
