@@ -181,6 +181,8 @@ export function getMainFileMatchers(
 
   patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
   patterns.push("!**/._*")
+  patterns.push("!**/*.{mk,a,o,h}")
+  patterns.push("!**/.{forge-meta}")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)
 

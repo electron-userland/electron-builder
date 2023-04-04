@@ -106,11 +106,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         return super.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
       }
       case Arch.universal: {
+        const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+
         const x64Arch = Arch.x64
-        const x64AppOutDir = appOutDir + "--" + Arch[x64Arch]
+        const x64AppOutDir = outDirName(x64Arch)
         await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false, true)
         const arm64Arch = Arch.arm64
-        const arm64AppOutPath = appOutDir + "--" + Arch[arm64Arch]
+        const arm64AppOutPath = outDirName(arm64Arch)
         await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false, true)
         const framework = this.info.framework
         log.info(
