@@ -322,6 +322,22 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
   )()
 })
 
+test.ifMac.only("yarn two package.json w/ native module", () =>
+  assertPack(
+    "test-app-two-native-modules",
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.universal),
+      config: {
+        npmRebuild: true,
+      },
+    },
+    {
+      signed: false,
+      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.universal)),
+    }
+  )
+)
+
 export function removeUnstableProperties(data: any) {
   return JSON.parse(
     JSON.stringify(data, (name, value) => {

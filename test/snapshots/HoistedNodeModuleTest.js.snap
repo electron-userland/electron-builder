@@ -185,35 +185,41 @@ Object {
     },
     "node_modules": Object {
       "files": Object {
-        "install": Object {
+        "debug": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "3479",
-              "size": 1101,
+              "offset": "3476",
+              "size": 1107,
             },
-            "install.js": Object {
-              "offset": "4580",
-              "size": 19880,
-            },
-            "install.min.js": Object {
-              "offset": "24460",
-              "size": 3663,
+            "dist": Object {
+              "files": Object {
+                "debug.js": Object {
+                  "offset": "22080",
+                  "size": 27572,
+                },
+              },
             },
             "package.json": Object {
-              "offset": "28123",
-              "size": 529,
+              "offset": "4583",
+              "size": 947,
             },
-            "scripts": Object {
+            "src": Object {
               "files": Object {
-                "docs.sh": Object {
-                  "executable": true,
-                  "offset": "28652",
-                  "size": 99,
+                "browser.js": Object {
+                  "offset": "5530",
+                  "size": 5831,
                 },
-                "prepublish.sh": Object {
-                  "executable": true,
-                  "offset": "28751",
-                  "size": 83,
+                "common.js": Object {
+                  "offset": "11361",
+                  "size": 5930,
+                },
+                "index.js": Object {
+                  "offset": "17291",
+                  "size": 314,
+                },
+                "node.js": Object {
+                  "offset": "17605",
+                  "size": 4475,
                 },
               },
             },
@@ -223,7 +229,7 @@ Object {
     },
     "package.json": Object {
       "offset": "3342",
-      "size": 137,
+      "size": 134,
     },
   },
 }

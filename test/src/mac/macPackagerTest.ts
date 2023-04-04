@@ -3,7 +3,7 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, platform, verifyAsarFileTree } from "../helpers/packTester"
+import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
 test.ifMac.ifAll("two-package", () =>
   assertPack(
@@ -91,19 +91,6 @@ test.ifMac(
         await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
         await assertThat(path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
       },
-    }
-  )
-)
-
-test.ifMac("yarn two package.json w/ native module", () =>
-  assertPack(
-    "test-app-two-native-modules",
-    {
-      targets: Platform.MAC.createTarget("zip", Arch.universal),
-    },
-    {
-      signed: false,
-      packed: context => verifyAsarFileTree(context.getResources(Platform.MAC, Arch.universal)),
     }
   )
 )
