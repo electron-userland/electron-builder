@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.1.3
+
+### Patch Changes
+
+- [#7519](https://github.com/electron-userland/electron-builder/pull/7519) [`abf37039`](https://github.com/electron-userland/electron-builder/commit/abf370395f45e4005f12131c532325a1e3232309) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: "Can't reconcile two non-macho files" due to `disablePreGypCopy` functionality in new electron/rebuild integration
+
 ## 24.1.2
 
 ### Patch Changes

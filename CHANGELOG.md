@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.2...v) (2023-04-05)
+
+
+### Bug Fixes
+
+* "Can't reconcile two non-macho files" due to new Pre-Gyp-Copy functionality in electron/rebuild integration ([#7519](https://github.com/electron-userland/electron-builder/issues/7519)) ([abf3703](https://github.com/electron-userland/electron-builder/commit/abf370395f45e4005f12131c532325a1e3232309))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.1.1...v) (2023-03-30)
 
 
