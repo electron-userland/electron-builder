@@ -185,37 +185,59 @@ Object {
     },
     "node_modules": Object {
       "files": Object {
-        "install": Object {
+        "debug": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "3479",
-              "size": 1101,
+              "offset": "3546",
+              "size": 1107,
             },
-            "install.js": Object {
-              "offset": "4580",
-              "size": 19880,
-            },
-            "install.min.js": Object {
-              "offset": "24460",
-              "size": 3663,
-            },
-            "package.json": Object {
-              "offset": "28123",
-              "size": 529,
-            },
-            "scripts": Object {
+            "dist": Object {
               "files": Object {
-                "docs.sh": Object {
-                  "executable": true,
-                  "offset": "28652",
-                  "size": 99,
-                },
-                "prepublish.sh": Object {
-                  "executable": true,
-                  "offset": "28751",
-                  "size": 83,
+                "debug.js": Object {
+                  "offset": "22150",
+                  "size": 27572,
                 },
               },
+            },
+            "package.json": Object {
+              "offset": "4653",
+              "size": 947,
+            },
+            "src": Object {
+              "files": Object {
+                "browser.js": Object {
+                  "offset": "5600",
+                  "size": 5831,
+                },
+                "common.js": Object {
+                  "offset": "11431",
+                  "size": 5930,
+                },
+                "index.js": Object {
+                  "offset": "17361",
+                  "size": 314,
+                },
+                "node.js": Object {
+                  "offset": "17675",
+                  "size": 4475,
+                },
+              },
+            },
+          },
+        },
+        "ms": Object {
+          "files": Object {
+            "index.js": Object {
+              "offset": "49722",
+              "size": 3024,
+            },
+            "license.md": Object {
+              "offset": "52746",
+              "size": 1079,
+            },
+            "package.json": Object {
+              "offset": "53825",
+              "size": 497,
             },
           },
         },
@@ -223,7 +245,7 @@ Object {
     },
     "package.json": Object {
       "offset": "3342",
-      "size": 137,
+      "size": 204,
     },
   },
 }
