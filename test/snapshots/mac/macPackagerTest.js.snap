@@ -106,7 +106,6 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.12.0",
-  "LSRequiresNativeExecution": true,
   "LSUIElement": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
@@ -127,6 +126,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
