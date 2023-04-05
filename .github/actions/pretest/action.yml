@@ -23,7 +23,7 @@ runs:
     - name: Setup node
       uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3
       with:
-        node-version: '14'
+        node-version: '18'
         cache: 'pnpm'
 
     - name: Install dependencies
