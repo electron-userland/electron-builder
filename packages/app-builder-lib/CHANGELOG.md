@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.2.0
+
+### Minor Changes
+
+- [#7516](https://github.com/electron-userland/electron-builder/pull/7516) [`1533501f`](https://github.com/electron-userland/electron-builder/commit/1533501f999b364b656cdaa2048a1a7fd5e7c361) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Moved `electronLanguages` to global config to support win/linux
+
 ## 24.1.3
 
 ### Patch Changes
