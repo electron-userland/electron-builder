@@ -144,7 +144,7 @@ export abstract class BaseUpdater extends AppUpdater {
           reject(error)
         })
         p.unref()
-        if (process.pid !== undefined) {
+        if (p.pid !== undefined) {
           resolve(true)
         }
       } catch (error) {
