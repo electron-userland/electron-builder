@@ -38,7 +38,14 @@ export default class MsiWrappedTarget extends MsiTarget {
 
     const target = config.win.target
     const nsisTarget = "nsis"
-    if (!target.some((t: TargetConfiguration | string) => (typeof t === "string" && t === nsisTarget) || (t as TargetConfiguration).target === nsisTarget)) {
+    if (
+      !target
+        .map((t: TargetConfiguration | string): string => {
+          const result: string = typeof t === "string" ? t : t.target
+          return result.toLowerCase().trim()
+        })
+        .some(t => t === nsisTarget)
+    ) {
       throw new Error("No nsis target found! Please specify an nsis target")
     }
   }
