@@ -40,12 +40,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -267,7 +268,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -287,6 +287,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -477,7 +479,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -497,6 +498,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
