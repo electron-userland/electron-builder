@@ -19,13 +19,5 @@ system.
 This change is to ensure that system is used before resorting to direct links.
 
 ## How should this be consumed?
-If you are having issues on install or get errors about `/usr/bin/${executable}` already
-exists, then simply remove the link and `update-alternatives` will take over from there.
-
-If you are having isuses afterwards or still having issues, you can use the `--force`
-argument to ensure links are created accordingly as such:
-
-    update-alternatives --force --install /usr/bin/${executable} ${executable} /opt/${sanitizedProductName}/${executable} 100
-
-This should clear up any linking issues. Going forward, if you want to override the
-default, simply use a priority greater than 100.
+Simply update as normal and this package will switch to using update-alternatives.
+This will allow middleware and end-users to better control the active executable.

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Link to the binary
-if type update-alternatives 2>/dev/null >&1; then
-   update-alternatives --install '/usr/bin/${executable}' '${executable}' '/opt/${sanitizedProductName}/${executable}' 100
-else
-    ln -sf '/opt/${sanitizedProductName}/${executable}' '/usr/bin/${executable}'
+# Remove previous link if it doesn't use update-alternatives
+if [ `readlink "/usr/bin/${executable}"` != "/etc/alternatives/${executable}" ]; then
+  rm -f "/usr/bin/${executable}"
 fi
+
+update-alternatives --install '/usr/bin/${executable}' '${executable}' '/opt/${sanitizedProductName}/${executable}' 100
 
 # SUID chrome-sandbox for Electron 5+
 chmod 4755 '/opt/${sanitizedProductName}/chrome-sandbox' || true
