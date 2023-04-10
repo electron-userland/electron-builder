@@ -306,6 +306,25 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
   }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
 }
 
+export async function dirSize(dirPath: string): Promise<number> {
+  const entries = await readdir(dirPath, { withFileTypes: true })
+
+  const entrySizes = entries.map(async entry => {
+    const entryPath = path.join(dirPath, entry.name)
+
+    if (entry.isDirectory()) return await dirSize(entryPath)
+
+    if (entry.isFile()) {
+      const { size } = await stat(entryPath)
+      return size
+    }
+
+    return 0
+  })
+
+  return (await Promise.all(entrySizes)).reduce((entrySize, totalSize) => entrySize + totalSize, 0)
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -3,7 +3,6 @@
 
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow
-SpaceTexts none
 !ifdef BUILD_UNINSTALLER
   ShowUninstDetails nevershow
 !endif
@@ -12,6 +11,32 @@ Name "${PRODUCT_NAME}"
 
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
+
+!macro setSpaceRequired SECTION_ID
+  !ifdef APP_64_UNPACKED_SIZE
+    !ifdef APP_32_UNPACKED_SIZE
+      !ifdef APP_ARM64_UNPACKED_SIZE
+        ${if} ${IsNativeARM64}
+          SectionSetSize ${SECTION_ID} ${APP_ARM64_UNPACKED_SIZE}
+        ${elseif} ${IsNativeAMD64}
+          SectionSetSize ${SECTION_ID} ${APP_64_UNPACKED_SIZE}
+        ${else}
+          SectionSetSize ${SECTION_ID} ${APP_32_UNPACKED_SIZE}
+        ${endif}
+      !else
+        ${if} ${RunningX64}
+          SectionSetSize ${SECTION_ID} ${APP_64_UNPACKED_SIZE}
+        ${else}
+          SectionSetSize ${SECTION_ID} ${APP_32_UNPACKED_SIZE}
+        ${endif}
+      !endif
+    !else
+      SectionSetSize ${SECTION_ID} ${APP_64_UNPACKED_SIZE}
+    !endif
+  !else
+    SectionSetSize ${SECTION_ID} ${APP_32_UNPACKED_SIZE}
+  !endif
+!macroend
 
 !macro check64BitAndSetRegView
   # https://github.com/electron-userland/electron-builder/issues/2420
@@ -107,7 +132,7 @@ Name "${PRODUCT_NAME}"
     LogSet ${SETTING}
   !endif
 !macroend
- 
+
 !define LogText "!insertmacro LogTextMacroEB"
 !macro LogTextMacroEB INPUT_TEXT
   !ifdef ENABLE_LOGGING_ELECTRON_BUILDER
