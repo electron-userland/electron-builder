@@ -217,7 +217,7 @@ Please double check that your authentication token is correct. Due to security r
 
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
-      let result: Buffer | null = null
+      const responseChunks: Buffer[] = []
       const requestOptions = {
         headers: options.headers || undefined,
         // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
@@ -233,46 +233,23 @@ Please double check that your authentication token is correct. Due to security r
           onCancel,
           callback: error => {
             if (error == null) {
-              resolve(result!)
+              resolve(Buffer.concat(responseChunks))
             } else {
               reject(error)
             }
           },
           responseHandler: (response, callback) => {
-            const contentLength = safeGetHeader(response, "content-length")
-            let position = -1
-            if (contentLength != null) {
-              const size = parseInt(contentLength, 10)
-              if (size > 0) {
-                if (size > 524288000) {
-                  callback(new Error("Maximum allowed size is 500 MB"))
-                  return
-                }
-
-                result = Buffer.alloc(size)
-                position = 0
-              }
-            }
+            let receivedLength = 0
             response.on("data", (chunk: Buffer) => {
-              if (position !== -1) {
-                chunk.copy(result!, position)
-                position += chunk.length
-              } else if (result == null) {
-                result = chunk
-              } else {
-                if (result.length > 524288000) {
-                  callback(new Error("Maximum allowed size is 500 MB"))
-                  return
-                }
-                result = Buffer.concat([result, chunk])
+              receivedLength += chunk.length
+              if (receivedLength > 524288000) {
+                callback(new Error("Maximum allowed size is 500 MB"))
+                return
               }
+              responseChunks.push(chunk)
             })
             response.on("end", () => {
-              if (result != null && position !== -1 && position !== result.length) {
-                callback(new Error(`Received data length ${position} is not equal to expected ${result.length}`))
-              } else {
-                callback(null)
-              }
+              callback(null)
             })
           },
         },
