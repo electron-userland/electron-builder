@@ -34,7 +34,9 @@ Name "${PRODUCT_NAME}"
       SectionSetSize ${SECTION_ID} ${APP_64_UNPACKED_SIZE}
     !endif
   !else
-    SectionSetSize ${SECTION_ID} ${APP_32_UNPACKED_SIZE}
+    !ifdef APP_32_UNPACKED_SIZE
+      SectionSetSize ${SECTION_ID} ${APP_32_UNPACKED_SIZE}
+    !endif
   !endif
 !macroend
 
