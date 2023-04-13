@@ -228,6 +228,10 @@ export abstract class DifferentialDownloader {
         }
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
+          response.on("error", reject)
+          response.on("abort", () => {
+            reject(new Error("response has been aborted by the server"))
+          })
           // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
           if (response.statusCode >= 400) {
             reject(createHttpError(response))
