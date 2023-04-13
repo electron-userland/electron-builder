@@ -4,7 +4,7 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import * as electronRebuild from "@electron/rebuild"
-import * as searchModule from "@electron/rebuild/lib/src/search-module"
+import * as searchModule from "@electron/rebuild/lib/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   let isDependenciesInstalled = false
