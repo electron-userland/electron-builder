@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.2.0...v) (2023-04-13)
+
+
+### Bug Fixes
+
+* update `@electron/rebuild` version and update imports ([#7541](https://github.com/electron-userland/electron-builder/issues/7541)) ([a4888ac](https://github.com/electron-userland/electron-builder/commit/a4888ac490e4e5d3783858d27acd487b2b8444fd))
+* **updater:** handle errors on responses in differential download ([#7542](https://github.com/electron-userland/electron-builder/issues/7542)) ([9123e31](https://github.com/electron-userland/electron-builder/commit/9123e31eb792211da717804e5a5b8029fe694d5f)), closes [#2398](https://github.com/electron-userland/electron-builder/issues/2398)
+* Use `update-alternatives` instead of symlinks for [#7500](https://github.com/electron-userland/electron-builder/issues/7500) ([#7501](https://github.com/electron-userland/electron-builder/issues/7501)) ([e83dc81](https://github.com/electron-userland/electron-builder/commit/e83dc814725f543c6b51721fdbfee83158d35084))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.1.3...v) (2023-04-06)
 
 

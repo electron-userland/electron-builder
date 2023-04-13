@@ -1,5 +1,34 @@
 # app-builder-lib
 
+## 24.2.1
+
+### Patch Changes
+
+- [#7541](https://github.com/electron-userland/electron-builder/pull/7541) [`a4888ac4`](https://github.com/electron-userland/electron-builder/commit/a4888ac490e4e5d3783858d27acd487b2b8444fd) Thanks [@yannickm95](https://github.com/yannickm95)! - Update `@electron/rebuild` to version `^3.2.11` and account for the new folder structure of the package.
+
+- [#7501](https://github.com/electron-userland/electron-builder/pull/7501) [`e83dc814`](https://github.com/electron-userland/electron-builder/commit/e83dc814725f543c6b51721fdbfee83158d35084) Thanks [@markizano](https://github.com/markizano)! - Use `update-alternatives` when available.
+
+  ## What is changing?
+
+  Test for `update-alternatives` in DEB based installations and use this whenever possible.
+  In this way, middleware and downstream projects and users can specify binaries of their
+  own priority that would override this programs' configured executable.
+
+  ## Why is this changing?
+
+  Personally, I don't want apps running as myself or a privileged user in my system.
+  For this. I have a shell that is executed to drop permissions first, then execute the
+  selected software.
+  Electron apps don't conform to this since they link directly rather than using a linking
+  system.
+
+  This change is to ensure that system is used before resorting to direct links.
+
+  ## How should this be consumed?
+
+  Simply update as normal and this package will switch to using update-alternatives.
+  This will allow middleware and end-users to better control the active executable.
+
 ## 24.2.0
 
 ### Minor Changes
