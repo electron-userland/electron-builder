@@ -17,7 +17,7 @@ import * as path from "path"
 import { promisify } from "util"
 import pathSorter from "path-sort"
 import { TmpDir } from "temp-file"
-import { readAsar } from "app-builder-lib/out/asar/asar"
+import { readAsarFile, readAsarHeader } from "app-builder-lib/out/asar/integrity"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
@@ -540,8 +540,8 @@ export function removeUnstableProperties(data: any) {
   )
 }
 
-export async function verifyAsarFileTree(resourceDir: string) {
-  const fs = await readAsar(path.join(resourceDir, "app.asar"))
+export function verifyAsarFileTree(resourceDir: string) {
+  const fs = readAsarHeader(path.join(resourceDir, "app.asar"))
 
   const stableHeader = JSON.parse(
     JSON.stringify(fs.header, (name, value) => {
@@ -552,7 +552,9 @@ export async function verifyAsarFileTree(resourceDir: string) {
       return value
     })
   )
+
   expect(stableHeader).toMatchSnapshot()
+  return Promise.resolve()
 }
 
 export function toSystemIndependentPath(s: string): string {

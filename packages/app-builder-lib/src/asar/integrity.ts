@@ -1,6 +1,7 @@
 import { readdir } from "fs/promises"
 import * as path from "path"
 import * as asar from "@electron/asar"
+import { log } from "builder-util"
 
 export interface AsarIntegrityOptions {
   readonly resourcesPath: string
@@ -29,9 +30,10 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
   }
   let stat: asar.FileMetadata
   try {
+    log.error({ asarFile, relativeFile }, 'asar check')
     stat = asar.statFile(asarFile, relativeFile, false) as asar.FileMetadata
   } catch (e: any) {
-    if (e.message.includes("Cannot read property 'link' of undefined")) {
+    if (e.message.includes("Cannot read properties of undefined (reading 'link')")) {
       throw error("does not exist. Seems like a wrong configuration.")
     }
     throw error(`is corrupted: ${e}`)

@@ -71,7 +71,7 @@ export class AsarPackager {
         
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-        // log.info({ src: this.src, srcRelative, file, dest, projectDir }, 'Relative Source')
+        log.info({ src: this.src, srcRelative, file, dest, projectDir }, 'Relative Source')
         
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
