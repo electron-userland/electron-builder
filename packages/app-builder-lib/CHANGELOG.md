@@ -1,5 +1,56 @@
 # app-builder-lib
 
+## 24.2.1
+
+### Patch Changes
+
+- [#7541](https://github.com/electron-userland/electron-builder/pull/7541) [`a4888ac4`](https://github.com/electron-userland/electron-builder/commit/a4888ac490e4e5d3783858d27acd487b2b8444fd) Thanks [@yannickm95](https://github.com/yannickm95)! - Update `@electron/rebuild` to version `^3.2.11` and account for the new folder structure of the package.
+
+- [#7501](https://github.com/electron-userland/electron-builder/pull/7501) [`e83dc814`](https://github.com/electron-userland/electron-builder/commit/e83dc814725f543c6b51721fdbfee83158d35084) Thanks [@markizano](https://github.com/markizano)! - Use `update-alternatives` when available.
+
+  ## What is changing?
+
+  Test for `update-alternatives` in DEB based installations and use this whenever possible.
+  In this way, middleware and downstream projects and users can specify binaries of their
+  own priority that would override this programs' configured executable.
+
+  ## Why is this changing?
+
+  Personally, I don't want apps running as myself or a privileged user in my system.
+  For this. I have a shell that is executed to drop permissions first, then execute the
+  selected software.
+  Electron apps don't conform to this since they link directly rather than using a linking
+  system.
+
+  This change is to ensure that system is used before resorting to direct links.
+
+  ## How should this be consumed?
+
+  Simply update as normal and this package will switch to using update-alternatives.
+  This will allow middleware and end-users to better control the active executable.
+
+## 24.2.0
+
+### Minor Changes
+
+- [#7516](https://github.com/electron-userland/electron-builder/pull/7516) [`1533501f`](https://github.com/electron-userland/electron-builder/commit/1533501f999b364b656cdaa2048a1a7fd5e7c361) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Moved `electronLanguages` to global config to support win/linux
+
+## 24.1.3
+
+### Patch Changes
+
+- [#7519](https://github.com/electron-userland/electron-builder/pull/7519) [`abf37039`](https://github.com/electron-userland/electron-builder/commit/abf370395f45e4005f12131c532325a1e3232309) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: "Can't reconcile two non-macho files" due to `disablePreGypCopy` functionality in new electron/rebuild integration
+
+## 24.1.2
+
+### Patch Changes
+
+- [#7511](https://github.com/electron-userland/electron-builder/pull/7511) [`16283cca`](https://github.com/electron-userland/electron-builder/commit/16283ccaf5788b1a60c28f6d1424f72eebecea46) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: utilizing frameworkInfo as primary manner of fetching electron version for installation. (fixes: #7494)
+
+- Updated dependencies [[`d4c90b67`](https://github.com/electron-userland/electron-builder/commit/d4c90b676aa22c745de4129f98453b97f264805c)]:
+  - builder-util@24.1.2
+  - electron-publish@24.1.2
+
 ## 24.1.1
 
 ### Patch Changes

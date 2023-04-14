@@ -917,16 +917,27 @@ Object {
           "files": Object {
             "LICENSE.md": Object {
               "size": "<size>",
+              "unpacked": true,
             },
             "build": Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
                     "keytar.node": Object {
-                      "executable": true,
                       "size": "<size>",
+                      "unpacked": true,
                     },
                   },
+                  "unpacked": true,
+                },
+                "node_gyp_bins": Object {
+                  "files": Object {
+                    "python3": Object {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
                 },
               },
             },
@@ -934,13 +945,17 @@ Object {
               "files": Object {
                 "keytar.js": Object {
                   "size": "<size>",
+                  "unpacked": true,
                 },
               },
+              "unpacked": true,
             },
             "package.json": Object {
               "size": "<size>",
+              "unpacked": true,
             },
           },
+          "unpacked": true,
         },
         "mimic-response": Object {
           "files": Object {
@@ -957,13 +972,6 @@ Object {
         },
         "minimist": Object {
           "files": Object {
-            ".github": Object {
-              "files": Object {
-                "FUNDING.yml": Object {
-                  "size": "<size>",
-                },
-              },
-            },
             ".nycrc": Object {
               "size": "<size>",
             },
@@ -1821,6 +1829,47 @@ Object {
 exports[`posix smart unpack 3`] = `
 Array [
   "app.asar",
+  "app.asar.unpacked/node_modules/keytar/LICENSE.md",
+  Object {
+    "content": "{
+  \\"main\\": \\"./lib/keytar.js\\",
+  \\"typings\\": \\"keytar.d.ts\\",
+  \\"name\\": \\"keytar\\",
+  \\"description\\": \\"Bindings to native Mac/Linux/Windows password APIs\\",
+  \\"version\\": \\"5.6.0\\",
+  \\"license\\": \\"MIT\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"https://github.com/atom/node-keytar.git\\"
+  },
+  \\"homepage\\": \\"http://atom.github.io/node-keytar\\",
+  \\"files\\": [
+    \\"lib\\",
+    \\"src\\",
+    \\"binding.gyp\\",
+    \\"keytar.d.ts\\"
+  ],
+  \\"types\\": \\"./keytar.d.ts\\",
+  \\"devDependencies\\": {
+    \\"babel-core\\": \\"^6.26.3\\",
+    \\"babel-plugin-transform-async-to-generator\\": \\"^6.24.1\\",
+    \\"chai\\": \\"^4.2.0\\",
+    \\"mocha\\": \\"^7.1.2\\",
+    \\"node-abi\\": \\"^2.16.0\\",
+    \\"node-cpplint\\": \\"~0.4.0\\",
+    \\"node-gyp\\": \\"^6.0.0\\",
+    \\"prebuild\\": \\"^10.0.0\\"
+  },
+  \\"dependencies\\": {
+    \\"nan\\": \\"2.14.1\\",
+    \\"prebuild-install\\": \\"5.3.3\\"
+  }
+}",
+    "name": "app.asar.unpacked/node_modules/keytar/package.json",
+  },
+  "app.asar.unpacked/node_modules/keytar/lib/keytar.js",
+  "app.asar.unpacked/node_modules/keytar/build/node_gyp_bins/python3",
+  "app.asar.unpacked/node_modules/keytar/build/Release/keytar.node",
 ]
 `;
 

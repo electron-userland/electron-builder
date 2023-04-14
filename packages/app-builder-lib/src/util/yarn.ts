@@ -1,13 +1,10 @@
-import { asArray, log, spawn } from "builder-util"
+import { Arch, archFromString, asArray, log, spawn } from "builder-util"
 import { pathExists } from "fs-extra"
-import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { NodeModuleDirInfo } from "./packageDependencies"
-import { getElectronVersion } from "../electron/electronVersion"
 import * as electronRebuild from "@electron/rebuild"
-import * as searchModule from "@electron/rebuild/lib/src/search-module"
+import * as searchModule from "@electron/rebuild/lib/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   let isDependenciesInstalled = false
@@ -26,7 +23,8 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
     }
     await installDependencies(appDir, effectiveOptions)
   } else {
-    await rebuild(appDir, config.buildDependenciesFromSource === true, options.arch)
+    const arch = archFromString(options.arch || process.arch)
+    await rebuild(appDir, config.buildDependenciesFromSource === true, options.frameworkInfo, arch)
   }
 }
 
@@ -119,8 +117,8 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   })
 }
 
-export async function nodeGypRebuild(arch: string) {
-  return rebuild(process.cwd(), false, arch)
+export async function nodeGypRebuild(frameworkInfo: DesktopFrameworkInfo, arch: Arch) {
+  return rebuild(process.cwd(), false, frameworkInfo, arch)
 }
 
 function getPackageToolPath() {
@@ -138,7 +136,6 @@ function isRunningYarn(execPath: string | null | undefined) {
 
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps?: Lazy<Array<NodeModuleDirInfo>>
 
   platform?: NodeJS.Platform
   arch?: string
@@ -149,15 +146,15 @@ export interface RebuildOptions {
 }
 
 /** @internal */
-export async function rebuild(appDir: string, buildFromSource: boolean, arch = process.arch) {
-  log.info({ appDir, arch }, "executing @electron/rebuild")
+export async function rebuild(appDir: string, buildFromSource: boolean, frameworkInfo: DesktopFrameworkInfo, arch: Arch) {
+  log.info({ arch: Arch[arch], version: frameworkInfo.version, appDir }, "executing @electron/rebuild")
+  const rootPath = await searchModule.getProjectRootPath(appDir)
   const options: electronRebuild.RebuildOptions = {
     buildPath: appDir,
-    electronVersion: await getElectronVersion(appDir),
-    arch,
-    force: true,
-    debug: log.isDebugEnabled,
-    projectRootPath: await searchModule.getProjectRootPath(appDir),
+    electronVersion: frameworkInfo.version,
+    arch: Arch[arch],
+    projectRootPath: rootPath,
+    disablePreGypCopy: true,
   }
   if (buildFromSource) {
     options.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"

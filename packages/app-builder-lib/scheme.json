@@ -1731,6 +1731,20 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
+        },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
           "type": [
@@ -2394,7 +2408,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -3019,7 +3033,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -6006,6 +6020,20 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
+        },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
           "type": [
@@ -6667,6 +6695,20 @@
       "$ref": "#/definitions/ElectronDownloadOptions",
       "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
     },
+    "electronLanguages": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The electron locales to keep. By default, all Electron locales used as-is."
+    },
     "electronUpdaterCompatibility": {
       "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
       "type": [
@@ -7141,11 +7183,6 @@
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
       "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
-    },
-    "remoteBuild": {
-      "default": true,
-      "description": "Whether to build using Electron Build Service if target not supported on current OS.",
-      "type": "boolean"
     },
     "removePackageKeywords": {
       "default": true,

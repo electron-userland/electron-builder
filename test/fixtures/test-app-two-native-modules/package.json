@@ -1,17 +1,27 @@
 {
   "private": true,
-  "name": "TestApp",
-  "productName": "Test App ßW",
+  "name": "TestApp2",
+  "productName": "Test App ßW2",
   "version": "1.1.0",
   "homepage": "http://foo.example.com",
   "description": "Test Application (test quite \" #378)",
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
+  "devDependencies": {
+    "electron": "23.2.0"
+  },
   "build": {
-    "electronVersion": "17.0.0",
-    "appId": "org.electron-builder.testApp",
+    "appId": "org.electron-builder.testApp2",
     "compression": "store",
-    "npmRebuild": false,
+    "npmRebuild": true,
+    "directories": {
+      "app": "app"
+    },
+    "files": [
+      "index.html",
+      "index.js",
+      "package.json"
+    ],
     "mac": {
       "category": "your.app.category.type"
     },

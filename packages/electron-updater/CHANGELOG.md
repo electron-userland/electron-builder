@@ -1,5 +1,23 @@
 ## 4.3.0
 
+## 6.0.4
+
+### Patch Changes
+
+- [#7542](https://github.com/electron-userland/electron-builder/pull/7542) [`9123e31e`](https://github.com/electron-userland/electron-builder/commit/9123e31eb792211da717804e5a5b8029fe694d5f) Thanks [@ganthern](https://github.com/ganthern)! - fix: handle errors on responses in differential download (#2398)
+
+## 6.0.3
+
+### Patch Changes
+
+- [#7524](https://github.com/electron-userland/electron-builder/pull/7524) [`1a134800`](https://github.com/electron-userland/electron-builder/commit/1a13480036a2219007f866c64beea45292bc2946) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Fixed error handling when launching updater (fixes NSIS updates when isAdminRightsRequired is incorrectly set to false)
+
+## 6.0.2
+
+### Patch Changes
+
+- [#7508](https://github.com/electron-userland/electron-builder/pull/7508) [`d4c90b67`](https://github.com/electron-userland/electron-builder/commit/d4c90b676aa22c745de4129f98453b97f264805c) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Removed DefinitelyTyped dependencies from production dependencies list
+
 ## 6.0.1
 
 ### Patch Changes

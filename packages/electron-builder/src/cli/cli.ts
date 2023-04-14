@@ -12,6 +12,7 @@ import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
 import { start } from "./start"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
+import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
 
 // tslint:disable:no-unused-expression
 void createYargs()
@@ -75,6 +76,7 @@ async function checkIsOutdated() {
 }
 
 async function rebuildAppNativeCode(args: any) {
+  const projectDir = process.cwd()
   // this script must be used only for electron
-  return nodeGypRebuild(args.arch)
+  return nodeGypRebuild({ version: await getElectronVersion(projectDir), useCustomDist: true }, args.arch)
 }

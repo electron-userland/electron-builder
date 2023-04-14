@@ -1,3 +1,47 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.2.0...v) (2023-04-13)
+
+
+### Bug Fixes
+
+* update `@electron/rebuild` version and update imports ([#7541](https://github.com/electron-userland/electron-builder/issues/7541)) ([a4888ac](https://github.com/electron-userland/electron-builder/commit/a4888ac490e4e5d3783858d27acd487b2b8444fd))
+* **updater:** handle errors on responses in differential download ([#7542](https://github.com/electron-userland/electron-builder/issues/7542)) ([9123e31](https://github.com/electron-userland/electron-builder/commit/9123e31eb792211da717804e5a5b8029fe694d5f)), closes [#2398](https://github.com/electron-userland/electron-builder/issues/2398)
+* Use `update-alternatives` instead of symlinks for [#7500](https://github.com/electron-userland/electron-builder/issues/7500) ([#7501](https://github.com/electron-userland/electron-builder/issues/7501)) ([e83dc81](https://github.com/electron-userland/electron-builder/commit/e83dc814725f543c6b51721fdbfee83158d35084))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.3...v) (2023-04-06)
+
+
+### Bug Fixes
+
+* Fix electron-updater error handling when spawning a process asynchronously ([#7524](https://github.com/electron-userland/electron-builder/issues/7524)) ([1a13480](https://github.com/electron-userland/electron-builder/commit/1a13480036a2219007f866c64beea45292bc2946))
+
+
+### Features
+
+* Moved `electronLanguages` to global config to support win/linux ([#7516](https://github.com/electron-userland/electron-builder/issues/7516)) ([1533501](https://github.com/electron-userland/electron-builder/commit/1533501f999b364b656cdaa2048a1a7fd5e7c361))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.2...v) (2023-04-05)
+
+
+### Bug Fixes
+
+* "Can't reconcile two non-macho files" due to new Pre-Gyp-Copy functionality in electron/rebuild integration ([#7519](https://github.com/electron-userland/electron-builder/issues/7519)) ([abf3703](https://github.com/electron-userland/electron-builder/commit/abf370395f45e4005f12131c532325a1e3232309))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.1.1...v) (2023-03-30)
+
+
+### Bug Fixes
+
+* NsisUpdater - only resolving true if pid !== undefined ([#7503](https://github.com/electron-userland/electron-builder/issues/7503)) ([a2ab1ff](https://github.com/electron-userland/electron-builder/commit/a2ab1ff36dbe99a9c9d22bde15e83482eb5be340)), closes [#7502](https://github.com/electron-userland/electron-builder/issues/7502)
+* utilizing frameworkInfo as primary manner of fetching electron version for installation. ([#7511](https://github.com/electron-userland/electron-builder/issues/7511)) ([16283cc](https://github.com/electron-userland/electron-builder/commit/16283ccaf5788b1a60c28f6d1424f72eebecea46))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.1.1...v) (2023-03-26)
 
 

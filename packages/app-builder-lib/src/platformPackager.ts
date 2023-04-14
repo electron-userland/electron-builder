@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, isEnvTrue } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { defaultArchFromString, getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -784,15 +784,4 @@ export function chooseNotNull(v1: string | null | undefined, v2: string | null |
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
-export function isSafeToUnpackElectronOnRemoteBuildServer(packager: PlatformPackager<any>) {
-  if (packager.platform !== Platform.LINUX || packager.config.remoteBuild === false) {
-    return false
-  }
-
-  if (process.platform === "win32" || isEnvTrue(process.env._REMOTE_BUILD)) {
-    return packager.config.electronDist == null && packager.config.electronDownload == null
-  }
-  return false
 }

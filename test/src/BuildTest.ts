@@ -1,14 +1,13 @@
 import { checkBuildRequestOptions } from "app-builder-lib"
 import { doMergeConfigs } from "app-builder-lib/out/util/config"
-import { walk } from "builder-util/out/fs"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { promises as fs, readFileSync } from "fs"
+import { promises as fs } from "fs"
 import { outputJson } from "fs-extra"
 import * as path from "path"
 import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
-import { listFiles, readAsarJson } from "app-builder-lib/out/asar/integrity"
+import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
 
 test("cli", async () => {
   // because these methods are internal
@@ -321,43 +320,6 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
     }
   )()
 })
-
-export function removeUnstableProperties(data: any) {
-  return JSON.parse(
-    JSON.stringify(data, (name, value) => {
-      if (name === "offset") {
-        return undefined
-      }
-      if (value.size != null) {
-        // size differs on various OS and subdependencies aren't pinned, so this will randomly fail when subdependency resolution versions change
-        value.size = "<size>"
-      }
-      // Keep existing test coverage
-      if (value.integrity) {
-        delete value.integrity
-      }
-      return value
-    })
-  )
-}
-
-async function verifySmartUnpack(resourceDir: string) {
-  const archive = path.join(resourceDir, "app.asar")
-  const json = await readAsarJson(archive, `node_modules${path.sep}debug${path.sep}package.json`)
-  expect(json).toMatchObject({
-    name: "debug",
-  })
-  expect(listFiles(archive)).toMatchSnapshot()
-
-  const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`))).map(it => {
-    const name = toSystemIndependentPath(it.substring(resourceDir.length + 1))
-    if (it.endsWith("package.json")) {
-      return { name, content: readFileSync(it, "utf-8") }
-    }
-    return name
-  })
-  expect(files).toMatchSnapshot()
-}
 
 // https://github.com/electron-userland/electron-builder/issues/1738
 test.ifDevOrLinuxCi(

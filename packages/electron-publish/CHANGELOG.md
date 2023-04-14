@@ -1,5 +1,14 @@
 # electron-publish
 
+## 24.1.2
+
+### Patch Changes
+
+- [#7508](https://github.com/electron-userland/electron-builder/pull/7508) [`d4c90b67`](https://github.com/electron-userland/electron-builder/commit/d4c90b676aa22c745de4129f98453b97f264805c) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Removed DefinitelyTyped dependencies from production dependencies list
+
+- Updated dependencies [[`d4c90b67`](https://github.com/electron-userland/electron-builder/commit/d4c90b676aa22c745de4129f98453b97f264805c)]:
+  - builder-util@24.1.2
+
 ## 24.1.0
 
 ### Patch Changes
