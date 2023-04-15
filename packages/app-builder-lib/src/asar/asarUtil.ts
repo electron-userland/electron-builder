@@ -2,7 +2,7 @@ import { CreateOptions, createPackageFromFiles } from "@electron/asar"
 import { AsyncTaskManager, log } from "builder-util"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import * as fs from "fs-extra"
-import { mkdir, rm, stat, writeFile } from "fs/promises"
+import { mkdir, rm, writeFile } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
@@ -30,9 +30,9 @@ export class AsarPackager {
     const unpack = await Promise.all(
       unpackedDirs.map(async fileOrDir => {
         let p = fileOrDir
-        const stats = await stat(p)
+        const stats = await fs.lstat(p)
         if (stats.isDirectory()) {
-          p = path.join(fileOrDir, "**/*")
+          p = path.join(fileOrDir, "**")
         }
         return path.isAbsolute(fileOrDir) ? p : path.resolve(this.rootForAppFilesWithoutAsar, p)
       })
@@ -43,8 +43,15 @@ export class AsarPackager {
     const options: CreateOptions = {
       unpack: unpackGlob,
       ordering: this.options.ordering || undefined,
+      dot: true
     }
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, copiedFiles, undefined, options)
+    // const tmpDir = path.join(tmpdir(), "electron-builder-test")
+    // // await mkdir(tmpDir)
+    // const file = path.join(tmpDir, "temp-asar.asar")
+    // // fs.rmSync(file)
+    // await createPackageFromFiles(this.rootForAppFilesWithoutAsar, file, copiedFiles, undefined, options)
+    // log.error({ file }, "temp asar")
     await rm(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
@@ -56,28 +63,29 @@ export class AsarPackager {
       if (this.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
       }
-      const transformedFiles = fileSet.transformedFiles
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
-        
-        let projectDir = path.resolve(this.src, packager.projectDir)
+        const transformedData = fileSet.transformedFiles?.get(i)
+
+        const projectDir = path.resolve(this.src, packager.appDir)
         let srcRelative = path.normalize(path.relative(projectDir, file))
         // Remove all nesting "../" in the file patth, such as for yarn workspaces
         srcRelative = srcRelative.split(path.sep).filter(p => p !== '..').join(path.sep)
-        
-        if (this.unpackPattern?.(file, await fs.stat(file))) {
+
+        log.info({ src: this.src, appdir: packager.appDir, srcRelative, file, projectDir, isTransformed: !!transformedData }, "Relative Source")
+        const stats = await fs.lstat(file)
+        if (this.unpackPattern?.(file, stats)) {
           unpackedDirs.add(srcRelative)
         }
-        
+
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         await mkdir(path.dirname(dest), { recursive: true })
-        log.info({ src: this.src, srcRelative, file, dest, projectDir }, 'Relative Source')
-        
+
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
         }
-        if (!copiedFiles.has(dest)){
-          taskManager.addTask(this.copyFileOrData(transformedFiles?.get(i), file, dest))
+        if (!copiedFiles.has(dest)) {
+          taskManager.addTask(this.copyFileOrData(transformedData, file, dest))
           copiedFiles.add(dest)
         }
       }
@@ -93,7 +101,7 @@ export class AsarPackager {
     if (data) {
       return writeFile(destination, data)
     } else {
-      return this.fileCopier.copy(source, destination, await fs.stat(source))
+      return this.fileCopier.copy(source, destination, await fs.lstat(source))
     }
   }
 }

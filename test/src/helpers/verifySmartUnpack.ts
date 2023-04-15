@@ -2,6 +2,8 @@ import { walk } from "builder-util/out/fs"
 import { readFileSync } from "fs"
 import * as path from "path"
 import { toSystemIndependentPath, verifyAsarFileTree } from "./packTester"
+import { readAsarFile } from "app-builder-lib/out/asar/integrity"
+import { log } from "builder-util"
 
 export function removeUnstableProperties(data: any) {
   return JSON.parse(
@@ -23,10 +25,10 @@ export function removeUnstableProperties(data: any) {
 }
 
 export async function verifySmartUnpack(resourceDir: string) {
-  // const asarFs = await readAsar(path.join(resourceDir, "app.asar"))
-  // expect(await asarFs.readJson(`node_modules${path.sep}debug${path.sep}package.json`)).toMatchObject({
-  //   name: "debug",
-  // })
+  const json = readAsarFile(path.join(resourceDir, "app.asar"), `node_modules${path.sep}debug${path.sep}package.json`)
+  expect(json).toMatchObject({
+    name: "debug",
+  })
   // expect(removeUnstableProperties(asarFs.header)).toMatchSnapshot()
   await verifyAsarFileTree(resourceDir)
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`))).map(it => {
@@ -34,6 +36,7 @@ export async function verifySmartUnpack(resourceDir: string) {
     if (it.endsWith("package.json")) {
       return { name, content: readFileSync(it, "utf-8") }
     }
+    log.warn( { it, name })
     return name
   })
   expect(files).toMatchSnapshot()

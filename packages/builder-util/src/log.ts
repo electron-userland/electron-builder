@@ -2,6 +2,7 @@ import { Chalk } from "chalk"
 import * as chalk from "chalk"
 import _debug from "debug"
 import WritableStream = NodeJS.WritableStream
+import { tmpdir } from "os"
 
 let printer: ((message: string) => void) | null = null
 
@@ -94,6 +95,11 @@ export class Logger {
       } else if (Array.isArray(fieldValue)) {
         fieldValue = JSON.stringify(fieldValue)
       }
+
+      // purge os tmp dir from the list
+      // if (typeof fieldValue === 'string') {
+      //   fieldValue = fieldValue.replace(tmpdir(), '')
+      // }
 
       text += `${color(name)}=${fieldValue}`
       if (++counter !== fieldNames.length) {
