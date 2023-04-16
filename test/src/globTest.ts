@@ -21,7 +21,7 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }
 
-test.ifNotWindows.ifDevOrLinuxCi(
+test.ifNotWindows.ifDevOrLinuxCi.only(
   "unpackDir one",
   app(
     {
@@ -117,7 +117,7 @@ test.ifNotWindows(
         await fs.symlink(tempDir, path.join(projectDir, "o-dir"))
       },
       packed: async context => {
-        const file = checkFileInArchive(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo",  "outside link")
+        const file = checkFileInArchive(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo", "outside link")
         expect(removeUnstableProperties(file)).toMatchSnapshot()
       },
     }

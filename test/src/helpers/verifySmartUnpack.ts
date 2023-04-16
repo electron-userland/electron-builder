@@ -36,7 +36,7 @@ export async function verifySmartUnpack(resourceDir: string) {
     if (it.endsWith("package.json")) {
       return { name, content: readFileSync(it, "utf-8") }
     }
-    log.warn( { it, name })
+    log.warn({ it, name })
     return name
   })
   expect(files).toMatchSnapshot()
