@@ -312,7 +312,9 @@ export async function dirSize(dirPath: string): Promise<number> {
   const entrySizes = entries.map(async entry => {
     const entryPath = path.join(dirPath, entry.name)
 
-    if (entry.isDirectory()) return await dirSize(entryPath)
+    if (entry.isDirectory()) {
+      return await dirSize(entryPath)
+    }
 
     if (entry.isFile()) {
       const { size } = await stat(entryPath)

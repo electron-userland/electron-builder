@@ -59,13 +59,11 @@ export class AppPackageHelper {
       const appOutDir = target.archs.get(arch)!
       resultPromise = this.elevateHelper
         .copy(appOutDir, target)
-        .then(() => dirSize(appOutDir))
-        .then(unpackedSize =>
-          target.buildAppPackage(appOutDir, arch).then(fileInfo => ({
-            fileInfo,
-            unpackedSize,
-          }))
-        )
+        .then(() => target.buildAppPackage(appOutDir, arch))
+        .then(async fileInfo => ({
+          fileInfo,
+          unpackedSize: await dirSize(appOutDir),
+        }))
       this.archToResult.set(arch, resultPromise)
     }
 
