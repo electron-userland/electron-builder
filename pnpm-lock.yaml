@@ -189,6 +189,14 @@ importers:
       dmg-builder: link:../dmg-builder
       electron-builder-squirrel-windows: link:../electron-builder-squirrel-windows
 
+  packages/app-builder-lib/test-asar:
+    specifiers:
+      '@sentry/core': 0.5.4
+      electron-log: 2.2.9
+    dependencies:
+      '@sentry/core': 0.5.4
+      electron-log: 2.2.9
+
   packages/builder-util:
     specifiers:
       7zip-bin: ~5.1.1
@@ -2572,6 +2580,18 @@ packages:
     dependencies:
       mkdirp: 1.0.4
       rimraf: 3.0.2
+    dev: false
+
+  /@sentry/core/0.5.4:
+    resolution: {integrity: sha512-2OPFVkgpv0HmYnUTmgF6IxLvslqn7fYCEBWRn/Owa5ICx2+peWQ8D5VQSTpgYsRwC2HQLEndhz+TwvkrnB2SKA==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@sentry/shim': 0.5.4
+    dev: false
+
+  /@sentry/shim/0.5.4:
+    resolution: {integrity: sha512-UoExifJnbmTiUgc1ClH34/UvPxp68wT1OQBuAUTm/hVdhNyp81TjsrxnJenq5YDTAVEzgjjREi0aiA7Hl946mg==}
+    engines: {node: '>=6'}
     dev: false
 
   /@sindresorhus/is/4.6.0:
@@ -5195,6 +5215,10 @@ packages:
     hasBin: true
     dependencies:
       jake: 10.8.5
+    dev: false
+
+  /electron-log/2.2.9:
+    resolution: {integrity: sha512-WNMSipQYurNxY14RO6IKgcxcZg1e4aNVpUUJK9q7Bqe0TZEKn1e5h4HiQKhTgVLqKrUn++ugOZrty450P9vpjA==}
     dev: false
 
   /electron-to-chromium/1.4.330:

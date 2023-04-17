@@ -51,11 +51,12 @@ export class AsarPackager {
     }
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, copiedFiles, undefined, options)
     const tmpDir = path.join(tmpdir(), "electron-builder-test")
-    // await mkdir(tmpDir)
+    if (!fs.existsSync(tmpDir)) await mkdir(tmpDir)
     const file = path.join(tmpDir, "temp-asar.asar")
-    fs.rmSync(file)
+    if (fs.existsSync(file)) fs.rmSync(file)
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, file, copiedFiles, undefined, options)
     const dir = path.resolve(__dirname, "../../test-asar")
+    if (fs.existsSync(dir)) await fs.rm(dir, { recursive: true })
     await fs.mkdir(dir)
     asar.extractAll(file, dir)
     log.error({ file, dir }, "temp asar")
@@ -66,18 +67,20 @@ export class AsarPackager {
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
     const unpackedDirs = new Set<string>()
     const copiedFiles = new Set<string>()
+
     const autoUnpack = async (p: string) => {
-      if (this.unpackPattern?.(p, await fs.stat(p))) {
+      if (this.unpackPattern?.(p, await fs.lstat(p))) {
         log.info({ p }, "unpacking")
         unpackedDirs.add(p)
       }
     }
-    const autoCopy = (file: string, transformedData: string | Buffer | undefined, dest: string) => {
+    const autoCopy = (transformedData: string | Buffer | undefined, file: string, dest: string) => {
       if (!copiedFiles.has(dest)) {
         taskManager.addTask(this.copyFileOrData(transformedData, file, dest))
         copiedFiles.add(dest)
       }
     }
+
     for await (const fileSet of fileSets) {
       if (this.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
@@ -110,8 +113,8 @@ export class AsarPackager {
           "Relative Source"
         )
 
-        await autoUnpack(dest)
-        autoCopy(file, transformedData, dest)
+        await autoUnpack(file)
+        autoCopy(transformedData, file, dest)
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -131,7 +134,7 @@ export class AsarPackager {
     if (data) {
       return writeFile(destination, data)
     } else {
-      return this.fileCopier.copy(source, destination, await fs.stat(source))
+      return this.fileCopier.copy(source, destination, await fs.lstat(source))
     }
   }
 }

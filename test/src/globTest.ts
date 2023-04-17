@@ -21,7 +21,20 @@ async function createFiles(appDir: string) {
   await fs.symlink(path.join(appDir, "assets", "file"), path.join(appDir, "assets", "file-symlink"))
 }
 
-test.ifNotWindows.ifDevOrLinuxCi.only(
+async function assertDirs(context: PackedContext) {
+  const resourceDir = context.getResources(Platform.LINUX)
+  await Promise.all([
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
+    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
+  ])
+
+  await verifyAsarFileTree(resourceDir)
+}
+
+test.ifNotWindows.ifDevOrLinuxCi(
   "unpackDir one",
   app(
     {
@@ -37,18 +50,6 @@ test.ifNotWindows.ifDevOrLinuxCi.only(
   )
 )
 
-async function assertDirs(context: PackedContext) {
-  const resourceDir = context.getResources(Platform.LINUX)
-  await Promise.all([
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "assets")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "b2")).isDirectory(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
-    assertThat(path.join(resourceDir, "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
-  ])
-
-  await verifyAsarFileTree(resourceDir)
-}
 
 test.ifNotWindows.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack(
@@ -87,7 +88,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
   )
 })
 
-test.ifNotWindows(
+test.ifNotWindows.only(
   "link",
   app(
     {
@@ -104,7 +105,7 @@ test.ifNotWindows(
   )
 )
 
-test.ifNotWindows(
+test.ifNotWindows.only(
   "outside link",
   app(
     {
