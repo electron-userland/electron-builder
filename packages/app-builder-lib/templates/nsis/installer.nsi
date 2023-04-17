@@ -40,6 +40,8 @@ Var oldMenuDirectory
 !endif
 
 Function .onInit
+  Call setInstallSectionSpaceRequired
+
   SetOutPath $INSTDIR
   ${LogSet} on
 
@@ -82,7 +84,7 @@ FunctionEnd
   !include "installUtil.nsh"
 !endif
 
-Section "install"
+Section "install" INSTALL_SECTION_ID
   !ifndef BUILD_UNINSTALLER
     # If we're running a silent upgrade of a per-machine installation, elevate so extracting the new app will succeed.
     # For a non-silent install, the elevation will be triggered when the install mode is selected in the UI,
@@ -113,6 +115,10 @@ Section "install"
     !include "installSection.nsh"
   !endif
 SectionEnd
+
+Function setInstallSectionSpaceRequired
+  !insertmacro setSpaceRequired ${INSTALL_SECTION_ID}
+FunctionEnd
 
 !ifdef BUILD_UNINSTALLER
   !include "uninstaller.nsh"
