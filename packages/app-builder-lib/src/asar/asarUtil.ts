@@ -11,6 +11,7 @@ import { ResolvedFileSet } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { homedir, tmpdir } from "os"
 import * as asar from "@electron/asar"
+import { PathLike } from "fs"
 
 /** @internal */
 export class AsarPackager {
@@ -65,6 +66,18 @@ export class AsarPackager {
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
     const unpackedDirs = new Set<string>()
     const copiedFiles = new Set<string>()
+    const autoUnpack = async (p: string) => {
+      if (this.unpackPattern?.(p, await fs.stat(p))) {
+        log.info({ p }, "unpacking")
+        unpackedDirs.add(p)
+      }
+    }
+    const autoCopy = (file: string, transformedData: string | Buffer | undefined, dest: string) => {
+      if (!copiedFiles.has(dest)) {
+        taskManager.addTask(this.copyFileOrData(transformedData, file, dest))
+        copiedFiles.add(dest)
+      }
+    }
     for await (const fileSet of fileSets) {
       if (this.options.smartUnpack !== false) {
         detectUnpackedDirs(fileSet, unpackedDirs, this.rootForAppFilesWithoutAsar)
@@ -73,33 +86,36 @@ export class AsarPackager {
         const file = fileSet.files[i]
         const transformedData = fileSet.transformedFiles?.get(i)
 
-        const destFile = path.resolve(this.src, file)
-        const destRelative = path.normalize(path.relative(packager.appDir, file))
+        const srcFile = path.resolve(this.src, file)
+        const srcRelative = path.relative(packager.appDir, file)
+        const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
+        const dest2 = path.resolve(packager.appDir, file)
         // Remove all nesting "../" in the file path, such as for yarn workspaces
         // srcRelative = srcRelative
         //   .split(path.sep)
         //   .filter(p => p !== "..")
         //   .join(path.sep)
 
-        log.warn({ src: this.src, appdir: packager.appDir, srcRelative: destRelative, file, isTransformed: !!transformedData }, "Relative Source")
-        const stats = await fs.lstat(destFile).catch(() => fs.lstat(destRelative))
-        const shouldUnpack = this.unpackPattern?.(destRelative, stats)
-        if (shouldUnpack) {
-          log.info({ srcRelative: destRelative }, "unpacking")
-          unpackedDirs.add(destRelative)
+        log.warn(
+          {
+            src: this.src,
+            appdir: packager.appDir,
+            file,
+            srcFile,
+            srcRelative,
+            dest,
+            dest2,
+            isTransformed: !!transformedData,
+          },
+          "Relative Source"
+        )
+
+        await autoUnpack(dest)
+        autoCopy(file, transformedData, dest)
+
+        if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
+          await taskManager.awaitTasks()
         }
-
-        const dest = path.resolve(this.rootForAppFilesWithoutAsar, destRelative)
-        await mkdir(path.dirname(dest), { recursive: true })
-
-        if (!copiedFiles.has(dest)) {
-          taskManager.addTask(this.copyFileOrData(transformedData, file, dest))
-          copiedFiles.add(dest)
-        }
-
-        // if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
-        await taskManager.awaitTasks()
-        // }
       }
     }
     await taskManager.awaitTasks()
@@ -110,10 +126,12 @@ export class AsarPackager {
   }
 
   private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string) {
+    await mkdir(path.dirname(destination), { recursive: true })
+
     if (data) {
       return writeFile(destination, data)
     } else {
-      return this.fileCopier.copy(source, destination, await fs.lstat(source))
+      return this.fileCopier.copy(source, destination, await fs.stat(source))
     }
   }
 }
