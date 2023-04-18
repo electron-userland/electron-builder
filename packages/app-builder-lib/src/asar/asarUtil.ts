@@ -11,7 +11,7 @@ import { ResolvedFileSet } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { homedir, tmpdir } from "os"
 import * as asar from "@electron/asar"
-import { PathLike } from "fs"
+import { PathLike, symlink } from "fs"
 
 /** @internal */
 export class AsarPackager {
@@ -33,6 +33,7 @@ export class AsarPackager {
     const unpack = await Promise.all(
       unpackedDirs.map(async fileOrDir => {
         let p = fileOrDir
+        log.warn({ p }, "unpackedDirs")
         const stats = await fs.lstat(p)
         if (stats.isDirectory()) {
           p = path.join(fileOrDir, "**")
@@ -68,16 +69,84 @@ export class AsarPackager {
     const unpackedDirs = new Set<string>()
     const copiedFiles = new Set<string>()
 
-    const autoUnpack = async (p: string) => {
-      if (this.unpackPattern?.(p, await fs.lstat(p))) {
-        log.info({ p }, "unpacking")
-        unpackedDirs.add(p)
+    const autoUnpack = async (file: string, dest: string) => {
+      if (this.unpackPattern?.(file, await fs.lstat(file))) {
+        log.info({ file }, "unpacking")
+        unpackedDirs.add(dest)
       }
     }
-    const autoCopy = (transformedData: string | Buffer | undefined, file: string, dest: string) => {
-      if (!copiedFiles.has(dest)) {
-        taskManager.addTask(this.copyFileOrData(transformedData, file, dest))
-        copiedFiles.add(dest)
+    const autoCopy = async (transformedData: string | Buffer | undefined, source: string, destination: string) => {
+      const realPathFile = fs.realpathSync(source)
+      const realPathRelative = path.relative(packager.appDir, realPathFile)
+      const symlinkDestination = path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative)
+      const alreadyIncluded = copiedFiles.has(destination)
+      const stat = await fs.lstat(source)
+
+      log.error(
+        {
+          source,
+          destination,
+          realPathFile,
+          realPathRelative,
+          symlinkDestination,
+          isSymbolicLink: stat.isSymbolicLink(),
+          alreadyIncluded,
+        },
+        "autoCopy"
+      )
+
+      if (alreadyIncluded) {
+        return
+      }
+      copiedFiles.add(destination)
+
+      // If transformed data, skip symlink logic
+      if (transformedData) {
+        return copyFileOrData(transformedData, source, destination)
+      }
+
+      await copyFileOrData(undefined, realPathFile, symlinkDestination)
+      if (stat.isSymbolicLink()) {
+        if (realPathRelative.substring(0, 2) === "..") {
+          throw new Error(`${source}: file "${realPathRelative}" linked outstide`)
+        }
+        // if (fs.existsSync(destination)) {
+        //   await fs.rm(destination)
+        // }
+        await fs.symlink(symlinkDestination, destination)
+        copiedFiles.add(symlinkDestination)
+      }
+    }
+
+    const copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string) => {
+      await mkdir(path.dirname(destination), { recursive: true })
+
+      if (data) {
+        return fs.writeFile(destination, data)
+      } else {
+        // const stat = await fs.stat(source)
+        // await this.fileCopier.copy(source, destination, stat)
+        return fs.copyFile(source, destination)
+
+        // const realPathFile = fs.realpathSync(source)
+        // const realPathRelative = path.relative(packager.appDir, realPathFile)
+
+        // log.error(
+        //   {
+        //     source,
+        //     destination,
+        //     realPathFile,
+        //     realPathRelative,
+        //     isSymbolicLink: stat.isSymbolicLink()
+        //   },
+        //   "copyFileOrData"
+        // )
+        // if (stat.isSymbolicLink()) {
+        //   if (realPathRelative.substring(0, 2) === "..") {
+        //     throw new Error(`${ source }: file "${ realPathRelative }" linked outstide`)
+        //   }
+        //   await fs.symlink(destination, path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative))
+        // }
       }
     }
 
@@ -93,28 +162,36 @@ export class AsarPackager {
         const srcRelative = path.relative(packager.appDir, file)
         const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
         const dest2 = path.resolve(packager.appDir, file)
+
+        const stat = await fs.stat(file)
+        const realPathFile = fs.realpathSync(file)
+        const realPathRelative = path.relative(packager.appDir, realPathFile)
         // Remove all nesting "../" in the file path, such as for yarn workspaces
         // srcRelative = srcRelative
         //   .split(path.sep)
         //   .filter(p => p !== "..")
         //   .join(path.sep)
 
-        log.warn(
-          {
-            src: this.src,
-            appdir: packager.appDir,
-            file,
-            srcFile,
-            srcRelative,
-            dest,
-            dest2,
-            isTransformed: !!transformedData,
-          },
-          "Relative Source"
-        )
+        // log.warn(
+        //   {
+        //     src: this.src,
+        //     appdir: packager.appDir,
+        //     file,
+        //     realPathFile,
+        //     realPathRelative,
+        //     isSymbolicLink: stat.isSymbolicLink(),
+        //     srcFile,
+        //     srcRelative,
+        //     dest,
+        //     dest2,
+        //     isTransformed: !!transformedData,
+        //   },
+        //   "Relative Source"
+        // )
 
-        await autoUnpack(file)
-        autoCopy(transformedData, file, dest)
+        await autoUnpack(file, dest)
+        await autoCopy(transformedData, file, dest)
+        // taskManager.addTask(autoCopy(transformedData, file, dest))
 
         if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
           await taskManager.awaitTasks()
@@ -128,13 +205,20 @@ export class AsarPackager {
     }
   }
 
-  private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string) {
-    await mkdir(path.dirname(destination), { recursive: true })
+  // private async copyFileOrData(data: string | Buffer | undefined, source: string, destination: string) {
+  //   await mkdir(path.dirname(destination), { recursive: true })
 
-    if (data) {
-      return writeFile(destination, data)
-    } else {
-      return this.fileCopier.copy(source, destination, await fs.lstat(source))
-    }
-  }
+  //   if (data) {
+  //     return writeFile(destination, data)
+  //   } else {
+  //     const stat = await fs.lstat(source)
+  //     await this.fileCopier.copy(source, destination, stat)
+
+  //     const realPathFile = fs.realpathSync(file)
+  //     const realPathRelative = path.relative(packager.appDir, realPathFile)
+  //     if (stat.isSymbolicLink()) {
+  //       await fs.symlink(destination, path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative))
+  //     }
+  //   }
+  // }
 }

@@ -45,12 +45,12 @@ export function checkFileInArchive(asarFile: string, relativeFile: string, messa
 }
 
 export function readAsarJson(archive: string, file: string) {
-  const fileString = readAsarFile(archive, file)
+  const fileString = asar.extractFile(archive, file).toString()
   return Promise.resolve(JSON.parse(fileString))
 }
 
 export function readAsarFile(archive: string, file: string) {
-  return asar.extractFile(archive, file).toString()
+  return asar.statFile(archive, file, false)
 }
 
 export function readAsarHeader(archive: string) {
