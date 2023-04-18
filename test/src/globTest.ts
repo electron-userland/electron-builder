@@ -88,7 +88,7 @@ test.ifDevOrLinuxCi("asarUnpack and files ignore", () => {
   )
 })
 
-test.ifNotWindows.only(
+test.ifNotWindows(
   "link",
   app(
     {
@@ -105,7 +105,7 @@ test.ifNotWindows.only(
   )
 )
 
-test.ifNotWindows.only(
+test.ifNotWindows(
   "outside link",
   app(
     {
@@ -127,7 +127,7 @@ test.ifNotWindows.only(
 
 // cannot be enabled
 // https://github.com/electron-userland/electron-builder/issues/611
-test.ifDevOrLinuxCi("failed peer dep", () => {
+test.ifDevOrLinuxCi.skip("failed peer dep", () => {
   return assertPack(
     "test-app-one",
     {
