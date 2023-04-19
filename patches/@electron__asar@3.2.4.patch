@@ -1,0 +1,25 @@
+diff --git a/lib/crawlfs.js b/lib/crawlfs.js
+index a26c3eb88fe536454e0a3d25528b858c6e3febf2..770379d77a255bb123ff6d48efa9df25c8a2976b 100644
+--- a/lib/crawlfs.js
++++ b/lib/crawlfs.js
+@@ -6,7 +6,8 @@ const fs = require('./wrapped-fs')
+ const glob = promisify(require('glob'))
+ 
+ async function determineFileType (filename) {
+-  const stat = await fs.lstat(filename)
++  try {
++  const stat = await fs.lstat(filename).catch(err => new Error(err))
+   if (stat.isFile()) {
+     return { type: 'file', stat }
+   } else if (stat.isDirectory()) {
+@@ -14,6 +15,10 @@ async function determineFileType (filename) {
+   } else if (stat.isSymbolicLink()) {
+     return { type: 'link', stat }
+   }
++  } catch (err) {
++    console.error(err.stack || err)
++    throw err
++  }
+ }
+ 
+ module.exports = async function (dir, options) {

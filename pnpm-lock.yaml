@@ -1,6 +1,9 @@
 lockfileVersion: 5.4
 
 patchedDependencies:
+  '@electron/asar@3.2.4':
+    hash: rmzb2vqgm4yulvstssmkgp7lda
+    path: patches/@electron__asar@3.2.4.patch
   '@changesets/cli@2.25.0':
     hash: nye7dcohy6yzxjscpnrszvchra
     path: patches/@changesets__cli@2.25.0.patch
@@ -33,6 +36,7 @@ importers:
       prettier: 2.8.0
       replace-in-file: 6.2.0
       source-map-support: 0.5.21
+      trace: ^3.1.1
       ts-jsdoc: 3.2.2
       typescript: 4.8.4
       typescript-json-schema: 0.51.0
@@ -63,6 +67,7 @@ importers:
       prettier: 2.8.0
       replace-in-file: 6.2.0
       source-map-support: 0.5.21
+      trace: 3.1.1
       ts-jsdoc: 3.2.2_typescript@4.8.4
       typescript: 4.8.4
       typescript-json-schema: 0.51.0
@@ -91,7 +96,7 @@ importers:
       '@babel/preset-env': 7.15.6
       '@babel/preset-react': 7.14.5
       '@develar/schema-utils': ~2.6.5
-      '@electron/asar': ^3.2.3
+      '@electron/asar': 3.2.4
       '@electron/notarize': ^1.2.3
       '@electron/osx-sign': ^1.0.4
       '@electron/rebuild': ^3.2.11
@@ -131,7 +136,7 @@ importers:
     dependencies:
       7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
-      '@electron/asar': 3.2.3
+      '@electron/asar': 3.2.4_rmzb2vqgm4yulvstssmkgp7lda
       '@electron/notarize': 1.2.3
       '@electron/osx-sign': 1.0.4
       '@electron/rebuild': 3.2.11
@@ -188,14 +193,6 @@ importers:
       '@types/tar': 6.1.4
       dmg-builder: link:../dmg-builder
       electron-builder-squirrel-windows: link:../electron-builder-squirrel-windows
-
-  packages/app-builder-lib/test-asar:
-    specifiers:
-      '@sentry/core': 0.5.4
-      electron-log: 2.2.9
-    dependencies:
-      '@sentry/core': 0.5.4
-      electron-log: 2.2.9
 
   packages/builder-util:
     specifiers:
@@ -417,6 +414,7 @@ importers:
       7zip-bin: ~5.1.1
       '@electron/osx-sign': ^1.0.4
       '@jest/core': ^27.5.1
+      '@jest/types': ^29.5.0
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
@@ -471,6 +469,7 @@ importers:
       temp-file: 3.4.0
       yargs: 17.7.1
     devDependencies:
+      '@jest/types': 29.5.0
       '@types/fs-extra': 9.0.13
       '@types/jest': 26.0.24
       '@types/js-yaml': 4.0.3
@@ -2109,8 +2108,8 @@ packages:
       ajv-keywords: 3.5.2_ajv@6.12.6
     dev: false
 
-  /@electron/asar/3.2.3:
-    resolution: {integrity: sha512-wmOfE6szYyqZhRIiLH+eyZEp+bGcJI0OD/SCvSUrfBE0jvauyGYO2ZhpWxmNCcDojKu5DYrsVqT5BOCZZ01XIg==}
+  /@electron/asar/3.2.4_rmzb2vqgm4yulvstssmkgp7lda:
+    resolution: {integrity: sha512-lykfY3TJRRWFeTxccEKdf1I6BLl2Plw81H0bbp4Fc5iEc67foDCa5pjJQULVgo0wF+Dli75f3xVcdb/67FFZ/g==}
     engines: {node: '>=10.12.0'}
     hasBin: true
     dependencies:
@@ -2118,9 +2117,8 @@ packages:
       commander: 5.1.0
       glob: 7.2.3
       minimatch: 3.1.2
-    optionalDependencies:
-      '@types/glob': 7.2.0
     dev: false
+    patched: true
 
   /@electron/notarize/1.2.3:
     resolution: {integrity: sha512-9oRzT56rKh5bspk3KpAVF8lPKHYQrBnRwcgiOeR0hdilVEQmszDaAu0IPCPrwwzJN0ugNs0rRboTreHMt/6mBQ==}
@@ -2174,7 +2172,7 @@ packages:
     resolution: {integrity: sha512-BdhBgm2ZBnYyYRLRgOjM5VHkyFItsbggJ0MHycOjKWdFGYwK97ZFXH54dTvUWEfha81vfvwr5On6XBjt99uDcg==}
     engines: {node: '>=8.6'}
     dependencies:
-      '@electron/asar': 3.2.3
+      '@electron/asar': 3.2.4_rmzb2vqgm4yulvstssmkgp7lda
       '@malept/cross-spawn-promise': 1.1.1
       debug: 4.3.4
       dir-compare: 3.3.0
@@ -2365,6 +2363,13 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@jest/schemas/29.4.3:
+    resolution: {integrity: sha512-VLYKXQmtmuEz6IxJsrZwzG9NvtkQsWNnWMsKxqWNu3+CnfzJQhp0WDDKWLVV9hLKr0l3SLLFRqcYHjhtyuDVxg==}
+    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+    dependencies:
+      '@sinclair/typebox': 0.25.24
+    dev: true
+
   /@jest/source-map/27.5.1:
     resolution: {integrity: sha512-y9NIHUYF3PJRlHk98NdC/N1gl88BL08aQQgu4k4ZopQkCw9t9cV8mtl3TV8b/YCB8XaVTFrmUTAJvjsntDireg==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -2458,6 +2463,18 @@ packages:
       '@types/node': 16.11.43
       '@types/yargs': 16.0.5
       chalk: 4.1.2
+
+  /@jest/types/29.5.0:
+    resolution: {integrity: sha512-qbu7kN6czmVRc3xWFQcAN03RAUamgppVUdXrvl1Wr3jlNF93o9mJbGcDWrwGB6ht44u7efB1qCFgVQmca24Uog==}
+    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+    dependencies:
+      '@jest/schemas': 29.4.3
+      '@types/istanbul-lib-coverage': 2.0.4
+      '@types/istanbul-reports': 3.0.1
+      '@types/node': 16.11.43
+      '@types/yargs': 17.0.22
+      chalk: 4.1.2
+    dev: true
 
   /@jridgewell/gen-mapping/0.3.2:
     resolution: {integrity: sha512-mh65xKQAzI6iBcFzwv28KVWSmCkdRBWoOh+bYQGW3+6OZvbbN3TqMGo5hqYxQniRcH9F2VZIoJCm4pa3BPDK/A==}
@@ -2582,17 +2599,9 @@ packages:
       rimraf: 3.0.2
     dev: false
 
-  /@sentry/core/0.5.4:
-    resolution: {integrity: sha512-2OPFVkgpv0HmYnUTmgF6IxLvslqn7fYCEBWRn/Owa5ICx2+peWQ8D5VQSTpgYsRwC2HQLEndhz+TwvkrnB2SKA==}
-    engines: {node: '>=6'}
-    dependencies:
-      '@sentry/shim': 0.5.4
-    dev: false
-
-  /@sentry/shim/0.5.4:
-    resolution: {integrity: sha512-UoExifJnbmTiUgc1ClH34/UvPxp68wT1OQBuAUTm/hVdhNyp81TjsrxnJenq5YDTAVEzgjjREi0aiA7Hl946mg==}
-    engines: {node: '>=6'}
-    dev: false
+  /@sinclair/typebox/0.25.24:
+    resolution: {integrity: sha512-XJfwUVUKDHF5ugKwIcxEgc9k8b7HbznCp6eUfWgu710hMPNIO4aw4/zB5RogDQz8nd6gyCDpU9O/m6qYEWY6yQ==}
+    dev: true
 
   /@sindresorhus/is/4.6.0:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
@@ -2703,15 +2712,6 @@ packages:
       '@types/node': 16.11.43
     dev: true
 
-  /@types/glob/7.2.0:
-    resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
-    requiresBuild: true
-    dependencies:
-      '@types/minimatch': 5.1.2
-      '@types/node': 16.11.43
-    dev: false
-    optional: true
-
   /@types/glob/8.1.0:
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
     dependencies:
@@ -2817,6 +2817,7 @@ packages:
 
   /@types/minimatch/5.1.2:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
+    dev: true
 
   /@types/minimist/1.2.2:
     resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
@@ -5215,10 +5216,6 @@ packages:
     hasBin: true
     dependencies:
       jake: 10.8.5
-    dev: false
-
-  /electron-log/2.2.9:
-    resolution: {integrity: sha512-WNMSipQYurNxY14RO6IKgcxcZg1e4aNVpUUJK9q7Bqe0TZEKn1e5h4HiQKhTgVLqKrUn++ugOZrty450P9vpjA==}
     dev: false
 
   /electron-to-chromium/1.4.330:
@@ -9694,6 +9691,10 @@ packages:
       minipass: 3.3.6
     dev: false
 
+  /stack-chain/2.0.0:
+    resolution: {integrity: sha512-GGrHXePi305aW7XQweYZZwiRwR7Js3MWoK/EHzzB9ROdc75nCnjSJVi21rdAGxFl+yCx2L2qdfl5y7NO4lTyqg==}
+    dev: true
+
   /stack-utils/2.0.6:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
@@ -10094,6 +10095,13 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       punycode: 2.3.0
+
+  /trace/3.1.1:
+    resolution: {integrity: sha512-iVxFnDKps8bCRQ6kXj66rHYFJY3fNkoYPHeFTFZn89YdwmmQ9Hz97IFPf3NdfbCF3zuqUqFpRNTu6N9+eZR2qg==}
+    engines: {node: '>=8.0'}
+    dependencies:
+      stack-chain: 2.0.0
+    dev: true
 
   /traverse/0.3.9:
     resolution: {integrity: sha512-iawgk0hLP3SxGKDfnDJf8wTz4p2qImnyihM5Hh/sGvQ3K37dPi/w8sRhdNIxYA1TwFwc5mDhIJq+O0RsvXBKdQ==}

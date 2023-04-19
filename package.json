@@ -18,7 +18,7 @@
     "pretest": "pnpm lint && pnpm lint-deps",
     "prettier": "prettier 'packages/**/*.{ts, js}' 'test/src/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
-    "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher",
+    "test": "node  ./test/out/helpers/runTests.js skipArtifactPublisher watch",
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
     "test-linux": "pnpm docker-launch -c \"pnpm install && node ./test/out/helpers/runTests.js\"",
     "test-update": "UPDATE_SNAPSHOT=true pnpm test-all",
@@ -69,6 +69,7 @@
     "prettier": "2.8.0",
     "replace-in-file": "6.2.0",
     "source-map-support": "0.5.21",
+    "trace": "^3.1.1",
     "ts-jsdoc": "3.2.2",
     "typescript": "4.8.4",
     "typescript-json-schema": "0.51.0",
@@ -80,7 +81,8 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch",
+      "@electron/asar@3.2.4": "patches/@electron__asar@3.2.4.patch"
     }
   }
 }

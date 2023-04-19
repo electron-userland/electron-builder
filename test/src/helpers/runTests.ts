@@ -14,6 +14,9 @@ runTests().catch(error => {
   process.exit(1)
 })
 
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
+
 async function runTests() {
   await fs.rm(APP_BUILDER_TMP_DIR, { recursive: true, force: true })
   await fs.mkdir(APP_BUILDER_TMP_DIR, { recursive: true })

@@ -28,19 +28,20 @@ export class AsarPackager {
   }
 
   private async electronAsarPack(fileSets: Array<ResolvedFileSet>, packager: Packager) {
-    const { unpackedDirs, copiedFiles } = await this.detectAndCopy(packager, fileSets)
+    const { unpackedDirs: unpack, copiedFiles } = await this.detectAndCopy(packager, fileSets)
 
-    const unpack = await Promise.all(
-      unpackedDirs.map(async fileOrDir => {
-        let p = fileOrDir
-        log.warn({ p }, "unpackedDirs")
-        const stats = await fs.lstat(p)
-        if (stats.isDirectory()) {
-          p = path.join(fileOrDir, "**")
-        }
-        return path.isAbsolute(fileOrDir) ? p : path.resolve(this.rootForAppFilesWithoutAsar, p)
-      })
-    )
+    // const unpack = await Promise.all(
+    //   unpackedDirs.map(async fileOrDir => {
+    //     let p = path.isAbsolute(fileOrDir) ? fileOrDir : path.resolve(this.src, fileOrDir)
+    //     log.warn({ p }, "unpackedDirs")
+    //     const stats = await fs.lstat(p)
+    //     if (stats.isDirectory()) {
+    //       p = path.join(fileOrDir, "**")
+    //     }
+    //     return p
+    //     return path.isAbsolute(fileOrDir) ? p : path.resolve(this.rootForAppFilesWithoutAsar, p)
+    //   })
+    // )
 
     const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.length === 1 ? unpack[0] : undefined
 
@@ -51,16 +52,16 @@ export class AsarPackager {
       dot: true,
     }
     await createPackageFromFiles(this.rootForAppFilesWithoutAsar, this.outFile, copiedFiles, undefined, options)
-    const tmpDir = path.join(tmpdir(), "electron-builder-test")
-    if (!fs.existsSync(tmpDir)) await mkdir(tmpDir)
-    const file = path.join(tmpDir, "temp-asar.asar")
-    if (fs.existsSync(file)) fs.rmSync(file)
-    await createPackageFromFiles(this.rootForAppFilesWithoutAsar, file, copiedFiles, undefined, options)
-    const dir = path.resolve(__dirname, "../../test-asar")
-    if (fs.existsSync(dir)) await fs.rm(dir, { recursive: true })
-    await fs.mkdir(dir)
-    asar.extractAll(file, dir)
-    log.error({ file, dir }, "temp asar")
+    // const tmpDir = path.join(tmpdir(), "electron-builder-test")
+    // if (!fs.existsSync(tmpDir)) await mkdir(tmpDir)
+    // const file = path.join(tmpDir, "temp-asar.asar")
+    // if (fs.existsSync(file)) fs.rmSync(file)
+    // await createPackageFromFiles(this.rootForAppFilesWithoutAsar, file, copiedFiles, undefined, options)
+    // const dir = path.resolve(__dirname, "../../test-asar")
+    // if (fs.existsSync(dir)) await fs.rm(dir, { recursive: true })
+    // await fs.mkdir(dir)
+    // asar.extractAll(file, dir)
+    // log.error({ file, dir }, "temp asar")
     await rm(this.rootForAppFilesWithoutAsar, { recursive: true })
   }
 
@@ -70,7 +71,8 @@ export class AsarPackager {
     const copiedFiles = new Set<string>()
 
     const autoUnpack = async (file: string, dest: string) => {
-      if (this.unpackPattern?.(file, await fs.lstat(file))) {
+      const newLocal = await fs.lstat(file)
+      if (this.unpackPattern?.(file, newLocal)) {
         log.info({ file }, "unpacking")
         unpackedDirs.add(dest)
       }
@@ -105,17 +107,23 @@ export class AsarPackager {
         return copyFileOrData(transformedData, source, destination)
       }
 
-      await copyFileOrData(undefined, realPathFile, symlinkDestination)
-      if (stat.isSymbolicLink()) {
-        if (realPathRelative.substring(0, 2) === "..") {
-          throw new Error(`${source}: file "${realPathRelative}" linked outstide`)
-        }
-        // if (fs.existsSync(destination)) {
-        //   await fs.rm(destination)
-        // }
-        await fs.symlink(symlinkDestination, destination)
-        copiedFiles.add(symlinkDestination)
+      const isOutsidePackage = realPathRelative.substring(0, 2) === ".."
+      if (isOutsidePackage) {
+        log.warn({ source, realPathRelative, realPathFile, destination }, `file linked outstide. Skipping symlink, copying file directly`)
+        const buffer = fs.readFileSync(source)
+        return copyFileOrData(buffer, source, destination)
       }
+      // if (source !== realPathFile) {
+      //   await copyFileOrData(undefined, realPathFile, symlinkDestination)
+      //   // if (fs.existsSync(destination)) {
+      //   //   await fs.rm(destination)
+      //   // }
+      //   await mkdir(path.dirname(destination), { recursive: true })
+      //   await fs.symlink(symlinkDestination, destination)
+      //   copiedFiles.add(symlinkDestination)
+      // } else {
+        await copyFileOrData(undefined, source, destination)
+      // }
     }
 
     const copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string) => {
@@ -124,9 +132,9 @@ export class AsarPackager {
       if (data) {
         return fs.writeFile(destination, data)
       } else {
-        // const stat = await fs.stat(source)
+        const stat = await fs.stat(source)
         // await this.fileCopier.copy(source, destination, stat)
-        return fs.copyFile(source, destination)
+        return fs.copyFile(source, destination).then(() => fs.chmod(destination, stat.mode))
 
         // const realPathFile = fs.realpathSync(source)
         // const realPathRelative = path.relative(packager.appDir, realPathFile)
