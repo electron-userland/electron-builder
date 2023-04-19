@@ -1,7 +1,7 @@
 import { Arch, log } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { getBinFromUrl, getBinFromCustomLoc } from "../../binDownload"
-import { copyFile } from "builder-util/out/fs"
+import { copyFile, dirSize } from "builder-util/out/fs"
 import * as path from "path"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./NsisTarget"
@@ -39,8 +39,13 @@ export const NSIS_PATH = () => {
   })
 }
 
+export interface PackArchResult {
+  fileInfo: PackageFileInfo
+  unpackedSize: number
+}
+
 export class AppPackageHelper {
-  private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
+  private readonly archToResult = new Map<Arch, Promise<PackArchResult>>()
   private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()
 
   /** @private */
@@ -48,21 +53,28 @@ export class AppPackageHelper {
 
   constructor(private readonly elevateHelper: CopyElevateHelper) {}
 
-  async packArch(arch: Arch, target: NsisTarget): Promise<PackageFileInfo> {
-    let infoPromise = this.archToFileInfo.get(arch)
-    if (infoPromise == null) {
+  async packArch(arch: Arch, target: NsisTarget): Promise<PackArchResult> {
+    let resultPromise = this.archToResult.get(arch)
+    if (resultPromise == null) {
       const appOutDir = target.archs.get(arch)!
-      infoPromise = this.elevateHelper.copy(appOutDir, target).then(() => target.buildAppPackage(appOutDir, arch))
-      this.archToFileInfo.set(arch, infoPromise)
+      resultPromise = this.elevateHelper
+        .copy(appOutDir, target)
+        .then(() => target.buildAppPackage(appOutDir, arch))
+        .then(async fileInfo => ({
+          fileInfo,
+          unpackedSize: await dirSize(appOutDir),
+        }))
+      this.archToResult.set(arch, resultPromise)
     }
 
-    const info = await infoPromise
+    const result = await resultPromise
+    const { fileInfo: info } = result
     if (target.isWebInstaller) {
       this.infoToIsDelete.set(info, false)
     } else if (!this.infoToIsDelete.has(info)) {
       this.infoToIsDelete.set(info, true)
     }
-    return info
+    return result
   }
 
   async finishBuild(): Promise<any> {
