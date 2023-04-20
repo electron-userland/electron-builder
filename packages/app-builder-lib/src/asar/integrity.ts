@@ -49,8 +49,8 @@ export function readAsarJson(archive: string, file: string) {
   return Promise.resolve(JSON.parse(fileString))
 }
 
-export function readAsarFile(archive: string, file: string) {
-  return asar.statFile(archive, file, false)
+export function readAsarFile(archive: string, file: string, followSymlinks = false) {
+  return asar.statFile(archive, file, followSymlinks)
 }
 
 export function readAsarHeader(archive: string) {

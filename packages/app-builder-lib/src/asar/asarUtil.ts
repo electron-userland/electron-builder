@@ -115,9 +115,6 @@ export class AsarPackager {
       }
       if (source !== realPathFile) {
         await copyFileOrData(undefined, realPathFile, symlinkDestination)
-        // if (fs.existsSync(destination)) {
-        //   await fs.rm(destination)
-        // }
         await mkdir(path.dirname(destination), { recursive: true })
         await fs.symlink(symlinkDestination, destination)
         copiedFiles.add(symlinkDestination)

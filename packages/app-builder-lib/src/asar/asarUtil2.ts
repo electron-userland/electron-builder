@@ -60,7 +60,7 @@ export class AsarPackager {
       for (let i = 0; i < fileSet.files.length; i++) {
         const file = fileSet.files[i]
 
-        let projectDir = path.resolve(this.src, packager.projectDir)
+        const projectDir = path.resolve(this.src, packager.projectDir)
         let srcRelative = path.normalize(path.relative(projectDir, file))
         // Remove all nesting "../" in the file patth, such as for yarn workspaces
         srcRelative = srcRelative

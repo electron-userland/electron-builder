@@ -88,6 +88,7 @@ async function runTests() {
     config,
     runInBand,
     projects: [rootDir],
+    watch: process.env.WATCH === "true",
   }
 
   if (testPatterns.length > 0) {
