@@ -113,17 +113,17 @@ export class AsarPackager {
         const buffer = fs.readFileSync(source)
         return copyFileOrData(buffer, source, destination)
       }
-      // if (source !== realPathFile) {
-      //   await copyFileOrData(undefined, realPathFile, symlinkDestination)
-      //   // if (fs.existsSync(destination)) {
-      //   //   await fs.rm(destination)
-      //   // }
-      //   await mkdir(path.dirname(destination), { recursive: true })
-      //   await fs.symlink(symlinkDestination, destination)
-      //   copiedFiles.add(symlinkDestination)
-      // } else {
+      if (source !== realPathFile) {
+        await copyFileOrData(undefined, realPathFile, symlinkDestination)
+        // if (fs.existsSync(destination)) {
+        //   await fs.rm(destination)
+        // }
+        await mkdir(path.dirname(destination), { recursive: true })
+        await fs.symlink(symlinkDestination, destination)
+        copiedFiles.add(symlinkDestination)
+      } else {
         await copyFileOrData(undefined, source, destination)
-      // }
+      }
     }
 
     const copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string) => {

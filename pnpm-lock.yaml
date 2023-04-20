@@ -414,7 +414,6 @@ importers:
       7zip-bin: ~5.1.1
       '@electron/osx-sign': ^1.0.4
       '@jest/core': ^27.5.1
-      '@jest/types': ^29.5.0
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
@@ -469,7 +468,6 @@ importers:
       temp-file: 3.4.0
       yargs: 17.7.1
     devDependencies:
-      '@jest/types': 29.5.0
       '@types/fs-extra': 9.0.13
       '@types/jest': 26.0.24
       '@types/js-yaml': 4.0.3
@@ -2363,13 +2361,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@jest/schemas/29.4.3:
-    resolution: {integrity: sha512-VLYKXQmtmuEz6IxJsrZwzG9NvtkQsWNnWMsKxqWNu3+CnfzJQhp0WDDKWLVV9hLKr0l3SLLFRqcYHjhtyuDVxg==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-    dependencies:
-      '@sinclair/typebox': 0.25.24
-    dev: true
-
   /@jest/source-map/27.5.1:
     resolution: {integrity: sha512-y9NIHUYF3PJRlHk98NdC/N1gl88BL08aQQgu4k4ZopQkCw9t9cV8mtl3TV8b/YCB8XaVTFrmUTAJvjsntDireg==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -2463,18 +2454,6 @@ packages:
       '@types/node': 16.11.43
       '@types/yargs': 16.0.5
       chalk: 4.1.2
-
-  /@jest/types/29.5.0:
-    resolution: {integrity: sha512-qbu7kN6czmVRc3xWFQcAN03RAUamgppVUdXrvl1Wr3jlNF93o9mJbGcDWrwGB6ht44u7efB1qCFgVQmca24Uog==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-    dependencies:
-      '@jest/schemas': 29.4.3
-      '@types/istanbul-lib-coverage': 2.0.4
-      '@types/istanbul-reports': 3.0.1
-      '@types/node': 16.11.43
-      '@types/yargs': 17.0.22
-      chalk: 4.1.2
-    dev: true
 
   /@jridgewell/gen-mapping/0.3.2:
     resolution: {integrity: sha512-mh65xKQAzI6iBcFzwv28KVWSmCkdRBWoOh+bYQGW3+6OZvbbN3TqMGo5hqYxQniRcH9F2VZIoJCm4pa3BPDK/A==}
@@ -2598,10 +2577,6 @@ packages:
       mkdirp: 1.0.4
       rimraf: 3.0.2
     dev: false
-
-  /@sinclair/typebox/0.25.24:
-    resolution: {integrity: sha512-XJfwUVUKDHF5ugKwIcxEgc9k8b7HbznCp6eUfWgu710hMPNIO4aw4/zB5RogDQz8nd6gyCDpU9O/m6qYEWY6yQ==}
-    dev: true
 
   /@sindresorhus/is/4.6.0:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
