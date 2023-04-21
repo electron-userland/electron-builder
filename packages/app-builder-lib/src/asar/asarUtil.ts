@@ -7,7 +7,7 @@ import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet } from "../util/appFileCopier"
+import { ResolvedFileSet, getDestinationPath } from "../util/appFileCopier"
 import { detectUnpackedDirs } from "./unpackDetector"
 import { homedir, tmpdir } from "os"
 import * as asar from "@electron/asar"
@@ -43,7 +43,7 @@ export class AsarPackager {
     //   })
     // )
 
-    const unpackGlob = unpack.length > 1 ? `{${unpack.join(",")}}` : unpack.length === 1 ? unpack[0] : undefined
+    const unpackGlob = unpack.length > 1 ? `{${ unpack.join(",") }}` : unpack.pop()
 
     const options: CreateOptions = {
       unpack: unpackGlob,
@@ -104,55 +104,35 @@ export class AsarPackager {
 
       // If transformed data, skip symlink logic
       if (transformedData) {
-        return copyFileOrData(transformedData, source, destination)
+        return copyFileOrData(transformedData, source, destination, stat)
       }
 
       const isOutsidePackage = realPathRelative.substring(0, 2) === ".."
       if (isOutsidePackage) {
         log.warn({ source, realPathRelative, realPathFile, destination }, `file linked outstide. Skipping symlink, copying file directly`)
         const buffer = fs.readFileSync(source)
-        return copyFileOrData(buffer, source, destination)
+        return copyFileOrData(buffer, source, destination, stat)
       }
       if (source !== realPathFile) {
-        await copyFileOrData(undefined, realPathFile, symlinkDestination)
+        await copyFileOrData(undefined, realPathFile, symlinkDestination, stat)
         await mkdir(path.dirname(destination), { recursive: true })
         await fs.symlink(symlinkDestination, destination)
         copiedFiles.add(symlinkDestination)
       } else {
-        await copyFileOrData(undefined, source, destination)
+        await copyFileOrData(undefined, source, destination, stat)
       }
     }
 
-    const copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string) => {
+    const copyFileOrData = async (data: string | Buffer | undefined, source: string, destination: string, stat: fs.Stats) => {
       await mkdir(path.dirname(destination), { recursive: true })
 
       if (data) {
-        return fs.writeFile(destination, data)
+        await fs.writeFile(destination, data)
       } else {
-        const stat = await fs.stat(source)
         // await this.fileCopier.copy(source, destination, stat)
-        return fs.copyFile(source, destination).then(() => fs.chmod(destination, stat.mode))
-
-        // const realPathFile = fs.realpathSync(source)
-        // const realPathRelative = path.relative(packager.appDir, realPathFile)
-
-        // log.error(
-        //   {
-        //     source,
-        //     destination,
-        //     realPathFile,
-        //     realPathRelative,
-        //     isSymbolicLink: stat.isSymbolicLink()
-        //   },
-        //   "copyFileOrData"
-        // )
-        // if (stat.isSymbolicLink()) {
-        //   if (realPathRelative.substring(0, 2) === "..") {
-        //     throw new Error(`${ source }: file "${ realPathRelative }" linked outstide`)
-        //   }
-        //   await fs.symlink(destination, path.resolve(this.rootForAppFilesWithoutAsar, realPathRelative))
-        // }
+        await fs.copyFile(source, destination)
       }
+      await fs.chmod(destination, stat.mode)
     }
 
     for await (const fileSet of fileSets) {
@@ -165,7 +145,7 @@ export class AsarPackager {
 
         const srcFile = path.resolve(this.src, file)
         const srcRelative = path.relative(packager.appDir, file)
-        const dest = path.resolve(this.rootForAppFilesWithoutAsar, srcRelative)
+        const dest = path.resolve(this.rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
         const dest2 = path.resolve(packager.appDir, file)
 
         const stat = await fs.stat(file)
