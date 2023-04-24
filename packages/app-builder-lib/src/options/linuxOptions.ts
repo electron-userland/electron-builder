@@ -113,6 +113,11 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
   readonly depends?: Array<string> | null
 
   /**
+   * The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps)..
+   */
+  readonly recommends?: Array<string> | null
+
+  /**
    * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
    */
   readonly packageCategory?: string | null

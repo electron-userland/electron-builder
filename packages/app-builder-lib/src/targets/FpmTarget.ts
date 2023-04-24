@@ -196,6 +196,22 @@ export default class FpmTarget extends Target {
       }
     }
 
+    if (target === "deb") {
+      const recommends = (options as DebOptions).recommends
+      if (recommends != null) {
+        if (Array.isArray(recommends)) {
+          fpmConfiguration.customRecommends = recommends
+        } else {
+          // noinspection SuspiciousTypeOfGuard
+          if (typeof recommends === "string") {
+            fpmConfiguration.customRecommends = [recommends as string]
+          } else {
+            throw new Error(`recommends must be Array or String, but specified as: ${recommends}`)
+          }
+        }
+      }
+    }
+
     use(packager.info.metadata.license, it => args.push("--license", it))
     use(appInfo.buildNumber, it =>
       args.push(
@@ -274,6 +290,7 @@ interface FpmConfiguration {
   target: string
   args: Array<string>
   customDepends?: Array<string>
+  customRecommends?: Array<string>
   compression?: string | null
 }
 
