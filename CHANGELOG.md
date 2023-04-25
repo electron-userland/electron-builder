@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.2.1...v) (2023-04-25)
+
+
+### Bug Fixes
+
+* handle differential downloads when the blockmap HTTP response is compressed ([#7544](https://github.com/electron-userland/electron-builder/issues/7544)) ([dab3aeb](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d))
+
+
+### Features
+
+* nsis install method - exposed as public to avoid quit the app for the install ([#7533](https://github.com/electron-userland/electron-builder/issues/7533)) ([4786d41](https://github.com/electron-userland/electron-builder/commit/4786d41575c638137c7016c905d089ab74bf5e28))
+* **nsis:** display "Space Required" text for NSIS installer ([#7531](https://github.com/electron-userland/electron-builder/issues/7531)) ([0db9c66](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.2.0...v) (2023-04-13)
 
 

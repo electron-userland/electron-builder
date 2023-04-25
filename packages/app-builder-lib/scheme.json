@@ -2134,7 +2134,7 @@
               "type": "null"
             }
           ],
-          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
         },
         "icon": {
           "type": "string"

@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.1
+
+### Patch Changes
+
+- [#7544](https://github.com/electron-userland/electron-builder/pull/7544) [`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Fix differential downloads when the server compresses the blockmap file HTTP response
+
 ## 9.2.0
 
 ### Minor Changes

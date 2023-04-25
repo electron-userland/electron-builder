@@ -27,7 +27,7 @@
 <p><code id="LinuxTargetSpecificOptions-afterRemove">afterRemove</code> String | “undefined”</p>
 </li>
 <li>
-<p><code id="LinuxTargetSpecificOptions-fpm">fpm</code> Array&lt;String&gt; | “undefined” - <em>Advanced only</em> The <a href="https://github.com/jordansissel/fpm/wiki#usage">fpm</a> options.</p>
+<p><code id="LinuxTargetSpecificOptions-fpm">fpm</code> Array&lt;String&gt; | “undefined” - <em>Advanced only</em> The <a href="https://fpm.readthedocs.io/en/latest/cli-reference.html">fpm</a> options.</p>
 <p>Example: <code>[&quot;--before-install=build/deb-preinstall.sh&quot;, &quot;--after-upgrade=build/deb-postinstall.sh&quot;]</code></p>
 </li>
 </ul>
