@@ -1,5 +1,18 @@
 ## 4.3.0
 
+## 6.1.0
+
+### Minor Changes
+
+- [#7533](https://github.com/electron-userland/electron-builder/pull/7533) [`4786d415`](https://github.com/electron-userland/electron-builder/commit/4786d41575c638137c7016c905d089ab74bf5e28) Thanks [@vitto-moz](https://github.com/vitto-moz)! - feat: nsis install method - exposed as public to avoid quit the app for the install
+
+### Patch Changes
+
+- [#7544](https://github.com/electron-userland/electron-builder/pull/7544) [`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Fix differential downloads when the server compresses the blockmap file HTTP response
+
+- Updated dependencies [[`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d)]:
+  - builder-util-runtime@9.2.1
+
 ## 6.0.4
 
 ### Patch Changes

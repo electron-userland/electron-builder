@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 24.3.0
+
+### Minor Changes
+
+- [#7531](https://github.com/electron-userland/electron-builder/pull/7531) [`0db9c66f`](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8) Thanks [@inickvel](https://github.com/inickvel)! - Display "Space required" text for NSIS installer
+
+### Patch Changes
+
+- [#7560](https://github.com/electron-userland/electron-builder/pull/7560) [`592570b7`](https://github.com/electron-userland/electron-builder/commit/592570b72e7fc5caab6352805eadf149c637c420) Thanks [@davej](https://github.com/davej)! - chore: Update `@electron/rebuild`
+
+- [#7557](https://github.com/electron-userland/electron-builder/pull/7557) [`22bc9370`](https://github.com/electron-userland/electron-builder/commit/22bc93707ca9af1b6be487f91589813e392726a2) Thanks [@t3chguy](https://github.com/t3chguy)! - Update link to fpm docs
+
+- Updated dependencies [[`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d), [`0db9c66f`](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8)]:
+  - builder-util-runtime@9.2.1
+  - builder-util@24.3.0
+  - electron-publish@24.3.0
+
 ## 24.2.1
 
 ### Patch Changes
