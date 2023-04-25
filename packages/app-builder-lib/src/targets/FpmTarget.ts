@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml } from "builder-util"
+import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -198,17 +198,8 @@ export default class FpmTarget extends Target {
 
     if (target === "deb") {
       const recommends = (options as DebOptions).recommends
-      if (recommends != null) {
-        if (Array.isArray(recommends)) {
-          fpmConfiguration.customRecommends = recommends
-        } else {
-          // noinspection SuspiciousTypeOfGuard
-          if (typeof recommends === "string") {
-            fpmConfiguration.customRecommends = [recommends as string]
-          } else {
-            throw new Error(`recommends must be Array or String, but specified as: ${recommends}`)
-          }
-        }
+      if (recommends) {
+        fpmConfiguration.customRecommends = asArray(recommends)
       }
     }
 
