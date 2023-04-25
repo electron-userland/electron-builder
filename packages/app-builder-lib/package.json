@@ -50,7 +50,7 @@
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "^1.2.3",
     "@electron/osx-sign": "^1.0.4",
-    "@electron/rebuild": "^3.2.11",
+    "@electron/rebuild": "^3.2.13",
     "@electron/universal": "1.3.4",
     "@malept/flatpak-bundler": "^0.4.0",
     "async-exit-hook": "^2.0.1",

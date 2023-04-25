@@ -9,12 +9,12 @@ This repository has a mono-repo structure consisting of multiple packages. Try t
 
 > All prerequisites could be installed via script at the end of the chapter
 
-- [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM.
+- [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM. Currently we use the latest version 7.x of PNPM, please use the same version to ensure that lockfiles are compatible.
 - For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to
   electron-builder for your other projects to leverage and test with.
 
 ```
-npm i -g pnpm
+npm i -g pnpm@latest-7
 pnpm i yalc -g
 ```
 
