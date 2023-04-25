@@ -41,7 +41,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected abstract doInstall(options: InstallOptions): boolean
 
   // must be sync (because quit even handler is not async)
-  protected install(isSilent: boolean, isForceRunAfter: boolean): boolean {
+  install(isSilent = false, isForceRunAfter = false): boolean {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
