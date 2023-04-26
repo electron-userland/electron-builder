@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml } from "builder-util"
+import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -196,6 +196,13 @@ export default class FpmTarget extends Target {
       }
     }
 
+    if (target === "deb") {
+      const recommends = (options as DebOptions).recommends
+      if (recommends) {
+        fpmConfiguration.customRecommends = asArray(recommends)
+      }
+    }
+
     use(packager.info.metadata.license, it => args.push("--license", it))
     use(appInfo.buildNumber, it =>
       args.push(
@@ -274,6 +281,7 @@ interface FpmConfiguration {
   target: string
   args: Array<string>
   customDepends?: Array<string>
+  customRecommends?: Array<string>
   compression?: string | null
 }
 
