@@ -15,6 +15,7 @@
     "out"
   ],
   "dependencies": {
+    "@types/fs-extra": "^9.0.11",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
@@ -24,7 +25,6 @@
   },
   "typings": "./out/publisher.d.ts",
   "devDependencies": {
-    "@types/fs-extra": "^9.0.11",
     "@types/mime": "2.0.3"
   }
 }

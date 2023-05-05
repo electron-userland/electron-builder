@@ -135,6 +135,7 @@ importers:
       '@electron/rebuild': 3.2.13
       '@electron/universal': 1.3.4
       '@malept/flatpak-bundler': 0.4.0
+      '@types/fs-extra': 9.0.13
       async-exit-hook: 2.0.1
       bluebird-lst: 1.0.9
       builder-util: link:../builder-util
@@ -178,7 +179,6 @@ importers:
       '@babel/preset-react': 7.14.5_@babel+core@7.15.5
       '@types/debug': 4.1.7
       '@types/ejs': 3.1.0
-      '@types/fs-extra': 9.0.13
       '@types/hosted-git-info': 3.0.2
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
@@ -212,6 +212,7 @@ importers:
       temp-file: ^3.4.0
     dependencies:
       7zip-bin: 5.1.1
+      '@types/debug': 4.1.7
       app-builder-bin: 4.0.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
@@ -228,7 +229,6 @@ importers:
       temp-file: 3.4.0
     devDependencies:
       '@types/cross-spawn': 6.0.2
-      '@types/debug': 4.1.7
       '@types/fs-extra': 9.0.13
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
@@ -361,6 +361,7 @@ importers:
       lazy-val: ^1.0.5
       mime: ^2.5.2
     dependencies:
+      '@types/fs-extra': 9.0.13
       builder-util: link:../builder-util
       builder-util-runtime: link:../builder-util-runtime
       chalk: 4.1.2
@@ -368,7 +369,6 @@ importers:
       lazy-val: 1.0.5
       mime: 2.6.0
     devDependencies:
-      '@types/fs-extra': 9.0.13
       '@types/mime': 2.0.3
 
   packages/electron-updater:
@@ -2669,7 +2669,6 @@ packages:
     resolution: {integrity: sha512-9AonUzyTjXXhEOa0DnqpzZi6VHlqKMswga9EXjpXnnqxwLtdvPPtlO8evrI5D9S6asFRCQ6v+wpiUKbw+vKqyg==}
     dependencies:
       '@types/ms': 0.7.31
-    dev: true
 
   /@types/ejs/3.1.0:
     resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
@@ -2679,7 +2678,6 @@ packages:
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==}
     dependencies:
       '@types/node': 16.11.43
-    dev: true
 
   /@types/glob/7.2.0:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
@@ -2802,7 +2800,6 @@ packages:
 
   /@types/ms/0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
-    dev: true
 
   /@types/node/12.20.55:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
