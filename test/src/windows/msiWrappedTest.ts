@@ -34,6 +34,26 @@ test.ifAll.ifDevOrWinCi(
 )
 
 test.ifAll.ifDevOrWinCi(
+  "msiWrapped allows capitalized nsis target",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["msiWrapped", "NSIS"]),
+      config: {
+        appId: "build.electron.test.msi.oneClick.perMachine",
+        extraMetadata: {
+          // version: "1.0.0",
+        },
+        productName: "Test MSI",
+        win: {
+          target: ["msiWrapped", "NSIS"],
+        },
+      },
+    },
+    {}
+  )
+)
+
+test.ifAll.ifDevOrWinCi(
   "msiWrapped includes packaged exe",
   app({
     targets: Platform.WINDOWS.createTarget(["msiWrapped", "nsis"]),
