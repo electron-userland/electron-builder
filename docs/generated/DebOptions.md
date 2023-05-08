@@ -1,5 +1,6 @@
 <ul>
 <li><code id="DebOptions-depends">depends</code> Array&lt;String&gt; | “undefined” - Package dependencies. Defaults to <code>[&quot;gconf2&quot;, &quot;gconf-service&quot;, &quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;]</code>. If need to support Debian, <code>libappindicator1</code> should be removed, it is <a href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=895037">deprecated in Debian</a>. If need to support KDE, <code>gconf2</code> and <code>gconf-service</code> should be removed as it’s no longer used by GNOME](<a href="https://packages.debian.org/bullseye/gconf2">https://packages.debian.org/bullseye/gconf2</a>).</li>
+<li><code id="DebOptions-recommends">recommends</code> Array&lt;String&gt; | “undefined” - The <a href="https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps">recommended package dependencies</a>…</li>
 <li><code id="DebOptions-packageCategory">packageCategory</code> String | “undefined” - The <a href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section">package category</a>.</li>
 <li><code id="DebOptions-priority">priority</code> String | “undefined” - The <a href="https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority">Priority</a> attribute.</li>
 </ul>
