@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.3.0...v) (2023-05-08)
+
+
+### Bug Fixes
+
+* missing [@types](https://github.com/types) dependencies for output d.ts files ([#7568](https://github.com/electron-userland/electron-builder/issues/7568)) ([c9d20db](https://github.com/electron-userland/electron-builder/commit/c9d20db964cce991dab137ec0105d40d8eacd95c))
+
+
+### Features
+
+* allow specifying recommended dependencies for deb target ([#7558](https://github.com/electron-userland/electron-builder/issues/7558)) ([54c8537](https://github.com/electron-userland/electron-builder/commit/54c85374790f7a8e0dc520a20c716b4afe69be20))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.2.1...v) (2023-04-25)
 
 

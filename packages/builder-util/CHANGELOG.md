@@ -1,5 +1,11 @@
 # builder-util
 
+## 24.4.0
+
+### Patch Changes
+
+- [#7568](https://github.com/electron-userland/electron-builder/pull/7568) [`c9d20db9`](https://github.com/electron-userland/electron-builder/commit/c9d20db964cce991dab137ec0105d40d8eacd95c) Thanks [@t3chguy](https://github.com/t3chguy)! - Fix missing @types dependencies for output d.ts files
+
 ## 24.3.0
 
 ### Minor Changes
