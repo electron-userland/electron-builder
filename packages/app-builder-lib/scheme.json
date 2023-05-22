@@ -5883,7 +5883,9 @@
                   "armv7l",
                   "ia32",
                   "universal",
-                  "x64"
+                  "x64",
+                  "mipls64el",
+                  "loong64"
                 ],
                 "type": "string"
               },
@@ -5895,7 +5897,9 @@
                 "armv7l",
                 "ia32",
                 "universal",
-                "x64"
+                "x64",
+                "mipls64el",
+                "loong64"
               ],
               "type": "string"
             }
