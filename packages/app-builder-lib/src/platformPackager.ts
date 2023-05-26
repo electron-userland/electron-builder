@@ -217,13 +217,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
     }
 
-    if (this.installAppDependenciesPromise != null) {
-      await this.installAppDependenciesPromise
-    } else {
+    if (this.installAppDependenciesPromise == null) {
       this.installAppDependenciesPromise = this.info.installAppDependencies(this.platform, arch).finally(() => {
         this.installAppDependenciesPromise = null
       })
     }
+    await this.installAppDependenciesPromise
 
     if (this.info.cancellationToken.cancelled) {
       return
