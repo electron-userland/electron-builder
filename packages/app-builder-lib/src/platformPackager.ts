@@ -33,6 +33,7 @@ import { computeFileSets, computeNodeModuleFileSets, copyAppFiles, ELECTRON_COMP
 import { expandMacro as doExpandMacro } from "./util/macroExpander"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
+  installAppDependenciesPromise: Promise<any> | undefined | null
   get packagerOptions(): PackagerOptions {
     return this.info.options
   }
@@ -216,7 +217,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
     }
 
-    await this.info.installAppDependencies(this.platform, arch)
+    if (this.installAppDependenciesPromise != null) {
+      await this.installAppDependenciesPromise
+    } else {
+      this.installAppDependenciesPromise = this.info.installAppDependencies(this.platform, arch).finally(() => {
+        this.installAppDependenciesPromise = null
+      })
+    }
 
     if (this.info.cancellationToken.cancelled) {
       return
