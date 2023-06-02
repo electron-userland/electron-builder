@@ -636,7 +636,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return path.basename(urlPath)
       } else {
         // url like /latest, generate name
-        return `update.${taskOptions.fileExtension}`
+        return taskOptions.fileInfo.info.url
       }
     }
 
