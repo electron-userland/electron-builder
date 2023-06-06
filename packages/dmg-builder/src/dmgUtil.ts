@@ -1,4 +1,4 @@
-import { exec } from "builder-util"
+import { exec, retry } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { executeFinally } from "builder-util/out/promise"
 import * as path from "path"
@@ -37,11 +37,7 @@ export async function detach(name: string) {
   try {
     await exec("hdiutil", ["detach", "-quiet", name])
   } catch (e: any) {
-    await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        exec("hdiutil", ["detach", "-force", name]).then(resolve).catch(reject)
-      }, 1000)
-    })
+    await retry(() => exec("hdiutil", ["detach", "-force", name]), 5, 1000, 500)
   }
 }
 

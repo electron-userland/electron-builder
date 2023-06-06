@@ -396,14 +396,14 @@ export function executeAppBuilder(
   }
 }
 
-export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number, backoff = 0, attempt = 0): Promise<T> {
   try {
     return await task()
   } catch (error: any) {
     log.info(`Above command failed, retrying ${retriesLeft} more times`)
     if (retriesLeft > 0) {
-      await new Promise(resolve => setTimeout(resolve, interval))
-      return await retry(task, retriesLeft - 1, interval)
+      await new Promise(resolve => setTimeout(resolve, interval + backoff * attempt))
+      return await retry(task, retriesLeft - 1, interval, backoff, attempt + 1)
     } else {
       throw error
     }
