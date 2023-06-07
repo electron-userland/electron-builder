@@ -445,8 +445,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
 
-    appPlist.CFBundleIdentifier = appInfo.macBundleIdentifier
-
     appPlist.CFBundleShortVersionString = this.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
     appPlist.CFBundleVersion = appInfo.buildVersion
 
