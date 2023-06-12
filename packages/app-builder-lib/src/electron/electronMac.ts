@@ -118,10 +118,12 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
 
-  const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : packager.platformSpecificBuildOptions.appId) || appInfo.macBundleIdentifier)
+  const defaultAppId = packager.platformSpecificBuildOptions.appId
+  const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
 
+  const defaultHelperId = packager.platformSpecificBuildOptions.helperBundleId
   const helperBundleIdentifier = filterCFBundleIdentifier(
-    (isMas ? packager.config.mas?.helperBundleId : packager.platformSpecificBuildOptions.helperBundleId) || oldHelperBundleId || `${cfBundleIdentifier}.helper`
+    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || oldHelperBundleId || `${cfBundleIdentifier}.helper`
   )
 
   appPlist.CFBundleIdentifier = cfBundleIdentifier
