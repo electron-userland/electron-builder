@@ -117,7 +117,16 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
   if (oldHelperBundleId != null) {
     log.warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
-  const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appInfo.macBundleIdentifier}.helper`)
+
+  const defaultAppId = packager.platformSpecificBuildOptions.appId
+  const cfBundleIdentifier = filterCFBundleIdentifier((isMas ? packager.config.mas?.appId : defaultAppId) || defaultAppId || appInfo.macBundleIdentifier)
+
+  const defaultHelperId = packager.platformSpecificBuildOptions.helperBundleId
+  const helperBundleIdentifier = filterCFBundleIdentifier(
+    (isMas ? packager.config.mas?.helperBundleId : defaultHelperId) || defaultHelperId || oldHelperBundleId || `${cfBundleIdentifier}.helper`
+  )
+
+  appPlist.CFBundleIdentifier = cfBundleIdentifier
 
   await packager.applyCommonInfo(appPlist, contentsPath)
 
@@ -168,7 +177,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     helperLoginPlist.CFBundleExecutable = `${appFilename} Login Helper`
     helperLoginPlist.CFBundleDisplayName = `${appInfo.productName} Login Helper`
     // noinspection SpellCheckingInspection
-    helperLoginPlist.CFBundleIdentifier = `${appInfo.macBundleIdentifier}.loginhelper`
+    helperLoginPlist.CFBundleIdentifier = `${cfBundleIdentifier}.loginhelper`
     helperLoginPlist.CFBundleVersion = appPlist.CFBundleVersion
   }
 
