@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.1.1
+
+### Patch Changes
+
+- [#7597](https://github.com/electron-userland/electron-builder/pull/7597) [`cd15e161`](https://github.com/electron-userland/electron-builder/commit/cd15e161031e180200ab772f01198a5b68fa42fe) Thanks [@marcuskirsch](https://github.com/marcuskirsch)! - fix: default file name of `update.${fileExtension}` for downloaded files in private repositories.
+
 ## 6.1.0
 
 ### Minor Changes
