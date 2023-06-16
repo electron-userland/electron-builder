@@ -9,7 +9,7 @@ docker build -t electronuserland/builder:base -t "electronuserland/builder:base-
 ## NOTE: Order the latest to oldest versions. The most recent node LTS should be tagged as the latest image
 
 # Node 18
-docker build --build-arg NODE_VERSION=18.12.1 -t electronuserland/builder:18 -t "electronuserland/builder:18-$DATE" docker/node -t electronuserland/builder:latest docker/node
+docker build --build-arg NODE_VERSION=18.16.1 -t electronuserland/builder:18 -t "electronuserland/builder:18-$DATE" docker/node -t electronuserland/builder:latest docker/node
 
 docker build --build-arg IMAGE_VERSION=18 -t electronuserland/builder:18-wine -t "electronuserland/builder:18-wine-$DATE" docker/wine -t electronuserland/builder:wine docker/wine
 docker build --build-arg IMAGE_VERSION=18-wine -t electronuserland/builder:18-wine-mono -t "electronuserland/builder:18-wine-mono-$DATE" docker/wine-mono
