@@ -1,5 +1,11 @@
 # builder-util
 
+## 24.5.0
+
+### Patch Changes
+
+- [#7600](https://github.com/electron-userland/electron-builder/pull/7600) [`4dce3718`](https://github.com/electron-userland/electron-builder/commit/4dce3718abd75b8d0e29f37f6ba0ee1e76353c65) Thanks [@roryabraham](https://github.com/roryabraham)! - fix(mac): wrap hdiutil detach in retry w/ backoff
+
 ## 24.4.0
 
 ### Patch Changes

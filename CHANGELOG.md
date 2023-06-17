@@ -1,3 +1,20 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.4.0...v) (2023-06-16)
+
+
+### Bug Fixes
+
+* Allow building MAS and MAC targets with different appId ([#7603](https://github.com/electron-userland/electron-builder/issues/7603)) ([f464e3e](https://github.com/electron-userland/electron-builder/commit/f464e3ee6b8a6330a9be2961afaaec150777f91c))
+* default the downloaded update file name to `fileInfo.info.url` ([#7597](https://github.com/electron-userland/electron-builder/issues/7597)) ([cd15e16](https://github.com/electron-userland/electron-builder/commit/cd15e161031e180200ab772f01198a5b68fa42fe))
+* **mac:** Wrap hditutil detach in retry w/ backoff ([#7600](https://github.com/electron-userland/electron-builder/issues/7600)) ([4dce371](https://github.com/electron-userland/electron-builder/commit/4dce3718abd75b8d0e29f37f6ba0ee1e76353c65))
+* **nsis:** Ensure application name sub-folder on fresh installs. ([#7552](https://github.com/electron-userland/electron-builder/issues/7552)) ([e3fc9b5](https://github.com/electron-userland/electron-builder/commit/e3fc9b544cc8c6728ffd77a45408d6e0e87dbb46)), closes [#6885](https://github.com/electron-userland/electron-builder/issues/6885)
+
+
+### Features
+
+* added `ELECTRON_BUILDER_7Z_FILTER ` env variable for 7z filter ([#7609](https://github.com/electron-userland/electron-builder/issues/7609)) ([99f49cf](https://github.com/electron-userland/electron-builder/commit/99f49cf7a86afa33d35652ffc6329fefed2e5f75))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.3.0...v) (2023-05-08)
 
 
