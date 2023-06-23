@@ -6,6 +6,6 @@
     "debug": "4.1.1"
   },
   "optionalDependencies": {
-    "node-mac-permissions": "^2.3.0"
+    "node-mac-permissions": "2.3.0"
   }
 }
