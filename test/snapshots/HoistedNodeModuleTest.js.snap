@@ -188,37 +188,37 @@ Object {
         "debug": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "3546",
+              "offset": "3476",
               "size": 1107,
             },
             "dist": Object {
               "files": Object {
                 "debug.js": Object {
-                  "offset": "22150",
+                  "offset": "22080",
                   "size": 27572,
                 },
               },
             },
             "package.json": Object {
-              "offset": "4653",
+              "offset": "4583",
               "size": 947,
             },
             "src": Object {
               "files": Object {
                 "browser.js": Object {
-                  "offset": "5600",
+                  "offset": "5530",
                   "size": 5831,
                 },
                 "common.js": Object {
-                  "offset": "11431",
+                  "offset": "11361",
                   "size": 5930,
                 },
                 "index.js": Object {
-                  "offset": "17361",
+                  "offset": "17291",
                   "size": 314,
                 },
                 "node.js": Object {
-                  "offset": "17675",
+                  "offset": "17605",
                   "size": 4475,
                 },
               },
@@ -228,15 +228,15 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "49722",
+              "offset": "49652",
               "size": 3024,
             },
             "license.md": Object {
-              "offset": "52746",
+              "offset": "52676",
               "size": 1079,
             },
             "package.json": Object {
-              "offset": "53825",
+              "offset": "53755",
               "size": 497,
             },
           },
@@ -245,7 +245,7 @@ Object {
     },
     "package.json": Object {
       "offset": "3342",
-      "size": 204,
+      "size": 134,
     },
   },
 }
