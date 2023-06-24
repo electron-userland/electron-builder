@@ -495,7 +495,7 @@ export class Packager {
     const frameworkInfo = { version: this.framework.version, useCustomDist: true }
     const config = this.config
     if (config.nodeGypRebuild === true) {
-      await nodeGypRebuild(frameworkInfo, arch)
+      await nodeGypRebuild(frameworkInfo, arch, platform)
     }
 
     if (config.npmRebuild === false) {
