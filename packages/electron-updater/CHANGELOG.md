@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.1.2
+
+### Patch Changes
+
+- [#7628](https://github.com/electron-userland/electron-builder/pull/7628) [`98f535e1`](https://github.com/electron-userland/electron-builder/commit/98f535e1f80b7f84dc3c2f135a4a5ea8cd142f31) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: removing stdio from spawnSync to fix crash on rpm/deb updaters
+
 ## 6.1.1
 
 ### Patch Changes
