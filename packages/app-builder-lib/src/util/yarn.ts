@@ -5,7 +5,7 @@ import * as path from "path"
 import { Configuration } from "../configuration"
 import * as electronRebuild from "@electron/rebuild/lib/rebuild"
 import * as searchModule from "@electron/rebuild/lib/search-module"
-import { EventEmitter } from "stream"
+import { EventEmitter } from "events"
 import { Platform } from "../core"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
@@ -150,7 +150,7 @@ export interface RebuildOptions {
 
 /** @internal */
 export async function rebuild(appDir: string, buildFromSource: boolean, frameworkInfo: DesktopFrameworkInfo, arch: Arch, platform: Platform) {
-  log.info({ arch: Arch[arch], platform, version: frameworkInfo.version, appDir }, "executing @electron/rebuild")
+  log.info({ arch: Arch[arch], platform: platform.name, version: frameworkInfo.version, appDir }, "executing @electron/rebuild")
   const rootPath = await searchModule.getProjectRootPath(appDir)
   const rebuilderOptions: electronRebuild.RebuilderOptions = {
     buildPath: appDir,
