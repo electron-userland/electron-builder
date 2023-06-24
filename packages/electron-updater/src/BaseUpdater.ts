@@ -116,10 +116,10 @@ export abstract class BaseUpdater extends AppUpdater {
     return command.join(" ")
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}, stdio?: StdioOptions): string {
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
-      stdio,
+      stdio: "inherit",
       env: { ...process.env, ...env },
       encoding: "utf-8",
       shell: true,
