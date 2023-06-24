@@ -527,6 +527,50 @@ Object {
             },
           },
         },
+        "node-mac-permissions": Object {
+          "files": Object {
+            ".prettierrc": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "LICENSE": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "build": Object {
+              "files": Object {
+                "Release": Object {
+                  "files": Object {
+                    "permissions.node": Object {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+                "node_gyp_bins": Object {
+                  "files": Object {
+                    "python3": Object {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+              },
+            },
+            "index.js": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "package.json": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "permissions.mm": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+          },
+        },
       },
     },
     "package.json": Object {
@@ -540,5 +584,51 @@ exports[`yarn two package.json w/ native module 4`] = `
 Array [
   "app.asar",
   "electron.icns",
+  "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
+  "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
+  Object {
+    "content": "{
+  \\"name\\": \\"node-mac-permissions\\",
+  \\"version\\": \\"2.3.0\\",
+  \\"description\\": \\"A native node module to manage system permissions on macOS\\",
+  \\"main\\": \\"index.js\\",
+  \\"types\\": \\"index.d.ts\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"git+https://github.com/codebytere/node-mac-permissions.git\\"
+  },
+  \\"author\\": \\"Shelley Vohr <shelley.vohr@gmail.com>\\",
+  \\"license\\": \\"MIT\\",
+  \\"homepage\\": \\"https://github.com/codebytere/node-mac-permissions#readme\\",
+  \\"dependencies\\": {
+    \\"bindings\\": \\"^1.5.0\\",
+    \\"node-addon-api\\": \\"^3.0.2\\"
+  },
+  \\"devDependencies\\": {
+    \\"chai\\": \\"^4.3.6\\",
+    \\"clang-format\\": \\"1.8.0\\",
+    \\"husky\\": \\"^8.0.1\\",
+    \\"lint-staged\\": \\"^12.4.1\\",
+    \\"mocha\\": \\"^10.0.0\\",
+    \\"node-gyp\\": \\"^9.0.0\\",
+    \\"prettier\\": \\"^2.6.2\\"
+  },
+  \\"lint-staged\\": {
+    \\"*.js\\": [
+      \\"prettier --write\\"
+    ],
+    \\"*.mm\\": [
+      \\"clang-format -i\\"
+    ]
+  },
+  \\"os\\": [
+    \\"darwin\\"
+  ]
+}",
+    "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
+  },
+  "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
+  "app.asar.unpacked/node_modules/node-mac-permissions/build/node_gyp_bins/python3",
+  "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;
