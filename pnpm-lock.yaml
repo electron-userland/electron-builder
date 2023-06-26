@@ -385,7 +385,7 @@ importers:
       lodash.escaperegexp: ^4.1.2
       lodash.isequal: ^4.5.0
       semver: ^7.3.8
-      typed-emitter: ^2.1.0
+      tiny-typed-emitter: ^2.1.0
     dependencies:
       builder-util-runtime: link:../builder-util-runtime
       fs-extra: 10.1.0
@@ -394,13 +394,13 @@ importers:
       lodash.escaperegexp: 4.1.2
       lodash.isequal: 4.5.0
       semver: 7.3.8
+      tiny-typed-emitter: 2.1.0
     devDependencies:
       '@types/fs-extra': 9.0.13
       '@types/js-yaml': 4.0.3
       '@types/lodash.escaperegexp': 4.1.6
       '@types/lodash.isequal': 4.5.5
       '@types/semver': 7.3.13
-      typed-emitter: 2.1.0
 
   test:
     specifiers:
@@ -9962,6 +9962,10 @@ packages:
       readable-stream: 3.6.2
     dev: true
 
+  /tiny-typed-emitter/2.1.0:
+    resolution: {integrity: sha512-qVtvMxeXbVej0cQWKqVSSAHmKZEHAvxdF8HEUBFWts8h+xEo5m/lEiPakuyZ3BnCBjOD8i24kzNOiOLLgsSxhA==}
+    dev: false
+
   /tmp-promise/3.0.3:
     resolution: {integrity: sha512-RwM7MoPojPxsOBYnyd2hy0bxtIlVrihNs9pj5SUvY8Zz1sQcQG2tG1hSr8PDxfgEB8RNKDhqbIlroIarSNDNsQ==}
     dependencies:
@@ -10191,12 +10195,6 @@ packages:
       call-bind: 1.0.2
       for-each: 0.3.3
       is-typed-array: 1.1.10
-    dev: true
-
-  /typed-emitter/2.1.0:
-    resolution: {integrity: sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==}
-    optionalDependencies:
-      rxjs: 7.8.0
     dev: true
 
   /typedarray-to-buffer/3.1.5:
