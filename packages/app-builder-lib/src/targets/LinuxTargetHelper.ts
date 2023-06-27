@@ -76,6 +76,20 @@ export class LinuxTargetHelper {
     return options.description || this.packager.appInfo.description
   }
 
+  getSanitizedVersion(target: string) {
+    const {
+      appInfo: { version },
+    } = this.packager
+    switch (target) {
+      case "pacman":
+        return version.replace(/-/g, "_")
+      case "rpm":
+        return version.replace(/-/g, "~")
+      default:
+        return version
+    }
+  }
+
   async writeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string }): Promise<string> {
     const data = await this.computeDesktopEntry(targetSpecificOptions, exec, extra)
     const file = destination || (await this.packager.getTempFile(`${this.packager.appInfo.productFilename}.desktop`))
