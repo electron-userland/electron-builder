@@ -24,6 +24,8 @@ export interface AppAdapter {
 
   whenReady(): Promise<void>
 
+  relaunch(): void
+
   quit(): void
 
   onQuit(handler: (exitCode: number) => void): void

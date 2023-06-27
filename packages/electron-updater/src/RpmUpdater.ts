@@ -58,6 +58,9 @@ export class RpmUpdater extends BaseUpdater {
       ]
     }
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
     return true
   }
 }
