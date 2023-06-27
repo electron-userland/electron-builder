@@ -274,6 +274,13 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageKeywords?: boolean
+
+  /**
+   * Whether to check the `version` field of `package.json` for semver compliance.
+   *
+   * @default true
+   */
+  readonly checkPackageVersion?: boolean
 }
 
 interface PackContext {

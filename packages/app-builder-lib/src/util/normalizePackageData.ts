@@ -2,9 +2,13 @@ import * as semver from "semver"
 import { fromUrl } from "hosted-git-info"
 import * as url from "url"
 
-export function normalizePackageData(data: any) {
+export interface NormalizePackageDataOptions {
+  checkPackageVersion: boolean
+}
+
+export function normalizePackageData(data: any, options: NormalizePackageDataOptions) {
   for (const it of check) {
-    it(data)
+    it(data, options)
   }
 }
 
@@ -136,10 +140,13 @@ const check = [
       })
     }
   },
-  function fixVersionField(data: any) {
+  function fixVersionField(data: any, options: NormalizePackageDataOptions) {
     const loose = true
     if (!data.version) {
       data.version = ""
+      return true
+    }
+    if (options.checkPackageVersion) {
       return true
     }
     if (!semver.valid(data.version, loose)) {

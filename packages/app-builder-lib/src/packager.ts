@@ -305,34 +305,43 @@ export class Packager {
       delete configFromOptions.extends
     }
 
-    const projectDir = this.projectDir
+    const packageFile = path.join(this.projectDir, "package.json")
+    const checkPackageVersion = configFromOptions?.checkPackageVersion || true
+    this._devMetadata = await orNullIfFileNotExist(readPackageJson({ packageFile, checkPackageVersion }))
 
-    const devPackageFile = path.join(projectDir, "package.json")
-    this._devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
-
-    const devMetadata = this.devMetadata
-    const configuration = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(devMetadata)))
+    const configuration = await getConfig(this.projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(this.devMetadata)))
     if (log.isDebugEnabled) {
       log.debug({ config: getSafeEffectiveConfig(configuration) }, "effective config")
     }
 
-    this._appDir = await computeDefaultAppDirectory(projectDir, configuration.directories!.app)
-    this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== projectDir
+    this._appDir = await computeDefaultAppDirectory(this.projectDir, configuration.directories!.app)
+    this.isTwoPackageJsonProjectLayoutUsed = this._appDir !== this.projectDir
 
-    const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
+    const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : packageFile
 
     // tslint:disable:prefer-conditional-expression
     if (this.devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
       this._metadata = this.devMetadata
     } else {
-      this._metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
+      let data = await orNullIfFileNotExist(readPackageJson({ packageFile: appPackageFile, checkPackageVersion }))
+      if (data != null) {
+        this._metadata = data
+      }
+
+      data = await orNullIfFileNotExist(readAsarJson(path.join(this.projectDir, "app.asar"), "package.json"))
+      if (data != null) {
+        this._isPrepackedAppAsar = true
+        this._metadata = data
+      }
+
+      throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
     }
     deepAssign(this.metadata, configuration.extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      log.debug({ devPackageFile, appPackageFile }, "two package.json structure is used")
+      log.debug({ devPackageFile: packageFile, appPackageFile }, "two package.json structure is used")
     }
-    checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
+    checkMetadata(this.metadata, this.devMetadata, appPackageFile, packageFile)
 
     return await this._build(configuration, this._metadata, this._devMetadata)
   }
@@ -393,21 +402,6 @@ export class Packager {
       platformToTargets,
       configuration,
     }
-  }
-
-  private async readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile: string): Promise<Metadata> {
-    let data = await orNullIfFileNotExist(readPackageJson(appPackageFile))
-    if (data != null) {
-      return data
-    }
-
-    data = await orNullIfFileNotExist(readAsarJson(path.join(this.projectDir, "app.asar"), "package.json"))
-    if (data != null) {
-      this._isPrepackedAppAsar = true
-      return data
-    }
-
-    throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
   }
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {

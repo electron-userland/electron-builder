@@ -3,16 +3,20 @@ import { readFile, readJson } from "fs-extra"
 import * as path from "path"
 import * as semver from "semver"
 import { Metadata } from "../options/metadata"
-import { normalizePackageData } from "./normalizePackageData"
+import { type NormalizePackageDataOptions, normalizePackageData } from "./normalizePackageData"
+
+export interface ReadPackageJSONOptions extends NormalizePackageDataOptions {
+  packageFile: string
+}
 
 /** @internal */
-export async function readPackageJson(file: string): Promise<any> {
-  const data = await readJson(file)
-  await authors(file, data)
+export async function readPackageJson(options: ReadPackageJSONOptions): Promise<any> {
+  const data = await readJson(options.packageFile)
+  await authors(options.packageFile, data)
   // remove not required fields because can be used for remote build
   delete data.scripts
   delete data.readme
-  normalizePackageData(data)
+  normalizePackageData(data, options)
   return data
 }
 
