@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix(pacman): replace hyphens with underscores in version
+fix(linux): make semver pre-release versions valid for `"pacman"` and `"rpm"` target
