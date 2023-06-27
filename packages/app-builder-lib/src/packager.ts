@@ -306,7 +306,7 @@ export class Packager {
     }
 
     const packageFile = path.join(this.projectDir, "package.json")
-    const checkPackageVersion = configFromOptions?.checkPackageVersion || true
+    const checkPackageVersion = configFromOptions?.checkPackageVersion !== false
     this._devMetadata = await orNullIfFileNotExist(readPackageJson({ packageFile, checkPackageVersion }))
 
     const configuration = await getConfig(this.projectDir, configPath, configFromOptions, new Lazy(() => Promise.resolve(this.devMetadata)))
