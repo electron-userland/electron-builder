@@ -1418,7 +1418,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 </ul>
 </li>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -1575,9 +1575,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
 <h3 id="appimageupdater.isupdateractive()-%E2%87%92-boolean"><code>appImageUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="AppUpdater"></a></p>
-<h2 id="appupdater-%E2%87%90-module%3Atyped-emitter%2Findex.typedeventemitter">AppUpdater ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code></h2>
+<h2 id="appupdater-%E2%87%90-module%3Atiny-typed-emitter%2Flib%2Findex.typedemitter">AppUpdater ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:typed-emitter/index.TypedEventEmitter</code><br>
+<strong>Extends</strong>: <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code><br>
 <strong>Properties</strong></p>
 <ul>
 <li>
@@ -1637,7 +1637,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
