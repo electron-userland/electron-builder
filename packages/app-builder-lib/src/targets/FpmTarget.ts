@@ -152,7 +152,7 @@ export default class FpmTarget extends Target {
       "--description",
       smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version",
-      appInfo.version,
+      this.helper.getSanitizedVersion(target),
       "--package",
       artifactPath,
     ]
