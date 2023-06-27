@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.5.2
+
+### Patch Changes
+
+- [#7630](https://github.com/electron-userland/electron-builder/pull/7630) [`37db080f`](https://github.com/electron-userland/electron-builder/commit/37db080ffabf546132d278ff69532b0558ad0a41) Thanks [@m4rch3n1ng](https://github.com/m4rch3n1ng)! - fix(linux): make semver pre-release versions valid for `"pacman"` and `"rpm"` target
+
 ## 24.5.1
 
 ### Patch Changes
