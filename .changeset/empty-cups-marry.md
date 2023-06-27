@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": patch
+
 ---
 
-fix: always force unpack python, necessary for mac universal builds to pass (flaky test otherwise)
+chore: re-add native module test that used to be flaky
