@@ -384,7 +384,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const entitlements = getEntitlements(filePath)
       const args = {
         entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime || undefined,
+        hardenedRuntime: hardenedRuntime ?? undefined,
         timestamp: customSignOptions.timestamp || undefined,
         requirements: requirements || undefined,
       }
