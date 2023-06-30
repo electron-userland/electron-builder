@@ -2679,6 +2679,11 @@
           ],
           "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
         },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
+        },
         "protocols": {
           "anyOf": [
             {
@@ -3303,6 +3308,11 @@
             }
           ],
           "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
         },
         "protocols": {
           "anyOf": [
