@@ -271,6 +271,8 @@ function archNameToTriplet(arch: Arch): string {
       return "arm-linux-gnueabihf"
     case Arch.arm64:
       return "aarch64-linux-gnu"
+    case Arch.riscv64:
+      return "riscv64-linux-gnu"
 
     default:
       throw new Error(`Unsupported arch ${arch}`)
