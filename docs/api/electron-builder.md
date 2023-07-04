@@ -33,6 +33,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><strong><code id="Arch-armv7l">armv7l</code></strong></li>
 <li><strong><code id="Arch-arm64">arm64</code></strong></li>
 <li><strong><code id="Arch-universal">universal</code></strong></li>
+<li><strong><code id="Arch-riscv64">riscv64</code></strong></li>
 </ul>
 <p><a name="module_electron-builder.build"></a></p>
 <h2 id="electron-builder.build(rawoptions)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>electron-builder.build(rawOptions)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h2>
