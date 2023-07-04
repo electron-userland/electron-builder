@@ -7,4 +7,4 @@ RUN curl -L https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64
   unlink /usr/local/CHANGELOG.md && unlink /usr/local/LICENSE && unlink /usr/local/README.md && \
   # https://github.com/npm/npm/issues/4531
   echo "unsafe-perm true" > .npmrc
-RUN npm i -g pnpm@7.13.2
+RUN npm i -g pnpm@8.6.5
