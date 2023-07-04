@@ -306,6 +306,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       binaries,
       // https://github.com/electron-userland/electron-builder/issues/1480
       strictVerify: options.strictVerify,
+      preAutoEntitlements: options.preAutoEntitlements,
       optionsForFile: await this.getOptionsForFile(appPath, isMas, customSignOptions),
       provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }

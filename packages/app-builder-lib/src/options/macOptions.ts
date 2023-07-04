@@ -165,6 +165,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly strictVerify?: boolean
 
   /**
+   * Whether to enable entitlements automation from @electron/osx-sign.
+   * @default true
+   */
+  readonly preAutoEntitlements?: boolean
+
+  /**
    * Regex or an array of regex's that signal skipping signing a file.
    */
   readonly signIgnore?: Array<string> | string | null
