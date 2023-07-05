@@ -111,4 +111,4 @@ build -wl
 
 ### TargetConfiguration
 * **<code id="TargetConfiguration-target">target</code>** String - The target name. e.g. `snap`.
-* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64" | "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.
+* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.
