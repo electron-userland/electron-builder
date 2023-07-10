@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 24.6.0
+
+### Minor Changes
+
+- [#7642](https://github.com/electron-userland/electron-builder/pull/7642) [`2717282c`](https://github.com/electron-userland/electron-builder/commit/2717282cbff0dc0b6dee7e5af1fa0ecfcff1d5bf) Thanks [@taozhou-glean](https://github.com/taozhou-glean)! - feat: Added support for overriding ‘preAutoEntitlements’ for electron/osx-sign
+
+### Patch Changes
+
+- [#7643](https://github.com/electron-userland/electron-builder/pull/7643) [`5fec6864`](https://github.com/electron-userland/electron-builder/commit/5fec686412b23614bf17f76d03fecc66c220ac99) Thanks [@taozhou-glean](https://github.com/taozhou-glean)! - fix: use nullish coalescing operator for hardenedRuntime default value
+
+- [#7648](https://github.com/electron-userland/electron-builder/pull/7648) [`84ed3ff1`](https://github.com/electron-userland/electron-builder/commit/84ed3ff123b5ae92cd3350d64677434f9b397b76) Thanks [@l3m0nqu1z](https://github.com/l3m0nqu1z)! - fix: re-enable changeDir step for assisted, perMachine installs
+
 ## 24.5.2
 
 ### Patch Changes

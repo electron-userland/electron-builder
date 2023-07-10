@@ -1,3 +1,23 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.5.2...v) (2023-07-10)
+
+
+### Bug Fixes
+
+* re-enable changeDir step for assisted, perMachine installs ([#7648](https://github.com/electron-userland/electron-builder/issues/7648)) ([84ed3ff](https://github.com/electron-userland/electron-builder/commit/84ed3ff123b5ae92cd3350d64677434f9b397b76))
+* use nullish coalescing operator for hardenedRuntime default value ([#7643](https://github.com/electron-userland/electron-builder/issues/7643)) ([5fec686](https://github.com/electron-userland/electron-builder/commit/5fec686412b23614bf17f76d03fecc66c220ac99))
+
+
+### Features
+
+*  Added support for overriding ‘preAutoEntitlements’ for electron/osx-sign ([#7642](https://github.com/electron-userland/electron-builder/issues/7642)) ([2717282](https://github.com/electron-userland/electron-builder/commit/2717282cbff0dc0b6dee7e5af1fa0ecfcff1d5bf))
+
+
+### Reverts
+
+* Revert "chore: update pnpm version for tests and docker images (#7640)" ([014397b](https://github.com/electron-userland/electron-builder/commit/014397b798047b0afda7d5f04d7a8e13036b351a)), closes [#7640](https://github.com/electron-userland/electron-builder/issues/7640)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.5.1...v) (2023-06-27)
 
 
