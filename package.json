@@ -75,7 +75,7 @@
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=8.0.0"
+    "pnpm": ">=7.4.0"
   },
   "pnpm": {
     "patchedDependencies": {
