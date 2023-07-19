@@ -70,7 +70,6 @@ importers:
 
   packages/app-builder-lib:
     specifiers:
-      7zip-bin: ~5.1.1
       '@babel/core': 7.15.5
       '@babel/plugin-proposal-class-properties': 7.14.5
       '@babel/plugin-proposal-decorators': 7.15.4
@@ -103,6 +102,7 @@ importers:
       '@types/js-yaml': 4.0.3
       '@types/semver': 7.3.8
       '@types/tar': ^6.1.3
+      7zip-bin: ~5.1.1
       async-exit-hook: ^2.0.1
       bluebird-lst: ^1.0.9
       builder-util: workspace:*
@@ -127,13 +127,13 @@ importers:
       tar: ^6.1.12
       temp-file: ^3.4.0
     dependencies:
-      7zip-bin: 5.1.1
       '@develar/schema-utils': 2.6.5
       '@electron/notarize': 1.2.3
       '@electron/osx-sign': 1.0.4
       '@electron/universal': 1.3.4
       '@malept/flatpak-bundler': 0.4.0
       '@types/fs-extra': 9.0.13
+      7zip-bin: 5.1.1
       async-exit-hook: 2.0.1
       bluebird-lst: 1.0.9
       builder-util: link:../builder-util
@@ -187,13 +187,13 @@ importers:
 
   packages/builder-util:
     specifiers:
-      7zip-bin: ~5.1.1
       '@types/cross-spawn': 6.0.2
       '@types/debug': ^4.1.6
       '@types/fs-extra': ^9.0.11
       '@types/is-ci': 3.0.0
       '@types/js-yaml': 4.0.3
       '@types/source-map-support': 0.5.4
+      7zip-bin: ~5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: ^1.0.9
       builder-util-runtime: workspace:*
@@ -209,8 +209,8 @@ importers:
       stat-mode: ^1.0.0
       temp-file: ^3.4.0
     dependencies:
-      7zip-bin: 5.1.1
       '@types/debug': 4.1.7
+      7zip-bin: 5.1.1
       app-builder-bin: 4.0.0
       bluebird-lst: 1.0.9
       builder-util-runtime: link:../builder-util-runtime
@@ -285,7 +285,7 @@ importers:
       is-ci: ^3.0.0
       lazy-val: ^1.0.5
       read-config-file: 6.3.2
-      simple-update-notifier: ^1.1.0
+      simple-update-notifier: 2.0.0
       yargs: ^17.6.2
     dependencies:
       app-builder-lib: link:../app-builder-lib
@@ -297,7 +297,7 @@ importers:
       is-ci: 3.0.1
       lazy-val: 1.0.5
       read-config-file: 6.3.2
-      simple-update-notifier: 1.1.0
+      simple-update-notifier: 2.0.0
       yargs: 17.7.1
     devDependencies:
       '@types/fs-extra': 9.0.13
@@ -306,9 +306,9 @@ importers:
 
   packages/electron-builder-squirrel-windows:
     specifiers:
-      7zip-bin: ~5.1.1
       '@types/archiver': 5.3.1
       '@types/fs-extra': 9.0.13
+      7zip-bin: ~5.1.1
       app-builder-lib: workspace:*
       archiver: ^5.3.1
       builder-util: workspace:*
@@ -402,13 +402,13 @@ importers:
 
   test:
     specifiers:
-      7zip-bin: ~5.1.1
       '@electron/osx-sign': ^1.0.4
       '@jest/core': ^27.5.1
       '@types/fs-extra': ^9.0.11
       '@types/jest': ^26.0.23
       '@types/js-yaml': ^4.0.1
       '@types/semver': ^7.3.13
+      7zip-bin: ~5.1.1
       app-builder-lib: workspace:*
       builder-util: workspace:*
       builder-util-runtime: workspace:*
@@ -434,9 +434,9 @@ importers:
       temp-file: ^3.4.0
       yargs: ^17.6.2
     dependencies:
-      7zip-bin: 5.1.1
       '@electron/osx-sign': 1.0.4
       '@jest/core': 27.5.1
+      7zip-bin: 5.1.1
       app-builder-lib: link:../packages/app-builder-lib
       builder-util: link:../packages/builder-util
       builder-util-runtime: link:../packages/builder-util-runtime
@@ -4095,8 +4095,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      JSONStream: 1.3.5
       is-text-path: 1.0.1
+      JSONStream: 1.3.5
       lodash: 4.17.21
       meow: 8.1.2
       split2: 3.2.2
@@ -8863,17 +8863,20 @@ packages:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
     hasBin: true
 
-  /semver/7.0.0:
-    resolution: {integrity: sha512-+GB6zVA9LWh6zovYQLALHwv5rb2PHGlJi3lfiqIHxR0uuwCgefcOJc59v9fv1w8GbStwxuuqqAjI9NMAOOgq1A==}
-    hasBin: true
-    dev: false
-
   /semver/7.3.8:
     resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+
+  /semver/7.5.4:
+    resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: false
 
   /set-blocking/2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
@@ -8922,11 +8925,11 @@ packages:
   /signal-exit/3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
-  /simple-update-notifier/1.1.0:
-    resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}
-    engines: {node: '>=8.10.0'}
+  /simple-update-notifier/2.0.0:
+    resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
+    engines: {node: '>=10'}
     dependencies:
-      semver: 7.0.0
+      semver: 7.5.4
     dev: false
 
   /sisteransi/1.0.5:
