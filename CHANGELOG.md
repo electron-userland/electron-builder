@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.0...v) (2023-07-19)
+
+
+### Bug Fixes
+
+* reverting migration to electron-rebuild since Cxx flags were back-ported to latest versions of electron ([#7668](https://github.com/electron-userland/electron-builder/issues/7668)) ([9cfd35d](https://github.com/electron-userland/electron-builder/commit/9cfd35d5ad320255d88be67530ce5fe6e832f862))
+* updating simple-update-notifier version to resolve vulnerability ([#7673](https://github.com/electron-userland/electron-builder/issues/7673)) ([355e356](https://github.com/electron-userland/electron-builder/commit/355e35654510daded399ea31ed0bcd37effde935))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.5.2...v) (2023-07-10)
 
 

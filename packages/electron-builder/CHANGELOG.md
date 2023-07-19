@@ -1,5 +1,17 @@
 # electron-builder
 
+## 24.6.1
+
+### Patch Changes
+
+- [#7668](https://github.com/electron-userland/electron-builder/pull/7668) [`9cfd35d5`](https://github.com/electron-userland/electron-builder/commit/9cfd35d5ad320255d88be67530ce5fe6e832f862) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: reverting migration to electron-rebuild to resolve native prebuilt modules issue
+
+- [#7673](https://github.com/electron-userland/electron-builder/pull/7673) [`355e3565`](https://github.com/electron-userland/electron-builder/commit/355e35654510daded399ea31ed0bcd37effde935) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: updating simple-update-notifier version to resolve vulnerability
+
+- Updated dependencies [[`9cfd35d5`](https://github.com/electron-userland/electron-builder/commit/9cfd35d5ad320255d88be67530ce5fe6e832f862)]:
+  - app-builder-lib@24.6.1
+  - dmg-builder@24.6.1
+
 ## 24.6.0
 
 ### Patch Changes
