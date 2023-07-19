@@ -68,9 +68,9 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
   }
 
   const devDependencies = (metadata as any).devDependencies
-  if (devDependencies != null && "@electron/rebuild" in devDependencies) {
+  if (devDependencies != null && ("electron-rebuild" in devDependencies || "@electron/rebuild" in devDependencies)) {
     log.info(
-      '@electron/rebuild is already incorporated into electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`'
+      '@electron/rebuild not required if you use electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`'
     )
   }
 
@@ -110,7 +110,7 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
     errors.push(`At least electron-builder-squirrel-windows 20.32.0 is required by current electron-builder version. Please set electron-builder-squirrel-windows to "^20.32.0"`)
   }
 
-  const deps = ["electron", "electron-prebuilt", "@electron/rebuild"]
+  const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
   if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
     deps.push("electron-builder")
   }
