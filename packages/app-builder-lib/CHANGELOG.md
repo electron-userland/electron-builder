@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.6.1
+
+### Patch Changes
+
+- [#7668](https://github.com/electron-userland/electron-builder/pull/7668) [`9cfd35d5`](https://github.com/electron-userland/electron-builder/commit/9cfd35d5ad320255d88be67530ce5fe6e832f862) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: reverting migration to electron-rebuild to resolve native prebuilt modules issue
+
 ## 24.6.0
 
 ### Minor Changes
