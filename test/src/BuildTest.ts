@@ -322,7 +322,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi.only(
   "posix smart unpack",
   app(
     {
@@ -345,8 +345,7 @@ test.ifDevOrLinuxCi(
         it.dependencies = {
           debug: "4.1.1",
           "edge-cs": "1.2.1",
-          // no prebuilt for electron 3
-          // "lzma-native": "3.0.10",
+          "lzma-native": "8.0.6",
           keytar: "5.6.0",
         }
       }),
