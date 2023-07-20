@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.1.4
+
+### Patch Changes
+
+- [#7666](https://github.com/electron-userland/electron-builder/pull/7666) [`441da40d`](https://github.com/electron-userland/electron-builder/commit/441da40d814d90154ed9b120684e7c1a7d919c52) Thanks [@sethjray](https://github.com/sethjray)! - fix: check null for `isCustomChannel` in GitHubProvider.ts
+
 ## 6.1.3
 
 ### Patch Changes
