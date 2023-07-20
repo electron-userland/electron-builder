@@ -153,7 +153,7 @@ function isRunningYarn(execPath: string | null | undefined) {
 
 export interface RebuildOptions {
   frameworkInfo: DesktopFrameworkInfo
-  productionDeps?: Lazy<Array<NodeModuleDirInfo>>
+  productionDeps: Lazy<Array<NodeModuleDirInfo>>
 
   platform?: NodeJS.Platform
   arch?: string
@@ -166,7 +166,7 @@ export interface RebuildOptions {
 /** @internal */
 export async function rebuild(appDir: string, options: RebuildOptions) {
   const configuration: any = {
-    dependencies: await options.productionDeps!.value,
+    dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
     platform: options.platform || process.platform,
     arch: options.arch || process.arch,
