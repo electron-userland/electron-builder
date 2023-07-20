@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.1...v) (2023-07-20)
+
+
+### Bug Fixes
+
+* add back missing `createLazyProductionDeps` that was missed during revert ([#7679](https://github.com/electron-userland/electron-builder/issues/7679)) ([f5d23ef](https://github.com/electron-userland/electron-builder/commit/f5d23ef4edce6096759a3e25dfe453366ab72da2))
+* check null for `isCustomChannel` in GitHubProvider.ts [#7665](https://github.com/electron-userland/electron-builder/issues/7665) ([#7666](https://github.com/electron-userland/electron-builder/issues/7666)) ([441da40](https://github.com/electron-userland/electron-builder/commit/441da40d814d90154ed9b120684e7c1a7d919c52))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.0...v) (2023-07-19)
 
 

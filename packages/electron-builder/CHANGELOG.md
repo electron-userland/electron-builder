@@ -1,5 +1,15 @@
 # electron-builder
 
+## 24.6.2
+
+### Patch Changes
+
+- [#7679](https://github.com/electron-userland/electron-builder/pull/7679) [`f5d23ef4`](https://github.com/electron-userland/electron-builder/commit/f5d23ef4edce6096759a3e25dfe453366ab72da2) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add back missing `createLazyProductionDeps` that was missed during revert
+
+- Updated dependencies [[`f5d23ef4`](https://github.com/electron-userland/electron-builder/commit/f5d23ef4edce6096759a3e25dfe453366ab72da2)]:
+  - app-builder-lib@24.6.2
+  - dmg-builder@24.6.2
+
 ## 24.6.1
 
 ### Patch Changes
