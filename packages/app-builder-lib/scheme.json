@@ -6340,6 +6340,21 @@
           "description": "Whether to sign DLL files. Advanced option.",
           "type": "boolean"
         },
+        "signExts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Explicit file extensions to also sign. Advanced option."
+        },
         "signingHashAlgorithms": {
           "anyOf": [
             {
