@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.2...v) (2023-07-24)
+
+
+### Bug Fixes
+
+* add `signExts` configuration option to not sign `.node` files by default ([#7685](https://github.com/electron-userland/electron-builder/issues/7685)) ([78448af](https://github.com/electron-userland/electron-builder/commit/78448af062e2ce70c1eb590c05cce01919933e26))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.1...v) (2023-07-20)
 
 
