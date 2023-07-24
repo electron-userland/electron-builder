@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.6.3
+
+### Patch Changes
+
+- [#7685](https://github.com/electron-userland/electron-builder/pull/7685) [`78448af0`](https://github.com/electron-userland/electron-builder/commit/78448af062e2ce70c1eb590c05cce01919933e26) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow explicit configuration on what additional files to sign. Do not sign .node files by default
+
 ## 24.6.2
 
 ### Patch Changes
