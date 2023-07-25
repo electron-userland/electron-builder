@@ -14,7 +14,7 @@ This repository has a mono-repo structure consisting of multiple packages. Try t
   electron-builder for your other projects to leverage and test with.
 
 ```
-npm i -g pnpm@latest-7
+npm i -g pnpm@latest-8
 pnpm i yalc -g
 ```
 
