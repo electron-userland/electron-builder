@@ -27,7 +27,10 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 ```yaml
 win:
   publish:
-    - github
+      # an object provider for github with additional options
+    - provider: github
+      protocol: https
+      # a string provider for bitbucket that will use default options
     - bitbucket
 ```
 
