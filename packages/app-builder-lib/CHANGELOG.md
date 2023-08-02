@@ -1,5 +1,139 @@
 # app-builder-lib
 
+## 24.6.3
+
+### Patch Changes
+
+- [#7685](https://github.com/electron-userland/electron-builder/pull/7685) [`78448af0`](https://github.com/electron-userland/electron-builder/commit/78448af062e2ce70c1eb590c05cce01919933e26) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: allow explicit configuration on what additional files to sign. Do not sign .node files by default
+
+## 24.6.2
+
+### Patch Changes
+
+- [#7679](https://github.com/electron-userland/electron-builder/pull/7679) [`f5d23ef4`](https://github.com/electron-userland/electron-builder/commit/f5d23ef4edce6096759a3e25dfe453366ab72da2) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: add back missing `createLazyProductionDeps` that was missed during revert
+
+## 24.6.1
+
+### Patch Changes
+
+- [#7668](https://github.com/electron-userland/electron-builder/pull/7668) [`9cfd35d5`](https://github.com/electron-userland/electron-builder/commit/9cfd35d5ad320255d88be67530ce5fe6e832f862) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: reverting migration to electron-rebuild to resolve native prebuilt modules issue
+
+## 24.6.0
+
+### Minor Changes
+
+- [#7642](https://github.com/electron-userland/electron-builder/pull/7642) [`2717282c`](https://github.com/electron-userland/electron-builder/commit/2717282cbff0dc0b6dee7e5af1fa0ecfcff1d5bf) Thanks [@taozhou-glean](https://github.com/taozhou-glean)! - feat: Added support for overriding ‘preAutoEntitlements’ for electron/osx-sign
+
+### Patch Changes
+
+- [#7643](https://github.com/electron-userland/electron-builder/pull/7643) [`5fec6864`](https://github.com/electron-userland/electron-builder/commit/5fec686412b23614bf17f76d03fecc66c220ac99) Thanks [@taozhou-glean](https://github.com/taozhou-glean)! - fix: use nullish coalescing operator for hardenedRuntime default value
+
+- [#7648](https://github.com/electron-userland/electron-builder/pull/7648) [`84ed3ff1`](https://github.com/electron-userland/electron-builder/commit/84ed3ff123b5ae92cd3350d64677434f9b397b76) Thanks [@l3m0nqu1z](https://github.com/l3m0nqu1z)! - fix: re-enable changeDir step for assisted, perMachine installs
+
+## 24.5.2
+
+### Patch Changes
+
+- [#7630](https://github.com/electron-userland/electron-builder/pull/7630) [`37db080f`](https://github.com/electron-userland/electron-builder/commit/37db080ffabf546132d278ff69532b0558ad0a41) Thanks [@m4rch3n1ng](https://github.com/m4rch3n1ng)! - fix(linux): make semver pre-release versions valid for `"pacman"` and `"rpm"` target
+
+## 24.5.1
+
+### Patch Changes
+
+- [#7629](https://github.com/electron-userland/electron-builder/pull/7629) [`285aa766`](https://github.com/electron-userland/electron-builder/commit/285aa766c2675448689f2e465b6fa2b2acacdbc6) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: use electron/rebuild Rebuilder directly for cross-platform builds
+
+- [#7622](https://github.com/electron-userland/electron-builder/pull/7622) [`46524169`](https://github.com/electron-userland/electron-builder/commit/46524169cefbfa18e342d7fa19e79e710aae848e) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): use Identity `hash` instead of `name` if it exists
+
+## 24.5.0
+
+### Minor Changes
+
+- [#7609](https://github.com/electron-userland/electron-builder/pull/7609) [`99f49cf7`](https://github.com/electron-userland/electron-builder/commit/99f49cf7a86afa33d35652ffc6329fefed2e5f75) Thanks [@panther7](https://github.com/panther7)! - Added env variable for 7z filter
+
+### Patch Changes
+
+- [#7603](https://github.com/electron-userland/electron-builder/pull/7603) [`f464e3ee`](https://github.com/electron-userland/electron-builder/commit/f464e3ee6b8a6330a9be2961afaaec150777f91c) Thanks [@GabrielNSD](https://github.com/GabrielNSD)! - fix: Allow building MAS and dmg targets with different appId
+
+- [#7552](https://github.com/electron-userland/electron-builder/pull/7552) [`e3fc9b54`](https://github.com/electron-userland/electron-builder/commit/e3fc9b544cc8c6728ffd77a45408d6e0e87dbb46) Thanks [@p2004a](https://github.com/p2004a)! - fix(nsis): Ensure application name sub-folder on fresh installs.
+
+- Updated dependencies [[`4dce3718`](https://github.com/electron-userland/electron-builder/commit/4dce3718abd75b8d0e29f37f6ba0ee1e76353c65)]:
+  - builder-util@24.5.0
+  - electron-publish@24.5.0
+
+## 24.4.0
+
+### Minor Changes
+
+- [#7558](https://github.com/electron-userland/electron-builder/pull/7558) [`54c85374`](https://github.com/electron-userland/electron-builder/commit/54c85374790f7a8e0dc520a20c716b4afe69be20) Thanks [@t3chguy](https://github.com/t3chguy)! - Add ability to specify recommended deb dependencies
+
+### Patch Changes
+
+- [#7529](https://github.com/electron-userland/electron-builder/pull/7529) [`60eb5558`](https://github.com/electron-userland/electron-builder/commit/60eb55584d82cc72d6d546e1a51198d3e4b91ad3) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - When using the msiWrapped target, allow the nsis target to be capitalized in the configuration file
+
+- [#7568](https://github.com/electron-userland/electron-builder/pull/7568) [`c9d20db9`](https://github.com/electron-userland/electron-builder/commit/c9d20db964cce991dab137ec0105d40d8eacd95c) Thanks [@t3chguy](https://github.com/t3chguy)! - Fix missing @types dependencies for output d.ts files
+
+- Updated dependencies [[`c9d20db9`](https://github.com/electron-userland/electron-builder/commit/c9d20db964cce991dab137ec0105d40d8eacd95c)]:
+  - builder-util@24.4.0
+  - electron-publish@24.4.0
+
+## 24.3.0
+
+### Minor Changes
+
+- [#7531](https://github.com/electron-userland/electron-builder/pull/7531) [`0db9c66f`](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8) Thanks [@inickvel](https://github.com/inickvel)! - Display "Space required" text for NSIS installer
+
+### Patch Changes
+
+- [#7560](https://github.com/electron-userland/electron-builder/pull/7560) [`592570b7`](https://github.com/electron-userland/electron-builder/commit/592570b72e7fc5caab6352805eadf149c637c420) Thanks [@davej](https://github.com/davej)! - chore: Update `@electron/rebuild`
+
+- [#7557](https://github.com/electron-userland/electron-builder/pull/7557) [`22bc9370`](https://github.com/electron-userland/electron-builder/commit/22bc93707ca9af1b6be487f91589813e392726a2) Thanks [@t3chguy](https://github.com/t3chguy)! - Update link to fpm docs
+
+- Updated dependencies [[`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d), [`0db9c66f`](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8)]:
+  - builder-util-runtime@9.2.1
+  - builder-util@24.3.0
+  - electron-publish@24.3.0
+
+## 24.2.1
+
+### Patch Changes
+
+- [#7541](https://github.com/electron-userland/electron-builder/pull/7541) [`a4888ac4`](https://github.com/electron-userland/electron-builder/commit/a4888ac490e4e5d3783858d27acd487b2b8444fd) Thanks [@yannickm95](https://github.com/yannickm95)! - Update `@electron/rebuild` to version `^3.2.11` and account for the new folder structure of the package.
+
+- [#7501](https://github.com/electron-userland/electron-builder/pull/7501) [`e83dc814`](https://github.com/electron-userland/electron-builder/commit/e83dc814725f543c6b51721fdbfee83158d35084) Thanks [@markizano](https://github.com/markizano)! - Use `update-alternatives` when available.
+
+  ## What is changing?
+
+  Test for `update-alternatives` in DEB based installations and use this whenever possible.
+  In this way, middleware and downstream projects and users can specify binaries of their
+  own priority that would override this programs' configured executable.
+
+  ## Why is this changing?
+
+  Personally, I don't want apps running as myself or a privileged user in my system.
+  For this. I have a shell that is executed to drop permissions first, then execute the
+  selected software.
+  Electron apps don't conform to this since they link directly rather than using a linking
+  system.
+
+  This change is to ensure that system is used before resorting to direct links.
+
+  ## How should this be consumed?
+
+  Simply update as normal and this package will switch to using update-alternatives.
+  This will allow middleware and end-users to better control the active executable.
+
+## 24.2.0
+
+### Minor Changes
+
+- [#7516](https://github.com/electron-userland/electron-builder/pull/7516) [`1533501f`](https://github.com/electron-userland/electron-builder/commit/1533501f999b364b656cdaa2048a1a7fd5e7c361) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: Moved `electronLanguages` to global config to support win/linux
+
+## 24.1.3
+
+### Patch Changes
+
+- [#7519](https://github.com/electron-userland/electron-builder/pull/7519) [`abf37039`](https://github.com/electron-userland/electron-builder/commit/abf370395f45e4005f12131c532325a1e3232309) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: "Can't reconcile two non-macho files" due to `disablePreGypCopy` functionality in new electron/rebuild integration
+
 ## 24.1.2
 
 ### Patch Changes

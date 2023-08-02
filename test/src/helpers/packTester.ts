@@ -52,7 +52,7 @@ export interface PackedContext {
   readonly outDir: string
 
   readonly getResources: (platform: Platform, arch?: Arch) => string
-  readonly getContent: (platform: Platform) => string
+  readonly getContent: (platform: Platform, arch?: Arch) => string
 
   readonly packager: Packager
 
@@ -122,7 +122,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production"], {
+        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--legacy-peer-deps"], {
           cwd: projectDir,
         })
       }
@@ -141,14 +141,18 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.packed != null) {
         const base = function (platform: Platform, arch?: Arch): string {
-          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
+          return path.join(
+            outDir,
+            `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
+            platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
+          )
         }
 
         await checkOptions.packed({
           projectDir,
           outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
-          getContent: platform => base(platform),
+          getResources: (platform, arch) => path.join(base(platform, arch), platform === Platform.MAC ? "Resources" : "resources"),
+          getContent: (platform, arch) => base(platform, arch),
           packager,
           tmpDir,
         })
@@ -259,7 +263,8 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
       const nameToTarget = platformToTargets.get(platform)!
       if (platform === Platform.MAC) {
-        const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
+        const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
+        const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       } else if (platform === Platform.LINUX) {
         await checkLinuxResult(outDir, packager, arch, nameToTarget)
@@ -322,7 +327,8 @@ function parseDebControl(info: string): any {
 
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
-  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", path.join(packedAppDir, "Contents", "Info.plist")]))[0]
+  const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
+  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", plistPath]))[0]
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,

@@ -106,11 +106,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         return super.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
       }
       case Arch.universal: {
+        const outDirName = (arch: Arch) => `${appOutDir}-${Arch[arch]}-temp`
+
         const x64Arch = Arch.x64
-        const x64AppOutDir = appOutDir + "--" + Arch[x64Arch]
+        const x64AppOutDir = outDirName(x64Arch)
         await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false, true)
         const arm64Arch = Arch.arm64
-        const arm64AppOutPath = appOutDir + "--" + Arch[arm64Arch]
+        const arm64AppOutPath = outDirName(arm64Arch)
         await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false, true)
         const framework = this.info.framework
         log.info(
@@ -295,7 +297,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           https://github.com/electron-userland/electron-builder/issues/5383
           */
       },
-      identity: identity ? identity.name : undefined,
+      identity: identity ? identity.hash || identity.name : undefined,
       type,
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion || undefined,
@@ -304,6 +306,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       binaries,
       // https://github.com/electron-userland/electron-builder/issues/1480
       strictVerify: options.strictVerify,
+      preAutoEntitlements: options.preAutoEntitlements,
       optionsForFile: await this.getOptionsForFile(appPath, isMas, customSignOptions),
       provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }
@@ -382,7 +385,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       const entitlements = getEntitlements(filePath)
       const args = {
         entitlements: entitlements || undefined,
-        hardenedRuntime: hardenedRuntime || undefined,
+        hardenedRuntime: hardenedRuntime ?? undefined,
         timestamp: customSignOptions.timestamp || undefined,
         requirements: requirements || undefined,
       }
@@ -442,8 +445,6 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     if (minimumSystemVersion != null) {
       appPlist.LSMinimumSystemVersion = minimumSystemVersion
     }
-
-    appPlist.CFBundleIdentifier = appInfo.macBundleIdentifier
 
     appPlist.CFBundleShortVersionString = this.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
     appPlist.CFBundleVersion = appInfo.buildVersion

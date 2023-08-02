@@ -28,15 +28,15 @@ A complete solution to package and build a ready for distribution [Electron](htt
             </div>
             Your gateway to understanding your diabetes data
          </a>
-         <br>  
+         <br>
       </td>
       <td>
          <br>
          <a href="https://keygen.sh/?via=electron-builder">
             <div>
-               <img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
+               <img src="https://keygen.sh/images/logo-pill.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
             </div>
-            A dead-simple software licensing and distribution API built for developers
+            An open, source-available software licensing and distribution API
          </a>
          <br>
       </td>
@@ -50,7 +50,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
             </div>
             ToDesktop: An all-in-one platform for building and releasing Electron apps
          </a>
-         <br>    
+         <br>
       </td>
       <td>
          <br>

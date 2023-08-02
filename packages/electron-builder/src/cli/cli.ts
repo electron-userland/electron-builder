@@ -78,5 +78,5 @@ async function checkIsOutdated() {
 async function rebuildAppNativeCode(args: any) {
   const projectDir = process.cwd()
   // this script must be used only for electron
-  return nodeGypRebuild({ version: await getElectronVersion(projectDir), useCustomDist: true }, args.arch)
+  return nodeGypRebuild(args.platform, args.arch, { version: await getElectronVersion(projectDir), useCustomDist: true })
 }

@@ -33,6 +33,9 @@ export class DebUpdater extends BaseUpdater {
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
     const cmd = ["dpkg", "-i", options.installerPath, "||", "apt-get", "install", "-f", "-y"]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    if (options.isForceRunAfter) {
+      this.app.relaunch()
+    }
     return true
   }
 }

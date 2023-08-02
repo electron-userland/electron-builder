@@ -26,7 +26,7 @@ import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
-import type TypedEmitter from "typed-emitter"
+import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import { AuthInfo } from "electron"
 
@@ -636,7 +636,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return path.basename(urlPath)
       } else {
         // url like /latest, generate name
-        return `update.${taskOptions.fileExtension}`
+        return taskOptions.fileInfo.info.url
       }
     }
 

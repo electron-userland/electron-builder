@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml } from "builder-util"
+import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
@@ -152,7 +152,7 @@ export default class FpmTarget extends Target {
       "--description",
       smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version",
-      appInfo.version,
+      this.helper.getSanitizedVersion(target),
       "--package",
       artifactPath,
     ]
@@ -193,6 +193,13 @@ export default class FpmTarget extends Target {
         } else {
           throw new Error(`depends must be Array or String, but specified as: ${depends}`)
         }
+      }
+    }
+
+    if (target === "deb") {
+      const recommends = (options as DebOptions).recommends
+      if (recommends) {
+        fpmConfiguration.customRecommends = asArray(recommends)
       }
     }
 
@@ -274,6 +281,7 @@ interface FpmConfiguration {
   target: string
   args: Array<string>
   customDepends?: Array<string>
+  customRecommends?: Array<string>
   compression?: string | null
 }
 

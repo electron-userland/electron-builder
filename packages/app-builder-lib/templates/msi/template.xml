@@ -16,6 +16,7 @@
     <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage='A newer version of "[ProductName]" is already installed.'/>
     <MediaTemplate CompressionLevel="${compressionLevel}" EmbedCab="yes"/>
 
+    <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER"/>
     <Property Id="ApplicationFolderName" Value="${installationDirectoryWixName}"/>
     <Property Id="WixAppFolder" Value="WixPerUserFolder"/>
     <Property Id="DISABLEADVTSHORTCUTS" Value="1"/>
@@ -69,7 +70,11 @@
         <Publish Dialog="InstallScopeDlg" Control="Next" Property="ALLUSERS" Value="1" Order="4">WixAppFolder = "WixPerMachineFolder"</Publish>
         <!-- Run 'FindRelatedProducts' again after changing the install scope, because its first run might have ignored an existing installation based on the default scope at the time. https://stackoverflow.com/a/35064434 -->
         <Publish Dialog="InstallScopeDlg" Control="Next" Event="DoAction" Value="FindRelatedProducts" Order="5">1</Publish>
-        <Publish Dialog="InstallScopeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="6">1</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="6">WixAppFolder = "WixPerUserFolder"</Publish>
+        <Publish Dialog="InstallScopeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="7">WixAppFolder = "WixPerMachineFolder"</Publish>
+
+        <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="InstallScopeDlg" Order="2">1</Publish>
+        <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="2">1</Publish>
 
         <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallScopeDlg" Order="2">NOT Installed</Publish>
       </UI>

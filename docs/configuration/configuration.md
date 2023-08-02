@@ -175,13 +175,15 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) =&gt; Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when <code>npmRebuild</code> is set to <code>true</code>. Resolving to <code>false</code> will skip dependencies install or rebuild.</p>
 <p>If provided and <code>node_modules</code> are missing, it will not invoke production dependencies check.</p>
 </li>
-</ul>
-<hr>
-<ul>
-<li><code id="Configuration-remoteBuild">remoteBuild</code> = <code>true</code> Boolean - Whether to build using Electron Build Service if target not supported on current OS.</li>
-<li><code id="Configuration-includePdb">includePdb</code> = <code>false</code> Boolean - Whether to include PDB files.</li>
-<li><code id="Configuration-removePackageScripts">removePackageScripts</code> = <code>true</code> Boolean - Whether to remove <code>scripts</code> field from <code>package.json</code> files.</li>
-<li><code id="Configuration-removePackageKeywords">removePackageKeywords</code> = <code>true</code> Boolean - Whether to remove <code>keywords</code> field from <code>package.json</code> files.</li>
+<li>
+<p><code id="Configuration-includePdb">includePdb</code> = <code>false</code> Boolean - Whether to include PDB files.</p>
+</li>
+<li>
+<p><code id="Configuration-removePackageScripts">removePackageScripts</code> = <code>true</code> Boolean - Whether to remove <code>scripts</code> field from <code>package.json</code> files.</p>
+</li>
+<li>
+<p><code id="Configuration-removePackageKeywords">removePackageKeywords</code> = <code>true</code> Boolean - Whether to remove <code>keywords</code> field from <code>package.json</code> files.</p>
+</li>
 </ul>
 
 <!-- end of generated block -->

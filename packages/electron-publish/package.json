@@ -1,6 +1,6 @@
 {
   "name": "electron-publish",
-  "version": "24.1.2",
+  "version": "24.5.0",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "out"
   ],
   "dependencies": {
+    "@types/fs-extra": "^9.0.11",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
@@ -24,7 +25,6 @@
   },
   "typings": "./out/publisher.d.ts",
   "devDependencies": {
-    "@types/fs-extra": "^9.0.11",
     "@types/mime": "2.0.3"
   }
 }

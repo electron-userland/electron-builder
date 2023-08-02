@@ -136,11 +136,6 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly requirements?: string | null
 
-  /**
-   * The electron locales. By default Electron locales used as is.
-   */
-  readonly electronLanguages?: Array<string> | string
-
   /** @private */
   readonly cscInstallerLink?: string | null
   /** @private */
@@ -168,6 +163,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly strictVerify?: boolean
+
+  /**
+   * Whether to enable entitlements automation from @electron/osx-sign.
+   * @default true
+   */
+  readonly preAutoEntitlements?: boolean
 
   /**
    * Regex or an array of regex's that signal skipping signing a file.

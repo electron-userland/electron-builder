@@ -1,5 +1,28 @@
 # builder-util
 
+## 24.5.0
+
+### Patch Changes
+
+- [#7600](https://github.com/electron-userland/electron-builder/pull/7600) [`4dce3718`](https://github.com/electron-userland/electron-builder/commit/4dce3718abd75b8d0e29f37f6ba0ee1e76353c65) Thanks [@roryabraham](https://github.com/roryabraham)! - fix(mac): wrap hdiutil detach in retry w/ backoff
+
+## 24.4.0
+
+### Patch Changes
+
+- [#7568](https://github.com/electron-userland/electron-builder/pull/7568) [`c9d20db9`](https://github.com/electron-userland/electron-builder/commit/c9d20db964cce991dab137ec0105d40d8eacd95c) Thanks [@t3chguy](https://github.com/t3chguy)! - Fix missing @types dependencies for output d.ts files
+
+## 24.3.0
+
+### Minor Changes
+
+- [#7531](https://github.com/electron-userland/electron-builder/pull/7531) [`0db9c66f`](https://github.com/electron-userland/electron-builder/commit/0db9c66f0fff9a482d34aeaafaf11f542b786bf8) Thanks [@inickvel](https://github.com/inickvel)! - Display "Space required" text for NSIS installer
+
+### Patch Changes
+
+- Updated dependencies [[`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d)]:
+  - builder-util-runtime@9.2.1
+
 ## 24.1.2
 
 ### Patch Changes

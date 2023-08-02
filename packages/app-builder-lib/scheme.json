@@ -607,7 +607,7 @@
               "type": "null"
             }
           ],
-          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
         },
         "icon": {
           "type": "string"
@@ -720,6 +720,20 @@
               ]
             }
           ]
+        },
+        "recommends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps).."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -1731,6 +1745,20 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
+        },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
           "type": [
@@ -2120,7 +2148,7 @@
               "type": "null"
             }
           ],
-          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
         },
         "icon": {
           "type": "string"
@@ -2394,7 +2422,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -2650,6 +2678,11 @@
             }
           ],
           "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
         },
         "protocols": {
           "anyOf": [
@@ -3019,7 +3052,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -3275,6 +3308,11 @@
             }
           ],
           "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
         },
         "protocols": {
           "anyOf": [
@@ -6006,6 +6044,20 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
+        },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
           "type": [
@@ -6287,6 +6339,21 @@
           "default": false,
           "description": "Whether to sign DLL files. Advanced option.",
           "type": "boolean"
+        },
+        "signExts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Explicit file extensions to also sign. Advanced option."
         },
         "signingHashAlgorithms": {
           "anyOf": [
@@ -6666,6 +6733,20 @@
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
       "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+    },
+    "electronLanguages": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
       "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -7141,11 +7222,6 @@
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
       "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
-    },
-    "remoteBuild": {
-      "default": true,
-      "description": "Whether to build using Electron Build Service if target not supported on current OS.",
-      "type": "boolean"
     },
     "removePackageKeywords": {
       "default": true,

@@ -1,5 +1,56 @@
 ## 4.3.0
 
+## 6.1.4
+
+### Patch Changes
+
+- [#7666](https://github.com/electron-userland/electron-builder/pull/7666) [`441da40d`](https://github.com/electron-userland/electron-builder/commit/441da40d814d90154ed9b120684e7c1a7d919c52) Thanks [@sethjray](https://github.com/sethjray)! - fix: check null for `isCustomChannel` in GitHubProvider.ts
+
+## 6.1.3
+
+### Patch Changes
+
+- [#7637](https://github.com/electron-userland/electron-builder/pull/7637) [`b3dfe64b`](https://github.com/electron-userland/electron-builder/commit/b3dfe64b22dc51375861f6b8a3517ff9ab562aaf) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: trigger `app.relaunch()` if `isForceRunAfter = true` for (beta) deb and rpm updaters
+
+- [#7633](https://github.com/electron-userland/electron-builder/pull/7633) [`531a6309`](https://github.com/electron-userland/electron-builder/commit/531a6309283ea1b2b262817a170e2c030735f8b6) Thanks [@s00d](https://github.com/s00d)! - fix: change typed-emitter to tiny-typed-emitter to remove rxjs dependency
+
+## 6.1.2
+
+### Patch Changes
+
+- [#7628](https://github.com/electron-userland/electron-builder/pull/7628) [`98f535e1`](https://github.com/electron-userland/electron-builder/commit/98f535e1f80b7f84dc3c2f135a4a5ea8cd142f31) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: removing stdio from spawnSync to fix crash on rpm/deb updaters
+
+## 6.1.1
+
+### Patch Changes
+
+- [#7597](https://github.com/electron-userland/electron-builder/pull/7597) [`cd15e161`](https://github.com/electron-userland/electron-builder/commit/cd15e161031e180200ab772f01198a5b68fa42fe) Thanks [@marcuskirsch](https://github.com/marcuskirsch)! - fix: default file name of `update.${fileExtension}` for downloaded files in private repositories.
+
+## 6.1.0
+
+### Minor Changes
+
+- [#7533](https://github.com/electron-userland/electron-builder/pull/7533) [`4786d415`](https://github.com/electron-userland/electron-builder/commit/4786d41575c638137c7016c905d089ab74bf5e28) Thanks [@vitto-moz](https://github.com/vitto-moz)! - feat: nsis install method - exposed as public to avoid quit the app for the install
+
+### Patch Changes
+
+- [#7544](https://github.com/electron-userland/electron-builder/pull/7544) [`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Fix differential downloads when the server compresses the blockmap file HTTP response
+
+- Updated dependencies [[`dab3aeba`](https://github.com/electron-userland/electron-builder/commit/dab3aeba2240ead4300c8fdb35e3d9c16b04a23d)]:
+  - builder-util-runtime@9.2.1
+
+## 6.0.4
+
+### Patch Changes
+
+- [#7542](https://github.com/electron-userland/electron-builder/pull/7542) [`9123e31e`](https://github.com/electron-userland/electron-builder/commit/9123e31eb792211da717804e5a5b8029fe694d5f) Thanks [@ganthern](https://github.com/ganthern)! - fix: handle errors on responses in differential download (#2398)
+
+## 6.0.3
+
+### Patch Changes
+
+- [#7524](https://github.com/electron-userland/electron-builder/pull/7524) [`1a134800`](https://github.com/electron-userland/electron-builder/commit/1a13480036a2219007f866c64beea45292bc2946) Thanks [@NoahAndrews](https://github.com/NoahAndrews)! - Fixed error handling when launching updater (fixes NSIS updates when isAdminRightsRequired is incorrectly set to false)
+
 ## 6.0.2
 
 ### Patch Changes

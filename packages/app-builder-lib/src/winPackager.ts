@@ -355,7 +355,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   private shouldSignFile(file: string): boolean {
     const shouldSignDll = this.platformSpecificBuildOptions.signDlls === true && file.endsWith(".dll")
-    return shouldSignDll || file.endsWith(".exe") || file.endsWith(".node")
+    const shouldSignExplicit = !!this.platformSpecificBuildOptions.signExts?.some(ext => file.endsWith(ext))
+    return shouldSignDll || shouldSignExplicit || file.endsWith(".exe")
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {

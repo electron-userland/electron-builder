@@ -41,7 +41,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected abstract doInstall(options: InstallOptions): boolean
 
   // must be sync (because quit even handler is not async)
-  protected install(isSilent: boolean, isForceRunAfter: boolean): boolean {
+  install(isSilent = false, isForceRunAfter = false): boolean {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
@@ -119,7 +119,6 @@ export abstract class BaseUpdater extends AppUpdater {
   protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
-      stdio: "inherit",
       env: { ...process.env, ...env },
       encoding: "utf-8",
       shell: true,
@@ -144,7 +143,7 @@ export abstract class BaseUpdater extends AppUpdater {
           reject(error)
         })
         p.unref()
-        if (process.pid !== undefined) {
+        if (p.pid !== undefined) {
           resolve(true)
         }
       } catch (error) {

@@ -4,6 +4,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 test.ifMac.ifAll("two-package", () =>
   assertPack(
@@ -91,6 +92,22 @@ test.ifMac(
         await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
         await assertThat(path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
       },
+    }
+  )
+)
+
+test.ifMac("yarn two package.json w/ native module", () =>
+  assertPack(
+    "test-app-two-native-modules",
+    {
+      targets: Platform.MAC.createTarget("zip", Arch.universal),
+      config: {
+        npmRebuild: true,
+      },
+    },
+    {
+      signed: false,
+      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.universal)),
     }
   )
 )
