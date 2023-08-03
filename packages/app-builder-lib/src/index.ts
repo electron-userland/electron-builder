@@ -46,7 +46,7 @@ export {
   CustomWindowsSign,
   FileCodeSigningInfo,
   CertificateFromStoreInfo,
-  DoSign,
+  doSign,
 } from "./codeSign/windowsCodeSign"
 export { CancellationToken, ProgressInfo } from "builder-util-runtime"
 export { PublishOptions, UploadTask } from "electron-publish"
