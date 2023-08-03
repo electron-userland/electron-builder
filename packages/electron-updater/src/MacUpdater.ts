@@ -79,12 +79,16 @@ export class MacUpdater extends AppUpdater {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
     }
 
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+
     return this.executeDownload({
       fileExtension: "zip",
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
-      task: (destinationFile, downloadOptions) => {
-        return this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
+      task: async (destinationFile, downloadOptions) => {
+        if (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider)) {
+          await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions);
+        }
       },
       done: event => this.updateDownloaded(zipFileInfo, event),
     })
