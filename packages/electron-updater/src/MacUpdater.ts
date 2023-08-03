@@ -1,6 +1,6 @@
-import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
+import { AllPublishOptions, newError, safeStringifyJson, CURRENT_MAC_APP_ZIP_FILE_NAME } from "builder-util-runtime"
 import { stat } from "fs-extra"
-import { createReadStream } from "fs"
+import { createReadStream, copyFileSync } from "fs"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
@@ -86,9 +86,10 @@ export class MacUpdater extends AppUpdater {
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: async (destinationFile, downloadOptions) => {
-        if (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider)) {
-          await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions);
+        if (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME)) {
+          await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
+        copyFileSync(destinationFile, this.downloadedUpdateHelper!.cacheDir + "/update.zip")
       },
       done: event => this.updateDownloaded(zipFileInfo, event),
     })

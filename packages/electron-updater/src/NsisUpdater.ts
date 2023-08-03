@@ -1,4 +1,4 @@
-import { AllPublishOptions, newError, PackageFileInfo,  CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, newError, PackageFileInfo, CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME } from "builder-util-runtime"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
@@ -61,7 +61,7 @@ export class NsisUpdater extends BaseUpdater {
             "disableWebInstaller is set to false, you should set it to true if you do not plan on using a web installer. This will default to true in a future version."
           )
         }
-        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))) {
+        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_APP_INSTALLER_FILE_NAME))) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 

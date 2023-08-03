@@ -10,7 +10,6 @@ import {
   CancellationError,
   ProgressInfo,
   BlockMap,
-  CURRENT_APP_INSTALLER_FILE_NAME,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { EventEmitter } from "events"
@@ -699,7 +698,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     fileInfo: ResolvedUpdateFileInfo,
     downloadUpdateOptions: DownloadUpdateOptions,
     installerPath: string,
-    provider: Provider<any>
+    provider: Provider<any>,
+    oldInstallerFileName: string
   ): Promise<boolean> {
     try {
       if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
@@ -727,7 +727,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
       const downloadOptions: DifferentialDownloaderOptions = {
         newUrl: fileInfo.url,
-        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_APP_INSTALLER_FILE_NAME),
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, oldInstallerFileName),
         logger: this._logger,
         newFile: installerPath,
         isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
