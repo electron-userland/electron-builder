@@ -89,6 +89,9 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       }
 
       for (const newArtifact of newArtifacts) {
+        if (buildResult.artifactPaths.includes(newArtifact)) {
+          continue;
+        }
         buildResult.artifactPaths.push(newArtifact)
         for (const publishConfiguration of publishConfigurations) {
           publishManager.scheduleUpload(
