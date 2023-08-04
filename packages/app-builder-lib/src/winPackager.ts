@@ -7,7 +7,7 @@ import {readdir} from "fs/promises"
 import * as isCI from "is-ci"
 import {Lazy} from "lazy-val"
 import * as path from "path"
-import {downloadCertificate} from "./codeSign/codesign"
+import { importCertificate } from "./codeSign/codesign"
 import {
   CertificateFromStoreInfo,
   CertificateInfo,
@@ -24,15 +24,17 @@ import {RequestedExecutionLevel, WindowsConfiguration} from "./options/winOption
 import {Packager} from "./packager"
 import {chooseNotNull, PlatformPackager} from "./platformPackager"
 import AppXTarget from "./targets/AppxTarget"
-import {NsisTarget} from "./targets/nsis/NsisTarget"
-import {AppPackageHelper, CopyElevateHelper} from "./targets/nsis/nsisUtil"
-import {WebInstallerTarget} from "./targets/nsis/WebInstallerTarget"
-import {createCommonTarget} from "./targets/targetFactory"
-import {BuildCacheManager, digest} from "./util/cacheManager"
-import {isBuildCacheEnabled} from "./util/flags"
-import {time} from "./util/timer"
-import {getWindowsVm, VmManager} from "./vm/vm"
-import {execWine} from "./wine"
+import MsiTarget from "./targets/MsiTarget"
+import MsiWrappedTarget from "./targets/MsiWrappedTarget"
+import { NsisTarget } from "./targets/nsis/NsisTarget"
+import { AppPackageHelper, CopyElevateHelper } from "./targets/nsis/nsisUtil"
+import { WebInstallerTarget } from "./targets/nsis/WebInstallerTarget"
+import { createCommonTarget } from "./targets/targetFactory"
+import { BuildCacheManager, digest } from "./util/cacheManager"
+import { isBuildCacheEnabled } from "./util/flags"
+import { time } from "./util/timer"
+import { getWindowsVm, VmManager } from "./vm/vm"
+import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
@@ -40,7 +42,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
       return this.vm.value
         .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-        .catch(e => {
+        .catch((e: any) => {
           // https://github.com/electron-userland/electron-builder/pull/2397
           if (platformSpecificBuildOptions.sign == null) {
             throw e
@@ -66,9 +68,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return (
-      downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+      importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
         // before then
-        .catch(e => {
+        .catch((e: any) => {
           if (e instanceof InvalidConfigurationError) {
             throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
           } else {
@@ -165,12 +167,12 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         // package file format differs from nsis target
         mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper(getCopyElevateHelper())))
       } else {
-        const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | typeof MsiTarget | typeof MsiWrappedTarget | null = (() => {
           switch (name) {
             case "squirrel":
               try {
                 return require("electron-builder-squirrel-windows").default
-              } catch (e) {
+              } catch (e: any) {
                 throw new InvalidConfigurationError(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
               }
 
@@ -179,6 +181,9 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
             case "msi":
               return require("./targets/MsiTarget").default
+
+            case "msiwrapped":
+              return require("./targets/MsiWrappedTarget").default
 
             default:
               return null
@@ -194,7 +199,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return this._iconPath.value
   }
 
-  async sign(file: string, logMessagePrefix?: string): Promise<void> {
+  async sign(file: string, logMessagePrefix?: string): Promise<boolean> {
     const signOptions: WindowsSignOptions = {
       path: file,
       name: this.appInfo.productName,
@@ -205,13 +210,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.platformSpecificBuildOptions.sign != null) {
-        await sign(signOptions, this)
+        return sign(signOptions, this)
       } else if (this.forceCodeSigning) {
         throw new InvalidConfigurationError(
           `App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`
         )
       }
-      return
+      return false
     }
 
     if (logMessagePrefix == null) {
@@ -240,7 +245,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       )
     }
 
-    await this.doSign({
+    return this.doSign({
       ...signOptions,
       cscInfo,
       options: {
@@ -253,8 +258,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     for (let i = 0; i < 3; i++) {
       try {
         await sign(options, this)
-        break
-      } catch (e) {
+        return true
+      } catch (e: any) {
         // https://github.com/electron-userland/electron-builder/issues/1414
         const message = e.message
         if (message != null && message.includes("Couldn't resolve host name")) {
@@ -264,6 +269,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         throw e
       }
     }
+    return false
   }
 
   async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
@@ -297,7 +303,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it))
-    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it))
     const iconPath = await this.getIconPath()
     use(iconPath, it => {
       files.push(it)
@@ -347,8 +353,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  private isSignDlls(): boolean {
-    return this.platformSpecificBuildOptions.signDlls === true
+  private shouldSignFile(file: string): boolean {
+    const shouldSignDll = this.platformSpecificBuildOptions.signDlls === true && file.endsWith(".dll")
+    const shouldSignExplicit = !!this.platformSpecificBuildOptions.signExts?.some(ext => file.endsWith(ext))
+    return shouldSignDll || shouldSignExplicit || file.endsWith(".exe")
   }
 
   protected createTransformerForExtraFiles(packContext: AfterPackContext): FileTransformer | null {
@@ -357,7 +365,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     return file => {
-      if (file.endsWith(".exe") || (this.isSignDlls() && file.endsWith(".dll"))) {
+      if (this.shouldSignFile(file)) {
         const parentDir = path.dirname(file)
         if (parentDir !== packContext.appOutDir) {
           return new CopyFileTransformer(file => this.sign(file))
@@ -367,7 +375,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
   }
 
-  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
+  protected async signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean | any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
     // if (this.platformSpecificBuildOptions.signAndEditExecutable === false) {
     //   return
@@ -383,21 +391,21 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
           this.platformSpecificBuildOptions.requestedExecutionLevel
         )
       } else if ((this.platformSpecificBuildOptions
-        .signAndEditExecutable && file.endsWith(".exe")) || (this.isSignDlls() && file.endsWith(".dll"))) {
+        .signAndEditExecutable && file.endsWith(".exe")) || (this.shouldSignFile(file) && file.endsWith(".dll"))) {
         return this.sign(path.join(packContext.appOutDir, file))
       }
       return null
     })
 
     if (!isAsar) {
-      return
+      return true
     }
 
-    const signPromise = (filepath: string[]) => {
+    const filesPromise = (filepath: string[]) => {
       const outDir = path.join(packContext.appOutDir, ...filepath)
-      return walk(outDir, (file, stat) => stat.isDirectory() || (this.platformSpecificBuildOptions.signAndEditExecutable && file.endsWith(".exe")) || (this.isSignDlls() && file.endsWith(".dll")))
+      return walk(outDir, (file, stat) => stat.isDirectory() || (this.platformSpecificBuildOptions.signAndEditExecutable && file.endsWith(".exe")) || (this.shouldSignFile(file) && file.endsWith(".dll")))
     }
-    const filesToSign = await Promise.all([signPromise(["resources", "app.asar.unpacked"]), signPromise(["swiftshader"])])
+    const filesToSign = await Promise.all([filesPromise(["resources", "app.asar.unpacked"]), filesPromise(["swiftshader"])])
     await BluebirdPromise.map(filesToSign.flat(1), file => this.sign(file), {concurrency: 4})
   }
 }

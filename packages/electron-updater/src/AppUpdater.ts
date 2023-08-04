@@ -26,7 +26,7 @@ import { GenericProvider } from "./providers/GenericProvider"
 import { DOWNLOAD_PROGRESS, Logger, Provider, ResolvedUpdateFileInfo, UPDATE_DOWNLOADED, UpdateCheckResult, UpdateDownloadedEvent, UpdaterSignal } from "./main"
 import { createClient, isUrlProbablySupportMultiRangeRequests } from "./providerFactory"
 import { ProviderPlatform } from "./providers/Provider"
-import type TypedEmitter from "typed-emitter"
+import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import { AuthInfo } from "electron"
 
@@ -52,6 +52,12 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
    */
   autoInstallOnAppQuit = true
+
+  /**
+   * *windows-only* Whether to run the app after finish install when run the installer NOT in silent mode.
+   * @default true
+   */
+  autoRunAppAfterInstall = true
 
   /**
    * *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
@@ -83,8 +89,16 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    *
    * @default false
    */
-
   disableWebInstaller = false
+
+  /**
+   * Allows developer to force the updater to work in "dev" mode, looking for "dev-app-update.yml" instead of "app-update.yml"
+   * Dev: `path.join(this.app.getAppPath(), "dev-app-update.yml")`
+   * Prod: `path.join(process.resourcesPath!, "app-update.yml")`
+   *
+   * @default false
+   */
+  forceDevUpdateConfig = false
 
   /**
    * The current application version.
@@ -268,7 +282,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         nullizePromise()
         return it
       })
-      .catch(e => {
+      .catch((e: any) => {
         nullizePromise()
         this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
         throw e
@@ -279,8 +293,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   }
 
   public isUpdaterActive(): boolean {
-    if (!this.app.isPackaged) {
-      this._logger.info("Skip checkForUpdatesAndNotify because application is not packed")
+    const isEnabled = this.app.isPackaged || this.forceDevUpdateConfig
+    if (!isEnabled) {
+      this._logger.info("Skip checkForUpdates because application is not packed and dev update config is not forced")
       return false
     }
     return true
@@ -444,9 +459,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<string>} Path to downloaded file.
+   * @returns {Promise<Array<string>>} Paths to downloaded files.
    */
-  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
+  downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<Array<string>> {
     const updateInfoAndProvider = this.updateInfoAndProvider
     if (updateInfoAndProvider == null) {
       const error = new Error("Please check update first")
@@ -478,7 +493,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
         disableWebInstaller: this.disableWebInstaller,
-      }).catch(e => {
+      }).catch((e: any) => {
         throw errorHandler(e)
       })
     } catch (e: any) {
@@ -504,7 +519,8 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * This is different from the normal quit event sequence.
    *
    * @param isSilent *windows-only* Runs the installer in silent mode. Defaults to `false`.
-   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS. Ignored if `isSilent` is set to `false`.
+   * @param isForceRunAfter Run the app after finish even on silent install. Not applicable for macOS.
+   * Ignored if `isSilent` is set to `false`(In this case you can still set `autoRunAppAfterInstall` to `false` to prevent run the app after finish).
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
@@ -548,7 +564,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
       await outputFile(file, id)
-    } catch (e) {
+    } catch (e: any) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)
     }
     return id
@@ -620,7 +636,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         return path.basename(urlPath)
       } else {
         // url like /latest, generate name
-        return `update.${taskOptions.fileExtension}`
+        return taskOptions.fileInfo.info.url
       }
     }
 
@@ -660,7 +676,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)
-    } catch (e) {
+    } catch (e: any) {
       await removeFileIfAny()
 
       if (e instanceof CancellationError) {

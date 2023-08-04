@@ -41,6 +41,30 @@ test("downgrade (disallowed, beta)", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
+test("github allowPrerelease=true", async () => {
+  const updater = await createNsisUpdater("1.0.1")
+  updater.allowPrerelease = true
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test-prerelease",
+  })
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+})
+
+test("github allowPrerelease=false", async () => {
+  const updater = await createNsisUpdater("1.0.1")
+  updater.allowPrerelease = false
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test-prerelease",
+  })
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
+})
+
 test("file url generic", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
@@ -55,8 +79,8 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("file url keygen", async () => {
   updater.addAuthHeader(`Bearer ${process.env.KEYGEN_TOKEN}`)
   updater.updateConfigPath = await writeUpdateConfig<KeygenOptions>({
     provider: "keygen",
-    product: "43981278-96e7-47de-b8c2-98d59987206b",
-    account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
+    product: process.env.KEYGEN_PRODUCT || "43981278-96e7-47de-b8c2-98d59987206b",
+    account: process.env.KEYGEN_ACCOUNT || "cdecda36-3ef0-483e-ad88-97e7970f3149",
   })
   await validateDownload(updater)
 })
@@ -208,8 +232,9 @@ test("test error", async () => {
 test.skip("test download progress", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
-    provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
   })
   updater.autoDownload = false
 

@@ -13,7 +13,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly category?: string | null
 
   /**
-   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.
    */
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
@@ -32,12 +32,15 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
    * MAS entitlements is specified in the [mas](/configuration/mas).
+   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
+   * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
+   * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
    */
   readonly entitlements?: string | null
 
   /**
    * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).
-   * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
+   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
    *
    * This option only applies when signing with `entitlements` provided.
    */
@@ -133,11 +136,6 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    */
   readonly requirements?: string | null
 
-  /**
-   * The electron locales. By default Electron locales used as is.
-   */
-  readonly electronLanguages?: Array<string> | string
-
   /** @private */
   readonly cscInstallerLink?: string | null
   /** @private */
@@ -155,16 +153,22 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly hardenedRuntime?: boolean
 
   /**
-   * Whether to let electron-osx-sign validate the signing or not.
+   * Whether to let @electron/osx-sign validate the signing or not.
    * @default false
    */
   readonly gatekeeperAssess?: boolean
 
   /**
-   * Whether to let electron-osx-sign verify the contents or not.
+   * Whether to let @electron/osx-sign verify the contents or not.
    * @default true
    */
-  readonly strictVerify?: Array<string> | string | boolean
+  readonly strictVerify?: boolean
+
+  /**
+   * Whether to enable entitlements automation from @electron/osx-sign.
+   * @default true
+   */
+  readonly preAutoEntitlements?: boolean
 
   /**
    * Regex or an array of regex's that signal skipping signing a file.
@@ -191,7 +195,42 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * This option has no effect unless building for "universal" arch and applies
    * only if `mergeASARs` is `true`.
    */
-  readonly singleArchFiles?: string
+  readonly singleArchFiles?: string | null
+
+  /**
+   * Minimatch pattern of paths that are allowed to be x64 binaries in both
+   * ASAR files
+   *
+   * This option has no effect unless building for "universal" arch and applies
+   * only if `mergeASARs` is `true`.
+   */
+  readonly x64ArchFiles?: string | null
+
+  /**
+   * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
+   * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
+   *
+   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
+   */
+  readonly notarize?: NotarizeOptions | boolean | null
+}
+
+export interface NotarizeOptions {
+  /**
+   * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
+   * Only used by `legacy` notarization tool
+   */
+  readonly appBundleId?: string | null
+
+  /**
+   * Your Team Short Name. Only used by `legacy` notarization tool
+   */
+  readonly ascProvider?: string | null
+
+  /**
+   * The team ID you want to notarize under. Only needed if using `notarytool`
+   */
+  readonly teamId?: string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
@@ -320,13 +359,15 @@ export interface DmgContent {
 export interface MasConfiguration extends MacConfiguration {
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
-   * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
+   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
+   * Be aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.
+   * See [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.
    */
   readonly entitlements?: string | null
 
   /**
    * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).
-   * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
+   * See [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.
    */
   readonly entitlementsInherit?: string | null
 

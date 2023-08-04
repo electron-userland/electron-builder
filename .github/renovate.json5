@@ -8,7 +8,8 @@
     ":prNotPending",
     "group:recommended",
     "group:monorepos",
-    ":enableVulnerabilityAlerts"
+    ":enableVulnerabilityAlerts",
+    "helpers:pinGitHubActionDigests"
   ],
   "npm": {
     "extends": [

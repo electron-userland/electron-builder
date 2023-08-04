@@ -4,20 +4,20 @@ inputs:
   version: # id of input
     description: 'The pnpm version to use'
     required: false
-    default: 7.1.6
+    default: 8.6.10
 
 runs:
   using: 'composite'
   steps:
     - name: Setup pnpm
-      uses: pnpm/action-setup@v2.2.2
+      uses: pnpm/action-setup@d882d12c64e032187b2edb46d3a0d003b7a43598 # v2.4.0
       with:
         version: ${{ inputs.version }}
 
     - name: Setup node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
       with:
-        node-version: '14'
+        node-version: '18'
         cache: 'pnpm'
 
     - name: Install dependencies

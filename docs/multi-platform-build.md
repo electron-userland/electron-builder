@@ -188,8 +188,11 @@ Or to avoid second step, append to first command `/bin/bash -c "yarn && yarn dis
 
 ### Provided Docker Images
 
-* `electronuserland/builder` or `electronuserland/builder:12` — NodeJS 10 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
-* `electronuserland/builder:wine` — Wine, NodeJS 10 and required system dependencies. Based on `builder:10`. Use this image if you need to build Windows targets.
+* `electronuserland/builder` or `electronuserland/builder:18` — NodeJS 18 and required system dependencies. Based on `builder:base`. Use this image if you need to build only Linux targets.
+* `electronuserland/builder:wine` — Wine, NodeJS 18 and required system dependencies. Based on `builder:18`. Use this image if you need to build Windows targets.
 * `electronuserland/builder:wine-mono` — Mono for Squirrel.Windows. Based on `builder:wine`. Use this image if you need to build Squirrel.Windows target.
 * `electronuserland/builder:wine-chrome` — `google-chrome-stable` and `xvfb` are available — you can use this image for headless testing of Electron application. Based on `builder:wine`.
 * `electronuserland/builder:base` — Required system dependencies. Not supposed to be used directly.
+There are also iterations of these docker images for Node 16 (`builder:16`, `builder:16-wine`, etc.) and Node 16 (`builder:14`, `builder:14-wine`, etc.)
+Docker images are also tagged with the Date suffix `-%m.%y` to statically reference an image, ex: `builder:18-07.23`.
+Full docker build, node version, and tag script can be found here: (build.sh)[https://github.com/electron-userland/electron-builder/blob/master/docker/build.sh]

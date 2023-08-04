@@ -1,0 +1,146 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`msiWrapped allows capitalized nsis target 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "Test MSI 1.1.0.msi",
+      "safeArtifactName": "Test-MSI-1.1.0.msi",
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test MSI Setup 1.1.0.exe",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test MSI Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "Test-MSI-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped impersonate no if not provided 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped impersonate yes if true 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped includes packaged exe 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`msiWrapped wrappedInstallerArgs provided 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE 1.1.0.msi",
+      "safeArtifactName": "MSIWrappingEXE-1.1.0.msi",
+    },
+    Object {
+      "arch": "x64",
+      "file": "MSIWrappingEXE Setup 1.1.0.exe",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "MSIWrappingEXE Setup 1.1.0.exe.blockmap",
+      "safeArtifactName": "MSIWrappingEXE-Setup-1.1.0.exe.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;

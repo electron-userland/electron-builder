@@ -1,4 +1,4 @@
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { CheckingMacPackager } from "../helpers/CheckingPackager"
@@ -8,23 +8,25 @@ async function assertIcon(platformPackager: CheckingMacPackager) {
   const file = await platformPackager.getIconPath()
   expect(file).toBeDefined()
 
-  const result = await platformPackager.resolveIcon([file!!], [], "set")
+  const result = await platformPackager.resolveIcon([file!], [], "set")
   result.forEach(it => {
     it.file = path.basename(it.file)
   })
   expect(result).toMatchSnapshot()
 }
 
+const targets = Platform.MAC.createTarget(DIR_TARGET, Arch.x64)
+
 test.ifMac.ifAll("icon set", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
     {
       projectDirCreated: projectDir => Promise.all([fs.unlink(path.join(projectDir, "build", "icon.icns")), fs.unlink(path.join(projectDir, "build", "icon.ico"))]),
-      packed: () => assertIcon(platformPackager!!),
+      packed: () => assertIcon(platformPackager!),
     }
   )()
 })
@@ -33,7 +35,7 @@ test.ifMac.ifAll("custom icon set", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       config: {
         mac: {
           icon: "customIconSet",
@@ -57,7 +59,7 @@ test.ifMac.ifAll("custom icon set with only 512 and 128", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       config: {
         mac: {
           icon: "..",
@@ -82,7 +84,7 @@ test.ifMac.ifAll("png icon", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       config: {
         mac: {
           icon: "icons/512x512.png",
@@ -101,7 +103,7 @@ test.ifMac.ifAll("default png icon", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       platformPackagerFactory: packager => (platformPackager = new CheckingMacPackager(packager)),
     },
     {
@@ -122,7 +124,7 @@ test.ifMac.ifAll("png icon small", () => {
   let platformPackager: CheckingMacPackager | null = null
   return app(
     {
-      targets: Platform.MAC.createTarget(DIR_TARGET),
+      targets,
       config: {
         mac: {
           icon: "icons/128x128.png",
@@ -135,7 +137,7 @@ test.ifMac.ifAll("png icon small", () => {
       packed: async () => {
         try {
           await platformPackager!!.getIconPath()
-        } catch (e) {
+        } catch (e: any) {
           if (!e.message.includes("must be at least 512x512")) {
             throw e
           }

@@ -29,7 +29,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 <p><code id="LinuxConfiguration-mimeTypes">mimeTypes</code> Array&lt;String&gt; | “undefined” - The mime types in addition to specified in the file associations. Use it if you don’t want to register a new mime type, but reuse existing.</p>
 </li>
 <li>
-<p><code id="LinuxConfiguration-desktop">desktop</code> any | “undefined” - The <a href="https://developer.gnome.org/integration-guide/stable/desktop-files.html.en">Desktop file</a> entries (name to value).</p>
+<p><code id="LinuxConfiguration-desktop">desktop</code> any | “undefined” - The <a href="https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files">Desktop file</a> entries (name to value).</p>
 </li>
 <li>
 <p><code id="LinuxConfiguration-executableArgs">executableArgs</code> Array&lt;String&gt; | “undefined” - The executable parameters. Pass to executableName</p>

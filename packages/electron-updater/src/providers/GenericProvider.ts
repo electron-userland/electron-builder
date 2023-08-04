@@ -22,7 +22,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
         return parseUpdateInfo(await this.httpRequest(channelUrl), channelFile, channelUrl)
-      } catch (e) {
+      } catch (e: any) {
         if (e instanceof HttpError && e.statusCode === 404) {
           throw newError(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`, "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND")
         } else if (e.code === "ECONNREFUSED") {
@@ -30,7 +30,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
             await new Promise((resolve, reject) => {
               try {
                 setTimeout(resolve, 1000 * attemptNumber)
-              } catch (e) {
+              } catch (e: any) {
                 reject(e)
               }
             })

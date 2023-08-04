@@ -1,4 +1,6 @@
-macOS and Windows code signing is supported. Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
+macOS and Windows code signing is supported. If the configuration values are provided correctly in your package.json, then signing should be automatically executed.
+
+Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
 
 On a macOS development machine, a valid and appropriate identity from your keychain will be automatically used.
 
@@ -13,6 +15,9 @@ On a macOS development machine, a valid and appropriate identity from your keych
 | `CSC_NAME`                   | *macOS-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI) if you have several identities (otherwise don't specify it).
 | `CSC_IDENTITY_AUTO_DISCOVERY`| `true` or `false`. Defaults to `true` — on a macOS development machine valid and appropriate identity from your keychain will be automatically used.
 | `CSC_KEYCHAIN`| The keychain name. Used if `CSC_LINK` is not specified. Defaults to system default keychain.
+
+!!! tip
+    If you are wrapping app to installer (pkg), you need to have `INSTALLER ID` identity in your keychain or provide according `CSC_INSTALLER_LINK` and `CSC_INSTALLER_KEY_PASSWORD`.
 
 !!! tip
     If you are building Windows on macOS and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD`.
@@ -73,3 +78,10 @@ Please note — Gatekeeper only recognises [Apple digital certificates](http://s
 To disable Code Signing when building for macOS leave all the above vars unset except for `CSC_IDENTITY_AUTO_DISCOVERY` which needs to be set to `false`. This can be done by running `export CSC_IDENTITY_AUTO_DISCOVERY=false`. 
 
 Another way — set `mac.identity` to `null`. You can pass aditional configuration using CLI as well: `-c.mac.identity=null`.
+
+## Alternative methods of codesigning
+
+Codesigning via Electron Builder's configuration (via package.json) is not the only way to sign an application. Some people find it easier to codesign using a GUI tool. A couple of examples include:
+- [SSL manager](https://www.ssl.com/ssl-manager)
+- [DigiCert utility for Windows](https://www.digicert.com/support/tools/certificate-utility-for-windows)
+Of course any comprehensive discussion of such tools is beyond the scope of this documentation.

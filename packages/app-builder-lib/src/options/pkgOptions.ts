@@ -63,7 +63,7 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly identity?: string | null
 
   /**
-   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
+   * The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
    */
   readonly license?: string | null
 

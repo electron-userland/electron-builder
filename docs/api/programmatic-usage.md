@@ -1,4 +1,4 @@
-```
+```javascript
 "use strict"
 
 const builder = require("electron-builder")

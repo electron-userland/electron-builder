@@ -20,7 +20,7 @@ export default class S3Publisher extends BaseS3Publisher {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
       try {
         options.region = await executeAppBuilder(["get-bucket-location", "--bucket", bucket])
-      } catch (e) {
+      } catch (e: any) {
         if (errorIfCannot) {
           throw e
         } else {

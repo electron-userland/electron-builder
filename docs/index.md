@@ -47,6 +47,15 @@ public-hoist-pattern=*
 shamefully-hoist=true
 ```
 
+Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
+
+### Note for Yarn 3
+
+Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+```
+nodeLinker: "node-modules"
+```
+will declare to use node-modules instead of PnP.
 
 ## Boilerplates
 
@@ -56,6 +65,7 @@ shamefully-hoist=true
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
 * [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
 * [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite2 boilerplate.
+* [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. TypeScript + Vue/React/Angular/Svelte/Vanilla
 
 ## Quick Setup Guide
 

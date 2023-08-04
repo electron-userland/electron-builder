@@ -8,40 +8,64 @@ A complete solution to package and build a ready for distribution [Electron](htt
 
 ## Sponsors
 
-<div align="center">
-<a href="https://workflowy.com">
-<div>
-<img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
-</div>
-Notes, Tasks, Projects. All in a Single Place.
-</a>
-<br>
-<br>
-<a href="https://tidepool.org">
-<div>
-<img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
-</div>
-Your gateway to understanding your diabetes data
-</a>
-<br>
-<br>
-<a href="https://keygen.sh/?via=electron-builder">
-<div>
-<img src="https://keygen.sh/images/badge.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
-</div>
-A dead-simple software licensing and distribution API built for developers
-</a>
-<br>
-<br>
-<a href="https://www.todesktop.com/electron?utm_source=electron-builder">
-<div>
-<img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
-</div>
-ToDesktop: An all-in-one platform for building and releasing Electron apps
-</a>
-<br>
-<br>
-</div>
+<table>
+   <tr align="center">
+      <td>
+         <a href="https://workflowy.com">
+            <div>
+               <img src="https://workflowy.com/media/i/icon-28x28.png" alt="WorkFlowy" title="WorkFlowy" height="50" align="middle"/>
+            </div>
+            Notes, Tasks, Projects.<br>All in a Single Place.
+         </a>
+         <br>
+      </td>
+   </tr>
+   <tr align="center">
+      <td>
+         <br>
+         <a href="https://tidepool.org">
+            <div>
+               <img src="https://www.electron.build/sponsor-logos/Tidepool_Logo_Light.svg" alt="Tidepool" title="Tidepool" height="75" align="middle"/>
+            </div>
+            Your gateway to understanding your diabetes data
+         </a>
+         <br>
+      </td>
+      <td>
+         <br>
+         <a href="https://keygen.sh/?via=electron-builder">
+            <div>
+               <img src="https://keygen.sh/images/logo-pill.png" alt="Keygen" title="Keygen" height="75" align="middle"/>
+            </div>
+            An open, source-available software licensing and distribution API
+         </a>
+         <br>
+      </td>
+   </tr>
+   <tr align="center">
+      <td>
+         <br>
+         <a href="https://www.todesktop.com/electron?utm_source=electron-builder">
+            <div>
+               <img src="https://www.todesktop.com/new-logo/todesktop-logo.png" alt="ToDesktop" title="ToDesktop" height="75" align="middle"/>
+            </div>
+            ToDesktop: An all-in-one platform for building and releasing Electron apps
+         </a>
+         <br>
+      </td>
+      <td>
+         <br>
+         <a href="https://www.dashcam.io/?ref=electron_builder">
+            <div>
+               <img src="https://user-images.githubusercontent.com/318295/226675216-ab6aad0c-526c-4a45-a0a8-3906ac614b8b.png" alt="Dashcam" title="Dashcam" height="75" align="middle"/>
+            </div>
+            Dashcam: Capture the steps to reproduce any bug with video crash reports for Electron.
+         </a>
+         <br>
+      </td>
+   </tr>
+</table>
+
 
 ## Documentation
 
@@ -97,6 +121,16 @@ public-hoist-pattern=*
 shamefully-hoist=true
 ```
 
+Note: Setting shamefully-hoist to true is the same as setting public-hoist-pattern to *.
+
+### Note for Yarn 3
+
+Yarn 3 use PnP by default, but electron-builder still need node-modules(ref: [yarnpkg/berry#4804](https://github.com/yarnpkg/berry/issues/4804#issuecomment-1234407305)). Add configuration in the `.yarnrc.yaml` as follows:
+```
+nodeLinker: "node-modules"
+```
+will declare to use node-modules instead of PnP.
+
 ## Quick Setup Guide
 
 [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) is a recommended way to create a new Electron application. See [Boilerplates](https://www.electron.build/#boilerplates).
@@ -115,6 +149,7 @@ shamefully-hoist=true
    ```
 
    See [all options](https://www.electron.build/configuration/configuration). Option [files](https://www.electron.build/configuration/contents#files) to indicate which files should be packed in the final application, including the entry file, maybe required.
+   You can also use separate configuration files, such as `js`, `ts`, `yml`, and `json`/`json5`. See [read-config-file](https://www.npmjs.com/package/read-config-file) for supported extensions. [JS Example for programmatic API](https://www.electron.build/api/programmatic-usage)
 
 3. Add [icons](https://www.electron.build/icons).
 

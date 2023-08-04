@@ -24,6 +24,8 @@ export interface AppAdapter {
 
   whenReady(): Promise<void>
 
+  relaunch(): void
+
   quit(): void
 
   onQuit(handler: (exitCode: number) => void): void
@@ -36,7 +38,7 @@ export function getAppCacheDir() {
   if (process.platform === "win32") {
     result = process.env["LOCALAPPDATA"] || path.join(homedir, "AppData", "Local")
   } else if (process.platform === "darwin") {
-    result = path.join(homedir, "Library", "Application Support", "Caches")
+    result = path.join(homedir, "Library", "Caches")
   } else {
     result = process.env["XDG_CACHE_HOME"] || path.join(homedir, ".cache")
   }

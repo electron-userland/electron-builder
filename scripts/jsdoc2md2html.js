@@ -89,12 +89,12 @@ async function render2(files, jsdoc2MdOptions) {
       if (context.typeItem.name === "LinuxTargetSpecificOptions" && context.object.name === "DebOptions") {
         return null
       }
-      if (context.typeItem.name === "TargetSpecificOptions" && context.object.name === "NsisOptions") {
+      if (context.typeItem.name === "TargetSpecificOptions" && ["NsisOptions", "MsiOptions", "MsiWrappedOptions"].includes(context.object.name)) {
         return null
       }
 
       // looks strange when on LinuxConfiguration page "Inherited from `CommonLinuxOptions`:" - no configuration inheritance in this case
-      if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && (context.typeItem.name === "CommonNsisOptions" || context.typeItem.name === "CommonWindowsInstallerConfiguration"))) {
+      if (context.object.name === "LinuxConfiguration" || (["NsisOptions", "MsiOptions", "MsiWrappedOptions"].includes(context.object.name) && (context.typeItem.name === "CommonNsisOptions" || context.typeItem.name === "CommonWindowsInstallerConfiguration"))) {
         return ""
       }
     }
@@ -155,6 +155,12 @@ async function render2(files, jsdoc2MdOptions) {
     if (types.some(it => it.endsWith(".NsisOptions") || it === "NsisOptions")) {
       return "[NsisOptions](nsis)"
     }
+    if (types.some(it => it.endsWith("MsiOptions"))) {
+      return "[MsisOptions](msi)"
+    }
+    if (types.some(it => it.endsWith("MsiWrappedOptions"))) {
+      return "[MsisWrappedOptions](msi-wrapped)"
+    }
     if (types.some(it => it.endsWith("AppXOptions"))) {
       return "[AppXOptions](appx)"
     }
@@ -188,7 +194,7 @@ async function render2(files, jsdoc2MdOptions) {
       return "[AppImageOptions](/configuration/linux#appimageoptions)"
     }
     if (types.some(it => it.endsWith("DebOptions"))) {
-      return "[DebOptions](/configuration/linux#de)"
+      return "[DebOptions](/configuration/linux#deb)"
     }
     if (types.some(it => it.endsWith("LinuxTargetSpecificOptions"))) {
       return "[LinuxTargetSpecificOptions](/configuration/linux#LinuxTargetSpecificOptions)"
@@ -206,6 +212,8 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/pkg.md", "PkgOptions"),
 
     new Page("configuration/win.md", "WindowsConfiguration"),
+    new Page("configuration/msi-wrapped.md", "MsiWrappedOptions"),
+    new Page("configuration/msi.md", "MsiOptions"),
     new Page("configuration/appx.md", "AppXOptions"),
     new Page("configuration/squirrel-windows.md", "SquirrelWindowsOptions"),
 

@@ -229,7 +229,7 @@ export class NsisTarget extends Target {
       defines.APP_BUILD_DIR = archs.get(archs.keys().next().value)
     } else {
       await BluebirdPromise.map(archs.keys(), async arch => {
-        const fileInfo = await this.packageHelper.packArch(arch, this)
+        const { fileInfo, unpackedSize } = await this.packageHelper.packArch(arch, this)
         const file = fileInfo.path
         const defineKey = arch === Arch.x64 ? "APP_64" : arch === Arch.arm64 ? "APP_ARM64" : "APP_32"
         defines[defineKey] = file
@@ -240,6 +240,10 @@ export class NsisTarget extends Target {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const defineHashKey = `${defineKey}_HASH` as "APP_64_HASH" | "APP_ARM64_HASH" | "APP_32_HASH"
         defines[defineHashKey] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+        // NSIS accepts size in KiloBytes and supports only whole numbers
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const defineUnpackedSizeKey = `${defineKey}_UNPACKED_SIZE` as "APP_64_UNPACKED_SIZE" | "APP_ARM64_UNPACKED_SIZE" | "APP_32_UNPACKED_SIZE"
+        defines[defineUnpackedSizeKey] = Math.ceil(unpackedSize / 1024).toString()
 
         if (this.isWebInstaller) {
           await packager.dispatchArtifactCreated(file, this, arch)
@@ -479,6 +483,10 @@ export class NsisTarget extends Target {
         throw new InvalidConfigurationError("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
       }
       defines.allowToChangeInstallationDirectory = null
+    }
+
+    if (options.removeDefaultUninstallWelcomePage) {
+      defines.removeDefaultUninstallWelcomePage = null
     }
 
     const commonOptions = getEffectiveOptions(options, packager)
@@ -749,7 +757,7 @@ async function ensureNotBusy(outFile: string): Promise<void> {
           } else {
             fs.close(fd, () => resolve(true))
           }
-        } catch (error) {
+        } catch (error: any) {
           reject(error)
         }
       })

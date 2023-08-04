@@ -401,6 +401,44 @@ Array [
 ]
 `;
 
+exports[`github allowPrerelease=false 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "electron-quick-start-typescript-1.0.2-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-1.0.2-x64.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "1.0.2",
+  "releaseNotes": "",
+  "sha512": "@sha512",
+  "tag": "v1.0.2",
+  "version": "1.0.2",
+}
+`;
+
+exports[`github allowPrerelease=true 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+      "url": "electron-quick-start-typescript-2.0.0-x64.exe",
+    },
+  ],
+  "path": "electron-quick-start-typescript-2.0.0-x64.exe",
+  "releaseDate": "@releaseDate",
+  "releaseName": "2.0.0",
+  "releaseNotes": "",
+  "sha512": "@sha512",
+  "tag": "v2.0.0",
+  "version": "2.0.0",
+}
+`;
+
 exports[`invalid signature 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
 
 exports[`invalid signature 2`] = `

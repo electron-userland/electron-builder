@@ -1,5 +1,4 @@
 import { AllPublishOptions, newError, PackageFileInfo, BlockMap, CURRENT_APP_PACKAGE_FILE_NAME, CURRENT_APP_INSTALLER_FILE_NAME } from "builder-util-runtime"
-import { spawn } from "child_process"
 import * as path from "path"
 import { AppAdapter } from "./AppAdapter"
 import { DownloadUpdateOptions } from "./AppUpdater"
@@ -7,7 +6,7 @@ import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
-import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, ResolvedUpdateFileInfo, verifyUpdateCodeSignature } from "./main"
 import { blockmapFiles } from "./util"
 import { findFile, Provider } from "./providers/Provider"
 import { unlink } from "fs-extra"
@@ -16,8 +15,31 @@ import { URL } from "url"
 import { gunzipSync } from "zlib"
 
 export class NsisUpdater extends BaseUpdater {
+  /**
+   * Specify custom install directory path
+   *
+   */
+  installDirectory?: string
+
   constructor(options?: AllPublishOptions | null, app?: AppAdapter) {
     super(options, app)
+  }
+
+  protected _verifyUpdateCodeSignature: verifyUpdateCodeSignature = (publisherNames: Array<string>, unescapedTempUpdateFile: string) =>
+    verifySignature(publisherNames, unescapedTempUpdateFile, this._logger)
+
+  /**
+   * The verifyUpdateCodeSignature. You can pass [win-verify-signature](https://github.com/beyondkmp/win-verify-trust) or another custom verify function: ` (publisherName: string[], path: string) => Promise<string | null>`.
+   * The default verify function uses [windowsExecutableCodeSignatureVerifier](https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts)
+   */
+  get verifyUpdateCodeSignature(): verifyUpdateCodeSignature {
+    return this._verifyUpdateCodeSignature
+  }
+
+  set verifyUpdateCodeSignature(value: verifyUpdateCodeSignature) {
+    if (value) {
+      this._verifyUpdateCodeSignature = value
+    }
   }
 
   /*** @private */
@@ -57,16 +79,16 @@ export class NsisUpdater extends BaseUpdater {
         }
 
         if (isWebInstaller) {
-          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo!, packageFile!, provider)) {
+          if (await this.differentialDownloadWebPackage(downloadUpdateOptions, packageInfo, packageFile, provider)) {
             try {
-              await this.httpExecutor.download(new URL(packageInfo!.path), packageFile!, {
+              await this.httpExecutor.download(new URL(packageInfo.path), packageFile, {
                 headers: downloadUpdateOptions.requestHeaders,
                 cancellationToken: downloadUpdateOptions.cancellationToken,
-                sha512: packageInfo!.sha512,
+                sha512: packageInfo.sha512,
               })
-            } catch (e) {
+            } catch (e: any) {
               try {
-                await unlink(packageFile!)
+                await unlink(packageFile)
               } catch (ignored) {
                 // ignore
               }
@@ -89,14 +111,14 @@ export class NsisUpdater extends BaseUpdater {
       if (publisherName == null) {
         return null
       }
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === "ENOENT") {
         // no app-update.yml
         return null
       }
       throw e
     }
-    return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
+    return await this._verifyUpdateCodeSignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile)
   }
 
   protected doInstall(options: InstallOptions): boolean {
@@ -109,6 +131,11 @@ export class NsisUpdater extends BaseUpdater {
       args.push("--force-run")
     }
 
+    if (this.installDirectory) {
+      // maybe check if folder exists
+      args.push(`/D=${this.installDirectory}`)
+    }
+
     const packagePath = this.downloadedUpdateHelper == null ? null : this.downloadedUpdateHelper.packageFile
     if (packagePath != null) {
       // only = form is supported
@@ -116,7 +143,7 @@ export class NsisUpdater extends BaseUpdater {
     }
 
     const callUsingElevation = (): void => {
-      _spawn(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
+      this.spawnLog(path.join(process.resourcesPath!, "elevate.exe"), [options.installerPath].concat(args)).catch(e => this.dispatchError(e))
     }
 
     if (options.isAdminRightsRequired) {
@@ -125,7 +152,7 @@ export class NsisUpdater extends BaseUpdater {
       return true
     }
 
-    _spawn(options.installerPath, args).catch((e: Error) => {
+    this.spawnLog(options.installerPath, args).catch((e: Error) => {
       // https://github.com/electron-userland/electron-builder/issues/1129
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
@@ -164,7 +191,7 @@ export class NsisUpdater extends BaseUpdater {
 
         try {
           return JSON.parse(gunzipSync(data).toString())
-        } catch (e) {
+        } catch (e: any) {
           throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
         }
       }
@@ -186,7 +213,7 @@ export class NsisUpdater extends BaseUpdater {
       const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
       await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
       return false
-    } catch (e) {
+    } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       if (this._testOnlyOptions != null) {
         // test mode
@@ -222,37 +249,11 @@ export class NsisUpdater extends BaseUpdater {
       }
 
       await new FileWithEmbeddedBlockMapDifferentialDownloader(packageInfo, this.httpExecutor, downloadOptions).download()
-    } catch (e) {
+    } catch (e: any) {
       this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
       // during test (developer machine mac or linux) we must throw error
       return process.platform === "win32"
     }
     return false
   }
-}
-
-/**
- * This handles both node 8 and node 10 way of emitting error when spawning a process
- *   - node 8: Throws the error
- *   - node 10: Emit the error(Need to listen with on)
- */
-async function _spawn(exe: string, args: Array<string>): Promise<any> {
-  return new Promise((resolve, reject) => {
-    try {
-      const process = spawn(exe, args, {
-        detached: true,
-        stdio: "ignore",
-      })
-      process.on("error", error => {
-        reject(error)
-      })
-      process.unref()
-
-      if (process.pid !== undefined) {
-        resolve(true)
-      }
-    } catch (error) {
-      reject(error)
-    }
-  })
 }

@@ -109,9 +109,6 @@ export class PublishManager implements PublishContext {
         if (!event.targets.some(it => isSuitableWindowsTarget(it))) {
           return
         }
-      } else {
-        // AppImage writes data to AppImage stage dir, not to linux-unpacked
-        return
       }
 
       const publishConfig = await getAppUpdatePublishConfiguration(packager, event.arch, this.isPublish)
@@ -165,6 +162,10 @@ export class PublishManager implements PublishContext {
     if (this.publishOptions.publish === "onTagOrDraft" && getCiTag() == null && providerName !== "bitbucket" && providerName !== "github") {
       log.info({ file: event.file, reason: "current build is not for a git tag", publishPolicy: "onTagOrDraft" }, `not published to ${providerName}`)
       return
+    }
+
+    if (publishConfig.timeout) {
+      event.timeout = publishConfig.timeout
     }
 
     this.taskManager.addTask(publisher.upload(event))

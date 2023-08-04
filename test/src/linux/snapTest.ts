@@ -40,7 +40,7 @@ test.ifAll.ifDevOrLinuxCi(
 test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack("test-app-one", {
-      targets: Platform.LINUX.createTarget("snap"),
+      targets: snapTarget,
       config: {
         extraMetadata: {
           name: "sep",
@@ -82,7 +82,7 @@ test.ifAll.ifDevOrLinuxCi(
 
 test.ifAll.ifDevOrLinuxCi("buildPackages", async () => {
   await assertPack("test-app-one", {
-    targets: Platform.LINUX.createTarget("snap"),
+    targets: snapTarget,
     config: {
       extraMetadata: {
         name: "sep",
@@ -122,7 +122,7 @@ test.ifDevOrLinuxCi("plugs option", async () => {
     },
   ]) {
     await assertPack("test-app-one", {
-      targets: Platform.LINUX.createTarget("snap"),
+      targets: snapTarget,
       config: {
         snap: {
           plugs: p,
@@ -154,7 +154,7 @@ test.ifDevOrLinuxCi("slots option", async () => {
     ],
   ]) {
     await assertPack("test-app-one", {
-      targets: Platform.LINUX.createTarget("snap"),
+      targets: snapTarget,
       config: {
         extraMetadata: {
           name: "sep",
@@ -175,7 +175,7 @@ test.ifDevOrLinuxCi("slots option", async () => {
 test.ifDevOrLinuxCi(
   "custom env",
   app({
-    targets: Platform.LINUX.createTarget("snap"),
+    targets: snapTarget,
     config: {
       extraMetadata: {
         name: "sep",
@@ -197,7 +197,7 @@ test.ifDevOrLinuxCi(
 test.ifDevOrLinuxCi(
   "custom after, no desktop",
   app({
-    targets: Platform.LINUX.createTarget("snap"),
+    targets: snapTarget,
     config: {
       extraMetadata: {
         name: "sep",
@@ -217,7 +217,7 @@ test.ifDevOrLinuxCi(
 test.ifDevOrLinuxCi(
   "no desktop plugs",
   app({
-    targets: Platform.LINUX.createTarget("snap"),
+    targets: snapTarget,
     config: {
       extraMetadata: {
         name: "sep",
@@ -283,13 +283,73 @@ test.ifDevOrLinuxCi(
       },
       productName: "Sep",
       snap: {
+        useTemplateApp: false,
         compression: "xz",
       },
     },
     effectiveOptionComputed: async ({ snap, args }) => {
       expect(snap).toMatchSnapshot()
-      expect(snap.compression).toEqual("xz")
+      expect(snap.compression).toBe("xz")
       expect(args).toEqual(expect.arrayContaining(["--compression", "xz"]))
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "default base",
+  app({
+    targets: snapTarget,
+    config: {
+      productName: "Sep",
+    },
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.base).toBe("core18")
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "base option",
+  app({
+    targets: snapTarget,
+    config: {
+      productName: "Sep",
+      snap: {
+        base: "core22",
+      },
+    },
+    effectiveOptionComputed: async ({ snap }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.base).toBe("core22")
+      return true
+    },
+  })
+)
+
+test.ifDevOrLinuxCi(
+  "use template app",
+  app({
+    targets: snapTarget,
+    config: {
+      snap: {
+        useTemplateApp: true,
+        compression: "xz",
+      },
+    },
+    effectiveOptionComputed: async ({ snap, args }) => {
+      expect(snap).toMatchSnapshot()
+      expect(snap.parts).toBeUndefined()
+      expect(snap.compression).toBeUndefined()
+      expect(snap.contact).toBeUndefined()
+      expect(snap.donation).toBeUndefined()
+      expect(snap.issues).toBeUndefined()
+      expect(snap.parts).toBeUndefined()
+      expect(snap["source-code"]).toBeUndefined()
+      expect(snap.website).toBeUndefined()
+      expect(args).toEqual(expect.arrayContaining(["--exclude", "chrome-sandbox", "--compression", "xz"]))
       return true
     },
   })

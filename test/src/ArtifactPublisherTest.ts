@@ -32,6 +32,7 @@ function versionNumber() {
 //noinspection SpellCheckingInspection
 const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
+const icoPath = path.join(__dirname, "..", "fixtures", "test-app", "build", "icon.ico")
 
 const publishContext: PublishContext = {
   cancellationToken: new CancellationToken(),
@@ -41,7 +42,7 @@ const publishContext: PublishContext = {
 test("GitHub unauthorized", async () => {
   try {
     await new GitHubPublisher(publishContext, { provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token" }, versionNumber())._release.value
-  } catch (e) {
+  } catch (e: any) {
     expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
     return
   }
@@ -62,7 +63,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   test.skip(name, async () => {
     try {
       await testFunction()
-    } catch (e) {
+    } catch (e: any) {
       if (isApiRateError(e)) {
         console.warn(e.description.message)
       } else {
@@ -132,22 +133,40 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
     {
       provider: "keygen",
       // electron-builder-test
-      product: "43981278-96e7-47de-b8c2-98d59987206b",
-      account: "cdecda36-3ef0-483e-ad88-97e7970f3149",
+      product: process.env.KEYGEN_PRODUCT || "43981278-96e7-47de-b8c2-98d59987206b",
+      account: process.env.KEYGEN_ACCOUNT || "cdecda36-3ef0-483e-ad88-97e7970f3149",
       platform: Platform.MAC.name,
     } as KeygenOptions,
     versionNumber()
   )
-  const releaseId = await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  const [releaseId] = await Promise.all([
+    publisher.upload({ file: iconPath, arch: Arch.x64 }),
+    // test parallel artifact uploads for the same release
+    publisher.upload({ file: icoPath, arch: Arch.x64 }),
+  ])
+
   await publisher.deleteRelease(releaseId)
 })
 
 test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
+  const timeout = 0
   const publisher = new BitbucketPublisher(publishContext, {
     provider: "bitbucket",
     owner: "mike-m",
     slug: "electron-builder-test",
+    timeout,
   } as BitbucketOptions)
-  const filename = await publisher.upload({ file: iconPath, arch: Arch.x64 })
+  const filename = await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })
   await publisher.deleteRelease(filename)
+})
+
+test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
+  const timeout = 100
+  const publisher = new BitbucketPublisher(publishContext, {
+    provider: "bitbucket",
+    owner: "mike-m",
+    slug: "electron-builder-test",
+    timeout,
+  } as BitbucketOptions)
+  expect(await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })).toThrowError("Request timed out")
 })

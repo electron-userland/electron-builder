@@ -1,7 +1,7 @@
 You decided to contribute to this project? Great, thanks a lot for pushing it.
 
 This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-By participating, you are expected to uphold this code. Please file issue to report unacceptable behavior.
+By participating, you are expected to uphold this code. Please file an issue to report unacceptable behavior.
 
 This repository has a mono-repo structure consisting of multiple packages. Try to take a look at the [packages directory](https://github.com/electron-userland/electron-builder/tree/master/packages)!
 
@@ -9,12 +9,12 @@ This repository has a mono-repo structure consisting of multiple packages. Try t
 
 > All prerequisites could be installed via script at the end of the chapter
 
-- [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM.
+- [pnpm](https://pnpm.js.org) is required because NPM is not reliable and Yarn 2 is not as good as PNPM. Currently we use the latest version 7.x of PNPM, please use the same version to ensure that lockfiles are compatible.
 - For local development, you can use [yalc](https://github.com/whitecolor/yalc) in order to apply changes made to
   electron-builder for your other projects to leverage and test with.
 
 ```
-npm i -g pnpm
+npm i -g pnpm@latest-8
 pnpm i yalc -g
 ```
 
@@ -36,8 +36,8 @@ pnpm install
 popd
 ```
 
-You must publish and link `yalc`'s local "packages" to your project via the one-liner below (run from your project folder).
-Unfortunately,the `yalc publish` command cannot pass multiple packages.
+Publish the electron-builder packages to `yalc`'s local store via these commands that you need to run from `electron-builder/packages`.
+Unfortunately, the `yalc publish` command cannot pass multiple packages.
 
 ```
 yalc publish app-builder-lib
@@ -52,7 +52,11 @@ yalc publish electron-forge-maker-nsis
 yalc publish electron-forge-maker-nsis-web
 yalc publish electron-forge-maker-snap
 yalc publish electron-updater
+```
 
+Now link those packages to your project via the one-liner below (run from your project folder).
+
+```
 yalc link app-builder-lib builder-util builder-util-runtime dmg-builder electron-builder electron-publish electron-builder-squirrel-windows electron-forge-maker-appimage electron-forge-maker-nsis electron-forge-maker-nsis-web electron-forge-maker-snap electron-updater
 ```
 
@@ -73,7 +77,7 @@ If you are using Windows and Visual Studio Code(Powershell), please use this.
 ```PowerShell
 pushd ..\electron-builder
 pnpm compile
-Get-ChildItem packages -Directory | Foreach-Object{pushd "./packages/$_"; yalc push; popd;}
+Get-ChildItem packages -Directory | Foreach-Object{pushd "$_"; yalc push; popd;}
 popd
 ```
 

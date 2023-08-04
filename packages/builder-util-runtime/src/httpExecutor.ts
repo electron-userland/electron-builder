@@ -111,11 +111,11 @@ export abstract class HttpExecutor<T extends Request> {
       const request = this.createRequest(options, (response: any) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
-        } catch (e) {
+        } catch (e: any) {
           reject(e)
         }
       })
-      this.addErrorAndTimeoutHandlers(request, reject)
+      this.addErrorAndTimeoutHandlers(request, reject, options.timeout)
       this.addRedirectHandlers(request, options, reject, redirectCount, options => {
         this.doApiRequest(options, cancellationToken, requestProcessor, redirectCount).then(resolve).catch(reject)
       })
@@ -130,8 +130,8 @@ export abstract class HttpExecutor<T extends Request> {
     // not required for NodeJS
   }
 
-  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void) {
-    this.addTimeOutHandler(request, reject)
+  addErrorAndTimeoutHandlers(request: any, reject: (error: Error) => void, timeout = 60 * 1000) {
+    this.addTimeOutHandler(request, reject, timeout)
     request.on("error", reject)
     request.on("aborted", () => {
       reject(new Error("Request has been aborted by the server"))
@@ -206,18 +206,18 @@ Please double check that your authentication token is correct. Due to security r
         } else {
           resolve(data.length === 0 ? null : data)
         }
-      } catch (e) {
+      } catch (e: any) {
         reject(e)
       }
     })
   }
 
   // noinspection JSUnusedLocalSymbols
-  abstract createRequest(options: any, callback: (response: any) => void): T
+  abstract createRequest(options: RequestOptions, callback: (response: any) => void): T
 
   async downloadToBuffer(url: URL, options: DownloadOptions): Promise<Buffer> {
     return await options.cancellationToken.createPromise<Buffer>((resolve, reject, onCancel) => {
-      let result: Buffer | null = null
+      const responseChunks: Buffer[] = []
       const requestOptions = {
         headers: options.headers || undefined,
         // because PrivateGitHubProvider requires HttpExecutor.prepareRedirectUrlOptions logic, so, we need to redirect manually
@@ -233,46 +233,23 @@ Please double check that your authentication token is correct. Due to security r
           onCancel,
           callback: error => {
             if (error == null) {
-              resolve(result!)
+              resolve(Buffer.concat(responseChunks))
             } else {
               reject(error)
             }
           },
           responseHandler: (response, callback) => {
-            const contentLength = safeGetHeader(response, "content-length")
-            let position = -1
-            if (contentLength != null) {
-              const size = parseInt(contentLength, 10)
-              if (size > 0) {
-                if (size > 524288000) {
-                  callback(new Error("Maximum allowed size is 500 MB"))
-                  return
-                }
-
-                result = Buffer.alloc(size)
-                position = 0
-              }
-            }
+            let receivedLength = 0
             response.on("data", (chunk: Buffer) => {
-              if (position !== -1) {
-                chunk.copy(result!, position)
-                position += chunk.length
-              } else if (result == null) {
-                result = chunk
-              } else {
-                if (result.length > 524288000) {
-                  callback(new Error("Maximum allowed size is 500 MB"))
-                  return
-                }
-                result = Buffer.concat([result, chunk])
+              receivedLength += chunk.length
+              if (receivedLength > 524288000) {
+                callback(new Error("Maximum allowed size is 500 MB"))
+                return
               }
+              responseChunks.push(chunk)
             })
             response.on("end", () => {
-              if (result != null && position !== -1 && position !== result.length) {
-                callback(new Error(`Received data length ${position} is not equal to expected ${result.length}`))
-              } else {
-                callback(null)
-              }
+              callback(null)
             })
           },
         },
@@ -313,7 +290,7 @@ Please double check that your authentication token is correct. Due to security r
         options.responseHandler(response, options.callback)
       }
     })
-    this.addErrorAndTimeoutHandlers(request, options.callback)
+    this.addErrorAndTimeoutHandlers(request, options.callback, requestOptions.timeout)
     this.addRedirectHandlers(request, requestOptions, options.callback, redirectCount, requestOptions => {
       this.doDownload(requestOptions, options, redirectCount++)
     })
@@ -324,9 +301,9 @@ Please double check that your authentication token is correct. Due to security r
     return new Error(`Too many redirects (> ${this.maxRedirects})`)
   }
 
-  private addTimeOutHandler(request: any, callback: (error: Error) => void) {
+  private addTimeOutHandler(request: any, callback: (error: Error) => void, timeout: number) {
     request.on("socket", (socket: Socket) => {
-      socket.setTimeout(60 * 1000, () => {
+      socket.setTimeout(timeout, () => {
         request.abort()
         callback(new Error("Request timed out"))
       })
@@ -349,7 +326,7 @@ Please double check that your authentication token is correct. Due to security r
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
         return task()
-      } catch (e) {
+      } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
           continue
         }
@@ -417,7 +394,7 @@ export class DigestTransform extends Transform {
     if (this.isValidateOnEnd) {
       try {
         this.validate()
-      } catch (e) {
+      } catch (e: any) {
         callback(e)
         return
       }
@@ -485,6 +462,7 @@ function configurePipes(options: DownloadCallOptions, response: IncomingMessage)
   let lastStream = response
   for (const stream of streams) {
     stream.on("error", (error: Error) => {
+      fileOut.close()
       if (!options.options.cancellationToken.cancelled) {
         options.callback(error)
       }

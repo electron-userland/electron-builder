@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 
-import { PACKAGE_VERSION } from "@swiftmr/app-builder-lib/out/version"
-import { log, use, getArchCliNames } from "builder-util"
-import { printErrorAndExit } from "builder-util/out/promise"
-import { computeDefaultAppDirectory, getConfig } from "@swiftmr/app-builder-lib/out/util/config"
 import { getElectronVersion } from "@swiftmr/app-builder-lib/out/electron/electronVersion"
-import { createLazyProductionDeps } from "@swiftmr/app-builder-lib/out/util/packageDependencies"
+import { computeDefaultAppDirectory, getConfig } from "@swiftmr/app-builder-lib/out/util/config"
 import { installOrRebuild } from "@swiftmr/app-builder-lib/out/util/yarn"
+import { PACKAGE_VERSION } from "@swiftmr/app-builder-lib/out/version"
+import { createLazyProductionDeps } from "@swiftmr/app-builder-lib/out/util/packageDependencies"
+import { getArchCliNames, log, use } from "builder-util"
+import { printErrorAndExit } from "builder-util/out/promise"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -37,7 +37,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Argv): yargs.Argv {
 export async function installAppDeps(args: any) {
   try {
     log.info({ version: PACKAGE_VERSION }, "electron-builder")
-  } catch (e) {
+  } catch (e: any) {
     // error in dev mode without babel
     if (!(e instanceof ReferenceError)) {
       throw e
@@ -50,9 +50,9 @@ export async function installAppDeps(args: any) {
   const [appDir, version] = await Promise.all<string>([
     computeDefaultAppDirectory(
       projectDir,
-      use(config.directories, it => it!.app)
+      use(config.directories, it => it.app)
     ),
-    getElectronVersion(projectDir, config, packageMetadata),
+    getElectronVersion(projectDir, config),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)

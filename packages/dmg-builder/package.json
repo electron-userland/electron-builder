@@ -1,36 +1,36 @@
 {
-  "name": "dmg-builder",
-  "version": "23.1.0",
-  "main": "out/dmgUtil.js",
-  "author": "Vladimir Krivosheev",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/electron-userland/electron-builder.git",
-    "directory": "packages/dmg-builder"
-  },
-  "bugs": "https://github.com/electron-userland/electron-builder/issues",
-  "homepage": "https://github.com/electron-userland/electron-builder",
-  "files": [
-    "out",
-    "templates",
-    "vendor"
-  ],
-  "dependencies": {
-    "@swiftmr/app-builder-lib": "workspace:*",
-    "builder-util": "workspace:*",
-    "builder-util-runtime": "workspace:*",
-    "fs-extra": "^10.0.0",
-    "iconv-lite": "^0.6.2",
-    "js-yaml": "^4.1.0"
-  },
-  "optionalDependencies": {
-    "dmg-license": "^1.0.11"
-  },
-  "devDependencies": {
-    "@types/fs-extra": "9.0.13",
-    "@types/js-yaml": "4.0.3",
-    "temp-file": "3.4.0"
-  },
-  "typings": "./out/dmg.d.ts"
+	"name": "dmg-builder",
+	"version": "24.6.3",
+	"main": "out/dmgUtil.js",
+	"author": "Vladimir Krivosheev",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/electron-userland/electron-builder.git",
+		"directory": "packages/dmg-builder"
+	},
+	"bugs": "https://github.com/electron-userland/electron-builder/issues",
+	"homepage": "https://github.com/electron-userland/electron-builder",
+	"files": [
+		"out",
+		"templates",
+		"vendor"
+	],
+	"dependencies": {
+		"@swiftmr/app-builder-lib": "workspace:*",
+		"builder-util": "workspace:*",
+		"builder-util-runtime": "workspace:*",
+		"fs-extra": "^10.1.0",
+		"iconv-lite": "^0.6.2",
+		"js-yaml": "^4.1.0"
+	},
+	"optionalDependencies": {
+		"dmg-license": "^1.0.11"
+	},
+	"devDependencies": {
+		"@types/fs-extra": "9.0.13",
+		"@types/js-yaml": "4.0.3",
+		"temp-file": "3.4.0"
+	},
+	"typings": "./out/dmg.d.ts"
 }

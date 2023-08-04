@@ -25,7 +25,7 @@ Building:
   --projectDir, --project  The path to project directory. Defaults to current
                            working directory.
   --config, -c             The path to an electron-builder config. Defaults to
-                           `electron-builder.yml` (or `json`, or `json5`), see
+                           `electron-builder.yml` (or `json`, or `json5`, or `js`, or `ts`), see
                            https://goo.gl/YFRJOM
 
 Publishing:
@@ -111,4 +111,4 @@ build -wl
 
 ### TargetConfiguration
 * **<code id="TargetConfiguration-target">target</code>** String - The target name. e.g. `snap`.
-* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64" | "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.
+* <code id="TargetConfiguration-arch">arch</code> "x64" | "ia32" | "armv7l" | "arm64" - The arch or list of archs.

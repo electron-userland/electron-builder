@@ -24,12 +24,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -100,12 +101,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -188,12 +190,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -274,12 +277,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -361,12 +365,13 @@ Array [
   "/opt/Test App ßW/chrome-sandbox",
   "/opt/Test App ßW/chrome_100_percent.pak",
   "/opt/Test App ßW/chrome_200_percent.pak",
+  "/opt/Test App ßW/chrome_crashpad_handler",
   "/opt/Test App ßW/icudtl.dat",
   "/opt/Test App ßW/libEGL.so",
   "/opt/Test App ßW/libffmpeg.so",
   "/opt/Test App ßW/libGLESv2.so",
   "/opt/Test App ßW/libvk_swiftshader.so",
-  "/opt/Test App ßW/libvulkan.so",
+  "/opt/Test App ßW/libvulkan.so.1",
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/resources.pak",
@@ -463,12 +468,13 @@ Array [
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/chrome_crashpad_handler",
   "/opt/foo/icudtl.dat",
   "/opt/foo/libEGL.so",
   "/opt/foo/libffmpeg.so",
   "/opt/foo/libGLESv2.so",
   "/opt/foo/libvk_swiftshader.so",
-  "/opt/foo/libvulkan.so",
+  "/opt/foo/libvulkan.so.1",
   "/opt/foo/LICENSE.electron.txt",
   "/opt/foo/LICENSES.chromium.html",
   "/opt/foo/resources.pak",
@@ -532,8 +538,15 @@ exports[`executable path in postinst script 4`] = `"Test Application (test quite
 exports[`executable path in postinst script 5`] = `
 "#!/bin/bash
 
-# Link to the binary
-ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
+if type update-alternatives 2>/dev/null >&1; then
+    # Remove previous link if it doesn't use update-alternatives
+    if [ -L '/usr/bin/Boo' -a -e '/usr/bin/Boo' -a \\"\`readlink '/usr/bin/Boo'\`\\" != '/etc/alternatives/Boo' ]; then
+      rm -f '/usr/bin/Boo'
+    fi
+    update-alternatives --install '/usr/bin/Boo' 'Boo' '/opt/foo/Boo' 100
+else
+    ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
+fi
 
 # SUID chrome-sandbox for Electron 5+
 chmod 4755 '/opt/foo/chrome-sandbox' || true
@@ -576,12 +589,13 @@ Array [
   "/opt/foo/chrome-sandbox",
   "/opt/foo/chrome_100_percent.pak",
   "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/chrome_crashpad_handler",
   "/opt/foo/icudtl.dat",
   "/opt/foo/libEGL.so",
   "/opt/foo/libffmpeg.so",
   "/opt/foo/libGLESv2.so",
   "/opt/foo/libvk_swiftshader.so",
-  "/opt/foo/libvulkan.so",
+  "/opt/foo/libvulkan.so.1",
   "/opt/foo/LICENSE.electron.txt",
   "/opt/foo/LICENSES.chromium.html",
   "/opt/foo/resources.pak",

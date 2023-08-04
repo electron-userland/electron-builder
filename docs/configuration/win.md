@@ -15,7 +15,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 </ul>
 <hr>
 <ul>
-<li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha1” | “sha256”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
+<li><code id="WindowsConfiguration-signingHashAlgorithms">signingHashAlgorithms</code> = <code>['sha1', 'sha256']</code> Array&lt;“sha256” | “sha1”&gt; | “undefined” - Array of signing algorithms used. For AppX <code>sha256</code> is always used.</li>
 <li><code id="WindowsConfiguration-sign">sign</code> String | (configuration: CustomWindowsSignTaskConfiguration) =&gt; Promise - The custom function (or path to file or module id) to sign Windows executable.</li>
 <li><code id="WindowsConfiguration-certificateFile">certificateFile</code> String | “undefined” - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
 <li><code id="WindowsConfiguration-certificatePassword">certificatePassword</code> String | “undefined” - The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see <a href="/code-signing">Code Signing</a>.</li>
@@ -31,7 +31,8 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <li><code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = <code>true</code> Boolean - Whether to verify the signature of an available update before installation. The <a href="#publisherName">publisher name</a> will be used for the signature verification.</li>
 <li><code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = <code>asInvoker</code> “asInvoker” | “highestAvailable” | “requireAdministrator” | “undefined” - The <a href="https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9">security level</a> at which the application requests to be executed. Cannot be specified per target, allowed only in the <code>win</code>.</li>
 <li><code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = <code>true</code> Boolean - Whether to sign and add metadata to executable. Advanced option.</li>
-<li><code id="WindowsConfiguration-signDlls">signDlls</code> = <code>false</code> Boolean - Whether to sign DLL files. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384">https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384</a></li>
+<li tag.description=""><code id="WindowsConfiguration-signDlls">signDlls</code> = <code>false</code> Boolean - Whether to sign DLL files. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384">https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384</a> Deprecated:</li>
+<li><code id="WindowsConfiguration-signExts">signExts</code> Array&lt;String&gt; | “undefined” - Explicit file extensions to also sign. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/7329">https://github.com/electron-userland/electron-builder/issues/7329</a></li>
 </ul>
 
 <!-- end of generated block -->
@@ -57,6 +58,49 @@ exports.default = async function(configuration) {
   // your custom code
 }
 ```
+
+#### How do use a custom verify function to enable nsis signature verification alternatives instead of powershell?
+
+Use the `verifyUpdateCodeSignature` interface:
+
+```js
+/**
+*  return null if verify signature succeed
+*  return error message if verify signature failed
+*/
+export type verifyUpdateCodeSignature = (publisherName: string[], path: string) => Promise<string | null>
+```
+
+Pass a custom verify function to the nsis updater. For example, if you want to use a native verify function, you can use [win-verify-signature](https://github.com/beyondkmp/win-verify-trust).
+
+
+```js
+import { NsisUpdater } from "electron-updater"
+import { verifySignatureByPublishName } from "win-verify-signature"
+// Or MacUpdater, AppImageUpdater
+
+export default class AppUpdater {
+    constructor() {
+        const options = {
+            requestHeaders: {
+                // Any request headers to include here
+            },
+            provider: 'generic',
+            url: 'https://example.com/auto-updates'
+        }
+
+        const autoUpdater = new NsisUpdater(options)
+        autoUpdater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+            const result = verifySignatureByPublishName(path, publisherName);
+            if(result.signed) return Promise.resolve(null);
+            return Promise.resolve(result.message);
+        }
+        autoUpdater.addAuthHeader(`Bearer ${token}`)
+        autoUpdater.checkForUpdatesAndNotify()
+    }
+}
+```
+
 
 #### How do create Parallels Windows 10 Virtual Machine?
 

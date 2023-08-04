@@ -1,6 +1,6 @@
 import { path7x, path7za } from "7zip-bin"
 import { addValue, deepAssign, exec, log, spawn } from "builder-util"
-import { CancellationToken } from "builder-util-runtime"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
@@ -26,8 +26,8 @@ if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
 }
 
-export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
-export const snapTarget = Platform.LINUX.createTarget("snap")
+export const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET, Arch.x64)
+export const snapTarget = Platform.LINUX.createTarget("snap", Arch.x64)
 
 export interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
@@ -52,7 +52,7 @@ export interface PackedContext {
   readonly outDir: string
 
   readonly getResources: (platform: Platform, arch?: Arch) => string
-  readonly getContent: (platform: Platform) => string
+  readonly getContent: (platform: Platform, arch?: Arch) => string
 
   readonly packager: Packager
 
@@ -88,7 +88,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   if (checkOptions.signedWin) {
     configuration.cscLink = WIN_CSC_LINK
     configuration.cscKeyPassword = ""
-  } else if ((configuration as Configuration).cscLink == null) {
+  } else if (configuration.cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, { config: { mac: { identity: null } } })
   }
 
@@ -122,7 +122,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.isInstallDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production"], {
+        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--legacy-peer-deps"], {
           cwd: projectDir,
         })
       }
@@ -141,14 +141,18 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
       if (checkOptions.packed != null) {
         const base = function (platform: Platform, arch?: Arch): string {
-          return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
+          return path.join(
+            outDir,
+            `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
+            platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
+          )
         }
 
         await checkOptions.packed({
           projectDir,
           outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
-          getContent: platform => base(platform),
+          getResources: (platform, arch) => path.join(base(platform, arch), platform === Platform.MAC ? "Resources" : "resources"),
+          getContent: (platform, arch) => base(platform, arch),
           packager,
           tmpDir,
         })
@@ -191,11 +195,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   }
 
   function sortKey(a: ArtifactCreated) {
-    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!!.toString("hex") : path.basename(a.file)}`
+    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.fileContent!.toString("hex") : path.basename(a.file)}`
   }
 
   const objectToCompare: any = {}
-  for (const platform of packagerOptions.targets!!.keys()) {
+  for (const platform of packagerOptions.targets!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await Promise.all(
       (artifacts.get(platform) || [])
         .sort((a, b) => sortKey(a).localeCompare(sortKey(b), "en"))
@@ -228,8 +232,12 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
             result.arch = Arch[result.arch]
           }
 
-          if (Buffer.isBuffer(result.fileContent)) {
-            delete result.fileContent
+          if (result.fileContent) {
+            if (Buffer.isBuffer(result.fileContent)) {
+              delete result.fileContent
+            } else if (Array.isArray(result.fileContent.files)) {
+              result.fileContent.files = result.fileContent.files.sort((a: UpdateFileInfo, b: UpdateFileInfo) => a.url.localeCompare(b.url, "en"))
+            }
           }
 
           delete result.isWriteUpdateInfo
@@ -243,7 +251,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   expect(objectToCompare).toMatchSnapshot()
 
-  c: for (const [platform, archToType] of packagerOptions.targets!!) {
+  c: for (const [platform, archToType] of packagerOptions.targets!) {
     for (const [arch, targets] of computeArchToTargetNamesMap(
       archToType,
       { platformSpecificBuildOptions: (packagerOptions as any)[platform.buildConfigurationKey] || {}, defaultTarget: [] } as any,
@@ -253,14 +261,15 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         continue c
       }
 
-      const nameToTarget = platformToTargets.get(platform)!!
+      const nameToTarget = platformToTargets.get(platform)!
       if (platform === Platform.MAC) {
-        const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
+        const subDir = nameToTarget.has("mas-dev") ? "mas-dev" : nameToTarget.has("mas") ? "mas" : "mac"
+        const packedAppDir = path.join(outDir, `${subDir}${getArchSuffix(arch)}`, `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       } else if (platform === Platform.LINUX) {
         await checkLinuxResult(outDir, packager, arch, nameToTarget)
       } else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!!, nameToTarget)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!, nameToTarget)
       }
     }
   }
@@ -318,7 +327,8 @@ function parseDebControl(info: string): any {
 
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
-  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", path.join(packedAppDir, "Contents", "Info.plist")]))[0]
+  const plistPath = path.join(packedAppDir, "Contents", "Info.plist")
+  const info = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", plistPath]))[0]
 
   expect(info).toMatchObject({
     CFBundleVersion: info.CFBundleVersion === "50" ? "50" : `${appInfo.version}.${process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM}`,
@@ -381,8 +391,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     return
   }
 
-  const packageFile = artifacts.find(it => it.file!!.endsWith("-full.nupkg"))!.file!!
-  const unZipper = new DecompressZip(packageFile!!)
+  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
+  const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
@@ -542,8 +552,6 @@ export async function verifyAsarFileTree(resourceDir: string) {
       return value
     })
   )
-
-  // console.log(resourceDir + " " + JSON.stringify(stableHeader, null, 2))
   expect(stableHeader).toMatchSnapshot()
 }
 

@@ -1,5 +1,5 @@
 Developer API only. See [Configuration](../configuration/configuration.md) for user documentation.
-  
+
 <!-- do not edit. start of generated block -->
 <h1 id="modules">Modules</h1>
 <dl>
@@ -1097,7 +1097,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 <tr>
 <td>outputFormat</td>
-<td><code>“icns”</code> | <code>“ico”</code> | <code>“set”</code></td>
+<td><code>“set”</code> | <code>“icns”</code> | <code>“ico”</code></td>
 </tr>
 </tbody>
 </table>
@@ -1304,6 +1304,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><code id="UploadTask-fileContent">fileContent</code> module:global.Buffer | “undefined”</li>
 <li><strong><code id="UploadTask-arch">arch</code></strong> <a href="#Arch">Arch</a> | “undefined”</li>
 <li><code id="UploadTask-safeArtifactName">safeArtifactName</code> String | “undefined”</li>
+<li><code id="UploadTask-timeout">timeout</code> Number | “undefined”</li>
 </ul>
 <p><a name="HttpPublisher"></a></p>
 <h2 id="httppublisher-%E2%87%90-publisher">HttpPublisher ⇐ <code><a href="#Publisher">Publisher</a></code></h2>
@@ -1417,25 +1418,26 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 </ul>
 </li>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 <li><a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
 </ul>
 </li>
+<li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
 <li><a href="#MacUpdater">.MacUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.MacUpdater+quitAndInstall"><code>.quitAndInstall()</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1449,6 +1451,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.Provider+resolveFiles"><code>.resolveFiles(updateInfo)</code></a> ⇒ <code>Array&lt;<a href="#ResolvedUpdateFileInfo">ResolvedUpdateFileInfo</a>&gt;</code></li>
 </ul>
 </li>
+<li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
 <li><a href="#UpdaterSignal">.UpdaterSignal</a>
 <ul>
 <li><a href="#module_electron-updater.UpdaterSignal+login"><code>.login(handler)</code></a></li>
@@ -1572,9 +1575,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
 <h3 id="appimageupdater.isupdateractive()-%E2%87%92-boolean"><code>appImageUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="AppUpdater"></a></p>
-<h2 id="appupdater-%E2%87%90-module%3Atyped-emitter%2Findex.typedeventemitter">AppUpdater ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code></h2>
+<h2 id="appupdater-%E2%87%90-module%3Atiny-typed-emitter%2Flib%2Findex.typedemitter">AppUpdater ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:typed-emitter/index.TypedEventEmitter</code><br>
+<strong>Extends</strong>: <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code><br>
 <strong>Properties</strong></p>
 <ul>
 <li>
@@ -1582,6 +1585,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </li>
 <li>
 <p><code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = <code>true</code> Boolean - Whether to automatically install a downloaded update on app quit (if <code>quitAndInstall</code> was not called before).</p>
+</li>
+<li>
+<p><code id="AppUpdater-autoRunAppAfterInstall">autoRunAppAfterInstall</code> = <code>true</code> Boolean - <em>windows-only</em> Whether to run the app after finish install when run the installer NOT in silent mode.</p>
 </li>
 <li>
 <p><code id="AppUpdater-allowPrerelease">allowPrerelease</code> = <code>false</code> Boolean - <em>GitHub provider only.</em> Whether to allow update to pre-release versions. Defaults to <code>true</code> if application version contains prerelease components (e.g. <code>0.12.1-alpha.1</code>, here <code>alpha</code> is a prerelease component), otherwise <code>false</code>.</p>
@@ -1597,6 +1603,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li>
 <p><code id="AppUpdater-disableWebInstaller">disableWebInstaller</code> = <code>false</code> Boolean - Web installer files might not have signature verification, this switch prevents to load them unless it is needed.</p>
 <p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
+</li>
+<li>
+<p><code id="AppUpdater-forceDevUpdateConfig">forceDevUpdateConfig</code> = <code>false</code> Boolean - Allows developer to force the updater to work in “dev” mode, looking for “dev-app-update.yml” instead of “app-update.yml” Dev: <code>path.join(this.app.getAppPath(), &quot;dev-app-update.yml&quot;)</code> Prod: <code>path.join(process.resourcesPath!, &quot;app-update.yml&quot;)</code></p>
 </li>
 <li>
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
@@ -1628,12 +1637,12 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </ul>
 <p><strong>Methods</strong></p>
 <ul>
-<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:typed-emitter/index.TypedEventEmitter</code>
+<li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
 <ul>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1678,9 +1687,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tbody>
 </table>
 <p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
-<h3 id="appupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Cany%3E"><code>appUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<h3 id="appupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>appUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
 <p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
-<p><strong>Returns</strong>: <code>Promise&lt;any&gt;</code> - Path to downloaded file.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
 <table>
 <thead>
 <tr>
@@ -1741,11 +1750,15 @@ This is different from the normal quit event sequence.</p>
 <tr>
 <td>isForceRunAfter</td>
 <td><code>Boolean</code></td>
-<td>Run the app after finish even on silent install. Not applicable for macOS. Ignored if <code>isSilent</code> is set to <code>false</code>.</td>
+<td>Run the app after finish even on silent install. Not applicable for macOS. Ignored if <code>isSilent</code> is set to <code>false</code>(In this case you can still set <code>autoRunAppAfterInstall</code> to <code>false</code> to prevent run the app after finish).</td>
 </tr>
 </tbody>
 </table>
-<p><a name="MacUpdater"></a></p>
+<p><a name="DebUpdater"></a></p>
+<h2 id="debupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">DebUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
+<a name="MacUpdater"></a></p>
 <h2 id="macupdater-%E2%87%90-appupdater">MacUpdater ⇐ <code><a href="#AppUpdater">AppUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Extends</strong>: <code><a href="#AppUpdater">AppUpdater</a></code></p>
@@ -1756,7 +1769,7 @@ This is different from the normal quit event sequence.</p>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
-<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
 <li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
@@ -1803,9 +1816,9 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
-<h3 id="macupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Cany%3E"><code>macUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<h3 id="macupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>macUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
 <p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
-<p><strong>Returns</strong>: <code>Promise&lt;any&gt;</code> - Path to downloaded file.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
 <table>
 <thead>
 <tr>
@@ -1847,7 +1860,12 @@ This is different from the normal quit event sequence.</p>
 <h2 id="nsisupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">NsisUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
-<a name="Provider"></a></p>
+<strong>Properties</strong></p>
+<ul>
+<li><code id="NsisUpdater-installDirectory">installDirectory</code> String - Specify custom install directory path</li>
+<li><strong><code id="NsisUpdater-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code></strong> module:electron-updater.__type - The verifyUpdateCodeSignature. You can pass <a href="https://github.com/beyondkmp/win-verify-trust">win-verify-signature</a> or another custom verify function: <code> (publisherName: string[], path: string) =&gt; Promise&lt;string | null&gt;</code>. The default verify function uses <a href="https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts">windowsExecutableCodeSignatureVerifier</a></li>
+</ul>
+<p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Properties</strong></p>
@@ -1899,7 +1917,11 @@ This is different from the normal quit event sequence.</p>
 </tr>
 </tbody>
 </table>
-<p><a name="UpdaterSignal"></a></p>
+<p><a name="RpmUpdater"></a></p>
+<h2 id="rpmupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">RpmUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
+<a name="UpdaterSignal"></a></p>
 <h2 id="updatersignal">UpdaterSignal</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/></p>
 <ul>

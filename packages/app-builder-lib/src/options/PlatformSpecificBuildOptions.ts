@@ -80,6 +80,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly protocols?: Array<Protocol> | Protocol
 
   /**
+   * The electron locales to keep. By default, all Electron locales used as-is.
+   */
+  readonly electronLanguages?: Array<string> | string
+
+  /**
    * Whether to fail if app will be not code signed.
    */
   readonly forceCodeSigning?: boolean
@@ -143,6 +148,11 @@ export interface ReleaseInfo {
    * The release date.
    */
   releaseDate?: string
+
+  /**
+   * Vendor specific information.
+   */
+  vendor?: { [key: string]: any } | null
 }
 
 /**

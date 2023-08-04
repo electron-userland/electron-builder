@@ -173,7 +173,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   logSpawn(command, args, options)
   try {
     return _spawn(command, args, options)
-  } catch (e) {
+  } catch (e: any) {
     throw new Error(`Cannot spawn ${command}: ${e.stack || e}`)
   }
 }
@@ -265,7 +265,8 @@ export class ExecError extends Error {
   }
 }
 
-export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
+type Nullish = null | undefined
+export function use<T, R>(value: T | Nullish, task: (value: T) => R): R | null {
   return value == null ? null : task(value)
 }
 
@@ -326,7 +327,11 @@ export function isPullRequest() {
   }
 
   return (
-    isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CIRCLE_PULL_REQUEST) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
+    isSet(process.env.TRAVIS_PULL_REQUEST) ||
+    isSet(process.env.CIRCLE_PULL_REQUEST) ||
+    isSet(process.env.BITRISE_PULL_REQUEST) ||
+    isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER) ||
+    isSet(process.env.GITHUB_BASE_REF)
   )
 }
 
@@ -391,14 +396,14 @@ export function executeAppBuilder(
   }
 }
 
-export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
+export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number, backoff = 0, attempt = 0): Promise<T> {
   try {
     return await task()
-  } catch (error) {
+  } catch (error: any) {
     log.info(`Above command failed, retrying ${retriesLeft} more times`)
     if (retriesLeft > 0) {
-      await new Promise(resolve => setTimeout(resolve, interval))
-      return await retry(task, retriesLeft - 1, interval)
+      await new Promise(resolve => setTimeout(resolve, interval + backoff * attempt))
+      return await retry(task, retriesLeft - 1, interval, backoff, attempt + 1)
     } else {
       throw error
     }

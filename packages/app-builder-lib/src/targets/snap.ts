@@ -69,6 +69,13 @@ export default class SnapTarget extends Target {
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
+    if (options.base != null) {
+      snap.base = options.base
+      // from core22 onwards adapter is legacy
+      if (Number(snap.base.split("core")[1]) >= 22) {
+        delete appDescriptor.adapter
+      }
+    }
     if (options.grade != null) {
       snap.grade = options.grade
     }
@@ -123,10 +130,7 @@ export default class SnapTarget extends Target {
     } else {
       const archTriplet = archNameToTriplet(arch)
       appDescriptor.environment = {
-        // https://github.com/electron-userland/electron-builder/issues/4007
-        // https://github.com/electron/electron/issues/9056
-        DISABLE_WAYLAND: "1",
-        TMPDIR: "$XDG_RUNTIME_DIR",
+        DISABLE_WAYLAND: options.allowNativeWayland ? "" : "1",
         PATH: "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH",
         SNAP_DESKTOP_RUNTIME: "$SNAP/gnome-platform",
         LD_LIBRARY_PATH: [
@@ -177,9 +181,6 @@ export default class SnapTarget extends Target {
     })
 
     const snap = await this.createDescriptor(arch)
-    if (this.isUseTemplateApp) {
-      delete snap.parts
-    }
 
     const stageDir = await createStageDirPath(this, packager, arch)
     const snapArch = toLinuxArchString(arch, "snap")
@@ -201,15 +202,30 @@ export default class SnapTarget extends Target {
       Icon: "${SNAP}/meta/gui/icon.png",
     })
 
+    const extraAppArgs: Array<string> = options.executableArgs ?? []
     if (this.isElectronVersionGreaterOrEqualThan("5.0.0") && !isBrowserSandboxAllowed(snap)) {
-      args.push("--extraAppArgs=--no-sandbox")
+      const noSandboxArg = "--no-sandbox"
+      if (!extraAppArgs.includes(noSandboxArg)) {
+        extraAppArgs.push(noSandboxArg)
+      }
       if (this.isUseTemplateApp) {
         args.push("--exclude", "chrome-sandbox")
       }
     }
+    if (extraAppArgs.length > 0) {
+      args.push("--extraAppArgs=" + extraAppArgs.join(" "))
+    }
 
     if (snap.compression != null) {
       args.push("--compression", snap.compression)
+    }
+
+    if (this.isUseTemplateApp) {
+      // remove fields that are valid in snapcraft.yaml, but not snap.yaml
+      const fieldsToStrip = ["compression", "contact", "donation", "issues", "parts", "source-code", "website"]
+      for (const field of fieldsToStrip) {
+        delete snap[field]
+      }
     }
 
     if (packager.packagerOptions.effectiveOptionComputed != null && (await packager.packagerOptions.effectiveOptionComputed({ snap, desktopFile, args }))) {

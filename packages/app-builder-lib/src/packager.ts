@@ -231,7 +231,7 @@ export class Packager {
 
     try {
       log.info({ version: PACKAGE_VERSION, os: getOsRelease() }, "electron-builder")
-    } catch (e) {
+    } catch (e: any) {
       // error in dev mode without babel
       if (!(e instanceof ReferenceError)) {
         throw e
@@ -381,7 +381,7 @@ export class Packager {
       const toDispose = this.toDispose.slice()
       this.toDispose.length = 0
       for (const disposer of toDispose) {
-        await disposer().catch(e => {
+        await disposer().catch((e: any) => {
           log.warn({ error: e }, "cannot dispose")
         })
       }
@@ -412,6 +412,7 @@ export class Packager {
 
   private async doBuild(): Promise<Map<Platform, Map<string, Target>>> {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
+    const syncTargetsIfAny = [] as Target[]
 
     const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
@@ -446,11 +447,19 @@ export class Packager {
       }
 
       for (const target of nameToTarget.values()) {
-        taskManager.addTask(target.finishBuild())
+        if (target.isAsyncSupported) {
+          taskManager.addTask(target.finishBuild())
+        } else {
+          syncTargetsIfAny.push(target)
+        }
       }
     }
 
     await taskManager.awaitTasks()
+
+    for (const target of syncTargetsIfAny) {
+      await target.finishBuild()
+    }
     return platformToTarget
   }
 

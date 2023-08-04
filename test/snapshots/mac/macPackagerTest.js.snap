@@ -27,7 +27,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -49,7 +48,14 @@ Object {
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -75,7 +81,7 @@ Object {
       "CFBundleTypeExtensions": Array [
         "boo",
       ],
-      "CFBundleTypeIconFile": "Test App ßW.icns",
+      "CFBundleTypeIconFile": "icon.icns",
       "CFBundleTypeName": "Boo",
       "CFBundleTypeRole": "Shell",
       "LSHandlerRank": "Owner",
@@ -92,7 +98,7 @@ Object {
     },
   ],
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "foo",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -100,7 +106,6 @@ Object {
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.12.0",
-  "LSRequiresNativeExecution": true,
   "LSUIElement": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
@@ -121,6 +126,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -180,19 +187,21 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-x64.zip",
+            "url": "TestApp-1.1.0-mac-arm64.dmg",
           },
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.zip",
           },
           Object {
-            "blockMapSize": "@blockMapSize",
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "TestApp-1.1.0-mac-universal.dmg",
+          },
+          Object {
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.zip",
@@ -205,12 +214,7 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-mac-arm64.dmg",
-          },
-          Object {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "TestApp-1.1.0-mac-universal.dmg",
+            "url": "TestApp-1.1.0-mac-x64.zip",
           },
         ],
         "path": "TestApp-1.1.0-mac-x64.zip",
@@ -223,7 +227,14 @@ Object {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -232,7 +243,14 @@ Object {
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -241,7 +259,14 @@ Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -261,7 +286,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -281,6 +305,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -289,11 +315,11 @@ Object {
 
 exports[`two-package 3`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
 ]
 `;
 
@@ -308,7 +334,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -328,6 +353,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -336,11 +363,11 @@ Object {
 
 exports[`two-package 5`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
 ]
 `;
 
@@ -355,7 +382,6 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
-  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -375,6 +401,8 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -383,10 +411,224 @@ Object {
 
 exports[`two-package 7`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
+]
+`;
+
+exports[`yarn two package.json w/ native module 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": "universal",
+      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
+      "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`yarn two package.json w/ native module 2`] = `
+Object {
+  "CFBundleDisplayName": "test-app-two-native-modules",
+  "CFBundleExecutable": "test-app-two-native-modules",
+  "CFBundleIconFile": "electron.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp2",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "test-app-two-native-modules",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.1",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`yarn two package.json w/ native module 3`] = `
+Object {
+  "files": Object {
+    "index.html": Object {
+      "size": "<size>",
+    },
+    "index.js": Object {
+      "size": "<size>",
+    },
+    "node_modules": Object {
+      "files": Object {
+        "debug": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": "<size>",
+            },
+            "dist": Object {
+              "files": Object {
+                "debug.js": Object {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+            "src": Object {
+              "files": Object {
+                "browser.js": Object {
+                  "size": "<size>",
+                },
+                "common.js": Object {
+                  "size": "<size>",
+                },
+                "index.js": Object {
+                  "size": "<size>",
+                },
+                "node.js": Object {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "node-mac-permissions": Object {
+          "files": Object {
+            ".prettierrc": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "LICENSE": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "build": Object {
+              "files": Object {
+                "Release": Object {
+                  "files": Object {
+                    "permissions.node": Object {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+                "node_gyp_bins": Object {
+                  "files": Object {
+                    "python3": Object {
+                      "size": "<size>",
+                      "unpacked": true,
+                    },
+                  },
+                },
+              },
+            },
+            "index.js": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "package.json": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+            "permissions.mm": Object {
+              "size": "<size>",
+              "unpacked": true,
+            },
+          },
+        },
+      },
+    },
+    "package.json": Object {
+      "size": "<size>",
+    },
+  },
+}
+`;
+
+exports[`yarn two package.json w/ native module 4`] = `
+Array [
+  "app.asar",
+  "electron.icns",
+  "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
+  "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
+  Object {
+    "content": "{
+  \\"name\\": \\"node-mac-permissions\\",
+  \\"version\\": \\"2.3.0\\",
+  \\"description\\": \\"A native node module to manage system permissions on macOS\\",
+  \\"main\\": \\"index.js\\",
+  \\"types\\": \\"index.d.ts\\",
+  \\"repository\\": {
+    \\"type\\": \\"git\\",
+    \\"url\\": \\"git+https://github.com/codebytere/node-mac-permissions.git\\"
+  },
+  \\"author\\": \\"Shelley Vohr <shelley.vohr@gmail.com>\\",
+  \\"license\\": \\"MIT\\",
+  \\"homepage\\": \\"https://github.com/codebytere/node-mac-permissions#readme\\",
+  \\"dependencies\\": {
+    \\"bindings\\": \\"^1.5.0\\",
+    \\"node-addon-api\\": \\"^3.0.2\\"
+  },
+  \\"devDependencies\\": {
+    \\"chai\\": \\"^4.3.6\\",
+    \\"clang-format\\": \\"1.8.0\\",
+    \\"husky\\": \\"^8.0.1\\",
+    \\"lint-staged\\": \\"^12.4.1\\",
+    \\"mocha\\": \\"^10.0.0\\",
+    \\"node-gyp\\": \\"^9.0.0\\",
+    \\"prettier\\": \\"^2.6.2\\"
+  },
+  \\"lint-staged\\": {
+    \\"*.js\\": [
+      \\"prettier --write\\"
+    ],
+    \\"*.mm\\": [
+      \\"clang-format -i\\"
+    ]
+  },
+  \\"os\\": [
+    \\"darwin\\"
+  ]
+}",
+    "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
+  },
+  "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
+  "app.asar.unpacked/node_modules/node-mac-permissions/build/node_gyp_bins/python3",
+  "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;

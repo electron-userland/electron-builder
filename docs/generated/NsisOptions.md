@@ -17,6 +17,9 @@
 <li>
 <p><code id="NsisOptions-allowToChangeInstallationDirectory">allowToChangeInstallationDirectory</code> = <code>false</code> Boolean - <em>assisted installer only.</em> Whether to allow user to change installation directory.</p>
 </li>
+<li>
+<p><code id="NsisOptions-removeDefaultUninstallWelcomePage">removeDefaultUninstallWelcomePage</code> = <code>false</code> Boolean - <em>assisted installer only.</em> remove the default uninstall welcome page.</p>
+</li>
 </ul>
 <hr>
 <ul>
@@ -37,8 +40,8 @@
 <p><code id="NsisOptions-script">script</code> String | “undefined” - The path to NSIS script to customize installer. Defaults to <code>build/installer.nsi</code>. See <a href="#custom-nsis-script">Custom NSIS script</a>.</p>
 </li>
 <li>
-<p><code id="NsisOptions-license">license</code> String | “undefined” - The path to EULA license file. Defaults to <code>license.txt</code> or <code>eula.txt</code> (or uppercase variants). In addition to <code>txt, </code>rtf<code>and</code>html<code>supported (don't forget to use</code>target=&quot;_blank&quot;` for links).</p>
-<p>Multiple license files in different languages are supported — use lang postfix (e.g. <code>_de</code>, <code>_ru</code>)). For example, create files <code>license_de.txt</code> and <code>license_en.txt</code> in the build resources. If OS language is german, <code>license_de.txt</code> will be displayed. See map of <a href="https://github.com/meikidd/iso-639-1/blob/master/src/data.js">language code to name</a>.</p>
+<p><code id="NsisOptions-license">license</code> String | “undefined” - The path to EULA license file. Defaults to <code>license.txt</code> or <code>eula.txt</code> (or uppercase variants). In addition to <code>txt</code>, <code>rtf</code> and <code>html</code> supported (don’t forget to use <code>target=&quot;_blank&quot;</code> for links).</p>
+<p>Multiple license files in different languages are supported — use lang postfix (e.g. <code>_de</code>, <code>_ru</code>). For example, create files <code>license_de.txt</code> and <code>license_en.txt</code> in the build resources. If OS language is german, <code>license_de.txt</code> will be displayed. See map of <a href="https://github.com/meikidd/iso-639-1/blob/master/src/data.js">language code to name</a>.</p>
 <p>Appropriate license file will be selected by user OS language.</p>
 </li>
 <li>

@@ -27,7 +27,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "executableArgs": {
           "anyOf": [
@@ -334,7 +334,7 @@
     },
     "BitbucketOptions": {
       "additionalProperties": false,
-      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, token: string) {\nconst base64encodedData = Buffer.from(`${owner}:${token.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
+      "description": "Bitbucket options.\nhttps://bitbucket.org/\nDefine `BITBUCKET_TOKEN` environment variable.\n\nFor converting an app password to a usable token, you can utilize this\n```typescript\nconvertAppPassword(owner: string, appPassword: string) {\nconst base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString(\"base64\")\nreturn `Basic ${base64encodedData}`\n}\n```",
       "properties": {
         "channel": {
           "default": "latest",
@@ -381,8 +381,16 @@
           "description": "Repository slug/name",
           "type": "string"
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "token": {
-          "description": "The access token to support auto-update from private bitbucket repositories.",
+          "description": "The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.",
           "type": [
             "null",
             "string"
@@ -478,6 +486,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updateProvider": {
           "description": "The Provider to provide UpdateInfo regarding available updates.  Required\nto use custom providers with electron-updater.",
           "typeof": "function"
@@ -563,7 +579,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "executableArgs": {
           "anyOf": [
@@ -591,7 +607,7 @@
               "type": "null"
             }
           ],
-          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
         },
         "icon": {
           "type": "string"
@@ -704,6 +720,20 @@
               ]
             }
           ]
+        },
+        "recommends": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps).."
         },
         "synopsis": {
           "description": "The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).",
@@ -1140,7 +1170,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "executableArgs": {
           "anyOf": [
@@ -1358,6 +1388,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -1482,6 +1520,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "token": {
           "description": "The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).",
           "type": [
@@ -1572,6 +1618,14 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "updaterCacheDirName": {
           "type": [
@@ -1684,12 +1738,26 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "detectUpdateChannel": {
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
+        },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -1971,7 +2039,7 @@
             }
           ],
           "default": "AppImage",
-          "description": "Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
+          "description": "Target package type: list of `AppImage`, `flatpak`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\n\nelectron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.\n\nPlease [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz."
         },
         "vendor": {
           "description": "The vendor. Defaults to [author](/configuration/configuration#Metadata-author).",
@@ -2052,7 +2120,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "executableArgs": {
           "anyOf": [
@@ -2080,7 +2148,7 @@
               "type": "null"
             }
           ],
-          "description": "*Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
+          "description": "*Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.\n\nExample: `[\"--before-install=build/deb-preinstall.sh\", \"--after-upgrade=build/deb-postinstall.sh\"]`"
         },
         "icon": {
           "type": "string"
@@ -2354,7 +2422,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -2364,14 +2432,14 @@
           ]
         },
         "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](/configuration/mas).",
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).\nMAS entitlements is specified in the [mas](/configuration/mas).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlementsInherit": {
-          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).\n\nThis option only applies when signing with `entitlements` provided.",
+          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\n\nThis option only applies when signing with `entitlements` provided.",
           "type": [
             "null",
             "string"
@@ -2509,7 +2577,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -2596,6 +2664,25 @@
             "null",
             "string"
           ]
+        },
+        "notarize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NotarizeOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
         },
         "protocols": {
           "anyOf": [
@@ -2716,25 +2803,15 @@
         },
         "singleArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "strictVerify": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "string",
-                "boolean"
-              ]
-            }
-          ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "type": "boolean"
         },
         "target": {
           "anyOf": [
@@ -2789,7 +2866,7 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -2813,6 +2890,13 @@
           ],
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
+        },
+        "x64ArchFiles": {
+          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -2968,7 +3052,7 @@
               "type": "string"
             }
           ],
-          "description": "The electron locales. By default Electron locales used as is."
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
         },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -2978,14 +3062,14 @@
           ]
         },
         "entitlements": {
-          "description": "The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).",
+          "description": "The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.\nBe aware that your app may crash if the right entitlements are not set like `com.apple.security.cs.allow-jit` for example on arm64 builds with Electron 20+.\nSee [Signing and Notarizing macOS Builds from the Electron documentation](https://www.electronjs.org/docs/latest/tutorial/code-signing#signing--notarizing-macos-builds) for more information.",
           "type": [
             "null",
             "string"
           ]
         },
         "entitlementsInherit": {
-          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).\nOtherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).",
+          "description": "The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).\nSee [this folder in osx-sign's repository](https://github.com/electron/osx-sign/tree/main/entitlements) for examples.",
           "type": [
             "null",
             "string"
@@ -3123,7 +3207,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let electron-osx-sign validate the signing or not.",
+          "description": "Whether to let @electron/osx-sign validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3210,6 +3294,25 @@
             "null",
             "string"
           ]
+        },
+        "notarize": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NotarizeOptions"
+            },
+            {
+              "type": [
+                "null",
+                "boolean"
+              ]
+            }
+          ],
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+        },
+        "preAutoEntitlements": {
+          "default": true,
+          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "type": "boolean"
         },
         "protocols": {
           "anyOf": [
@@ -3330,25 +3433,15 @@
         },
         "singleArchFiles": {
           "description": "Minimatch pattern of paths that are allowed to be present in one of the\nASAR files, but not in the other.\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
-          "type": "string"
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "strictVerify": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "type": [
-                "string",
-                "boolean"
-              ]
-            }
-          ],
           "default": true,
-          "description": "Whether to let electron-osx-sign verify the contents or not."
+          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "type": "boolean"
         },
         "target": {
           "anyOf": [
@@ -3403,7 +3496,7 @@
               "type": "null"
             }
           ],
-          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac)."
+          "description": "The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages."
         },
         "timestamp": {
           "description": "Specify the URL of the timestamp authority server",
@@ -3427,6 +3520,13 @@
           ],
           "default": "distribution",
           "description": "Whether to sign app for development or for distribution."
+        },
+        "x64ArchFiles": {
+          "description": "Minimatch pattern of paths that are allowed to be x64 binaries in both\nASAR files\n\nThis option has no effect unless building for \"universal\" arch and applies\nonly if `mergeASARs` is `true`.",
+          "type": [
+            "null",
+            "string"
+          ]
         }
       },
       "type": "object"
@@ -3611,6 +3711,194 @@
       },
       "type": "object"
     },
+    "MsiWrappedOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "additionalWixArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Any additional arguments to be passed to the WiX installer compiler, such as `[\"-ext\", \"WixUtilExtension\"]`"
+        },
+        "artifactName": {
+          "description": "The [artifact file name template](/configuration/configuration#artifact-file-name-template).",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "createDesktopShortcut": {
+          "default": true,
+          "description": "Whether to create desktop shortcut. Set to `always` if to recreate also on reinstall (even if removed by user).",
+          "enum": [
+            "always",
+            false,
+            true
+          ]
+        },
+        "createStartMenuShortcut": {
+          "default": true,
+          "description": "Whether to create start menu shortcut.",
+          "type": "boolean"
+        },
+        "impersonate": {
+          "default": false,
+          "description": "Determines if the wrapped installer should be executed with impersonation",
+          "type": "boolean"
+        },
+        "menuCategory": {
+          "default": false,
+          "description": "Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.",
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "oneClick": {
+          "type": "boolean"
+        },
+        "perMachine": {
+          "default": false,
+          "description": "Whether to install per all users (per-machine).",
+          "type": "boolean"
+        },
+        "publish": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/GithubOptions"
+            },
+            {
+              "$ref": "#/definitions/S3Options"
+            },
+            {
+              "$ref": "#/definitions/SpacesOptions"
+            },
+            {
+              "$ref": "#/definitions/GenericServerOptions"
+            },
+            {
+              "$ref": "#/definitions/CustomPublishOptions"
+            },
+            {
+              "$ref": "#/definitions/KeygenOptions"
+            },
+            {
+              "$ref": "#/definitions/SnapStoreOptions"
+            },
+            {
+              "$ref": "#/definitions/BitbucketOptions"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/GithubOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/S3Options"
+                  },
+                  {
+                    "$ref": "#/definitions/SpacesOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/GenericServerOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/CustomPublishOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/KeygenOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/SnapStoreOptions"
+                  },
+                  {
+                    "$ref": "#/definitions/BitbucketOptions"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ]
+        },
+        "runAfterFinish": {
+          "default": true,
+          "description": "Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.",
+          "type": "boolean"
+        },
+        "shortcutName": {
+          "description": "The name that will be used for all shortcuts. Defaults to the application name.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "upgradeCode": {
+          "description": "The [upgrade code](https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx). Optional, by default generated using app id.",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "warningsAsErrors": {
+          "default": true,
+          "description": "If `warningsAsErrors` is `true` (default): treat warnings as errors. If `warningsAsErrors` is `false`: allow warnings.",
+          "type": "boolean"
+        },
+        "wrappedInstallerArgs": {
+          "description": "Extra arguments to provide to the wrapped installer (ie: /S for silent install)",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "NotarizeOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "appBundleId": {
+          "description": "The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).\nOnly used by `legacy` notarization tool",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "ascProvider": {
+          "description": "Your Team Short Name. Only used by `legacy` notarization tool",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "teamId": {
+          "description": "The team ID you want to notarize under. Only needed if using `notarytool`",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "NsisOptions": {
       "additionalProperties": false,
       "properties": {
@@ -3737,7 +4025,7 @@
           ]
         },
         "license": {
-          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
           "type": [
             "null",
             "string"
@@ -3865,6 +4153,11 @@
               ]
             }
           ]
+        },
+        "removeDefaultUninstallWelcomePage": {
+          "default": false,
+          "description": "*assisted installer only.* remove the default uninstall welcome page.",
+          "type": "boolean"
         },
         "runAfterFinish": {
           "default": true,
@@ -4055,7 +4348,7 @@
           ]
         },
         "license": {
-          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).\n\nMultiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`). For example, create files `license_de.txt` and `license_en.txt` in the build resources.\nIf OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).\n\nAppropriate license file will be selected by user OS language.",
           "type": [
             "null",
             "string"
@@ -4183,6 +4476,11 @@
               ]
             }
           ]
+        },
+        "removeDefaultUninstallWelcomePage": {
+          "default": false,
+          "description": "*assisted installer only.* remove the default uninstall welcome page.",
+          "type": "boolean"
         },
         "runAfterFinish": {
           "default": true,
@@ -4402,7 +4700,7 @@
           ]
         },
         "license": {
-          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).",
+          "description": "The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt`, `rtf` and `html` supported (don't forget to use `target=\"_blank\"` for links).",
           "type": [
             "null",
             "string"
@@ -4749,6 +5047,17 @@
             "null",
             "string"
           ]
+        },
+        "vendor": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Vendor specific information."
         }
       },
       "type": "object"
@@ -4757,6 +5066,10 @@
       "additionalProperties": false,
       "description": "[Amazon S3](https://aws.amazon.com/s3/) options.\nAWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).\nDefine `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).\nOr in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).\n\nExample configuration:\n\n```json\n{\n\"build\":\n \"publish\": {\n   \"provider\": \"s3\",\n   \"bucket\": \"bucket-name\"\n }\n}\n}\n```",
       "properties": {
+        "accelerate": {
+          "description": "If set to true, this will enable the s3 accelerated endpoint\nThese endpoints have a particular format of:\n ${bucketname}.s3-accelerate.amazonaws.com",
+          "type": "boolean"
+        },
         "acl": {
           "anyOf": [
             {
@@ -4868,6 +5181,14 @@
           "default": "STANDARD",
           "description": "The type of storage to use for the object."
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -4911,6 +5232,13 @@
           ],
           "description": "Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.\nDefaults to `[\"desktop-gtk2\"\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom parts `foo` in addition to defaults."
         },
+        "allowNativeWayland": {
+          "description": "Allow running the program with native wayland support with --ozone-platform=wayland.\nDisabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "appPartStage": {
           "anyOf": [
             {
@@ -4953,6 +5281,13 @@
           "default": false,
           "description": "Whether or not the snap should automatically start on login.",
           "type": "boolean"
+        },
+        "base": {
+          "description": "A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`. Defaults to `core18`",
+          "type": [
+            "null",
+            "string"
+          ]
         },
         "buildPackages": {
           "anyOf": [
@@ -5015,7 +5350,7 @@
           ]
         },
         "desktop": {
-          "description": "The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value)."
+          "description": "The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value)."
         },
         "environment": {
           "anyOf": [
@@ -5116,7 +5451,7 @@
               "type": "null"
             }
           ],
-          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
+          "description": "The list of [plugs](https://snapcraft.io/docs/reference/interfaces).\nDefaults to `[\"desktop\", \"desktop-legacy\", \"home\", \"x11\", \"wayland\", \"unity7\", \"browser-support\", \"network\", \"gsettings\", \"audio-playback\", \"pulseaudio\", \"opengl\"]`.\n\nIf list contains `default`, it will be replaced to default list, so, `[\"default\", \"foo\"]` can be used to add custom plug `foo` in addition to defaults.\n\nAdditional attributes can be specified using object instead of just name of plug:\n```\n[\n {\n   \"browser-sandbox\": {\n     \"interface\": \"browser-support\",\n     \"allow-sandbox\": true\n   },\n },\n \"another-simple-plug-name\"\n]\n```"
         },
         "publish": {
           "anyOf": [
@@ -5309,6 +5644,14 @@
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
         },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
+        },
         "updaterCacheDirName": {
           "type": [
             "null",
@@ -5393,6 +5736,14 @@
         "requestHeaders": {
           "$ref": "#/definitions/OutgoingHttpHeaders",
           "description": "Any custom request headers"
+        },
+        "timeout": {
+          "default": 120000,
+          "description": "Request timeout in milliseconds. (Default is 2 minutes; O is ignored)",
+          "type": [
+            "null",
+            "number"
+          ]
         },
         "updaterCacheDirName": {
           "type": [
@@ -5693,6 +6044,20 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "electronLanguages": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The electron locales to keep. By default, all Electron locales used as-is."
+        },
         "electronUpdaterCompatibility": {
           "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
           "type": [
@@ -5975,6 +6340,21 @@
           "description": "Whether to sign DLL files. Advanced option.",
           "type": "boolean"
         },
+        "signExts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Explicit file extensions to also sign. Advanced option."
+        },
         "signingHashAlgorithms": {
           "anyOf": [
             {
@@ -6236,8 +6616,15 @@
       "description": "Whether to build the application native dependencies from source.",
       "type": "boolean"
     },
+    "buildNumber": {
+      "description": "The build number. Maps to the `--iteration` flag for builds using FPM on Linux.\nIf not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.",
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "buildVersion": {
-      "description": "The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.\nIf `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).",
+      "description": "The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.\nIf `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber` envs) is defined, it will be used as a build version (`version.buildNumber`).",
       "type": [
         "null",
         "string"
@@ -6320,6 +6707,10 @@
       ],
       "description": "macOS DMG options."
     },
+    "downloadAlternateFFmpeg": {
+      "description": "Whether to download the alternate FFmpeg library from Electron's release assets and replace the default FFmpeg library prior to signing",
+      "type": "boolean"
+    },
     "electronBranding": {
       "$ref": "#/definitions/ElectronBrandingOptions",
       "description": "The branding used by Electron's distributables. This is needed if a fork has modified Electron's BRANDING.json file."
@@ -6342,6 +6733,20 @@
     "electronDownload": {
       "$ref": "#/definitions/ElectronDownloadOptions",
       "description": "The [electron-download](https://github.com/electron-userland/electron-download#usage) options."
+    },
+    "electronLanguages": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The electron locales to keep. By default, all Electron locales used as-is."
     },
     "electronUpdaterCompatibility": {
       "description": "The [electron-updater compatibility](/auto-update#compatibility) semver range.",
@@ -6606,6 +7011,16 @@
       ],
       "description": "MSI project created on disk - not packed into .msi package yet."
     },
+    "msiWrapped": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MsiWrappedOptions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "nodeGypRebuild": {
       "default": false,
       "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
@@ -6807,11 +7222,6 @@
     "releaseInfo": {
       "$ref": "#/definitions/ReleaseInfo",
       "description": "The release info. Intended for command line usage:\n\n```\n-c.releaseInfo.releaseNotes=\"new features\"\n```"
-    },
-    "remoteBuild": {
-      "default": true,
-      "description": "Whether to build using Electron Build Service if target not supported on current OS.",
-      "type": "boolean"
     },
     "removePackageKeywords": {
       "default": true,

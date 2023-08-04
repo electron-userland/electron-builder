@@ -63,7 +63,7 @@ The top-level [flatpak](configuration.md#Configuration-flatpak) key contains a s
 <li><code id="FlatpakOptions-description">description</code> String | “undefined” - As <a href="/configuration/configuration#Metadata-description">description</a> from application package.json, but allows you to specify different for Linux.</li>
 <li><code id="FlatpakOptions-category">category</code> String | “undefined” - The <a href="https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry">application category</a>.</li>
 <li><code id="FlatpakOptions-mimeTypes">mimeTypes</code> Array&lt;String&gt; | “undefined” - The mime types in addition to specified in the file associations. Use it if you don’t want to register a new mime type, but reuse existing.</li>
-<li><code id="FlatpakOptions-desktop">desktop</code> any | “undefined” - The <a href="https://developer.gnome.org/integration-guide/stable/desktop-files.html.en">Desktop file</a> entries (name to value).</li>
+<li><code id="FlatpakOptions-desktop">desktop</code> any | “undefined” - The <a href="https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files">Desktop file</a> entries (name to value).</li>
 <li><code id="FlatpakOptions-executableArgs">executableArgs</code> Array&lt;String&gt; | “undefined” - The executable parameters. Pass to executableName</li>
 </ul>
 <p>Inherited from <code>TargetSpecificOptions</code>:</p>

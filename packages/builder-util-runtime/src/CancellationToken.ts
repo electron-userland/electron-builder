@@ -88,7 +88,7 @@ export class CancellationToken extends EventEmitter {
         finallyHandler()
         return it
       })
-      .catch(e => {
+      .catch((e: any) => {
         finallyHandler()
         throw e
       })

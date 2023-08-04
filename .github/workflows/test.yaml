@@ -14,35 +14,40 @@ on:
         description: Force rebuild docker images for CI tests
         required: false
 
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   test-linux:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,PublishManagerTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-11.0.0-linux-electron
+          cache-key: v-17.0.0-linux-electron
 
       - name: Lint
         run: pnpm pretest
 
       - name: Determine if Dockerfiles changed
-        id: changed-files
-        uses: tj-actions/changed-files@v17
+        id: changed-files-specific
+        uses: tj-actions/changed-files@ce4b8e3cba2220de8132ac9721ff754efd6bb7d7 # v34
+        with:
+          files: docker/**/*
 
       - name: Dockerfile has changed, rebuild for tests
-        if: ${{ github.event.inputs.build-docker-locally == 'true' }} || contains(steps.changed-files.outputs.all_changed_files, 'Dockerfile') || contains(steps.changed-files.outputs.all_changed_files, 'docker')
+        if: steps.changed-files-specific.outputs.any_changed == 'true'
         run: pnpm docker-images
 
       - name: Run tests in docker image
@@ -55,37 +60,37 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/Library/Caches/electron
-          cache-key: v-11.0.0-macos-electron
+          cache-key: v-17.0.0-macos-electron
 
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,protonTest
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
   
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-path: ~/Library/Caches/electron
-          cache-key: v-11.0.0-update-electron
+          cache-path: ~/.cache/electron
+          cache-key: v-17.0.0-update-electron
 
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -97,15 +102,15 @@ jobs:
       matrix:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-11.0.0-windows-electron
+          cache-key: v-17.0.0-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
       
       - name: Test

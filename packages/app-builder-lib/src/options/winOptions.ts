@@ -96,8 +96,16 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
    * Whether to sign DLL files. Advanced option.
    * @see https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384
    * @default false
+   * @deprecated Use `signExts` instead for more explicit control
    */
   readonly signDlls?: boolean
+
+  /**
+   * Explicit file extensions to also sign. Advanced option.
+   * @see https://github.com/electron-userland/electron-builder/issues/7329
+   * @default null
+   */
+  readonly signExts?: string[] | null
 }
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"

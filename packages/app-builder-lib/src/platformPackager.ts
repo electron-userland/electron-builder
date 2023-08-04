@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, isEnvTrue } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { defaultArchFromString, getArtifactArchName } from "builder-util/out/arch"
 import { FileTransformer, statOrNull } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -201,6 +201,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
+    // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
+    delete process.env.GYP_MSVS_VERSION
+
     const beforePack = resolveFunction(this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
@@ -326,10 +329,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       packager: this,
       electronPlatformName: platformName,
     }
-    await this.signApp(packContext, isAsar)
+    const didSign = await this.signApp(packContext, isAsar)
     const afterSign = resolveFunction(this.config.afterSign, "afterSign")
     if (afterSign != null) {
-      await Promise.resolve(afterSign(packContext))
+      if (didSign) {
+        await Promise.resolve(afterSign(packContext))
+      } else {
+        log.warn(null, `skipping "afterSign" hook as no signing occurred, perhaps you intended "afterPack"?`)
+      }
     }
   }
 
@@ -422,8 +429,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<any> {
-    return Promise.resolve()
+  protected signApp(packContext: AfterPackContext, isAsar: boolean): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
   getIconPath(): Promise<string | null> {
@@ -757,7 +764,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
 
   try {
     p = require.resolve(p)
-  } catch (e) {
+  } catch (e: any) {
     debug(e)
     p = path.resolve(p)
   }
@@ -778,15 +785,4 @@ export function chooseNotNull(v1: string | null | undefined, v2: string | null |
 
 function capitalizeFirstLetter(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
-export function isSafeToUnpackElectronOnRemoteBuildServer(packager: PlatformPackager<any>) {
-  if (packager.platform !== Platform.LINUX || packager.config.remoteBuild === false) {
-    return false
-  }
-
-  if (process.platform === "win32" || isEnvTrue(process.env._REMOTE_BUILD)) {
-    return packager.config.electronDist == null && packager.config.electronDownload == null
-  }
-  return false
 }

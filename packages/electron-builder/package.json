@@ -1,7 +1,7 @@
 {
   "name": "@swiftmr/electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "23.1.2",
+  "version": "24.6.3",
   "main": "out/index.js",
   "files": [
     "out"
@@ -50,23 +50,22 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "@types/yargs": "^17.0.1",
-    "@swiftmr/app-builder-lib": "23.1.2",
-    "builder-util": "23.0.9",
-    "builder-util-runtime": "9.0.2",
-    "chalk": "^4.1.1",
-    "dmg-builder": "23.1.0",
-    "fs-extra": "^10.0.0",
+    "@swiftmr/app-builder-lib": "workspace:*",
+    "builder-util": "workspace:*",
+    "builder-util-runtime": "workspace:*",
+    "chalk": "^4.1.2",
+    "dmg-builder": "workspace:*",
+    "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
-    "read-config-file": "6.2.0",
-    "update-notifier": "^5.1.0",
-    "yargs": "^17.0.1"
+    "read-config-file": "6.3.2",
+    "simple-update-notifier": "2.0.0",
+    "yargs": "^17.6.2"
   },
   "devDependencies": {
     "@types/fs-extra": "9.0.13",
     "@types/is-ci": "3.0.0",
-    "@types/update-notifier": "5.1.0"
+    "@types/yargs": "^17.0.16"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

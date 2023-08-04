@@ -44,6 +44,10 @@ export type Defines = {
   APP_ARM64_HASH?: string
   APP_32_HASH?: string
 
+  APP_64_UNPACKED_SIZE?: string
+  APP_ARM64_UNPACKED_SIZE?: string
+  APP_32_UNPACKED_SIZE?: string
+
   REQUEST_EXECUTION_LEVEL?: PortableOptions["requestExecutionLevel"]
 
   UNPACK_DIR_NAME?: string | false
@@ -75,6 +79,8 @@ export type Defines = {
   INSTALL_MODE_PER_ALL_USERS_REQUIRED?: null
 
   allowToChangeInstallationDirectory?: null
+
+  removeDefaultUninstallWelcomePage?: null
 
   MENU_FILENAME?: string
 

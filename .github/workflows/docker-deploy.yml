@@ -17,10 +17,10 @@ jobs:
     
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3
       
       - name: Login to DockerHub
-        uses: docker/login-action@v1 
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2 
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

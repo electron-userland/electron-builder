@@ -27,7 +27,10 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 ```yaml
 win:
   publish:
-    - github
+      # an object provider for github with additional options
+    - provider: github
+      protocol: https
+      # a string provider for bitbucket that will use default options
     - bitbucket
 ```
 
@@ -132,6 +135,9 @@ In all publish options <a href="/file-patterns#file-macros">File Macros</a> are 
 <li>
 <p><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="GenericServerOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="githuboptions">GithubOptions</h2>
 <p><a href="https://help.github.com/articles/about-releases/">GitHub</a> options.</p>
@@ -179,6 +185,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 <li>
 <p><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="GithubOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="snapstoreoptions">SnapStoreOptions</h2>
 <p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
@@ -195,6 +204,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 </li>
 <li>
 <p><code id="SnapStoreOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="SnapStoreOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
 </li>
 </ul>
 <h2 id="spacesoptions">SpacesOptions</h2>
@@ -228,21 +240,24 @@ Define <code>KEYGEN_TOKEN</code> environment variable.</p>
 <li>
 <p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
 </li>
+<li>
+<p><code id="KeygenOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
 </ul>
 <h2 id="bitbucketoptions">BitbucketOptions</h2>
 <p>Bitbucket options.
 <a href="https://bitbucket.org/">https://bitbucket.org/</a>
 Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <p>For converting an app password to a usable token, you can utilize this</p>
-<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, token: <span class="hljs-built_in">string</span></span>) {
-<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${token.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
+<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, appPassword: <span class="hljs-built_in">string</span></span>) {
+<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${appPassword.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
 <span class="hljs-keyword">return</span> <span class="hljs-string">`Basic <span class="hljs-subst">${base64encodedData}</span>`</span>
 }
 </code></pre>
 <ul>
 <li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
 <li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
-<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The access token to support auto-update from private bitbucket repositories.</li>
+<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The app password (account&gt;settings&gt;app-passwords) to support auto-update from private bitbucket repositories.</li>
 <li><code id="BitbucketOptions-username">username</code> String | “undefined” - The user name to support auto-update from private bitbucket repositories.</li>
 <li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
 <li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
@@ -255,6 +270,9 @@ Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 </li>
 <li>
 <p><code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="BitbucketOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
 </li>
 </ul>
 <h2 id="s3options">S3Options</h2>
@@ -294,6 +312,9 @@ Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-gu
 </li>
 <li>
 <p><code id="S3Options-endpoint">endpoint</code> String | “undefined” - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like <code>https://{service}.{region}.amazonaws.com</code>.</p>
+</li>
+<li>
+<p><code id="S3Options-accelerate">accelerate</code> Boolean - If set to true, this will enable the s3 accelerated endpoint These endpoints have a particular format of:  ${bucketname}.s3-accelerate.amazonaws.com</p>
 </li>
 <li>
 <p><code id="S3Options-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</p>

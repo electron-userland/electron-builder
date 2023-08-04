@@ -6,6 +6,7 @@ import { AppXOptions } from "./options/AppXOptions"
 import { AppImageOptions, DebOptions, FlatpakOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { MsiOptions } from "./options/MsiOptions"
+import { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 import { PkgOptions } from "./options/pkgOptions"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { SnapOptions } from "./options/SnapOptions"
@@ -73,6 +74,8 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly appx?: AppXOptions | null
   /** @private */
   readonly msi?: MsiOptions | null
+  /** @private */
+  readonly msiWrapped?: MsiWrappedOptions | null
   readonly squirrelWindows?: SquirrelWindowsOptions | null
 
   /**
@@ -130,10 +133,21 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly npmRebuild?: boolean
 
   /**
+   * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
+   * If not defined, then it will fallback to `BUILD_NUMBER` or `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_BUILDNUMBER` or `CI_PIPELINE_IID` env.
+   */
+  readonly buildNumber?: string | null
+
+  /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
-   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` or `CI_PIPELINE_IID` env defined, it will be used as a build version (`version.build_number`).
+   * If `buildVersion` is not defined and `buildNumber` (or one of the `buildNumber` envs) is defined, it will be used as a build version (`version.buildNumber`).
    */
   readonly buildVersion?: string | null
+
+  /**
+   * Whether to download the alternate FFmpeg library from Electron's release assets and replace the default FFmpeg library prior to signing
+   */
+  readonly downloadAlternateFFmpeg?: boolean
 
   /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
@@ -240,12 +254,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * If provided and `node_modules` are missing, it will not invoke production dependencies check.
    */
   readonly beforeBuild?: ((context: BeforeBuildContext) => Promise<any>) | string | null
-
-  /**
-   * Whether to build using Electron Build Service if target not supported on current OS.
-   * @default true
-   */
-  readonly remoteBuild?: boolean
 
   /**
    * Whether to include PDB files.

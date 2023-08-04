@@ -56,7 +56,7 @@ export interface CommonLinuxOptions {
   readonly mimeTypes?: Array<string> | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+   * The [Desktop file](https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files) entries (name to value).
    */
   readonly desktop?: any | null
 
@@ -98,7 +98,7 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly afterRemove?: string | null
 
   /**
-   * *Advanced only* The [fpm](https://github.com/jordansissel/fpm/wiki#usage) options.
+   * *Advanced only* The [fpm](https://fpm.readthedocs.io/en/latest/cli-reference.html) options.
    *
    * Example: `["--before-install=build/deb-preinstall.sh", "--after-upgrade=build/deb-postinstall.sh"]`
    */
@@ -111,6 +111,11 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * If need to support KDE, `gconf2` and `gconf-service` should be removed as it's no longer used by GNOME](https://packages.debian.org/bullseye/gconf2).
    */
   readonly depends?: Array<string> | null
+
+  /**
+   * The [recommended package dependencies](https://www.debian.org/doc/debian-policy/ch-relationships.html#s-binarydeps)..
+   */
+  readonly recommends?: Array<string> | null
 
   /**
    * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).

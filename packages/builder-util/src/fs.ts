@@ -12,7 +12,7 @@ import * as isCI from "is-ci"
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = { concurrency: MAX_FILE_REQUESTS }
 
-export type AfterCopyFileTransformer = (file: string) => Promise<void>
+export type AfterCopyFileTransformer = (file: string) => Promise<boolean>
 
 export class CopyFileTransformer {
   constructor(public readonly afterCopyTransformer: AfterCopyFileTransformer) {}
@@ -35,7 +35,7 @@ export async function exists(file: string): Promise<boolean> {
   try {
     await access(file)
     return true
-  } catch (e) {
+  } catch (e: any) {
     return false
   }
 }
@@ -185,7 +185,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
   }
 
   if (isUseHardLink) {
-    return link(src, dest).catch(e => {
+    return link(src, dest).catch((e: any) => {
       if (e.code === "EXDEV") {
         const isLog = exDevErrorHandler == null ? true : exDevErrorHandler()
         if (isLog && log.isDebugEnabled) {
@@ -220,7 +220,7 @@ export class FileCopier {
     }
   }
 
-  async copy(src: string, dest: string, stat: Stats | undefined) {
+  async copy(src: string, dest: string, stat: Stats | undefined): Promise<void> {
     let afterCopyTransformer: AfterCopyFileTransformer | null = null
     if (this.transformer != null && stat != null && stat.isFile()) {
       let data = this.transformer(src)
@@ -304,6 +304,27 @@ export function copyDir(src: string, destination: string, options: CopyDirOption
       }
     },
   }).then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file, symlinkType), CONCURRENCY))
+}
+
+export async function dirSize(dirPath: string): Promise<number> {
+  const entries = await readdir(dirPath, { withFileTypes: true })
+
+  const entrySizes = entries.map(async entry => {
+    const entryPath = path.join(dirPath, entry.name)
+
+    if (entry.isDirectory()) {
+      return await dirSize(entryPath)
+    }
+
+    if (entry.isFile()) {
+      const { size } = await stat(entryPath)
+      return size
+    }
+
+    return 0
+  })
+
+  return (await Promise.all(entrySizes)).reduce((entrySize, totalSize) => entrySize + totalSize, 0)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

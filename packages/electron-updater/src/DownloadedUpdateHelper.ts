@@ -111,7 +111,7 @@ export class DownloadedUpdateHelper {
     let cachedInfo: CachedUpdateInfo
     try {
       cachedInfo = await readJson(updateInfoFilePath)
-    } catch (error) {
+    } catch (error: any) {
       let message = `No cached update info available`
       if (error.code !== "ENOENT") {
         await this.cleanCacheDirForPendingUpdate()
@@ -186,7 +186,7 @@ export async function createTempUpdateFile(name: string, cacheDir: string, log: 
     try {
       await unlink(result)
       return result
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === "ENOENT") {
         return result
       }

@@ -70,7 +70,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       outDirs[0] = oldDir
 
       await buildApp("1.0.1", tmpDir)
-    } catch (e) {
+    } catch (e: any) {
       await tmpDir.cleanup()
       throw e
     }
@@ -131,7 +131,7 @@ test.ifAll.ifDevOrWinCi("nsis", async () => {
       outDirs[0] = oldDir
 
       await buildApp("1.0.1")
-    } catch (e) {
+    } catch (e: any) {
       await tmpDir.cleanup()
       throw e
     }
@@ -176,7 +176,7 @@ test.skip("dmg", async () => {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   if (process.env.__SKIP_BUILD == null) {
-    await doBuild(outDirs, Platform.MAC.createTarget(), tmpDir, {
+    await doBuild(outDirs, Platform.MAC.createTarget(undefined, Arch.x64), tmpDir, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
@@ -225,7 +225,7 @@ async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, 
     outDirs[0] = oldDir
 
     await buildApp("1.0.1", outDirs, targets, tmpDir, extraConfig)
-  } catch (e) {
+  } catch (e: any) {
     await tmpDir.cleanup()
     throw e
   }

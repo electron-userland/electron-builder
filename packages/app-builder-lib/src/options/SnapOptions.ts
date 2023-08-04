@@ -3,6 +3,11 @@ import { CommonLinuxOptions } from "./linuxOptions"
 
 export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
+   * A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`. Defaults to `core18`
+   */
+  readonly base?: string | null
+
+  /**
    * The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
    * @default strict
    */
@@ -50,7 +55,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
 
   /**
    * The list of [plugs](https://snapcraft.io/docs/reference/interfaces).
-   * Defaults to `["desktop", "desktop-legacy", "home", "x11", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]`.
+   * Defaults to `["desktop", "desktop-legacy", "home", "x11", "wayland", "unity7", "browser-support", "network", "gsettings", "audio-playback", "pulseaudio", "opengl"]`.
    *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
    *
@@ -130,6 +135,12 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
    * Sets the compression type for the snap. Can be xz, lzo, or null.
    */
   readonly compression?: "xz" | "lzo" | null
+
+  /**
+   * Allow running the program with native wayland support with --ozone-platform=wayland.
+   * Disabled by default because of this issue in older Electron/Snap versions: https://github.com/electron-userland/electron-builder/issues/4007
+   */
+  readonly allowNativeWayland?: boolean | null
 }
 
 export interface PlugDescriptor {

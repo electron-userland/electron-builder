@@ -137,6 +137,12 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
       args.push("-mhc=off")
     }
 
+    // https://www.7-zip.org/7z.html
+    // Filters: BCJ, BCJ2, ARM, ARMT, IA64, PPC, SPARC, ...
+    if (process.env.ELECTRON_BUILDER_7Z_FILTER) {
+      args.push(`-mf=${process.env.ELECTRON_BUILDER_7Z_FILTER}`)
+    }
+
     // args valid only for 7z
     // -mtm=off disable "Stores last Modified timestamps for files."
     args.push("-mtm=off", "-mta=off")
@@ -182,7 +188,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
       },
       debug7z.enabled
     )
-  } catch (e) {
+  } catch (e: any) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
       throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
     } else {

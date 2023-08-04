@@ -1,5 +1,5 @@
 import { isEmptyOrSpaces, log } from "builder-util"
-import { prerelease, SemVer } from "semver"
+import { prerelease } from "semver"
 import { PlatformSpecificBuildOptions } from "./options/PlatformSpecificBuildOptions"
 import { Packager } from "./packager"
 import { expandMacro } from "./util/macroExpander"
@@ -39,13 +39,14 @@ export class AppInfo {
       buildVersion = info.config.buildVersion
     }
 
-    this.buildNumber =
+    const buildNumberEnvs =
       process.env.BUILD_NUMBER ||
       process.env.TRAVIS_BUILD_NUMBER ||
       process.env.APPVEYOR_BUILD_NUMBER ||
       process.env.CIRCLE_BUILD_NUM ||
       process.env.BUILD_BUILDNUMBER ||
       process.env.CI_PIPELINE_IID
+    this.buildNumber = info.config.buildNumber || buildNumberEnvs
     if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {
@@ -75,13 +76,25 @@ export class AppInfo {
   }
 
   getVersionInWeirdWindowsForm(isSetBuildNumber = true): string {
-    const parsedVersion = new SemVer(this.version)
+    const [major, maybe_minor, maybe_patch] = this.version.split(".").map(versionPart => parseInt(versionPart))
+    // The major component must be present. Here it can be either NaN or undefined, which
+    // both returns true from isNaN.
+    if (isNaN(major)) {
+      throw new Error(`Invalid major number in: ${this.version}`)
+    }
+    // Allow missing version parts. Minor and patch can be left out and default to zero
+    const minor = maybe_minor ?? 0
+    const patch = maybe_patch ?? 0
+    // ... but reject non-integer version parts. '1.a' is not going to fly
+    if (isNaN(minor) || isNaN(patch)) {
+      throw new Error(`Invalid minor or patch number in: ${this.version}`)
+    }
     // https://github.com/electron-userland/electron-builder/issues/2635#issuecomment-371792272
     let buildNumber = isSetBuildNumber ? this.buildNumber : null
     if (buildNumber == null || !/^\d+$/.test(buildNumber)) {
       buildNumber = "0"
     }
-    return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${buildNumber}`
+    return `${major}.${minor}.${patch}.${buildNumber}`
   }
 
   private get notNullDevMetadata() {
