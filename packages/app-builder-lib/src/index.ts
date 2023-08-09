@@ -89,6 +89,10 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       }
 
       for (const newArtifact of newArtifacts) {
+        if (buildResult.artifactPaths.includes(newArtifact)) {
+          log.warn({ newArtifact }, "skipping publish of artifact, already published");
+          continue;
+        }
         buildResult.artifactPaths.push(newArtifact)
         for (const publishConfiguration of publishConfigurations) {
           publishManager.scheduleUpload(
