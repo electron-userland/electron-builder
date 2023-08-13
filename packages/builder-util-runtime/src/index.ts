@@ -40,6 +40,8 @@ export { BlockMap } from "./blockMapApi"
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"
 // nsis-web
 export const CURRENT_APP_PACKAGE_FILE_NAME = "package.7z"
+// mac zip
+export const CURRENT_MAC_APP_ZIP_FILE_NAME = "update.zip"
 
 export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   if (v == null) {
