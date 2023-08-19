@@ -111,8 +111,8 @@ importers:
         specifier: 2.1.0
         version: 2.1.0
       '@electron/osx-sign':
-        specifier: 1.0.4
-        version: 1.0.4
+        specifier: 1.0.5
+        version: 1.0.5
       '@electron/universal':
         specifier: 1.4.1
         version: 1.4.1
@@ -2295,6 +2295,21 @@ packages:
 
   /@electron/osx-sign@1.0.4:
     resolution: {integrity: sha512-xfhdEcIOfAZg7scZ9RQPya1G1lWo8/zMCwUXAulq0SfY7ONIW+b9qGyKdMyuMctNYwllrIS+vmxfijSfjeh97g==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+    dependencies:
+      compare-version: 0.1.2
+      debug: 4.3.4
+      fs-extra: 10.1.0
+      isbinaryfile: 4.0.10
+      minimist: 1.2.8
+      plist: 3.0.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@electron/osx-sign@1.0.5:
+    resolution: {integrity: sha512-k9ZzUQtamSoweGQDV2jILiRIHUu7lYlJ3c6IEmjv1hC17rclE+eb9U+f6UFlOOETo0JzY1HNlXy4YOlCvl+Lww==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
