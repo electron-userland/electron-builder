@@ -49,7 +49,7 @@
     "7zip-bin": "~5.1.1",
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "2.1.0",
-    "@electron/osx-sign": "1.0.4",
+    "@electron/osx-sign": "1.0.5",
     "@electron/universal": "1.4.1",
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",
