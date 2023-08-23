@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.3...v) (2023-08-19)
+
+
+### Bug Fixes
+
+* adding `IMAGE_VERSION` arg for docker `node` image so that it force rebuilds when pnpm is updated on any date ([#7690](https://github.com/electron-userland/electron-builder/issues/7690)) ([47c1fd7](https://github.com/electron-userland/electron-builder/commit/47c1fd71080f8079f97f6513dd037a5a617f3809))
+* **docs:** typos in CONTRIBUTING.md ([#7691](https://github.com/electron-userland/electron-builder/issues/7691)) ([6bcea7f](https://github.com/electron-userland/electron-builder/commit/6bcea7f8a449daf9af09095b93bee71e22682488))
+* Only schedule upload for unique files after `afterAllArtifactBuild` ([#7715](https://github.com/electron-userland/electron-builder/issues/7715)) ([66bef0f](https://github.com/electron-userland/electron-builder/commit/66bef0f7f1a0371ff924d29ed5453f9b3222c1ab))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.2...v) (2023-07-24)
 
 

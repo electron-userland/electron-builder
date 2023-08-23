@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 24.6.4
+
+### Patch Changes
+
+- [#7736](https://github.com/electron-userland/electron-builder/pull/7736) [`445b7f5d`](https://github.com/electron-userland/electron-builder/commit/445b7f5d066781f3938fd6bcaca1d9a12f5b0eeb) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: updating @electron/osx-sign to latest version to handle preAutoEntitlements
+
+- [#7707](https://github.com/electron-userland/electron-builder/pull/7707) [`4517d97f`](https://github.com/electron-userland/electron-builder/commit/4517d97f48d822f446c48937df4b542a638fcab6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): updating @electron notarize, osx-sign, and universal packages and pinning versions
+
+- [#7715](https://github.com/electron-userland/electron-builder/pull/7715) [`66bef0f7`](https://github.com/electron-userland/electron-builder/commit/66bef0f7f1a0371ff924d29ed5453f9b3222c1ab) Thanks [@guohaolay](https://github.com/guohaolay)! - fix: Only schedule upload for unique files after `afterAllArtifactBuild`
+
 ## 24.6.3
 
 ### Patch Changes
