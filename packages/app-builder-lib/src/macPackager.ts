@@ -170,7 +170,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       ).then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
     }
 
-    const procesTargetPack = async (target: Target) => {
+    const processTargetPack = async (target: Target) => {
       const targetName = target.name
       if (!(targetName === "mas" || targetName === "mas-dev")) {
         return;
@@ -194,7 +194,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
     async function processTargetsPack(targets: Array<Target>, index: number) {
       if (index < targets.length) {
-        await procesTargetPack(targets[index]);
+        await processTargetPack(targets[index]);
         await processTargetsPack(targets, index + 1);
       }
     }
