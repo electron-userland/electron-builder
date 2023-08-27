@@ -171,22 +171,25 @@ test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
-// ifAll.ifMac.ifNotCi todo
-test.skip("dmg", async () => {
+async function testMac(arch: Arch) {
+  process.env.TEST_UPDATER_ARCH = Arch[arch]
+
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
-  if (process.env.__SKIP_BUILD == null) {
-    await doBuild(outDirs, Platform.MAC.createTarget(undefined, Arch.x64), tmpDir, {
+  try {
+    await doBuild(outDirs, Platform.MAC.createTarget(["dmg"], arch), tmpDir, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
     })
-  } else {
-    // todo
+    await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
+  } finally {
+    await tmpDir.cleanup()
   }
+}
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
-})
+test.ifAll.ifMac.ifNotCi("Mac intel", () => testMac(Arch.x64))
+test.ifAll.ifMac.ifNotCi("Mac arm64", () => testMac(Arch.arm64))
 
 async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig: Configuration | null | undefined) {
   await assertPack(
