@@ -181,10 +181,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
-    if ((!hasMas || targets.length > 1) && !prepackaged) {
-      const appPath = path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`);
-      await this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
-      .then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
+    if (!hasMas || targets.length > 1) {
+      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
+      if (prepackaged == null) {
+        await this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+      }
+      this.packageInDistributableFormat(appPath, arch, targets, taskManager)
     }
   }
 
