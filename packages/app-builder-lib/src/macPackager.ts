@@ -156,19 +156,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<void> {
-    let nonMasPromise: Promise<any> | null = null
-
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
     const prepackaged = this.packagerOptions.prepackaged
-
-    if (!hasMas || targets.length > 1) {
-      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (
-        prepackaged
-          ? Promise.resolve()
-          : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
-      ).then(() => this.packageInDistributableFormat(appPath, arch, targets, taskManager))
-    }
 
     for (const target of targets) {
       const targetName = target.name
@@ -192,8 +181,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
     }
 
-    if (nonMasPromise != null) {
-      await nonMasPromise
+    if (!hasMas || targets.length > 1) {
+      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
+      if (prepackaged == null) {
+        await this.doPack(outDir, path.dirname(appPath), this.platform.nodeName as ElectronPlatformName, arch, this.platformSpecificBuildOptions, targets)
+      }
+      this.packageInDistributableFormat(appPath, arch, targets, taskManager)
     }
   }
 
