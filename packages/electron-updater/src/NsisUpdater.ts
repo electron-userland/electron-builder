@@ -160,7 +160,7 @@ export class NsisUpdater extends BaseUpdater {
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
       } else if (errorCode === 'ENOENT') {
-        require("electron").shell.openPath(options.installerPath).catch(err => this.dispatchError(err))
+        require("electron").shell.openPath(options.installerPath).catch((err: Error) => this.dispatchError(err))
       } else {
         this.dispatchError(e)
       }
