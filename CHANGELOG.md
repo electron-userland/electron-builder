@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.4...v) (2023-09-18)
+
+
+### Bug Fixes
+
+* **mac:** Enhance the usage boundary of iconTextSize ([#7769](https://github.com/electron-userland/electron-builder/issues/7769)) ([#7780](https://github.com/electron-userland/electron-builder/issues/7780)) ([a8b1f15](https://github.com/electron-userland/electron-builder/commit/a8b1f1592e14710977b036313c8a2cb551a29064))
+* **mac:** fix errors using native modules that require rebuild when both mas and mac targets are specified ([#7744](https://github.com/electron-userland/electron-builder/issues/7744)) ([4fc7a3c](https://github.com/electron-userland/electron-builder/commit/4fc7a3c3b857380bcbdd2a10e26989e3b1af50a2))
+* When error code is ENOENT, try to use `electron.shell.openPath` to open Windows installer ([#7767](https://github.com/electron-userland/electron-builder/issues/7767)) ([21f3069](https://github.com/electron-userland/electron-builder/commit/21f3069cb6dcad30959af4bfd8f3014133a3dfde))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.3...v) (2023-08-19)
 
 

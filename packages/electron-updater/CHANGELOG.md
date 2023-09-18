@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.1.5
+
+### Patch Changes
+
+- [#7767](https://github.com/electron-userland/electron-builder/pull/7767) [`21f3069c`](https://github.com/electron-userland/electron-builder/commit/21f3069cb6dcad30959af4bfd8f3014133a3dfde) Thanks [@jackple](https://github.com/jackple)! - fix: When error code is ENOENT, try to use electron.shell.openPath to run installer on Windows
+
 ## 6.1.4
 
 ### Patch Changes

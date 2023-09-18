@@ -242,7 +242,7 @@ async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: s
 async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null | undefined) {
   const window = specification.window
   const isValidIconTextSize = !!specification.iconTextSize && specification.iconTextSize >= 10 && specification.iconTextSize <= 16
-  const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12;
+  const iconTextSize = isValidIconTextSize ? specification.iconTextSize : 12
   const env: any = {
     ...process.env,
     volumePath,
