@@ -1,5 +1,14 @@
 # dmg-builder
 
+## 24.6.5
+
+### Patch Changes
+
+- [#7780](https://github.com/electron-userland/electron-builder/pull/7780) [`a8b1f159`](https://github.com/electron-userland/electron-builder/commit/a8b1f1592e14710977b036313c8a2cb551a29064) Thanks [@Koppel-Zhou](https://github.com/Koppel-Zhou)! - fix(mac): Validate the usage boundary of iconTextSize (#7769)
+
+- Updated dependencies [[`4fc7a3c3`](https://github.com/electron-userland/electron-builder/commit/4fc7a3c3b857380bcbdd2a10e26989e3b1af50a2)]:
+  - app-builder-lib@24.6.5
+
 ## 24.6.4
 
 ### Patch Changes

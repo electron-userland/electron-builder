@@ -1,5 +1,11 @@
 # app-builder-lib
 
+## 24.6.5
+
+### Patch Changes
+
+- [#7744](https://github.com/electron-userland/electron-builder/pull/7744) [`4fc7a3c3`](https://github.com/electron-userland/electron-builder/commit/4fc7a3c3b857380bcbdd2a10e26989e3b1af50a2) Thanks [@Koppel-Zhou](https://github.com/Koppel-Zhou)! - fix(mac): fix errors using native modules that require rebuild when both mas and mac targets are specified
+
 ## 24.6.4
 
 ### Patch Changes
