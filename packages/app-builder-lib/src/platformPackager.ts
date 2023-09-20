@@ -679,7 +679,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
-    let output = this.expandMacro( this.config.directories!.output! );
+    const output = this.expandMacro(this.config.directories!.output!);
     const args = [
       "icon",
       "--format",
