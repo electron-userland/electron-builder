@@ -64,7 +64,12 @@
   !endif
 !else
   !ifndef removeDefaultUninstallWelcomePage
-    !insertmacro MUI_UNPAGE_WELCOME
+    !ifmacrodef customUnWelcomePage
+      !insertmacro customUnWelcomePage
+    !else
+      !insertmacro MUI_UNPAGE_WELCOME
+  !endif
+
   !endif
   !ifndef INSTALL_MODE_PER_ALL_USERS
     !insertmacro PAGE_INSTALL_MODE
