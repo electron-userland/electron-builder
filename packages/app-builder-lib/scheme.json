@@ -2668,7 +2668,10 @@
         "notarize": {
           "anyOf": [
             {
-              "$ref": "#/definitions/NotarizeOptions"
+              "$ref": "#/definitions/NotarizeLegacyOptions"
+            },
+            {
+              "$ref": "#/definitions/NotarizeNotaryOptions"
             },
             {
               "type": [
@@ -3298,7 +3301,10 @@
         "notarize": {
           "anyOf": [
             {
-              "$ref": "#/definitions/NotarizeOptions"
+              "$ref": "#/definitions/NotarizeLegacyOptions"
+            },
+            {
+              "$ref": "#/definitions/NotarizeNotaryOptions"
             },
             {
               "type": [
@@ -3872,7 +3878,7 @@
       },
       "type": "object"
     },
-    "NotarizeOptions": {
+    "NotarizeLegacyOptions": {
       "additionalProperties": false,
       "properties": {
         "appBundleId": {
@@ -3888,15 +3894,21 @@
             "null",
             "string"
           ]
-        },
-        "teamId": {
-          "description": "The team ID you want to notarize under. Only needed if using `notarytool`",
-          "type": [
-            "null",
-            "string"
-          ]
         }
       },
+      "type": "object"
+    },
+    "NotarizeNotaryOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "teamId": {
+          "description": "The team ID you want to notarize under for when using `notarytool`",
+          "type": "string"
+        }
+      },
+      "required": [
+        "teamId"
+      ],
       "type": "object"
     },
     "NsisOptions": {

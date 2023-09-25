@@ -212,10 +212,10 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
    */
-  readonly notarize?: NotarizeOptions | boolean | null
+  readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
 }
 
-export interface NotarizeOptions {
+export interface NotarizeLegacyOptions {
   /**
    * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
    * Only used by `legacy` notarization tool
@@ -226,11 +226,13 @@ export interface NotarizeOptions {
    * Your Team Short Name. Only used by `legacy` notarization tool
    */
   readonly ascProvider?: string | null
+}
 
+export interface NotarizeNotaryOptions {
   /**
-   * The team ID you want to notarize under. Only needed if using `notarytool`
+   * The team ID you want to notarize under for when using `notarytool`
    */
-  readonly teamId?: string | null
+  readonly teamId: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {
