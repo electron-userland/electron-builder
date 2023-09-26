@@ -11,7 +11,7 @@ import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacConfiguration, MasConfiguration } from "./options/macOptions"
+import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
@@ -21,6 +21,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
+import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolNotarizeAppOptions, NotaryToolStartOptions } from "@electron/notarize/lib/types"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -502,27 +503,28 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   private generateNotarizeOptions(appPath: string, appleId: string, appleIdPassword: string): NotarizeOptions {
-    const baseOptions = { appPath, appleId, appleIdPassword }
+    const baseOptions: NotaryToolNotarizeAppOptions & LegacyNotarizePasswordCredentials = { appPath, appleId, appleIdPassword }
     const options = this.platformSpecificBuildOptions.notarize
     if (typeof options === "boolean") {
-      return {
+      const proj: LegacyNotarizeStartOptions = {
         ...baseOptions,
-        tool: "legacy",
         appBundleId: this.appInfo.id,
       }
+      return proj
     }
-    if (options?.teamId) {
-      return {
+    const { teamId } = options as NotarizeNotaryOptions
+    if (teamId) {
+      const proj: NotaryToolStartOptions = {
         ...baseOptions,
-        tool: "notarytool",
-        teamId: options.teamId,
+        teamId,
       }
+      return { tool: "notarytool", ...proj }
     }
+    const { appBundleId, ascProvider } = options as NotarizeLegacyOptions
     return {
       ...baseOptions,
-      tool: "legacy",
-      appBundleId: options?.appBundleId || this.appInfo.id,
-      ascProvider: options?.ascProvider || undefined,
+      appBundleId: appBundleId || this.appInfo.id,
+      ascProvider: ascProvider || undefined,
     }
   }
 }

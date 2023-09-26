@@ -105,7 +105,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p>This option has no effect unless building for “universal” arch and applies only if <code>mergeASARs</code> is <code>true</code>.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-notarize">notarize</code> module:app-builder-lib/out/options/macOptions.NotarizeOptions | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
+<p><code id="MacConfiguration-notarize">notarize</code> module:app-builder-lib/out/options/macOptions.NotarizeLegacyOptions | module:app-builder-lib/out/options/macOptions.NotarizeNotaryOptions | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
 <p>Note: You MUST specify <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code> via environment variables to activate notarization step</p>
 </li>
 </ul>
