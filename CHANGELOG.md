@@ -1,3 +1,19 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.6.5...v) (2023-09-26)
+
+
+### Bug Fixes
+
+* exclude `electron-builder.env` file from app to avoid packaging env secrets ([#7792](https://github.com/electron-userland/electron-builder/issues/7792)) ([84906bc](https://github.com/electron-userland/electron-builder/commit/84906bc899c1b6ad2a9ec9bb9a249849e05133b5))
+* expand macro for `${version}/.icon-ico/` dir on Window's installers ([#7763](https://github.com/electron-userland/electron-builder/issues/7763)) ([0cb1913](https://github.com/electron-userland/electron-builder/commit/0cb1913272c0cf24603233e2033d8fc3f33cb26d))
+* Extract `NotarizeNotaryOptions` and `NotarizeLegacyOptions` to explicitly define required vars ([#7797](https://github.com/electron-userland/electron-builder/issues/7797)) ([efd48dc](https://github.com/electron-userland/electron-builder/commit/efd48dc07bdc12894e1494136448176dc8a6c4bb))
+
+
+### Features
+
+* add `customUnWelcomePage` macro for nsis ([#7790](https://github.com/electron-userland/electron-builder/issues/7790)) ([1a412f4](https://github.com/electron-userland/electron-builder/commit/1a412f4d07304fcd0404ac04b5085ffd394db6cf))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.4...v) (2023-09-18)
 
 

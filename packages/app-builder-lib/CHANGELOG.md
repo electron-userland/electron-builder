@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 24.7.0
+
+### Minor Changes
+
+- [#7790](https://github.com/electron-userland/electron-builder/pull/7790) [`1a412f4d`](https://github.com/electron-userland/electron-builder/commit/1a412f4d07304fcd0404ac04b5085ffd394db6cf) Thanks [@xianyunleo](https://github.com/xianyunleo)! - feat: add customUnWelcomePage macro for NSIS installers
+
+### Patch Changes
+
+- [#7797](https://github.com/electron-userland/electron-builder/pull/7797) [`efd48dc0`](https://github.com/electron-userland/electron-builder/commit/efd48dc07bdc12894e1494136448176dc8a6c4bb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: Extract `NotarizeNotaryOptions` and `NotarizeLegacyOptions` to explicitly define required vars
+
+- [#7792](https://github.com/electron-userland/electron-builder/pull/7792) [`84906bc8`](https://github.com/electron-userland/electron-builder/commit/84906bc899c1b6ad2a9ec9bb9a249849e05133b5) Thanks [@dkaser](https://github.com/dkaser)! - fix: exclude electron-builder.env from app to avoid packaging env secrets
+
+- [#7763](https://github.com/electron-userland/electron-builder/pull/7763) [`0cb19132`](https://github.com/electron-userland/electron-builder/commit/0cb1913272c0cf24603233e2033d8fc3f33cb26d) Thanks [@NewSilen](https://github.com/NewSilen)! - fix: expand macro for ${version}/.icon-ico/ dir on Window's installers
+
 ## 24.6.5
 
 ### Patch Changes
