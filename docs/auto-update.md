@@ -440,9 +440,9 @@ Define `KEYGEN_TOKEN` environment variable.
 * **<code id="ReleaseNoteInfo-note">note</code>** String | "undefined" - The note.
 
 <a name="RequestHeaders"></a>
-### `RequestHeaders` ⇐ <code>[key: string]: string</code>
+### `RequestHeaders` ⇐ <code>[key: string]: OutgoingHttpHeader | undefined</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[key: string]: string</code>  
+**Extends**: <code>[key: string]: OutgoingHttpHeader | undefined</code>  
 <a name="S3Options"></a>
 ### `S3Options` ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
