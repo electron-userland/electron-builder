@@ -3,7 +3,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <!-- do not edit. start of generated block -->
 <ul>
 <li>
-<p><code id="SnapOptions-base">base</code> String | “undefined” - A snap of type base to be used as the execution environment for this snap. Examples: <code>core</code>, <code>core18</code>, <code>core20</code>. Defaults to <code>core18</code></p>
+<p><code id="SnapOptions-base">base</code> String | “undefined” - A snap of type base to be used as the execution environment for this snap. Examples: <code>core</code>, <code>core18</code>, <code>core20</code>, <code>core22</code>. Defaults to <code>core18</code></p>
 </li>
 <li>
 <p><code id="SnapOptions-confinement">confinement</code> = <code>strict</code> “devmode” | “strict” | “classic” | “undefined” - The type of <a href="https://snapcraft.io/docs/reference/confinement">confinement</a> supported by the snap.</p>
