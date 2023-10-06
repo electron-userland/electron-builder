@@ -5624,7 +5624,7 @@
           "description": "The list of channels the snap would be released."
         },
         "provider": {
-          "description": "The provider. Must be `snapStore`.",
+          "description": "The provider. Must be `snapStore`. To publish directly to Snapcraft,\n see <a href=\"https://snapcraft.io/docs/snapcraft-authentication\">Snapcraft\n authentication options</a> for local or CI/CD authentication options.",
           "enum": [
             "snapStore"
           ],

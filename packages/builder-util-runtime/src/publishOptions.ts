@@ -248,7 +248,9 @@ export interface BitbucketOptions extends PublishConfiguration {
 }
 
 /**
- * [Snap Store](https://snapcraft.io/) options.
+ * [Snap Store](https://snapcraft.io/) options. To publish directly to Snapcraft,
+ *  see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft
+ *  authentication options</a> for local or CI/CD authentication options.
  */
 export interface SnapStoreOptions extends PublishConfiguration {
   /**

@@ -190,7 +190,9 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 </li>
 </ul>
 <h2 id="snapstoreoptions">SnapStoreOptions</h2>
-<p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
+<p><a href="https://snapcraft.io/">Snap Store</a> options. To publish directly to Snapcraft,
+see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft
+authentication options</a> for local or CI/CD authentication options.</p>
 <ul>
 <li><strong><code id="SnapStoreOptions-provider">provider</code></strong> “snapStore” - The provider. Must be <code>snapStore</code>.</li>
 <li><code id="SnapStoreOptions-repo">repo</code> String - snapcraft repo name</li>
