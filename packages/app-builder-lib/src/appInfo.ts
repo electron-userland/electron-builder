@@ -64,7 +64,9 @@ export class AppInfo {
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.sanitizedProductName = sanitizeFileName(this.productName)
-    this.productFilename = platformSpecificOptions?.executableName != null ? sanitizeFileName(platformSpecificOptions.executableName) : this.sanitizedProductName
+
+    const executableName = platformSpecificOptions?.executableName ?? info.config.executableName
+    this.productFilename = executableName != null ? sanitizeFileName(executableName) : this.sanitizedProductName
   }
 
   get channel(): string | null {

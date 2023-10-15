@@ -655,3 +655,91 @@ Object {
 `;
 
 exports[`no quotes for safe exec name 5`] = `"Test Application (test quite “ #378)"`;
+
+exports[`top-level exec name 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
+`;
+
+exports[`top-level exec name 2`] = `
+Array [
+  "/",
+  "/opt/",
+  "/usr/",
+  "/opt/foo/",
+  "/opt/foo/Boo",
+  "/opt/foo/chrome-sandbox",
+  "/opt/foo/chrome_100_percent.pak",
+  "/opt/foo/chrome_200_percent.pak",
+  "/opt/foo/chrome_crashpad_handler",
+  "/opt/foo/icudtl.dat",
+  "/opt/foo/libEGL.so",
+  "/opt/foo/libffmpeg.so",
+  "/opt/foo/libGLESv2.so",
+  "/opt/foo/libvk_swiftshader.so",
+  "/opt/foo/libvulkan.so.1",
+  "/opt/foo/LICENSE.electron.txt",
+  "/opt/foo/LICENSES.chromium.html",
+  "/opt/foo/resources.pak",
+  "/opt/foo/snapshot_blob.bin",
+  "/opt/foo/v8_context_snapshot.bin",
+  "/opt/foo/vk_swiftshader_icd.json",
+  "/usr/share/",
+  "/opt/foo/resources/",
+  "/opt/foo/resources/app.asar",
+  "/opt/foo/swiftshader/",
+  "/opt/foo/swiftshader/libEGL.so",
+  "/opt/foo/swiftshader/libGLESv2.so",
+  "/usr/share/applications/",
+  "/usr/share/applications/Boo.desktop",
+  "/usr/share/doc/",
+  "/usr/share/icons/",
+  "/usr/share/doc/testapp/",
+  "/usr/share/doc/testapp/changelog.gz",
+  "/usr/share/icons/hicolor/",
+  "/usr/share/icons/hicolor/128x128/",
+  "/usr/share/icons/hicolor/16x16/",
+  "/usr/share/icons/hicolor/256x256/",
+  "/usr/share/icons/hicolor/32x32/",
+  "/usr/share/icons/hicolor/48x48/",
+  "/usr/share/icons/hicolor/512x512/",
+  "/usr/share/icons/hicolor/64x64/",
+  "/usr/share/icons/hicolor/128x128/apps/",
+  "/usr/share/icons/hicolor/128x128/apps/Boo.png",
+  "/usr/share/icons/hicolor/16x16/apps/",
+  "/usr/share/icons/hicolor/16x16/apps/Boo.png",
+  "/usr/share/icons/hicolor/256x256/apps/",
+  "/usr/share/icons/hicolor/256x256/apps/Boo.png",
+  "/usr/share/icons/hicolor/32x32/apps/",
+  "/usr/share/icons/hicolor/32x32/apps/Boo.png",
+  "/usr/share/icons/hicolor/48x48/apps/",
+  "/usr/share/icons/hicolor/48x48/apps/Boo.png",
+  "/usr/share/icons/hicolor/512x512/apps/",
+  "/usr/share/icons/hicolor/512x512/apps/Boo.png",
+  "/usr/share/icons/hicolor/64x64/apps/",
+  "/usr/share/icons/hicolor/64x64/apps/Boo.png",
+]
+`;
+
+exports[`top-level exec name 3`] = `
+Object {
+  "Architecture": "amd64",
+  "Depends": "libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0",
+  "Homepage": "http://foo.example.com",
+  "License": "MIT",
+  "Maintainer": "Foo Bar <foo@example.com>",
+  "Package": "testapp",
+  "Priority": "optional",
+  "Recommends": "libappindicator3-1",
+  "Section": "devel",
+  "Vendor": "Foo Bar <foo@example.com>",
+}
+`;
+
+exports[`top-level exec name 4`] = `"Test Application (test quite “ #378)"`;
