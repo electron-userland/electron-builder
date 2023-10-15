@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "7zip-bin": "~5.1.1",
+    "7zip-bin": "~5.2.0",
     "@electron/osx-sign": "^1.0.4",
     "@jest/core": "^27.5.1",
     "app-builder-lib": "workspace:*",

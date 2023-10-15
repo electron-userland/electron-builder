@@ -102,8 +102,8 @@ importers:
   packages/app-builder-lib:
     dependencies:
       7zip-bin:
-        specifier: ~5.1.1
-        version: 5.1.1
+        specifier: ~5.2.0
+        version: 5.2.0
       '@develar/schema-utils':
         specifier: ~2.6.5
         version: 2.6.5
@@ -274,8 +274,8 @@ importers:
   packages/builder-util:
     dependencies:
       7zip-bin:
-        specifier: ~5.1.1
-        version: 5.1.1
+        specifier: ~5.2.0
+        version: 5.2.0
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
@@ -451,8 +451,8 @@ importers:
         version: 10.1.0
     optionalDependencies:
       7zip-bin:
-        specifier: ~5.1.1
-        version: 5.1.1
+        specifier: ~5.2.0
+        version: 5.2.0
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -559,8 +559,8 @@ importers:
   test:
     dependencies:
       7zip-bin:
-        specifier: ~5.1.1
-        version: 5.1.1
+        specifier: ~5.2.0
+        version: 5.2.0
       '@electron/osx-sign':
         specifier: ^1.0.4
         version: 1.0.5
@@ -655,8 +655,8 @@ importers:
 
 packages:
 
-  /7zip-bin@5.1.1:
-    resolution: {integrity: sha512-sAP4LldeWNz0lNzmTird3uWfFDWWTeg6V/MsmyyLR9X1idwKBWIgt/ZvinqQldJm3LecKEs1emkbquO6PCiLVQ==}
+  /7zip-bin@5.2.0:
+    resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
     dev: false
 
   /@aashutoshrathi/word-wrap@1.2.6:

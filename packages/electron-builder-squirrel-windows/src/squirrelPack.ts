@@ -4,7 +4,7 @@ import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
+import { chmod, createWriteStream, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
 import * as archiver from "archiver"
 import * as fs from "fs/promises"
@@ -126,6 +126,7 @@ export class SquirrelBuilder {
 
   private async createEmbeddedArchiveFile(nupkgPath: string, dirToArchive: string) {
     const embeddedArchiveFile = await this.packager.getTempFile("setup.zip")
+    await chmod(path7za, 0o755)
     await exec(
       path7za,
       compute7zCompressArgs("zip", {
@@ -228,7 +229,8 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   await archivePromise
 }
 
-function execSw(options: SquirrelOptions, args: Array<string>) {
+async function execSw(options: SquirrelOptions, args: Array<string>) {
+  await chmod(path7za, 0o755)
   return exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")), {
     env: {
       ...process.env,

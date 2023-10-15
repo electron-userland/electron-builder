@@ -7,6 +7,7 @@ import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
+import { chmod } from "fs-extra"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
@@ -349,13 +350,14 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(
+export async function executeAppBuilder(
   args: Array<string>,
   childProcessConsumer?: (childProcess: ChildProcess) => void,
   extraOptions: SpawnOptions = {},
   maxRetries = 0
 ): Promise<string> {
   const command = appBuilderPath
+  await chmod(path7za, 0o755)
   const env: any = {
     ...process.env,
     SZA_PATH: path7za,
