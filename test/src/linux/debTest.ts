@@ -27,6 +27,17 @@ test.ifNotWindows(
 )
 
 test.ifNotWindows(
+  "top-level exec name",
+  app({
+    targets: Platform.LINUX.createTarget("deb"),
+    config: {
+      productName: "foo",
+      executableName: "Boo",
+    },
+  })
+)
+
+test.ifNotWindows(
   "no quotes for safe exec name",
   app({
     targets: Platform.LINUX.createTarget("deb"),
