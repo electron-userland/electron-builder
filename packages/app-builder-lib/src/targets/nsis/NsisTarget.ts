@@ -42,7 +42,7 @@ export class NsisTarget extends Target {
 
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
-  readonly isAsyncSupported = false;
+  readonly isAsyncSupported = false
 
   constructor(readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
     super(targetName)

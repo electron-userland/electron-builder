@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.7.0...v) (2023-10-19)
+
+
+### Bug Fixes
+
+* display product names with an `&` properly ([#7831](https://github.com/electron-userland/electron-builder/issues/7831)) ([6e41480](https://github.com/electron-userland/electron-builder/commit/6e41480e6221693f6fec46ae813d513935e05f66))
+* run nsis builds (and portable builds) sequentially ([#7798](https://github.com/electron-userland/electron-builder/issues/7798)) ([526e075](https://github.com/electron-userland/electron-builder/commit/526e075edddf908b9688e108a18fbb76e6f047be))
+* support `executableName` in main config ([#7828](https://github.com/electron-userland/electron-builder/issues/7828)) ([7c7db83](https://github.com/electron-userland/electron-builder/commit/7c7db837bdf650228594a30114975f1581c37130))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.6.5...v) (2023-09-26)
 
 

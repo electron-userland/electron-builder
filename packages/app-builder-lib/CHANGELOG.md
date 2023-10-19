@@ -1,5 +1,26 @@
 # app-builder-lib
 
+## 24.8.0
+
+### Minor Changes
+
+- [#7828](https://github.com/electron-userland/electron-builder/pull/7828) [`7c7db837`](https://github.com/electron-userland/electron-builder/commit/7c7db837bdf650228594a30114975f1581c37130) Thanks [@BrandonXLF](https://github.com/BrandonXLF)! - fix: support executableName in main config
+
+### Patch Changes
+
+- [#7813](https://github.com/electron-userland/electron-builder/pull/7813) [`f2a1f1ee`](https://github.com/electron-userland/electron-builder/commit/f2a1f1ee9a1387eb183b9f3b0dfcca29c7891bd1) Thanks [@jgresham](https://github.com/jgresham)! - minor addition to docs for snap. add snap recommended core22 option.
+
+- [#7831](https://github.com/electron-userland/electron-builder/pull/7831) [`6e41480e`](https://github.com/electron-userland/electron-builder/commit/6e41480e6221693f6fec46ae813d513935e05f66) Thanks [@vespasianvs](https://github.com/vespasianvs)! - fix(nsis): display product names with an `&` properly
+
+- [#7814](https://github.com/electron-userland/electron-builder/pull/7814) [`549d07b0`](https://github.com/electron-userland/electron-builder/commit/549d07b0a04b8686cf4998dc102edad390ddd09a) Thanks [@jgresham](https://github.com/jgresham)! - minor addition to docs for snap publishing. add snapcraft link to local and cd auth options
+
+- [#7798](https://github.com/electron-userland/electron-builder/pull/7798) [`526e075e`](https://github.com/electron-userland/electron-builder/commit/526e075edddf908b9688e108a18fbb76e6f047be) Thanks [@iffy](https://github.com/iffy)! - fix: run nsis and portable builds sequentially. fixes #7791
+
+- Updated dependencies [[`549d07b0`](https://github.com/electron-userland/electron-builder/commit/549d07b0a04b8686cf4998dc102edad390ddd09a)]:
+  - builder-util-runtime@9.2.2
+  - builder-util@24.8.0
+  - electron-publish@24.8.0
+
 ## 24.7.0
 
 ### Minor Changes
