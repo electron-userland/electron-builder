@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.2
+
+### Patch Changes
+
+- [#7814](https://github.com/electron-userland/electron-builder/pull/7814) [`549d07b0`](https://github.com/electron-userland/electron-builder/commit/549d07b0a04b8686cf4998dc102edad390ddd09a) Thanks [@jgresham](https://github.com/jgresham)! - minor addition to docs for snap publishing. add snapcraft link to local and cd auth options
+
 ## 9.2.1
 
 ### Patch Changes
