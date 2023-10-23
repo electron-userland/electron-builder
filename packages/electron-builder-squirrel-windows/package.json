@@ -1,6 +1,6 @@
 {
   "name": "electron-builder-squirrel-windows",
-  "version": "23.6.0",
+  "version": "24.0.0-alpha.8",
   "main": "out/SquirrelWindowsTarget.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "app-builder-lib": "workspace:*",
     "archiver": "^5.3.1",
     "builder-util": "workspace:*",
-    "fs-extra": "^10.0.0"
+    "fs-extra": "^10.1.0"
   },
   "devDependencies": {
     "@types/archiver": "5.3.1",

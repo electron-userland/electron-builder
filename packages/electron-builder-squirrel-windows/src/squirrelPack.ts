@@ -253,7 +253,7 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
   await Promise.all([
     unlink(path.join(outputDirectory, "Setup.wxs")),
     unlink(path.join(outputDirectory, "Setup.wixobj")),
-    unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),
+    unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch((e: any) => debug(e.toString())),
   ])
 }
 

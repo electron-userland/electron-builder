@@ -15,7 +15,7 @@ export async function deleteOldElectronVersion(): Promise<any> {
   let files: Array<string>
   try {
     files = await fs.readdir(cacheDir)
-  } catch (e) {
+  } catch (e: any) {
     if (e.code === "ENOENT") {
       return
     } else {

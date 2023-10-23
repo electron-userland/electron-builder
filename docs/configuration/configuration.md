@@ -11,7 +11,7 @@ electron-builder [configuration](#configuration) can be defined
    appId: "com.example.app"
    ```
    
-    `json`, [json5](http://json5.org), [toml](https://github.com/toml-lang/toml) or `js` (exported configuration or function that produces configuration) formats also supported.
+    `json`, [json5](http://json5.org), [toml](https://github.com/toml-lang/toml) or `js`/`ts` (exported configuration or function that produces configuration) formats also supported.
 
     !!! tip
         If you want to use `js` file, do not name it `electron-builder.js`. It will [conflict](https://github.com/electron-userland/electron-builder/issues/6227) with `electron-builder` package name.

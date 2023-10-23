@@ -9,7 +9,7 @@ export function executeAppBuilderAsJson<T>(args: Array<string>): Promise<T> {
 
     try {
       return JSON.parse(rawResult) as T
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(`Cannot parse result: ${e.message}: "${rawResult}"`)
     }
   })

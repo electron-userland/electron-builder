@@ -198,7 +198,7 @@ export class GitHubPublisher extends HttpPublisher {
         this.context.cancellationToken,
         requestProcessor
       )
-      .catch(e => {
+      .catch((e: any) => {
         if (attemptNumber > 3) {
           return Promise.reject(e)
         } else if (this.doesErrorMeanAlreadyExists(e)) {
@@ -249,7 +249,7 @@ export class GitHubPublisher extends HttpPublisher {
     for (let i = 0; i < 3; i++) {
       try {
         return await this.githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
-      } catch (e) {
+      } catch (e: any) {
         if (e instanceof HttpError) {
           if (e.statusCode === 404) {
             log.warn({ releaseId: release.id, reason: "doesn't exist" }, "cannot delete release")

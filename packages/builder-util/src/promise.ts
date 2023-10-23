@@ -10,10 +10,10 @@ export async function executeFinally<T>(promise: Promise<T>, task: (isErrorOccur
   let result: T | null = null
   try {
     result = await promise
-  } catch (originalError) {
+  } catch (originalError: any) {
     try {
       await task(true)
-    } catch (taskError) {
+    } catch (taskError: any) {
       throw new NestedError([originalError, taskError])
     }
 
@@ -41,7 +41,7 @@ export function orNullIfFileNotExist<T>(promise: Promise<T>): Promise<T | null> 
 }
 
 export function orIfFileNotExist<T>(promise: Promise<T>, fallbackValue: T): Promise<T> {
-  return promise.catch(e => {
+  return promise.catch((e: any) => {
     if (e.code === "ENOENT" || e.code === "ENOTDIR") {
       return fallbackValue
     }

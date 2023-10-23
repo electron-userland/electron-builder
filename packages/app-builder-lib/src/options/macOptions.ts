@@ -13,7 +13,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly category?: string | null
 
   /**
-   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+   * The target package type: list of `default`, `dmg`, `mas`, `mas-dev`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (`dmg` and `zip` for Squirrel.Mac). Note: Squirrel.Mac auto update mechanism requires both `dmg` and `zip` to be enabled, even when only `dmg` is used. Disabling `zip` will break auto update in `dmg` packages.
    */
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
@@ -158,13 +158,13 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly hardenedRuntime?: boolean
 
   /**
-   * Whether to let electron-osx-sign validate the signing or not.
+   * Whether to let @electron/osx-sign validate the signing or not.
    * @default false
    */
   readonly gatekeeperAssess?: boolean
 
   /**
-   * Whether to let electron-osx-sign verify the contents or not.
+   * Whether to let @electron/osx-sign verify the contents or not.
    * @default true
    */
   readonly strictVerify?: Array<string> | string | boolean
@@ -194,7 +194,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * This option has no effect unless building for "universal" arch and applies
    * only if `mergeASARs` is `true`.
    */
-  readonly singleArchFiles?: string
+  readonly singleArchFiles?: string | null
 
   /**
    * Minimatch pattern of paths that are allowed to be x64 binaries in both
@@ -203,7 +203,33 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * This option has no effect unless building for "universal" arch and applies
    * only if `mergeASARs` is `true`.
    */
-  readonly x64ArchFiles?: string
+  readonly x64ArchFiles?: string | null
+
+  /**
+   * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
+   * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
+   *
+   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
+   */
+  readonly notarize?: NotarizeOptions | boolean | null
+}
+
+export interface NotarizeOptions {
+  /**
+   * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
+   * Only used by `legacy` notarization tool
+   */
+  readonly appBundleId?: string | null
+
+  /**
+   * Your Team Short Name. Only used by `legacy` notarization tool
+   */
+  readonly ascProvider?: string | null
+
+  /**
+   * The team ID you want to notarize under. Only needed if using `notarytool`
+   */
+  readonly teamId?: string | null
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

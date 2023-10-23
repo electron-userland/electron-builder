@@ -42,7 +42,7 @@ export class BuildCacheManager {
     try {
       await copyFile(this.cacheFile, this.executableFile, false)
       return true
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === "ENOENT" || e.code === "ENOTDIR") {
         log.debug({ error: e.code }, "copy cached executable failed")
       } else {
@@ -66,7 +66,7 @@ export class BuildCacheManager {
     try {
       await mkdir(this.cacheDir, { recursive: true })
       await Promise.all([writeJson(this.cacheInfoFile, this.cacheInfo), copyFile(this.executableFile, this.cacheFile, false)])
-    } catch (e) {
+    } catch (e: any) {
       log.warn({ error: e.stack || e }, `cannot save build cache`)
     }
   }

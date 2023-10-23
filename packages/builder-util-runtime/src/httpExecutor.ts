@@ -206,7 +206,7 @@ Please double check that your authentication token is correct. Due to security r
         } else {
           resolve(data.length === 0 ? null : data)
         }
-      } catch (e) {
+      } catch (e: any) {
         reject(e)
       }
     })
@@ -349,7 +349,7 @@ Please double check that your authentication token is correct. Due to security r
     for (let attemptNumber = 0; ; attemptNumber++) {
       try {
         return task()
-      } catch (e) {
+      } catch (e: any) {
         if (attemptNumber < maxRetries && ((e instanceof HttpError && e.isServerError()) || e.code === "EPIPE")) {
           continue
         }
@@ -417,7 +417,7 @@ export class DigestTransform extends Transform {
     if (this.isValidateOnEnd) {
       try {
         this.validate()
-      } catch (e) {
+      } catch (e: any) {
         callback(e)
         return
       }

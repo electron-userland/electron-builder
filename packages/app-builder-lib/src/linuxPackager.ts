@@ -6,7 +6,7 @@ import { PlatformPackager } from "./platformPackager"
 import { RemoteBuilder } from "./remoteBuilder/RemoteBuilder"
 import AppImageTarget from "./targets/AppImageTarget"
 import FlatpakTarget from "./targets/FlatpakTarget"
-import FpmTarget from "./targets/fpm"
+import FpmTarget from "./targets/FpmTarget"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
@@ -57,7 +57,7 @@ export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
           case "pacman":
           case "apk":
           case "p5p":
-            return require("./targets/fpm").default
+            return require("./targets/FpmTarget").default
           default:
             return null
         }

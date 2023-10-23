@@ -957,6 +957,16 @@ Object {
         },
         "minimist": Object {
           "files": Object {
+            ".github": Object {
+              "files": Object {
+                "FUNDING.yml": Object {
+                  "size": 579,
+                },
+              },
+            },
+            ".nycrc": Object {
+              "size": 229,
+            },
             "LICENSE": Object {
               "size": 1073,
             },
@@ -964,7 +974,7 @@ Object {
               "size": 7807,
             },
             "package.json": Object {
-              "size": 722,
+              "size": 1247,
             },
           },
         },

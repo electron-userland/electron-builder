@@ -173,7 +173,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   logSpawn(command, args, options)
   try {
     return _spawn(command, args, options)
-  } catch (e) {
+  } catch (e: any) {
     throw new Error(`Cannot spawn ${command}: ${e.stack || e}`)
   }
 }
@@ -399,7 +399,7 @@ export function executeAppBuilder(
 export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number): Promise<T> {
   try {
     return await task()
-  } catch (error) {
+  } catch (error: any) {
     log.info(`Above command failed, retrying ${retriesLeft} more times`)
     if (retriesLeft > 0) {
       await new Promise(resolve => setTimeout(resolve, interval))

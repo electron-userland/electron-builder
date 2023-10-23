@@ -69,6 +69,9 @@ export default class SnapTarget extends Target {
     if (this.isUseTemplateApp) {
       delete appDescriptor.adapter
     }
+    if (options.base != null) {
+      snap.base = options.base
+    }
     if (options.grade != null) {
       snap.grade = options.grade
     }
@@ -195,11 +198,18 @@ export default class SnapTarget extends Target {
       Icon: "${SNAP}/meta/gui/icon.png",
     })
 
+    const extraAppArgs: Array<string> = options.executableArgs ?? []
     if (this.isElectronVersionGreaterOrEqualThan("5.0.0") && !isBrowserSandboxAllowed(snap)) {
-      args.push("--extraAppArgs=--no-sandbox")
+      const noSandboxArg = "--no-sandbox"
+      if (!extraAppArgs.includes(noSandboxArg)) {
+        extraAppArgs.push(noSandboxArg)
+      }
       if (this.isUseTemplateApp) {
         args.push("--exclude", "chrome-sandbox")
       }
+    }
+    if (extraAppArgs.length > 0) {
+      args.push("--extraAppArgs=" + extraAppArgs.join(" "))
     }
 
     if (snap.compression != null) {

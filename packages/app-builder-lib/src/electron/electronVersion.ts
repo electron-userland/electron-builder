@@ -89,7 +89,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
       const version = releaseInfo.tag_name.startsWith("v") ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
       log.info({ version }, `resolve ${dependency.name}@${dependency.version}`)
       return version
-    } catch (e) {
+    } catch (e: any) {
       log.warn(e)
     }
 

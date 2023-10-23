@@ -14,7 +14,6 @@ export interface NodeIntegrity {
   blocks: Array<string>
 }
 
-/** @internal */
 export class Node {
   // we don't use Map because later it will be stringified
   files?: { [key: string]: Node }

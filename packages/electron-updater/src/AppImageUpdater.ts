@@ -1,5 +1,5 @@
 import { AllPublishOptions, newError } from "builder-util-runtime"
-import { execFileSync, spawn } from "child_process"
+import { execFileSync } from "child_process"
 import { chmod } from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
@@ -30,7 +30,7 @@ export class AppImageUpdater extends BaseUpdater {
   /*** @private */
   protected doDownloadUpdate(downloadUpdateOptions: DownloadUpdateOptions): Promise<Array<string>> {
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
-    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage")!
+    const fileInfo = findFile(provider.resolveFiles(downloadUpdateOptions.updateInfoAndProvider.info), "AppImage", ["rpm", "deb"])!
     return this.executeDownload({
       fileExtension: "AppImage",
       fileInfo,
@@ -58,7 +58,7 @@ export class AppImageUpdater extends BaseUpdater {
           }
 
           await new FileWithEmbeddedBlockMapDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download()
-        } catch (e) {
+        } catch (e: any) {
           this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
           // during test (developer machine mac) we must throw error
           isDownloadFull = process.platform === "linux"
@@ -99,19 +99,15 @@ export class AppImageUpdater extends BaseUpdater {
     }
 
     const env: any = {
-      ...process.env,
       APPIMAGE_SILENT_INSTALL: "true",
     }
 
     if (options.isForceRunAfter) {
-      spawn(destination, [], {
-        detached: true,
-        stdio: "ignore",
-        env,
-      }).unref()
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.spawnLog(destination, [], env)
     } else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], { env })
+      execFileSync(destination, [], env)
     }
     return true
   }

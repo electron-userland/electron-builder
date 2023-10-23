@@ -27,7 +27,6 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.1.0-mac.zip",
@@ -49,7 +48,14 @@ Object {
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -75,7 +81,7 @@ Object {
       "CFBundleTypeExtensions": Array [
         "boo",
       ],
-      "CFBundleTypeIconFile": "Test App ßW.icns",
+      "CFBundleTypeIconFile": "icon.icns",
       "CFBundleTypeName": "Boo",
       "CFBundleTypeRole": "Shell",
       "LSHandlerRank": "Owner",
@@ -92,7 +98,7 @@ Object {
     },
   ],
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "foo",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -180,19 +186,16 @@ Object {
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-x64.zip",
           },
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-arm64.zip",
           },
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "TestApp-1.1.0-mac-universal.zip",
@@ -223,7 +226,14 @@ Object {
       "arch": "arm64",
       "file": "TestApp-1.1.0-mac-arm64.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-arm64.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -232,7 +242,14 @@ Object {
       "arch": "universal",
       "file": "TestApp-1.1.0-mac-universal.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-universal.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -241,7 +258,14 @@ Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac-x64.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "safeArtifactName": "TestApp-1.1.0-mac-x64.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -289,11 +313,11 @@ Object {
 
 exports[`two-package 3`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
 ]
 `;
 
@@ -336,11 +360,11 @@ Object {
 
 exports[`two-package 5`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
 ]
 `;
 
@@ -383,10 +407,10 @@ Object {
 
 exports[`two-package 7`] = `
 Array [
-  "icon.icns",
   "app-update.yml",
   "app.asar",
   "bn.lproj",
   "en.lproj",
+  "icon.icns",
 ]
 `;

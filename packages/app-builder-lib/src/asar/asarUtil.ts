@@ -202,7 +202,7 @@ export class AsarPackager {
             .then(it => {
               writeStream.write(it, () => w(index + 1))
             })
-            .catch(e => reject(`Cannot read file ${file}: ${e.stack || e}`))
+            .catch((e: any) => reject(`Cannot read file ${file}: ${e.stack || e}`))
         } else {
           const readStream = createReadStream(file)
           readStream.on("error", reject)
