@@ -99,7 +99,7 @@ export class MacUpdater extends AppUpdater {
     try {
       this.debug("Clearing quarantine bit")
       const result = execFileSync("xattr", ["-r", "-d", "com.apple.quarantine", downloadedFile])
-      log.info(`Quarantine bit is cleared from ${downloadedFile}: ${result?.trim()}`)
+      log.info(`Quarantine bit is cleared from ${downloadedFile}: ${result}`)
     } catch (e: any) {
       log.warn(`xattr shell command for clearing quarantine bit failed: ${e.message}`)
     }
