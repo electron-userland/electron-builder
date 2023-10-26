@@ -315,7 +315,7 @@ function identifierToLink(id, root) {
       }
       if (id.endsWith(".RequestHeaders")) {
         // don't want complicate docs, if someone need - just see source code
-        return "[key: string]: string"
+        return "[key: string]: OutgoingHttpHeader | undefined"
       }
 
       console.warn(`Unresolved member (helpers.js) ${id}`)

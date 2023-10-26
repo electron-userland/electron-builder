@@ -48,7 +48,7 @@
     "@babel/plugin-transform-modules-commonjs": "7.15.4",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
-    "@types/node": "16.11.43",
+    "@types/node": "16.18.55",
     "@typescript-eslint/eslint-plugin": "5.41.0",
     "@typescript-eslint/parser": "5.41.0",
     "catharsis": "0.9.0",

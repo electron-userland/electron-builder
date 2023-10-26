@@ -1,7 +1,7 @@
 import { BinaryToTextEncoding, createHash, Hash } from "crypto"
 import _debug from "debug"
 import { createWriteStream } from "fs"
-import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
+import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
@@ -12,7 +12,7 @@ import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 const debug = _debug("electron-builder")
 
 export interface RequestHeaders extends OutgoingHttpHeaders {
-  [key: string]: string
+  [key: string]: OutgoingHttpHeader | undefined
 }
 
 export interface DownloadOptions {
