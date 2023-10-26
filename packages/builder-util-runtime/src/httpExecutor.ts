@@ -12,7 +12,7 @@ import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 const debug = _debug("electron-builder")
 
 export interface RequestHeaders extends OutgoingHttpHeaders {
-  [key: string]: string
+  [key: string]: string | string[] | number
 }
 
 export interface DownloadOptions {
