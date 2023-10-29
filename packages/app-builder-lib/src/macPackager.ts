@@ -331,9 +331,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       await this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg", arch, true, this.platformSpecificBuildOptions.defaultArch))
     }
 
-if (!isMas) { 
-   await this.notarizeIfProvided(appPath)
-}
+    if (!isMas) {
+      await this.notarizeIfProvided(appPath)
+    }
     return true
   }
 
