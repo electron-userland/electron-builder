@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import { debug7z, exec } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
-import { move } from "fs-extra"
+import { chmod, move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
@@ -55,6 +55,7 @@ export async function tar(
     compression,
   })
   args.push(outFile, tarFile)
+  await chmod(path7za, 0o755)
   await exec(
     path7za,
     args,
@@ -180,6 +181,7 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   try {
+    await chmod(path7za, 0o755)
     await exec(
       path7za,
       args,

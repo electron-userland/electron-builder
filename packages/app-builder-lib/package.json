@@ -46,7 +46,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "7zip-bin": "~5.1.1",
+    "7zip-bin": "~5.2.0",
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "2.1.0",
     "@electron/osx-sign": "1.0.5",

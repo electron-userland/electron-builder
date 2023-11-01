@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { outputFile, stat } from "fs-extra"
+import { chmod, outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
@@ -234,6 +234,7 @@ export default class FpmTarget extends Target {
       return
     }
 
+    await chmod(path7za, 0o755)
     const env = {
       ...process.env,
       SZA_PATH: path7za,
