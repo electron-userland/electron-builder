@@ -21,7 +21,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
-import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolNotarizeAppOptions, NotaryToolStartOptions } from "@electron/notarize/lib/types"
+import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolNotarizeAppOptions, NotaryToolStartOptions, NotaryToolApiKeyCredentials, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -481,31 +481,55 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
+  private async getNotarizeOptions(appPath) {
+    const appleId = process.env.APPLE_ID
+    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+
+    // option 1: app specific password
+    if (appleId || !appleIdPassword) {
+      if (!appleId) {
+        throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
+      }
+      if (!appleIdPassword) {
+        throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
+      }
+      return this.generateNotarizeOptions({ appPath, appleId, appleIdPassword })
+    }
+
+    // option 2: API key
+    const appleApiKey = process.env.APPLE_API_KEY;
+    const appleApiKeyId = process.env.APPLE_API_KEY_ID;
+    const appleApiIssuer = process.env.APPLE_API_ISSUER;
+    if (appleApiKey || appleApiKeyId || appleApiIssuer) {
+      return this.generateNotarizeOptions({ appPath, appleApiKey, appleApiKeyId, appleApiIssuer });
+    }
+
+    // option 3: keychain
+    const keychain = process.env.APPLE_KEYCHAIN;
+    const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE;
+    if (keychain && keychainProfile) {
+      return this.generateNotarizeOptions({ appPath, keychain, keychainProfile });
+    }
+
+    // if no credentials provided, skip silently
+    return undefined;
+  }
+
   private async notarizeIfProvided(appPath: string) {
     const notarizeOptions = this.platformSpecificBuildOptions.notarize
     if (notarizeOptions === false) {
       log.info({ reason: "`notarizeOptions` is explicitly set to false" }, "skipped macOS notarization")
       return
     }
-    const appleId = process.env.APPLE_ID
-    const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
-    if (!appleId && !appleIdPassword) {
-      // if no credentials provided, skip silently
-      return
-    }
-    if (!appleId) {
-      throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
-    }
-    if (!appleIdPassword) {
-      throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
-    }
-    const options = this.generateNotarizeOptions(appPath, appleId, appleIdPassword)
+    const options = this.getNotarizeOptions(appPath)
+    if (options == null) return
     await notarize(options)
     log.info(null, "notarization successful")
   }
 
-  private generateNotarizeOptions(appPath: string, appleId: string, appleIdPassword: string): NotarizeOptions {
-    const baseOptions: NotaryToolNotarizeAppOptions & LegacyNotarizePasswordCredentials = { appPath, appleId, appleIdPassword }
+  private generateNotarizeOptions(baseOptions:
+    NotaryToolNotarizeAppOptions & (LegacyNotarizePasswordCredentials | NotaryToolApiKeyCredentials | NotaryToolKeychainCredentials)
+  ): NotarizeOptions {
     const options = this.platformSpecificBuildOptions.notarize
     if (typeof options === "boolean") {
       const proj: LegacyNotarizeStartOptions = {
