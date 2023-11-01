@@ -4,6 +4,7 @@ A complete solution to package and build a ready for distribution [Electron](htt
 :large_orange_diamond: - Looking for additional maintainers!
 
 **We condemn Russia’s military aggression against Ukraine. We stand with the people of Ukraine.**
+**We condemn Israeli’s military aggression against Palestine. We stand with the people of Palestine.**
 
 ## Sponsors
 
