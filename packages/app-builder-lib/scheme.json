@@ -4566,6 +4566,398 @@
           }
         ]
       },
+      "properties": {
+        "accept": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "accept-charset": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "accept-encoding": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "accept-language": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "accept-ranges": {
+          "type": "string"
+        },
+        "access-control-allow-credentials": {
+          "type": "string"
+        },
+        "access-control-allow-headers": {
+          "type": "string"
+        },
+        "access-control-allow-methods": {
+          "type": "string"
+        },
+        "access-control-allow-origin": {
+          "type": "string"
+        },
+        "access-control-expose-headers": {
+          "type": "string"
+        },
+        "access-control-max-age": {
+          "type": "string"
+        },
+        "access-control-request-headers": {
+          "type": "string"
+        },
+        "access-control-request-method": {
+          "type": "string"
+        },
+        "age": {
+          "type": "string"
+        },
+        "allow": {
+          "type": "string"
+        },
+        "authorization": {
+          "type": "string"
+        },
+        "cache-control": {
+          "type": "string"
+        },
+        "cdn-cache-control": {
+          "type": "string"
+        },
+        "connection": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "content-disposition": {
+          "type": "string"
+        },
+        "content-encoding": {
+          "type": "string"
+        },
+        "content-language": {
+          "type": "string"
+        },
+        "content-length": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "content-location": {
+          "type": "string"
+        },
+        "content-range": {
+          "type": "string"
+        },
+        "content-security-policy": {
+          "type": "string"
+        },
+        "content-security-policy-report-only": {
+          "type": "string"
+        },
+        "cookie": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "dav": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "dnt": {
+          "type": "string"
+        },
+        "etag": {
+          "type": "string"
+        },
+        "expect": {
+          "type": "string"
+        },
+        "expires": {
+          "type": "string"
+        },
+        "forwarded": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "if-match": {
+          "type": "string"
+        },
+        "if-modified-since": {
+          "type": "string"
+        },
+        "if-none-match": {
+          "type": "string"
+        },
+        "if-range": {
+          "type": "string"
+        },
+        "if-unmodified-since": {
+          "type": "string"
+        },
+        "last-modified": {
+          "type": "string"
+        },
+        "link": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "location": {
+          "type": "string"
+        },
+        "max-forwards": {
+          "type": "string"
+        },
+        "origin": {
+          "type": "string"
+        },
+        "prgama": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "proxy-authenticate": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "proxy-authorization": {
+          "type": "string"
+        },
+        "public-key-pins": {
+          "type": "string"
+        },
+        "public-key-pins-report-only": {
+          "type": "string"
+        },
+        "range": {
+          "type": "string"
+        },
+        "referer": {
+          "type": "string"
+        },
+        "referrer-policy": {
+          "type": "string"
+        },
+        "refresh": {
+          "type": "string"
+        },
+        "retry-after": {
+          "type": "string"
+        },
+        "sec-websocket-accept": {
+          "type": "string"
+        },
+        "sec-websocket-extensions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "sec-websocket-key": {
+          "type": "string"
+        },
+        "sec-websocket-protocol": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "sec-websocket-version": {
+          "type": "string"
+        },
+        "server": {
+          "type": "string"
+        },
+        "set-cookie": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "strict-transport-security": {
+          "type": "string"
+        },
+        "te": {
+          "type": "string"
+        },
+        "trailer": {
+          "type": "string"
+        },
+        "transfer-encoding": {
+          "type": "string"
+        },
+        "upgrade": {
+          "type": "string"
+        },
+        "upgrade-insecure-requests": {
+          "type": "string"
+        },
+        "user-agent": {
+          "type": "string"
+        },
+        "vary": {
+          "type": "string"
+        },
+        "via": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "warning": {
+          "type": "string"
+        },
+        "www-authenticate": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "x-content-type-options": {
+          "type": "string"
+        },
+        "x-dns-prefetch-control": {
+          "type": "string"
+        },
+        "x-frame-options": {
+          "type": "string"
+        },
+        "x-xss-protection": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "PkgBackgroundOptions": {
@@ -5601,7 +5993,7 @@
     },
     "SnapStoreOptions": {
       "additionalProperties": false,
-      "description": "[Snap Store](https://snapcraft.io/) options. To publish directly to Snapcraft,\n see <a href=\"https://snapcraft.io/docs/snapcraft-authentication\">Snapcraft\n authentication options</a> for local or CI/CD authentication options.",
+      "description": "[Snap Store](https://snapcraft.io/) options. To publish directly to Snapcraft, see <a href=\"https://snapcraft.io/docs/snapcraft-authentication\">Snapcraft authentication options</a> for local or CI/CD authentication options.",
       "properties": {
         "channels": {
           "anyOf": [

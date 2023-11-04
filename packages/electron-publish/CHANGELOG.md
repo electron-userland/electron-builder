@@ -1,5 +1,13 @@
 # electron-publish
 
+## 24.8.1
+
+### Patch Changes
+
+- Updated dependencies [[`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f), [`1af7447e`](https://github.com/electron-userland/electron-builder/commit/1af7447edf47303de03ca2924727c78118161c60), [`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f)]:
+  - builder-util-runtime@9.2.3
+  - builder-util@24.8.1
+
 ## 24.8.0
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # electron-builder
 
+## 24.8.1
+
+### Patch Changes
+
+- [#7829](https://github.com/electron-userland/electron-builder/pull/7829) [`1af7447e`](https://github.com/electron-userland/electron-builder/commit/1af7447edf47303de03ca2924727c78118161c60) Thanks [@lutzroeder](https://github.com/lutzroeder)! - fix(deps): Update 7zip-bin to support Windows on ARM
+
+- Updated dependencies [[`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f), [`1af7447e`](https://github.com/electron-userland/electron-builder/commit/1af7447edf47303de03ca2924727c78118161c60), [`87eae1cc`](https://github.com/electron-userland/electron-builder/commit/87eae1cc2f85f034f1543840b20d56e89a23c0df), [`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f)]:
+  - builder-util-runtime@9.2.3
+  - builder-util@24.8.1
+  - app-builder-lib@24.8.1
+  - dmg-builder@24.8.1
+
 ## 24.8.0
 
 ### Patch Changes
