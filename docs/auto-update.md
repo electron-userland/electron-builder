@@ -6,7 +6,7 @@ See [publish configuration](configuration/publish.md) for information on how to 
 ## Auto-updatable Targets
 
 * macOS: DMG.
-* Linux: AppImage.
+* Linux: AppImage, DEB and RPM.
 * Windows: NSIS.
 
 All these targets are default, custom configuration is not required. (Though it is possible to [pass in additional configuration, e.g. request headers](#custom-options-instantiating-updater-directly).)
