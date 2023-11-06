@@ -481,7 +481,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
-  private async getNotarizeOptions(appPath) {
+  private getNotarizeOptions(appPath: string) {
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
 
@@ -501,6 +501,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const appleApiKeyId = process.env.APPLE_API_KEY_ID;
     const appleApiIssuer = process.env.APPLE_API_ISSUER;
     if (appleApiKey || appleApiKeyId || appleApiIssuer) {
+      if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
+        throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
+      }
       return this.generateNotarizeOptions({ appPath, appleApiKey, appleApiKeyId, appleApiIssuer });
     }
 
@@ -522,7 +525,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       return
     }
     const options = this.getNotarizeOptions(appPath)
-    if (options == null) return
+    if (options == null) {
+      return
+    }
     await notarize(options)
     log.info(null, "notarization successful")
   }
