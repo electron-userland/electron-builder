@@ -357,6 +357,7 @@ export async function executeAppBuilder(
   maxRetries = 0
 ): Promise<string> {
   const command = appBuilderPath
+  await chmod(command, 0o755)
   await chmod(path7za, 0o755)
   const env: any = {
     ...process.env,
