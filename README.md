@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate) [![project discussions](https://img.shields.io/badge/discuss-on_github-blue.svg)](https://github.com/electron-userland/electron-builder/discussions)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://www.npmjs.com/package/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-brightgreen.svg)](https://www.electron.build/donate)
 A complete solution to package and build a ready for distribution [Electron](https://electronjs.org), [Proton Native](https://proton-native.js.org/) app for macOS, Windows and Linux with “auto update” support out of the box. :shipit:
 
 :large_orange_diamond: - Looking for additional maintainers!
@@ -94,8 +94,7 @@ See the full documentation on [electron.build](https://www.electron.build).
 | Question | Answer |
 |----------|-------|
 | “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
-| “I have a question” | [Join the discussions](https://github.com/electron-userland/electron-builder/discussions) |
-| “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
+| “I found a bug or I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development” | [Donate](https://www.electron.build/donate) |
 
 ## Installation

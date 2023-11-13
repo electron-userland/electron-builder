@@ -10,7 +10,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, writeJson } from "fs-extra"
+import { chmod, emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -438,6 +438,7 @@ export async function getTarExecutable() {
 }
 
 async function getContents(packageFile: string) {
+  await chmod(path7x, 0o755)
   const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${path7x}'`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {

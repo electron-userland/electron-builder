@@ -1,5 +1,13 @@
 # builder-util-runtime
 
+## 9.2.3
+
+### Patch Changes
+
+- [#7806](https://github.com/electron-userland/electron-builder/pull/7806) [`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f) Thanks [@AviVahl](https://github.com/AviVahl)! - fix: update @types/node for compat with newest @types/node
+
+- [#7806](https://github.com/electron-userland/electron-builder/pull/7806) [`db424e8e`](https://github.com/electron-userland/electron-builder/commit/db424e8e876e6ac1985668bf78bd52a02824dd7f) Thanks [@AviVahl](https://github.com/AviVahl)! - fix: compat with newest @types/node
+
 ## 9.2.2
 
 ### Patch Changes

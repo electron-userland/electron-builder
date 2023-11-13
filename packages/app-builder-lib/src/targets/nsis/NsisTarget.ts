@@ -5,7 +5,7 @@ import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, Package
 import { exists, statOrNull, walk } from "builder-util/out/fs"
 import _debug from "debug"
 import * as fs from "fs"
-import { readFile, stat, unlink } from "fs-extra"
+import { chmod, readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
@@ -250,7 +250,7 @@ export class NsisTarget extends Target {
           await packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
-
+        await chmod(path7za, 0o755)
         const archiveInfo = (await exec(path7za, ["l", file])).trim()
         // after adding blockmap data will be "Warnings: 1" in the end of output
         const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
