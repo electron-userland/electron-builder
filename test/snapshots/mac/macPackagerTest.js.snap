@@ -494,6 +494,133 @@ Object {
     },
     "node_modules": Object {
       "files": Object {
+        ".pnpm": Object {
+          "files": Object {
+            "bindings@1.5.0": Object {
+              "files": Object {
+                "node_modules": Object {
+                  "files": Object {
+                    "file-uri-to-path": Object {
+                      "files": Object {
+                        "History.md": Object {
+                          "size": "<size>",
+                        },
+                        "LICENSE": Object {
+                          "size": "<size>",
+                        },
+                        "index.js": Object {
+                          "size": "<size>",
+                        },
+                        "package.json": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "debug@4.1.1": Object {
+              "files": Object {
+                "node_modules": Object {
+                  "files": Object {
+                    "ms": Object {
+                      "files": Object {
+                        "index.js": Object {
+                          "size": "<size>",
+                        },
+                        "license.md": Object {
+                          "size": "<size>",
+                        },
+                        "package.json": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "node-mac-permissions@2.2.1": Object {
+              "files": Object {
+                "node_modules": Object {
+                  "files": Object {
+                    "bindings": Object {
+                      "files": Object {
+                        "LICENSE.md": Object {
+                          "size": "<size>",
+                        },
+                        "bindings.js": Object {
+                          "size": "<size>",
+                        },
+                        "package.json": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "node-addon-api": Object {
+                      "files": Object {
+                        "LICENSE.md": Object {
+                          "size": "<size>",
+                        },
+                        "common.gypi": Object {
+                          "size": "<size>",
+                        },
+                        "except.gypi": Object {
+                          "size": "<size>",
+                        },
+                        "index.js": Object {
+                          "size": "<size>",
+                        },
+                        "napi-inl.deprecated.h": Object {
+                          "size": "<size>",
+                        },
+                        "napi-inl.h": Object {
+                          "size": "<size>",
+                        },
+                        "napi.h": Object {
+                          "size": "<size>",
+                        },
+                        "node_api.gyp": Object {
+                          "size": "<size>",
+                        },
+                        "noexcept.gypi": Object {
+                          "size": "<size>",
+                        },
+                        "nothing.c": Object {
+                          "size": "<size>",
+                        },
+                        "package-support.json": Object {
+                          "size": "<size>",
+                        },
+                        "package.json": Object {
+                          "size": "<size>",
+                        },
+                        "tools": Object {
+                          "files": Object {
+                            "README.md": Object {
+                              "size": "<size>",
+                            },
+                            "check-napi.js": Object {
+                              "size": "<size>",
+                            },
+                            "clang-format.js": Object {
+                              "size": "<size>",
+                            },
+                            "conversion.js": Object {
+                              "executable": true,
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         "debug": Object {
           "files": Object {
             "LICENSE": Object {
@@ -531,27 +658,17 @@ Object {
           "files": Object {
             ".prettierrc": Object {
               "size": "<size>",
-              "unpacked": true,
             },
             "LICENSE": Object {
               "size": "<size>",
-              "unpacked": true,
             },
             "build": Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
                     "permissions.node": Object {
+                      "executable": true,
                       "size": "<size>",
-                      "unpacked": true,
-                    },
-                  },
-                },
-                "node_gyp_bins": Object {
-                  "files": Object {
-                    "python3": Object {
-                      "size": "<size>",
-                      "unpacked": true,
                     },
                   },
                 },
@@ -559,15 +676,12 @@ Object {
             },
             "index.js": Object {
               "size": "<size>",
-              "unpacked": true,
             },
             "package.json": Object {
               "size": "<size>",
-              "unpacked": true,
             },
             "permissions.mm": Object {
               "size": "<size>",
-              "unpacked": true,
             },
           },
         },
@@ -584,56 +698,5 @@ exports[`yarn two package.json w/ native module 4`] = `
 Array [
   "app.asar",
   "electron.icns",
-  "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
-  "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
-  Object {
-    "content": "{
-  \\"name\\": \\"node-mac-permissions\\",
-  \\"version\\": \\"2.2.1\\",
-  \\"description\\": \\"A native node module to manage system permissions on macOS\\",
-  \\"main\\": \\"index.js\\",
-  \\"types\\": \\"index.d.ts\\",
-  \\"repository\\": {
-    \\"type\\": \\"git\\",
-    \\"url\\": \\"git+https://github.com/codebytere/node-mac-permissions.git\\"
-  },
-  \\"author\\": \\"Shelley Vohr <shelley.vohr@gmail.com>\\",
-  \\"license\\": \\"MIT\\",
-  \\"homepage\\": \\"https://github.com/codebytere/node-mac-permissions#readme\\",
-  \\"dependencies\\": {
-    \\"bindings\\": \\"^1.5.0\\",
-    \\"node-addon-api\\": \\"^3.0.2\\"
-  },
-  \\"devDependencies\\": {
-    \\"chai\\": \\"^4.2.0\\",
-    \\"clang-format\\": \\"^1.4.0\\",
-    \\"husky\\": \\"^4.3.0\\",
-    \\"lint-staged\\": \\"^10.5.3\\",
-    \\"mocha\\": \\"^8.2.1\\",
-    \\"node-gyp\\": \\"^7.1.2\\",
-    \\"prettier\\": \\"^2.2.1\\"
-  },
-  \\"husky\\": {
-    \\"hooks\\": {
-      \\"pre-commit\\": \\"lint-staged\\"
-    }
-  },
-  \\"lint-staged\\": {
-    \\"*.js\\": [
-      \\"prettier --write\\"
-    ],
-    \\"*.mm\\": [
-      \\"clang-format -i\\"
-    ]
-  },
-  \\"os\\": [
-    \\"darwin\\"
-  ]
-}",
-    "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
-  },
-  "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/node_gyp_bins/python3",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
 ]
 `;
