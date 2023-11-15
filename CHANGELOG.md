@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.8.1...v) (2023-11-13)
+
+
+### Bug Fixes
+
+* flatpak build failing due to too large icons ([#7875](https://github.com/electron-userland/electron-builder/issues/7875)) ([9883ab6](https://github.com/electron-userland/electron-builder/commit/9883ab60687b67c858b16f09eea6f8af76cf01b0))
+* temporarily skip flaky test from transient dependency ([3f6757b](https://github.com/electron-userland/electron-builder/commit/3f6757b41720c0740886325431c18be81a23ebbf))
+
+
+### Features
+
+* allow api key and keychain for mac notarization ([#7861](https://github.com/electron-userland/electron-builder/issues/7861)) ([906ffb1](https://github.com/electron-userland/electron-builder/commit/906ffb1fcebe6aef4dc6c6a3fab10aa7d9378c3f))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.8.0...v) (2023-11-04)
 
 
