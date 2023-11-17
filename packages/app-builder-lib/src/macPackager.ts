@@ -500,7 +500,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
 
     // option 1: app specific password
-    if (appleId || !appleIdPassword) {
+    if (appleId || appleIdPassword) {
       if (!appleId) {
         throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
       }
