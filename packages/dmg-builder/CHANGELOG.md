@@ -1,5 +1,12 @@
 # dmg-builder
 
+## 24.9.1
+
+### Patch Changes
+
+- Updated dependencies [[`3c266271`](https://github.com/electron-userland/electron-builder/commit/3c26627182a660b6f22c1fa8eb22c714f014783f), [`d7e39f05`](https://github.com/electron-userland/electron-builder/commit/d7e39f05c55287ea32fd0f978ecb41078931d6b6), [`6fa8a27f`](https://github.com/electron-userland/electron-builder/commit/6fa8a27f9dd406c289f608c664c93b6ed9d1a9ee)]:
+  - app-builder-lib@24.9.1
+
 ## 24.9.0
 
 ### Patch Changes
