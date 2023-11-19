@@ -346,7 +346,7 @@ test.ifDevOrLinuxCi(
           debug: "4.1.1",
           "edge-cs": "1.2.1",
           "lzma-native": "8.0.6",
-          keytar: "5.6.0",
+          keytar: "7.9.0",
         }
       }),
       packed: context => {
