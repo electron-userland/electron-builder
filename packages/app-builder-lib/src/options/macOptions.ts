@@ -210,7 +210,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
    * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
    *
-   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
+   * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
 }
