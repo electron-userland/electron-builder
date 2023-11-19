@@ -1,3 +1,13 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.0...v) (2023-11-19)
+
+
+### Bug Fixes
+
+* mac notarization issue when checking env password ([#7884](https://github.com/electron-userland/electron-builder/issues/7884)) ([6fa8a27](https://github.com/electron-userland/electron-builder/commit/6fa8a27f9dd406c289f608c664c93b6ed9d1a9ee))
+* **mac:** Pass `buildOptions` down to notarization for platform-specific build options ([#7886](https://github.com/electron-userland/electron-builder/issues/7886)) ([d7e39f0](https://github.com/electron-userland/electron-builder/commit/d7e39f05c55287ea32fd0f978ecb41078931d6b6))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.8.1...v) (2023-11-13)
 
 

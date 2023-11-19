@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 24.9.1
+
+### Patch Changes
+
+- [#7885](https://github.com/electron-userland/electron-builder/pull/7885) [`3c266271`](https://github.com/electron-userland/electron-builder/commit/3c26627182a660b6f22c1fa8eb22c714f014783f) Thanks [@mifi](https://github.com/mifi)! - docs: update notarization docs in schema
+
+- [#7886](https://github.com/electron-userland/electron-builder/pull/7886) [`d7e39f05`](https://github.com/electron-userland/electron-builder/commit/d7e39f05c55287ea32fd0f978ecb41078931d6b6) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): pass in correct notarize options
+
+- [#7884](https://github.com/electron-userland/electron-builder/pull/7884) [`6fa8a27f`](https://github.com/electron-userland/electron-builder/commit/6fa8a27f9dd406c289f608c664c93b6ed9d1a9ee) Thanks [@mifi](https://github.com/mifi)! - fix: mac notarization issue checking password
+
 ## 24.9.0
 
 ### Minor Changes
