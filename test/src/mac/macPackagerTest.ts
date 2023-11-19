@@ -3,7 +3,7 @@ import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, platform } from "../helpers/packTester"
+import { app, appThrows, assertPack, packageJson, platform } from "../helpers/packTester"
 import { verifySmartUnpack } from "../helpers/verifySmartUnpack"
 
 test.ifMac.ifAll("two-package", () =>
@@ -96,18 +96,26 @@ test.ifMac(
   )
 )
 
-test.ifMac.skip("yarn two package.json w/ native module", () =>
+test.ifMac("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
-      targets: Platform.MAC.createTarget("zip", Arch.universal),
+      targets: Platform.MAC.createTarget("zip", Arch.x64),
       config: {
         npmRebuild: true,
+        buildDependenciesFromSource: true,
+        asarUnpack: "node_modules/keytar",
       },
     },
     {
+      projectDirCreated: packageJson(it => {
+        it.dependencies = {
+          debug: "4.1.1",
+          keytar: "7.9.0",
+        }
+      }),
       signed: false,
-      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.universal)),
+      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.x64)),
     }
   )
 )

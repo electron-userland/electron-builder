@@ -423,16 +423,16 @@ exports[`yarn two package.json w/ native module 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": "universal",
-      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip",
+      "arch": "x64",
+      "file": "test-app-two-native-modules-1.1.1-mac.zip",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
-      "safeArtifactName": "test-app-two-native-modules-1.1.1-universal-mac.zip.blockmap",
+      "file": "test-app-two-native-modules-1.1.1-mac.zip.blockmap",
+      "safeArtifactName": "test-app-two-native-modules-1.1.1-mac.zip.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -527,13 +527,9 @@ Object {
             },
           },
         },
-        "node-mac-permissions": Object {
+        "keytar": Object {
           "files": Object {
-            ".prettierrc": Object {
-              "size": "<size>",
-              "unpacked": true,
-            },
-            "LICENSE": Object {
+            "LICENSE.md": Object {
               "size": "<size>",
               "unpacked": true,
             },
@@ -541,11 +537,12 @@ Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
-                    "permissions.node": Object {
+                    "keytar.node": Object {
                       "size": "<size>",
                       "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
                 "node_gyp_bins": Object {
                   "files": Object {
@@ -554,22 +551,25 @@ Object {
                       "unpacked": true,
                     },
                   },
+                  "unpacked": true,
                 },
               },
             },
-            "index.js": Object {
-              "size": "<size>",
+            "lib": Object {
+              "files": Object {
+                "keytar.js": Object {
+                  "size": "<size>",
+                  "unpacked": true,
+                },
+              },
               "unpacked": true,
             },
             "package.json": Object {
               "size": "<size>",
               "unpacked": true,
             },
-            "permissions.mm": Object {
-              "size": "<size>",
-              "unpacked": true,
-            },
           },
+          "unpacked": true,
         },
       },
     },
@@ -584,51 +584,54 @@ exports[`yarn two package.json w/ native module 4`] = `
 Array [
   "app.asar",
   "electron.icns",
-  "app.asar.unpacked/node_modules/node-mac-permissions/LICENSE",
-  "app.asar.unpacked/node_modules/node-mac-permissions/index.js",
+  "app.asar.unpacked/node_modules/keytar/LICENSE.md",
   Object {
     "content": "{
-  \\"name\\": \\"node-mac-permissions\\",
-  \\"version\\": \\"2.3.0\\",
-  \\"description\\": \\"A native node module to manage system permissions on macOS\\",
-  \\"main\\": \\"index.js\\",
-  \\"types\\": \\"index.d.ts\\",
+  \\"main\\": \\"./lib/keytar.js\\",
+  \\"typings\\": \\"keytar.d.ts\\",
+  \\"name\\": \\"keytar\\",
+  \\"description\\": \\"Bindings to native Mac/Linux/Windows password APIs\\",
+  \\"version\\": \\"7.9.0\\",
+  \\"license\\": \\"MIT\\",
   \\"repository\\": {
     \\"type\\": \\"git\\",
-    \\"url\\": \\"git+https://github.com/codebytere/node-mac-permissions.git\\"
+    \\"url\\": \\"https://github.com/atom/node-keytar.git\\"
   },
-  \\"author\\": \\"Shelley Vohr <shelley.vohr@gmail.com>\\",
-  \\"license\\": \\"MIT\\",
-  \\"homepage\\": \\"https://github.com/codebytere/node-mac-permissions#readme\\",
-  \\"dependencies\\": {
-    \\"bindings\\": \\"^1.5.0\\",
-    \\"node-addon-api\\": \\"^3.0.2\\"
-  },
+  \\"homepage\\": \\"http://atom.github.io/node-keytar\\",
+  \\"files\\": [
+    \\"lib\\",
+    \\"src\\",
+    \\"binding.gyp\\",
+    \\"keytar.d.ts\\"
+  ],
+  \\"types\\": \\"./keytar.d.ts\\",
   \\"devDependencies\\": {
-    \\"chai\\": \\"^4.3.6\\",
-    \\"clang-format\\": \\"1.8.0\\",
-    \\"husky\\": \\"^8.0.1\\",
-    \\"lint-staged\\": \\"^12.4.1\\",
-    \\"mocha\\": \\"^10.0.0\\",
-    \\"node-gyp\\": \\"^9.0.0\\",
-    \\"prettier\\": \\"^2.6.2\\"
+    \\"babel-core\\": \\"^6.26.3\\",
+    \\"babel-plugin-transform-async-to-generator\\": \\"^6.24.1\\",
+    \\"chai\\": \\"^4.2.0\\",
+    \\"mocha\\": \\"^9.2.0\\",
+    \\"node-cpplint\\": \\"~0.4.0\\",
+    \\"node-gyp\\": \\"^8.4.1\\",
+    \\"prebuild\\": \\"^11.0.2\\"
   },
-  \\"lint-staged\\": {
-    \\"*.js\\": [
-      \\"prettier --write\\"
-    ],
-    \\"*.mm\\": [
-      \\"clang-format -i\\"
+  \\"dependencies\\": {
+    \\"node-addon-api\\": \\"^4.3.0\\",
+    \\"prebuild-install\\": \\"^7.0.1\\"
+  },
+  \\"binary\\": {
+    \\"napi_versions\\": [
+      3
     ]
   },
-  \\"os\\": [
-    \\"darwin\\"
-  ]
+  \\"config\\": {
+    \\"runtime\\": \\"napi\\",
+    \\"target\\": 3
+  }
 }",
-    "name": "app.asar.unpacked/node_modules/node-mac-permissions/package.json",
+    "name": "app.asar.unpacked/node_modules/keytar/package.json",
   },
-  "app.asar.unpacked/node_modules/node-mac-permissions/permissions.mm",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/node_gyp_bins/python3",
-  "app.asar.unpacked/node_modules/node-mac-permissions/build/Release/permissions.node",
+  "app.asar.unpacked/node_modules/keytar/lib/keytar.js",
+  "app.asar.unpacked/node_modules/keytar/build/node_gyp_bins/python3",
+  "app.asar.unpacked/node_modules/keytar/build/Release/keytar.node",
 ]
 `;
