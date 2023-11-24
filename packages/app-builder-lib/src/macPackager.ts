@@ -560,6 +560,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         ascProvider: ascProvider || undefined,
       }
     }
+    if (notaryToolLogin) {
+      return {
+        appPath,
+        ...notaryToolLogin,
+      }
+    }
     return undefined
   }
 }
