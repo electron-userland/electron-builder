@@ -25,7 +25,7 @@ export interface ElectronBrandingOptions {
   productName?: string
 }
 
-export function createBrandingOpts(opts: Configuration): Required<ElectronBrandingOptions> {
+export function createBrandingOpts(opts: Configuration): ElectronBrandingOptions {
   return {
     projectName: opts.electronBranding?.projectName || "electron",
     productName: opts.electronBranding?.productName || "Electron",
@@ -74,7 +74,7 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   if (packager.platform === Platform.LINUX) {
     const linuxPackager = packager as LinuxPackager
     const executable = path.join(appOutDir, linuxPackager.executableName)
-    await rename(path.join(appOutDir, electronBranding.projectName), executable)
+    await rename(path.join(appOutDir, electronBranding.projectName!), executable)
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
@@ -170,7 +170,7 @@ export async function createElectronFrameworkSupport(configuration: Configuratio
   }
 
   const branding = createBrandingOpts(configuration)
-  return new ElectronFramework(branding.projectName, version, `${branding.productName}.app`)
+  return new ElectronFramework(branding.projectName!, version, `${branding.productName}.app`)
 }
 
 async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, options: ElectronDownloadOptions, distMacOsAppName: string) {

@@ -105,7 +105,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p>This option has no effect unless building for “universal” arch and applies only if <code>mergeASARs</code> is <code>true</code>.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-notarize">notarize</code> module:app-builder-lib/out/options/macOptions.NotarizeLegacyOptions | module:app-builder-lib/out/options/macOptions.NotarizeNotaryOptions | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
+<p><code id="MacConfiguration-notarize">notarize</code> <a href="#NotarizeLegacyOptions">NotarizeLegacyOptions</a> | <a href="#NotarizeNotaryOptions">NotarizeNotaryOptions</a> | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
 <p>Note: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. <code>APPLE_API_KEY</code>, <code>APPLE_API_KEY_ID</code> and <code>APPLE_API_ISSUER</code>\n2. <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code>\n3. <code>APPLE_KEYCHAIN</code> and <code>APPLE_KEYCHAIN_PROFILE</code>\n\nFor security reasons it is recommended to use the first option (see <a href="https://github.com/electron-userland/electron-builder/issues/7859">https://github.com/electron-userland/electron-builder/issues/7859</a>)</p>
 </li>
 </ul>

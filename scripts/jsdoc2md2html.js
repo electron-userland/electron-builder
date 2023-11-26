@@ -22,14 +22,15 @@ async function main() {
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
-  const files = [
-    path.join(source, "builder/electron-builder.js"),
-    path.join(source, "publisher/electron-publish.js"),
-    path.join(source, "updater/electron-updater.js"),
-    path.join(source, "builder-lib/app-builder-lib.js"),
-    path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-    path.join(source, "util/builder-util.js"),
-  ]
+  // const files = [
+  //   path.join(source, "builder/electron-builder.js"),
+  //   path.join(source, "publisher/electron-publish.js"),
+  //   path.join(source, "updater/electron-updater.js"),
+  //   path.join(source, "builder-lib/app-builder-lib.js"),
+  //   path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+  //   path.join(source, "util/builder-util.js"),
+  // ]
+  const files = (await globby(["**/*.js"], {cwd: source})).map(it => path.resolve(source, it))
   const pages = [
     {
       page: "api/electron-builder.md", pageUrl: "electron-builder",
