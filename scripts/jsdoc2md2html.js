@@ -22,15 +22,15 @@ async function main() {
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
-  // const files = [
-  //   path.join(source, "builder/electron-builder.js"),
-  //   path.join(source, "publisher/electron-publish.js"),
-  //   path.join(source, "updater/electron-updater.js"),
-  //   path.join(source, "builder-lib/app-builder-lib.js"),
-  //   path.join(source, "builder-util-runtime/builder-util-runtime.js"),
-  //   path.join(source, "util/builder-util.js"),
-  // ]
-  const files = (await globby(["**/*.js"], {cwd: source})).map(it => path.resolve(source, it))
+  const files = [
+    path.join(source, "builder/electron-builder.js"),
+    path.join(source, "publisher/electron-publish.js"),
+    path.join(source, "updater/electron-updater.js"),
+    path.join(source, "builder-lib/app-builder-lib.js"),
+    path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+    path.join(source, "util/builder-util.js"),
+  ]
+  // const files = (await globby(["**/*.js"], {cwd: source})).map(it => path.resolve(source, it))
   const pages = [
     {
       page: "api/electron-builder.md", pageUrl: "electron-builder",
@@ -207,7 +207,11 @@ async function render2(files, jsdoc2MdOptions) {
   const pages = [
     new Page("configuration/configuration.md", "Configuration"),
 
-    new Page("configuration/mac.md", "MacConfiguration"),
+    new Page("configuration/mac.md", null, {
+      "MacConfiguration": "",
+      "NotarizeLegacyOptions" : "",
+      "NotarizeNotaryOptions" : ""
+    }),
     new Page("configuration/dmg.md", "DmgOptions"),
     new Page("configuration/mas.md", "MasConfiguration"),
     new Page("configuration/pkg.md", "PkgOptions"),
@@ -229,7 +233,8 @@ async function render2(files, jsdoc2MdOptions) {
       "SpacesOptions": "",
       "KeygenOptions": "",
       "BitbucketOptions": "",
-      "S3Options": ""
+      "S3Options": "",
+      "CustomPublishOptions": ""
     }),
 
     new Page("generated/appimage-options.md", "AppImageOptions"),

@@ -1,6 +1,8 @@
 The top-level [mac](configuration.md#Configuration-mac) key contains set of options instructing electron-builder on how it should build macOS targets. These options applicable for any macOS target.
 
 <!-- do not edit. start of generated block -->
+<h2 id="macconfiguration">MacConfiguration</h2>
+<p>undefined</p>
 <ul>
 <li>
 <p><code id="MacConfiguration-category">category</code> String | “undefined” - The application category type, as shown in the Finder via <em>View -&gt; Arrange by Application Category</em> when viewing the Applications directory.</p>
@@ -106,8 +108,20 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 </li>
 <li>
 <p><code id="MacConfiguration-notarize">notarize</code> <a href="#NotarizeLegacyOptions">NotarizeLegacyOptions</a> | <a href="#NotarizeNotaryOptions">NotarizeNotaryOptions</a> | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
-<p>Note: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. <code>APPLE_API_KEY</code>, <code>APPLE_API_KEY_ID</code> and <code>APPLE_API_ISSUER</code>\n2. <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code>\n3. <code>APPLE_KEYCHAIN</code> and <code>APPLE_KEYCHAIN_PROFILE</code>\n\nFor security reasons it is recommended to use the first option (see <a href="https://github.com/electron-userland/electron-builder/issues/7859">https://github.com/electron-userland/electron-builder/issues/7859</a>)</p>
+<p>Note: In order to activate the notarization step You MUST specify one of the following via environment variables: 1. <code>APPLE_API_KEY</code>, <code>APPLE_API_KEY_ID</code> and <code>APPLE_API_ISSUER</code>. 2. <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code> 3. <code>APPLE_KEYCHAIN</code> and <code>APPLE_KEYCHAIN_PROFILE</code></p>
+<p>For security reasons it is recommended to use the first option (see <a href="https://github.com/electron-userland/electron-builder/issues/7859">https://github.com/electron-userland/electron-builder/issues/7859</a>)</p>
 </li>
+</ul>
+<h2 id="notarizelegacyoptions">NotarizeLegacyOptions</h2>
+<p>undefined</p>
+<ul>
+<li><code id="NotarizeLegacyOptions-appBundleId">appBundleId</code> String | “undefined” - The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely). Only used by <code>legacy</code> notarization tool</li>
+<li><code id="NotarizeLegacyOptions-ascProvider">ascProvider</code> String | “undefined” - Your Team Short Name. Only used by <code>legacy</code> notarization tool</li>
+</ul>
+<h2 id="notarizenotaryoptions">NotarizeNotaryOptions</h2>
+<p>undefined</p>
+<ul>
+<li><strong><code id="NotarizeNotaryOptions-teamId">teamId</code></strong> String - The team ID you want to notarize under for when using <code>notarytool</code></li>
 </ul>
 
 <!-- end of generated block -->
