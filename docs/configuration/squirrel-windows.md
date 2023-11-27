@@ -8,32 +8,21 @@ To build for Squirrel.Windows on macOS, please install `mono` (`brew install mon
 Your app must be able to handle Squirrel.Windows startup events that occur during install and uninstall. See [electron-squirrel-startup](https://github.com/mongodb-js/electron-squirrel-startup).
 
 <!-- do not edit. start of generated block -->
-<ul>
-<li>
-<p><code id="SquirrelWindowsOptions-iconUrl">iconUrl</code> String | “undefined” - A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p>
-<p>Please note — <a href="https://github.com/atom/grunt-electron-installer/issues/73">local icon file url is not accepted</a>, must be https/http.</p>
-<p>If you don’t plan to build windows installer, you can omit it. If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</p>
-</li>
-<li>
-<p><code id="SquirrelWindowsOptions-loadingGif">loadingGif</code> String | “undefined” - The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise <a href="https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif">default</a>).</p>
-</li>
-<li>
-<p><code id="SquirrelWindowsOptions-msi">msi</code> Boolean - Whether to create an MSI installer. Defaults to <code>false</code> (MSI is not created).</p>
-</li>
-<li>
-<p><code id="SquirrelWindowsOptions-remoteReleases">remoteReleases</code> String | Boolean | “undefined” - A URL to your existing updates. Or <code>true</code> to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.</p>
-</li>
-<li>
-<p><code id="SquirrelWindowsOptions-remoteToken">remoteToken</code> String | “undefined” - Authentication token for remote updates</p>
-</li>
-<li>
-<p><code id="SquirrelWindowsOptions-useAppIdAsId">useAppIdAsId</code> Boolean - Use <code>appId</code> to identify package instead of <code>name</code>.</p>
-</li>
-</ul>
-<p>Inherited from <code>TargetSpecificOptions</code>:</p>
-<ul>
-<li><code id="SquirrelWindowsOptions-artifactName">artifactName</code> String | “undefined” - The <a href="/configuration/configuration#artifact-file-name-template">artifact file name template</a>.</li>
-<li><code id="SquirrelWindowsOptions-publish">publish</code> The <a href="/configuration/publish">publish</a> options.</li>
-</ul>
+* <code id="SquirrelWindowsOptions-iconUrl">iconUrl</code> String | "undefined" - A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+    
+    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+    
+    If you don't plan to build windows installer, you can omit it. If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
+
+* <code id="SquirrelWindowsOptions-loadingGif">loadingGif</code> String | "undefined" - The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
+* <code id="SquirrelWindowsOptions-msi">msi</code> Boolean - Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+* <code id="SquirrelWindowsOptions-remoteReleases">remoteReleases</code> String | Boolean | "undefined" - A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+* <code id="SquirrelWindowsOptions-remoteToken">remoteToken</code> String | "undefined" - Authentication token for remote updates
+* <code id="SquirrelWindowsOptions-useAppIdAsId">useAppIdAsId</code> Boolean - Use `appId` to identify package instead of `name`.
+
+Inherited from `TargetSpecificOptions`:
+
+* <code id="SquirrelWindowsOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="SquirrelWindowsOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->

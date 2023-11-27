@@ -3,24 +3,22 @@ The top-level [appx](configuration.md#Configuration-appx) key contains set of op
 All options are optional. All required for AppX configuration is inferred and computed automatically.
 
 <!-- do not edit. start of generated block -->
-<ul>
-<li><code id="AppXOptions-applicationId">applicationId</code> String - The application id. Defaults to <code>identityName</code>. Can’t start with numbers.</li>
-<li><code id="AppXOptions-backgroundColor">backgroundColor</code> = <code>#464646</code> String | “undefined” - The background color of the app tile. See <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx">Visual Elements</a>.</li>
-<li><code id="AppXOptions-displayName">displayName</code> String | “undefined” - A friendly name that can be displayed to users. Corresponds to <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx">Properties.DisplayName</a>. Defaults to the application product name.</li>
-<li><code id="AppXOptions-identityName">identityName</code> String | “undefined” - The name. Corresponds to <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx">Identity.Name</a>. Defaults to the <a href="/configuration/configuration#Metadata-name">application name</a>.</li>
-<li><code id="AppXOptions-publisher">publisher</code> String | “undefined” - The Windows Store publisher. Not used if AppX is build for testing. See <a href="#appx-package-code-signing">AppX Package Code Signing</a> below.</li>
-<li><code id="AppXOptions-publisherDisplayName">publisherDisplayName</code> String | “undefined” - A friendly name for the publisher that can be displayed to users. Corresponds to <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx">Properties.PublisherDisplayName</a>. Defaults to company name from the application metadata.</li>
-<li><code id="AppXOptions-languages">languages</code> Array&lt;String&gt; | String | “undefined” - The list of <a href="https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest">supported languages</a> that will be listed in the Windows Store. The first entry (index 0) will be the default language. Defaults to en-US if omitted.</li>
-<li><code id="AppXOptions-addAutoLaunchExtension">addAutoLaunchExtension</code> Boolean - Whether to add auto launch extension. Defaults to <code>true</code> if <a href="https://github.com/felixrieseberg/electron-winstore-auto-launch">electron-winstore-auto-launch</a> in the dependencies.</li>
-<li><code id="AppXOptions-customExtensionsPath">customExtensionsPath</code> String - Relative path to custom extensions xml to be included in an <code>appmanifest.xml</code>.</li>
-<li><code id="AppXOptions-showNameOnTiles">showNameOnTiles</code> = <code>false</code> Boolean - Whether to overlay the app’s name on top of tile images on the Start screen. Defaults to <code>false</code>. (<a href="https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles">https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles</a>) in the dependencies.</li>
-<li><code id="AppXOptions-setBuildNumber">setBuildNumber</code> = <code>false</code> Boolean - Whether to set build number. See <a href="https://github.com/electron-userland/electron-builder/issues/3875">https://github.com/electron-userland/electron-builder/issues/3875</a></li>
-</ul>
-<p>Inherited from <code>TargetSpecificOptions</code>:</p>
-<ul>
-<li><code id="AppXOptions-artifactName">artifactName</code> String | “undefined” - The <a href="/configuration/configuration#artifact-file-name-template">artifact file name template</a>.</li>
-<li><code id="AppXOptions-publish">publish</code> The <a href="/configuration/publish">publish</a> options.</li>
-</ul>
+* <code id="AppXOptions-applicationId">applicationId</code> String - The application id. Defaults to `identityName`. Can’t start with numbers.
+* <code id="AppXOptions-backgroundColor">backgroundColor</code> = `#464646` String | "undefined" - The background color of the app tile. See [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+* <code id="AppXOptions-displayName">displayName</code> String | "undefined" - A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx). Defaults to the application product name.
+* <code id="AppXOptions-identityName">identityName</code> String | "undefined" - The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](/configuration/configuration#Metadata-name).
+* <code id="AppXOptions-publisher">publisher</code> String | "undefined" - The Windows Store publisher. Not used if AppX is build for testing. See [AppX Package Code Signing](#appx-package-code-signing) below.
+* <code id="AppXOptions-publisherDisplayName">publisherDisplayName</code> String | "undefined" - A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx). Defaults to company name from the application metadata.
+* <code id="AppXOptions-languages">languages</code> Array&lt;String&gt; | String | "undefined" - The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store. The first entry (index 0) will be the default language. Defaults to en-US if omitted.
+* <code id="AppXOptions-addAutoLaunchExtension">addAutoLaunchExtension</code> Boolean - Whether to add auto launch extension. Defaults to `true` if [electron-winstore-auto-launch](https://github.com/felixrieseberg/electron-winstore-auto-launch) in the dependencies.
+* <code id="AppXOptions-customExtensionsPath">customExtensionsPath</code> String - Relative path to custom extensions xml to be included in an `appmanifest.xml`.
+* <code id="AppXOptions-showNameOnTiles">showNameOnTiles</code> = `false` Boolean - Whether to overlay the app's name on top of tile images on the Start screen. Defaults to `false`. (https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles) in the dependencies.
+* <code id="AppXOptions-setBuildNumber">setBuildNumber</code> = `false` Boolean - Whether to set build number. See https://github.com/electron-userland/electron-builder/issues/3875
+
+Inherited from `TargetSpecificOptions`:
+
+* <code id="AppXOptions-artifactName">artifactName</code> String | "undefined" - The [artifact file name template](/configuration/configuration#artifact-file-name-template).
+* <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish) options.
 
 <!-- end of generated block -->
 

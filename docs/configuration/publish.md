@@ -117,230 +117,176 @@ Detected automatically using:
 - S3Options
 
 <!-- do not edit. start of generated block -->
-<h2 id="genericserveroptions">GenericServerOptions</h2>
-<p>Generic (any HTTP(S) server) options.
-In all publish options <a href="/file-patterns#file-macros">File Macros</a> are supported.</p>
-<ul>
-<li><strong><code id="GenericServerOptions-provider">provider</code></strong> “generic” - The provider. Must be <code>generic</code>.</li>
-<li><strong><code id="GenericServerOptions-url">url</code></strong> String - The base url. e.g. <code>https://bucket_name.s3.amazonaws.com</code>.</li>
-<li><code id="GenericServerOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
-<li><code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to <code>true</code> if <code>url</code> doesn’t contain <code>s3.amazonaws.com</code>.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="GenericServerOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
-<h2 id="githuboptions">GithubOptions</h2>
-<p><a href="https://help.github.com/articles/about-releases/">GitHub</a> options.</p>
-<p>GitHub <a href="https://help.github.com/articles/creating-an-access-token-for-command-line-use/">personal access token</a> is required. You can generate by going to <a href="https://github.com/settings/tokens/new">https://github.com/settings/tokens/new</a>. The access token should have the repo scope/permission.
-Define <code>GH_TOKEN</code> environment variable.</p>
-<ul>
-<li>
-<p><strong><code id="GithubOptions-provider">provider</code></strong> “github” - The provider. Must be <code>github</code>.</p>
-</li>
-<li>
-<p><code id="GithubOptions-repo">repo</code> String | “undefined” - The repository name. <a href="#github-repository-and-bintray-package">Detected automatically</a>.</p>
-</li>
-<li>
-<p><code id="GithubOptions-owner">owner</code> String | “undefined” - The owner.</p>
-</li>
-<li>
-<p><code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = <code>true</code> Boolean - Whether to use <code>v</code>-prefixed tag name.</p>
-</li>
-<li>
-<p><code id="GithubOptions-host">host</code> = <code>github.com</code> String | “undefined” - The host (including the port if need).</p>
-</li>
-<li>
-<p><code id="GithubOptions-protocol">protocol</code> = <code>https</code> “https” | “http” | “undefined” - The protocol. GitHub Publisher supports only <code>https</code>.</p>
-</li>
-<li>
-<p><code id="GithubOptions-token">token</code> String | “undefined” - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for <a href="/auto-update#appupdatersetfeedurloptions">setFeedURL</a>.</p>
-</li>
-<li>
-<p><code id="GithubOptions-private">private</code> Boolean | “undefined” - Whether to use private github auto-update provider if <code>GH_TOKEN</code> environment variable is defined. See <a href="/auto-update#private-github-update-repo">Private GitHub Update Repo</a>.</p>
-</li>
-<li>
-<p><code id="GithubOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</p>
-</li>
-<li>
-<p><code id="GithubOptions-releaseType">releaseType</code> = <code>draft</code> “draft” | “prerelease” | “release” | “undefined” - The type of release. By default <code>draft</code> release will be created.</p>
-<p>Also you can set release type using environment variable. If <code>EP_DRAFT</code>is set to <code>true</code> — <code>draft</code>, if <code>EP_PRE_RELEASE</code>is set to <code>true</code> — <code>prerelease</code>.</p>
-</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="GithubOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
-<h2 id="snapstoreoptions">SnapStoreOptions</h2>
-<p><a href="https://snapcraft.io/">Snap Store</a> options. To publish directly to Snapcraft, see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft authentication options</a> for local or CI/CD authentication options.</p>
-<ul>
-<li><strong><code id="SnapStoreOptions-provider">provider</code></strong> “snapStore” - The provider. Must be <code>snapStore</code>.</li>
-<li><code id="SnapStoreOptions-repo">repo</code> String - snapcraft repo name</li>
-<li><code id="SnapStoreOptions-channels">channels</code> = <code>[&quot;edge&quot;]</code> String | Array&lt;String&gt; | “undefined” - The list of channels the snap would be released.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="SnapStoreOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="SnapStoreOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="SnapStoreOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
-<h2 id="spacesoptions">SpacesOptions</h2>
-<p><a href="https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces">DigitalOcean Spaces</a> options.
-Access key is required, define <code>DO_KEY_ID</code> and <code>DO_SECRET_KEY</code> environment variables.</p>
-<ul>
-<li><strong><code id="SpacesOptions-provider">provider</code></strong> “spaces” - The provider. Must be <code>spaces</code>.</li>
-<li><strong><code id="SpacesOptions-name">name</code></strong> String - The space name.</li>
-<li><strong><code id="SpacesOptions-region">region</code></strong> String - The region (e.g. <code>nyc3</code>).</li>
-<li><code id="SpacesOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</li>
-<li><code id="SpacesOptions-path">path</code> = <code>/</code> String | “undefined” - The directory path.</li>
-<li><code id="SpacesOptions-acl">acl</code> = <code>public-read</code> “private” | “public-read” | “undefined” - The ACL. Set to <code>null</code> to not <a href="https://github.com/electron-userland/electron-builder/issues/1822">add</a>.</li>
-</ul>
-<h2 id="keygenoptions">KeygenOptions</h2>
-<p>Keygen options.
-<a href="https://keygen.sh/">https://keygen.sh/</a>
-Define <code>KEYGEN_TOKEN</code> environment variable.</p>
-<ul>
-<li><strong><code id="KeygenOptions-provider">provider</code></strong> “keygen” - The provider. Must be <code>keygen</code>.</li>
-<li><strong><code id="KeygenOptions-account">account</code></strong> String - Keygen account’s UUID</li>
-<li><strong><code id="KeygenOptions-product">product</code></strong> String - Keygen product’s UUID</li>
-<li><code id="KeygenOptions-channel">channel</code> = <code>stable</code> “stable” | “rc” | “beta” | “alpha” | “dev” | “undefined” - The channel.</li>
-<li><code id="KeygenOptions-platform">platform</code> String | “undefined” - The target Platform. Is set programmatically explicitly during publishing.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="KeygenOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="KeygenOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
-<h2 id="bitbucketoptions">BitbucketOptions</h2>
-<p>Bitbucket options.
-<a href="https://bitbucket.org/">https://bitbucket.org/</a>
-Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
-<p>For converting an app password to a usable token, you can utilize this</p>
-<pre><code class="hljs language-typescript"><span class="hljs-title function_">convertAppPassword</span>(<span class="hljs-params">owner: <span class="hljs-built_in">string</span>, appPassword: <span class="hljs-built_in">string</span></span>) {
-<span class="hljs-keyword">const</span> base64encodedData = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span>:<span class="hljs-subst">${appPassword.trim()}</span>`</span>).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&quot;base64&quot;</span>)
-<span class="hljs-keyword">return</span> <span class="hljs-string">`Basic <span class="hljs-subst">${base64encodedData}</span>`</span>
+## GenericServerOptions
+Generic (any HTTP(S) server) options.
+In all publish options [File Macros](/file-patterns#file-macros) are supported.
+
+* **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
+* **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
+* <code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
+* <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
+
+Inherited from `PublishConfiguration`:
+
+* <code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="GenericServerOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="GenericServerOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
+## GithubOptions
+[GitHub](https://help.github.com/articles/about-releases/) options.
+
+GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
+Define `GH_TOKEN` environment variable.
+
+* **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
+* <code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).
+* <code id="GithubOptions-owner">owner</code> String | "undefined" - The owner.
+* <code id="GithubOptions-vPrefixedTagName">vPrefixedTagName</code> = `true` Boolean - Whether to use `v`-prefixed tag name.
+* <code id="GithubOptions-host">host</code> = `github.com` String | "undefined" - The host (including the port if need).
+* <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" | "undefined" - The protocol. GitHub Publisher supports only `https`.
+* <code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
+* <code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
+* <code id="GithubOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
+* <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
+    
+    Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
+
+
+Inherited from `PublishConfiguration`:
+
+* <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="GithubOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="GithubOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
+## SnapStoreOptions
+[Snap Store](https://snapcraft.io/) options. To publish directly to Snapcraft, see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft authentication options</a> for local or CI/CD authentication options.
+
+* **<code id="SnapStoreOptions-provider">provider</code>** "snapStore" - The provider. Must be `snapStore`.
+* <code id="SnapStoreOptions-repo">repo</code> String - snapcraft repo name
+* <code id="SnapStoreOptions-channels">channels</code> = `["edge"]` String | Array&lt;String&gt; | "undefined" - The list of channels the snap would be released.
+
+Inherited from `PublishConfiguration`:
+
+* <code id="SnapStoreOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="SnapStoreOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="SnapStoreOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
+## SpacesOptions
+[DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) options.
+Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.
+
+* **<code id="SpacesOptions-provider">provider</code>** "spaces" - The provider. Must be `spaces`.
+* **<code id="SpacesOptions-name">name</code>** String - The space name.
+* **<code id="SpacesOptions-region">region</code>** String - The region (e.g. `nyc3`).
+* <code id="SpacesOptions-channel">channel</code> = `latest` String | "undefined" - The update channel.
+* <code id="SpacesOptions-path">path</code> = `/` String | "undefined" - The directory path.
+* <code id="SpacesOptions-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+
+## KeygenOptions
+Keygen options.
+https://keygen.sh/
+Define `KEYGEN_TOKEN` environment variable.
+
+* **<code id="KeygenOptions-provider">provider</code>** "keygen" - The provider. Must be `keygen`.
+* **<code id="KeygenOptions-account">account</code>** String - Keygen account's UUID
+* **<code id="KeygenOptions-product">product</code>** String - Keygen product's UUID
+* <code id="KeygenOptions-channel">channel</code> = `stable` "stable" | "rc" | "beta" | "alpha" | "dev" | "undefined" - The channel.
+* <code id="KeygenOptions-platform">platform</code> String | "undefined" - The target Platform. Is set programmatically explicitly during publishing.
+
+Inherited from `PublishConfiguration`:
+
+* <code id="KeygenOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="KeygenOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="KeygenOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
+## BitbucketOptions
+Bitbucket options.
+https://bitbucket.org/
+Define `BITBUCKET_TOKEN` environment variable.
+
+For converting an app password to a usable token, you can utilize this
+```typescript
+convertAppPassword(owner: string, appPassword: string) {
+const base64encodedData = Buffer.from(`${owner}:${appPassword.trim()}`).toString("base64")
+return `Basic ${base64encodedData}`
 }
-</code></pre>
-<ul>
-<li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
-<li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
-<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The app password (account&gt;settings&gt;app-passwords) to support auto-update from private bitbucket repositories.</li>
-<li><code id="BitbucketOptions-username">username</code> String | “undefined” - The user name to support auto-update from private bitbucket repositories.</li>
-<li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
-<li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="BitbucketOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="BitbucketOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
-<h2 id="s3options">S3Options</h2>
-<p><a href="https://aws.amazon.com/s3/">Amazon S3</a> options.
-AWS credentials are required, please see <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html">getting your credentials</a>.
-Define <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html">environment variables</a>.
-Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html">~/.aws/credentials</a>.</p>
-<p>Example configuration:</p>
-<pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
-<span class="hljs-attr">&quot;build&quot;</span><span class="hljs-punctuation">:</span>
-<span class="hljs-attr">&quot;publish&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
-<span class="hljs-attr">&quot;provider&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;s3&quot;</span><span class="hljs-punctuation">,</span>
-<span class="hljs-attr">&quot;bucket&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;bucket-name&quot;</span>
-<span class="hljs-punctuation">}</span>
-<span class="hljs-punctuation">}</span>
-<span class="hljs-punctuation">}</span>
-</code></pre>
-<ul>
-<li>
-<p><strong><code id="S3Options-provider">provider</code></strong> “s3” - The provider. Must be <code>s3</code>.</p>
-</li>
-<li>
-<p><strong><code id="S3Options-bucket">bucket</code></strong> String - The bucket name.</p>
-</li>
-<li>
-<p><code id="S3Options-region">region</code> String | “undefined” - The region. Is determined and set automatically when publishing.</p>
-</li>
-<li>
-<p><code id="S3Options-acl">acl</code> = <code>public-read</code> “private” | “public-read” | “undefined” - The ACL. Set to <code>null</code> to not <a href="https://github.com/electron-userland/electron-builder/issues/1822">add</a>.</p>
-<p>Please see <a href="https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128">required permissions for the S3 provider</a>.</p>
-</li>
-<li>
-<p><code id="S3Options-storageClass">storageClass</code> = <code>STANDARD</code> “STANDARD” | “REDUCED_REDUNDANCY” | “STANDARD_IA” | “undefined” - The type of storage to use for the object.</p>
-</li>
-<li>
-<p><code id="S3Options-encryption">encryption</code> “AES256” | “aws:kms” | “undefined” - Server-side encryption algorithm to use for the object.</p>
-</li>
-<li>
-<p><code id="S3Options-endpoint">endpoint</code> String | “undefined” - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like <code>https://{service}.{region}.amazonaws.com</code>.</p>
-</li>
-<li>
-<p><code id="S3Options-accelerate">accelerate</code> Boolean - If set to true, this will enable the s3 accelerated endpoint These endpoints have a particular format of:  ${bucketname}.s3-accelerate.amazonaws.com</p>
-</li>
-<li>
-<p><code id="S3Options-channel">channel</code> = <code>latest</code> String | “undefined” - The update channel.</p>
-</li>
-<li>
-<p><code id="S3Options-path">path</code> = <code>/</code> String | “undefined” - The directory path.</p>
-</li>
-</ul>
-<h2 id="custompublishoptions">CustomPublishOptions</h2>
-<p>undefined</p>
-<ul>
-<li><strong><code id="CustomPublishOptions-provider">provider</code></strong> “custom” - The provider. Must be <code>custom</code>.</li>
-<li><code id="CustomPublishOptions-updateProvider">updateProvider</code> module:builder-util-runtime/out/publishOptions.__type - The Provider to provide UpdateInfo regarding available updates.  Required to use custom providers with electron-updater.</li>
-</ul>
-<p>Inherited from <code>PublishConfiguration</code>:</p>
-<ul>
-<li>
-<p><code id="CustomPublishOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
-<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
-</li>
-<li>
-<p><code id="CustomPublishOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
-</li>
-<li>
-<p><code id="CustomPublishOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
-</li>
-</ul>
+```
+
+* **<code id="BitbucketOptions-provider">provider</code>** "bitbucket" - The provider. Must be `bitbucket`.
+* **<code id="BitbucketOptions-owner">owner</code>** String - Repository owner
+* <code id="BitbucketOptions-token">token</code> String | "undefined" - The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.
+* <code id="BitbucketOptions-username">username</code> String | "undefined" - The user name to support auto-update from private bitbucket repositories.
+* **<code id="BitbucketOptions-slug">slug</code>** String - Repository slug/name
+* <code id="BitbucketOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
+
+Inherited from `PublishConfiguration`:
+
+* <code id="BitbucketOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="BitbucketOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="BitbucketOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
+## S3Options
+[Amazon S3](https://aws.amazon.com/s3/) options.
+AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
+Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
+Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
+
+Example configuration:
+
+```json
+{
+"build":
+"publish": {
+"provider": "s3",
+"bucket": "bucket-name"
+}
+}
+}
+```
+
+* **<code id="S3Options-provider">provider</code>** "s3" - The provider. Must be `s3`.
+* **<code id="S3Options-bucket">bucket</code>** String - The bucket name.
+* <code id="S3Options-region">region</code> String | "undefined" - The region. Is determined and set automatically when publishing.
+* <code id="S3Options-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+    
+    Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
+
+* <code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | "undefined" - The type of storage to use for the object.
+* <code id="S3Options-encryption">encryption</code> "AES256" | "aws:kms" | "undefined" - Server-side encryption algorithm to use for the object.
+* <code id="S3Options-endpoint">endpoint</code> String | "undefined" - The endpoint URI to send requests to. The default endpoint is built from the configured region. The endpoint should be a string like `https://{service}.{region}.amazonaws.com`.
+* <code id="S3Options-accelerate">accelerate</code> Boolean - If set to true, this will enable the s3 accelerated endpoint These endpoints have a particular format of:  ${bucketname}.s3-accelerate.amazonaws.com
+* <code id="S3Options-channel">channel</code> = `latest` String | "undefined" - The update channel.
+* <code id="S3Options-path">path</code> = `/` String | "undefined" - The directory path.
+
+## CustomPublishOptions
+undefined
+
+* **<code id="CustomPublishOptions-provider">provider</code>** "custom" - The provider. Must be `custom`.
+* <code id="CustomPublishOptions-updateProvider">updateProvider</code> module:builder-util-runtime/out/publishOptions.__type - The Provider to provide UpdateInfo regarding available updates.  Required to use custom providers with electron-updater.
+
+Inherited from `PublishConfiguration`:
+
+* <code id="CustomPublishOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
+    
+    Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
+
+* <code id="CustomPublishOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers
+* <code id="CustomPublishOptions-timeout">timeout</code> = `120000` Number | "undefined" - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)
+
 
 <!-- end of generated block -->

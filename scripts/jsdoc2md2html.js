@@ -428,7 +428,7 @@ async function render(pages, jsdoc2MdOptions) {
 
 const markdown2htmlPro = new Markdown2HtmlPro();
 async function writeDocFile(docOutFile, content) {
-  content = await markdown2htmlPro.markdown2html(content);
+  // content = await markdown2htmlPro.markdown2html(content);
   let existingContent
   try {
     existingContent = await fs.readFile(docOutFile, "utf8")
