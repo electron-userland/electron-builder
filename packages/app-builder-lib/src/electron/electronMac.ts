@@ -251,7 +251,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   await Promise.all([
     executeAppBuilderAndWriteJson(["encode-plist"], plistDataToWrite),
-    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName!, appPlist.CFBundleExecutable),
+    doRename(path.join(contentsPath, "MacOS"), electronBranding.productName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ])
@@ -260,7 +260,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     getAvailableHelperSuffixes(helperEHPlist, helperNPPlist, helperRendererPlist, helperPluginPlist, helperGPUPlist),
     frameworksPath,
     appFilename,
-    electronBranding.productName!
+    electronBranding.productName
   )
 
   if (helperLoginPlist != null) {
