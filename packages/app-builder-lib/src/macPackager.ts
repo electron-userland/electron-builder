@@ -58,7 +58,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
+    // codesign requires the filename to be normalized to the NFD form
+    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions, true)
   }
 
   async getIconPath(): Promise<string | null> {
