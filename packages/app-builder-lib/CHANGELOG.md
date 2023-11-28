@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 24.9.2
+
+### Patch Changes
+
+- [#7896](https://github.com/electron-userland/electron-builder/pull/7896) [`65817e0e`](https://github.com/electron-userland/electron-builder/commit/65817e0edc43a2e6707fab835b0bbe680bd0b1e4) Thanks [@dahchon](https://github.com/dahchon)! - fix notary with pure api key auth
+
+- [#7901](https://github.com/electron-userland/electron-builder/pull/7901) [`f83f05f6`](https://github.com/electron-userland/electron-builder/commit/f83f05f6f24a36b96d0e0c7786e1a12e5c762389) Thanks [@jebibot](https://github.com/jebibot)! - fix codesign and DMG layout when productName or executableName contains Unicode
+
+- [#7900](https://github.com/electron-userland/electron-builder/pull/7900) [`3b3a6989`](https://github.com/electron-userland/electron-builder/commit/3b3a69895f0caa3870219bc0bec7420de81a07ed) Thanks [@jebibot](https://github.com/jebibot)! - fix macOS app with exectuableName different from productName
+
 ## 24.9.1
 
 ### Patch Changes
