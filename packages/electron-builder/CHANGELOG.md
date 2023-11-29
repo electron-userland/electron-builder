@@ -1,5 +1,15 @@
 # electron-builder
 
+## 24.9.3
+
+### Patch Changes
+
+- [#7908](https://github.com/electron-userland/electron-builder/pull/7908) [`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23) Thanks [@Rychu-Pawel](https://github.com/Rychu-Pawel)! - fix: pass publish options to snap publisher
+
+- Updated dependencies [[`d1347a06`](https://github.com/electron-userland/electron-builder/commit/d1347a06e5bd14f7811a543d2e8929b2ca3cdc39), [`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23)]:
+  - dmg-builder@24.9.3
+  - app-builder-lib@24.9.3
+
 ## 24.9.2
 
 ### Patch Changes

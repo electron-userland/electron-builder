@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.2...v) (2023-11-29)
+
+
+### Bug Fixes
+
+* pass `publish` options to snap publisher ([#7908](https://github.com/electron-userland/electron-builder/issues/7908)) ([9fc5157](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23))
+
+
+### Reverts
+
+* fix(mac): should normalize unicode strings from file system before used in string compare ([#4841](https://github.com/electron-userland/electron-builder/issues/4841)) ([#7905](https://github.com/electron-userland/electron-builder/issues/7905)) ([d1347a0](https://github.com/electron-userland/electron-builder/commit/d1347a06e5bd14f7811a543d2e8929b2ca3cdc39))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.9.1...v) (2023-11-27)
 
 
