@@ -50,7 +50,10 @@ function getAvailableHelperSuffixes(
 /** @internal */
 export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, isMas: boolean) {
   const appInfo = packager.appInfo
-  const appFilename = appInfo.productFilename
+  // Electon uses the application name (CFBundleName) to resolve helper apps
+  // https://github.com/electron/electron/blob/main/shell/app/electron_main_delegate_mac.mm
+  // https://github.com/electron-userland/electron-builder/issues/6962
+  const appFilename = appInfo.sanitizedProductName
   const electronBranding = createBrandingOpts(packager.config)
 
   const contentsPath = path.join(appOutDir, packager.info.framework.distMacOsAppName, "Contents")
@@ -270,7 +273,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix).then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
   }
 
-  const appPath = path.join(appOutDir, `${appFilename}.app`)
+  const appPath = path.join(appOutDir, `${appInfo.productFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000

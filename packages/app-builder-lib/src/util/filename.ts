@@ -2,8 +2,9 @@
 import * as _sanitizeFileName from "sanitize-filename"
 import * as path from "path"
 
-export function sanitizeFileName(s: string): string {
-  return _sanitizeFileName(s)
+export function sanitizeFileName(s: string, normalizeNfd = false): string {
+  const sanitized = _sanitizeFileName(s)
+  return normalizeNfd ? sanitized.normalize("NFD") : sanitized
 }
 
 // Get the filetype from a filename. Returns a string of one or more file extensions,
