@@ -7,6 +7,8 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <dd></dd>
 <dt><a href="#module_app-builder-lib">app-builder-lib</a></dt>
 <dd></dd>
+<dt><a href="#module_dmg-builder">dmg-builder</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-publish">electron-publish</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater">electron-updater</a></dt>
@@ -1267,7 +1269,85 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 </tbody>
 </table>
-<p><a name="module_electron-publish"></a></p>
+<p><a name="module_dmg-builder"></a></p>
+<h1 id="dmg-builder">dmg-builder</h1>
+<ul>
+<li><a href="#module_dmg-builder">dmg-builder</a>
+<ul>
+<li><a href="#module_dmg-builder.attachAndExecute"><code>.attachAndExecute(dmgPath, readWrite, task)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_dmg-builder.computeBackground"><code>.computeBackground(packager)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+<li><a href="#module_dmg-builder.detach"><code>.detach(name)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_dmg-builder.getDmgTemplatePath"><code>.getDmgTemplatePath()</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_dmg-builder.getDmgVendorPath"><code>.getDmgVendorPath()</code></a> ⇒ <code>String</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_dmg-builder.attachAndExecute"></a></p>
+<h2 id="dmg-builder.attachandexecute(dmgpath%2C-readwrite%2C-task)-%E2%87%92-promise%3Cany%3E"><code>dmg-builder.attachAndExecute(dmgPath, readWrite, task)</code> ⇒ <code>Promise&lt;any&gt;</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dmgPath</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>readWrite</td>
+<td><code>Boolean</code></td>
+</tr>
+<tr>
+<td>task</td>
+<td><code>callback</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_dmg-builder.computeBackground"></a></p>
+<h2 id="dmg-builder.computebackground(packager)-%E2%87%92-promise%3Cstring%3E"><code>dmg-builder.computeBackground(packager)</code> ⇒ <code>Promise&lt;String&gt;</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>packager</td>
+<td><code>PlatformPackager&lt;any&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_dmg-builder.detach"></a></p>
+<h2 id="dmg-builder.detach(name)-%E2%87%92-promise%3Cvoid%3E"><code>dmg-builder.detach(name)</code> ⇒ <code>Promise&lt;void&gt;</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_dmg-builder.getDmgTemplatePath"></a></p>
+<h2 id="dmg-builder.getdmgtemplatepath()-%E2%87%92-string"><code>dmg-builder.getDmgTemplatePath()</code> ⇒ <code>String</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/>
+<a name="module_dmg-builder.getDmgVendorPath"></a></p>
+<h2 id="dmg-builder.getdmgvendorpath()-%E2%87%92-string"><code>dmg-builder.getDmgVendorPath()</code> ⇒ <code>String</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/>
+<a name="module_electron-publish"></a></p>
 <h1 id="electron-publish">electron-publish</h1>
 <ul>
 <li><a href="#module_electron-publish">electron-publish</a>
@@ -1421,9 +1501,11 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#ResolvedUpdateFileInfo"><code>.ResolvedUpdateFileInfo</code></a></li>
 <li><a href="#UpdateCheckResult"><code>.UpdateCheckResult</code></a></li>
 <li><a href="#UpdateDownloadedEvent"><code>.UpdateDownloadedEvent</code></a> ⇐ <code>module:builder-util-runtime.UpdateInfo</code></li>
-<li><a href="#AppImageUpdater">.AppImageUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
+<li><a href="#AppImageUpdater">.AppImageUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
 </ul>
 </li>
 <li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
@@ -1438,7 +1520,32 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
 </ul>
 </li>
-<li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
+<li><a href="#BaseUpdater">.BaseUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+<li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
 <li><a href="#MacUpdater">.MacUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.MacUpdater+quitAndInstall"><code>.quitAndInstall()</code></a></li>
@@ -1451,7 +1558,19 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
 </ul>
 </li>
-<li><a href="#NsisUpdater">.NsisUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
+<li><a href="#NsisUpdater">.NsisUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
 <li><a href="#Provider">.Provider</a>
 <ul>
 <li><a href="#module_electron-updater.Provider+getLatestVersion"><code>.getLatestVersion()</code></a> ⇒ <code>Promise&lt;module:electron-updater/out/providers/Provider.T&gt;</code></li>
@@ -1459,7 +1578,19 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_electron-updater.Provider+resolveFiles"><code>.resolveFiles(updateInfo)</code></a> ⇒ <code>Array&lt;<a href="#ResolvedUpdateFileInfo">ResolvedUpdateFileInfo</a>&gt;</code></li>
 </ul>
 </li>
-<li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></li>
+<li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
 <li><a href="#UpdaterSignal">.UpdaterSignal</a>
 <ul>
 <li><a href="#module_electron-updater.UpdaterSignal+login"><code>.login(handler)</code></a></li>
@@ -1577,11 +1708,54 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><strong><code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code></strong> String</li>
 </ul>
 <p><a name="AppImageUpdater"></a></p>
-<h2 id="appimageupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">AppImageUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<h2 id="appimageupdater-%E2%87%90-baseupdater">AppImageUpdater ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
-<a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
+<strong>Extends</strong>: <code><a href="#BaseUpdater">BaseUpdater</a></code></p>
+<ul>
+<li><a href="#AppImageUpdater">.AppImageUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
 <h3 id="appimageupdater.isupdateractive()-%E2%87%92-boolean"><code>appImageUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="appimageupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>appImageUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="appimageupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>appImageUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
 <p><a name="AppUpdater"></a></p>
 <h2 id="appupdater-%E2%87%90-module%3Atiny-typed-emitter%2Flib%2Findex.typedemitter">AppUpdater ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
@@ -1762,11 +1936,268 @@ This is different from the normal quit event sequence.</p>
 </tr>
 </tbody>
 </table>
-<p><a name="DebUpdater"></a></p>
-<h2 id="debupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">DebUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<p><a name="BaseUpdater"></a></p>
+<h2 id="baseupdater-%E2%87%90-appupdater">BaseUpdater ⇐ <code><a href="#AppUpdater">AppUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
-<a name="MacUpdater"></a></p>
+<strong>Extends</strong>: <code><a href="#AppUpdater">AppUpdater</a></code></p>
+<ul>
+<li><a href="#BaseUpdater">.BaseUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="baseupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>baseUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="baseupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>baseUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>quitAndInstall</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
+<h3 id="baseupdater.addauthheader(token)"><code>baseUpdater.addAuthHeader(token)</code></h3>
+<p>Shortcut for explicitly adding auth tokens to request headers</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdates"></a></p>
+<h3 id="baseupdater.checkforupdates()-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>baseUpdater.checkForUpdates()</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<p>Asks the server whether there is an update.</p>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a></p>
+<h3 id="baseupdater.checkforupdatesandnotify(downloadnotification)-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>baseUpdater.checkForUpdatesAndNotify(downloadNotification)</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>downloadNotification</td>
+<td><code>module:electron-updater/out/AppUpdater.DownloadNotification</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
+<h3 id="baseupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>baseUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
+<p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancellationToken</td>
+<td><code>CancellationToken</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+getFeedURL"></a></p>
+<h3 id="baseupdater.getfeedurl()-%E2%87%92-undefined-%7C-null-%7C-string"><code>baseUpdater.getFeedURL()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><a name="module_electron-updater.AppUpdater+setFeedURL"></a></p>
+<h3 id="baseupdater.setfeedurl(options)"><code>baseUpdater.setFeedURL(options)</code></h3>
+<p>Configure update provider. If value is <code>string</code>, <a href="/configuration/publish#genericserveroptions">GenericServerOptions</a> will be set with value as <code>url</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code> | <code>String</code> | <code><a href="/configuration/publish#githuboptions">GithubOptions</a></code> | <code><a href="/configuration/publish#s3options">S3Options</a></code> | <code><a href="/configuration/publish#spacesoptions">SpacesOptions</a></code> | <code><a href="/configuration/publish#genericserveroptions">GenericServerOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.CustomPublishOptions</code> | <code>module:builder-util-runtime/out/publishOptions.KeygenOptions</code> | <code><a href="/configuration/publish#snapstoreoptions">SnapStoreOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.BitbucketOptions</code> | <code>String</code></td>
+<td>If you want to override configuration in the <code>app-update.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
+<h3 id="baseupdater.isupdateractive()-%E2%87%92-boolean"><code>baseUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
+<p><a name="DebUpdater"></a></p>
+<h2 id="debupdater-%E2%87%90-baseupdater">DebUpdater ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
+<strong>Extends</strong>: <code><a href="#BaseUpdater">BaseUpdater</a></code></p>
+<ul>
+<li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="debupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>debUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="debupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>debUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
+<h3 id="debupdater.addauthheader(token)"><code>debUpdater.addAuthHeader(token)</code></h3>
+<p>Shortcut for explicitly adding auth tokens to request headers</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdates"></a></p>
+<h3 id="debupdater.checkforupdates()-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>debUpdater.checkForUpdates()</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<p>Asks the server whether there is an update.</p>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a></p>
+<h3 id="debupdater.checkforupdatesandnotify(downloadnotification)-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>debUpdater.checkForUpdatesAndNotify(downloadNotification)</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>downloadNotification</td>
+<td><code>module:electron-updater/out/AppUpdater.DownloadNotification</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
+<h3 id="debupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>debUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
+<p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancellationToken</td>
+<td><code>CancellationToken</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+getFeedURL"></a></p>
+<h3 id="debupdater.getfeedurl()-%E2%87%92-undefined-%7C-null-%7C-string"><code>debUpdater.getFeedURL()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><a name="module_electron-updater.AppUpdater+setFeedURL"></a></p>
+<h3 id="debupdater.setfeedurl(options)"><code>debUpdater.setFeedURL(options)</code></h3>
+<p>Configure update provider. If value is <code>string</code>, <a href="/configuration/publish#genericserveroptions">GenericServerOptions</a> will be set with value as <code>url</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code> | <code>String</code> | <code><a href="/configuration/publish#githuboptions">GithubOptions</a></code> | <code><a href="/configuration/publish#s3options">S3Options</a></code> | <code><a href="/configuration/publish#spacesoptions">SpacesOptions</a></code> | <code><a href="/configuration/publish#genericserveroptions">GenericServerOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.CustomPublishOptions</code> | <code>module:builder-util-runtime/out/publishOptions.KeygenOptions</code> | <code><a href="/configuration/publish#snapstoreoptions">SnapStoreOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.BitbucketOptions</code> | <code>String</code></td>
+<td>If you want to override configuration in the <code>app-update.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
+<h3 id="debupdater.isupdateractive()-%E2%87%92-boolean"><code>debUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
+<p><a name="MacUpdater"></a></p>
 <h2 id="macupdater-%E2%87%90-appupdater">MacUpdater ⇐ <code><a href="#AppUpdater">AppUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
 <strong>Extends</strong>: <code><a href="#AppUpdater">AppUpdater</a></code></p>
@@ -1865,14 +2296,141 @@ This is different from the normal quit event sequence.</p>
 <p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
 <h3 id="macupdater.isupdateractive()-%E2%87%92-boolean"><code>macUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="NsisUpdater"></a></p>
-<h2 id="nsisupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">NsisUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<h2 id="nsisupdater-%E2%87%90-baseupdater">NsisUpdater ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
+<strong>Extends</strong>: <code><a href="#BaseUpdater">BaseUpdater</a></code><br>
 <strong>Properties</strong></p>
 <ul>
 <li><code id="NsisUpdater-installDirectory">installDirectory</code> String - Specify custom install directory path</li>
 <li><strong><code id="NsisUpdater-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code></strong> module:electron-updater.__type - The verifyUpdateCodeSignature. You can pass <a href="https://github.com/beyondkmp/win-verify-trust">win-verify-signature</a> or another custom verify function: <code> (publisherName: string[], path: string) =&gt; Promise&lt;string | null&gt;</code>. The default verify function uses <a href="https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/windowsExecutableCodeSignatureVerifier.ts">windowsExecutableCodeSignatureVerifier</a></li>
 </ul>
+<p><strong>Methods</strong></p>
+<ul>
+<li><a href="#NsisUpdater">.NsisUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="nsisupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>nsisUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="nsisupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>nsisUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
+<h3 id="nsisupdater.addauthheader(token)"><code>nsisUpdater.addAuthHeader(token)</code></h3>
+<p>Shortcut for explicitly adding auth tokens to request headers</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdates"></a></p>
+<h3 id="nsisupdater.checkforupdates()-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>nsisUpdater.checkForUpdates()</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<p>Asks the server whether there is an update.</p>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a></p>
+<h3 id="nsisupdater.checkforupdatesandnotify(downloadnotification)-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>nsisUpdater.checkForUpdatesAndNotify(downloadNotification)</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>downloadNotification</td>
+<td><code>module:electron-updater/out/AppUpdater.DownloadNotification</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
+<h3 id="nsisupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>nsisUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
+<p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancellationToken</td>
+<td><code>CancellationToken</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+getFeedURL"></a></p>
+<h3 id="nsisupdater.getfeedurl()-%E2%87%92-undefined-%7C-null-%7C-string"><code>nsisUpdater.getFeedURL()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><a name="module_electron-updater.AppUpdater+setFeedURL"></a></p>
+<h3 id="nsisupdater.setfeedurl(options)"><code>nsisUpdater.setFeedURL(options)</code></h3>
+<p>Configure update provider. If value is <code>string</code>, <a href="/configuration/publish#genericserveroptions">GenericServerOptions</a> will be set with value as <code>url</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code> | <code>String</code> | <code><a href="/configuration/publish#githuboptions">GithubOptions</a></code> | <code><a href="/configuration/publish#s3options">S3Options</a></code> | <code><a href="/configuration/publish#spacesoptions">SpacesOptions</a></code> | <code><a href="/configuration/publish#genericserveroptions">GenericServerOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.CustomPublishOptions</code> | <code>module:builder-util-runtime/out/publishOptions.KeygenOptions</code> | <code><a href="/configuration/publish#snapstoreoptions">SnapStoreOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.BitbucketOptions</code> | <code>String</code></td>
+<td>If you want to override configuration in the <code>app-update.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
+<h3 id="nsisupdater.isupdateractive()-%E2%87%92-boolean"><code>nsisUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="Provider"></a></p>
 <h2 id="provider">Provider</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
@@ -1926,10 +2484,136 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="RpmUpdater"></a></p>
-<h2 id="rpmupdater-%E2%87%90-module%3Aelectron-updater%2Fout%2Fbaseupdater.baseupdater">RpmUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code></h2>
+<h2 id="rpmupdater-%E2%87%90-baseupdater">RpmUpdater ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code></h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/>
-<strong>Extends</strong>: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code><br>
-<a name="UpdaterSignal"></a></p>
+<strong>Extends</strong>: <code><a href="#BaseUpdater">BaseUpdater</a></code></p>
+<ul>
+<li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
+<ul>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+downloadUpdate"><code>.downloadUpdate(cancellationToken)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
+<li><a href="#module_electron-updater.AppUpdater+getFeedURL"><code>.getFeedURL()</code></a> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></li>
+<li><a href="#module_electron-updater.AppUpdater+setFeedURL"><code>.setFeedURL(options)</code></a></li>
+<li><a href="#module_electron-updater.AppUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_electron-updater.BaseUpdater+install"></a></p>
+<h3 id="rpmupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>rpmUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
+<h3 id="rpmupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>rpmUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>isSilent</td>
+</tr>
+<tr>
+<td>isForceRunAfter</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+addAuthHeader"></a></p>
+<h3 id="rpmupdater.addauthheader(token)"><code>rpmUpdater.addAuthHeader(token)</code></h3>
+<p>Shortcut for explicitly adding auth tokens to request headers</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>token</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdates"></a></p>
+<h3 id="rpmupdater.checkforupdates()-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>rpmUpdater.checkForUpdates()</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<p>Asks the server whether there is an update.</p>
+<p><a name="module_electron-updater.AppUpdater+checkForUpdatesAndNotify"></a></p>
+<h3 id="rpmupdater.checkforupdatesandnotify(downloadnotification)-%E2%87%92-promise%3C-%7C-updatecheckresult%3E"><code>rpmUpdater.checkForUpdatesAndNotify(downloadNotification)</code> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>downloadNotification</td>
+<td><code>module:electron-updater/out/AppUpdater.DownloadNotification</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+downloadUpdate"></a></p>
+<h3 id="rpmupdater.downloadupdate(cancellationtoken)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>rpmUpdater.downloadUpdate(cancellationToken)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h3>
+<p>Start downloading update manually. You can use this method if <code>autoDownload</code> option is set to <code>false</code>.</p>
+<p><strong>Returns</strong>: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cancellationToken</td>
+<td><code>CancellationToken</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+getFeedURL"></a></p>
+<h3 id="rpmupdater.getfeedurl()-%E2%87%92-undefined-%7C-null-%7C-string"><code>rpmUpdater.getFeedURL()</code> ⇒ <code>undefined</code> | <code>null</code> | <code>String</code></h3>
+<p><a name="module_electron-updater.AppUpdater+setFeedURL"></a></p>
+<h3 id="rpmupdater.setfeedurl(options)"><code>rpmUpdater.setFeedURL(options)</code></h3>
+<p>Configure update provider. If value is <code>string</code>, <a href="/configuration/publish#genericserveroptions">GenericServerOptions</a> will be set with value as <code>url</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>options</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code> | <code>String</code> | <code><a href="/configuration/publish#githuboptions">GithubOptions</a></code> | <code><a href="/configuration/publish#s3options">S3Options</a></code> | <code><a href="/configuration/publish#spacesoptions">SpacesOptions</a></code> | <code><a href="/configuration/publish#genericserveroptions">GenericServerOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.CustomPublishOptions</code> | <code>module:builder-util-runtime/out/publishOptions.KeygenOptions</code> | <code><a href="/configuration/publish#snapstoreoptions">SnapStoreOptions</a></code> | <code>module:builder-util-runtime/out/publishOptions.BitbucketOptions</code> | <code>String</code></td>
+<td>If you want to override configuration in the <code>app-update.yml</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-updater.AppUpdater+isUpdaterActive"></a></p>
+<h3 id="rpmupdater.isupdateractive()-%E2%87%92-boolean"><code>rpmUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
+<p><a name="UpdaterSignal"></a></p>
 <h2 id="updatersignal">UpdaterSignal</h2>
 <p><strong>Kind</strong>: class of <a href="#module_electron-updater"><code>electron-updater</code></a><br/></p>
 <ul>

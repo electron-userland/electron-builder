@@ -24,10 +24,11 @@ async function main() {
 
   const files = [
     path.join(source, "builder/electron-builder.js"),
-    path.join(source, "publisher/electron-publish.js"),
-    path.join(source, "updater/electron-updater.js"),
     path.join(source, "builder-lib/app-builder-lib.js"),
     path.join(source, "builder-util-runtime/builder-util-runtime.js"),
+    path.join(source, "dmg-builder/dmg-builder.js"),
+    path.join(source, "publisher/electron-publish.js"),
+    path.join(source, "updater/electron-updater.js"),
     path.join(source, "util/builder-util.js"),
   ]
   // const files = (await globby(["**/*.js"], {cwd: source})).map(it => path.resolve(source, it))

@@ -214,7 +214,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
    * 2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`
    * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
-   * 
+   *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
