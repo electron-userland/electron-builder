@@ -3,7 +3,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <!-- do not edit. start of generated block -->
 <ul>
 <li>
-<p><code id="WindowsConfiguration-target">target</code> = <code>nsis</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - The target package type: list of <code>nsis</code>, <code>nsis-web</code> (Web installer), <code>portable</code> (<a href="/configuration/nsis#portable">portable</a> app without installation), <code>appx</code>, <code>msi</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. AppX package can be built only on Windows 10.</p>
+<p><code id="WindowsConfiguration-target">target</code> = <code>nsis</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - The target package type: list of <code>nsis</code>, <code>nsis-web</code> (Web installer), <code>portable</code> (<a href="/configuration/nsis#portable">portable</a> app without installation), <code>appx</code>, <code>msi</code>, <code>msiWrapped</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. AppX package can be built only on Windows 10.</p>
 <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
 </li>
 <li>
