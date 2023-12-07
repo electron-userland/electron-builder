@@ -13,7 +13,6 @@ const excludedFiles = new Set(
   )
 )
 const topLevelExcludedFiles = new Set([
-  "test.js",
   "karma.conf.js",
   ".coveralls.yml",
   "README.md",
