@@ -270,9 +270,6 @@ importers:
 
   packages/builder-util:
     dependencies:
-      7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
@@ -318,6 +315,10 @@ importers:
       temp-file:
         specifier: ^3.4.0
         version: 3.4.0
+    optionalDependencies:
+      7zip-bin:
+        specifier: ~5.2.0
+        version: 5.2.0
     devDependencies:
       '@types/cross-spawn':
         specifier: 6.0.2
@@ -647,7 +648,9 @@ packages:
 
   /7zip-bin@5.2.0:
     resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
+    requiresBuild: true
     dev: false
+    optional: true
 
   /@aashutoshrathi/word-wrap@1.2.6:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
