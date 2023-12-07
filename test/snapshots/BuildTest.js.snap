@@ -485,6 +485,9 @@ Object {
             "package.json": Object {
               "size": "<size>",
             },
+            "test.js": Object {
+              "size": "<size>",
+            },
           },
         },
         "fs-constants": Object {
