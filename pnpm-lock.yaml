@@ -449,6 +449,9 @@ importers:
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
+      builder-util-runtime:
+        specifier: workspace:*
+        version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
