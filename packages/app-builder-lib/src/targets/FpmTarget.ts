@@ -17,7 +17,7 @@ import { getLinuxToolsPath } from "./tools"
 import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
-import { getPath7za } from "builder-util-runtime"
+import { getPath7za } from "builder-util"
 
 interface FpmOptions {
   name: string

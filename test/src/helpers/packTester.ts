@@ -1,5 +1,5 @@
-import { addValue, deepAssign, exec, log, spawn } from "builder-util"
-import { CancellationToken, UpdateFileInfo, getPath7x, getPath7za } from "builder-util-runtime"
+import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za } from "builder-util"
+import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"

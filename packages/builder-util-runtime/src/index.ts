@@ -35,7 +35,6 @@ export { UUID } from "./uuid"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 export { parseXml, XElement } from "./xml"
 export { BlockMap } from "./blockMapApi"
-export { getPath7za, getPath7x } from "./7za"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"

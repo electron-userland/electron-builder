@@ -6,7 +6,7 @@ import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
-import { getPath7za } from "builder-util-runtime"
+import { getPath7za } from "builder-util"
 
 /** @internal */
 export async function tar(

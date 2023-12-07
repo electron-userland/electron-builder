@@ -270,6 +270,9 @@ importers:
 
   packages/builder-util:
     dependencies:
+      7zip-bin:
+        specifier: ~5.2.0
+        version: 5.2.0
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
@@ -334,15 +337,9 @@ importers:
 
   packages/builder-util-runtime:
     dependencies:
-      7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
       debug:
         specifier: ^4.3.4
         version: 4.3.4
-      fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
       sax:
         specifier: ^1.2.4
         version: 1.2.4
@@ -350,9 +347,6 @@ importers:
       '@types/debug':
         specifier: 4.1.7
         version: 4.1.7
-      '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
       '@types/sax':
         specifier: 1.2.3
         version: 1.2.3
@@ -449,9 +443,6 @@ importers:
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
-      builder-util-runtime:
-        specifier: workspace:*
-        version: link:../builder-util-runtime
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0

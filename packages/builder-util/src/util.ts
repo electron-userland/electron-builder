@@ -1,5 +1,5 @@
 import { appBuilderPath } from "app-builder-bin"
-import { getPath7za, safeStringifyJson } from "builder-util-runtime"
+import { safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
@@ -9,6 +9,7 @@ import { dump } from "js-yaml"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
+import { getPath7za } from "./7za"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -25,6 +26,8 @@ export { copyFile, exists } from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"
+
+export { getPath7za, getPath7x } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 

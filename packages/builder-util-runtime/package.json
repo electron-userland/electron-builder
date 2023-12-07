@@ -18,13 +18,10 @@
     "node": ">=12.0.0"
   },
   "dependencies": {
-    "7zip-bin": "~5.2.0",
     "debug": "^4.3.4",
-    "fs-extra": "^10.1.0",
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.13",
     "@types/debug": "4.1.7",
     "@types/sax": "1.2.3"
   },
