@@ -1,7 +1,6 @@
-import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
-import { chmod, outputFile, stat } from "fs-extra"
+import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"
 import { smarten } from "../appInfo"
@@ -18,6 +17,7 @@ import { getLinuxToolsPath } from "./tools"
 import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { getPath7za } from "builder-util-runtime"
 
 interface FpmOptions {
   name: string
@@ -234,10 +234,9 @@ export default class FpmTarget extends Target {
       return
     }
 
-    await chmod(path7za, 0o755)
     const env = {
       ...process.env,
-      SZA_PATH: path7za,
+      SZA_PATH: await getPath7za(),
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
     }
 

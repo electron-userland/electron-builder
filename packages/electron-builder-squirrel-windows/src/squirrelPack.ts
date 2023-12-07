@@ -1,13 +1,13 @@
-import { path7za } from "7zip-bin"
 import { Arch, debug, exec, log, spawn, isEmptyOrSpaces } from "builder-util"
 import { copyFile, walk } from "builder-util/out/fs"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"
-import { chmod, createWriteStream, stat, unlink, writeFile } from "fs-extra"
+import { createWriteStream, stat, unlink, writeFile } from "fs-extra"
 import * as path from "path"
 import * as archiver from "archiver"
 import * as fs from "fs/promises"
+import { getPath7za } from "builder-util-runtime"
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")
@@ -126,7 +126,7 @@ export class SquirrelBuilder {
 
   private async createEmbeddedArchiveFile(nupkgPath: string, dirToArchive: string) {
     const embeddedArchiveFile = await this.packager.getTempFile("setup.zip")
-    await chmod(path7za, 0o755)
+    const path7za = await getPath7za()
     await exec(
       path7za,
       compute7zCompressArgs("zip", {
@@ -230,11 +230,10 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
 }
 
 async function execSw(options: SquirrelOptions, args: Array<string>) {
-  await chmod(path7za, 0o755)
   return exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")), {
     env: {
       ...process.env,
-      SZA_PATH: path7za,
+      SZA_PATH: await getPath7za(),
     },
   })
 }

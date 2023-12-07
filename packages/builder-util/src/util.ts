@@ -1,13 +1,11 @@
-import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
-import { safeStringifyJson } from "builder-util-runtime"
+import { getPath7za, safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"
 import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
-import { chmod } from "fs-extra"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
@@ -357,10 +355,9 @@ export async function executeAppBuilder(
   maxRetries = 0
 ): Promise<string> {
   const command = appBuilderPath
-  await chmod(path7za, 0o755)
   const env: any = {
     ...process.env,
-    SZA_PATH: path7za,
+    SZA_PATH: await getPath7za(),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
   const cacheEnv = process.env.ELECTRON_BUILDER_CACHE

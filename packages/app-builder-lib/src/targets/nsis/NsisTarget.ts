@@ -1,11 +1,10 @@
-import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
-import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
+import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, getPath7za, PackageFileInfo, UUID } from "builder-util-runtime"
 import { exists, statOrNull, walk } from "builder-util/out/fs"
 import _debug from "debug"
 import * as fs from "fs"
-import { chmod, readFile, stat, unlink } from "fs-extra"
+import { readFile, stat, unlink } from "fs-extra"
 import * as path from "path"
 import { getBinFromUrl } from "../../binDownload"
 import { Target } from "../../core"
@@ -250,7 +249,7 @@ export class NsisTarget extends Target {
           await packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
-        await chmod(path7za, 0o755)
+        const path7za = await getPath7za()
         const archiveInfo = (await exec(path7za, ["l", file])).trim()
         // after adding blockmap data will be "Warnings: 1" in the end of output
         const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
