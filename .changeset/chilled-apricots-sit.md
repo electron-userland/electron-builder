@@ -1,7 +1,6 @@
 ---
 "app-builder-lib": patch
 "builder-util": patch
-"builder-util-runtime": patch
 "electron-builder-squirrel-windows": patch
 ---
 
