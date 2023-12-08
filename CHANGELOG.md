@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.3...v) (2023-12-08)
+
+
+### Bug Fixes
+
+* Allowing `test.js` in compiled asar to allow testing mechanisms like Playwright ([#7931](https://github.com/electron-userland/electron-builder/issues/7931)) ([f7aacab](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801))
+* **mac:** use `zip` instead of `7z` if name contains NFD characters ([#7929](https://github.com/electron-userland/electron-builder/issues/7929)) ([0f43989](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657))
+* **win:** use `resultOutputPath` to sign custom location for windows ([#7919](https://github.com/electron-userland/electron-builder/issues/7919)) ([4e930a7](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24)), closes [#7910](https://github.com/electron-userland/electron-builder/issues/7910)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.9.2...v) (2023-11-29)
 
 

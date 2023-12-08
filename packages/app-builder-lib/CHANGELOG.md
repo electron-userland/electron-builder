@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 24.9.4
+
+### Patch Changes
+
+- [#7930](https://github.com/electron-userland/electron-builder/pull/7930) [`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: consolidating usages of `7zip-bin` to builder-util-runtime so as to execute `chmod` logic _always_
+
+- [#7931](https://github.com/electron-userland/electron-builder/pull/7931) [`f7aacabd`](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801) Thanks [@mmaietta](https://github.com/mmaietta)! - Allowing `test.js` in compiled asar to allow testing mechanisms like Playwright
+
+- [#7919](https://github.com/electron-userland/electron-builder/pull/7919) [`4e930a74`](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: pull `resultOutputPath` from `CustomWindowsSignTaskConfiguration` (fixes: #7910)
+
+- [#7929](https://github.com/electron-userland/electron-builder/pull/7929) [`0f439890`](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657) Thanks [@jebibot](https://github.com/jebibot)! - fix macOS app signature when the name contains NFD-normalized characters
+
+- [#7915](https://github.com/electron-userland/electron-builder/pull/7915) [`8b91d315`](https://github.com/electron-userland/electron-builder/commit/8b91d315727bfbac2ec2c2109f12aa92cf6f6c15) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(docs): Update docs to include `msi-wrapped` target
+
+- Updated dependencies [[`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af)]:
+  - builder-util@24.9.4
+  - electron-publish@24.9.4
+
 ## 24.9.3
 
 ### Patch Changes
