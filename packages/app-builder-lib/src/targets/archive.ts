@@ -1,12 +1,12 @@
-import { path7za } from "7zip-bin"
 import { debug7z, exec, log } from "builder-util"
 import { exists, unlinkIfExists } from "builder-util/out/fs"
-import { chmod, move } from "fs-extra"
+import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
+import { getPath7za } from "builder-util"
 
 /** @internal */
 export async function tar(
@@ -55,9 +55,8 @@ export async function tar(
     compression,
   })
   args.push(outFile, tarFile)
-  await chmod(path7za, 0o755)
   await exec(
-    path7za,
+    await getPath7za(),
     args,
     {
       cwd: path.dirname(dirToArchive),
@@ -221,11 +220,9 @@ export async function archive(format: string, outFile: string, dirToArchive: str
   }
 
   try {
-    if (use7z) {
-      await chmod(path7za, 0o755)
-    }
+    const binary = use7z ? await getPath7za() : "zip"
     await exec(
-      use7z ? path7za : "zip",
+      binary,
       args,
       {
         cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),

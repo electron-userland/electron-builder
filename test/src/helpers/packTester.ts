@@ -1,5 +1,4 @@
-import { path7x, path7za } from "7zip-bin"
-import { addValue, deepAssign, exec, log, spawn } from "builder-util"
+import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
 import { executeFinally } from "builder-util/out/promise"
@@ -10,7 +9,7 @@ import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetF
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { PublishPolicy } from "electron-publish"
-import { chmod, emptyDir, writeJson } from "fs-extra"
+import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
 import { load } from "js-yaml"
 import * as path from "path"
@@ -438,12 +437,11 @@ export async function getTarExecutable() {
 }
 
 async function getContents(packageFile: string) {
-  await chmod(path7x, 0o755)
-  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${path7x}'`, {
+  const result = await execShell(`ar p '${packageFile}' data.tar.xz | ${await getTarExecutable()} -t -I'${await getPath7x()}'`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      SZA_PATH: path7za,
+      SZA_PATH: await getPath7za(),
     },
   })
 

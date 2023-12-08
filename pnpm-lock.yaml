@@ -101,9 +101,6 @@ importers:
 
   packages/app-builder-lib:
     dependencies:
-      7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
       '@develar/schema-utils':
         specifier: ~2.6.5
         version: 2.6.5
@@ -449,10 +446,6 @@ importers:
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
-    optionalDependencies:
-      7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -558,9 +551,6 @@ importers:
 
   test:
     dependencies:
-      7zip-bin:
-        specifier: ~5.2.0
-        version: 5.2.0
       '@electron/osx-sign':
         specifier: ^1.0.4
         version: 1.0.5
@@ -657,6 +647,7 @@ packages:
 
   /7zip-bin@5.2.0:
     resolution: {integrity: sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A==}
+    requiresBuild: true
     dev: false
 
   /@aashutoshrathi/word-wrap@1.2.6:
@@ -2746,7 +2737,7 @@ packages:
   /@types/fs-extra@9.0.13:
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==}
     dependencies:
-      '@types/node': 16.11.43
+      '@types/node': 16.18.55
 
   /@types/glob@8.1.0:
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
