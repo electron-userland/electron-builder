@@ -257,7 +257,7 @@ export class Packager {
       },
       "building"
     )
-    const handler = resolveFunction(this.config.artifactBuildStarted, "artifactBuildStarted")
+    const handler = await resolveFunction(this.appInfo.type, this.config.artifactBuildStarted, "artifactBuildStarted")
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
@@ -271,7 +271,7 @@ export class Packager {
   }
 
   async callArtifactBuildCompleted(event: ArtifactCreated): Promise<void> {
-    const handler = resolveFunction(this.config.artifactBuildCompleted, "artifactBuildCompleted")
+    const handler = await resolveFunction(this.appInfo.type, this.config.artifactBuildCompleted, "artifactBuildCompleted")
     if (handler != null) {
       await Promise.resolve(handler(event))
     }
@@ -280,14 +280,14 @@ export class Packager {
   }
 
   async callAppxManifestCreated(path: string): Promise<void> {
-    const handler = resolveFunction(this.config.appxManifestCreated, "appxManifestCreated")
+    const handler = await resolveFunction(this.appInfo.type, this.config.appxManifestCreated, "appxManifestCreated")
     if (handler != null) {
       await Promise.resolve(handler(path))
     }
   }
 
   async callMsiProjectCreated(path: string): Promise<void> {
-    const handler = resolveFunction(this.config.msiProjectCreated, "msiProjectCreated")
+    const handler = await resolveFunction(this.appInfo.type, this.config.msiProjectCreated, "msiProjectCreated")
     if (handler != null) {
       await Promise.resolve(handler(path))
     }
@@ -503,7 +503,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = resolveFunction(config.beforeBuild, "beforeBuild")
+    const beforeBuild = await resolveFunction(this.appInfo.type, config.beforeBuild, "beforeBuild")
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -532,7 +532,7 @@ export class Packager {
   }
 
   async afterPack(context: AfterPackContext): Promise<any> {
-    const afterPack = resolveFunction(this.config.afterPack, "afterPack")
+    const afterPack = await resolveFunction(this.appInfo.type, this.config.afterPack, "afterPack")
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last

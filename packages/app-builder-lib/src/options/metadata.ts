@@ -41,6 +41,8 @@ export interface Metadata {
   /** @private */
   readonly version?: string
   /** @private */
+  readonly type?: string
+  /** @private */
   readonly shortVersion?: string | null
   /** @private */
   readonly shortVersionWindows?: string | null

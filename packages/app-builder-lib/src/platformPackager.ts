@@ -204,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
 
-    const beforePack = resolveFunction(this.config.beforePack, "beforePack")
+    const beforePack = await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
         appOutDir,
@@ -330,7 +330,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
     const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
+    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
     if (afterSign != null) {
       if (didSign) {
         await Promise.resolve(afterSign(packContext))
@@ -753,7 +753,16 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function resolveFunction<T>(executor: T | string, name: string): T {
+async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
+  const extension = path.extname(name).toLowerCase()
+  const isModuleType = type === "module"
+  if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
+    return await eval("import('" + name + "')")
+  }
+  return require(name)
+}
+
+export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     return executor
   }
@@ -770,8 +779,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
     p = path.resolve(p)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const m = require(p)
+  const m: any = await resolveModule(type, p)
   const namedExport = m[name]
   if (namedExport == null) {
     return m.default || m
