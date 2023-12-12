@@ -1,3 +1,39 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.3...v) (2023-12-08)
+
+
+### Bug Fixes
+
+* Allowing `test.js` in compiled asar to allow testing mechanisms like Playwright ([#7931](https://github.com/electron-userland/electron-builder/issues/7931)) ([f7aacab](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801))
+* **mac:** use `zip` instead of `7z` if name contains NFD characters ([#7929](https://github.com/electron-userland/electron-builder/issues/7929)) ([0f43989](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657))
+* **win:** use `resultOutputPath` to sign custom location for windows ([#7919](https://github.com/electron-userland/electron-builder/issues/7919)) ([4e930a7](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24)), closes [#7910](https://github.com/electron-userland/electron-builder/issues/7910)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.2...v) (2023-11-29)
+
+
+### Bug Fixes
+
+* pass `publish` options to snap publisher ([#7908](https://github.com/electron-userland/electron-builder/issues/7908)) ([9fc5157](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23))
+
+
+### Reverts
+
+* fix(mac): should normalize unicode strings from file system before used in string compare ([#4841](https://github.com/electron-userland/electron-builder/issues/4841)) ([#7905](https://github.com/electron-userland/electron-builder/issues/7905)) ([d1347a0](https://github.com/electron-userland/electron-builder/commit/d1347a06e5bd14f7811a543d2e8929b2ca3cdc39))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.1...v) (2023-11-27)
+
+
+### Bug Fixes
+
+* **mac:** normalize filename to NFD form ([#7901](https://github.com/electron-userland/electron-builder/issues/7901)) ([f83f05f](https://github.com/electron-userland/electron-builder/commit/f83f05f6f24a36b96d0e0c7786e1a12e5c762389))
+* **mac:** use `notarytool` with only api key auth ([#7896](https://github.com/electron-userland/electron-builder/issues/7896)) ([65817e0](https://github.com/electron-userland/electron-builder/commit/65817e0edc43a2e6707fab835b0bbe680bd0b1e4))
+* use product name for helper apps ([#7900](https://github.com/electron-userland/electron-builder/issues/7900)) ([3b3a698](https://github.com/electron-userland/electron-builder/commit/3b3a69895f0caa3870219bc0bec7420de81a07ed)), closes [#6962](https://github.com/electron-userland/electron-builder/issues/6962)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.9.0...v) (2023-11-19)
 
 

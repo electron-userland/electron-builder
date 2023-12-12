@@ -6,6 +6,7 @@ import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
+export { BaseUpdater } from "./BaseUpdater"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, UpdateInfo }
 export { Provider } from "./providers/Provider"

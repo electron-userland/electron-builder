@@ -2680,7 +2680,7 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`\\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\\n\\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
         },
         "preAutoEntitlements": {
           "default": true,
@@ -3313,7 +3313,7 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`\\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\\n\\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
         },
         "preAutoEntitlements": {
           "default": true,
@@ -6804,7 +6804,7 @@
             }
           ],
           "default": "nsis",
-          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",

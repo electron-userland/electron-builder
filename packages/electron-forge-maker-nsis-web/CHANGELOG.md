@@ -1,5 +1,28 @@
 # electron-forge-maker-nsis-web
 
+## 24.9.4
+
+### Patch Changes
+
+- Updated dependencies [[`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af), [`f7aacabd`](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801), [`4e930a74`](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24), [`0f439890`](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657), [`8b91d315`](https://github.com/electron-userland/electron-builder/commit/8b91d315727bfbac2ec2c2109f12aa92cf6f6c15)]:
+  - app-builder-lib@24.9.4
+
+## 24.9.3
+
+### Patch Changes
+
+- [#7908](https://github.com/electron-userland/electron-builder/pull/7908) [`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23) Thanks [@Rychu-Pawel](https://github.com/Rychu-Pawel)! - fix: pass publish options to snap publisher
+
+- Updated dependencies [[`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23)]:
+  - app-builder-lib@24.9.3
+
+## 24.9.2
+
+### Patch Changes
+
+- Updated dependencies [[`65817e0e`](https://github.com/electron-userland/electron-builder/commit/65817e0edc43a2e6707fab835b0bbe680bd0b1e4), [`f83f05f6`](https://github.com/electron-userland/electron-builder/commit/f83f05f6f24a36b96d0e0c7786e1a12e5c762389), [`3b3a6989`](https://github.com/electron-userland/electron-builder/commit/3b3a69895f0caa3870219bc0bec7420de81a07ed)]:
+  - app-builder-lib@24.9.2
+
 ## 24.9.1
 
 ### Patch Changes

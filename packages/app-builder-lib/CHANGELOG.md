@@ -1,5 +1,39 @@
 # app-builder-lib
 
+## 24.9.4
+
+### Patch Changes
+
+- [#7930](https://github.com/electron-userland/electron-builder/pull/7930) [`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: consolidating usages of `7zip-bin` to builder-util-runtime so as to execute `chmod` logic _always_
+
+- [#7931](https://github.com/electron-userland/electron-builder/pull/7931) [`f7aacabd`](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801) Thanks [@mmaietta](https://github.com/mmaietta)! - Allowing `test.js` in compiled asar to allow testing mechanisms like Playwright
+
+- [#7919](https://github.com/electron-userland/electron-builder/pull/7919) [`4e930a74`](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: pull `resultOutputPath` from `CustomWindowsSignTaskConfiguration` (fixes: #7910)
+
+- [#7929](https://github.com/electron-userland/electron-builder/pull/7929) [`0f439890`](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657) Thanks [@jebibot](https://github.com/jebibot)! - fix macOS app signature when the name contains NFD-normalized characters
+
+- [#7915](https://github.com/electron-userland/electron-builder/pull/7915) [`8b91d315`](https://github.com/electron-userland/electron-builder/commit/8b91d315727bfbac2ec2c2109f12aa92cf6f6c15) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(docs): Update docs to include `msi-wrapped` target
+
+- Updated dependencies [[`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af)]:
+  - builder-util@24.9.4
+  - electron-publish@24.9.4
+
+## 24.9.3
+
+### Patch Changes
+
+- [#7908](https://github.com/electron-userland/electron-builder/pull/7908) [`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23) Thanks [@Rychu-Pawel](https://github.com/Rychu-Pawel)! - fix: pass publish options to snap publisher
+
+## 24.9.2
+
+### Patch Changes
+
+- [#7896](https://github.com/electron-userland/electron-builder/pull/7896) [`65817e0e`](https://github.com/electron-userland/electron-builder/commit/65817e0edc43a2e6707fab835b0bbe680bd0b1e4) Thanks [@dahchon](https://github.com/dahchon)! - fix notary with pure api key auth
+
+- [#7901](https://github.com/electron-userland/electron-builder/pull/7901) [`f83f05f6`](https://github.com/electron-userland/electron-builder/commit/f83f05f6f24a36b96d0e0c7786e1a12e5c762389) Thanks [@jebibot](https://github.com/jebibot)! - fix codesign and DMG layout when productName or executableName contains Unicode
+
+- [#7900](https://github.com/electron-userland/electron-builder/pull/7900) [`3b3a6989`](https://github.com/electron-userland/electron-builder/commit/3b3a69895f0caa3870219bc0bec7420de81a07ed) Thanks [@jebibot](https://github.com/jebibot)! - fix macOS app with exectuableName different from productName
+
 ## 24.9.1
 
 ### Patch Changes
