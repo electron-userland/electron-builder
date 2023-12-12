@@ -21,7 +21,7 @@ runs:
         version: ${{ inputs.version }}
 
     - name: Setup node
-      uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3
+      uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4
       with:
         node-version: '18'
         cache: 'pnpm'
