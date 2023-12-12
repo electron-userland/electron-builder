@@ -562,7 +562,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     if (notaryToolLogin) {
       return {
-        tool: 'notarytool',
+        tool: "notarytool",
         appPath,
         ...notaryToolLogin,
       }
