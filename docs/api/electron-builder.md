@@ -382,6 +382,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><code id="AppInfo-description">description</code> = <code>smarten(this.info.metadata.description || &quot;&quot;)</code> String</li>
 <li><code id="AppInfo-version">version</code> String</li>
+<li><code id="AppInfo-type">type</code> String | undefined</li>
 <li><code id="AppInfo-shortVersion">shortVersion</code> String | undefined</li>
 <li><code id="AppInfo-shortVersionWindows">shortVersionWindows</code> String | undefined</li>
 <li><code id="AppInfo-buildNumber">buildNumber</code> String | undefined</li>

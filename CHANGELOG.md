@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.9.4...v) (2023-12-13)
+
+
+### Features
+
+* Enable ESM support for hooks by using dynamic `import()` when `package.json` is set to type `module` ([#7936](https://github.com/electron-userland/electron-builder/issues/7936)) ([664a09c](https://github.com/electron-userland/electron-builder/commit/664a09c4471f46a5b88be0b8e26f24b1a0b2bcc1))
+* **snap:** Use `core20` as default base for snap target ([#7902](https://github.com/electron-userland/electron-builder/issues/7902)) ([843d501](https://github.com/electron-userland/electron-builder/commit/843d5017f0303cf6d5a71564aad73dd15ca75d88))
+
+
+### Reverts
+
+* Revert "chore(deps): update actions/labeler action to v5 (#7937)" (#7947) ([6c4d17c](https://github.com/electron-userland/electron-builder/commit/6c4d17cc7811307a6685c766bac72a5397073e58)), closes [#7937](https://github.com/electron-userland/electron-builder/issues/7937) [#7947](https://github.com/electron-userland/electron-builder/issues/7947)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.9.3...v) (2023-12-08)
 
 

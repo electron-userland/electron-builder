@@ -1,5 +1,14 @@
 # dmg-builder
 
+## 24.10.0
+
+### Patch Changes
+
+- [#7933](https://github.com/electron-userland/electron-builder/pull/7933) [`0f0e942a`](https://github.com/electron-userland/electron-builder/commit/0f0e942a45d52faed9ff2bd6dd0198e79c8e183d) Thanks [@mmaietta](https://github.com/mmaietta)! - adding `-debug` to `hdiutil detach` for when it fails and attempts a force detach
+
+- Updated dependencies [[`843d5017`](https://github.com/electron-userland/electron-builder/commit/843d5017f0303cf6d5a71564aad73dd15ca75d88), [`664a09c4`](https://github.com/electron-userland/electron-builder/commit/664a09c4471f46a5b88be0b8e26f24b1a0b2bcc1)]:
+  - app-builder-lib@24.10.0
+
 ## 24.9.4
 
 ### Patch Changes

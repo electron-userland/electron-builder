@@ -1,5 +1,13 @@
 # app-builder-lib
 
+## 24.10.0
+
+### Minor Changes
+
+- [#7902](https://github.com/electron-userland/electron-builder/pull/7902) [`843d5017`](https://github.com/electron-userland/electron-builder/commit/843d5017f0303cf6d5a71564aad73dd15ca75d88) Thanks [@3v1n0](https://github.com/3v1n0)! - feat(snap): Use core20 as default base
+
+- [#7936](https://github.com/electron-userland/electron-builder/pull/7936) [`664a09c4`](https://github.com/electron-userland/electron-builder/commit/664a09c4471f46a5b88be0b8e26f24b1a0b2bcc1) Thanks [@lutzroeder](https://github.com/lutzroeder)! - feat: Enable ESM support for hooks by using dynamic `import()` when `package.json` is set to type `module`.
+
 ## 24.9.4
 
 ### Patch Changes
