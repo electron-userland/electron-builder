@@ -22,6 +22,7 @@ export function smarten(s: string): string {
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
+  readonly type: string | undefined
   readonly shortVersion: string | undefined
   readonly shortVersionWindows: string | undefined
 
@@ -39,6 +40,7 @@ export class AppInfo {
     normalizeNfd = false
   ) {
     this.version = info.metadata.version!
+    this.type = info.metadata.type
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion

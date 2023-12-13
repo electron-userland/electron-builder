@@ -41,7 +41,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const filter = this.filter
     const metadata = this.metadata
 
-    const onNodeModuleFile = resolveFunction(this.packager.config.onNodeModuleFile, "onNodeModuleFile")
+    const onNodeModuleFile = await resolveFunction(this.packager.appInfo.type, this.packager.config.onNodeModuleFile, "onNodeModuleFile")
 
     const result: Array<string> = []
     const queue: Array<string> = []
