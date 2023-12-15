@@ -92,6 +92,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   disableWebInstaller = false
 
   /**
+   * *NSIS only* Disable differential downloads and always perform full download of installer.
+   *
+   * @default false
+   */
+  disableDifferentialDownload = false
+
+  /**
    * Allows developer to force the updater to work in "dev" mode, looking for "dev-app-update.yml" instead of "app-update.yml"
    * Dev: `path.join(this.app.getAppPath(), "dev-app-update.yml")`
    * Prod: `path.join(process.resourcesPath!, "app-update.yml")`
@@ -493,6 +500,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
         disableWebInstaller: this.disableWebInstaller,
+        disableDifferentialDownload: this.disableDifferentialDownload,
       }).catch((e: any) => {
         throw errorHandler(e)
       })
@@ -696,6 +704,7 @@ export interface DownloadUpdateOptions {
   readonly requestHeaders: OutgoingHttpHeaders
   readonly cancellationToken: CancellationToken
   readonly disableWebInstaller?: boolean
+  readonly disableDifferentialDownload?: boolean
 }
 
 function hasPrereleaseComponents(version: SemVer) {
