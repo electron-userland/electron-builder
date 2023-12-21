@@ -42,7 +42,7 @@
     ${nsProcess::FindProcess} "${_FILE}" ${_ERR}
   !else
     # find process owned by current user
-    nsExec::Exec `cmd /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" | %SYSTEMROOT%\System32\find.exe "${_FILE}"`
+    nsExec::Exec `cmd /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO csv | %SYSTEMROOT%\System32\find.exe "${_FILE}"`
     Pop ${_ERR}
   !endif
 !macroend
