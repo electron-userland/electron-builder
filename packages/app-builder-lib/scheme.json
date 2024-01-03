@@ -3622,6 +3622,11 @@
           "description": "Whether to install per all users (per-machine).",
           "type": "boolean"
         },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
+          "type": "boolean"
+        },
         "publish": {
           "anyOf": [
             {
@@ -4068,6 +4073,11 @@
         "perMachine": {
           "default": false,
           "description": "Whether to show install mode installer page (choice per-machine or per-user) for assisted installer. Or whether installation always per all users (per-machine).\n\nIf `oneClick` is `true` (default): Whether to install per all users (per-machine).\n\nIf `oneClick` is `false` and `perMachine` is `true`: no install mode installer page, always install per-machine.\n\nIf `oneClick` is `false` and `perMachine` is `false` (default): install mode installer page.",
+          "type": "boolean"
+        },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
           "type": "boolean"
         },
         "preCompressedFileExtensions": {
