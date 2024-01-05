@@ -6957,6 +6957,9 @@ Object {
                     "ar-ma.js": Object {
                       "size": "<size>",
                     },
+                    "ar-ps.js": Object {
+                      "size": "<size>",
+                    },
                     "ar-sa.js": Object {
                       "size": "<size>",
                     },
@@ -7156,6 +7159,9 @@ Object {
                       "size": "<size>",
                     },
                     "ko.js": Object {
+                      "size": "<size>",
+                    },
+                    "ku-kmr.js": Object {
                       "size": "<size>",
                     },
                     "ku.js": Object {
@@ -7374,6 +7380,9 @@ Object {
                 "ar-ma.js": Object {
                   "size": "<size>",
                 },
+                "ar-ps.js": Object {
+                  "size": "<size>",
+                },
                 "ar-sa.js": Object {
                   "size": "<size>",
                 },
@@ -7573,6 +7582,9 @@ Object {
                   "size": "<size>",
                 },
                 "ko.js": Object {
+                  "size": "<size>",
+                },
+                "ku-kmr.js": Object {
                   "size": "<size>",
                 },
                 "ku.js": Object {
@@ -8185,6 +8197,9 @@ Object {
                     "ar-ma.js": Object {
                       "size": "<size>",
                     },
+                    "ar-ps.js": Object {
+                      "size": "<size>",
+                    },
                     "ar-sa.js": Object {
                       "size": "<size>",
                     },
@@ -8384,6 +8399,9 @@ Object {
                       "size": "<size>",
                     },
                     "ko.js": Object {
+                      "size": "<size>",
+                    },
+                    "ku-kmr.js": Object {
                       "size": "<size>",
                     },
                     "ku.js": Object {
