@@ -1788,6 +1788,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <p>Currently false to prevent breaking the current API, but it should be changed to default true at some point that breaking changes are allowed.</p>
 </li>
 <li>
+<p><code id="AppUpdater-disableDifferentialDownload">disableDifferentialDownload</code> = <code>false</code> Boolean - <em>NSIS only</em> Disable differential downloads and always perform full download of installer.</p>
+</li>
+<li>
 <p><code id="AppUpdater-forceDevUpdateConfig">forceDevUpdateConfig</code> = <code>false</code> Boolean - Allows developer to force the updater to work in “dev” mode, looking for “dev-app-update.yml” instead of “app-update.yml” Dev: <code>path.join(this.app.getAppPath(), &quot;dev-app-update.yml&quot;)</code> Prod: <code>path.join(process.resourcesPath!, &quot;app-update.yml&quot;)</code></p>
 </li>
 <li>

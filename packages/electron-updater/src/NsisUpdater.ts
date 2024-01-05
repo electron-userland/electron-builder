@@ -64,7 +64,11 @@ export class NsisUpdater extends BaseUpdater {
             "disableWebInstaller is set to false, you should set it to true if you do not plan on using a web installer. This will default to true in a future version."
           )
         }
-        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))) {
+        if (
+          isWebInstaller ||
+          downloadUpdateOptions.disableDifferentialDownload ||
+          (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider))
+        ) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
