@@ -1,5 +1,5 @@
 import { debug7z, exec, log } from "builder-util"
-import { exists, unlinkIfExists } from "builder-util/out/fs"
+import { exists, unlinkIfExists, statOrNull } from "builder-util/out/fs"
 import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
@@ -203,6 +203,12 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
 // 7z is very fast, so, use ultra compression
 /** @internal */
 export async function archive(format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
+  let outFileStat = await statOrNull(outFile)
+  let dirStat = await statOrNull(dirToArchive)
+  if (outFileStat && dirStat && outFileStat.mtime > dirStat.mtime) {
+    log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
+    return outFile
+  }
   let use7z = true
   if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
     log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
