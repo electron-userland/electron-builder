@@ -203,8 +203,8 @@ export function computeZipCompressArgs(options: ArchiveOptions = {}) {
 // 7z is very fast, so, use ultra compression
 /** @internal */
 export async function archive(format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
-  let outFileStat = await statOrNull(outFile)
-  let dirStat = await statOrNull(dirToArchive)
+  const outFileStat = await statOrNull(outFile)
+  const dirStat = await statOrNull(dirToArchive)
   if (outFileStat && dirStat && outFileStat.mtime > dirStat.mtime) {
     log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
     return outFile
