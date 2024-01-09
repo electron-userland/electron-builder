@@ -4183,6 +4183,11 @@
             "string"
           ]
         },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
+          "type": "boolean"
+        },
         "shortcutName": {
           "description": "The name that will be used for all shortcuts. Defaults to the application name.",
           "type": [
@@ -4505,6 +4510,11 @@
             "null",
             "string"
           ]
+        },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
+          "type": "boolean"
         },
         "shortcutName": {
           "description": "The name that will be used for all shortcuts. Defaults to the application name.",

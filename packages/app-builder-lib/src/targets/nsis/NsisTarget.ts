@@ -474,6 +474,10 @@ export class NsisTarget extends Target {
       defines.INSTALL_MODE_PER_ALL_USERS = null
     }
 
+    if (options.selectPerMachineByDefault === true) {
+      defines.INSTALL_MODE_PER_ALL_USERS_DEFAULT = null
+    }
+
     if (!oneClick || options.perMachine === true) {
       defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
     }
