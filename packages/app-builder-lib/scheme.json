@@ -2787,6 +2787,20 @@
             "string"
           ]
         },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign an app bundle."
+        },
         "signIgnore": {
           "anyOf": [
             {
@@ -3419,6 +3433,20 @@
             "null",
             "string"
           ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign an app bundle."
         },
         "signIgnore": {
           "anyOf": [
