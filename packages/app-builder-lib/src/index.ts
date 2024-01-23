@@ -39,6 +39,7 @@ export { SnapOptions, PlugDescriptor, SlotDescriptor } from "./options/SnapOptio
 export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
 export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
 export {
   WindowsSignOptions,
   CustomWindowsSignTaskConfiguration,

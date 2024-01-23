@@ -13,7 +13,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
+import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
@@ -22,6 +22,9 @@ import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
 import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolStartOptions, NotaryToolCredentials } from "@electron/notarize/lib/types"
+
+export type CustomMacSignOptions = SignOptions
+export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -231,7 +234,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
-      if (identity == null) {
+      if (!options.sign && identity == null) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
         return false
       }
@@ -263,9 +266,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           return path.resolve(appPath, destination)
         })
       )
-      log.info("Signing addtional user-defined binaries: " + JSON.stringify(binaries, null, 1))
+      log.info({ binaries }, "signing additional user-defined binaries")
     }
-    const customSignOptions = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
+    const customSignOptions: MasConfiguration | MacConfiguration = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
     const signOptions: SignOptions = {
       identityValidation: false,
@@ -306,16 +309,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }
 
-    log.info(
-      {
-        file: log.filePath(appPath),
-        identityName: identity.name,
-        identityHash: identity.hash,
-        provisioningProfile: signOptions.provisioningProfile || "none",
-      },
-      "signing"
-    )
-    await this.doSign(signOptions)
+    await this.doSign(signOptions, customSignOptions)
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
@@ -393,8 +387,22 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected doSign(opts: SignOptions): Promise<any> {
-    return signAsync(opts)
+  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration): Promise<void> {
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
+
+    const { app, platform, type, identity, provisioningProfile } = opts
+    log.info(
+      {
+        file: log.filePath(app),
+        platform,
+        type,
+        identity: identity || "none",
+        provisioningProfile: provisioningProfile || "none",
+      },
+      customSign ? "executing custom sign" : "signing"
+    )
+
+    return customSign ? Promise.resolve(customSign(opts, this)) : signAsync(opts)
   }
 
   //noinspection JSMethodCanBeStatic

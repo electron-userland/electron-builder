@@ -1,4 +1,5 @@
 import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
+import { CustomMacSign } from "../macPackager"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -174,6 +175,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Regex or an array of regex's that signal skipping signing a file.
    */
   readonly signIgnore?: Array<string> | string | null
+
+  /**
+   * The custom function (or path to file or module id) to sign an app bundle.
+   */
+  readonly sign?: CustomMacSign | string | null
 
   /**
    * Specify the URL of the timestamp authority server
