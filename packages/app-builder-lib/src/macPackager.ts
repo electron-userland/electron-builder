@@ -396,10 +396,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions, masOptions: MasConfiguration | null): Promise<any> {
-    const options = masOptions == null ? this.platformSpecificBuildOptions : masOptions
-
-    const customSign = await resolveFunction(this.appInfo.type, options.sign, "sign")
+  protected async doSign(opts: SignOptions, customSignOptions: MasConfiguration): Promise<any> {
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
     if (customSign) {
       return customSign(opts, this)
     }
