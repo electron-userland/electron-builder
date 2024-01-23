@@ -1,5 +1,17 @@
 # app-builder-lib
 
+## 24.12.0
+
+### Minor Changes
+
+- [#8002](https://github.com/electron-userland/electron-builder/pull/8002) [`adf97dcc`](https://github.com/electron-userland/electron-builder/commit/adf97dccd0146288ab482a261b749d67a458868a) Thanks [@scottnonnenberg-signal](https://github.com/scottnonnenberg-signal)! - mac: Support for a custom 'sign' action
+
+### Patch Changes
+
+- [#7978](https://github.com/electron-userland/electron-builder/pull/7978) [`27734100`](https://github.com/electron-userland/electron-builder/commit/277341000a87abaa65a7985854c06e88ed5938b9) Thanks [@mvitale1989](https://github.com/mvitale1989)! - Use ~ as pre-release separator for deb targets
+
+- [#7998](https://github.com/electron-userland/electron-builder/pull/7998) [`61dfe7fb`](https://github.com/electron-userland/electron-builder/commit/61dfe7fbaa592785353348a16abd1525dcbfaf28) Thanks [@dbrnz](https://github.com/dbrnz)! - Use full path to macOS signing utilities
+
 ## 24.11.0
 
 ### Minor Changes
