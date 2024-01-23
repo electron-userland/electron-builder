@@ -234,8 +234,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
-      const customSign = await resolveFunction(this.appInfo.type, options.sign, "sign")
-      if (!customSign && identity == null) {
+      if (!options.sign && identity == null) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
         return false
       }

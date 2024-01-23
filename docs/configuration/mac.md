@@ -92,6 +92,9 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-signIgnore">signIgnore</code> Array&lt;String&gt; | String | “undefined” - Regex or an array of regex’s that signal skipping signing a file.</p>
 </li>
 <li>
+<p><code id="MacConfiguration-sign">sign</code> module:app-builder-lib/out/macPackager.__type | String | “undefined” - The custom function (or path to file or module id) to sign an app bundle.</p>
+</li>
+<li>
 <p><code id="MacConfiguration-timestamp">timestamp</code> String | “undefined” - Specify the URL of the timestamp authority server</p>
 </li>
 <li>
