@@ -1,3 +1,18 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.11.0...v) (2024-01-23)
+
+
+### Bug Fixes
+
+* **linux:** Use ~ as pre-release separator for deb targets ([#7978](https://github.com/electron-userland/electron-builder/issues/7978)) ([2773410](https://github.com/electron-userland/electron-builder/commit/277341000a87abaa65a7985854c06e88ed5938b9))
+* Use fully-defined path `/usr/bin/___` to macOS signing utilities ([#7998](https://github.com/electron-userland/electron-builder/issues/7998)) ([61dfe7f](https://github.com/electron-userland/electron-builder/commit/61dfe7fbaa592785353348a16abd1525dcbfaf28))
+
+
+### Features
+
+* **mac:** Add support for a custom 'sign' function in mac/mas config ([#8002](https://github.com/electron-userland/electron-builder/issues/8002)) ([adf97dc](https://github.com/electron-userland/electron-builder/commit/adf97dccd0146288ab482a261b749d67a458868a))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.10.0...v) (2024-01-09)
 
 
