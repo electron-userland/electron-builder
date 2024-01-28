@@ -135,7 +135,8 @@ export function getCiTag() {
     process.env.APPVEYOR_REPO_TAG_NAME ||
     process.env.CIRCLE_TAG ||
     process.env.BITRISE_GIT_TAG ||
-    process.env.CI_BUILD_TAG ||
+    process.env.CI_BUILD_TAG || // deprecated, GitLab uses `CI_COMMIT_TAG` instead
+    process.env.CI_COMMIT_TAG ||
     process.env.BITBUCKET_TAG ||
     (process.env.GITHUB_REF_TYPE === "tag" ? process.env.GITHUB_REF_NAME : null)
   return tag != null && tag.length > 0 ? tag : null
