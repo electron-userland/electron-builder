@@ -179,6 +179,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-includePdb">includePdb</code> = <code>false</code> Boolean - Whether to include PDB files.</p>
 </li>
 <li>
+<p><code id="Configuration-includeExtensions">includeExtensions</code> = Array&lt;String&gt; | String | “undefined” - Whether to include files with given extensions.</p>
+</li>
+<li>
 <p><code id="Configuration-removePackageScripts">removePackageScripts</code> = <code>true</code> Boolean - Whether to remove <code>scripts</code> field from <code>package.json</code> files.</p>
 </li>
 <li>

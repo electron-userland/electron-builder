@@ -182,7 +182,16 @@ export function getMainFileMatchers(
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
-  patterns.push(`!**/*.{${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}}`)
+  let excludedExtsFinal = `${excludedExts}${packager.config.includePdb === true ? "" : ",pdb"}`
+
+  if (packager.config.includeExtensions) {
+    excludedExtsFinal = excludedExtsFinal
+      .split(',')
+      .filter( ext => !packager.config.includeExtensions?.includes(ext))
+      .join(',')
+  }
+
+  patterns.push(`!**/*.{${excludedExtsFinal}}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml,ts}")
   patterns.push(`!**/{${excludedNames}}`)

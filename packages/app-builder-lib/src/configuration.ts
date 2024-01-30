@@ -262,6 +262,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly includePdb?: boolean
 
   /**
+   * Whether to include files with given extensions.
+   */
+  readonly includeExtensions?: Array<string> | string | null
+
+  /**
    * Whether to remove `scripts` field from `package.json` files.
    *
    * @default true

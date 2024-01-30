@@ -7367,6 +7367,23 @@
         "string"
       ]
     },
+    "includeExtensions": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "Whether to include files with given extensions."
+    },
     "includePdb": {
       "default": false,
       "description": "Whether to include PDB files.",
