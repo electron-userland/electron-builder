@@ -1,6 +1,14 @@
 "use strict"
 
 const isCi = require("ci-info").isCI
+let expect;
+try {
+  expect = require("expect")
+} catch (_) {
+  // for Jest in version 28+
+  const { expect: expectModule } = require("@jest/globals")
+  expect = expectModule
+}
 
 const isWindows = process.platform === "win32"
 
@@ -15,7 +23,7 @@ describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
 skip.ifAll = skip
 
-const execEnv = (envVar) => !!envVar ? test : skip
+const execEnv = envVar => (!!envVar ? test : skip)
 test.ifEnv = execEnv
 skip.ifEnv = execEnv
 
@@ -47,8 +55,7 @@ skip.ifLinuxOrDevMac = skip
 if (isCi) {
   test.ifCi = test
   test.ifNotCi = skip
-}
-else {
+} else {
   test.ifCi = skip
   test.ifNotCi = test
 }
@@ -76,3 +83,16 @@ if (!process.env.SZA_COMPRESSION_LEVEL) {
 
 process.env.FORCE_YARN = "true"
 process.env.TEST_SET_BABEL_PRESET = "true"
+
+expect.extend({
+  toBeOneOf(received, items) {
+    const pass = items.includes(received)
+    return {
+      message: () => `expected ${received} to be contained in array [${items}]`,
+      pass,
+    }
+  },
+  toContainsOneOf(received, items) {
+    return items.some(item => this.toBeOneOf(received, item).pass)
+  },
+})

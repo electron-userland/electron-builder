@@ -30,7 +30,7 @@ test.ifNotCiMac(
         await outputFile(path.join(projectDir, "assets", "nested", "nested", "file.exe"), "invalid PE file")
       },
     },
-    error => expect(error.message).toContain("This file format cannot be signed because it is not recognized.")
+    error => expect(error.message).toContainsOneOf(["This file format cannot be signed because it is not recognized.", "Unrecognized file type:"])
   )
 )
 
