@@ -61,7 +61,9 @@ export async function sign(options: WindowsSignOptions, packager: WinPackager): 
       computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin),
     }
     await Promise.resolve(executor(config, packager))
-    isNest = true
+    // nested signing is only supported on Windows
+    // https://github.com/electron-userland/electron-builder/issues/7973
+    isNest = process.platform === "win32"
     if (config.resultOutputPath != null) {
       await rename(config.resultOutputPath, options.path)
     }
@@ -153,7 +155,7 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
   const tool = toolInfo.path
   if (vmRequired) {
     vm = await packager.vm.value
-    args = computeSignToolArgs(configuration, process.platform === "win32", vm)
+    args = computeSignToolArgs(configuration, isWin, vm)
   } else {
     vm = new VmManager()
     args = configuration.computeSignToolArgs(isWin)
