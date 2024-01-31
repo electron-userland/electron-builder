@@ -93,8 +93,7 @@ expect.extend({
     }
   },
   toContainsOneOf(received, items) {
-    console.error('received', received)
-    const pass = items.some(item => expect.toBeOneOf(received, item).pass)
+    const pass = items.some(item => received.includes(item))
     return {
       message: () => `expected ${received} to be contained in array [${items}]`,
       pass,
