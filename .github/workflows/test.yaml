@@ -41,6 +41,22 @@ jobs:
       - name: Lint
         run: pnpm pretest
 
+      - run: mkdir -p ~/docker-image-cache
+
+      - id: docker-image-cache
+        uses: actions/cache@v1
+        with:
+            path: ~/docker-image-cache
+            key: docker-image-cache-${{ runner.os }}
+
+      - if: steps.docker-image-cache.outputs.cache-hit != 'true'
+        run: |
+            docker pull electronuserland/builder:18-wine-mono
+            docker save -o ~/docker-image-cache/image.tar electronuserland/builder:18-wine-mono
+
+      - if: steps.docker-image-cache.outputs.cache-hit == 'true'
+        run: docker load -i ~/docker-image-cache/image.tar
+
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
         uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959 # v42
