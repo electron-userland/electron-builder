@@ -21,7 +21,13 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
-import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolStartOptions, NotaryToolCredentials } from "@electron/notarize/lib/types"
+import {
+  LegacyNotarizePasswordCredentials,
+  LegacyNotarizeStartOptions,
+  NotaryToolStartOptions,
+  NotaryToolCredentials,
+  NotaryToolKeychainCredentials,
+} from "@electron/notarize/lib/types"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -533,8 +539,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     // option 3: keychain
     const keychain = process.env.APPLE_KEYCHAIN
     const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE
-    if (keychain && keychainProfile) {
-      return this.generateNotarizeOptions(appPath, undefined, { keychain, keychainProfile })
+    if (keychainProfile) {
+      let args: NotaryToolKeychainCredentials = { keychainProfile }
+      if (keychain) {
+        args = { ...args, keychain }
+      }
+      return this.generateNotarizeOptions(appPath, undefined, args)
     }
 
     // if no credentials provided, skip silently
