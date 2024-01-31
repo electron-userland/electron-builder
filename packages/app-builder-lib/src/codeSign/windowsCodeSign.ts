@@ -153,7 +153,7 @@ export async function doSign(configuration: CustomWindowsSignTaskConfiguration, 
   const tool = toolInfo.path
   if (vmRequired) {
     vm = await packager.vm.value
-    args = computeSignToolArgs(configuration, isWin, vm)
+    args = computeSignToolArgs(configuration, process.platform === "win32", vm)
   } else {
     vm = new VmManager()
     args = configuration.computeSignToolArgs(isWin)
