@@ -48,11 +48,11 @@ importers:
         specifier: 8.26.0
         version: 8.26.0
       eslint-config-prettier:
-        specifier: 8.5.0
-        version: 8.5.0(eslint@8.26.0)
+        specifier: 9.1.0
+        version: 9.1.0(eslint@8.26.0)
       eslint-plugin-prettier:
-        specifier: 4.2.1
-        version: 4.2.1(eslint-config-prettier@8.5.0)(eslint@8.26.0)(prettier@2.8.0)
+        specifier: 5.1.3
+        version: 5.1.3(eslint-config-prettier@9.1.0)(eslint@8.26.0)(prettier@3.2.4)
       fs-extra:
         specifier: 10.1.0
         version: 10.1.0
@@ -78,8 +78,8 @@ importers:
         specifier: 0.1.0
         version: 0.1.0
       prettier:
-        specifier: 2.8.0
-        version: 2.8.0
+        specifier: 3.2.4
+        version: 3.2.4
       replace-in-file:
         specifier: 6.2.0
         version: 6.2.0
@@ -2651,6 +2651,11 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
+    dev: true
+
+  /@pkgr/core@0.1.1:
+    resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
+    engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
     dev: true
 
   /@sinonjs/commons@1.8.6:
@@ -5291,8 +5296,8 @@ packages:
     optionalDependencies:
       source-map: 0.6.1
 
-  /eslint-config-prettier@8.5.0(eslint@8.26.0):
-    resolution: {integrity: sha512-obmWKLUNCnhtQRKc+tmnYuQl0pFU1ibYJQ5BGhTVB08bHe9wC8qUeG7c08dj9XX+AuPj1YSGSQIHl1pnDHZR0Q==}
+  /eslint-config-prettier@9.1.0(eslint@8.26.0):
+    resolution: {integrity: sha512-NSWl5BFQWEPi1j4TjVNItzYV7dZXZ+wP6I6ZhrBGpChQhZRUaElihE9uRRkcbRnNb76UMKDF3r+WTmNcGPKsqw==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -5300,21 +5305,25 @@ packages:
       eslint: 8.26.0
     dev: true
 
-  /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.5.0)(eslint@8.26.0)(prettier@2.8.0):
-    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
-    engines: {node: '>=12.0.0'}
+  /eslint-plugin-prettier@5.1.3(eslint-config-prettier@9.1.0)(eslint@8.26.0)(prettier@3.2.4):
+    resolution: {integrity: sha512-C9GCVAs4Eq7ZC/XFQHITLiHJxQngdtraXaM+LoUFoFp/lHNl2Zn8f3WQbe9HvTBBQ9YnKFB0/2Ajdqwo5D1EAw==}
+    engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
-      eslint: '>=7.28.0'
+      '@types/eslint': '>=8.0.0'
+      eslint: '>=8.0.0'
       eslint-config-prettier: '*'
-      prettier: '>=2.0.0'
+      prettier: '>=3.0.0'
     peerDependenciesMeta:
+      '@types/eslint':
+        optional: true
       eslint-config-prettier:
         optional: true
     dependencies:
       eslint: 8.26.0
-      eslint-config-prettier: 8.5.0(eslint@8.26.0)
-      prettier: 2.8.0
+      eslint-config-prettier: 9.1.0(eslint@8.26.0)
+      prettier: 3.2.4
       prettier-linter-helpers: 1.0.0
+      synckit: 0.8.8
     dev: true
 
   /eslint-scope@5.1.1:
@@ -6178,6 +6187,7 @@ packages:
 
   /ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
+    requiresBuild: true
     dev: false
 
   /ignore@5.2.4:
@@ -8477,6 +8487,12 @@ packages:
     hasBin: true
     dev: true
 
+  /prettier@3.2.4:
+    resolution: {integrity: sha512-FWu1oLHKCrtpO1ypU6J0SbK2d9Ckwysq6bHj/uaCP26DxrPpppCLQRGVuqAxSTvhF00AcvDRyYrLNW7ocBhFFQ==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dev: true
+
   /pretty-format@26.6.2:
     resolution: {integrity: sha512-7AeGuCYNGmycyQbCqd/3PWH4eOoX/OiCa0uphp57NVTeAGdJGaAliecxwBDHYQCIvrW7aDBZCYeNTP/WX69mkg==}
     engines: {node: '>= 10'}
@@ -9449,6 +9465,14 @@ packages:
 
   /symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
+
+  /synckit@0.8.8:
+    resolution: {integrity: sha512-HwOKAP7Wc5aRGYdKH+dw0PRRpbO841v2DENBtjnR5HFWoiNByAl7vrx3p0G/rCyYXQsrxqtX48TImFtPcIHSpQ==}
+    engines: {node: ^14.18.0 || >=16.0.0}
+    dependencies:
+      '@pkgr/core': 0.1.1
+      tslib: 2.6.2
+    dev: true
 
   /table-layout@0.4.5:
     resolution: {integrity: sha512-zTvf0mcggrGeTe/2jJ6ECkJHAQPIYEwDoqsiqBjI24mvRmQbInK5jq33fyypaCBxX08hMkfmdOqj6haT33EqWw==}
