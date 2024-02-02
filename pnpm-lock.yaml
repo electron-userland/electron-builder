@@ -111,8 +111,8 @@ importers:
         specifier: 1.0.5
         version: 1.0.5
       '@electron/universal':
-        specifier: 1.4.1
-        version: 1.4.1
+        specifier: 1.5.1
+        version: 1.5.1
       '@malept/flatpak-bundler':
         specifier: ^0.4.0
         version: 0.4.0
@@ -2269,8 +2269,8 @@ packages:
       - supports-color
     dev: false
 
-  /@electron/universal@1.4.1:
-    resolution: {integrity: sha512-lE/U3UNw1YHuowNbTmKNs9UlS3En3cPgwM5MI+agIgr/B1hSze9NdOP0qn7boZaI9Lph8IDv3/24g9IxnJP7aQ==}
+  /@electron/universal@1.5.1:
+    resolution: {integrity: sha512-kbgXxyEauPJiQQUNG2VgUeyfQNFk6hBF11ISN2PNI6agUgPl55pv4eQmaqHzTAzchBvqZ2tQuRVaPStGf0mxGw==}
     engines: {node: '>=8.6'}
     dependencies:
       '@electron/asar': 3.2.4
