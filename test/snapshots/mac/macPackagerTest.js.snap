@@ -69,6 +69,13 @@ Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleDocumentTypes": Array [
     Object {
+      "CFBundleTypeName": "Folders",
+      "CFBundleTypeRole": "Editor",
+      "LSItemContentTypes": Array [
+        "public.folder",
+      ],
+    },
+    Object {
       "CFBundleTypeExtensions": Array [
         "foo",
       ],
