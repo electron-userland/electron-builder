@@ -756,8 +756,12 @@ export function normalizeExt(ext: string) {
 async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
   const extension = path.extname(name).toLowerCase()
   const isModuleType = type === "module"
-  if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-    return await eval("import('" + name + "')")
+  try {
+    if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
+      return await eval("import('" + name + "')")
+    }
+  } catch (error) {
+    log.debug({ moduleName: name }, "Unable to dynamically import hook, falling back to `require`")
   }
   return require(name)
 }
