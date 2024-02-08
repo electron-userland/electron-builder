@@ -201,7 +201,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const fileAssociations = packager.fileAssociations
   if (fileAssociations.length > 0) {
-    appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
+    const documentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)
       const customIcon = await packager.getResource(getPlatformIconFileName(fileAssociation.icon, true), `${extensions[0]}.icns`)
       let iconFile = appPlist.CFBundleIconFile
@@ -223,6 +223,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
       }
       return result
     })
+
+    // `CFBundleDocumentTypes` may be defined in `mac.extendInfo`, so we need to merge it in that case
+    appPlist.CFBundleDocumentTypes = [...(appPlist.CFBundleDocumentTypes || []), ...documentTypes]
   }
 
   if (asarIntegrity != null) {
