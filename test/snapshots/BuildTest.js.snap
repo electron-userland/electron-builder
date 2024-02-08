@@ -221,20 +221,6 @@ Object {
 exports[`posix smart unpack 2`] = `
 Object {
   "files": Object {
-    "app": Object {
-      "files": Object {
-        "package.json": Object {
-          "files": Object {
-            "readme.md": Object {
-              "size": "<size>",
-            },
-          },
-        },
-        "readme.md": Object {
-          "size": "<size>",
-        },
-      },
-    },
     "index.html": Object {
       "size": "<size>",
     },
@@ -1424,6 +1410,1258 @@ Object {
             },
             "sandbox.js": Object {
               "size": "<size>",
+            },
+          },
+        },
+        "three": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": "<size>",
+            },
+            "build": Object {
+              "files": Object {
+                "three.cjs": Object {
+                  "size": "<size>",
+                },
+                "three.js": Object {
+                  "size": "<size>",
+                },
+                "three.min.js": Object {
+                  "size": "<size>",
+                },
+                "three.module.js": Object {
+                  "size": "<size>",
+                },
+                "three.module.min.js": Object {
+                  "size": "<size>",
+                },
+              },
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+            "src": Object {
+              "files": Object {
+                "Three.Legacy.js": Object {
+                  "size": "<size>",
+                },
+                "Three.js": Object {
+                  "size": "<size>",
+                },
+                "animation": Object {
+                  "files": Object {
+                    "AnimationAction.js": Object {
+                      "size": "<size>",
+                    },
+                    "AnimationClip.js": Object {
+                      "size": "<size>",
+                    },
+                    "AnimationMixer.js": Object {
+                      "size": "<size>",
+                    },
+                    "AnimationObjectGroup.js": Object {
+                      "size": "<size>",
+                    },
+                    "AnimationUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "KeyframeTrack.js": Object {
+                      "size": "<size>",
+                    },
+                    "PropertyBinding.js": Object {
+                      "size": "<size>",
+                    },
+                    "PropertyMixer.js": Object {
+                      "size": "<size>",
+                    },
+                    "tracks": Object {
+                      "files": Object {
+                        "BooleanKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                        "ColorKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                        "NumberKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                        "QuaternionKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                        "StringKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                        "VectorKeyframeTrack.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "audio": Object {
+                  "files": Object {
+                    "Audio.js": Object {
+                      "size": "<size>",
+                    },
+                    "AudioAnalyser.js": Object {
+                      "size": "<size>",
+                    },
+                    "AudioContext.js": Object {
+                      "size": "<size>",
+                    },
+                    "AudioListener.js": Object {
+                      "size": "<size>",
+                    },
+                    "PositionalAudio.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "cameras": Object {
+                  "files": Object {
+                    "ArrayCamera.js": Object {
+                      "size": "<size>",
+                    },
+                    "Camera.js": Object {
+                      "size": "<size>",
+                    },
+                    "CubeCamera.js": Object {
+                      "size": "<size>",
+                    },
+                    "OrthographicCamera.js": Object {
+                      "executable": true,
+                      "size": "<size>",
+                    },
+                    "PerspectiveCamera.js": Object {
+                      "size": "<size>",
+                    },
+                    "StereoCamera.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "constants.js": Object {
+                  "size": "<size>",
+                },
+                "core": Object {
+                  "files": Object {
+                    "BufferAttribute.js": Object {
+                      "size": "<size>",
+                    },
+                    "BufferGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "Clock.js": Object {
+                      "size": "<size>",
+                    },
+                    "EventDispatcher.js": Object {
+                      "size": "<size>",
+                    },
+                    "GLBufferAttribute.js": Object {
+                      "size": "<size>",
+                    },
+                    "InstancedBufferAttribute.js": Object {
+                      "size": "<size>",
+                    },
+                    "InstancedBufferGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "InstancedInterleavedBuffer.js": Object {
+                      "size": "<size>",
+                    },
+                    "InterleavedBuffer.js": Object {
+                      "size": "<size>",
+                    },
+                    "InterleavedBufferAttribute.js": Object {
+                      "size": "<size>",
+                    },
+                    "Layers.js": Object {
+                      "size": "<size>",
+                    },
+                    "Object3D.js": Object {
+                      "size": "<size>",
+                    },
+                    "Raycaster.js": Object {
+                      "size": "<size>",
+                    },
+                    "RenderTarget.js": Object {
+                      "size": "<size>",
+                    },
+                    "Uniform.js": Object {
+                      "size": "<size>",
+                    },
+                    "UniformsGroup.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "extras": Object {
+                  "files": Object {
+                    "DataUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "Earcut.js": Object {
+                      "size": "<size>",
+                    },
+                    "ImageUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "PMREMGenerator.js": Object {
+                      "size": "<size>",
+                    },
+                    "ShapeUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "core": Object {
+                      "files": Object {
+                        "Curve.js": Object {
+                          "size": "<size>",
+                        },
+                        "CurvePath.js": Object {
+                          "size": "<size>",
+                        },
+                        "Interpolations.js": Object {
+                          "size": "<size>",
+                        },
+                        "Path.js": Object {
+                          "size": "<size>",
+                        },
+                        "Shape.js": Object {
+                          "size": "<size>",
+                        },
+                        "ShapePath.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "curves": Object {
+                      "files": Object {
+                        "ArcCurve.js": Object {
+                          "size": "<size>",
+                        },
+                        "CatmullRomCurve3.js": Object {
+                          "size": "<size>",
+                        },
+                        "CubicBezierCurve.js": Object {
+                          "size": "<size>",
+                        },
+                        "CubicBezierCurve3.js": Object {
+                          "size": "<size>",
+                        },
+                        "Curves.js": Object {
+                          "size": "<size>",
+                        },
+                        "EllipseCurve.js": Object {
+                          "size": "<size>",
+                        },
+                        "LineCurve.js": Object {
+                          "size": "<size>",
+                        },
+                        "LineCurve3.js": Object {
+                          "size": "<size>",
+                        },
+                        "QuadraticBezierCurve.js": Object {
+                          "size": "<size>",
+                        },
+                        "QuadraticBezierCurve3.js": Object {
+                          "size": "<size>",
+                        },
+                        "SplineCurve.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "geometries": Object {
+                  "files": Object {
+                    "BoxGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "CapsuleGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "CircleGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "ConeGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "CylinderGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "DodecahedronGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "EdgesGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "ExtrudeGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "Geometries.js": Object {
+                      "size": "<size>",
+                    },
+                    "IcosahedronGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "LatheGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "OctahedronGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "PlaneGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "PolyhedronGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "RingGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "ShapeGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "SphereGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "TetrahedronGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "TorusGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "TorusKnotGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "TubeGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                    "WireframeGeometry.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "helpers": Object {
+                  "files": Object {
+                    "ArrowHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "AxesHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "Box3Helper.js": Object {
+                      "size": "<size>",
+                    },
+                    "BoxHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "CameraHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "DirectionalLightHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "GridHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "HemisphereLightHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "PlaneHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "PointLightHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "PolarGridHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "SkeletonHelper.js": Object {
+                      "size": "<size>",
+                    },
+                    "SpotLightHelper.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "lights": Object {
+                  "files": Object {
+                    "AmbientLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "DirectionalLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "DirectionalLightShadow.js": Object {
+                      "size": "<size>",
+                    },
+                    "HemisphereLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "Light.js": Object {
+                      "size": "<size>",
+                    },
+                    "LightProbe.js": Object {
+                      "size": "<size>",
+                    },
+                    "LightShadow.js": Object {
+                      "size": "<size>",
+                    },
+                    "PointLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "PointLightShadow.js": Object {
+                      "size": "<size>",
+                    },
+                    "RectAreaLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "SpotLight.js": Object {
+                      "size": "<size>",
+                    },
+                    "SpotLightShadow.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "loaders": Object {
+                  "files": Object {
+                    "AnimationLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "AudioLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "BufferGeometryLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "Cache.js": Object {
+                      "size": "<size>",
+                    },
+                    "CompressedTextureLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "CubeTextureLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "DataTextureLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "FileLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "ImageBitmapLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "ImageLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "Loader.js": Object {
+                      "size": "<size>",
+                    },
+                    "LoaderUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "LoadingManager.js": Object {
+                      "size": "<size>",
+                    },
+                    "MaterialLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "ObjectLoader.js": Object {
+                      "size": "<size>",
+                    },
+                    "TextureLoader.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "materials": Object {
+                  "files": Object {
+                    "LineBasicMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "LineDashedMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "Material.js": Object {
+                      "size": "<size>",
+                    },
+                    "Materials.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshBasicMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshDepthMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshDistanceMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshLambertMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshMatcapMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshNormalMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshPhongMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshPhysicalMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshStandardMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "MeshToonMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "PointsMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "RawShaderMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "ShaderMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "ShadowMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                    "SpriteMaterial.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "math": Object {
+                  "files": Object {
+                    "Box2.js": Object {
+                      "size": "<size>",
+                    },
+                    "Box3.js": Object {
+                      "size": "<size>",
+                    },
+                    "Color.js": Object {
+                      "size": "<size>",
+                    },
+                    "ColorManagement.js": Object {
+                      "size": "<size>",
+                    },
+                    "Cylindrical.js": Object {
+                      "size": "<size>",
+                    },
+                    "Euler.js": Object {
+                      "size": "<size>",
+                    },
+                    "Frustum.js": Object {
+                      "size": "<size>",
+                    },
+                    "Interpolant.js": Object {
+                      "size": "<size>",
+                    },
+                    "Line3.js": Object {
+                      "size": "<size>",
+                    },
+                    "MathUtils.js": Object {
+                      "size": "<size>",
+                    },
+                    "Matrix3.js": Object {
+                      "size": "<size>",
+                    },
+                    "Matrix4.js": Object {
+                      "size": "<size>",
+                    },
+                    "Plane.js": Object {
+                      "size": "<size>",
+                    },
+                    "Quaternion.js": Object {
+                      "size": "<size>",
+                    },
+                    "Ray.js": Object {
+                      "size": "<size>",
+                    },
+                    "Sphere.js": Object {
+                      "size": "<size>",
+                    },
+                    "Spherical.js": Object {
+                      "size": "<size>",
+                    },
+                    "SphericalHarmonics3.js": Object {
+                      "size": "<size>",
+                    },
+                    "Triangle.js": Object {
+                      "size": "<size>",
+                    },
+                    "Vector2.js": Object {
+                      "size": "<size>",
+                    },
+                    "Vector3.js": Object {
+                      "size": "<size>",
+                    },
+                    "Vector4.js": Object {
+                      "size": "<size>",
+                    },
+                    "interpolants": Object {
+                      "files": Object {
+                        "CubicInterpolant.js": Object {
+                          "size": "<size>",
+                        },
+                        "DiscreteInterpolant.js": Object {
+                          "size": "<size>",
+                        },
+                        "LinearInterpolant.js": Object {
+                          "size": "<size>",
+                        },
+                        "QuaternionLinearInterpolant.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "objects": Object {
+                  "files": Object {
+                    "BatchedMesh.js": Object {
+                      "size": "<size>",
+                    },
+                    "Bone.js": Object {
+                      "size": "<size>",
+                    },
+                    "Group.js": Object {
+                      "size": "<size>",
+                    },
+                    "InstancedMesh.js": Object {
+                      "size": "<size>",
+                    },
+                    "LOD.js": Object {
+                      "size": "<size>",
+                    },
+                    "Line.js": Object {
+                      "size": "<size>",
+                    },
+                    "LineLoop.js": Object {
+                      "size": "<size>",
+                    },
+                    "LineSegments.js": Object {
+                      "size": "<size>",
+                    },
+                    "Mesh.js": Object {
+                      "size": "<size>",
+                    },
+                    "Points.js": Object {
+                      "size": "<size>",
+                    },
+                    "Skeleton.js": Object {
+                      "size": "<size>",
+                    },
+                    "SkinnedMesh.js": Object {
+                      "size": "<size>",
+                    },
+                    "Sprite.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "renderers": Object {
+                  "files": Object {
+                    "WebGL1Renderer.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGL3DRenderTarget.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGLArrayRenderTarget.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGLCubeRenderTarget.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGLMultipleRenderTargets.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGLRenderTarget.js": Object {
+                      "size": "<size>",
+                    },
+                    "WebGLRenderer.js": Object {
+                      "size": "<size>",
+                    },
+                    "shaders": Object {
+                      "files": Object {
+                        "ShaderChunk": Object {
+                          "files": Object {
+                            "alphahash_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "alphahash_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "alphamap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "alphamap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "alphatest_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "alphatest_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "aomap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "aomap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "batching_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "batching_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "begin_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "beginnormal_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "bsdfs.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "bumpmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clearcoat_normal_fragment_begin.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clearcoat_normal_fragment_maps.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clearcoat_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clipping_planes_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clipping_planes_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clipping_planes_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "clipping_planes_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "color_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "color_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "color_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "color_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "colorspace_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "colorspace_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "common.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "cube_uv_reflection_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "default_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "default_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "defaultnormal_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "displacementmap_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "displacementmap_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "dithering_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "dithering_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "emissivemap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "emissivemap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_common_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_physical_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "envmap_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "fog_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "fog_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "fog_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "fog_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "gradientmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "iridescence_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "iridescence_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lightmap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lightmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_fragment_begin.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_fragment_end.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_fragment_maps.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_lambert_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_lambert_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_pars_begin.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_phong_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_phong_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_physical_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_physical_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_toon_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "lights_toon_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "logdepthbuf_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "logdepthbuf_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "logdepthbuf_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "logdepthbuf_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "map_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "map_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "map_particle_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "map_particle_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "metalnessmap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "metalnessmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "morphcolor_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "morphnormal_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "morphtarget_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "morphtarget_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normal_fragment_begin.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normal_fragment_maps.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normal_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normal_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normal_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "normalmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "opaque_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "packing.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "premultiplied_alpha_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "project_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "roughnessmap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "roughnessmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "shadowmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "shadowmap_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "shadowmap_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "shadowmask_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "skinbase_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "skinning_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "skinning_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "skinnormal_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "specularmap_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "specularmap_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "tonemapping_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "tonemapping_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "transmission_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "transmission_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "uv_pars_fragment.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "uv_pars_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "uv_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "worldpos_vertex.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                        "ShaderChunk.js": Object {
+                          "size": "<size>",
+                        },
+                        "ShaderLib": Object {
+                          "files": Object {
+                            "background.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "backgroundCube.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "cube.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "depth.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "distanceRGBA.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "equirect.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "linedashed.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshbasic.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshlambert.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshmatcap.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshnormal.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshphong.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshphysical.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "meshtoon.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "points.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "shadow.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "sprite.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                            "vsm.glsl.js": Object {
+                              "size": "<size>",
+                            },
+                          },
+                        },
+                        "ShaderLib.js": Object {
+                          "size": "<size>",
+                        },
+                        "UniformsLib.js": Object {
+                          "size": "<size>",
+                        },
+                        "UniformsUtils.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "webgl": Object {
+                      "files": Object {
+                        "WebGLAnimation.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLAttributes.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLBackground.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLBindingStates.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLBufferRenderer.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLCapabilities.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLClipping.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLCubeMaps.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLCubeUVMaps.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLExtensions.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLGeometries.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLIndexedBufferRenderer.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLInfo.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLLights.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLMaterials.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLMorphtargets.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLObjects.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLProgram.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLPrograms.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLProperties.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLRenderLists.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLRenderStates.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLShader.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLShaderCache.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLShadowMap.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLState.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLTextures.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLUniforms.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLUniformsGroups.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebGLUtils.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                    "webxr": Object {
+                      "files": Object {
+                        "WebXRController.js": Object {
+                          "size": "<size>",
+                        },
+                        "WebXRManager.js": Object {
+                          "size": "<size>",
+                        },
+                      },
+                    },
+                  },
+                },
+                "scenes": Object {
+                  "files": Object {
+                    "Fog.js": Object {
+                      "size": "<size>",
+                    },
+                    "FogExp2.js": Object {
+                      "size": "<size>",
+                    },
+                    "Scene.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "textures": Object {
+                  "files": Object {
+                    "CanvasTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "CompressedArrayTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "CompressedCubeTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "CompressedTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "CubeTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "Data3DTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "DataArrayTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "DataTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "DepthTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "FramebufferTexture.js": Object {
+                      "size": "<size>",
+                    },
+                    "Source.js": Object {
+                      "size": "<size>",
+                    },
+                    "Texture.js": Object {
+                      "size": "<size>",
+                    },
+                    "VideoTexture.js": Object {
+                      "size": "<size>",
+                    },
+                  },
+                },
+                "utils.js": Object {
+                  "size": "<size>",
+                },
+              },
             },
           },
         },

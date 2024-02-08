@@ -8,6 +8,7 @@ import { createYargs } from "electron-builder/out/builder"
 import { app, appTwo, appTwoThrows, assertPack, linuxDirTarget, modifyPackageJson, packageJson, toSystemIndependentPath } from "./helpers/packTester"
 import { ELECTRON_VERSION } from "./helpers/testConfig"
 import { verifySmartUnpack } from "./helpers/verifySmartUnpack"
+import { AsarFilesystem } from "app-builder-lib/src/asar/asar"
 
 test("cli", async () => {
   // because these methods are internal
@@ -322,7 +323,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi(
+test.ifDevOrLinuxCi.only(
   "posix smart unpack",
   app(
     {
@@ -333,6 +334,10 @@ test.ifDevOrLinuxCi(
         copyright: "Copyright © 2018 ${author}",
         npmRebuild: true,
         files: [
+          "index.js",
+          "index.html",
+          "package.json",
+          "node_modules/three/examples/*",
           // test ignore pattern for node_modules defined as file set filter
           {
             filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*"],
@@ -347,11 +352,14 @@ test.ifDevOrLinuxCi(
           "edge-cs": "1.2.1",
           "lzma-native": "8.0.6",
           keytar: "7.9.0",
+          three: "0.160.0",
         }
       }),
-      packed: context => {
+      packed: async context => {
         expect(context.packager.appInfo.copyright).toBe("Copyright © 2018 Foo Bar")
-        return verifySmartUnpack(context.getResources(Platform.LINUX))
+        await verifySmartUnpack(context.getResources(Platform.LINUX), async (asarFs: AsarFilesystem) => {
+          return expect(await asarFs.readFile(`node_modules${path.sep}three${path.sep}examples${path.sep}fonts${path.sep}README.md`)).toMatchSnapshot()
+        })
       },
     }
   )
