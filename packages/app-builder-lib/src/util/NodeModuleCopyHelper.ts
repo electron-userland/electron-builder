@@ -63,10 +63,10 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(
           childNames,
-          async name => {
+          name => {
             const filePath = dirPath + path.sep + name
 
-            const forceIncluded = onNodeModuleFile != null && !!(await Promise.resolve(onNodeModuleFile(filePath)))
+            const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
 
             if (excludedFiles.has(name) || name.startsWith("._")) {
               return null
