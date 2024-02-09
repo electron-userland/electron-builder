@@ -245,9 +245,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
   /**
-   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
+   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
    */
-  readonly onNodeModuleFile?: ((file: string) => void) | string | null
+  readonly onNodeModuleFile?: ((path: string) => void | boolean) | string | null
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    *
