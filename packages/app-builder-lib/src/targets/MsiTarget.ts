@@ -70,9 +70,15 @@ export default class MsiTarget extends Target {
 
     const commonOptions = getEffectiveOptions(this.options, this.packager)
 
+    // wix 4.0.0.5512.2 doesn't support the arm64 architecture so default to x64 when building for arm64.
+    // This will result in an x64 MSI installer that installs an arm64 version of the application. This is a
+    // stopgap until the electron-builder-binaries wix version is upgraded to a version that supports arm64:
+    // https://github.com/electron-userland/electron-builder/issues/6077
+    const wixArch = arch == Arch.arm64 ? Arch.x64 : arch;
+
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
-    await writeFile(projectFile, await this.writeManifest(appOutDir, arch, commonOptions))
+    await writeFile(projectFile, await this.writeManifest(appOutDir, wixArch, commonOptions))
 
     await packager.info.callMsiProjectCreated(projectFile)
 
@@ -80,7 +86,7 @@ export default class MsiTarget extends Target {
     const vendorPath = await getBinFromUrl("wix", "4.0.0.5512.2", "/X5poahdCc3199Vt6AP7gluTlT1nxi9cbbHhZhCMEu+ngyP1LiBMn+oZX7QAZVaKeBMc2SjVp7fJqNLqsUnPNQ==")
 
     // noinspection SpellCheckingInspection
-    const candleArgs = ["-arch", arch === Arch.ia32 ? "x86" : arch === Arch.arm64 ? "arm64" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
+    const candleArgs = ["-arch", wixArch === Arch.ia32 ? "x86" : "x64", `-dappDir=${vm.toVmFile(appOutDir)}`].concat(this.getCommonWixArgs())
     candleArgs.push("project.wxs")
     await vm.exec(vm.toVmFile(path.join(vendorPath, "candle.exe")), candleArgs, {
       cwd: stageDir.dir,
@@ -145,7 +151,7 @@ export default class MsiTarget extends Target {
     return args
   }
 
-  protected async writeManifest(appOutDir: string, arch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
+  protected async writeManifest(appOutDir: string, wixArch: Arch, commonOptions: FinalCommonWindowsInstallerOptions) {
     const appInfo = this.packager.appInfo
     const { files, dirs } = await this.computeFileDeclaration(appOutDir)
     const options = this.options
@@ -155,7 +161,7 @@ export default class MsiTarget extends Target {
       isCreateDesktopShortcut: commonOptions.isCreateDesktopShortcut !== DesktopShortcutCreationPolicy.NEVER,
       isRunAfterFinish: options.runAfterFinish !== false,
       // https://stackoverflow.com/questions/1929038/compilation-error-ice80-the-64bitcomponent-uses-32bitdirectory
-      programFilesId: arch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
+      programFilesId: wixArch === Arch.x64 ? "ProgramFiles64Folder" : "ProgramFilesFolder",
       // wix in the name because special wix format can be used in the name
       installationDirectoryWixName: getWindowsInstallationDirName(appInfo, commonOptions.isAssisted || commonOptions.isPerMachine === true),
       dirs,
