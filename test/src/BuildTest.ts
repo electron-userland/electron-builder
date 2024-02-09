@@ -334,11 +334,8 @@ test.ifDevOrLinuxCi(
         copyright: "Copyright © 2018 ${author}",
         npmRebuild: true,
         onNodeModuleFile: filePath => {
-          const exampleDir = filePath.includes("node_modules/three/examples")
-          if (exampleDir) {
-            return true
-          }
-          return undefined
+          // Force include this directory in the pakage
+          return filePath.includes("node_modules/three/examples")
         },
         files: [
           // test ignore pattern for node_modules defined as file set filter
