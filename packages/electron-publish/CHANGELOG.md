@@ -1,5 +1,11 @@
 # electron-publish
 
+## 24.13.0
+
+### Patch Changes
+
+- [#8010](https://github.com/electron-userland/electron-builder/pull/8010) [`f5340b73`](https://github.com/electron-userland/electron-builder/commit/f5340b732dc0a303743a2a924750e9861e3a345f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: use CI_COMMIT_TAG instead of CI_BUILD_TAG for Gitlab CI
+
 ## 24.9.4
 
 ### Patch Changes
