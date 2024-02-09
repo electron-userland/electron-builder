@@ -7529,7 +7529,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file."
+      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic"
     },
     "p5p": {
       "anyOf": [

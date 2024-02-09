@@ -23,8 +23,8 @@ const topLevelExcludedFiles = new Set([
   "Readme",
   "readme",
   "test",
-  "__tests__",
   "tests",
+  "__tests__",
   "powered-test",
   "example",
   "examples",
@@ -63,39 +63,40 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(
           childNames,
-          name => {
-            if (onNodeModuleFile != null) {
-              onNodeModuleFile(dirPath + path.sep + name)
-            }
+          async name => {
+            const filePath = dirPath + path.sep + name
+
+            const forceIncluded = onNodeModuleFile != null && !!(await Promise.resolve(onNodeModuleFile(filePath)))
 
             if (excludedFiles.has(name) || name.startsWith("._")) {
               return null
             }
 
-            for (const ext of nodeModuleExcludedExts) {
-              if (name.endsWith(ext)) {
+            if (!forceIncluded) {
+              for (const ext of nodeModuleExcludedExts) {
+                if (name.endsWith(ext)) {
+                  return null
+                }
+              }
+
+              // noinspection SpellCheckingInspection
+              if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
+                return null
+              }
+
+              if (dirPath.endsWith("build")) {
+                if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
+                  return null
+                }
+              } else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
+                return null
+              } else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
+                return null
+              } else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
                 return null
               }
             }
 
-            // noinspection SpellCheckingInspection
-            if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
-              return null
-            }
-
-            if (dirPath.endsWith("build")) {
-              if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
-                return null
-              }
-            } else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
-              return null
-            } else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
-              return null
-            } else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
-              return null
-            }
-
-            const filePath = dirPath + path.sep + name
             return lstat(filePath).then(stat => {
               if (filter != null && !filter(filePath, stat)) {
                 return null
