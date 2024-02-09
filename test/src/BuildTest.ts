@@ -323,7 +323,7 @@ test.ifDevOrLinuxCi("win smart unpack", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifDevOrLinuxCi.only(
+test.ifDevOrLinuxCi(
   "posix smart unpack",
   app(
     {
