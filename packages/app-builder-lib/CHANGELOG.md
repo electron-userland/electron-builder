@@ -1,5 +1,22 @@
 # app-builder-lib
 
+## 24.13.0
+
+### Minor Changes
+
+- [#8043](https://github.com/electron-userland/electron-builder/pull/8043) [`bb4a8c09`](https://github.com/electron-userland/electron-builder/commit/bb4a8c09318045938bfff5a0d1db8f17f0fa4e8c) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: allow `onNodeModuleFile` to return a boolean to force include the package to be copied
+
+### Patch Changes
+
+- [#8042](https://github.com/electron-userland/electron-builder/pull/8042) [`63a00443`](https://github.com/electron-userland/electron-builder/commit/63a00443cf4bae9d7406f7e879ea607632da08b8) Thanks [@mmaietta](https://github.com/mmaietta)! - Attempt dynamically importing hook as a module if package.json `type=module`, if fail, fallback to default `require`
+
+- [#8035](https://github.com/electron-userland/electron-builder/pull/8035) [`94677f3d`](https://github.com/electron-userland/electron-builder/commit/94677f3d70866582635c717b042194f0c75bbf01) Thanks [@davej](https://github.com/davej)! - fix(mac): merge `fileAssociations` with existing `CFBundleDocumentTypes` if defined in `mac.extendInfo`
+
+- [#8022](https://github.com/electron-userland/electron-builder/pull/8022) [`9d1d1508`](https://github.com/electron-userland/electron-builder/commit/9d1d150896a763d3630418bf5be8fd3a070c0c40) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): Update mac notarize keychain env var to be optional
+
+- Updated dependencies [[`f5340b73`](https://github.com/electron-userland/electron-builder/commit/f5340b732dc0a303743a2a924750e9861e3a345f)]:
+  - electron-publish@24.13.0
+
 ## 24.12.0
 
 ### Minor Changes
