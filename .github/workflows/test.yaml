@@ -55,7 +55,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-  
+
   test-mac:
     runs-on: macos-latest
     steps:
@@ -73,7 +73,7 @@ jobs:
         env:
           TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
-  
+
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-latest
@@ -103,6 +103,7 @@ jobs:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - nsisUpdaterTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -112,7 +113,7 @@ jobs:
         with:
           cache-key: v-17.0.0-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
-      
+
       - name: Test
         run: pnpm ci:test
         env:

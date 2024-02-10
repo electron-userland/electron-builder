@@ -368,18 +368,19 @@ test.ifAll("test download and install", async () => {
 
   const actualEvents = trackEvents(updater)
   expect(actualEvents).toMatchObject([])
-  // await updater.quitAndInstall(true, false)
 })
 
-test.ifAll("test downloaded installer", async () => {
+test.ifWindows("test downloaded installer", async () => {
   const updater = await createNsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
-    provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test",
   })
 
   const actualEvents = trackEvents(updater)
 
   expect(actualEvents).toMatchObject([])
-  // await updater.quitAndInstall(true, false)
+  await updater.quitAndInstall(true, false)
+  expect(actualEvents).toMatchObject(["before-quit-for-update"])
 })
