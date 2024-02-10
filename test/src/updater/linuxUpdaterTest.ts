@@ -24,12 +24,8 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   await assertThat(installer).isFile()
 
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
-  let willQuit = false
-  require("electron").autoUpdater.addListener("before-quit-for-update", () => {
-    willQuit = true
-  })
   updater.quitAndInstall(true, false)
-  expect(willQuit).toEqual(true)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
 }
 
 test.ifLinux("test rpm download", async () => {

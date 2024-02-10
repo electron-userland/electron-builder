@@ -19,6 +19,7 @@ export abstract class BaseUpdater extends AppUpdater {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that
         require("electron").autoUpdater.emit("before-quit-for-update")
+        this.emit("before-quit-for-update")
         this.app.quit()
       })
     } else {

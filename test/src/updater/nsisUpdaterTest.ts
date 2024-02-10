@@ -381,10 +381,6 @@ test.ifWindows("test downloaded installer", async () => {
   const actualEvents = trackEvents(updater)
 
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
-  let willQuit = false
-  require("electron").autoUpdater.addListener("before-quit-for-update", () => {
-    willQuit = true
-  })
   updater.quitAndInstall(true, false)
-  expect(willQuit).toEqual(true)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
 })
