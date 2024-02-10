@@ -24,8 +24,12 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   await assertThat(installer).isFile()
 
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
-  updater.quitAndInstall(true, false)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+
+  // AppImage requires APPIMAGE env var which can't exist on an emulated test updater
+  if (expectedExtension != 'AppImage') {
+    updater.quitAndInstall(true, false)
+    expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+  }
 }
 
 test.ifLinux("test rpm download", async () => {
