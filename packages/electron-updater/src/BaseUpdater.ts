@@ -128,7 +128,9 @@ export abstract class BaseUpdater extends AppUpdater {
       encoding: "utf-8",
       shell: true,
     })
-    return response.stdout.trim()
+    const stdout = response.stdout.trim()
+    this._logger.info(`Response: ${stdout}`)
+    return stdout
   }
 
   /**
