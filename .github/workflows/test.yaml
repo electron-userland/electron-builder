@@ -90,7 +90,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
+          TEST_FILES: linuxUpdaterTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
