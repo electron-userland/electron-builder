@@ -371,7 +371,7 @@ test.ifAll("test download and install", async () => {
 })
 
 test.ifWindows("test downloaded installer", async () => {
-  const updater = await createNsisUpdater("1.0.2")
+  const updater = await createNsisUpdater("1.0.1")
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
@@ -379,8 +379,28 @@ test.ifWindows("test downloaded installer", async () => {
   })
 
   const actualEvents = trackEvents(updater)
-
+  await validateDownload(updater)
   // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   updater.quitAndInstall(true, false)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
+})
+
+test.ifWindows("test custom signature verifier", async () => {
+  const updater = await createNsisUpdater("1.0.2")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test",
+    publisherName: ["Foo Bar"],
+  })
+
+  const actualEvents = trackEvents(updater)
+  await validateDownload(updater)
+
+  const { verifySignatureByPublishName } = require("win-verify-signature")
+  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+    const result = verifySignatureByPublishName(path, publisherName);
+    return Promise.resolve(result.signed ? undefined : result.message);
+  }
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
