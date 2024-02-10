@@ -2,6 +2,7 @@ import { AllPublishOptions } from "builder-util-runtime"
 import { spawn, SpawnOptions, spawnSync, StdioOptions } from "child_process"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadExecutorTask } from "./AppUpdater"
+import { log } from "../../builder-util/out/log"
 
 export abstract class BaseUpdater extends AppUpdater {
   protected quitAndInstallCalled = false
@@ -129,7 +130,8 @@ export abstract class BaseUpdater extends AppUpdater {
       shell: true,
     })
     const stdout = response.stdout.trim()
-    this._logger.info(`Response: ${stdout}`)
+    const stderr = response.stderr.trim()
+    log.info({ stdout, stderr }, "response")
     return stdout
   }
 
