@@ -80,7 +80,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
 
 export function trackEvents(updater: AppUpdater) {
   const actualEvents: Array<string> = []
-  for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error", "before-quit-for-update"] as const) {
+  for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error"] as const) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })

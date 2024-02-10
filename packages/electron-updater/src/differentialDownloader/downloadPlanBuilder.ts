@@ -25,7 +25,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
   let lastOperation: Operation | null = null
 
   // for now only one file is supported in block map
-  const blockMapFile = newBlockMap.files[0]
+  const blockMapFile: { name: string; offset: number } = newBlockMap.files[0]
   const operations: Array<Operation> = []
   const name = blockMapFile.name
   const oldEntry = nameToOldBlocks.get(name)
@@ -41,7 +41,7 @@ export function computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap, 
 
   let newOffset = blockMapFile.offset
   for (let i = 0; i < newFile.checksums.length; newOffset += newFile.sizes[i], i++) {
-    const blockSize = newFile.sizes[i]
+    const blockSize: number = newFile.sizes[i]
     const checksum = newFile.checksums[i]
     let oldOffset = checksumToOldOffset.get(checksum)
     if (oldOffset != null && checksumToOldSize.get(checksum) !== blockSize) {
@@ -96,8 +96,8 @@ function validateAndAdd(operation: Operation, operations: Array<Operation>, chec
       const min = [lastOperation.start, lastOperation.end, operation.start, operation.end].reduce((p, v) => (p < v ? p : v))
       throw new Error(
         `operation (block index: ${index}, checksum: ${checksum}, kind: ${OperationKind[operation.kind]}) overlaps previous operation (checksum: ${checksum}):\n` +
-          `abs: ${lastOperation.start} until ${lastOperation.end} and ${operation.start} until ${operation.end}\n` +
-          `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`
+        `abs: ${lastOperation.start} until ${lastOperation.end} and ${operation.start} until ${operation.end}\n` +
+        `rel: ${lastOperation.start - min} until ${lastOperation.end - min} and ${operation.start - min} until ${operation.end - min}`
       )
     }
   }
