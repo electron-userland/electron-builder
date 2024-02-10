@@ -32,6 +32,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   const assets = (updateCheckResult?.updateInfo as any).assets
   if (assets != null) {
     for (const asset of assets) {
@@ -47,6 +48,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
     if (updater instanceof MacUpdater) {
       expect(downloadResult).toEqual([])
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       await assertThat(path.join(downloadResult![0])).isFile()
     }
   } else {

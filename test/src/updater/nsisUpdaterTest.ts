@@ -186,6 +186,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -203,6 +204,7 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -284,10 +286,13 @@ test.ifAll("valid signature using DN", async () => {
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
+
+  const actualEvents = trackEvents(updater)
   await validateDownload(updater)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
-test.skip.ifAll("invalid signature", async () => {
+test.ifAll("invalid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -299,6 +304,27 @@ test.skip.ifAll("invalid signature", async () => {
   await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
 })
+
+test.ifWindows("test custom signature verifier", async () => {
+  const updater = await createNsisUpdater("1.0.2")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+  })
+
+  const actualEvents = trackEvents(updater)
+
+  const { verifySignatureByPublishName } = require("win-verify-signature")
+  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+    const result = verifySignatureByPublishName(path, publisherName);
+    return Promise.resolve(result.signed ? undefined : result.message);
+  }
+  await validateDownload(updater)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
+})
+
 
 // disable for now
 test("90 staging percentage", async () => {
@@ -385,22 +411,3 @@ test.ifWindows("test downloaded installer", async () => {
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
 })
 
-test.ifWindows("test custom signature verifier", async () => {
-  const updater = await createNsisUpdater("1.0.2")
-  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
-    provider: "github",
-    owner: "mmaietta",
-    repo: "electron-builder-test",
-    publisherName: ["Foo Bar"],
-  })
-
-  const actualEvents = trackEvents(updater)
-
-  const { verifySignatureByPublishName } = require("win-verify-signature")
-  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
-    const result = verifySignatureByPublishName(path, publisherName);
-    return Promise.resolve(result.signed ? undefined : result.message);
-  }
-  await validateDownload(updater)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
-})
