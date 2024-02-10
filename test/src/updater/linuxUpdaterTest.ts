@@ -23,7 +23,7 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   expect(installer.endsWith(`.${expectedExtension}`)).toBeTruthy()
   await assertThat(installer).isFile()
 
-  expect(actualEvents).toMatchObject([])
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
   let willQuit = false
   require("electron").autoUpdater.addListener("before-quit-for-update", () => {
     willQuit = true
