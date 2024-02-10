@@ -395,12 +395,12 @@ test.ifWindows("test custom signature verifier", async () => {
   })
 
   const actualEvents = trackEvents(updater)
-  await validateDownload(updater)
 
   const { verifySignatureByPublishName } = require("win-verify-signature")
   updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
     const result = verifySignatureByPublishName(path, publisherName);
     return Promise.resolve(result.signed ? undefined : result.message);
   }
+  await validateDownload(updater)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
