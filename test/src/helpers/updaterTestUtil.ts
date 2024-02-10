@@ -33,7 +33,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
 
   const updateCheckResult = await updater.checkForUpdates()
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  const assets = (updateCheckResult?.updateInfo as any).assets
+  const assets = (updateCheckResult?.updateInfo as any)?.assets
   if (assets != null) {
     for (const asset of assets) {
       delete asset.download_count

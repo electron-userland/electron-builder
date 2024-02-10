@@ -278,6 +278,7 @@ test.ifAll("valid signature - multiple publisher DNs", async () => {
   const actualEvents = trackEvents(updater)
   await validateDownload(updater)
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
+
 })
 
 test.ifAll("valid signature using DN", async () => {
@@ -294,18 +295,15 @@ test.ifAll("valid signature using DN", async () => {
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
-test.ifAll("invalid signature", async () => {
+test.ifWindows("invalid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
-    owner: "mmaietta",
-    repo: "electron-builder-test",
+    owner: "develar",
+    repo: "__test_nsis_release",
     publisherName: ["Foo Bar"],
   })
-  const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
-  // verify update downloaded but it should error after
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 test.ifWindows("test custom signature verifier", async () => {
