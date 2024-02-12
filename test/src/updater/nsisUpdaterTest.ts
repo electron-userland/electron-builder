@@ -397,11 +397,12 @@ test.ifAll("test download and install", async () => {
   expect(actualEvents).toMatchObject([])
 })
 
-test.ifWindows.only("test downloaded installer", async () => {
-  const updater = await createNsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
-    provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+test.ifWindows("test downloaded installer", async () => {
+  const updater = await createNsisUpdater("1.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test",
   })
 
   const actualEvents = trackEvents(updater)
