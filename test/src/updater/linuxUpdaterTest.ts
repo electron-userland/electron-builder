@@ -34,7 +34,7 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   if (expectedExtension != "AppImage") {
     updater.quitAndInstall(true, false)
     // Sudo doesn't exist on Github CI runners (probably only self-hosted?), so we execute `quitAndInstall` to validate logic, unfortunately, cannot verify the installation itself
-    expect(checkCiRunnerError).toEqual("Error: Error executing command as another user: No authentication agent found.")
+    expect(checkCiRunnerError).toEqual("[Error: Error executing command as another user: No authentication agent found.]")
   }
 }
 

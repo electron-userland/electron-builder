@@ -68,6 +68,9 @@ jobs:
           cache-path: ~/Library/Caches/electron
           cache-key: v-17.0.0-macos-electron
 
+      - name: Install distutils for test
+        run: python3 -m pip install distutils
+
       - name: Test
         run: pnpm ci:test
         env:
@@ -90,7 +93,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: linuxUpdaterTest,nsisUpdaterTest
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
