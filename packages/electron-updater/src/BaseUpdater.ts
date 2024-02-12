@@ -109,7 +109,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected wrapSudo() {
     const { name } = this.app
     const installComment = `"${name} would like to update"`
-    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
+    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu").stdout
     const command = [sudo]
     if (/kdesudo/i.test(sudo)) {
       command.push("--comment", installComment)
@@ -122,7 +122,7 @@ export abstract class BaseUpdater extends AppUpdater {
     return command.join(" ")
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): { stdout: string; stderr: string } {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
       env: { ...process.env, ...env },
@@ -132,7 +132,7 @@ export abstract class BaseUpdater extends AppUpdater {
     const stdout = response.stdout.trim()
     const stderr = response.stderr.trim()
     log.info({ stdout, stderr }, "response")
-    return stdout
+    return { stdout, stderr }
   }
 
   /**

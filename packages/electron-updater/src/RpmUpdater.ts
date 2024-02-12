@@ -32,10 +32,14 @@ export class RpmUpdater extends BaseUpdater {
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const packageManager = this.spawnSyncLog("which zypper")
+    let packageManager = this.spawnSyncLog("which zypper").stdout
     let cmd: string[]
     if (!packageManager) {
-      const packageManager = this.spawnSyncLog("which dnf || which yum")
+      const manager = this.spawnSyncLog("which dnf || which yum")
+      if (manager.stderr) {
+        throw new Error(manager.stderr)
+      }
+      packageManager = manager.stdout
       cmd = [packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", upgradePath]
     } else {
       cmd = [
@@ -57,7 +61,10 @@ export class RpmUpdater extends BaseUpdater {
         upgradePath,
       ]
     }
-    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    const { stderr } = this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    if (stderr) {
+      throw new Error(stderr)
+    }
     if (options.isForceRunAfter) {
       this.app.relaunch()
     }

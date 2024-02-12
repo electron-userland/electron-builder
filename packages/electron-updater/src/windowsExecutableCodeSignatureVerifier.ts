@@ -2,7 +2,6 @@ import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import { Logger } from "./main"
-import { log } from "../../builder-util/out/log"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
@@ -40,7 +39,6 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
       },
       (error, stdout, stderr) => {
         try {
-          log.info({ stdout, stderr }, "verifier output")
           if (error != null || stderr) {
             handleError(logger, error, stderr, reject)
             resolve(null)
