@@ -32,8 +32,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  const assets = (updateCheckResult?.updateInfo as any)?.assets
+  const assets = (updateCheckResult?.updateInfo as any).assets
   if (assets != null) {
     for (const asset of assets) {
       delete asset.download_count
@@ -77,7 +76,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
     platform: "win32",
     ...options,
   }
-  updater.logger = process.env.CI ? console : new NoOpLogger()
+  updater.logger = new NoOpLogger()
 }
 
 export function trackEvents(updater: AppUpdater) {
