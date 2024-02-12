@@ -8,14 +8,9 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      build-docker-locally:
-        type: boolean
-        description: Force rebuild docker images for CI tests
-        required: false
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: read
 
 jobs:
   test-linux:
@@ -62,9 +57,6 @@ jobs:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
-      - name: Install distutils for test
-        run: python3 -m pip install distutils
-
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
@@ -105,8 +97,8 @@ jobs:
       matrix:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winPackagerTest,webInstallerTest
-          - winCodeSignTest,nsisUpdaterTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest
+          - winCodeSignTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4

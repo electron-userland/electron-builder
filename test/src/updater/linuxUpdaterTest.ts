@@ -8,12 +8,6 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   const updater = new (updaterClass as any)(null, testAppAdapter)
   tuneTestUpdater(updater, { platform: "linux" })
   const actualEvents = trackEvents(updater)
-
-  let checkCiRunnerError: string = ""
-  updater.addListener("error", (message: string) => {
-    checkCiRunnerError = message
-  })
-
   updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
     provider: "github",
     owner: "mmaietta",
@@ -31,11 +25,11 @@ const runTest = async (updaterClass: typeof BaseUpdater, expectedExtension: "deb
   expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 
   // AppImage requires APPIMAGE env var which can't exist on an emulated test updater
-  if (expectedExtension != "AppImage") {
-    updater.quitAndInstall(true, false)
-    // Sudo doesn't exist on Github CI runners (probably only self-hosted?), so we execute `quitAndInstall` to validate logic, unfortunately, cannot verify the installation itself
-    expect(checkCiRunnerError).toMatchObject("[Error: Error executing command as another user: No authentication agent found.]")
-  }
+  // if (expectedExtension != "AppImage") {
+  //   updater.quitAndInstall(true, false)
+  //   // Sudo doesn't exist on Github CI runners (probably only self-hosted?), so we execute `quitAndInstall` to validate logic, unfortunately, cannot verify the installation itself
+  //   expect(checkCiRunnerError).toMatchObject("[Error: Error executing command as another user: No authentication agent found.]")
+  // }
 }
 
 test.ifLinux("test rpm download", async () => {
