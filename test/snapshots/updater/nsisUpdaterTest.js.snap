@@ -441,14 +441,6 @@ Object {
 
 exports[`invalid signature 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
 
-exports[`invalid signature 2`] = `
-Array [
-  "checking-for-update",
-  "update-available",
-  "error",
-]
-`;
-
 exports[`sha512 mismatch error event 1`] = `
 Object {
   "files": Array [
@@ -468,6 +460,29 @@ Array [
   "checking-for-update",
   "update-available",
   "error",
+]
+`;
+
+exports[`test custom signature verifier 1`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+      "url": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+  "releaseName": "1.1.0",
+  "releaseNotes": "",
+  "tag": "v1.1.0",
+  "version": "1.1.0",
+}
+`;
+
+exports[`test custom signature verifier 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
 ]
 `;
 
