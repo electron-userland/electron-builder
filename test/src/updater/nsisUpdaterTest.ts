@@ -298,7 +298,9 @@ test.ifWindows("invalid signature", async () => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar"],
   })
+  const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  expect(actualEvents).toMatchSnapshot()
 })
 
 test.ifWindows("test custom signature verifier", async () => {
