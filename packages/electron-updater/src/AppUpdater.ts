@@ -726,7 +726,7 @@ export class NoOpLogger implements Logger {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   error(message?: any) {
-    console.error(message);
+    // ignore
   }
 }
 
