@@ -1,5 +1,68 @@
 # dmg-builder
 
+## 24.13.0
+
+### Patch Changes
+
+- Updated dependencies [[`63a00443`](https://github.com/electron-userland/electron-builder/commit/63a00443cf4bae9d7406f7e879ea607632da08b8), [`94677f3d`](https://github.com/electron-userland/electron-builder/commit/94677f3d70866582635c717b042194f0c75bbf01), [`9d1d1508`](https://github.com/electron-userland/electron-builder/commit/9d1d150896a763d3630418bf5be8fd3a070c0c40), [`bb4a8c09`](https://github.com/electron-userland/electron-builder/commit/bb4a8c09318045938bfff5a0d1db8f17f0fa4e8c)]:
+  - app-builder-lib@24.13.0
+
+## 24.12.0
+
+### Patch Changes
+
+- Updated dependencies [[`adf97dcc`](https://github.com/electron-userland/electron-builder/commit/adf97dccd0146288ab482a261b749d67a458868a), [`27734100`](https://github.com/electron-userland/electron-builder/commit/277341000a87abaa65a7985854c06e88ed5938b9), [`61dfe7fb`](https://github.com/electron-userland/electron-builder/commit/61dfe7fbaa592785353348a16abd1525dcbfaf28)]:
+  - app-builder-lib@24.12.0
+
+## 24.11.0
+
+### Patch Changes
+
+- Updated dependencies [[`28e5b5dd`](https://github.com/electron-userland/electron-builder/commit/28e5b5ddb6bb2d77ef6847fc0c93e62c97174156), [`8803852c`](https://github.com/electron-userland/electron-builder/commit/8803852c7aadf56771f537dc33ffd51c14830f50), [`88e61bc4`](https://github.com/electron-userland/electron-builder/commit/88e61bc410fae8c0bea0b2029ee1347864af98ac), [`869c7e46`](https://github.com/electron-userland/electron-builder/commit/869c7e4652a5d5a3562e25723d6cedd622ab657b)]:
+  - app-builder-lib@24.11.0
+
+## 24.10.0
+
+### Patch Changes
+
+- [#7933](https://github.com/electron-userland/electron-builder/pull/7933) [`0f0e942a`](https://github.com/electron-userland/electron-builder/commit/0f0e942a45d52faed9ff2bd6dd0198e79c8e183d) Thanks [@mmaietta](https://github.com/mmaietta)! - adding `-debug` to `hdiutil detach` for when it fails and attempts a force detach
+
+- Updated dependencies [[`843d5017`](https://github.com/electron-userland/electron-builder/commit/843d5017f0303cf6d5a71564aad73dd15ca75d88), [`664a09c4`](https://github.com/electron-userland/electron-builder/commit/664a09c4471f46a5b88be0b8e26f24b1a0b2bcc1)]:
+  - app-builder-lib@24.10.0
+
+## 24.9.4
+
+### Patch Changes
+
+- Updated dependencies [[`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af), [`f7aacabd`](https://github.com/electron-userland/electron-builder/commit/f7aacabd9cc1b98e365134004aafa31566c7d801), [`4e930a74`](https://github.com/electron-userland/electron-builder/commit/4e930a74d7c2e9b53d47e37997b444da95680a24), [`0f439890`](https://github.com/electron-userland/electron-builder/commit/0f439890229431f02c7f86d5bf523e940e217657), [`8b91d315`](https://github.com/electron-userland/electron-builder/commit/8b91d315727bfbac2ec2c2109f12aa92cf6f6c15)]:
+  - app-builder-lib@24.9.4
+  - builder-util@24.9.4
+
+## 24.9.3
+
+### Patch Changes
+
+- [#7905](https://github.com/electron-userland/electron-builder/pull/7905) [`d1347a06`](https://github.com/electron-userland/electron-builder/commit/d1347a06e5bd14f7811a543d2e8929b2ca3cdc39) Thanks [@jebibot](https://github.com/jebibot)! - fix dmg build when productName or executableName contains Unicode
+
+- [#7908](https://github.com/electron-userland/electron-builder/pull/7908) [`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23) Thanks [@Rychu-Pawel](https://github.com/Rychu-Pawel)! - fix: pass publish options to snap publisher
+
+- Updated dependencies [[`9fc51578`](https://github.com/electron-userland/electron-builder/commit/9fc5157879bfa380a78003ff13cdbc26b5e8fd23)]:
+  - app-builder-lib@24.9.3
+
+## 24.9.2
+
+### Patch Changes
+
+- Updated dependencies [[`65817e0e`](https://github.com/electron-userland/electron-builder/commit/65817e0edc43a2e6707fab835b0bbe680bd0b1e4), [`f83f05f6`](https://github.com/electron-userland/electron-builder/commit/f83f05f6f24a36b96d0e0c7786e1a12e5c762389), [`3b3a6989`](https://github.com/electron-userland/electron-builder/commit/3b3a69895f0caa3870219bc0bec7420de81a07ed)]:
+  - app-builder-lib@24.9.2
+
+## 24.9.1
+
+### Patch Changes
+
+- Updated dependencies [[`3c266271`](https://github.com/electron-userland/electron-builder/commit/3c26627182a660b6f22c1fa8eb22c714f014783f), [`d7e39f05`](https://github.com/electron-userland/electron-builder/commit/d7e39f05c55287ea32fd0f978ecb41078931d6b6), [`6fa8a27f`](https://github.com/electron-userland/electron-builder/commit/6fa8a27f9dd406c289f608c664c93b6ed9d1a9ee)]:
+  - app-builder-lib@24.9.1
+
 ## 24.9.0
 
 ### Patch Changes

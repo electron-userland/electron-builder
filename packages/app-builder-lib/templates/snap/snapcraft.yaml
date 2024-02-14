@@ -1,4 +1,4 @@
-base: core18
+base: core20
 grade: stable
 confinement: strict
 parts:

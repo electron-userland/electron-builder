@@ -1,4 +1,3 @@
-import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
@@ -7,10 +6,11 @@ import { spawn as _spawn } from "cross-spawn"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { dump } from "js-yaml"
-import { chmod } from "fs-extra"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
+import { getPath7za } from "./7za"
+import { chmod } from "fs-extra"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -27,6 +27,8 @@ export { copyFile, exists } from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"
+
+export { getPath7za, getPath7x } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -358,10 +360,9 @@ export async function executeAppBuilder(
 ): Promise<string> {
   const command = appBuilderPath
   await chmod(command, 0o755)
-  await chmod(path7za, 0o755)
   const env: any = {
     ...process.env,
-    SZA_PATH: path7za,
+    SZA_PATH: await getPath7za(),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
   const cacheEnv = process.env.ELECTRON_BUILDER_CACHE

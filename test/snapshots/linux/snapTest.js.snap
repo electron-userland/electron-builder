@@ -42,7 +42,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -181,7 +181,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -404,7 +404,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "compression": "xz",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
@@ -611,7 +611,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -681,7 +681,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -750,7 +750,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -819,7 +819,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -869,7 +869,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1034,7 +1034,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1200,7 +1200,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1366,7 +1366,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "classic",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1542,7 +1542,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1602,7 +1602,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -1803,7 +1803,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -2017,7 +2017,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -2090,7 +2090,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",
@@ -2176,7 +2176,7 @@ Object {
   "architectures": Array [
     "amd64",
   ],
-  "base": "core18",
+  "base": "core20",
   "confinement": "strict",
   "description": "Test Application (test quite “ #378)",
   "grade": "stable",

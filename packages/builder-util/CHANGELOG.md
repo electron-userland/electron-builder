@@ -1,5 +1,11 @@
 # builder-util
 
+## 24.9.4
+
+### Patch Changes
+
+- [#7930](https://github.com/electron-userland/electron-builder/pull/7930) [`e4d6be81`](https://github.com/electron-userland/electron-builder/commit/e4d6be81d80ce9de0c95288d4418bbb80f7902af) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: consolidating usages of `7zip-bin` to builder-util-runtime so as to execute `chmod` logic _always_
+
 ## 24.8.1
 
 ### Patch Changes

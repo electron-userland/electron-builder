@@ -50,7 +50,10 @@ function getAvailableHelperSuffixes(
 /** @internal */
 export async function createMacApp(packager: MacPackager, appOutDir: string, asarIntegrity: AsarIntegrity | null, isMas: boolean) {
   const appInfo = packager.appInfo
-  const appFilename = appInfo.productFilename
+  // Electon uses the application name (CFBundleName) to resolve helper apps
+  // https://github.com/electron/electron/blob/main/shell/app/electron_main_delegate_mac.mm
+  // https://github.com/electron-userland/electron-builder/issues/6962
+  const appFilename = appInfo.sanitizedProductName
   const electronBranding = createBrandingOpts(packager.config)
 
   const contentsPath = path.join(appOutDir, packager.info.framework.distMacOsAppName, "Contents")
@@ -198,7 +201,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
 
   const fileAssociations = packager.fileAssociations
   if (fileAssociations.length > 0) {
-    appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
+    const documentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)
       const customIcon = await packager.getResource(getPlatformIconFileName(fileAssociation.icon, true), `${extensions[0]}.icns`)
       let iconFile = appPlist.CFBundleIconFile
@@ -220,6 +223,9 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
       }
       return result
     })
+
+    // `CFBundleDocumentTypes` may be defined in `mac.extendInfo`, so we need to merge it in that case
+    appPlist.CFBundleDocumentTypes = [...(appPlist.CFBundleDocumentTypes || []), ...documentTypes]
   }
 
   if (asarIntegrity != null) {
@@ -270,7 +276,7 @@ export async function createMacApp(packager: MacPackager, appOutDir: string, asa
     await doRename(executableBasePath, `${prefix}${suffix}`, appFilename + suffix).then(() => doRename(loginItemPath, `${prefix}${suffix}.app`, `${appFilename}${suffix}.app`))
   }
 
-  const appPath = path.join(appOutDir, `${appFilename}.app`)
+  const appPath = path.join(appOutDir, `${appInfo.productFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840
   const now = Date.now() / 1000

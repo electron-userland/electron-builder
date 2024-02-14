@@ -75,6 +75,13 @@ export interface NsisOptions extends CommonNsisOptions, CommonWindowsInstallerCo
   readonly perMachine?: boolean
 
   /**
+   * Whether to set per-machine or per-user installation as default selection on the install mode installer page.
+   *
+   * @default false
+   */
+  readonly selectPerMachineByDefault?: boolean
+
+  /**
    * *assisted installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
    * @default true
    */

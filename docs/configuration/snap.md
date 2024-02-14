@@ -3,7 +3,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <!-- do not edit. start of generated block -->
 <ul>
 <li>
-<p><code id="SnapOptions-base">base</code> String | “undefined” - A snap of type base to be used as the execution environment for this snap. Examples: <code>core</code>, <code>core18</code>, <code>core20</code>, <code>core22</code>. Defaults to <code>core18</code></p>
+<p><code id="SnapOptions-base">base</code> String | “undefined” - A snap of type base to be used as the execution environment for this snap. Examples: <code>core</code>, <code>core18</code>, <code>core20</code>, <code>core22</code>. Defaults to <code>core20</code></p>
 </li>
 <li>
 <p><code id="SnapOptions-confinement">confinement</code> = <code>strict</code> “devmode” | “strict” | “classic” | “undefined” - The type of <a href="https://snapcraft.io/docs/reference/confinement">confinement</a> supported by the snap.</p>
@@ -36,7 +36,7 @@ The top-level [snap](configuration.md#Configuration-snap) key contains set of op
 <p>Additional attributes can be specified using object instead of just name of plug: <code>[  {    &quot;browser-sandbox&quot;: {      &quot;interface&quot;: &quot;browser-support&quot;,      &quot;allow-sandbox&quot;: true    },  },  &quot;another-simple-plug-name&quot; ]</code></p>
 </li>
 <li>
-<p><code id="SnapOptions-slots">slots</code> Array&lt;String | module:app-builder-lib/out/options/SnapOptions.SlotDescriptor&gt; | module:app-builder-lib/out/options/SnapOptions.PlugDescriptor | “undefined” - The list of <a href="https://snapcraft.io/docs/reference/interfaces">slots</a>.</p>
+<p><code id="SnapOptions-slots">slots</code> Array&lt;String | <a href="#SlotDescriptor">SlotDescriptor</a>&gt; | <a href="#PlugDescriptor">PlugDescriptor</a> | “undefined” - The list of <a href="https://snapcraft.io/docs/reference/interfaces">slots</a>.</p>
 <p>Additional attributes can be specified using object instead of just name of slot: ``` [  {    “mpris”: {      “name”: “chromium”    },  } ]</p>
 <p>In case you want your application to be a compliant MPris player, you will need to definie The mpris slot with “chromium” name. This electron has it <a href="https://source.chromium.org/chromium/chromium/src/+/master:components/system_media_controls/linux/system_media_controls_linux.cc;l=51;bpv=0;bpt=1">hardcoded</a>, and we need to pass this name so snap <a href="https://forum.snapcraft.io/t/unable-to-use-mpris-interface/15360/7">will allow it</a> in strict confinement.</p>
 </li>

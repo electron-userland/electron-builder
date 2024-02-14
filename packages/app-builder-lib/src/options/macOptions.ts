@@ -1,4 +1,5 @@
 import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
+import { CustomMacSign } from "../macPackager"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -176,6 +177,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly signIgnore?: Array<string> | string | null
 
   /**
+   * The custom function (or path to file or module id) to sign an app bundle.
+   */
+  readonly sign?: CustomMacSign | string | null
+
+  /**
    * Specify the URL of the timestamp authority server
    */
   readonly timestamp?: string | null
@@ -210,7 +216,12 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
    * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
    *
-   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
+   * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
+   * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
+   * 2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`
+   * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
+   *
+   * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
   readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
 }

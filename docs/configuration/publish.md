@@ -323,5 +323,24 @@ Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-gu
 <p><code id="S3Options-path">path</code> = <code>/</code> String | “undefined” - The directory path.</p>
 </li>
 </ul>
+<h2 id="custompublishoptions">CustomPublishOptions</h2>
+<p>undefined</p>
+<ul>
+<li><strong><code id="CustomPublishOptions-provider">provider</code></strong> “custom” - The provider. Must be <code>custom</code>.</li>
+<li><code id="CustomPublishOptions-updateProvider">updateProvider</code> module:builder-util-runtime/out/publishOptions.__type - The Provider to provide UpdateInfo regarding available updates.  Required to use custom providers with electron-updater.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="CustomPublishOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="CustomPublishOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="CustomPublishOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
+</li>
+</ul>
 
 <!-- end of generated block -->

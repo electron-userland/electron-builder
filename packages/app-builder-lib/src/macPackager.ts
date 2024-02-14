@@ -13,7 +13,7 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
-import { chooseNotNull, PlatformPackager } from "./platformPackager"
+import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
@@ -21,7 +21,16 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
-import { LegacyNotarizePasswordCredentials, LegacyNotarizeStartOptions, NotaryToolStartOptions, NotaryToolCredentials } from "@electron/notarize/lib/types"
+import {
+  LegacyNotarizePasswordCredentials,
+  LegacyNotarizeStartOptions,
+  NotaryToolStartOptions,
+  NotaryToolCredentials,
+  NotaryToolKeychainCredentials,
+} from "@electron/notarize/lib/types"
+
+export type CustomMacSignOptions = SignOptions
+export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
 export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
@@ -58,7 +67,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions)
+    // codesign requires the filename to be normalized to the NFD form
+    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion, this.platformSpecificBuildOptions, true)
   }
 
   async getIconPath(): Promise<string | null> {
@@ -230,7 +240,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         }
       }
 
-      if (identity == null) {
+      if (!options.sign && identity == null) {
         await reportError(isMas, certificateTypes, qualifier, keychainFile, this.forceCodeSigning)
         return false
       }
@@ -262,9 +272,9 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
           return path.resolve(appPath, destination)
         })
       )
-      log.info("Signing addtional user-defined binaries: " + JSON.stringify(binaries, null, 1))
+      log.info({ binaries }, "signing additional user-defined binaries")
     }
-    const customSignOptions = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
+    const customSignOptions: MasConfiguration | MacConfiguration = (isMas ? masOptions : this.platformSpecificBuildOptions) || this.platformSpecificBuildOptions
 
     const signOptions: SignOptions = {
       identityValidation: false,
@@ -305,16 +315,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       provisioningProfile: customSignOptions.provisioningProfile || undefined,
     }
 
-    log.info(
-      {
-        file: log.filePath(appPath),
-        identityName: identity.name,
-        identityHash: identity.hash,
-        provisioningProfile: signOptions.provisioningProfile || "none",
-      },
-      "signing"
-    )
-    await this.doSign(signOptions)
+    await this.doSign(signOptions, customSignOptions)
 
     // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
     if (masOptions != null && !isDevelopment) {
@@ -332,7 +333,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
 
     if (!isMas) {
-      await this.notarizeIfProvided(appPath)
+      await this.notarizeIfProvided(appPath, options)
     }
     return true
   }
@@ -392,8 +393,22 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected doSign(opts: SignOptions): Promise<any> {
-    return signAsync(opts)
+  protected async doSign(opts: SignOptions, customSignOptions: MacConfiguration): Promise<void> {
+    const customSign = await resolveFunction(this.appInfo.type, customSignOptions.sign, "sign")
+
+    const { app, platform, type, identity, provisioningProfile } = opts
+    log.info(
+      {
+        file: log.filePath(app),
+        platform,
+        type,
+        identity: identity || "none",
+        provisioningProfile: provisioningProfile || "none",
+      },
+      customSign ? "executing custom sign" : "signing"
+    )
+
+    return customSign ? Promise.resolve(customSign(opts, this)) : signAsync(opts)
   }
 
   //noinspection JSMethodCanBeStatic
@@ -481,10 +496,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     return true
   }
 
-  private async notarizeIfProvided(appPath: string) {
-    const notarizeOptions = this.platformSpecificBuildOptions.notarize
-    if (notarizeOptions === false) {
-      log.info({ reason: "`notarizeOptions` is explicitly set to false" }, "skipped macOS notarization")
+  private async notarizeIfProvided(appPath: string, buildOptions: MacConfiguration) {
+    const notarizeOptions = buildOptions.notarize
+    if (!notarizeOptions) {
+      log.info({ reason: "`notarize` options were not provided" }, "skipped macOS notarization")
       return
     }
     const options = this.getNotarizeOptions(appPath)
@@ -500,7 +515,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
 
     // option 1: app specific password
-    if (appleId || !appleIdPassword) {
+    if (appleId || appleIdPassword) {
       if (!appleId) {
         throw new InvalidConfigurationError(`APPLE_ID env var needs to be set`)
       }
@@ -524,8 +539,12 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     // option 3: keychain
     const keychain = process.env.APPLE_KEYCHAIN
     const keychainProfile = process.env.APPLE_KEYCHAIN_PROFILE
-    if (keychain && keychainProfile) {
-      return this.generateNotarizeOptions(appPath, undefined, { keychain, keychainProfile })
+    if (keychainProfile) {
+      let args: NotaryToolKeychainCredentials = { keychainProfile }
+      if (keychain) {
+        args = { ...args, keychain }
+      }
+      return this.generateNotarizeOptions(appPath, undefined, args)
     }
 
     // if no credentials provided, skip silently
@@ -543,7 +562,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       return proj
     }
     const { teamId } = options as NotarizeNotaryOptions
-    if (teamId && (legacyLogin || notaryToolLogin)) {
+    if ((teamId || options === true) && (legacyLogin || notaryToolLogin)) {
       const proj: NotaryToolStartOptions = {
         appPath,
         ...(legacyLogin ?? notaryToolLogin!),
@@ -558,6 +577,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         ...legacyLogin,
         appBundleId: appBundleId || this.appInfo.id,
         ascProvider: ascProvider || undefined,
+      }
+    }
+    if (notaryToolLogin) {
+      return {
+        tool: "notarytool",
+        appPath,
+        ...notaryToolLogin,
       }
     }
     return undefined

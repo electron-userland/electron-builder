@@ -2680,7 +2680,7 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
         },
         "preAutoEntitlements": {
           "default": true,
@@ -2786,6 +2786,20 @@
             "null",
             "string"
           ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign an app bundle."
         },
         "signIgnore": {
           "anyOf": [
@@ -3313,7 +3327,7 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step"
+          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
         },
         "preAutoEntitlements": {
           "default": true,
@@ -3419,6 +3433,20 @@
             "null",
             "string"
           ]
+        },
+        "sign": {
+          "anyOf": [
+            {
+              "typeof": "function"
+            },
+            {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          ],
+          "description": "The custom function (or path to file or module id) to sign an app bundle."
         },
         "signIgnore": {
           "anyOf": [
@@ -4183,6 +4211,11 @@
             "string"
           ]
         },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
+          "type": "boolean"
+        },
         "shortcutName": {
           "description": "The name that will be used for all shortcuts. Defaults to the application name.",
           "type": [
@@ -4505,6 +4538,11 @@
             "null",
             "string"
           ]
+        },
+        "selectPerMachineByDefault": {
+          "default": false,
+          "description": "Whether to set per-machine or per-user installation as default selection on the install mode installer page.",
+          "type": "boolean"
         },
         "shortcutName": {
           "description": "The name that will be used for all shortcuts. Defaults to the application name.",
@@ -5687,7 +5725,7 @@
           "type": "boolean"
         },
         "base": {
-          "description": "A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`. Defaults to `core18`",
+          "description": "A snap of type base to be used as the execution environment for this snap. Examples: `core`, `core18`, `core20`, `core22`. Defaults to `core20`",
           "type": [
             "null",
             "string"
@@ -6804,7 +6842,7 @@
             }
           ],
           "default": "nsis",
-          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
+          "description": "The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` ([portable](/configuration/nsis#portable) app without installation), `appx`, `msi`, `msi-wrapped`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.\nAppX package can be built only on Windows 10.\n\nTo use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency."
         },
         "timeStampServer": {
           "default": "http://timestamp.digicert.com",
@@ -7491,7 +7529,7 @@
           ]
         }
       ],
-      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file."
+      "description": "The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic"
     },
     "p5p": {
       "anyOf": [

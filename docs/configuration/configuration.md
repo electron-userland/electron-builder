@@ -169,7 +169,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-appxManifestCreated">appxManifestCreated</code> module:app-builder-lib/out/configuration.__type | String | “undefined” - Appx manifest created on disk - not packed into .appx package yet.</p>
 </li>
 <li>
-<p><code id="Configuration-onNodeModuleFile">onNodeModuleFile</code> - The function (or path to file or module id) to be <a href="#onnodemodulefile">run on each node module</a> file.</p>
+<p><code id="Configuration-onNodeModuleFile">onNodeModuleFile</code> - The function (or path to file or module id) to be <a href="#onnodemodulefile">run on each node module</a> file. Returning <code>true</code>/<code>false</code> will determine whether to force include or to use the default copier logic</p>
 </li>
 <li>
 <p><code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) =&gt; Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when <code>npmRebuild</code> is set to <code>true</code>. Resolving to <code>false</code> will skip dependencies install or rebuild.</p>

@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.1.8
+
+### Patch Changes
+
+- [#7950](https://github.com/electron-userland/electron-builder/pull/7950) [`03c94516`](https://github.com/electron-userland/electron-builder/commit/03c94516ef3b1b31b2f5b7bcdb9c6d3753d36b8d) Thanks [@bronsonmock](https://github.com/bronsonmock)! - feat(nsis): add option to disable differential download
+
 ## 6.1.7
 
 ### Patch Changes

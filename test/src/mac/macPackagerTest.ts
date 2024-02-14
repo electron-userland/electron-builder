@@ -54,6 +54,13 @@ test.ifMac(
           appId: "foo",
           extendInfo: {
             LSUIElement: true,
+            CFBundleDocumentTypes: [
+              {
+                CFBundleTypeName: "Folders",
+                CFBundleTypeRole: "Editor",
+                LSItemContentTypes: ["public.folder"],
+              },
+            ],
           },
           minimumSystemVersion: "10.12.0",
           fileAssociations: [

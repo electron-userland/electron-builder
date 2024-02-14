@@ -143,7 +143,11 @@
       !ifdef INSTALL_MODE_PER_ALL_USERS
         !insertmacro setInstallModePerAllUsers
       !else
-        !insertmacro setInstallModePerUser
+        !ifdef INSTALL_MODE_PER_ALL_USERS_DEFAULT
+          !insertmacro setInstallModePerAllUsers
+        !else
+          !insertmacro setInstallModePerUser
+        !endif
       !endif
     ${endif}
   !endif

@@ -76,6 +76,7 @@ export type Defines = {
   MULTIUSER_INSTALLMODE_ALLOW_ELEVATION?: null
 
   INSTALL_MODE_PER_ALL_USERS?: null
+  INSTALL_MODE_PER_ALL_USERS_DEFAULT?: null
   INSTALL_MODE_PER_ALL_USERS_REQUIRED?: null
 
   allowToChangeInstallationDirectory?: null
