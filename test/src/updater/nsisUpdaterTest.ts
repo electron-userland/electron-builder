@@ -186,6 +186,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -203,6 +204,7 @@ test("file url github pre-release and fullChangelog", async () => {
   updater.updateConfigPath = await writeUpdateConfig(options)
   updater.signals.updateDownloaded(info => {
     expect(info.downloadedFile).not.toBeNull()
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     delete (info as any).downloadedFile
     expect(info).toMatchSnapshot()
   })
@@ -273,7 +275,9 @@ test.ifAll("valid signature - multiple publisher DNs", async () => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
   })
+  const actualEvents = trackEvents(updater)
   await validateDownload(updater)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 test.ifAll("valid signature using DN", async () => {
@@ -284,10 +288,13 @@ test.ifAll("valid signature using DN", async () => {
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
+
+  const actualEvents = trackEvents(updater)
   await validateDownload(updater)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
-test.skip.ifAll("invalid signature", async () => {
+test.ifWindows("invalid signature", async () => {
   const updater = await createNsisUpdater("0.0.1")
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
@@ -295,9 +302,27 @@ test.skip.ifAll("invalid signature", async () => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar"],
   })
-  const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
-  expect(actualEvents).toMatchSnapshot()
+})
+
+test.ifWindows("test custom signature verifier", async () => {
+  const updater = await createNsisUpdater("1.0.2")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+  })
+
+  const actualEvents = trackEvents(updater)
+
+  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+    return Promise.resolve(null)
+    // const result = verifySignatureByPublishName(path, publisherName)
+    // return Promise.resolve(result.signed ? undefined : result.message)
+  }
+  await validateDownload(updater)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 // disable for now
@@ -368,18 +393,19 @@ test.ifAll("test download and install", async () => {
 
   const actualEvents = trackEvents(updater)
   expect(actualEvents).toMatchObject([])
-  // await updater.quitAndInstall(true, false)
 })
 
-test.ifAll("test downloaded installer", async () => {
-  const updater = await createNsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
-    provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+test.skip.ifWindows("test downloaded installer", async () => {
+  const updater = await createNsisUpdater("1.0.1")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "mmaietta",
+    repo: "electron-builder-test",
   })
 
   const actualEvents = trackEvents(updater)
-
-  expect(actualEvents).toMatchObject([])
-  // await updater.quitAndInstall(true, false)
+  await validateDownload(updater)
+  // expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
+  updater.quitAndInstall(true, false)
+  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded", "before-quit-for-update"])
 })

@@ -30,8 +30,9 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
 
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
+    // Resetting PSModulePath is necessary https://github.com/electron-userland/electron-builder/issues/7127
     execFile(
-      "chcp 65001 >NUL & powershell.exe",
+      `set "PSModulePath="; chcp 65001 >NUL & powershell.exe`,
       ["-NoProfile", "-NonInteractive", "-InputFormat", "None", "-Command", `"Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress"`],
       {
         shell: true,
@@ -44,7 +45,6 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
             resolve(null)
             return
           }
-
           const data = parseOut(stdout)
           if (data.Status === 0) {
             const subject = parseDn(data.SignerCertificate.Subject)

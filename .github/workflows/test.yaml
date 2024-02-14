@@ -8,14 +8,9 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      build-docker-locally:
-        type: boolean
-        description: Force rebuild docker images for CI tests
-        required: false
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: read
 
 jobs:
   test-linux:
@@ -55,7 +50,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-  
+
   test-mac:
     runs-on: macos-latest
     steps:
@@ -73,7 +68,7 @@ jobs:
         env:
           TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
           FORCE_COLOR: 1
-  
+
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-latest
@@ -102,7 +97,7 @@ jobs:
       matrix:
         testFiles:
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,winCodeSignTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -112,7 +107,7 @@ jobs:
         with:
           cache-key: v-17.0.0-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
-      
+
       - name: Test
         run: pnpm ci:test
         env:
