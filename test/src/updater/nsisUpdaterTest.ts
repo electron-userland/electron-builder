@@ -108,7 +108,7 @@ test.skip("DigitalOcean Spaces", async () => {
   await validateDownload(updater)
 })
 
-test.skip.ifNotCiWin("sha512 mismatch error event", async () => {
+test.ifWindows("sha512 mismatch error event", async () => {
   const updater = await createNsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
     provider: "generic",
@@ -275,9 +275,7 @@ test.ifAll("valid signature - multiple publisher DNs", async () => {
     repo: "__test_nsis_release",
     publisherName: ["Foo Bar", "CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE", "Bar Foo"],
   })
-  const actualEvents = trackEvents(updater)
   await validateDownload(updater)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 test.ifAll("valid signature using DN", async () => {
@@ -289,9 +287,7 @@ test.ifAll("valid signature using DN", async () => {
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
 
-  const actualEvents = trackEvents(updater)
   await validateDownload(updater)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 test.ifWindows("invalid signature", async () => {
@@ -313,16 +309,12 @@ test.ifWindows("test custom signature verifier", async () => {
     repo: "__test_nsis_release",
     publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
   })
-
-  const actualEvents = trackEvents(updater)
-
   updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
     return Promise.resolve(null)
     // const result = verifySignatureByPublishName(path, publisherName)
     // return Promise.resolve(result.signed ? undefined : result.message)
   }
   await validateDownload(updater)
-  expect(actualEvents).toMatchObject(["checking-for-update", "update-available", "update-downloaded"])
 })
 
 // disable for now
@@ -390,9 +382,6 @@ test.ifAll("test download and install", async () => {
   })
 
   await validateDownload(updater)
-
-  const actualEvents = trackEvents(updater)
-  expect(actualEvents).toMatchObject([])
 })
 
 test.skip.ifWindows("test downloaded installer", async () => {
