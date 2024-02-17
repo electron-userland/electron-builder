@@ -27,6 +27,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
     // guaranteed that the path will not contain any illegal characters like <>:"/\|?*
     // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
     const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''")
+    logger.info(`Verifying signature ${tempUpdateFile}`)
 
     // https://github.com/electron-userland/electron-builder/issues/2421
     // https://github.com/electron-userland/electron-builder/issues/2535
