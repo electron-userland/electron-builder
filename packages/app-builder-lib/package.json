@@ -105,6 +105,10 @@
     "dmg-builder": "workspace:*",
     "electron-builder-squirrel-windows": "workspace:*"
   },
+  "peerDependencies": {
+    "dmg-builder": "workspace:*",
+    "electron-builder-squirrel-windows": "workspace:*"
+  },
   "//": "electron-builder-squirrel-windows and dmg-builder added as dev dep for tests (as otherwise `require` doesn't work using Yarn 2)",
   "typings": "./out/index.d.ts"
 }
