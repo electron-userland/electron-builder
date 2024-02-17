@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.4
+
+### Patch Changes
+
+- [#8057](https://github.com/electron-userland/electron-builder/pull/8057) [`ccbb80de`](https://github.com/electron-userland/electron-builder/commit/ccbb80dea4b6146ea2d2186193a1f307096e4d1e) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: upgrading connected dependencies (typescript requires higher eslint version)
+
 ## 9.2.3
 
 ### Patch Changes
