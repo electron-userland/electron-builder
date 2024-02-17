@@ -7,7 +7,11 @@ import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = newBaseUrl(this.configuration.url)
 
-  constructor(private readonly configuration: GenericServerOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+  constructor(
+    private readonly configuration: GenericServerOptions,
+    private readonly updater: AppUpdater,
+    runtimeOptions: ProviderRuntimeOptions
+  ) {
     super(runtimeOptions)
   }
 

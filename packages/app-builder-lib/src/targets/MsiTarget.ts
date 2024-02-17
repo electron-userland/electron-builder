@@ -27,7 +27,12 @@ export default class MsiTarget extends Target {
 
   readonly options: MsiOptions = deepAssign(this.packager.platformSpecificBuildOptions, this.packager.config.msi)
 
-  constructor(protected readonly packager: WinPackager, readonly outDir: string, name = "msi", isAsyncSupported = true) {
+  constructor(
+    protected readonly packager: WinPackager,
+    readonly outDir: string,
+    name = "msi",
+    isAsyncSupported = true
+  ) {
     super(name, isAsyncSupported)
   }
 

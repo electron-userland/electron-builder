@@ -79,9 +79,7 @@ test.ifAll.ifDevOrWinCi(
         msiProjectCreated: async path => {
           await fs.promises.writeFile(
             path,
-            (
-              await fs.promises.readFile(path, "utf8")
-            ).replace(
+            (await fs.promises.readFile(path, "utf8")).replace(
               "</Product>",
               `<util:CloseApplication xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
               PromptToContinue="no"

@@ -52,7 +52,11 @@ export interface OutFileNames {
 }
 
 export class SquirrelBuilder {
-  constructor(private readonly options: SquirrelOptions, private readonly outputDirectory: string, private readonly packager: WinPackager) {}
+  constructor(
+    private readonly options: SquirrelOptions,
+    private readonly outputDirectory: string,
+    private readonly packager: WinPackager
+  ) {}
 
   async buildInstaller(outFileNames: OutFileNames, appOutDir: string, outDir: string, arch: Arch) {
     const packager = this.packager

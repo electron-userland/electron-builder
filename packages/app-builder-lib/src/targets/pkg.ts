@@ -24,7 +24,10 @@ export class PkgTarget extends Target {
     ...this.packager.config.pkg,
   }
 
-  constructor(private readonly packager: MacPackager, readonly outDir: string) {
+  constructor(
+    private readonly packager: MacPackager,
+    readonly outDir: string
+  ) {
     super("pkg")
   }
 

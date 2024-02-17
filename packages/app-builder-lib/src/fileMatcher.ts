@@ -50,7 +50,12 @@ export class FileMatcher {
 
   readonly isSpecifiedAsEmptyArray: boolean
 
-  constructor(from: string, to: string, readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | null | undefined) {
+  constructor(
+    from: string,
+    to: string,
+    readonly macroExpander: (pattern: string) => string,
+    patterns?: Array<string> | string | null | undefined
+  ) {
     this.from = ensureNoEndSlash(macroExpander(from))
     this.to = ensureNoEndSlash(macroExpander(to))
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))

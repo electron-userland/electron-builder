@@ -17,7 +17,10 @@ import { release as getOsRelease } from "os"
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
 
-  constructor(private readonly packager: MacPackager, readonly outDir: string) {
+  constructor(
+    private readonly packager: MacPackager,
+    readonly outDir: string
+  ) {
     super("dmg")
   }
 

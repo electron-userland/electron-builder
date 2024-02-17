@@ -7,7 +7,11 @@ import { parseUpdateInfo, Provider, ProviderRuntimeOptions, resolveFiles } from 
 export class BitbucketProvider extends Provider<UpdateInfo> {
   private readonly baseUrl: URL
 
-  constructor(private readonly configuration: BitbucketOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+  constructor(
+    private readonly configuration: BitbucketOptions,
+    private readonly updater: AppUpdater,
+    runtimeOptions: ProviderRuntimeOptions
+  ) {
     super({
       ...runtimeOptions,
       isUseMultipleRangeRequest: false,

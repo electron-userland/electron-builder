@@ -59,7 +59,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  protected constructor(readonly info: Packager, readonly platform: Platform) {
+  protected constructor(
+    readonly info: Packager,
+    readonly platform: Platform
+  ) {
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
   }
@@ -169,8 +172,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const base = isResources
       ? this.getResourcesDir(appOutDir)
       : this.platform === Platform.MAC
-      ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-      : appOutDir
+        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
+        : appOutDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -272,8 +275,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       this.platform === Platform.MAC
         ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources")
         : isElectronBased(framework)
-        ? path.join(appOutDir, "resources")
-        : appOutDir
+          ? path.join(appOutDir, "resources")
+          : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()

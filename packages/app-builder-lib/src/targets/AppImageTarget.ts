@@ -16,7 +16,12 @@ export default class AppImageTarget extends Target {
   readonly options: AppImageOptions = { ...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name] }
   private readonly desktopEntry: Lazy<string>
 
-  constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
+  constructor(
+    ignored: string,
+    private readonly packager: LinuxPackager,
+    private readonly helper: LinuxTargetHelper,
+    readonly outDir: string
+  ) {
     super("appImage")
 
     this.desktopEntry = new Lazy<string>(() => {
@@ -49,7 +54,7 @@ export default class AppImageTarget extends Target {
       createStageDir(this, packager, arch),
     ])
     const license = c[3]
-    const stageDir = c[4]!
+    const stageDir = c[4]
 
     const publishConfig = c[2]
     if (publishConfig != null) {

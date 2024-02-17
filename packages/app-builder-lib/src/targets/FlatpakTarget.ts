@@ -15,7 +15,12 @@ export default class FlatpakTarget extends Target {
     ...(this.packager.config as any)[this.name],
   }
 
-  constructor(name: string, private readonly packager: LinuxPackager, private helper: LinuxTargetHelper, readonly outDir: string) {
+  constructor(
+    name: string,
+    private readonly packager: LinuxPackager,
+    private helper: LinuxTargetHelper,
+    readonly outDir: string
+  ) {
     super(name)
   }
 
