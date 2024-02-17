@@ -397,7 +397,7 @@ export class NsisTarget extends Target {
     } else {
       await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
-    await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
+    await packager.sign(uninstallerPath, "signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
