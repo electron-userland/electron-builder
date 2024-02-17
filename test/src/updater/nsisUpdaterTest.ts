@@ -313,10 +313,24 @@ test.ifWindows("test custom signature verifier", async () => {
   })
   updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
     return Promise.resolve(null)
-    // const result = verifySignatureByPublishName(path, publisherName)
-    // return Promise.resolve(result.signed ? undefined : result.message)
   }
   await validateDownload(updater)
+})
+
+test.ifWindows("test custom signature verifier - signing error message", async () => {
+  const updater = await createNsisUpdater("1.0.2")
+  updater.updateConfigPath = await writeUpdateConfig<GithubOptions>({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE"],
+  })
+  updater.verifyUpdateCodeSignature = (publisherName: string[], path: string) => {
+    return Promise.resolve("signature verification failed")
+  }
+  const actualEvents = trackEvents(updater)
+  await assertThat(updater.checkForUpdates().then((it): any => it?.downloadPromise)).throws()
+  expect(actualEvents).toMatchSnapshot()
 })
 
 // disable for now
