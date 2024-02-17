@@ -471,6 +471,16 @@ Array [
 ]
 `;
 
+exports[`test custom signature verifier - signing error message 1`] = `"ERR_UPDATER_INVALID_SIGNATURE"`;
+
+exports[`test custom signature verifier - signing error message 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
+`;
+
 exports[`test custom signature verifier 1`] = `
 Object {
   "files": Array [
