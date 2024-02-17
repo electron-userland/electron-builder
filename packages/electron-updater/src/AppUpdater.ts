@@ -433,7 +433,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
       this._logger.info(
-        `Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
       )
       this.emit("update-not-available", updateInfo)
       return {

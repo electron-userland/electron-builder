@@ -62,7 +62,11 @@ export class PublishManager implements PublishContext {
 
   private readonly updateFileWriteTask: Array<UpdateInfoFileTask> = []
 
-  constructor(private readonly packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken = packager.cancellationToken) {
+  constructor(
+    private readonly packager: Packager,
+    private readonly publishOptions: PublishOptions,
+    readonly cancellationToken: CancellationToken = packager.cancellationToken
+  ) {
     checkOptions(publishOptions.publish)
 
     this.taskManager = new AsyncTaskManager(cancellationToken)

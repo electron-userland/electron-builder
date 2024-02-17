@@ -14,7 +14,12 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  constructor(options: GithubOptions, private readonly updater: AppUpdater, private readonly token: string, runtimeOptions: ProviderRuntimeOptions) {
+  constructor(
+    options: GithubOptions,
+    private readonly updater: AppUpdater,
+    private readonly token: string,
+    runtimeOptions: ProviderRuntimeOptions
+  ) {
     super(options, "api.github.com", runtimeOptions)
   }
 

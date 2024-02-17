@@ -37,7 +37,12 @@ export class GitHubPublisher extends HttpPublisher {
 
   private releaseLogFields: Fields | null = null
 
-  constructor(context: PublishContext, private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
+  constructor(
+    context: PublishContext,
+    private readonly info: GithubOptions,
+    private readonly version: string,
+    private readonly options: PublishOptions = {}
+  ) {
     super(context, true)
 
     let token = info.token

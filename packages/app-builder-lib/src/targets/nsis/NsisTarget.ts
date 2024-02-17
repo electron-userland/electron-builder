@@ -43,7 +43,12 @@ export class NsisTarget extends Target {
   readonly archs: Map<Arch, string> = new Map()
   readonly isAsyncSupported = false
 
-  constructor(readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
+  constructor(
+    readonly packager: WinPackager,
+    readonly outDir: string,
+    targetName: string,
+    protected readonly packageHelper: AppPackageHelper
+  ) {
     super(targetName)
 
     this.packageHelper.refCount++
@@ -564,7 +569,7 @@ export class NsisTarget extends Target {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
     args.push("-INPUTCHARSET", "UTF8")
     for (const name of Object.keys(defines)) {
-      const value = defines[name as keyof Defines]
+      const value: any = defines[name as keyof Defines]
       if (value == null) {
         args.push(`-D${name}`)
       } else {

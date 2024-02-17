@@ -131,7 +131,11 @@ class ElectronFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = true
 
-  constructor(readonly name: string, readonly version: string, readonly distMacOsAppName: string) {}
+  constructor(
+    readonly name: string,
+    readonly version: string,
+    readonly distMacOsAppName: string
+  ) {}
 
   getDefaultIcon(platform: Platform) {
     if (platform === Platform.LINUX) {

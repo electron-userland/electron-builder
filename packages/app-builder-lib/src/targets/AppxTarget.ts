@@ -25,7 +25,10 @@ const DEFAULT_RESOURCE_LANG = "en-US"
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
-  constructor(private readonly packager: WinPackager, readonly outDir: string) {
+  constructor(
+    private readonly packager: WinPackager,
+    readonly outDir: string
+  ) {
     super("appx")
 
     if (process.platform !== "darwin" && (process.platform !== "win32" || isOldWin6())) {

@@ -20,7 +20,12 @@ export class AsarPackager {
   private readonly outFile: string
   private readonly unpackedDest: string
 
-  constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
+  constructor(
+    private readonly src: string,
+    private readonly destination: string,
+    private readonly options: AsarOptions,
+    private readonly unpackPattern: Filter | null
+  ) {
     this.outFile = path.join(destination, "app.asar")
     this.unpackedDest = `${this.outFile}.unpacked`
   }

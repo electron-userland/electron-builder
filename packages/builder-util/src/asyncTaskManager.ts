@@ -73,6 +73,7 @@ export class AsyncTaskManager {
           return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         list = tasks.slice()
         tasks.length = 0
       }
