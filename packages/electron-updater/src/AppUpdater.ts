@@ -40,6 +40,7 @@ export type AppUpdaterEvents = {
   "download-progress": (info: ProgressInfo) => void
   "update-cancelled": (info: UpdateInfo) => void
   "appimage-filename-updated": (path: string) => void
+  "before-quit-for-update": () => void
 }
 
 export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter<AppUpdaterEvents>) {

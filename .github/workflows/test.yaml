@@ -96,9 +96,8 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - winCodeSignTest
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,winCodeSignTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4

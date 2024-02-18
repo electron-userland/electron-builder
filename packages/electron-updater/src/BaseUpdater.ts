@@ -18,7 +18,12 @@ export abstract class BaseUpdater extends AppUpdater {
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that
-        require("electron").autoUpdater.emit("before-quit-for-update")
+        try {
+          require("electron").autoUpdater.emit("before-quit-for-update")
+        } catch {
+          // ignore, this only fails during mocked unit tests via TestAppAdapter
+        }
+        this.emit("before-quit-for-update")
         this.app.quit()
       })
     } else {
@@ -103,7 +108,7 @@ export abstract class BaseUpdater extends AppUpdater {
   protected wrapSudo() {
     const { name } = this.app
     const installComment = `"${name} would like to update"`
-    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
+    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu").stdout
     const command = [sudo]
     if (/kdesudo/i.test(sudo)) {
       command.push("--comment", installComment)
@@ -116,14 +121,16 @@ export abstract class BaseUpdater extends AppUpdater {
     return command.join(" ")
   }
 
-  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): string {
+  protected spawnSyncLog(cmd: string, args: string[] = [], env = {}): { stdout: string; stderr: string } {
     this._logger.info(`Executing: ${cmd} with args: ${args}`)
     const response = spawnSync(cmd, args, {
       env: { ...process.env, ...env },
       encoding: "utf-8",
       shell: true,
     })
-    return response.stdout.trim()
+    const stdout = response.stdout.trim()
+    const stderr = response.stderr.trim()
+    return { stdout, stderr }
   }
 
   /**

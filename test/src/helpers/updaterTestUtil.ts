@@ -47,6 +47,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
     if (updater instanceof MacUpdater) {
       expect(downloadResult).toEqual([])
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       await assertThat(path.join(downloadResult![0])).isFile()
     }
   } else {
@@ -80,7 +81,7 @@ export function tuneTestUpdater(updater: AppUpdater, options?: TestOnlyUpdaterOp
 
 export function trackEvents(updater: AppUpdater) {
   const actualEvents: Array<string> = []
-  for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error"] as const) {
+  for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error", "before-quit-for-update"] as const) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })
