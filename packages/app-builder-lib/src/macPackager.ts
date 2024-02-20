@@ -498,12 +498,13 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
   private async notarizeIfProvided(appPath: string, buildOptions: MacConfiguration) {
     const notarizeOptions = buildOptions.notarize
-    if (!notarizeOptions) {
-      log.info({ reason: "`notarize` options were not provided" }, "skipped macOS notarization")
+    if (notarizeOptions === false) {
+      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
       return
     }
     const options = this.getNotarizeOptions(appPath)
     if (!options) {
+      log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
     await notarize(options)
@@ -561,7 +562,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
       return proj
     }
-    const { teamId } = options as NotarizeNotaryOptions
+    const teamId = (options as NotarizeNotaryOptions)?.teamId
     if ((teamId || options === true) && (legacyLogin || notaryToolLogin)) {
       const proj: NotaryToolStartOptions = {
         appPath,
