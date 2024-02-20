@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix: execute SysRoot cmd.exe directly
+fix: execute %SYSTEMROOT% cmd.exe directly during NSIS installer
