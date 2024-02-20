@@ -498,8 +498,8 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
 
   private async notarizeIfProvided(appPath: string, buildOptions: MacConfiguration) {
     const notarizeOptions = buildOptions.notarize
-    if (!notarizeOptions) {
-      log.info({ reason: "`notarize` options were not provided" }, "skipped macOS notarization")
+    if (notarizeOptions === false) {
+      log.info({ reason: "`notarize` options were set explicitly `false`" }, "skipped macOS notarization")
       return
     }
     const options = this.getNotarizeOptions(appPath)
