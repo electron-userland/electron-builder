@@ -562,7 +562,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       }
       return proj
     }
-    const { teamId } = options as NotarizeNotaryOptions
+    const teamId = (options as NotarizeNotaryOptions)?.teamId
     if ((teamId || options === true) && (legacyLogin || notaryToolLogin)) {
       const proj: NotaryToolStartOptions = {
         appPath,
