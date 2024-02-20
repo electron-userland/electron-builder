@@ -504,7 +504,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     }
     const options = this.getNotarizeOptions(appPath)
     if (!options) {
-      log.info({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
+      log.warn({ reason: "`notarize` options were unable to be generated" }, "skipped macOS notarization")
       return
     }
     await notarize(options)
