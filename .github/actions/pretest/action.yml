@@ -10,7 +10,7 @@ inputs:
   version:
     description: 'The pnpm version to use'
     required: false
-    default: 8.6.10
+    default: 8.9.0
 
 runs:
   using: 'composite'
@@ -21,7 +21,7 @@ runs:
         version: ${{ inputs.version }}
 
     - name: Setup node
-      uses: actions/setup-node@e33196f7422957bea03ed53f6fbb155025ffc7b8 # v3
+      uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4
       with:
         node-version: '18'
         cache: 'pnpm'
@@ -33,9 +33,9 @@ runs:
     - name: Compile
       run: pnpm compile
       shell: bash
-    
+
     - name: Cache Electron
-      uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3
+      uses: actions/cache@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4
       with:
         path: ${{ inputs.cache-path }}
         key: ${{ inputs.cache-key }}

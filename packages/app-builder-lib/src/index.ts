@@ -26,7 +26,7 @@ export { Configuration, AfterPackContext, MetadataDirectories } from "./configur
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow } from "./options/macOptions"
+export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
 export { WindowsConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
@@ -35,10 +35,11 @@ export { MsiWrappedOptions } from "./options/MsiWrappedOptions"
 export { CommonWindowsInstallerConfiguration } from "./options/CommonWindowsInstallerConfiguration"
 export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions } from "./targets/nsis/nsisOptions"
 export { LinuxConfiguration, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions, AppImageOptions, FlatpakOptions } from "./options/linuxOptions"
-export { SnapOptions } from "./options/SnapOptions"
+export { SnapOptions, PlugDescriptor, SlotDescriptor } from "./options/SnapOptions"
 export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
 export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
 export {
   WindowsSignOptions,
   CustomWindowsSignTaskConfiguration,
@@ -76,7 +77,7 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
   process.once("SIGINT", sigIntHandler)
 
   const promise = packager.build().then(async buildResult => {
-    const afterAllArtifactBuild = resolveFunction(buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+    const afterAllArtifactBuild = await resolveFunction(packager.appInfo.type, buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
     if (afterAllArtifactBuild != null) {
       const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
       if (newArtifacts.length === 0 || !publishManager.isPublish) {
@@ -89,6 +90,10 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
       }
 
       for (const newArtifact of newArtifacts) {
+        if (buildResult.artifactPaths.includes(newArtifact)) {
+          log.warn({ newArtifact }, "skipping publish of artifact, already published")
+          continue
+        }
         buildResult.artifactPaths.push(newArtifact)
         for (const publishConfiguration of publishConfigurations) {
           publishManager.scheduleUpload(

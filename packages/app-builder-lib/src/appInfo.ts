@@ -22,6 +22,7 @@ export function smarten(s: string): string {
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
+  readonly type: string | undefined
   readonly shortVersion: string | undefined
   readonly shortVersionWindows: string | undefined
 
@@ -32,8 +33,14 @@ export class AppInfo {
   readonly sanitizedProductName: string
   readonly productFilename: string
 
-  constructor(private readonly info: Packager, buildVersion: string | null | undefined, private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null) {
+  constructor(
+    private readonly info: Packager,
+    buildVersion: string | null | undefined,
+    private readonly platformSpecificOptions: PlatformSpecificBuildOptions | null = null,
+    normalizeNfd = false
+  ) {
     this.version = info.metadata.version!
+    this.type = info.metadata.type
 
     if (buildVersion == null) {
       buildVersion = info.config.buildVersion
@@ -63,8 +70,10 @@ export class AppInfo {
     }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
-    this.sanitizedProductName = sanitizeFileName(this.productName)
-    this.productFilename = platformSpecificOptions?.executableName != null ? sanitizeFileName(platformSpecificOptions.executableName) : this.sanitizedProductName
+    this.sanitizedProductName = sanitizeFileName(this.productName, normalizeNfd)
+
+    const executableName = platformSpecificOptions?.executableName ?? info.config.executableName
+    this.productFilename = executableName != null ? sanitizeFileName(executableName, normalizeNfd) : this.sanitizedProductName
   }
 
   get channel(): string | null {

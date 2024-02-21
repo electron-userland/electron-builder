@@ -37,7 +37,7 @@ export async function detach(name: string) {
   try {
     await exec("hdiutil", ["detach", "-quiet", name])
   } catch (e: any) {
-    await retry(() => exec("hdiutil", ["detach", "-force", name]), 5, 1000, 500)
+    await retry(() => exec("hdiutil", ["detach", "-force", "-debug", name]), 5, 1000, 500)
   }
 }
 

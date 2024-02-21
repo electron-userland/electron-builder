@@ -84,6 +84,7 @@ export class LinuxTargetHelper {
       case "pacman":
         return version.replace(/-/g, "_")
       case "rpm":
+      case "deb":
         return version.replace(/-/g, "~")
       default:
         return version

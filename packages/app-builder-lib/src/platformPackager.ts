@@ -59,7 +59,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  protected constructor(readonly info: Packager, readonly platform: Platform) {
+  protected constructor(
+    readonly info: Packager,
+    readonly platform: Platform
+  ) {
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
   }
@@ -169,8 +172,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const base = isResources
       ? this.getResourcesDir(appOutDir)
       : this.platform === Platform.MAC
-      ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-      : appOutDir
+        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
+        : appOutDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -204,7 +207,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // Due to node-gyp rewriting GYP_MSVS_VERSION when reused across the same session, we must reset the env var: https://github.com/electron-userland/electron-builder/issues/7256
     delete process.env.GYP_MSVS_VERSION
 
-    const beforePack = resolveFunction(this.config.beforePack, "beforePack")
+    const beforePack = await resolveFunction(this.appInfo.type, this.config.beforePack, "beforePack")
     if (beforePack != null) {
       await beforePack({
         appOutDir,
@@ -272,8 +275,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       this.platform === Platform.MAC
         ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources")
         : isElectronBased(framework)
-        ? path.join(appOutDir, "resources")
-        : appOutDir
+          ? path.join(appOutDir, "resources")
+          : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
@@ -330,7 +333,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
     const didSign = await this.signApp(packContext, isAsar)
-    const afterSign = resolveFunction(this.config.afterSign, "afterSign")
+    const afterSign = await resolveFunction(this.appInfo.type, this.config.afterSign, "afterSign")
     if (afterSign != null) {
       if (didSign) {
         await Promise.resolve(afterSign(packContext))
@@ -679,6 +682,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   // convert if need, validate size (it is a reason why tool is called even if file has target extension (already specified as foo.icns for example))
   async resolveIcon(sources: Array<string>, fallbackSources: Array<string>, outputFormat: IconFormat): Promise<Array<IconInfo>> {
+    const output = this.expandMacro(this.config.directories!.output!)
     const args = [
       "icon",
       "--format",
@@ -688,7 +692,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       "--root",
       this.projectDir,
       "--out",
-      path.resolve(this.projectDir, this.config.directories!.output!, `.icon-${outputFormat}`),
+      path.resolve(this.projectDir, output, `.icon-${outputFormat}`),
     ]
     for (const source of sources) {
       args.push("--input", source)
@@ -752,7 +756,20 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function resolveFunction<T>(executor: T | string, name: string): T {
+async function resolveModule<T>(type: string | undefined, name: string): Promise<T> {
+  const extension = path.extname(name).toLowerCase()
+  const isModuleType = type === "module"
+  try {
+    if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
+      return await eval("import('" + name + "')")
+    }
+  } catch (error) {
+    log.debug({ moduleName: name }, "Unable to dynamically import hook, falling back to `require`")
+  }
+  return require(name)
+}
+
+export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {
   if (executor == null || typeof executor !== "string") {
     return executor
   }
@@ -769,8 +786,7 @@ export function resolveFunction<T>(executor: T | string, name: string): T {
     p = path.resolve(p)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const m = require(p)
+  const m: any = await resolveModule(type, p)
   const namedExport = m[name]
   if (namedExport == null) {
     return m.default || m

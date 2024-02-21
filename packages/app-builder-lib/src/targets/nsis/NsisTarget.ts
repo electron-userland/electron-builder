@@ -1,6 +1,5 @@
-import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, exec, executeAppBuilder, getPlatformIconFileName, InvalidConfigurationError, log, spawnAndWrite, use, getPath7za } from "builder-util"
 import { CURRENT_APP_INSTALLER_FILE_NAME, CURRENT_APP_PACKAGE_FILE_NAME, PackageFileInfo, UUID } from "builder-util-runtime"
 import { exists, statOrNull, walk } from "builder-util/out/fs"
 import _debug from "debug"
@@ -42,8 +41,14 @@ export class NsisTarget extends Target {
 
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
+  readonly isAsyncSupported = false
 
-  constructor(readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
+  constructor(
+    readonly packager: WinPackager,
+    readonly outDir: string,
+    targetName: string,
+    protected readonly packageHelper: AppPackageHelper
+  ) {
     super(targetName)
 
     this.packageHelper.refCount++
@@ -249,7 +254,7 @@ export class NsisTarget extends Target {
           await packager.dispatchArtifactCreated(file, this, arch)
           packageFiles[Arch[arch]] = fileInfo
         }
-
+        const path7za = await getPath7za()
         const archiveInfo = (await exec(path7za, ["l", file])).trim()
         // after adding blockmap data will be "Warnings: 1" in the end of output
         const match = /(\d+)\s+\d+\s+\d+\s+files/.exec(archiveInfo)
@@ -397,7 +402,7 @@ export class NsisTarget extends Target {
     } else {
       await execWine(installerPath, null, [], { env: { __COMPAT_LAYER: "RunAsInvoker" } })
     }
-    await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
+    await packager.sign(uninstallerPath, "signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine
@@ -472,6 +477,10 @@ export class NsisTarget extends Target {
 
     if (options.perMachine === true) {
       defines.INSTALL_MODE_PER_ALL_USERS = null
+    }
+
+    if (options.selectPerMachineByDefault === true) {
+      defines.INSTALL_MODE_PER_ALL_USERS_DEFAULT = null
     }
 
     if (!oneClick || options.perMachine === true) {
@@ -560,7 +569,7 @@ export class NsisTarget extends Target {
     const args: Array<string> = this.options.warningsAsErrors === false ? [] : ["-WX"]
     args.push("-INPUTCHARSET", "UTF8")
     for (const name of Object.keys(defines)) {
-      const value = defines[name as keyof Defines]
+      const value: any = defines[name as keyof Defines]
       if (value == null) {
         args.push(`-D${name}`)
       } else {

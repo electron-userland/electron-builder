@@ -31,7 +31,11 @@ export abstract class DifferentialDownloader {
   private readonly logger: Logger
 
   // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
-  constructor(protected readonly blockAwareFileInfo: BlockMapDataHolder, readonly httpExecutor: HttpExecutor<any>, readonly options: DifferentialDownloaderOptions) {
+  constructor(
+    protected readonly blockAwareFileInfo: BlockMapDataHolder,
+    readonly httpExecutor: HttpExecutor<any>,
+    readonly options: DifferentialDownloaderOptions
+  ) {
     this.logger = options.logger
   }
 

@@ -205,7 +205,7 @@ export interface KeygenOptions extends PublishConfiguration {
  * Bitbucket options.
  * https://bitbucket.org/
  * Define `BITBUCKET_TOKEN` environment variable.
- * 
+ *
  * For converting an app password to a usable token, you can utilize this
 ```typescript
 convertAppPassword(owner: string, appPassword: string) {
@@ -248,7 +248,7 @@ export interface BitbucketOptions extends PublishConfiguration {
 }
 
 /**
- * [Snap Store](https://snapcraft.io/) options.
+ * [Snap Store](https://snapcraft.io/) options. To publish directly to Snapcraft, see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft authentication options</a> for local or CI/CD authentication options.
  */
 export interface SnapStoreOptions extends PublishConfiguration {
   /**
@@ -294,9 +294,9 @@ export interface BaseS3Options extends PublishConfiguration {
  * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
  * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
  * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
- * 
+ *
  * Example configuration:
- * 
+ *
 ```json
 {
   "build":

@@ -61,7 +61,11 @@ export class NsisUpdater extends BaseUpdater {
             "disableWebInstaller is set to false, you should set it to true if you do not plan on using a web installer. This will default to true in a future version."
           )
         }
-        if (isWebInstaller || (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_APP_INSTALLER_FILE_NAME))) {
+        if (
+          isWebInstaller ||
+          downloadUpdateOptions.disableDifferentialDownload ||
+          (await this.differentialDownloadInstaller(fileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_APP_INSTALLER_FILE_NAME))
+        ) {
           await this.httpExecutor.download(fileInfo.url, destinationFile, downloadOptions)
         }
 
@@ -153,9 +157,15 @@ export class NsisUpdater extends BaseUpdater {
       // https://github.com/electron-userland/electron-builder/issues/1129
       // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
       const errorCode = (e as NodeJS.ErrnoException).code
-      this._logger.info(`Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES"`)
+      this._logger.info(
+        `Cannot run installer: error code: ${errorCode}, error message: "${e.message}", will be executed again using elevate if EACCES, and will try to use electron.shell.openItem if ENOENT`
+      )
       if (errorCode === "UNKNOWN" || errorCode === "EACCES") {
         callUsingElevation()
+      } else if (errorCode === "ENOENT") {
+        require("electron")
+          .shell.openPath(options.installerPath)
+          .catch((err: Error) => this.dispatchError(err))
       } else {
         this.dispatchError(e)
       }

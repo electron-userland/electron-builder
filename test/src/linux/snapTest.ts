@@ -305,7 +305,7 @@ test.ifDevOrLinuxCi(
     },
     effectiveOptionComputed: async ({ snap }) => {
       expect(snap).toMatchSnapshot()
-      expect(snap.base).toBe("core18")
+      expect(snap.base).toBe("core20")
       return true
     },
   })

@@ -1,22 +1,15 @@
-import { path7za } from "7zip-bin"
-import { debug7z, exec } from "builder-util"
-import { exists, unlinkIfExists } from "builder-util/out/fs"
+import { debug7z, exec, log } from "builder-util"
+import { exists, unlinkIfExists, statOrNull } from "builder-util/out/fs"
 import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"
 import { TmpDir } from "temp-file"
 import { CompressionLevel } from "../core"
 import { getLinuxToolsPath } from "./tools"
+import { getPath7za } from "builder-util"
 
 /** @internal */
-export async function tar(
-  compression: CompressionLevel | any | any,
-  format: string,
-  outFile: string,
-  dirToArchive: string,
-  isMacApp: boolean,
-  tempDirManager: TmpDir
-): Promise<void> {
+export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: CreateOptions & FileOptions = {
     file: tarFile,
@@ -56,7 +49,7 @@ export async function tar(
   })
   args.push(outFile, tarFile)
   await exec(
-    path7za,
+    await getPath7za(),
     args,
     {
       cwd: path.dirname(dirToArchive),
@@ -165,23 +158,70 @@ export function compute7zCompressArgs(format: string, options: ArchiveOptions = 
   return args
 }
 
+export function computeZipCompressArgs(options: ArchiveOptions = {}) {
+  let storeOnly = options.compression === "store"
+  // do not deref symlinks
+  const args = ["-q", "-r", "-y"]
+  if (debug7z.enabled) {
+    args.push("-v")
+  }
+
+  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+    storeOnly = false
+    args.push(`-${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+  } else if (!storeOnly) {
+    // https://github.com/electron-userland/electron-builder/pull/3032
+    args.push("-" + (options.compression === "maximum" ? "9" : "7"))
+  }
+
+  if (options.dictSize != null) {
+    log.warn({ distSize: options.dictSize }, `ignoring unsupported option`)
+  }
+
+  // do not save extra file attributes (Extended Attributes on OS/2, uid/gid and file times on Unix)
+  if (!options.isRegularFile) {
+    args.push("-X")
+  }
+
+  if (options.method != null) {
+    if (options.method !== "DEFAULT") {
+      log.warn({ method: options.method }, `ignoring unsupported option`)
+    }
+  } else {
+    args.push("-Z", storeOnly ? "store" : "deflate")
+  }
+  return args
+}
+
 // 7z is very fast, so, use ultra compression
 /** @internal */
 export async function archive(format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
-  const args = compute7zCompressArgs(format, options)
-  // remove file before - 7z doesn't overwrite file, but update
+  const outFileStat = await statOrNull(outFile)
+  const dirStat = await statOrNull(dirToArchive)
+  if (outFileStat && dirStat && outFileStat.mtime > dirStat.mtime) {
+    log.info({ reason: "Archive file is up to date", outFile }, `skipped archiving`)
+    return outFile
+  }
+  let use7z = true
+  if (process.platform === "darwin" && format === "zip" && dirToArchive.normalize("NFC") !== dirToArchive) {
+    log.warn({ reason: "7z doesn't support NFD-normalized filenames" }, `using zip`)
+    use7z = false
+  }
+  const args = use7z ? compute7zCompressArgs(format, options) : computeZipCompressArgs(options)
+  // remove file before - 7z and zip doesn't overwrite file, but update
   await unlinkIfExists(outFile)
 
   args.push(outFile, options.withoutDir ? "." : path.basename(dirToArchive))
   if (options.excluded != null) {
     for (const mask of options.excluded) {
-      args.push(`-xr!${mask}`)
+      args.push(use7z ? `-xr!${mask}` : `-x${mask}`)
     }
   }
 
   try {
+    const binary = use7z ? await getPath7za() : "zip"
     await exec(
-      path7za,
+      binary,
       args,
       {
         cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),

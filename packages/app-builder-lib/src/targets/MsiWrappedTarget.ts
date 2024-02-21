@@ -15,7 +15,10 @@ export default class MsiWrappedTarget extends MsiTarget {
   /** @private */
   private readonly archs: Map<Arch, string> = new Map()
 
-  constructor(packager: WinPackager, readonly outDir: string) {
+  constructor(
+    packager: WinPackager,
+    readonly outDir: string
+  ) {
     // must be synchronous so it can run after nsis
     super(packager, outDir, "msiWrapped", false)
   }

@@ -6,7 +6,10 @@ import { SnapStoreOptions } from "builder-util-runtime/out/publishOptions"
 export class SnapStorePublisher extends Publisher {
   readonly providerName = "snapStore"
 
-  constructor(context: PublishContext, private options: SnapStoreOptions) {
+  constructor(
+    context: PublishContext,
+    private options: SnapStoreOptions
+  ) {
     super(context)
   }
 

@@ -15,7 +15,12 @@ export default class FlatpakTarget extends Target {
     ...(this.packager.config as any)[this.name],
   }
 
-  constructor(name: string, private readonly packager: LinuxPackager, private helper: LinuxTargetHelper, readonly outDir: string) {
+  constructor(
+    name: string,
+    private readonly packager: LinuxPackager,
+    private helper: LinuxTargetHelper,
+    readonly outDir: string
+  ) {
     super(name)
   }
 
@@ -82,6 +87,10 @@ export default class FlatpakTarget extends Target {
   private async copyIcons(stageDir: StageDir) {
     const icons = await this.helper.icons
     const copyIcons = icons.map(async icon => {
+      if (icon.size > 512) {
+        // Flatpak does not allow icons larger than 512 pixels
+        return Promise.resolve()
+      }
       const extWithDot = path.extname(icon.file)
       const sizeName = extWithDot === ".svg" ? "scalable" : `${icon.size}x${icon.size}`
       const iconDst = stageDir.getTempFile(path.join("share", "icons", "hicolor", sizeName, "apps", `${this.appId}${extWithDot}`))

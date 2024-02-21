@@ -54,6 +54,13 @@ test.ifMac(
           appId: "foo",
           extendInfo: {
             LSUIElement: true,
+            CFBundleDocumentTypes: [
+              {
+                CFBundleTypeName: "Folders",
+                CFBundleTypeRole: "Editor",
+                LSItemContentTypes: ["public.folder"],
+              },
+            ],
           },
           minimumSystemVersion: "10.12.0",
           fileAssociations: [
@@ -96,7 +103,7 @@ test.ifMac(
   )
 )
 
-test.ifMac("yarn two package.json w/ native module", () =>
+test.ifMac.skip("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {

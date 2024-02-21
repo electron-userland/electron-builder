@@ -6,7 +6,10 @@ import { BaseS3Publisher } from "./BaseS3Publisher"
 export default class SpacesPublisher extends BaseS3Publisher {
   readonly providerName = "spaces"
 
-  constructor(context: PublishContext, private readonly info: SpacesOptions) {
+  constructor(
+    context: PublishContext,
+    private readonly info: SpacesOptions
+  ) {
     super(context, info)
   }
 

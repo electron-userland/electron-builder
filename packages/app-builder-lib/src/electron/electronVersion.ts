@@ -100,7 +100,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     )
   }
 
-  return semver.coerce(version)!.toString()
+  return semver.coerce(version)!.format()
 }
 
 interface NameAndVersion {

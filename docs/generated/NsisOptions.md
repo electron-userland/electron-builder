@@ -12,6 +12,9 @@
 <p>If <code>oneClick</code> is <code>false</code> and <code>perMachine</code> is <code>false</code> (default): install mode installer page.</p>
 </li>
 <li>
+<p><code id="NsisOptions-selectPerMachineByDefault">selectPerMachineByDefault</code> = <code>false</code> Boolean - Whether to set per-machine or per-user installation as default selection on the install mode installer page.</p>
+</li>
+<li>
 <p><code id="NsisOptions-allowElevation">allowElevation</code> = <code>true</code> Boolean - <em>assisted installer only.</em> Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.</p>
 </li>
 <li>

@@ -9,7 +9,12 @@ import { appendBlockmap, createBlockmap } from "./differentialUpdateInfoBuilder"
 export class ArchiveTarget extends Target {
   readonly options: TargetSpecificOptions = (this.packager.config as any)[this.name]
 
-  constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>, private readonly isWriteUpdateInfo = false) {
+  constructor(
+    name: string,
+    readonly outDir: string,
+    private readonly packager: PlatformPackager<any>,
+    private readonly isWriteUpdateInfo = false
+  ) {
     super(name)
   }
 
