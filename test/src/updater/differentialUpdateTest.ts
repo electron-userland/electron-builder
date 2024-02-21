@@ -176,16 +176,14 @@ async function testMac(arch: Arch) {
 
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
-  try {
-    await doBuild(outDirs, Platform.MAC.createTarget(["dmg"], arch), tmpDir, {
-      mac: {
-        electronUpdaterCompatibility: ">=2.17.0",
-      },
-    })
-    await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
-  } finally {
-    await tmpDir.cleanup()
-  }
+  await doBuild(outDirs, Platform.MAC.createTarget(["pkg", "zip"], arch), tmpDir, {
+    mac: {
+      electronUpdaterCompatibility: ">=2.17.0",
+    },
+  })
+  await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
+
+  await tmpDir.cleanup()
 }
 
 test.ifAll.ifMac.ifNotCi("Mac intel", () => testMac(Arch.x64))
