@@ -543,9 +543,9 @@ if type update-alternatives 2>/dev/null >&1; then
     if [ -L '/usr/bin/Boo' -a -e '/usr/bin/Boo' -a \\"\`readlink '/usr/bin/Boo'\`\\" != '/etc/alternatives/Boo' ]; then
         rm -f '/usr/bin/Boo'
     fi
-    update-alternatives --install '/usr/bin/Boo' 'Boo' '/opt/foo/Boo' 100
+    update-alternatives --install '/usr/bin/Boo' 'Boo' '/opt/foo/Boo' 100 || ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
 else
-    ln -s '/opt/foo/Boo' '/usr/bin/Boo'
+    ln -sf '/opt/foo/Boo' '/usr/bin/Boo'
 fi
 
 # SUID chrome-sandbox for Electron 5+
