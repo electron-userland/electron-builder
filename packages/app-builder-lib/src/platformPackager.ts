@@ -7,6 +7,7 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { pathToFileURL } from "url"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
@@ -761,7 +762,8 @@ async function resolveModule<T>(type: string | undefined, name: string): Promise
   const isModuleType = type === "module"
   try {
     if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-      return await eval("import('" + name + "')")
+      const fileUrl = pathToFileURL(name).href;
+      return await eval("import('" + fileUrl + "')")
     }
   } catch (error) {
     log.debug({ moduleName: name }, "Unable to dynamically import hook, falling back to `require`")
