@@ -1,3 +1,15 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.13.1...v) (2024-02-22)
+
+
+### Bug Fixes
+
+* execute `%SYSTEMROOT%` cmd.exe directly during NSIS installer ([#8059](https://github.com/electron-userland/electron-builder/issues/8059)) ([8f4acff](https://github.com/electron-userland/electron-builder/commit/8f4acff3c2d45c1cb07779bb3fe79644408ee387))
+* **mac:** only skip notarization step when `notarize` is explicitly false ([#8065](https://github.com/electron-userland/electron-builder/issues/8065)) ([5681777](https://github.com/electron-userland/electron-builder/commit/5681777a808d49756f3a95d18cc589218be44878))
+* **pkg:** provide `BundlePreInstallScriptPath` and/or `BundlePostInstallScriptPath` when a pre/postinstall script is provided to pkg installer ([#8071](https://github.com/electron-userland/electron-builder/issues/8071)) ([eb296c9](https://github.com/electron-userland/electron-builder/commit/eb296c9b2afd77db799eadd472f9ec22f6fc4354))
+* use `pathToFileUrl` for hooks for Windows ES module support ([#8069](https://github.com/electron-userland/electron-builder/issues/8069)) ([538dd86](https://github.com/electron-userland/electron-builder/commit/538dd86bf52f0091dbb1120bdd30f56dfdbd5747))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.13.0...v) (2024-02-17)
 
 
