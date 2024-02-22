@@ -9,6 +9,7 @@ import { filterCFBundleIdentifier } from "../appInfo"
 import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
+import { readdirSync } from "fs"
 
 const certType = "Developer ID Installer"
 
@@ -144,8 +145,9 @@ export class PkgTarget extends Target {
     const plistInfo = (await executeAppBuilderAsJson<Array<any>>(["decode-plist", "-f", propertyListOutputFile]))[0].filter(
       (it: any) => it.RootRelativeBundlePath !== "Electron.dSYM"
     )
+    let packageInfo: any = {}
     if (plistInfo.length > 0) {
-      const packageInfo = plistInfo[0]
+      packageInfo = plistInfo[0]
 
       // ChildBundles lists all of electron binaries within the .app.
       // There is no particular reason for removing that key, except to be as close as possible to
@@ -167,22 +169,35 @@ export class PkgTarget extends Target {
       if (options.overwriteAction != null) {
         packageInfo.BundleOverwriteAction = options.overwriteAction
       }
-
-      await executeAppBuilderAndWriteJson(["encode-plist"], { [propertyListOutputFile]: plistInfo })
     }
 
     // now build the package
     const args = ["--root", rootPath, "--identifier", this.packager.appInfo.id, "--component-plist", propertyListOutputFile]
 
     use(this.options.installLocation || "/Applications", it => args.push("--install-location", it))
-    if (options.scripts != null) {
-      args.push("--scripts", path.resolve(this.packager.info.buildResourcesDir, options.scripts))
-    } else if (options.scripts !== null) {
-      const dir = path.join(this.packager.info.buildResourcesDir, "pkg-scripts")
-      const stat = await statOrNull(dir)
-      if (stat != null && stat.isDirectory()) {
-        args.push("--scripts", dir)
-      }
+
+    // nasty nested ternary-statement, probably should optimize
+    const scriptsDir =
+      // user-provided scripts dir
+      options.scripts != null
+        ? path.resolve(this.packager.info.buildResourcesDir, options.scripts)
+        : // fallback to default unless user explicitly sets null
+          options.scripts !== null
+          ? path.join(this.packager.info.buildResourcesDir, "pkg-scripts")
+          : null
+    if (scriptsDir && (await statOrNull(scriptsDir))?.isDirectory()) {
+      const dirContents = readdirSync(scriptsDir)
+      dirContents.forEach(name => {
+        if (name.includes("preinstall")) {
+          packageInfo.BundlePreInstallScriptPath = name
+        } else if (name.includes("postinstall")) {
+          packageInfo.BundlePostInstallScriptPath = name
+        }
+      })
+      args.push("--scripts", scriptsDir)
+    }
+    if (plistInfo.length > 0) {
+      await executeAppBuilderAndWriteJson(["encode-plist"], { [propertyListOutputFile]: plistInfo })
     }
 
     args.push(packageOutputFile)

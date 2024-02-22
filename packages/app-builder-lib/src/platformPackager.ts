@@ -762,7 +762,7 @@ async function resolveModule<T>(type: string | undefined, name: string): Promise
   const isModuleType = type === "module"
   try {
     if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-      const fileUrl = pathToFileURL(name).href;
+      const fileUrl = pathToFileURL(name).href
       return await eval("import('" + fileUrl + "')")
     }
   } catch (error) {
