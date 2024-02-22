@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 24.13.2
+
+### Patch Changes
+
+- [#8059](https://github.com/electron-userland/electron-builder/pull/8059) [`8f4acff3`](https://github.com/electron-userland/electron-builder/commit/8f4acff3c2d45c1cb07779bb3fe79644408ee387) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: execute %SYSTEMROOT% cmd.exe directly during NSIS installer
+
+- [#8071](https://github.com/electron-userland/electron-builder/pull/8071) [`eb296c9b`](https://github.com/electron-userland/electron-builder/commit/eb296c9b2afd77db799eadd472f9ec22f6fc4354) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(pkg): provide `BundlePreInstallScriptPath` and/or `BundlePostInstallScriptPath` when a pre/postinstall script is provided to pkg installer
+
+- [#8069](https://github.com/electron-userland/electron-builder/pull/8069) [`538dd86b`](https://github.com/electron-userland/electron-builder/commit/538dd86bf52f0091dbb1120bdd30f56dfdbd5747) Thanks [@lutzroeder](https://github.com/lutzroeder)! - fix: use `pathToFileUrl` for hooks for Windows ES module support
+
+- [#8065](https://github.com/electron-userland/electron-builder/pull/8065) [`5681777a`](https://github.com/electron-userland/electron-builder/commit/5681777a808d49756f3a95d18cc589218be44878) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): only skip notarization step when `notarize` is explicitly false
+
+- Updated dependencies []:
+  - dmg-builder@24.13.2
+  - electron-builder-squirrel-windows@24.13.2
+
 ## 24.13.1
 
 ### Patch Changes
