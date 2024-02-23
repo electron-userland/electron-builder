@@ -1,18 +1,16 @@
+import { Arch, Configuration, Platform } from "app-builder-lib"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { Arch, Configuration, Platform } from "electron-builder"
-import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
-import { MacUpdater } from "electron-updater/out/MacUpdater"
-import { NsisUpdater } from "electron-updater/out/NsisUpdater"
+import { AppImageUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
+import { TestAppAdapter } from "../helpers/TestAppAdapter"
+import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "../helpers/differentialUpdateTestSnapshotData"
 import { assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "../helpers/differentialUpdateTestSnapshotData"
-import { TestAppAdapter } from "../helpers/TestAppAdapter"
 
 /*
 

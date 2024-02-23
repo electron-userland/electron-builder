@@ -66,7 +66,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
           FORCE_COLOR: 1
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
@@ -85,7 +85,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -96,7 +96,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - winCodeSignTest
+          - winCodeSignTest,differentialUpdateTest
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
