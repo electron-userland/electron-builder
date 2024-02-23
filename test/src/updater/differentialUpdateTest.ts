@@ -26,7 +26,7 @@ const OLD_VERSION_NUMBER = "1.0.0"
 
 const testAppCacheDirName = "testapp-updater"
 
-test.ifAll.ifDevOrWinCi("web installer", async () => {
+test.ifWindows("web installer", async () => {
   let outDirs: Array<string> = []
 
   async function buildApp(version: string, tmpDir: TmpDir) {
@@ -87,7 +87,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
 })
 
-test.ifAll.ifDevOrWinCi("nsis", async () => {
+test.ifWindows("nsis", async () => {
   let outDirs: Array<string> = []
 
   async function buildApp(version: string) {
@@ -165,9 +165,9 @@ async function testLinux(arch: Arch) {
   }
 }
 
-test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
+test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
-test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+test.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
 // ifAll.ifMac.ifNotCi todo
 test.skip("dmg", async () => {
