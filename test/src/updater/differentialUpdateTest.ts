@@ -9,8 +9,9 @@ import * as path from "path"
 import { TmpDir } from "temp-file"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
 import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "../helpers/differentialUpdateTestSnapshotData"
-import { assertPack, removeUnstableProperties } from "../helpers/packTester"
+import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
 import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { exec } from "child_process"
 
 /*
 
@@ -69,7 +70,7 @@ test.ifWindows("web installer", async () => {
 
       await buildApp("1.0.1", tmpDir)
     } catch (e: any) {
-      await tmpDir.cleanup()
+      // await tmpDir.cleanup()
       throw e
     }
 
@@ -130,7 +131,7 @@ test.ifWindows("nsis", async () => {
 
       await buildApp("1.0.1")
     } catch (e: any) {
-      await tmpDir.cleanup()
+      // await tmpDir.cleanup()
       throw e
     }
 
@@ -157,9 +158,10 @@ async function testLinux(arch: Arch) {
   const tmpDir = new TmpDir("differential-updater-test")
   try {
     await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir)
+    exec("open -a '/Applications/Sublime Text.app' " + path.resolve(outDirs[0], ".."))
 
-    process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
-    await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater, `__appImage-${Arch[arch]}`, Platform.LINUX)
+    process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
+    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, `linux-${arch === Arch.ia32 ? "ia32-" : ""}unpacked`, Platform.LINUX)
   } finally {
     await tmpDir.cleanup()
   }
@@ -186,7 +188,13 @@ test.skip("dmg", async () => {
   await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
 })
 
-async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig: Configuration | null | undefined) {
+async function buildApp(
+  version: string,
+  outDirs: Array<string>,
+  targets: Map<Platform, Map<Arch, Array<string>>>,
+  extraConfig: Configuration | null | undefined,
+  packed: (context: PackedContext) => Promise<any>
+) {
   await assertPack(
     "test-app-one",
     {
@@ -205,33 +213,33 @@ async function buildApp(version: string, outDirs: Array<string>, targets: Map<Pl
       },
     },
     {
-      packed: context => {
-        outDirs.push(context.outDir)
-        return Promise.resolve()
-      },
-      tmpDir,
+      packed,
+      // packed: context => {
+      //   log.error(context, 'packed')
+      //   outDirs.push(context.outDir)
+      //   return Promise.resolve()
+      // },
+      // tmpDir,
     }
   )
 }
 
 async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig?: Configuration | null) {
-  await buildApp("1.0.0", outDirs, targets, tmpDir, extraConfig)
+  const build = (version: string) =>
+    buildApp(version, outDirs, targets, extraConfig, async context => {
+      // move dist temporarily out of project dir so each downloader can reference it
+      const newDir = await tmpDir.getTempDir({ prefix: version })
+      await move(context.outDir, newDir)
+      outDirs.push(newDir)
+    })
   try {
-    // move dist temporarily out of project dir
-    const oldDir = await tmpDir.getTempDir()
-    await move(outDirs[0], oldDir)
-    outDirs[0] = oldDir
-
-    await buildApp("1.0.1", outDirs, targets, tmpDir, extraConfig)
+    await build(OLD_VERSION_NUMBER)
+    await build("1.0.1")
+    console.warn("test", outDirs)
   } catch (e: any) {
     await tmpDir.cleanup()
     throw e
   }
-
-  // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
-  const oldDir = path.join(outDirs[1], "..", "oldDist")
-  await move(outDirs[0], oldDir)
-  outDirs[0] = oldDir
 }
 
 async function checkResult(updater: NsisUpdater) {
@@ -279,6 +287,7 @@ function getTestUpdaterCacheDir(oldDir: string) {
 }
 
 async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, appUpdateConfigPath: string, platform: Platform) {
+  // log.error({ oldDir, newDir, appUpdateConfigPath }, "testBlockMap")
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
   // noinspection SpellCheckingInspection
@@ -314,6 +323,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
       updater.logger = console
 
       const currentUpdaterCacheDirName = (await updater.configOnDisk.value).updaterCacheDirName
+      console.warn("currentUpdaterCacheDirName", currentUpdaterCacheDirName)
       if (currentUpdaterCacheDirName == null) {
         throw new Error(`currentUpdaterCacheDirName must be not null, appUpdateConfigPath: ${updater._appUpdateConfigPath}`)
       }
@@ -323,13 +333,6 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
         updaterCacheDirName: currentUpdaterCacheDirName,
         url: `http://127.0.0.1:${port}`,
       })
-
-      // updater.updateConfigPath = await writeUpdateConfig<S3Options | GenericServerOptions>({
-      //   provider: "s3",
-      //   endpoint: "http://192.168.178.34:9000",
-      //   bucket: "develar",
-      //   path: "onshape-test",
-      // })
 
       await checkResult(updater)
     }

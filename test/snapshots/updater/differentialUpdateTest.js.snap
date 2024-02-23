@@ -77,7 +77,7 @@ Object {
       "size": "@size",
     },
   ],
-  "path": "TestApp-1.0.1-x86_64.AppImage",
+  "path": "Test App ßW-1.0.1.AppImage",
   "releaseDate": "@releaseDate",
   "sha512": "@sha512",
   "version": "1.0.1",
@@ -86,7 +86,7 @@ Object {
 
 exports[`AppImage 4`] = `
 Array [
-  "TestApp-1.0.1-x86_64.AppImage",
+  "Test App ßW-1.0.1.AppImage",
 ]
 `;
 
@@ -167,7 +167,7 @@ Object {
       "size": "@size",
     },
   ],
-  "path": "TestApp-1.0.1-i386.AppImage",
+  "path": "Test App ßW-1.0.1-i386.AppImage",
   "releaseDate": "@releaseDate",
   "sha512": "@sha512",
   "version": "1.0.1",
@@ -176,7 +176,7 @@ Object {
 
 exports[`AppImage ia32 4`] = `
 Array [
-  "TestApp-1.0.1-i386.AppImage",
+  "Test App ßW-1.0.1-i386.AppImage",
 ]
 `;
 
