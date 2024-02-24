@@ -26,12 +26,24 @@ export class MacUpdater extends AppUpdater {
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
+      this.debug("nativeUpdater.update-downloaded")
     })
   }
 
   private debug(message: string): void {
     if (this._logger.debug != null) {
       this._logger.debug(message)
+    }
+  }
+
+  private closeServerIfExists() {
+    if (this.server) {
+      this.debug("Closing proxy server")
+      this.server.close(err => {
+        if (err) {
+          this.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
+        }
+      })
     }
   }
 
@@ -101,8 +113,8 @@ export class MacUpdater extends AppUpdater {
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
+    this.closeServerIfExists()
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    this.server?.close()
     this.server = createServer()
     this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     this.server.on("close", () => {
@@ -221,12 +233,12 @@ export class MacUpdater extends AppUpdater {
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.nativeUpdater.quitAndInstall()
-      this.server?.close()
+      this.closeServerIfExists()
     } else {
       // Quit and install as soon as Squirrel get the update
       this.nativeUpdater.on("update-downloaded", () => {
         this.nativeUpdater.quitAndInstall()
-        this.server?.close()
+        this.closeServerIfExists()
       })
 
       if (!this.autoInstallOnAppQuit) {

@@ -126,10 +126,12 @@ async function testMac(arch: Arch) {
         electronUpdaterCompatibility: ">=2.17.0",
       },
     })
-    const oldDir = outDirs[0]
+
     // move to new dir so that localhost server can read both blockmaps
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}-mac.zip.blockmap`), path.join(outDirs[1], "Test App ßW-1.0.0-mac.zip.blockmap"))
+    const oldDir = outDirs[0]
+    const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
+    await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
     await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {
@@ -144,6 +146,9 @@ test.ifMac("Mac arm64", () => testMac(Arch.arm64))
 test.ifMac("Mac universal", () => testMac(Arch.universal))
 
 async function checkResult(updater: BaseUpdater) {
+  // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
+  updater.autoInstallOnAppQuit = false
+
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
@@ -151,7 +156,7 @@ async function checkResult(updater: BaseUpdater) {
   const files = await downloadPromise
   const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
-  // because port is random
+  // delete url because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
@@ -159,27 +164,13 @@ async function checkResult(updater: BaseUpdater) {
 }
 
 class TestNativeUpdater extends EventEmitter {
-  // private updateUrl: string | null = null
-
-  // noinspection JSMethodCanBeStatic
   checkForUpdates() {
     console.log("TestNativeUpdater.checkForUpdates")
     // MacUpdater expects this to emit corresponding update-downloaded event
     this.emit("update-downloaded")
-    // this.download()
-    //   .catch(error => {
-    //     this.emit("error", error)
-    //   })
   }
-
-  // private async download() {
-  // }
-
-  // noinspection JSMethodCanBeStatic
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setFeedURL(_updateUrl: string) {
-    // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
-    // this.updateUrl = updateUrl
+  setFeedURL(updateConfig: any) {
+    console.log("TestNativeUpdater.setFeedURL " + updateConfig.url)
   }
 }
 
@@ -194,11 +185,10 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
   )
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
-  // noinspection SpellCheckingInspection
-  const httpServerProcess = doSpawn(
-    path.join(await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"),
-    [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"]
-  )
+  const serverBin = await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
+  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
+
+  // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
   const mockNativeUpdater = new TestNativeUpdater()
   jest.mock(
     "electron",
@@ -210,7 +200,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
     { virtual: true }
   )
 
-  return await new Promise((resolve, reject) => {
+  return await new Promise<void>((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
@@ -240,9 +230,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
       await checkResult(updater)
     }
 
-    doTest()
-      .then(() => resolve(null))
-      .catch(reject)
+    doTest().then(resolve).catch(reject)
   }).then(
     v => {
       httpServerProcess.kill()
