@@ -2,7 +2,7 @@ import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { AppImageUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
@@ -120,7 +120,7 @@ async function testMac(arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(outDirs, Platform.MAC.createTarget(["pkg", "zip"], arch), tmpDir, false, {
+    await doBuild(outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
       mac: {
         electronUpdaterCompatibility: ">=2.17.0",
       },
@@ -135,7 +135,9 @@ test.ifMac("Mac Intel", () => testMac(Arch.x64))
 
 test.ifMac("Mac arm64", () => testMac(Arch.arm64))
 
-async function checkResult(updater: NsisUpdater) {
+test.ifMac("Mac universal", () => testMac(Arch.universal))
+
+async function checkResult(updater: BaseUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall

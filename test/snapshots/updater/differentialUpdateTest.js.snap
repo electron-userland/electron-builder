@@ -201,11 +201,6 @@ Object {
     },
     Object {
       "arch": "x64",
-      "file": "Test App ßW-1.0.0.pkg",
-      "safeArtifactName": "TestApp-1.0.0.pkg",
-    },
-    Object {
-      "arch": "x64",
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
       "updateInfo": Object {
@@ -281,11 +276,6 @@ Object {
         "sha512": "@sha512",
         "version": "1.0.1",
       },
-    },
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.1.pkg",
-      "safeArtifactName": "TestApp-1.0.1.pkg",
     },
     Object {
       "arch": "x64",
