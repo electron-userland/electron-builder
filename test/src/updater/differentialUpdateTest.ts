@@ -207,7 +207,6 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
       updater.logger = console
 
       const currentUpdaterCacheDirName = (await updater.configOnDisk.value).updaterCacheDirName
-      console.warn("currentUpdaterCacheDirName", currentUpdaterCacheDirName)
       if (currentUpdaterCacheDirName == null) {
         throw new Error(`currentUpdaterCacheDirName must be not null, appUpdateConfigPath: ${updater._appUpdateConfigPath}`)
       }
