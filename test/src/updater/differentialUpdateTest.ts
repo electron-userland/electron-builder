@@ -1,18 +1,15 @@
+import { Arch, Configuration, Platform } from "app-builder-lib"
+import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { Arch, Configuration, Platform } from "electron-builder"
-import { AppImageUpdater } from "electron-updater/out/AppImageUpdater"
-import { MacUpdater } from "electron-updater/out/MacUpdater"
-import { NsisUpdater } from "electron-updater/out/NsisUpdater"
+import { AppImageUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
 import { TmpDir } from "temp-file"
-import { assertPack, removeUnstableProperties } from "../helpers/packTester"
-import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
-import { nsisDifferentialUpdateFakeSnapshot, nsisWebDifferentialUpdateTestFakeSnapshot } from "../helpers/differentialUpdateTestSnapshotData"
 import { TestAppAdapter } from "../helpers/TestAppAdapter"
+import { PackedContext, assertPack, removeUnstableProperties } from "../helpers/packTester"
+import { tuneTestUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 /*
 
@@ -28,20 +25,23 @@ const OLD_VERSION_NUMBER = "1.0.0"
 
 const testAppCacheDirName = "testapp-updater"
 
-test.ifAll.ifDevOrWinCi("web installer", async () => {
-  let outDirs: Array<string> = []
-
-  async function buildApp(version: string, tmpDir: TmpDir) {
+async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, isWindows: boolean, extraConfig?: Configuration | null) {
+  async function buildApp(
+    version: string,
+    targets: Map<Platform, Map<Arch, Array<string>>>,
+    extraConfig: Configuration | null | undefined,
+    packed: (context: PackedContext) => Promise<any>
+  ) {
     await assertPack(
       "test-app-one",
       {
-        targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+        targets,
         config: {
           extraMetadata: {
             version,
           },
-          // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
-          compression: (process.env.COMPRESSION as any) || "store",
+          ...extraConfig,
+          compression: "normal",
           publish: {
             provider: "s3",
             bucket: "develar",
@@ -50,104 +50,47 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
         },
       },
       {
-        signedWin: true,
-        packed: context => {
-          outDirs.push(context.outDir)
-          return Promise.resolve()
-        },
-        tmpDir,
+        signedWin: isWindows,
+        packed,
       }
     )
   }
 
-  if (process.env.__SKIP_BUILD == null) {
-    const tmpDir = new TmpDir("differential-updater-test")
-    try {
-      await buildApp(OLD_VERSION_NUMBER, tmpDir)
-      // move dist temporarily out of project dir
-      const oldDir = await tmpDir.getTempDir()
-      await move(outDirs[0], oldDir)
-      outDirs[0] = oldDir
-
-      await buildApp("1.0.1", tmpDir)
-    } catch (e: any) {
-      await tmpDir.cleanup()
-      throw e
-    }
-
-    // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
-    const oldDir = path.join(outDirs[1], "..", "oldDist")
-    await move(outDirs[0], oldDir)
-    outDirs[0] = oldDir
-
-    await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
-  } else {
-    nsisWebDifferentialUpdateTestFakeSnapshot()
-    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!, "dist")]
+  const build = (version: string) =>
+    buildApp(version, targets, extraConfig, async context => {
+      // move dist temporarily out of project dir so each downloader can reference it
+      const newDir = await tmpDir.getTempDir({ prefix: version })
+      await move(context.outDir, newDir)
+      outDirs.push(newDir)
+    })
+  try {
+    await build(OLD_VERSION_NUMBER)
+    await build("1.0.1")
+  } catch (e: any) {
+    await tmpDir.cleanup()
+    throw e
   }
+}
+
+test.ifWindows("web installer", async () => {
+  const outDirs: Array<string> = []
+  const tmpDir = new TmpDir("differential-updater-test")
+  await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64), tmpDir, true)
+
+  const oldDir = outDirs[0]
+  await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
   await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
 })
 
-test.ifAll.ifDevOrWinCi("nsis", async () => {
-  let outDirs: Array<string> = []
+test.ifWindows("nsis", async () => {
+  const outDirs: Array<string> = []
+  const tmpDir = new TmpDir("differential-updater-test")
+  await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
 
-  async function buildApp(version: string) {
-    await assertPack(
-      "test-app-one",
-      {
-        targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
-        config: {
-          extraMetadata: {
-            version,
-          },
-          // package in any case compressed, customization is explicitly disabled - "do not allow to change compression level to avoid different packages"
-          compression: (process.env.COMPRESSION as any) || "store",
-          publish: {
-            provider: "s3",
-            bucket: "develar",
-            path: "test",
-          },
-        },
-      },
-      {
-        signedWin: true,
-        packed: context => {
-          outDirs.push(context.outDir)
-          return Promise.resolve()
-        },
-      }
-    )
-  }
-
-  if (process.env.__SKIP_BUILD == null) {
-    await buildApp(OLD_VERSION_NUMBER)
-
-    const tmpDir = new TmpDir("differential-updater-test")
-    try {
-      // move dist temporarily out of project dir
-      const oldDir = await tmpDir.getTempDir()
-      await move(outDirs[0], oldDir)
-      outDirs[0] = oldDir
-
-      await buildApp("1.0.1")
-    } catch (e: any) {
-      await tmpDir.cleanup()
-      throw e
-    }
-
-    // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
-    const oldDir = path.join(outDirs[1], "..", "oldDist")
-    await move(outDirs[0], oldDir)
-    outDirs[0] = oldDir
-
-    await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
-    await move(path.join(oldDir, "Test App ßW Setup 1.0.0.exe.blockmap"), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
-  } else {
-    nsisDifferentialUpdateFakeSnapshot()
-
-    outDirs = [path.join(process.env.TEST_APP_TMP_DIR!, "oldDist"), path.join(process.env.TEST_APP_TMP_DIR!, "dist")]
-  }
+  const oldDir = outDirs[0]
+  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
+  await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
 
   await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, "win-unpacked", Platform.WINDOWS)
 })
@@ -158,84 +101,39 @@ async function testLinux(arch: Arch) {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
   try {
-    await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir)
+    await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
 
-    process.env.APPIMAGE = path.join(outDirs[0], `TestApp-1.0.0-${arch === Arch.x64 ? "x86_64" : "i386"}.AppImage`)
-    await testBlockMap(outDirs[0], path.join(outDirs[1]), AppImageUpdater, `__appImage-${Arch[arch]}`, Platform.LINUX)
+    process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
+    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, `linux-${arch === Arch.ia32 ? "ia32-" : ""}unpacked`, Platform.LINUX)
   } finally {
     await tmpDir.cleanup()
   }
 }
 
-test.ifAll.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
+test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
-test.ifAll.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+test.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
 async function testMac(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
 
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
-  await doBuild(outDirs, Platform.MAC.createTarget(["pkg", "zip"], arch), tmpDir, {
-    mac: {
-      electronUpdaterCompatibility: ">=2.17.0",
-    },
-  })
-  await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
-
-  await tmpDir.cleanup()
-}
-
-test.ifAll.ifMac.ifNotCi("Mac intel", () => testMac(Arch.x64))
-test.ifAll.ifMac.ifNotCi("Mac arm64", () => testMac(Arch.arm64))
-
-async function buildApp(version: string, outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig: Configuration | null | undefined) {
-  await assertPack(
-    "test-app-one",
-    {
-      targets,
-      config: {
-        extraMetadata: {
-          version,
-        },
-        ...extraConfig,
-        compression: "normal",
-        publish: {
-          provider: "s3",
-          bucket: "develar",
-          path: "test",
-        },
-      },
-    },
-    {
-      packed: context => {
-        outDirs.push(context.outDir)
-        return Promise.resolve()
-      },
-      tmpDir,
-    }
-  )
-}
-
-async function doBuild(outDirs: Array<string>, targets: Map<Platform, Map<Arch, Array<string>>>, tmpDir: TmpDir, extraConfig?: Configuration | null) {
-  await buildApp("1.0.0", outDirs, targets, tmpDir, extraConfig)
   try {
-    // move dist temporarily out of project dir
-    const oldDir = await tmpDir.getTempDir()
-    await move(outDirs[0], oldDir)
-    outDirs[0] = oldDir
-
-    await buildApp("1.0.1", outDirs, targets, tmpDir, extraConfig)
-  } catch (e: any) {
+    await doBuild(outDirs, Platform.MAC.createTarget(["pkg", "zip"], arch), tmpDir, false, {
+      mac: {
+        electronUpdaterCompatibility: ">=2.17.0",
+      },
+    })
+    await testBlockMap(outDirs[0], outDirs[1], MacUpdater, "mac/Test App ßW.app", Platform.MAC)
+  } finally {
     await tmpDir.cleanup()
-    throw e
   }
-
-  // move old dist to new project as oldDist - simplify development (no need to guess where old dist located in the temp fs)
-  const oldDir = path.join(outDirs[1], "..", "oldDist")
-  await move(outDirs[0], oldDir)
-  outDirs[0] = oldDir
 }
+
+test.ifMac("Mac Intel", () => testMac(Arch.x64))
+
+test.ifMac("Mac arm64", () => testMac(Arch.arm64))
 
 async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
@@ -326,13 +224,6 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, a
         updaterCacheDirName: currentUpdaterCacheDirName,
         url: `http://127.0.0.1:${port}`,
       })
-
-      // updater.updateConfigPath = await writeUpdateConfig<S3Options | GenericServerOptions>({
-      //   provider: "s3",
-      //   endpoint: "http://192.168.178.34:9000",
-      //   bucket: "develar",
-      //   path: "onshape-test",
-      // })
 
       await checkResult(updater)
     }
