@@ -140,10 +140,11 @@ async function testMac(arch: Arch) {
 }
 
 test.ifMac("Mac Intel", () => testMac(Arch.x64))
-
-test.ifMac("Mac arm64", () => testMac(Arch.arm64))
-
 test.ifMac("Mac universal", () => testMac(Arch.universal))
+
+// only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
+test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", () => testMac(Arch.arm64))
+
 
 async function checkResult(updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
