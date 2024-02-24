@@ -1,6 +1,6 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { doSpawn } from "builder-util"
+import { doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
 import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
@@ -80,7 +80,7 @@ test.ifWindows("web installer", async () => {
   const oldDir = outDirs[0]
   await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
+  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
 })
 
 test.ifWindows("nsis", async () => {
@@ -89,10 +89,11 @@ test.ifWindows("nsis", async () => {
   await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
 
   const oldDir = outDirs[0]
+  // move to new dir so that localhost server can read both blockmaps
   await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
   await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
 
-  await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, "win-unpacked", Platform.WINDOWS)
+  await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
 })
 
 async function testLinux(arch: Arch) {
@@ -104,7 +105,7 @@ async function testLinux(arch: Arch) {
     await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
-    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, `linux-${arch === Arch.ia32 ? "ia32-" : ""}unpacked`, Platform.LINUX)
+    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
   } finally {
     await tmpDir.cleanup()
   }
@@ -125,7 +126,12 @@ async function testMac(arch: Arch) {
         electronUpdaterCompatibility: ">=2.17.0",
       },
     })
-    await testBlockMap(outDirs[0], outDirs[1], MacUpdater, "mac/Test App ßW.app", Platform.MAC)
+    const oldDir = outDirs[0]
+    // move to new dir so that localhost server can read both blockmaps
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}-mac.zip.blockmap`), path.join(outDirs[1], "Test App ßW-1.0.0-mac.zip.blockmap"))
+
+    await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {
     await tmpDir.cleanup()
   }
@@ -181,7 +187,11 @@ function getTestUpdaterCacheDir(oldDir: string) {
   return path.join(oldDir, "updater-cache")
 }
 
-async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, appUpdateConfigPath: string, platform: Platform) {
+async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, platform: Platform, arch: Arch, productFilename?: string) {
+  const appUpdateConfigPath = path.join(
+    `${platform.buildConfigurationKey}${getArchSuffix(arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
+    platform === Platform.MAC ? `${productFilename}.app` : ""
+  )
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
   // noinspection SpellCheckingInspection
