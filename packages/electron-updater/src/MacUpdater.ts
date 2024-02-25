@@ -1,6 +1,7 @@
-import { AllPublishOptions, newError, safeStringifyJson, CURRENT_MAC_APP_ZIP_FILE_NAME } from "builder-util-runtime"
+import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
 import { stat } from "fs-extra"
 import { createReadStream, copyFileSync } from "fs"
+import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
@@ -92,6 +93,7 @@ export class MacUpdater extends AppUpdater {
     }
 
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+    const CURRENT_MAC_APP_ZIP_FILE_NAME = "updater.zip"
 
     return this.executeDownload({
       fileExtension: "zip",
@@ -101,7 +103,7 @@ export class MacUpdater extends AppUpdater {
         if (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME)) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
-        copyFileSync(destinationFile, this.downloadedUpdateHelper!.cacheDir + "/update.zip")
+        copyFileSync(destinationFile, path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME))
       },
       done: event => this.updateDownloaded(zipFileInfo, event),
     })
