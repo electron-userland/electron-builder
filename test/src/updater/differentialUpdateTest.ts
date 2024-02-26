@@ -131,7 +131,7 @@ async function testMac(arch: Arch) {
     const oldDir = outDirs[0]
     const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
     await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "updater.zip"))
 
     await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {
@@ -144,7 +144,6 @@ test.ifMac("Mac universal", () => testMac(Arch.universal))
 
 // only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
 test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", () => testMac(Arch.arm64))
-
 
 async function checkResult(updater: BaseUpdater) {
   // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
