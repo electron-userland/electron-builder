@@ -131,7 +131,7 @@ async function testMac(arch: Arch) {
     const oldDir = outDirs[0]
     const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
     await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "updater.zip"))
+    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
 
     await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
   } finally {
