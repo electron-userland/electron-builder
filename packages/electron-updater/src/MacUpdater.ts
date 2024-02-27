@@ -1,6 +1,7 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { stat } from "fs-extra"
-import { createReadStream } from "fs"
+import { pathExistsSync, stat } from "fs-extra"
+import { createReadStream, copyFileSync } from "fs"
+import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppAdapter } from "./AppAdapter"
 import { AppUpdater, DownloadUpdateOptions } from "./AppUpdater"
@@ -26,12 +27,24 @@ export class MacUpdater extends AppUpdater {
     })
     this.nativeUpdater.on("update-downloaded", () => {
       this.squirrelDownloadedUpdate = true
+      this.debug("nativeUpdater.update-downloaded")
     })
   }
 
   private debug(message: string): void {
     if (this._logger.debug != null) {
       this._logger.debug(message)
+    }
+  }
+
+  private closeServerIfExists() {
+    if (this.server) {
+      this.debug("Closing proxy server")
+      this.server.close(err => {
+        if (err) {
+          this.debug("proxy server wasn't already open, probably attempted closing again as a safety check before quit")
+        }
+      })
     }
   }
 
@@ -79,12 +92,26 @@ export class MacUpdater extends AppUpdater {
       throw newError(`ZIP file not provided: ${safeStringifyJson(files)}`, "ERR_UPDATER_ZIP_FILE_NOT_FOUND")
     }
 
+    const provider = downloadUpdateOptions.updateInfoAndProvider.provider
+    const CURRENT_MAC_APP_ZIP_FILE_NAME = "update.zip"
+
     return this.executeDownload({
       fileExtension: "zip",
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
-      task: (destinationFile, downloadOptions) => {
-        return this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
+      task: async (destinationFile, downloadOptions) => {
+        const cachedFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+        const canDifferentialDownload = () => {
+          if (!pathExistsSync(cachedFile)) {
+            log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
+            return false
+          }
+          return !downloadUpdateOptions.disableDifferentialDownload
+        }
+        if (canDifferentialDownload() && (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME))) {
+          await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
+        }
+        copyFileSync(destinationFile, cachedFile)
       },
       done: event => this.updateDownloaded(zipFileInfo, event),
     })
@@ -96,8 +123,8 @@ export class MacUpdater extends AppUpdater {
 
     const log = this._logger
     const logContext = `fileToProxy=${zipFileInfo.url.href}`
+    this.closeServerIfExists()
     this.debug(`Creating proxy server for native Squirrel.Mac (${logContext})`)
-    this.server?.close()
     this.server = createServer()
     this.debug(`Proxy server for native Squirrel.Mac is created (${logContext})`)
     this.server.on("close", () => {
@@ -216,12 +243,12 @@ export class MacUpdater extends AppUpdater {
     if (this.squirrelDownloadedUpdate) {
       // update already fetched by Squirrel, it's ready to install
       this.nativeUpdater.quitAndInstall()
-      this.server?.close()
+      this.closeServerIfExists()
     } else {
       // Quit and install as soon as Squirrel get the update
       this.nativeUpdater.on("update-downloaded", () => {
         this.nativeUpdater.quitAndInstall()
-        this.server?.close()
+        this.closeServerIfExists()
       })
 
       if (!this.autoInstallOnAppQuit) {
