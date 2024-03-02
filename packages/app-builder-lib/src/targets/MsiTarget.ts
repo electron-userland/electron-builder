@@ -79,7 +79,7 @@ export default class MsiTarget extends Target {
     // This will result in an x64 MSI installer that installs an arm64 version of the application. This is a
     // stopgap until the electron-builder-binaries wix version is upgraded to a version that supports arm64:
     // https://github.com/electron-userland/electron-builder/issues/6077
-    const wixArch = arch == Arch.arm64 ? Arch.x64 : arch;
+    const wixArch = arch == Arch.arm64 ? Arch.x64 : arch
 
     const projectFile = stageDir.getTempFile("project.wxs")
     const objectFiles = ["project.wixobj"]
