@@ -1,5 +1,5 @@
 ---
-"app-builder-lib": minor
+"app-builder-lib": patch
 ---
 
-feat(msi): build emulated arm64 MSI installers
+fix(msi): build emulated arm64 MSI installers as stopgap until electron-builder-binaries wix version is updated
