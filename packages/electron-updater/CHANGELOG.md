@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.2.0
+
+### Minor Changes
+
+- [#7709](https://github.com/electron-userland/electron-builder/pull/7709) [`79df5423`](https://github.com/electron-userland/electron-builder/commit/79df54238621fbe48ba20444129950ba2dc49983) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: adding differential downloader for updates on macOS
+
 ## 6.1.9
 
 ### Patch Changes

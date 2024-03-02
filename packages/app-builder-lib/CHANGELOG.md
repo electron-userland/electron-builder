@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 24.13.3
+
+### Patch Changes
+
+- [#8086](https://github.com/electron-userland/electron-builder/pull/8086) [`e6f1bebd`](https://github.com/electron-userland/electron-builder/commit/e6f1bebd96cbc54f7455cd9bd48bb1eadc5648f5) Thanks [@Allan-Kerr](https://github.com/Allan-Kerr)! - fix(msi): build emulated arm64 MSI installers as stopgap until electron-builder-binaries wix version is updated
+
+- [#8090](https://github.com/electron-userland/electron-builder/pull/8090) [`2c147add`](https://github.com/electron-userland/electron-builder/commit/2c147addb09385008cf661c952e7ce390a254d8e) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): sign NSIS on mac
+
+- [#8067](https://github.com/electron-userland/electron-builder/pull/8067) [`18340eef`](https://github.com/electron-userland/electron-builder/commit/18340eef6d8e9ee6efbf528508bac7972168bedb) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deb): soft symlink instead of hardlink to handle when /opt is on a separate partition
+
+- Updated dependencies []:
+  - dmg-builder@24.13.3
+  - electron-builder-squirrel-windows@24.13.3
+
 ## 24.13.2
 
 ### Patch Changes
