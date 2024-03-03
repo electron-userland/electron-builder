@@ -18,8 +18,9 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
+          - ArtifactPublisherTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
           - snapTest,debTest,fpmTest,protonTest
+          - BuildTest,ExtraBuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -49,6 +50,7 @@ jobs:
         run: pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           FORCE_COLOR: 1
 
   test-mac:
