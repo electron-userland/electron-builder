@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.2.1
+
+### Patch Changes
+
+- [#8091](https://github.com/electron-userland/electron-builder/pull/8091) [`e2a181d9`](https://github.com/electron-userland/electron-builder/commit/e2a181d9fe3fbdd84690359e275daaef24584729) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(mac): revert autoupdate for mac differential
+
 ## 6.2.0
 
 ### Minor Changes
