@@ -94,15 +94,16 @@ export class MacUpdater extends AppUpdater {
 
     const provider = downloadUpdateOptions.updateInfoAndProvider.provider
     const CURRENT_MAC_APP_ZIP_FILE_NAME = "update.zip"
+    let cachedUpdateFile: string = ""
 
     return this.executeDownload({
       fileExtension: "zip",
       fileInfo: zipFileInfo,
       downloadUpdateOptions,
       task: async (destinationFile, downloadOptions) => {
-        const cachedFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
+        cachedUpdateFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
         const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedFile)) {
+          if (!pathExistsSync(cachedUpdateFile)) {
             log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
             return false
           }
@@ -111,9 +112,15 @@ export class MacUpdater extends AppUpdater {
         if (canDifferentialDownload() && (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME))) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
-        copyFileSync(destinationFile, cachedFile)
       },
-      done: event => this.updateDownloaded(zipFileInfo, event),
+      done: event => {
+        try {
+          copyFileSync(event.downloadedFile, cachedUpdateFile)
+        } catch (error: any) {
+          this._logger.error(`Unable to copy file for caching: ${error.message}`)
+        }
+        return this.updateDownloaded(zipFileInfo, event)
+      },
     })
   }
 
