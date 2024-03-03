@@ -1,3 +1,12 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.13.3...v) (2024-03-03)
+
+
+### Bug Fixes
+
+* **mac:** revert mac differential autoupdate ([#8091](https://github.com/electron-userland/electron-builder/issues/8091)) ([e2a181d](https://github.com/electron-userland/electron-builder/commit/e2a181d9fe3fbdd84690359e275daaef24584729)), closes [#7709](https://github.com/electron-userland/electron-builder/issues/7709)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.13.2...v) (2024-03-02)
 
 
