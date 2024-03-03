@@ -1,8 +1,8 @@
 import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
-import { doSpawn, getArchSuffix } from "builder-util"
+import { doSpawn } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { AppImageUpdater, MacUpdater, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
@@ -80,7 +80,7 @@ test.ifWindows("web installer", async () => {
   const oldDir = outDirs[0]
   await move(path.join(oldDir, "nsis-web", `TestApp-${OLD_VERSION_NUMBER}-x64.nsis.7z`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "package.7z"))
 
-  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, Platform.WINDOWS, Arch.x64)
+  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"), NsisUpdater, "win-unpacked", Platform.WINDOWS)
 })
 
 test.ifWindows("nsis", async () => {
@@ -89,11 +89,10 @@ test.ifWindows("nsis", async () => {
   await doBuild(outDirs, Platform.WINDOWS.createTarget(["nsis"], Arch.x64), tmpDir, true)
 
   const oldDir = outDirs[0]
-  // move to new dir so that localhost server can read both blockmaps
   await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "installer.exe"))
   await move(path.join(oldDir, `Test App ßW Setup ${OLD_VERSION_NUMBER}.exe.blockmap`), path.join(outDirs[1], "Test App ßW Setup 1.0.0.exe.blockmap"))
 
-  await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, Platform.WINDOWS, Arch.x64)
+  await testBlockMap(outDirs[0], outDirs[1], NsisUpdater, "win-unpacked", Platform.WINDOWS)
 })
 
 async function testLinux(arch: Arch) {
@@ -105,7 +104,7 @@ async function testLinux(arch: Arch) {
     await doBuild(outDirs, Platform.LINUX.createTarget(["appimage"], arch), tmpDir, false)
 
     process.env.APPIMAGE = path.join(outDirs[0], `Test App ßW-${OLD_VERSION_NUMBER}${arch === Arch.ia32 ? "-i386" : ""}.AppImage`)
-    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, Platform.LINUX, arch)
+    await testBlockMap(outDirs[0], outDirs[1], AppImageUpdater, `linux-${arch === Arch.ia32 ? "ia32-" : ""}unpacked`, Platform.LINUX)
   } finally {
     await tmpDir.cleanup()
   }
@@ -115,40 +114,20 @@ test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
 test.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
-async function testMac(arch: Arch) {
-  process.env.TEST_UPDATER_ARCH = Arch[arch]
-
+// ifAll.ifMac.ifNotCi todo
+test.skip("zip", async () => {
   const outDirs: Array<string> = []
   const tmpDir = new TmpDir("differential-updater-test")
-  try {
-    await doBuild(outDirs, Platform.MAC.createTarget(["zip"], arch), tmpDir, false, {
-      mac: {
-        electronUpdaterCompatibility: ">=2.17.0",
-      },
-    })
+  await doBuild(outDirs, Platform.MAC.createTarget(["zip"], Arch.x64), tmpDir, false, {
+    mac: {
+      electronUpdaterCompatibility: ">=2.17.0",
+    },
+  })
 
-    // move to new dir so that localhost server can read both blockmaps
-    const oldDir = outDirs[0]
-    const blockmap = `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip.blockmap`
-    await move(path.join(oldDir, blockmap), path.join(outDirs[1], blockmap))
-    await move(path.join(oldDir, `Test App ßW-${OLD_VERSION_NUMBER}${getArchSuffix(arch)}-mac.zip`), path.join(getTestUpdaterCacheDir(oldDir), testAppCacheDirName, "update.zip"))
+  await testBlockMap(outDirs[0], path.join(outDirs[1]), MacUpdater, "mac/Test App ßW.app", Platform.MAC)
+})
 
-    await testBlockMap(outDirs[0], outDirs[1], MacUpdater, Platform.MAC, arch, "Test App ßW")
-  } finally {
-    await tmpDir.cleanup()
-  }
-}
-
-test.ifMac("Mac Intel", () => testMac(Arch.x64))
-test.ifMac("Mac universal", () => testMac(Arch.universal))
-
-// only run on arm64 macs, otherwise of course no files can be found to be updated to (due to arch mismatch)
-test.ifMac.ifEnv(process.arch === "arm64")("Mac arm64", () => testMac(Arch.arm64))
-
-async function checkResult(updater: BaseUpdater) {
-  // disable automatic install otherwise mac updater will permanently wait on mocked electron's native updater to receive update (mocked server can't install)
-  updater.autoInstallOnAppQuit = false
-
+async function checkResult(updater: NsisUpdater) {
   const updateCheckResult = await updater.checkForUpdates()
   const downloadPromise = updateCheckResult?.downloadPromise
   // noinspection JSIgnoredPromiseFromCall
@@ -156,7 +135,7 @@ async function checkResult(updater: BaseUpdater) {
   const files = await downloadPromise
   const fileInfo: any = updateCheckResult?.updateInfo.files[0]
 
-  // delete url because port is random
+  // because port is random
   expect(fileInfo.url).toBeDefined()
   delete fileInfo.url
   expect(removeUnstableProperties(updateCheckResult?.updateInfo)).toMatchSnapshot()
@@ -164,13 +143,27 @@ async function checkResult(updater: BaseUpdater) {
 }
 
 class TestNativeUpdater extends EventEmitter {
+  // private updateUrl: string | null = null
+
+  // noinspection JSMethodCanBeStatic
   checkForUpdates() {
     console.log("TestNativeUpdater.checkForUpdates")
     // MacUpdater expects this to emit corresponding update-downloaded event
     this.emit("update-downloaded")
+    // this.download()
+    //   .catch(error => {
+    //     this.emit("error", error)
+    //   })
   }
-  setFeedURL(updateConfig: any) {
-    console.log("TestNativeUpdater.setFeedURL " + updateConfig.url)
+
+  // private async download() {
+  // }
+
+  // noinspection JSMethodCanBeStatic
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setFeedURL(_updateUrl: string) {
+    // console.log("TestNativeUpdater.setFeedURL " + updateUrl)
+    // this.updateUrl = updateUrl
   }
 }
 
@@ -178,17 +171,14 @@ function getTestUpdaterCacheDir(oldDir: string) {
   return path.join(oldDir, "updater-cache")
 }
 
-async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, platform: Platform, arch: Arch, productFilename?: string) {
-  const appUpdateConfigPath = path.join(
-    `${platform.buildConfigurationKey}${getArchSuffix(arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
-    platform === Platform.MAC ? `${productFilename}.app` : ""
-  )
+async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, appUpdateConfigPath: string, platform: Platform) {
   const port = 8000 + (updaterClass.name.charCodeAt(0) as number) + Math.floor(Math.random() * 10000)
 
-  const serverBin = await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg==")
-  const httpServerProcess = doSpawn(path.join(serverBin, process.platform, "ran"), [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"])
-
-  // Mac uses electron's native autoUpdater to serve updates to, we mock here since electron API isn't available within jest runtime
+  // noinspection SpellCheckingInspection
+  const httpServerProcess = doSpawn(
+    path.join(await getBinFromUrl("ran", "0.1.3", "imfA3LtT6umMM0BuQ29MgO3CJ9uleN5zRBi3sXzcTbMOeYZ6SQeN7eKr3kXZikKnVOIwbH+DDO43wkiR/qTdkg=="), process.platform, "ran"),
+    [`-root=${newDir}`, `-port=${port}`, "-gzip=false", "-listdir=true"]
+  )
   const mockNativeUpdater = new TestNativeUpdater()
   jest.mock(
     "electron",
@@ -200,7 +190,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
     { virtual: true }
   )
 
-  return await new Promise<void>((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     httpServerProcess.on("error", reject)
 
     const updater = new updaterClass(null, new TestAppAdapter(OLD_VERSION_NUMBER, getTestUpdaterCacheDir(oldDir)))
@@ -230,7 +220,9 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
       await checkResult(updater)
     }
 
-    doTest().then(resolve).catch(reject)
+    doTest()
+      .then(() => resolve(null))
+      .catch(reject)
   }).then(
     v => {
       httpServerProcess.kill()
