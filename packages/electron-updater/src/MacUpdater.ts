@@ -1,5 +1,5 @@
 import { AllPublishOptions, newError, safeStringifyJson } from "builder-util-runtime"
-import { pathExistsSync, stat } from "fs-extra"
+import { stat } from "fs-extra"
 import { createReadStream, copyFileSync } from "fs"
 import * as path from "path"
 import { createServer, IncomingMessage, Server, ServerResponse } from "http"
@@ -101,17 +101,14 @@ export class MacUpdater extends AppUpdater {
       downloadUpdateOptions,
       task: async (destinationFile, downloadOptions) => {
         const cachedFile = path.join(this.downloadedUpdateHelper!.cacheDir, CURRENT_MAC_APP_ZIP_FILE_NAME)
-        const canDifferentialDownload = () => {
-          if (!pathExistsSync(cachedFile)) {
-            log.info("Unable to locate previous update.zip for differential download (is this first install?), falling back to full download")
-            return false
-          }
-          return !downloadUpdateOptions.disableDifferentialDownload
-        }
-        if (canDifferentialDownload() && (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME))) {
+        if (downloadUpdateOptions.disableDifferentialDownload || (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME))) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
-        copyFileSync(destinationFile, cachedFile)
+        try {
+          copyFileSync(destinationFile, cachedFile)
+        } catch (error: any) {
+          log.error(`Unable to copy file for caching: ${error.message}`)
+        }
       },
       done: event => this.updateDownloaded(zipFileInfo, event),
     })
