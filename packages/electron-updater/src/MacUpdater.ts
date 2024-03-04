@@ -109,7 +109,12 @@ export class MacUpdater extends AppUpdater {
           }
           return !downloadUpdateOptions.disableDifferentialDownload
         }
-        if (canDifferentialDownload() && (await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME))) {
+        let differentialDownloadFailed = true
+        if (canDifferentialDownload()) {
+          differentialDownloadFailed = await this.differentialDownloadInstaller(zipFileInfo, downloadUpdateOptions, destinationFile, provider, CURRENT_MAC_APP_ZIP_FILE_NAME)
+        }
+
+        if (differentialDownloadFailed) {
           await this.httpExecutor.download(zipFileInfo.url, destinationFile, downloadOptions)
         }
       },
