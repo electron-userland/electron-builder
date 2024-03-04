@@ -37,7 +37,7 @@ jobs:
 
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959 # v42
+        uses: tj-actions/changed-files@800a2825992141ddde1a8bca8ad394cec34d3188 # v42
         with:
           files: docker/**/*
 
