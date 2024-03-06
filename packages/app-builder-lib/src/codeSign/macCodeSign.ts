@@ -11,6 +11,8 @@ import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { signAsync } from "@electron/osx-sign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -213,13 +215,25 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
   }
 }
 
-/** @private */
-export function sign(path: string, name: string, keychain: string): Promise<any> {
-  const args = ["--deep", "--force", "--sign", name, path]
-  if (keychain != null) {
-    args.push("--keychain", keychain)
+export async function sign(opts: SignOptions): Promise<void> {
+  let retryCount = 0
+  while (retryCount < 3) {
+    try {
+      await signAsync(opts)
+      return
+    } catch (e: any) {
+      retryCount += 1
+      if (retryCount > 3) {
+        throw e
+      }
+      log.warn(`Attempt ${retryCount} to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          signAsync(opts).then(resolve).catch(reject)
+        }, 15000)
+      })
+    }
   }
-  return exec("/usr/bin/codesign", args)
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null

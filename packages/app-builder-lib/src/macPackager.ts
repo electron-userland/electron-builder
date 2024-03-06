@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
 import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
-import { signAsync } from "@electron/osx-sign"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -8,7 +7,7 @@ import * as path from "path"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError } from "./codeSign/macCodeSign"
+import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
 import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
@@ -408,7 +407,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : signAsync(opts)
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic
