@@ -216,22 +216,19 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
+  const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
   let retryCount = 0
   while (retryCount < 3) {
     try {
-      await signAsync(opts)
+      await Promise.race([signAsync(opts), new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout))])
       return
     } catch (e: any) {
       retryCount += 1
-      if (retryCount > 3) {
+      if (retryCount >= 3) {
         throw e
       }
       log.warn(`Attempt ${retryCount} to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          signAsync(opts).then(resolve).catch(reject)
-        }, 15000)
-      })
+      await new Promise(resolve => setTimeout(resolve, 15000))
     }
   }
 }
