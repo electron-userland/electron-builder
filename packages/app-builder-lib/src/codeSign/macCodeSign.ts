@@ -220,13 +220,13 @@ export async function sign(opts: SignOptions): Promise<void> {
   let retryCount = 0
   while (retryCount < 3) {
     try {
-      await Promise.race([signAsync(opts), new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout))])
+      await Promise.race([signAsync(opts), new Promise((_, reject) => setTimeout(() => reject(new Error("sign Timeout")), timeout))])
       return
     } catch (e: any) {
-      retryCount += 1
-      if (retryCount >= 3) {
+      if (retryCount > 3) {
         throw e
       }
+      retryCount += 1
       log.warn(`Attempt ${retryCount} to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
       await new Promise(resolve => setTimeout(resolve, 15000))
     }
