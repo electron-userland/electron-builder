@@ -1,5 +1,5 @@
 import { AsyncTaskManager, log } from "builder-util"
-import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { DO_NOT_USE_HARD_LINKS, FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { symlink, createReadStream, createWriteStream, Stats } from "fs"
 import { writeFile, readFile, mkdir } from "fs/promises"
 import * as path from "path"
@@ -71,7 +71,7 @@ export class AsarPackager {
 
     const transformedFiles = fileSet.transformedFiles
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
-    const fileCopier = new FileCopier()
+    const fileCopier = new FileCopier(DO_NOT_USE_HARD_LINKS)
 
     let currentDirNode: Node | null = null
     let currentDirPath: string | null = null
