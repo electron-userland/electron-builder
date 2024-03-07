@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir } from "builder-util/out/util"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util/out/util"
 import { copyFile, unlinkIfExists } from "builder-util/out/fs"
 import { Fields, Logger } from "builder-util/out/log"
 import { randomBytes, createHash } from "crypto"
@@ -216,21 +216,7 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
 }
 
 export async function sign(opts: SignOptions): Promise<void> {
-  const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
-  let retryCount = 0
-  while (retryCount < 3) {
-    try {
-      await Promise.race([signAsync(opts), new Promise((_, reject) => setTimeout(() => reject(new Error("sign Timeout")), timeout))])
-      return
-    } catch (e: any) {
-      if (retryCount > 3) {
-        throw e
-      }
-      retryCount += 1
-      log.warn(`Attempt ${retryCount} to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
-      await new Promise(resolve => setTimeout(resolve, 15000))
-    }
-  }
+  return retry(() => signAsync(opts), 3, 5000, 5000)
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null
