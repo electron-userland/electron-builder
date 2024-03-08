@@ -5,10 +5,10 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
-// import electronRebuild from "@electron/rebuild"
+import electronRebuild from "@electron/rebuild"
 import { getElectronVersion } from "../electron/electronVersion"
-import { rebuild as remoteRebuild } from "./rebuild/rebuild"
-import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+// import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+// import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions = {
@@ -178,16 +178,16 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     buildFromSource: options.buildFromSource === true,
   }
 
-  // await electronRebuild({
-  //   buildPath: appDir,
-  //   electronVersion: await getElectronVersion(appDir),
-  //   arch: configuration.arch,
-  //   force: configuration.buildFromSource,
-  //   // onlyModules: Array.from(new Set(configuration.dependencies.map(value => value.deps).flatMap(dep => dep.map(dep => dep.name)))),
-  // })
-  await remoteRebuild(appDir, await getElectronVersion(appDir), configuration.platform, configuration.arch, {
+  await electronRebuild({
+    buildPath: appDir,
+    electronVersion: await getElectronVersion(appDir),
+    arch: configuration.arch,
     force: configuration.buildFromSource,
-    projectRootPath: await getProjectRootPath(appDir),
-    debug: log.isDebugEnabled,
+    // onlyModules: Array.from(new Set(configuration.dependencies.map(value => value.deps).flatMap(dep => dep.map(dep => dep.name)))),
   })
+  // await remoteRebuild(appDir, await getElectronVersion(appDir), configuration.platform, configuration.arch, {
+  //   force: configuration.buildFromSource,
+  //   projectRootPath: await getProjectRootPath(appDir),
+  //   debug: log.isDebugEnabled,
+  // })
 }
