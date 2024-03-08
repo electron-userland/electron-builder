@@ -1,5 +1,18 @@
 ## 4.3.0
 
+## 6.3.0-alpha.0
+
+### Minor Changes
+
+- [#8095](https://github.com/electron-userland/electron-builder/pull/8095) [`53cec79b`](https://github.com/electron-userland/electron-builder/commit/53cec79bdc3f56c9371bdfb7901e97650d9ac4bc) Thanks [@beyondkmp](https://github.com/beyondkmp)! - feat: adding differential downloader for updates on macOS
+
+### Patch Changes
+
+- [#8110](https://github.com/electron-userland/electron-builder/pull/8110) [`fa7982f1`](https://github.com/electron-userland/electron-builder/commit/fa7982f19feddcb9479ff83af8db1974aea1f8d6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: entering alpha release stage
+
+- Updated dependencies [[`fa7982f1`](https://github.com/electron-userland/electron-builder/commit/fa7982f19feddcb9479ff83af8db1974aea1f8d6)]:
+  - builder-util-runtime@9.2.5-alpha.0
+
 ## 6.2.1
 
 ### Patch Changes
