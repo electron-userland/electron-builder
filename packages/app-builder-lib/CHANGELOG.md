@@ -1,5 +1,20 @@
 # app-builder-lib
 
+## 24.13.4-alpha.0
+
+### Patch Changes
+
+- [#8110](https://github.com/electron-userland/electron-builder/pull/8110) [`fa7982f1`](https://github.com/electron-userland/electron-builder/commit/fa7982f19feddcb9479ff83af8db1974aea1f8d6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: entering alpha release stage
+
+- [#8101](https://github.com/electron-userland/electron-builder/pull/8101) [`9bcede88`](https://github.com/electron-userland/electron-builder/commit/9bcede88f2083d41266e48dfa712adc2d223bd7f) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix(mac): add retry mechanism in mac code signing for `electron/osx-sign`.
+
+- Updated dependencies [[`fa7982f1`](https://github.com/electron-userland/electron-builder/commit/fa7982f19feddcb9479ff83af8db1974aea1f8d6)]:
+  - builder-util@24.13.4-alpha.0
+  - builder-util-runtime@9.2.5-alpha.0
+  - dmg-builder@24.13.4-alpha.0
+  - electron-builder-squirrel-windows@24.13.4-alpha.0
+  - electron-publish@24.13.4-alpha.0
+
 ## 24.13.3
 
 ### Patch Changes
