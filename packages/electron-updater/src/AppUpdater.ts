@@ -12,6 +12,7 @@ import {
   BlockMap,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
+import { release } from "os"
 import { EventEmitter } from "events"
 import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
@@ -388,6 +389,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const currentVersion = this.currentVersion
     if (isVersionsEqual(latestVersion, currentVersion)) {
       return false
+    }
+
+    const minimumSystemVersion = updateInfo?.minimumSystemVersion
+    const currentOSVersion = release()
+    if (minimumSystemVersion) {
+      try {
+        if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
+          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
+          return false
+        }
+      } catch (e: any) {
+        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
+      }
     }
 
     const isStagingMatch = await this.isStagingMatch(updateInfo)
