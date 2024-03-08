@@ -25,7 +25,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | Question | Answer |
 |--------|-------|
 | “I want to configure electron-builder” | [See options](configuration/configuration.md) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
+| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development” | [Donate](donate.md) |
 
