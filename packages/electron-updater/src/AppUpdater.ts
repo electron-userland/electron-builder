@@ -19,7 +19,15 @@ import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
+import {
+  eq as isVersionsEqual,
+  gt as isVersionGreaterThan,
+  lt as isVersionLessThan,
+  parse as parseVersion,
+  prerelease as getVersionPreleaseComponents,
+  SemVer,
+  valid,
+} from "semver"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
@@ -392,11 +400,15 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const minimumSystemVersion = updateInfo?.minimumSystemVersion
+    const currentOSVersion = release()
     if (minimumSystemVersion) {
-      const currentOSVersion = release()
-      if (currentOSVersion && isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
-        this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${latestVersion}`)
-        return false
+      try {
+        if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
+          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
+          return false
+        }
+      } catch (e) {
+        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${e}`)
       }
     }
 
