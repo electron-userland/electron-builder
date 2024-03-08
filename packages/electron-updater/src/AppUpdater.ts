@@ -392,9 +392,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     }
 
     const minimumSystemVersion = updateInfo?.minimumSystemVersion
-    if (minimumSystemVersion != null) {
+    if (minimumSystemVersion) {
       const currentOSVersion = release()
-      if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
+      if (currentOSVersion && isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
         this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${latestVersion}`)
         return false
       }
