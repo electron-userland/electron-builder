@@ -75,8 +75,8 @@ export interface UpdateInfo {
   readonly stagingPercentage?: number
 
   /**
-   * The minimum version of system required for the app to run. Sample value: macOS `10.12.0`, Windows `10.0.22631`.
-   * Same with os.release() value.
+   * The minimum version of system required for the app to run. Sample value: macOS `23.1.0`, Windows `10.0.22631`.
+   * Same with os.release() value, this is a kernel version.
    */
   readonly minimumSystemVersion?: string
 }
