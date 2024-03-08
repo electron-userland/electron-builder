@@ -19,15 +19,7 @@ import { OutgoingHttpHeaders } from "http"
 import { load } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import {
-  eq as isVersionsEqual,
-  gt as isVersionGreaterThan,
-  lt as isVersionLessThan,
-  parse as parseVersion,
-  prerelease as getVersionPreleaseComponents,
-  SemVer,
-  valid,
-} from "semver"
+import { eq as isVersionsEqual, gt as isVersionGreaterThan, lt as isVersionLessThan, parse as parseVersion, prerelease as getVersionPreleaseComponents, SemVer } from "semver"
 import { AppAdapter } from "./AppAdapter"
 import { createTempUpdateFile, DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { ElectronAppAdapter } from "./ElectronAppAdapter"
