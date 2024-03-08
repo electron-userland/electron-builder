@@ -5,8 +5,8 @@ import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
-import electronRebuild from "@electron/rebuild"
-import { getElectronVersion } from "../electron/electronVersion"
+import * as electronRebuild from "@electron/rebuild"
+// import { getElectronVersion } from "../electron/electronVersion"
 // import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 // import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
@@ -29,7 +29,7 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
   if (forceInstall || !isDependenciesInstalled) {
     await installDependencies(appDir, effectiveOptions)
   } else {
-    await rebuild(appDir, effectiveOptions)
+    await rebuild(appDir, effectiveOptions.buildFromSource, options.arch || process.arch, options.frameworkInfo)
   }
 }
 
@@ -123,22 +123,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
 }
 
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
-  log.info({ platform, arch }, "executing node-gyp rebuild")
-  // this script must be used only for electron
-  const nodeGyp = `node-gyp${process.platform === "win32" ? ".cmd" : ""}`
-  const args = ["rebuild"]
-  // headers of old Electron versions do not have a valid config.gypi file
-  // and --force-process-config must be passed to node-gyp >= 8.4.0 to
-  // correctly build modules for them.
-  // see also https://github.com/nodejs/node-gyp/pull/2497
-  const [major, minor] = frameworkInfo.version
-    .split(".")
-    .slice(0, 2)
-    .map(n => parseInt(n, 10))
-  if (major <= 13 || (major == 14 && minor <= 1) || (major == 15 && minor <= 2)) {
-    args.push("--force-process-config")
-  }
-  await spawn(nodeGyp, args, { env: getGypEnv(frameworkInfo, platform, arch, true) })
+  return rebuild(process.cwd(), false, arch, frameworkInfo)
 }
 
 function getPackageToolPath() {
@@ -167,24 +152,28 @@ export interface RebuildOptions {
 }
 
 /** @internal */
-export async function rebuild(appDir: string, options: RebuildOptions) {
-  const configuration = {
-    dependencies: await options.productionDeps.value,
-    nodeExecPath: process.execPath,
-    platform: options.platform || process.platform,
-    arch: options.arch || process.arch,
-    additionalArgs: options.additionalArgs,
-    execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
-    buildFromSource: options.buildFromSource === true,
-  }
+export async function rebuild(appDir: string, buildFromSource: boolean, arch: string, frameworkInfo: DesktopFrameworkInfo, options?: RebuildOptions ) {
+  // const configuration = {
+  //   dependencies: await options.productionDeps.value,
+  //   nodeExecPath: process.execPath,
+  //   platform: options.platform || process.platform,
+  //   arch: options.arch || process.arch,
+  //   additionalArgs: options.additionalArgs,
+  //   execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
+  //   buildFromSource: options.buildFromSource === true,
+  // }
 
-  await electronRebuild({
+  const rebuildOptions: electronRebuild.RebuildOptions = {
     buildPath: appDir,
-    electronVersion: await getElectronVersion(appDir),
-    arch: configuration.arch,
-    force: configuration.buildFromSource,
-    // onlyModules: Array.from(new Set(configuration.dependencies.map(value => value.deps).flatMap(dep => dep.map(dep => dep.name)))),
-  })
+    electronVersion: frameworkInfo.version,
+    force: true,
+    arch,
+  }
+  if (buildFromSource) {
+    rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
+  }
+  log.info({ rebuildOptions }, "executing @electron/rebuild")
+  await electronRebuild.rebuild(rebuildOptions)
   // await remoteRebuild(appDir, await getElectronVersion(appDir), configuration.platform, configuration.arch, {
   //   force: configuration.buildFromSource,
   //   projectRootPath: await getProjectRootPath(appDir),
