@@ -49,6 +49,7 @@
     "@develar/schema-utils": "~2.6.5",
     "@electron/notarize": "2.2.1",
     "@electron/osx-sign": "1.0.5",
+    "@electron/rebuild": "^3.6.0",
     "@electron/universal": "1.5.1",
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",

@@ -4,8 +4,11 @@ import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { NodeModuleDirInfo } from "./packageDependencies"
+// import electronRebuild from "@electron/rebuild"
+import { getElectronVersion } from "../electron/electronVersion"
+import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
   const effectiveOptions = {
@@ -165,7 +168,7 @@ export interface RebuildOptions {
 
 /** @internal */
 export async function rebuild(appDir: string, options: RebuildOptions) {
-  const configuration: any = {
+  const configuration = {
     dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
     platform: options.platform || process.platform,
@@ -175,6 +178,16 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     buildFromSource: options.buildFromSource === true,
   }
 
-  const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
-  await executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
+  // await electronRebuild({
+  //   buildPath: appDir,
+  //   electronVersion: await getElectronVersion(appDir),
+  //   arch: configuration.arch,
+  //   force: configuration.buildFromSource,
+  //   // onlyModules: Array.from(new Set(configuration.dependencies.map(value => value.deps).flatMap(dep => dep.map(dep => dep.name)))),
+  // })
+  await remoteRebuild(appDir, await getElectronVersion(appDir), configuration.platform, configuration.arch, {
+    force: configuration.buildFromSource,
+    projectRootPath: await getProjectRootPath(appDir),
+    debug: log.isDebugEnabled,
+  })
 }

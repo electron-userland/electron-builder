@@ -1,3 +1,5 @@
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+
 import { InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -56,9 +58,16 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     return result
   }
 
-  const metadata = await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))
-  const dependency = metadata ? findFromPackageMetadata(metadata) : null
-  if (dependency?.name === "electron-nightly") {
+  const potentialRootDirs = [projectDir, await getProjectRootPath(projectDir)]
+  let dependency: NameAndVersion | null = null
+  for await (const dir of potentialRootDirs) {
+    const metadata = await orNullIfFileNotExist(readJson(path.join(dir, "package.json")))
+    dependency = metadata ? findFromPackageMetadata(metadata) : null
+    if (dependency) {
+      break
+    }
+  }
+    if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
       hostname: "github.com",
