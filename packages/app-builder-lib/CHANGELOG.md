@@ -1,5 +1,20 @@
 # app-builder-lib
 
+## 25.0.0-alpha.1
+
+### Minor Changes
+
+- [#8112](https://github.com/electron-userland/electron-builder/pull/8112) [`9edfee6d`](https://github.com/electron-userland/electron-builder/commit/9edfee6da2de0cfedafebceef0dbfea1a0a17644) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: implementing electron/rebuild with config option `nativeRebuilder` default: `legacy` to support Yarn 3 (modes: `parallel` or `sequential`)
+
+### Patch Changes
+
+- Updated dependencies [[`3d4cc7ae`](https://github.com/electron-userland/electron-builder/commit/3d4cc7ae01c4f6154d6ea59726578b1ff99b9daf)]:
+  - builder-util-runtime@9.2.5-alpha.1
+  - builder-util@25.0.0-alpha.1
+  - dmg-builder@25.0.0-alpha.1
+  - electron-publish@25.0.0-alpha.1
+  - electron-builder-squirrel-windows@25.0.0-alpha.1
+
 ## 24.13.4-alpha.0
 
 ### Patch Changes

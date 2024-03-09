@@ -18,7 +18,9 @@
   },
   "changesets": [
     "breezy-pans-shop",
+    "chatty-zebras-greet",
     "stale-otters-turn",
+    "twelve-points-whisper",
     "wild-buttons-pretend"
   ]
 }
