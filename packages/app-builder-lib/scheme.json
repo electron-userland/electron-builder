@@ -7463,6 +7463,23 @@
         }
       ]
     },
+    "nativeRebuilder": {
+      "anyOf": [
+        {
+          "enum": [
+            "legacy",
+            "parallel",
+            "sequential"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "legacy",
+      "description": "Use `legacy` app-builder binary for installing native dependencies, or @electron/rebuild in `sequential` or `parallel` compilation modes."
+    },
     "nodeGypRebuild": {
       "default": false,
       "description": "Whether to execute `node-gyp rebuild` before starting to package the app.\n\nDon't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.",
@@ -7731,11 +7748,6 @@
           ]
         }
       ]
-    },
-    "useLegacyRebuilder": {
-      "default": true,
-      "description": "Use legacy app-builder binary for installing native dependencies",
-      "type": "boolean"
     },
     "win": {
       "anyOf": [
