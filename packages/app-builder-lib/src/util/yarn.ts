@@ -189,10 +189,11 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
   const {
     frameworkInfo: { version: electronVersion },
   } = options
+  const { arch, buildFromSource } = configuration
   const logInfo = {
     electronVersion,
-    arch: configuration.arch,
-    buildFromSource: configuration.buildFromSource,
+    arch,
+    buildFromSource,
     appDir: log.filePath(appDir) || "./",
   }
   log.info(logInfo, "executing @electron/rebuild")
@@ -200,11 +201,11 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
   const rebuildOptions: electronRebuild.RebuildOptions = {
     buildPath: appDir,
     electronVersion,
-    arch: configuration.arch,
+    arch,
     debug: log.isDebugEnabled,
     projectRootPath: await getProjectRootPath(appDir),
   }
-  if (configuration.buildFromSource) {
+  if (buildFromSource) {
     rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
   }
   return remoteRebuild(rebuildOptions)
