@@ -131,6 +131,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly npmRebuild?: boolean
+  /**
+   * Use legacy app-builder binary for installing native dependencies
+   * @default true
+   */
+  readonly useLegacyRebuilder?: boolean
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.

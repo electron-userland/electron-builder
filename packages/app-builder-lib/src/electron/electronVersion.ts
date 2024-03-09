@@ -67,7 +67,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
       break
     }
   }
-    if (dependency?.name === "electron-nightly") {
+  if (dependency?.name === "electron-nightly") {
     log.info("You are using a nightly version of electron, be warned that those builds are highly unstable.")
     const feedXml = await httpExecutor.request({
       hostname: "github.com",

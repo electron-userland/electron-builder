@@ -20,7 +20,8 @@
     "files": [
       "index.html",
       "index.js",
-      "package.json"
+      "package.json",
+      "!node_modules/node-mac-permissions/bin"
     ],
     "mac": {
       "category": "your.app.category.type"

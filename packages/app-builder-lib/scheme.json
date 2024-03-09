@@ -7732,6 +7732,11 @@
         }
       ]
     },
+    "useLegacyRebuilder": {
+      "default": true,
+      "description": "Use legacy app-builder binary for installing native dependencies",
+      "type": "boolean"
+    },
     "win": {
       "anyOf": [
         {
