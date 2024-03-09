@@ -201,7 +201,7 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     electronVersion,
     arch: configuration.arch,
     debug: log.isDebugEnabled,
-    projectRootPath: await getProjectRootPath(appDir)
+    projectRootPath: await getProjectRootPath(appDir),
   }
   if (configuration.buildFromSource) {
     rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
