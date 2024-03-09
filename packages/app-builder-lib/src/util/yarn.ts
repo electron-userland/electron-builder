@@ -169,7 +169,7 @@ export async function rebuild(appDir: string, buildFromSource: boolean, arch: st
     electronVersion: frameworkInfo.version,
     arch,
     buildFromSource,
-    root: log.filePath(projectRootPath) || "./",
+    appDir: log.filePath(appDir) || "./",
   }
 
   const rebuildOptions: electronRebuild.RebuildOptions = {

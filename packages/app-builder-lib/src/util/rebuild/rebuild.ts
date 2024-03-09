@@ -4,7 +4,7 @@ import { RebuildOptions } from "@electron/rebuild"
 import { log } from "builder-util"
 
 export const rebuild = async (options: RebuildOptions): Promise<void> => {
-  log.info(`Installing native dependencies`)
+  log.info(`installing native dependencies`)
 
   const child = cp.fork(path.resolve(__dirname, "remote-rebuild.js"), [JSON.stringify(options)], {
     stdio: ["pipe", "pipe", "pipe", "ipc"],
@@ -23,15 +23,15 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
     const { moduleName, msg } = message
     switch (msg) {
       case "module-found": {
-        log.info({ moduleName }, "Preparing")
+        log.info({ moduleName }, "preparing")
         break
       }
       case "module-done": {
-        log.info({ moduleName }, "Finished")
+        log.info({ moduleName }, "finished")
         break
       }
       case "module-skip": {
-        log.debug?.({ moduleName }, "Skipped")
+        log.debug?.({ moduleName }, "skipped")
         break
       }
       case "rebuild-error": {
@@ -40,7 +40,7 @@ export const rebuild = async (options: RebuildOptions): Promise<void> => {
         break
       }
       case "rebuild-done": {
-        log.info("Completed installing native dependencies")
+        log.info("completed installing native dependencies")
         break
       }
     }
