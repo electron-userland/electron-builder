@@ -111,7 +111,7 @@ importers:
         specifier: 1.0.5
         version: 1.0.5
       '@electron/rebuild':
-        specifier: ^3.6.0
+        specifier: 3.6.0
         version: 3.6.0
       '@electron/universal':
         specifier: 1.5.1
