@@ -110,7 +110,7 @@ test.ifMac("yarn two package.json w/ native module", () =>
       targets: Platform.MAC.createTarget("zip", Arch.universal),
       config: {
         npmRebuild: true,
-        nativeRebuilder: "parallel",
+        nativeRebuilder: "sequential",
       },
     },
     {
