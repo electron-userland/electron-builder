@@ -122,6 +122,7 @@ async function installDependencies(config: Configuration, appDir: string, option
   })
 
   // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
+  // https://github.com/electron-userland/electron-builder/issues/8024
   return rebuild(config, appDir, options)
 }
 
