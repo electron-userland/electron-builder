@@ -6,8 +6,9 @@ import * as path from "path"
 import { Configuration } from "../configuration"
 import { NodeModuleDirInfo } from "./packageDependencies"
 import * as electronRebuild from "@electron/rebuild"
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 // import { getElectronVersion } from "../electron/electronVersion"
-// import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import { rebuild as remoteRebuild } from "./rebuild/rebuild"
 // import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
@@ -152,7 +153,7 @@ export interface RebuildOptions {
 }
 
 /** @internal */
-export async function rebuild(appDir: string, buildFromSource: boolean, arch: string, frameworkInfo: DesktopFrameworkInfo, options?: RebuildOptions ) {
+export async function rebuild(appDir: string, buildFromSource: boolean, arch: string, frameworkInfo: DesktopFrameworkInfo) {
   // const configuration = {
   //   dependencies: await options.productionDeps.value,
   //   nodeExecPath: process.execPath,
@@ -163,20 +164,24 @@ export async function rebuild(appDir: string, buildFromSource: boolean, arch: st
   //   buildFromSource: options.buildFromSource === true,
   // }
 
+  const projectRootPath = await getProjectRootPath(appDir)
+  const logInfo = {
+    electronVersion: frameworkInfo.version,
+    arch,
+    buildFromSource,
+    root: log.filePath(projectRootPath) || "./",
+  }
+
   const rebuildOptions: electronRebuild.RebuildOptions = {
     buildPath: appDir,
     electronVersion: frameworkInfo.version,
-    force: true,
     arch,
+    debug: log.isDebugEnabled,
+    projectRootPath,
   }
   if (buildFromSource) {
     rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
   }
-  log.info({ rebuildOptions }, "executing @electron/rebuild")
-  await electronRebuild.rebuild(rebuildOptions)
-  // await remoteRebuild(appDir, await getElectronVersion(appDir), configuration.platform, configuration.arch, {
-  //   force: configuration.buildFromSource,
-  //   projectRootPath: await getProjectRootPath(appDir),
-  //   debug: log.isDebugEnabled,
-  // })
+  log.info(logInfo, "executing @electron/rebuild")
+  await remoteRebuild(rebuildOptions)
 }

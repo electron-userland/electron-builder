@@ -3,27 +3,14 @@ import * as path from "path"
 import { RebuildOptions } from "@electron/rebuild"
 import { log } from "builder-util"
 
-export const rebuild = async (buildPath: string, electronVersion: string, platform: NodeJS.Platform, arch: string, config: Partial<RebuildOptions> = {}): Promise<void> => {
-  log.info(`Preparing native dependencies`)
-
-  const options: RebuildOptions = {
-    ...config,
-    buildPath,
-    electronVersion,
-    arch,
-  }
+export const rebuild = async (options: RebuildOptions): Promise<void> => {
+  log.info(`Installing native dependencies`)
 
   const child = cp.fork(path.resolve(__dirname, "remote-rebuild.js"), [JSON.stringify(options)], {
     stdio: ["pipe", "pipe", "pipe", "ipc"],
   })
 
   let pendingError: Error
-  let found = 0
-  let done = 0
-
-  const redraw = () => {
-    log.info(`Preparing native dependencies: ${done} / ${found}`)
-  }
 
   child.stdout?.on("data", chunk => {
     log.info(chunk.toString())
@@ -32,16 +19,19 @@ export const rebuild = async (buildPath: string, electronVersion: string, platfo
     log.error(chunk.toString())
   })
 
-  child.on("message", (message: { msg: string; err: { message: string; stack: string } }) => {
-    switch (message.msg) {
+  child.on("message", (message: { msg: string; moduleName: string; err: { message: string; stack: string } }) => {
+    const { moduleName, msg } = message
+    switch (msg) {
       case "module-found": {
-        found += 1
-        redraw()
+        log.info({ moduleName }, "Preparing")
         break
       }
       case "module-done": {
-        done += 1
-        redraw()
+        log.info({ moduleName }, "Finished")
+        break
+      }
+      case "module-skip": {
+        log.debug?.({ moduleName }, "Skipped")
         break
       }
       case "rebuild-error": {
