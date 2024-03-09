@@ -73,6 +73,12 @@ export interface UpdateInfo {
    * The [staged rollout](/auto-update#staged-rollouts) percentage, 0-100.
    */
   readonly stagingPercentage?: number
+
+  /**
+   * The minimum version of system required for the app to run. Sample value: macOS `23.1.0`, Windows `10.0.22631`.
+   * Same with os.release() value, this is a kernel version.
+   */
+  readonly minimumSystemVersion?: string
 }
 
 export interface WindowsUpdateInfo extends UpdateInfo {

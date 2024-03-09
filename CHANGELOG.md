@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v24.13.3...v) (2024-03-08)
+
+
+### Bug Fixes
+
+* mac differential updater ([#8095](https://github.com/electron-userland/electron-builder/issues/8095)) ([53cec79](https://github.com/electron-userland/electron-builder/commit/53cec79bdc3f56c9371bdfb7901e97650d9ac4bc))
+* **mac:** add retry in mac code sign ([#8101](https://github.com/electron-userland/electron-builder/issues/8101)) ([9bcede8](https://github.com/electron-userland/electron-builder/commit/9bcede88f2083d41266e48dfa712adc2d223bd7f))
+* **mac:** revert mac differential autoupdate ([#8091](https://github.com/electron-userland/electron-builder/issues/8091)) ([e2a181d](https://github.com/electron-userland/electron-builder/commit/e2a181d9fe3fbdd84690359e275daaef24584729)), closes [#7709](https://github.com/electron-userland/electron-builder/issues/7709)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v24.13.3...v) (2024-03-03)
 
 

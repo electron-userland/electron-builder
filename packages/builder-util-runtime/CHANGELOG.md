@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.5-alpha.0
+
+### Patch Changes
+
+- [#8110](https://github.com/electron-userland/electron-builder/pull/8110) [`fa7982f1`](https://github.com/electron-userland/electron-builder/commit/fa7982f19feddcb9479ff83af8db1974aea1f8d6) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: entering alpha release stage
+
 ## 9.2.4
 
 ### Patch Changes

@@ -16,5 +16,9 @@
     "electron-updater": "6.2.1",
     "@electron-builder/test": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "breezy-pans-shop",
+    "stale-otters-turn",
+    "wild-buttons-pretend"
+  ]
 }
