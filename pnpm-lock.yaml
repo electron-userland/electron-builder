@@ -93,8 +93,8 @@ importers:
         specifier: 5.4.2
         version: 5.4.2
       typescript-json-schema:
-        specifier: 0.51.0
-        version: 0.51.0
+        specifier: 0.63.0
+        version: 0.63.0
       v8-compile-cache:
         specifier: 2.3.0
         version: 2.3.0
@@ -8041,16 +8041,6 @@ packages:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
     dev: true
 
-  /json-stable-stringify@1.1.1:
-    resolution: {integrity: sha512-SU/971Kt5qVQfJpyDveVhQ/vya+5hvrjClFOcr8c0Fq5aODJjMwutrOfCU+eCnVD5gpx1Q3fEqkyom77zH1iIg==}
-    engines: {node: '>= 0.4'}
-    dependencies:
-      call-bind: 1.0.7
-      isarray: 2.0.5
-      jsonify: 0.0.1
-      object-keys: 1.1.1
-    dev: true
-
   /json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
     dev: true
@@ -8072,10 +8062,6 @@ packages:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
-
-  /jsonify@0.0.1:
-    resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
-    dev: true
 
   /jsonparse@1.3.1:
     resolution: {integrity: sha512-POQXvpdL69+CluYsillJ7SUhKvytYjW9vG/GKpnf+xP8UWgYEM/RaMzHHofbALDiKbbP1W8UEYmgGl39WkPZsg==}
@@ -9262,6 +9248,10 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /path-equal@1.2.5:
+    resolution: {integrity: sha512-i73IctDr3F2W+bsOWDyyVm/lqsXO47aY9nsFZUjTT/aljSbkxHxxCoyZ9UUrM8jK0JVod+An+rl48RCsvWM+9g==}
+    dev: true
+
   /path-exists@3.0.0:
     resolution: {integrity: sha512-bpC7GYwiDYQ4wYLe+FA8lhRjhQCMcQGuSgGGqDkg/QerRWw9CmGRT0iSOVRSZJ29NMLZgIzqaljJ63oaL4NIJQ==}
     engines: {node: '>=4'}
@@ -9943,6 +9933,11 @@ packages:
     resolution: {integrity: sha512-aJXcif4xnaNUzvUuC5gcb46oTS7zvg4jpMTnuqtrEPlR3vFr4pxtdTwaF1Qs3Enjn9HK+ZlwQui+a7z0SywIzg==}
     dependencies:
       ret: 0.1.15
+    dev: true
+
+  /safe-stable-stringify@2.4.3:
+    resolution: {integrity: sha512-e2bDA2WJT0wxseVd4lsDP4+3ONX6HpMXQa1ZhFQ7SU+GjvORCmShbCMltrtIDfkYhVHrOcPtj+KhmDBdPdZD1g==}
+    engines: {node: '>=10'}
     dev: true
 
   /safer-buffer@2.1.2:
@@ -10770,7 +10765,7 @@ packages:
       typescript: 5.4.2
     dev: true
 
-  /ts-node@10.9.2(@types/node@16.18.55)(typescript@4.2.4):
+  /ts-node@10.9.2(@types/node@16.18.55)(typescript@5.1.6):
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
     peerDependencies:
@@ -10796,7 +10791,7 @@ packages:
       create-require: 1.1.1
       diff: 4.0.2
       make-error: 1.3.6
-      typescript: 4.2.4
+      typescript: 5.1.6
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     dev: true
@@ -10912,25 +10907,26 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: true
 
-  /typescript-json-schema@0.51.0:
-    resolution: {integrity: sha512-POhWbUNs2oaBti1W9k/JwS+uDsaZD9J/KQiZ/iXRQEOD0lTn9VmshIls9tn+A9X6O+smPjeEz5NEy6WTkCCzrQ==}
+  /typescript-json-schema@0.63.0:
+    resolution: {integrity: sha512-vBfMBq4U/rZ5FIRi7u4o/YAdeRHsSabdGHogUlCPi0cYU0CGvS4Bdu8bSzyUsF+Kf5PTQUGh2TictJuQTDK6eQ==}
     hasBin: true
     dependencies:
       '@types/json-schema': 7.0.15
       '@types/node': 16.18.55
       glob: 7.2.3
-      json-stable-stringify: 1.1.1
-      ts-node: 10.9.2(@types/node@16.18.55)(typescript@4.2.4)
-      typescript: 4.2.4
+      path-equal: 1.2.5
+      safe-stable-stringify: 2.4.3
+      ts-node: 10.9.2(@types/node@16.18.55)(typescript@5.1.6)
+      typescript: 5.1.6
       yargs: 17.7.2
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
     dev: true
 
-  /typescript@4.2.4:
-    resolution: {integrity: sha512-V+evlYHZnQkaz8TRBuxTA92yZBPotr5H+WhQ7bD3hZUndx5tGOa1fuCgeSjxAzM1RiN5IzvadIXTVefuuwZCRg==}
-    engines: {node: '>=4.2.0'}
+  /typescript@5.1.6:
+    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+    engines: {node: '>=14.17'}
     hasBin: true
     dev: true
 
