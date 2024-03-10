@@ -105,8 +105,8 @@ importers:
         specifier: ~2.6.5
         version: 2.6.5
       '@electron/notarize':
-        specifier: 2.2.1
-        version: 2.2.1
+        specifier: 2.3.0
+        version: 2.3.0
       '@electron/osx-sign':
         specifier: 1.0.5
         version: 1.0.5
@@ -2298,8 +2298,8 @@ packages:
       minimatch: 3.1.2
     dev: false
 
-  /@electron/notarize@2.2.1:
-    resolution: {integrity: sha512-aL+bFMIkpR0cmmj5Zgy0LMKEpgy43/hw5zadEArgmAMWWlKc5buwFvFT9G/o/YJkvXAJm5q3iuTuLaiaXW39sg==}
+  /@electron/notarize@2.3.0:
+    resolution: {integrity: sha512-EiTBU0BwE7HZZjAG1fFWQaiQpCuPrVGn7jPss1kUjD6eTTdXXd29RiZqEqkgN7xqt/Pgn4g3I7Saqovanrfj3w==}
     engines: {node: '>= 10.0.0'}
     dependencies:
       debug: 4.3.4
