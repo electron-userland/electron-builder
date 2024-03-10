@@ -114,8 +114,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       '@electron/universal':
-        specifier: 1.5.1
-        version: 1.5.1
+        specifier: 2.0.1
+        version: 2.0.1
       '@malept/flatpak-bundler':
         specifier: ^0.4.0
         version: 0.4.0
@@ -2348,16 +2348,16 @@ packages:
       - supports-color
     dev: false
 
-  /@electron/universal@1.5.1:
-    resolution: {integrity: sha512-kbgXxyEauPJiQQUNG2VgUeyfQNFk6hBF11ISN2PNI6agUgPl55pv4eQmaqHzTAzchBvqZ2tQuRVaPStGf0mxGw==}
-    engines: {node: '>=8.6'}
+  /@electron/universal@2.0.1:
+    resolution: {integrity: sha512-fKpv9kg4SPmt+hY7SVBnIYULE9QJl8L3sCfcBsnqbJwwBwAeTLokJ9TRt9y7bK0JAzIW2y78TVVjvnQEms/yyA==}
+    engines: {node: '>=16.4'}
     dependencies:
       '@electron/asar': 3.2.8
-      '@malept/cross-spawn-promise': 1.1.1
+      '@malept/cross-spawn-promise': 2.0.0
       debug: 4.3.4
-      dir-compare: 3.3.0
-      fs-extra: 9.1.0
-      minimatch: 3.1.2
+      dir-compare: 4.2.0
+      fs-extra: 11.2.0
+      minimatch: 9.0.3
       plist: 3.1.0
     transitivePeerDependencies:
       - supports-color
@@ -2800,13 +2800,6 @@ packages:
     dependencies:
       lodash: 4.17.21
     dev: true
-
-  /@malept/cross-spawn-promise@1.1.1:
-    resolution: {integrity: sha512-RTBGWL5FWQcg9orDOCcp4LvItNzUPcyEU9bwaeJX0rJ1IQxzucC48Y0/sQLp/g6t99IQgAlGIaesJS+gTn7tVQ==}
-    engines: {node: '>= 10'}
-    dependencies:
-      cross-spawn: 7.0.3
-    dev: false
 
   /@malept/cross-spawn-promise@2.0.0:
     resolution: {integrity: sha512-1DpKU0Z5ThltBwjNySMC14g0CkbyhCaz9FkhxqNsZI6uAPJXFS8cMXlBKo26FJ8ZuW6S9GCMcR9IO5k2X5/9Fg==}
@@ -4104,11 +4097,6 @@ packages:
 
   /buffer-crc32@0.2.13:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
-
-  /buffer-equal@1.0.1:
-    resolution: {integrity: sha512-QoV3ptgEaQpvVwbXdSO39iqPQTCxSF7A5U99AxbHYqUdCizL/lH2Z0A2y6nbZucxMEOtNyZfG2s6gsVugGpKkg==}
-    engines: {node: '>=0.4'}
-    dev: false
 
   /buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
@@ -5525,11 +5513,11 @@ packages:
     engines: {node: '>=0.3.1'}
     dev: true
 
-  /dir-compare@3.3.0:
-    resolution: {integrity: sha512-J7/et3WlGUCxjdnD3HAAzQ6nsnc0WL6DD7WcwJb7c39iH1+AWfg+9OqzJNaI6PkBwBvm1mhZNL9iY/nRiZXlPg==}
+  /dir-compare@4.2.0:
+    resolution: {integrity: sha512-2xMCmOoMrdQIPHdsTawECdNPwlVFB9zGcz3kuhmBO6U3oU+UQjsue0i8ayLKpgBcm+hcXPMVSGUN9d+pvJ6+VQ==}
     dependencies:
-      buffer-equal: 1.0.1
       minimatch: 3.1.2
+      p-limit: 3.1.0
     dev: false
 
   /dir-glob@3.0.1:
@@ -6275,6 +6263,15 @@ packages:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
       universalify: 2.0.1
+
+  /fs-extra@11.2.0:
+    resolution: {integrity: sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==}
+    engines: {node: '>=14.14'}
+    dependencies:
+      graceful-fs: 4.2.11
+      jsonfile: 6.1.0
+      universalify: 2.0.1
+    dev: false
 
   /fs-extra@7.0.1:
     resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
@@ -9189,7 +9186,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       yocto-queue: 0.1.0
-    dev: true
 
   /p-locate@2.0.0:
     resolution: {integrity: sha512-nQja7m7gSKuewoVRen45CtVfODR3crN3goVQ0DDZ9N3yHxgpkuBhZqsaiotSQRrADUrne346peY7kT3TSACykg==}
@@ -11455,7 +11451,6 @@ packages:
   /yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
-    dev: true
 
   /zip-stream@4.1.1:
     resolution: {integrity: sha512-9qv4rlDiopXg4E69k+vMHjNN63YFMe9sZMrdlvKnCjlCRWeCBswPPMPUfx+ipsAWq1LXHe70RcbaHdJJpS6hyQ==}
