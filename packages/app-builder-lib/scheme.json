@@ -7152,6 +7152,11 @@
         }
       ]
     },
+    "disableSanityCheckPackage": {
+      "default": false,
+      "description": "Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)",
+      "type": "boolean"
+    },
     "dmg": {
       "anyOf": [
         {
