@@ -3376,6 +3376,20 @@
     "MsiOptions": {
       "additionalProperties": false,
       "properties": {
+        "additionalLightArgs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Any additional arguments to be passed to the light.ext, such as `[\"-cultures:ja-jp\"]`"
+        },
         "additionalWixArgs": {
           "anyOf": [
             {
