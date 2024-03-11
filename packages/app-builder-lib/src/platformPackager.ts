@@ -316,7 +316,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar, framework)
+    if (!this.config.disableSanityCheckPackage) {
+      await this.sanityCheckPackage(appOutDir, isAsar, framework)
+    }
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }

@@ -279,6 +279,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageKeywords?: boolean
+
+  /**
+   * Whether to disable sanity check package
+   * @default false
+   */
+  readonly disableSanityCheckPackage?: boolean
 }
 
 interface PackContext {
