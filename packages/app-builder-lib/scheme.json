@@ -2519,7 +2519,7 @@
         },
         "preAutoEntitlements": {
           "default": true,
-          "description": "Whether to enable entitlements automation from",
+          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -3138,7 +3138,7 @@
         },
         "preAutoEntitlements": {
           "default": true,
-          "description": "Whether to enable entitlements automation from",
+          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -7006,7 +7006,7 @@
         }
       ],
       "default": "legacy",
-      "description": "Use `legacy` app-builder binary for installing native dependencies, or"
+      "description": "Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes."
     },
     "nodeGypRebuild": {
       "default": false,
