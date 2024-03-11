@@ -316,9 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    if (!this.config.disableSanityCheckPackage) {
-      await this.sanityCheckPackage(appOutDir, isAsar, framework)
-    }
+    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
@@ -510,7 +508,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
-  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean) {
+  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean, disableSanityCheckAsar: boolean) {
+    if (isAsar && disableSanityCheckAsar) {
+      return
+    }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
       await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
@@ -548,7 +549,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework): Promise<any> {
+  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework, disableSanityCheckAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
@@ -561,8 +562,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesDir = this.getResourcesDir(appOutDir)
     const mainFile = (framework.getMainFile == null ? null : framework.getMainFile(this.platform)) || this.info.metadata.main || "index.js"
-    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar)
-    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
+    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar, disableSanityCheckAsar)
+    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar, disableSanityCheckAsar)
   }
 
   // tslint:disable-next-line:no-invalid-template-strings
