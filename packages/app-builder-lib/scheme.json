@@ -2,6 +2,37 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "definitions": {
+    "AllPublishOptions": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/GithubOptions"
+        },
+        {
+          "$ref": "#/definitions/S3Options"
+        },
+        {
+          "$ref": "#/definitions/SpacesOptions"
+        },
+        {
+          "$ref": "#/definitions/GenericServerOptions"
+        },
+        {
+          "$ref": "#/definitions/CustomPublishOptions"
+        },
+        {
+          "$ref": "#/definitions/KeygenOptions"
+        },
+        {
+          "$ref": "#/definitions/SnapStoreOptions"
+        },
+        {
+          "$ref": "#/definitions/BitbucketOptions"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "AppImageOptions": {
       "additionalProperties": false,
       "properties": {
@@ -92,35 +123,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -248,35 +251,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -315,6 +290,16 @@
       },
       "type": "object"
     },
+    "ArchType": {
+      "enum": [
+        "arm64",
+        "armv7l",
+        "ia32",
+        "universal",
+        "x64"
+      ],
+      "type": "string"
+    },
     "AsarOptions": {
       "additionalProperties": false,
       "properties": {
@@ -349,10 +334,8 @@
           "type": "string"
         },
         "provider": {
+          "const": "bitbucket",
           "description": "The provider. Must be `bitbucket`.",
-          "enum": [
-            "bitbucket"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -458,10 +441,8 @@
       "additionalProperties": {},
       "properties": {
         "provider": {
+          "const": "custom",
           "description": "The provider. Must be `custom`.",
-          "enum": [
-            "custom"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -681,35 +662,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -885,35 +838,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -1264,35 +1189,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -1360,10 +1257,8 @@
           ]
         },
         "provider": {
+          "const": "generic",
           "description": "The provider. Must be `generic`.",
-          "enum": [
-            "generic"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -1468,10 +1363,8 @@
           "description": "The protocol. GitHub Publisher supports only `https`."
         },
         "provider": {
+          "const": "github",
           "description": "The provider. Must be `github`.",
-          "enum": [
-            "github"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -1591,10 +1484,8 @@
           "type": "string"
         },
         "provider": {
+          "const": "keygen",
           "description": "The provider. Must be `keygen`.",
-          "enum": [
-            "keygen"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -1962,35 +1853,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -2215,35 +2078,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -2577,7 +2412,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let @electron/osx-sign validate the signing or not.",
+          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -2680,11 +2515,11 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
+          "description": "Options to use for"
         },
         "preAutoEntitlements": {
           "default": true,
-          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -2736,35 +2571,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -2827,7 +2634,7 @@
         },
         "strictVerify": {
           "default": true,
-          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
           "type": "boolean"
         },
         "target": {
@@ -3224,7 +3031,7 @@
         },
         "gatekeeperAssess": {
           "default": false,
-          "description": "Whether to let @electron/osx-sign validate the signing or not.",
+          "description": "Whether to let `@electron/osx-sign` validate the signing or not.",
           "type": "boolean"
         },
         "generateUpdatesFilesForAllChannels": {
@@ -3327,11 +3134,11 @@
               ]
             }
           ],
-          "description": "Options to use for @electron/notarize (ref: https://github.com/electron/notarize).\nSupports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable\n\nNote: In order to activate the notarization step You MUST specify one of the following via environment variables:\n1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.\n2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`\n3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`\n\nFor security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)"
+          "description": "Options to use for"
         },
         "preAutoEntitlements": {
           "default": true,
-          "description": "Whether to enable entitlements automation from @electron/osx-sign.",
+          "description": "Whether to enable entitlements automation from `@electron/osx-sign`.",
           "type": "boolean"
         },
         "protocols": {
@@ -3383,35 +3190,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -3474,7 +3253,7 @@
         },
         "strictVerify": {
           "default": true,
-          "description": "Whether to let @electron/osx-sign verify the contents or not.",
+          "description": "Whether to let `@electron/osx-sign` verify the contents or not.",
           "type": "boolean"
         },
         "target": {
@@ -3692,35 +3471,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -3846,35 +3597,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -4168,35 +3891,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -4496,35 +4191,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -5234,35 +4901,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -5362,35 +5001,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -5585,10 +5196,8 @@
           ]
         },
         "provider": {
+          "const": "s3",
           "description": "The provider. Must be `s3`.",
-          "enum": [
-            "s3"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -5937,35 +5546,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -6068,10 +5649,8 @@
           "description": "The list of channels the snap would be released."
         },
         "provider": {
+          "const": "snapStore",
           "description": "The provider. Must be `snapStore`.",
-          "enum": [
-            "snapStore"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -6161,10 +5740,8 @@
           ]
         },
         "provider": {
+          "const": "spaces",
           "description": "The provider. Must be `spaces`.",
-          "enum": [
-            "spaces"
-          ],
           "type": "string"
         },
         "publishAutoUpdate": {
@@ -6275,35 +5852,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -6344,14 +5893,7 @@
           "anyOf": [
             {
               "items": {
-                "enum": [
-                  "arm64",
-                  "armv7l",
-                  "ia32",
-                  "universal",
-                  "x64"
-                ],
-                "type": "string"
+                "$ref": "#/definitions/ArchType"
               },
               "type": "array"
             },
@@ -6686,35 +6228,7 @@
             },
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/definitions/GithubOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/S3Options"
-                  },
-                  {
-                    "$ref": "#/definitions/SpacesOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/GenericServerOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/CustomPublishOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/KeygenOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/SnapStoreOptions"
-                  },
-                  {
-                    "$ref": "#/definitions/BitbucketOptions"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/definitions/AllPublishOptions"
               },
               "type": "array"
             },
@@ -7497,7 +7011,7 @@
         }
       ],
       "default": "legacy",
-      "description": "Use `legacy` app-builder binary for installing native dependencies, or @electron/rebuild in `sequential` or `parallel` compilation modes."
+      "description": "Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes."
     },
     "nodeGypRebuild": {
       "default": false,
@@ -7657,35 +7171,7 @@
         },
         {
           "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/GithubOptions"
-              },
-              {
-                "$ref": "#/definitions/S3Options"
-              },
-              {
-                "$ref": "#/definitions/SpacesOptions"
-              },
-              {
-                "$ref": "#/definitions/GenericServerOptions"
-              },
-              {
-                "$ref": "#/definitions/CustomPublishOptions"
-              },
-              {
-                "$ref": "#/definitions/KeygenOptions"
-              },
-              {
-                "$ref": "#/definitions/SnapStoreOptions"
-              },
-              {
-                "$ref": "#/definitions/BitbucketOptions"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "$ref": "#/definitions/AllPublishOptions"
           },
           "type": "array"
         },

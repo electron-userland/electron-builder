@@ -154,19 +154,19 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly hardenedRuntime?: boolean
 
   /**
-   * Whether to let @electron/osx-sign validate the signing or not.
+   * Whether to let `@electron/osx-sign` validate the signing or not.
    * @default false
    */
   readonly gatekeeperAssess?: boolean
 
   /**
-   * Whether to let @electron/osx-sign verify the contents or not.
+   * Whether to let `@electron/osx-sign` verify the contents or not.
    * @default true
    */
   readonly strictVerify?: boolean
 
   /**
-   * Whether to enable entitlements automation from @electron/osx-sign.
+   * Whether to enable entitlements automation from `@electron/osx-sign`.
    * @default true
    */
   readonly preAutoEntitlements?: boolean
