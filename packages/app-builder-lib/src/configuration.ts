@@ -279,6 +279,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageKeywords?: boolean
+
+  /**
+   * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)
+   * @default false
+   */
+  readonly disableSanityCheckPackage?: boolean
 }
 
 interface PackContext {
