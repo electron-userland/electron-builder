@@ -23,4 +23,9 @@ export interface MsiOptions extends CommonWindowsInstallerConfiguration, TargetS
    * Any additional arguments to be passed to the WiX installer compiler, such as `["-ext", "WixUtilExtension"]`
    */
   readonly additionalWixArgs?: Array<string> | null
+
+  /**
+   * Any additional arguments to be passed to the light.ext, such as `["-cultures:ja-jp"]`
+   */
+  readonly additionalLightArgs?: Array<string> | null
 }
