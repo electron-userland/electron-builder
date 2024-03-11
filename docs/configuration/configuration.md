@@ -188,7 +188,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-removePackageKeywords">removePackageKeywords</code> = <code>true</code> Boolean - Whether to remove <code>keywords</code> field from <code>package.json</code> files.</p>
 </li>
 <li>
-<p><code id="Configuration-disableSanityCheckPackage">disableSanityCheckPackage</code> = <code>false</code> Boolean - Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)</p>
+<p><code id="Configuration-disableSanityCheckAsar">disableSanityCheckAsar</code> = <code>false</code> Boolean - Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)</p>
 </li>
 </ul>
 
