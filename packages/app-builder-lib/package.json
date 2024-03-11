@@ -50,7 +50,7 @@
     "@electron/notarize": "2.3.0",
     "@electron/osx-sign": "1.0.5",
     "@electron/rebuild": "3.6.0",
-    "@electron/universal": "1.5.1",
+    "@electron/universal": "2.0.1",
     "@malept/flatpak-bundler": "^0.4.0",
     "@types/fs-extra": "9.0.13",
     "async-exit-hook": "^2.0.1",
