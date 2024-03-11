@@ -80,10 +80,10 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-hardenedRuntime">hardenedRuntime</code> = <code>true</code> Boolean - Whether your app has to be signed with hardened runtime.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let @electron/osx-sign validate the signing or not.</p>
+<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let <code>@electron/osx-sign</code> validate the signing or not.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Boolean - Whether to let @electron/osx-sign verify the contents or not.</p>
+<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Boolean - Whether to let <code>@electron/osx-sign</code> verify the contents or not.</p>
 </li>
 <li>
 <p><code id="MacConfiguration-preAutoEntitlements">preAutoEntitlements</code> = <code>true</code> Boolean - Whether to enable entitlements automation from @electron/osx-sign.</p>
