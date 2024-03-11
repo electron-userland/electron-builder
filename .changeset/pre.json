@@ -17,8 +17,12 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "brave-toys-fly",
     "breezy-pans-shop",
     "chatty-zebras-greet",
+    "dirty-rats-happen",
+    "mighty-spies-knock",
+    "neat-bottles-wash",
     "stale-otters-turn",
     "twelve-points-whisper",
     "wild-buttons-pretend"
