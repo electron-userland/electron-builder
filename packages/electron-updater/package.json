@@ -17,7 +17,7 @@
   ],
   "dependencies": {
     "builder-util-runtime": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.0.0",
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "lodash.escaperegexp": "^4.1.2",
@@ -26,7 +26,7 @@
     "tiny-typed-emitter": "^2.1.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.13",
+    "@types/fs-extra": "11.0.4",
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
     "@types/lodash.isequal": "4.5.5",

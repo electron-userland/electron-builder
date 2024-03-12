@@ -54,8 +54,8 @@ importers:
         specifier: ^5.1.3
         version: 5.1.3(eslint-config-prettier@9.1.0)(eslint@8.57.0)(prettier@3.2.4)
       fs-extra:
-        specifier: 10.1.0
-        version: 10.1.0
+        specifier: 11.2.0
+        version: 11.2.0
       globby:
         specifier: 11.1.0
         version: 11.1.0
@@ -120,8 +120,8 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0
       '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
+        specifier: 11.0.4
+        version: 11.0.4
       async-exit-hook:
         specifier: ^2.0.1
         version: 2.0.1
@@ -150,8 +150,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       hosted-git-info:
         specifier: ^4.1.0
         version: 4.1.0
@@ -298,8 +298,8 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       http-proxy-agent:
         specifier: ^5.0.0
         version: 5.0.0
@@ -326,8 +326,8 @@ importers:
         specifier: 6.0.2
         version: 6.0.2
       '@types/fs-extra':
-        specifier: ^9.0.11
-        version: 9.0.13
+        specifier: ^11.0.0
+        version: 11.0.4
       '@types/is-ci':
         specifier: 3.0.0
         version: 3.0.0
@@ -366,8 +366,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       iconv-lite:
         specifier: ^0.6.2
         version: 0.6.3
@@ -380,8 +380,8 @@ importers:
         version: 1.0.11
     devDependencies:
       '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
+        specifier: 11.0.4
+        version: 11.0.4
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
@@ -407,8 +407,8 @@ importers:
         specifier: workspace:*
         version: link:../dmg-builder
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       is-ci:
         specifier: ^3.0.0
         version: 3.0.1
@@ -426,8 +426,8 @@ importers:
         version: 17.7.2
     devDependencies:
       '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
+        specifier: 11.0.4
+        version: 11.0.4
       '@types/is-ci':
         specifier: 3.0.0
         version: 3.0.0
@@ -447,15 +447,15 @@ importers:
         specifier: workspace:*
         version: link:../builder-util
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
         version: 5.3.1
       '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
+        specifier: 11.0.4
+        version: 11.0.4
 
   packages/electron-forge-maker-appimage:
     dependencies:
@@ -484,8 +484,8 @@ importers:
   packages/electron-publish:
     dependencies:
       '@types/fs-extra':
-        specifier: ^9.0.11
-        version: 9.0.13
+        specifier: ^11.0.0
+        version: 11.0.4
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
@@ -496,8 +496,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       lazy-val:
         specifier: ^1.0.5
         version: 1.0.5
@@ -515,8 +515,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util-runtime
       fs-extra:
-        specifier: ^10.1.0
-        version: 10.1.0
+        specifier: ^11.0.0
+        version: 11.2.0
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -537,8 +537,8 @@ importers:
         version: 2.1.0
     devDependencies:
       '@types/fs-extra':
-        specifier: 9.0.13
-        version: 9.0.13
+        specifier: 11.0.4
+        version: 11.0.4
       '@types/js-yaml':
         specifier: 4.0.3
         version: 4.0.3
@@ -3008,10 +3008,17 @@ packages:
     resolution: {integrity: sha512-DCg+Ka+uDQ31lJ/UtEXVlaeV3d6t81gifaVWKJy4MYVVgvJttyX/viREy+If7fz+tK/gVxTGMtyrFPnm4gjrVA==}
     dev: true
 
+  /@types/fs-extra@11.0.4:
+    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
+    dependencies:
+      '@types/jsonfile': 6.1.4
+      '@types/node': 16.18.55
+
   /@types/fs-extra@9.0.13:
     resolution: {integrity: sha512-nEnwB++1u5lVDM2UI4c1+5R+FYaKfaAzS4OococimjVm3nQw3TuzH5UNsocrcTBbhnerblyHj4A49qXbIiZdpA==}
     dependencies:
       '@types/node': 16.18.55
+    dev: true
 
   /@types/glob@8.1.0:
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
@@ -3066,6 +3073,11 @@ packages:
   /@types/json-schema@7.0.15:
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
     dev: true
+
+  /@types/jsonfile@6.1.4:
+    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
+    dependencies:
+      '@types/node': 16.18.55
 
   /@types/keyv@3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
@@ -4431,6 +4443,7 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+    requiresBuild: true
 
   /color-support@1.1.3:
     resolution: {integrity: sha512-qiBjkpbMLO/HL68y+lh4q0/O1MZFj2RX6X/KmMa3+gJD3z+WwI1ZzDHysvqHGS3mP6mznPckpXmw1nI9cJjyRg==}
@@ -6335,7 +6348,6 @@ packages:
       graceful-fs: 4.2.11
       jsonfile: 6.1.0
       universalify: 2.0.1
-    dev: false
 
   /fs-extra@7.0.1:
     resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
@@ -10217,6 +10229,7 @@ packages:
   /slice-ansi@3.0.0:
     resolution: {integrity: sha512-pSyv7bSTC7ig9Dcgbw9AuRNUb5k5V6oDudjZoMBSr13qpLBG7tB+zgCkARjq7xIUgdz5P1Qe8u+rSGdouOOIyQ==}
     engines: {node: '>=8'}
+    requiresBuild: true
     dependencies:
       ansi-styles: 4.3.0
       astral-regex: 2.0.0

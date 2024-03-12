@@ -15,11 +15,11 @@
     "out"
   ],
   "dependencies": {
-    "@types/fs-extra": "^9.0.11",
+    "@types/fs-extra": "^11.0.0",
     "builder-util": "workspace:*",
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.0.0",
     "lazy-val": "^1.0.5",
     "mime": "^2.5.2"
   },

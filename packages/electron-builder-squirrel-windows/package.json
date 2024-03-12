@@ -18,11 +18,11 @@
     "app-builder-lib": "workspace:*",
     "archiver": "^5.3.1",
     "builder-util": "workspace:*",
-    "fs-extra": "^10.1.0"
+    "fs-extra": "^11.0.0"
   },
   "devDependencies": {
     "@types/archiver": "5.3.1",
-    "@types/fs-extra": "9.0.13"
+    "@types/fs-extra": "11.0.4"
   },
   "types": "./out/SquirrelWindowsTarget.d.ts"
 }

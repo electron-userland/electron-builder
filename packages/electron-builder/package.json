@@ -55,7 +55,7 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "dmg-builder": "workspace:*",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.0.0",
     "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
     "read-config-file": "6.3.2",
@@ -63,7 +63,7 @@
     "yargs": "^17.6.2"
   },
   "devDependencies": {
-    "@types/fs-extra": "9.0.13",
+    "@types/fs-extra": "11.0.4",
     "@types/is-ci": "3.0.0",
     "@types/yargs": "^17.0.16"
   },

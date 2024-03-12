@@ -23,7 +23,7 @@
     "chalk": "^4.1.2",
     "cross-spawn": "^7.0.3",
     "debug": "^4.3.4",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.0.0",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.1",
     "is-ci": "^3.0.0",
@@ -35,7 +35,7 @@
   "typings": "./out/util.d.ts",
   "devDependencies": {
     "@types/cross-spawn": "6.0.2",
-    "@types/fs-extra": "^9.0.11",
+    "@types/fs-extra": "^11.0.0",
     "@types/is-ci": "3.0.0",
     "@types/js-yaml": "4.0.3",
     "@types/source-map-support": "0.5.4"
