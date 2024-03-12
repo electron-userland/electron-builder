@@ -66,8 +66,8 @@ importers:
         specifier: 27.5.1
         version: 27.5.1
       jsdoc-to-markdown:
-        specifier: 7.0.1
-        version: 7.0.1
+        specifier: 8.0.1
+        version: 8.0.1
       lint-staged:
         specifier: 15.2.2
         version: 15.2.2
@@ -5585,6 +5585,24 @@ packages:
       walk-back: 5.1.0
     dev: true
 
+  /dmd@6.2.0:
+    resolution: {integrity: sha512-uXWxLF1H7TkUAuoHK59/h/ts5cKavm2LnhrIgJWisip4BVzPoXavlwyoprFFn2CzcahKYgvkfaebS6oxzgflkg==}
+    engines: {node: '>=12'}
+    dependencies:
+      array-back: 6.2.2
+      cache-point: 2.0.0
+      common-sequence: 2.0.2
+      file-set: 4.0.2
+      handlebars: 4.7.8
+      marked: 4.3.0
+      object-get: 2.1.1
+      reduce-flatten: 3.0.1
+      reduce-unique: 2.0.1
+      reduce-without: 1.0.1
+      test-value: 3.0.0
+      walk-back: 5.1.0
+    dev: true
+
   /dmg-license@1.0.11:
     resolution: {integrity: sha512-ZdzmqwKmECOWJpqefloC5OJy1+WZBBse5+MR88z9g9Zn4VY+WYUkAyojmhzJckH5YbbZGcYIuGAkY5/Ys5OM2Q==}
     engines: {node: '>=8'}
@@ -7990,8 +8008,8 @@ packages:
     resolution: {integrity: sha512-4bYVV3aAMtDTTu4+xsDYa6sy9GyJ69/amsu9sYF2zqjiEoZA5xJi3BrfX3uY+/IekIu7MwdObdbDWpoZdBv3/A==}
     dev: false
 
-  /jsdoc-api@7.2.0:
-    resolution: {integrity: sha512-93YDnlm/OYTlLOFeNs4qAv0RBCJ0kGj67xQaWy8wrbk97Rw1EySitoOTHsTHXPEs3uyx2IStPKGrbE7LTnZXbA==}
+  /jsdoc-api@8.0.0:
+    resolution: {integrity: sha512-Rnhor0suB1Ds1abjmFkFfKeD+kSMRN9oHMTMZoJVUrmtCGDwXty+sWMA9sa4xbe4UyxuPjhC7tavZ40mDKK6QQ==}
     engines: {node: '>=12.17'}
     dependencies:
       array-back: 6.2.2
@@ -8016,16 +8034,16 @@ packages:
       test-value: 3.0.0
     dev: true
 
-  /jsdoc-to-markdown@7.0.1:
-    resolution: {integrity: sha512-wN6WAHAPiCyAU7m/+F3FbEEV40CGVWMae49SBPIvfy7kDq/2fBrOw86vdbnLdmjt6u/tHnoxHNrHWYbYFN+4UA==}
-    engines: {node: '>=14'}
+  /jsdoc-to-markdown@8.0.1:
+    resolution: {integrity: sha512-qJfNJhkq2C26UYoOdj8L1yheTJlk1veCsxwRejRmj07XZKCn7oSkuPErx6+JoNi8afCaUKdIM5oUu0uF2/T8iw==}
+    engines: {node: '>=12.17'}
     hasBin: true
     dependencies:
-      array-back: 5.0.0
+      array-back: 6.2.2
       command-line-tool: 0.8.0
       config-master: 3.1.0
-      dmd: 6.1.0
-      jsdoc-api: 7.2.0
+      dmd: 6.2.0
+      jsdoc-api: 8.0.0
       jsdoc-parse: 6.2.1
       walk-back: 5.1.0
     dev: true
