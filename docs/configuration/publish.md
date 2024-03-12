@@ -257,7 +257,7 @@ Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <ul>
 <li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
 <li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
-<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The app password (account&gt;settings&gt;app-passwords) to support auto-update from private bitbucket repositories.</li>
+<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The <a href="https://bitbucket.org/account/settings/app-passwords">app password</a> to support auto-update from private bitbucket repositories.</li>
 <li><code id="BitbucketOptions-username">username</code> String | “undefined” - The user name to support auto-update from private bitbucket repositories.</li>
 <li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
 <li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
