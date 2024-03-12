@@ -226,7 +226,7 @@ export interface BitbucketOptions extends PublishConfiguration {
   readonly owner: string
 
   /**
-   * The app password (account>settings>app-passwords) to support auto-update from private bitbucket repositories.
+   * The [app password](https://bitbucket.org/account/settings/app-passwords) to support auto-update from private bitbucket repositories.
    */
   readonly token?: string | null
 
