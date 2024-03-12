@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.5-alpha.2
+
+### Patch Changes
+
+- [#8126](https://github.com/electron-userland/electron-builder/pull/8126) [`445911a7`](https://github.com/electron-userland/electron-builder/commit/445911a75f9efd6fe61e586ebed6a210d0efcd41) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(docs): update Bitbucket Options token doc
+
 ## 9.2.5-alpha.1
 
 ### Patch Changes
