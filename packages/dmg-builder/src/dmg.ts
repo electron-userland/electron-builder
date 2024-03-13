@@ -4,7 +4,7 @@ import MacPackager from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { sanitizeFileName } from "app-builder-lib/out/util/filename"
-import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log, spawn, retry } from "builder-util"
+import { Arch, AsyncTaskManager, exec, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { stat } from "fs-extra"
@@ -13,6 +13,7 @@ import { TmpDir } from "temp-file"
 import { addLicenseToDmg } from "./dmgLicense"
 import { attachAndExecute, computeBackground, detach, getDmgVendorPath } from "./dmgUtil"
 import { release as getOsRelease } from "os"
+import { hdiUtil } from "./hdiuil"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -51,7 +52,7 @@ export class DmgTarget extends Target {
     const backgroundFile = specification.background == null ? null : await transformBackgroundFileIfNeed(specification.background, packager.info.tempDirManager)
     const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
     const expandingFinalSize = finalSize * 0.1 + finalSize
-    await exec("hdiutil", ["resize", "-size", expandingFinalSize.toString(), tempDmg])
+    await hdiUtil(["resize", "-size", expandingFinalSize.toString(), tempDmg])
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await exists(volumePath)) {
@@ -68,9 +69,9 @@ export class DmgTarget extends Target {
     if (specification.format === "UDZO") {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
-    await spawn("hdiutil", addLogLevel(args))
+    await hdiUtil(addLogLevel(args))
     if (this.options.internetEnabled && parseInt(getOsRelease().split(".")[0], 10) < 19) {
-      await exec("hdiutil", addLogLevel(["internet-enable"]).concat(artifactPath))
+      await hdiUtil(addLogLevel(["internet-enable"]).concat(artifactPath))
     }
 
     const licenseData = await addLicenseToDmg(packager, artifactPath)
@@ -210,9 +211,7 @@ async function createStageDmg(tempDmg: string, appPath: string, volumeName: stri
   }
   imageArgs.push("-fs", ...filesystem)
   imageArgs.push(tempDmg)
-  // The reason for retrying up to ten times is that hdiutil create in some cases fail to unmount due to "resource busy".
-  // https://github.com/electron-userland/electron-builder/issues/5431
-  await retry(() => spawn("hdiutil", imageArgs), 5, 1000)
+  await hdiUtil(imageArgs)
   return tempDmg
 }
 
