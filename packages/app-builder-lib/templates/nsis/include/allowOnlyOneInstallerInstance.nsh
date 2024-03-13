@@ -7,6 +7,8 @@
   Var pid
 !endif
 
+!define SYSTEMROOT "$%SYSTEMROOT%"
+
 # http://nsis.sourceforge.net/Allow_only_one_installer_instance
 !macro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
   BringToFront
@@ -42,7 +44,7 @@
     ${nsProcess::FindProcess} "${_FILE}" ${_ERR}
   !else
     # find process owned by current user
-    nsExec::Exec `%SYSTEMROOT%\System32\cmd.exe /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO csv | %SYSTEMROOT%\System32\find.exe "${_FILE}"`
+    nsExec::Exec `"${SYSTEMROOT}\System32\cmd.exe" /c tasklist /FI "USERNAME eq %USERNAME%" /FI "IMAGENAME eq ${_FILE}" /FO csv | "${SYSTEMROOT}\System32\find.exe" "${_FILE}"`
     Pop ${_ERR}
   !endif
 !macroend
@@ -73,7 +75,7 @@
       !ifdef INSTALL_MODE_PER_ALL_USERS
         nsExec::Exec `taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
       !else
-        nsExec::Exec `%SYSTEMROOT%\System32\cmd.exe /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
+        nsExec::Exec `"${SYSTEMROOT}\System32\cmd.exe" /c taskkill /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
       !endif
       # to ensure that files are not "in-use"
       Sleep 300
@@ -91,7 +93,7 @@
           !ifdef INSTALL_MODE_PER_ALL_USERS
             nsExec::Exec `taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid"`
           !else
-            nsExec::Exec `%SYSTEMROOT%\System32\cmd.exe /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
+            nsExec::Exec `"${SYSTEMROOT}\System32\cmd.exe" /c taskkill /f /im "${APP_EXECUTABLE_FILENAME}" /fi "PID ne $pid" /fi "USERNAME eq %USERNAME%"`
           !endif
           !insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0
           ${If} $R0 == 0
