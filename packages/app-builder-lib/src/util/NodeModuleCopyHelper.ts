@@ -47,7 +47,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const result: Array<string> = []
     const queue: Array<string> = []
     for (const moduleInfo of moduleInfos) {
-      const tmpPath = baseDir + path.sep + moduleInfo.dir
+      const tmpPath = moduleInfo.dir
       const moduleName = moduleInfo.name
       queue.length = 1
       // The path should be corrected in Windows that when the moduleName is Scoped packages named.
