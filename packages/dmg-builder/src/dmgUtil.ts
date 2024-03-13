@@ -1,7 +1,7 @@
-import { exec, retry } from "builder-util"
 import { PlatformPackager } from "app-builder-lib"
 import { executeFinally } from "builder-util/out/promise"
 import * as path from "path"
+import { hdiUtil } from "./hdiuil"
 
 export { DmgTarget } from "./dmg"
 
@@ -23,7 +23,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
   }
 
   args.push(dmgPath)
-  const attachResult = await exec("hdiutil", args)
+  const attachResult = await hdiUtil(args)
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {
@@ -34,11 +34,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
 }
 
 export async function detach(name: string) {
-  try {
-    await exec("hdiutil", ["detach", "-quiet", name])
-  } catch (e: any) {
-    await retry(() => exec("hdiutil", ["detach", "-force", "-debug", name]), 5, 1000, 500)
-  }
+  return hdiUtil(["detach", "-quiet", name])
 }
 
 export async function computeBackground(packager: PlatformPackager<any>): Promise<string> {
