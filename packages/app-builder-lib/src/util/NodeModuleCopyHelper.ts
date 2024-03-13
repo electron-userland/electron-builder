@@ -6,6 +6,7 @@ import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
+import { NodeModuleInfo } from "./packageDependencies"
 
 const excludedFiles = new Set(
   [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
@@ -37,7 +38,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     super(matcher, matcher.isEmpty() ? null : matcher.createFilter(), packager)
   }
 
-  async collectNodeModules(baseDir: string, moduleNames: Iterable<string>, nodeModuleExcludedExts: Array<string>): Promise<Array<string>> {
+  async collectNodeModules(baseDir: string, moduleInfos: Array<NodeModuleInfo>, nodeModuleExcludedExts: Array<string>): Promise<Array<string>> {
     const filter = this.filter
     const metadata = this.metadata
 
@@ -45,8 +46,9 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
     const result: Array<string> = []
     const queue: Array<string> = []
-    for (const moduleName of moduleNames) {
-      const tmpPath = baseDir + path.sep + moduleName
+    for (const moduleInfo of moduleInfos) {
+      const tmpPath = baseDir + path.sep + moduleInfo.dir
+      const moduleName = moduleInfo.name
       queue.length = 1
       // The path should be corrected in Windows that when the moduleName is Scoped packages named.
       const depPath = path.normalize(tmpPath)

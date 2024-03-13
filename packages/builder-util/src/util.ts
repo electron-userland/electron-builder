@@ -1,4 +1,4 @@
-import { appBuilderPath } from "app-builder-bin"
+import { appBuilderPath } from "app-builder-precompiled-bin"
 import { safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
 import { ChildProcess, execFile, ExecFileOptions, SpawnOptions } from "child_process"

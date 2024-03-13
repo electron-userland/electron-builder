@@ -20,4 +20,5 @@ export interface NodeModuleDirInfo {
 
 export interface NodeModuleInfo {
   readonly name: string
+  readonly dir: string
 }

@@ -34,9 +34,9 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
       if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
         index = file.length - 13
       }
-      if (index < 0) {
-        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
-      }
+      // if (index < 0) {
+      //   throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
+      // }
       return dest + file.substring(index)
     }
   }
@@ -204,11 +204,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
     const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(
-      source,
-      info.deps.map(it => it.name),
-      nodeModuleExcludedExts
-    )
+    const files = await copier.collectNodeModules(source, info.deps, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
   }
   return result
