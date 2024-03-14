@@ -2,4 +2,4 @@
 "app-builder-lib": patch
 ---
 
-fix: add define for SYSTEMROOT
+fix: replace SYSTEMROOT with $SYSDIR
