@@ -7,8 +7,6 @@
   Var pid
 !endif
 
-!define SYSTEMROOT "$%SYSTEMROOT%"
-
 # http://nsis.sourceforge.net/Allow_only_one_installer_instance
 !macro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
   BringToFront
