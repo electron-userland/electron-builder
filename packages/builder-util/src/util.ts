@@ -10,7 +10,6 @@ import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
 import { getPath7za } from "./7za"
-import { chmod } from "fs-extra"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -365,7 +364,6 @@ export async function executeAppBuilder(
   maxRetries = 0
 ): Promise<string> {
   const command = appBuilderPath
-  await chmod(command, 0o755)
   const env: any = {
     ...process.env,
     SZA_PATH: await getPath7za(),
