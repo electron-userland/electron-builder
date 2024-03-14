@@ -93,6 +93,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-npmRebuild">npmRebuild</code> = <code>true</code> Boolean - Whether to <a href="https://docs.npmjs.com/cli/rebuild">rebuild</a> native dependencies before starting to package the app.</p>
 </li>
 <li>
+<p><code id="Configuration-nativeRebuilder">nativeRebuilder</code> = <code>legacy</code> “legacy” | “sequential” | “parallel” | “undefined” - Use <code>legacy</code> app-builder binary for installing native dependencies, or <code>@electron/rebuild</code> in <code>sequential</code> or <code>parallel</code> compilation modes.</p>
+</li>
+<li>
 <p><code id="Configuration-buildNumber">buildNumber</code> String | “undefined” - The build number. Maps to the <code>--iteration</code> flag for builds using FPM on Linux. If not defined, then it will fallback to <code>BUILD_NUMBER</code> or <code>TRAVIS_BUILD_NUMBER</code> or <code>APPVEYOR_BUILD_NUMBER</code> or <code>CIRCLE_BUILD_NUM</code> or <code>BUILD_BUILDNUMBER</code> or <code>CI_PIPELINE_IID</code> env.</p>
 </li>
 </ul>
@@ -183,6 +186,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 </li>
 <li>
 <p><code id="Configuration-removePackageKeywords">removePackageKeywords</code> = <code>true</code> Boolean - Whether to remove <code>keywords</code> field from <code>package.json</code> files.</p>
+</li>
+<li>
+<p><code id="Configuration-disableSanityCheckAsar">disableSanityCheckAsar</code> = <code>false</code> Boolean - Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)</p>
 </li>
 </ul>
 

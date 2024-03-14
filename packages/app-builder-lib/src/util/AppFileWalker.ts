@@ -16,7 +16,11 @@ function addAllPatternIfNeed(matcher: FileMatcher) {
 export abstract class FileCopyHelper {
   readonly metadata = new Map<string, Stats>()
 
-  protected constructor(protected readonly matcher: FileMatcher, readonly filter: Filter | null, protected readonly packager: Packager) {}
+  protected constructor(
+    protected readonly matcher: FileMatcher,
+    readonly filter: Filter | null,
+    protected readonly packager: Packager
+  ) {}
 
   protected handleFile(file: string, parent: string, fileStat: Stats): Promise<Stats | null> | null {
     if (!fileStat.isSymbolicLink()) {

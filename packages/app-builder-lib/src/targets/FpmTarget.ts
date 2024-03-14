@@ -31,7 +31,12 @@ export default class FpmTarget extends Target {
 
   private readonly scriptFiles: Promise<Array<string>>
 
-  constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
+  constructor(
+    name: string,
+    private readonly packager: LinuxPackager,
+    private readonly helper: LinuxTargetHelper,
+    readonly outDir: string
+  ) {
     super(name, false)
 
     this.scriptFiles = this.createScripts()
@@ -150,7 +155,7 @@ export default class FpmTarget extends Target {
       "--after-remove",
       scripts[1],
       "--description",
-      smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
+      smarten(target === "rpm" ? this.helper.getDescription(options) : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version",
       this.helper.getSanitizedVersion(target),
       "--package",

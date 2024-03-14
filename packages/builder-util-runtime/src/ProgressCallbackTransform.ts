@@ -16,7 +16,11 @@ export class ProgressCallbackTransform extends Transform {
 
   private nextUpdate = this.start + 1000
 
-  constructor(private readonly total: number, private readonly cancellationToken: CancellationToken, private readonly onProgress: (info: ProgressInfo) => any) {
+  constructor(
+    private readonly total: number,
+    private readonly cancellationToken: CancellationToken,
+    private readonly onProgress: (info: ProgressInfo) => any
+  ) {
     super()
   }
 

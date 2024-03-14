@@ -212,7 +212,10 @@ function doCopyFile(src: string, dest: string, stats: Stats | null | undefined):
 export class FileCopier {
   isUseHardLink: boolean
 
-  constructor(private readonly isUseHardLinkFunction?: ((file: string) => boolean) | null, private readonly transformer?: FileTransformer | null) {
+  constructor(
+    private readonly isUseHardLinkFunction?: ((file: string) => boolean) | null,
+    private readonly transformer?: FileTransformer | null
+  ) {
     if (isUseHardLinkFunction === USE_HARD_LINKS) {
       this.isUseHardLink = true
     } else {

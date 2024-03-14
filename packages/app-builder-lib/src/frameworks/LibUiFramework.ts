@@ -22,7 +22,11 @@ export class LibUiFramework implements Framework {
   // noinspection JSUnusedGlobalSymbols
   readonly isNpmRebuildRequired = false
 
-  constructor(readonly version: string, readonly distMacOsAppName: string, protected readonly isUseLaunchUi: boolean) {}
+  constructor(
+    readonly version: string,
+    readonly distMacOsAppName: string,
+    protected readonly isUseLaunchUi: boolean
+  ) {}
 
   async prepareApplicationStageDirectory(options: PrepareApplicationStageDirectoryOptions) {
     await emptyDir(options.appOutDir)

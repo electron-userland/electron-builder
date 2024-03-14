@@ -9,14 +9,7 @@ import { getLinuxToolsPath } from "./tools"
 import { getPath7za } from "builder-util"
 
 /** @internal */
-export async function tar(
-  compression: CompressionLevel | any | any,
-  format: string,
-  outFile: string,
-  dirToArchive: string,
-  isMacApp: boolean,
-  tempDirManager: TmpDir
-): Promise<void> {
+export async function tar(compression: CompressionLevel | any, format: string, outFile: string, dirToArchive: string, isMacApp: boolean, tempDirManager: TmpDir): Promise<void> {
   const tarFile = await tempDirManager.getTempFile({ suffix: ".tar" })
   const tarArgs: CreateOptions & FileOptions = {
     file: tarFile,

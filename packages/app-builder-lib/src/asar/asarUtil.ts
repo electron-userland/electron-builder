@@ -20,7 +20,12 @@ export class AsarPackager {
   private readonly outFile: string
   private readonly unpackedDest: string
 
-  constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
+  constructor(
+    private readonly src: string,
+    private readonly destination: string,
+    private readonly options: AsarOptions,
+    private readonly unpackPattern: Filter | null
+  ) {
     this.outFile = path.join(destination, "app.asar")
     this.unpackedDest = `${this.outFile}.unpacked`
   }
@@ -33,10 +38,18 @@ export class AsarPackager {
     }
     await mkdir(path.dirname(this.outFile), { recursive: true })
     const unpackedFileIndexMap = new Map<ResolvedFileSet, Set<number>>()
-    for (const fileSet of fileSets) {
+    const orderedFileSets = [
+      // Write dependencies first to minimize offset changes to asar header
+      ...fileSets.slice(1),
+
+      // Finish with the app files that change most often
+      fileSets[0],
+    ].map(orderFileSet)
+
+    for (const fileSet of orderedFileSets) {
       unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
     }
-    await this.writeAsarFile(fileSets, unpackedFileIndexMap)
+    await this.writeAsarFile(orderedFileSets, unpackedFileIndexMap)
   }
 
   private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
@@ -263,5 +276,58 @@ function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefine
     return fileCopier.copy(source, destination, stats)
   } else {
     return writeFile(destination, data)
+  }
+}
+
+function orderFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
+  const sortedFileEntries = Array.from(fileSet.files.entries())
+
+  sortedFileEntries.sort(([, a], [, b]) => {
+    if (a === b) {
+      return 0
+    }
+
+    // Place addons last because their signature change
+    const isAAddon = a.endsWith(".node")
+    const isBAddon = b.endsWith(".node")
+    if (isAAddon && !isBAddon) {
+      return 1
+    }
+    if (isBAddon && !isAAddon) {
+      return -1
+    }
+
+    // Otherwise order by name
+    return a < b ? -1 : 1
+  })
+
+  let transformedFiles: Map<number, string | Buffer> | undefined
+  if (fileSet.transformedFiles) {
+    transformedFiles = new Map()
+
+    const indexMap = new Map<number, number>()
+    for (const [newIndex, [oldIndex]] of sortedFileEntries.entries()) {
+      indexMap.set(oldIndex, newIndex)
+    }
+
+    for (const [oldIndex, value] of fileSet.transformedFiles) {
+      const newIndex = indexMap.get(oldIndex)
+      if (newIndex === undefined) {
+        const file = fileSet.files[oldIndex]
+        throw new Error(`Internal error: ${file} was lost while ordering asar`)
+      }
+
+      transformedFiles.set(newIndex, value)
+    }
+  }
+
+  const { src, destination, metadata } = fileSet
+
+  return {
+    src,
+    destination,
+    metadata,
+    files: sortedFileEntries.map(([, file]) => file),
+    transformedFiles,
   }
 }

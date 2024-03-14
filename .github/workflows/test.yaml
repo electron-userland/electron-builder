@@ -8,14 +8,9 @@ on:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      build-docker-locally:
-        type: boolean
-        description: Force rebuild docker images for CI tests
-        required: false
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: read
 
 jobs:
   test-linux:
@@ -42,7 +37,7 @@ jobs:
 
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959 # v42
+        uses: tj-actions/changed-files@aa08304bd477b800d468db44fe10f6c61f7f7b11 # v42
         with:
           files: docker/**/*
 
@@ -55,7 +50,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
-  
+
   test-mac:
     runs-on: macos-latest
     steps:
@@ -71,9 +66,9 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest
+          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
           FORCE_COLOR: 1
-  
+
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
   test-updater:
     runs-on: ubuntu-latest
@@ -90,7 +85,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest
+          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -101,8 +96,9 @@ jobs:
     strategy:
       matrix:
         testFiles:
+          - winCodeSignTest,differentialUpdateTest
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
-          - BuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
+          - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -112,7 +108,7 @@ jobs:
         with:
           cache-key: v-17.0.0-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
-      
+
       - name: Test
         run: pnpm ci:test
         env:

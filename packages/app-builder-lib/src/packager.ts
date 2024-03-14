@@ -168,7 +168,10 @@ export class Packager {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(options: PackagerOptions, readonly cancellationToken = new CancellationToken()) {
+  constructor(
+    options: PackagerOptions,
+    readonly cancellationToken = new CancellationToken()
+  ) {
     if ("devMetadata" in options) {
       throw new InvalidConfigurationError("devMetadata in the options is deprecated, please use config instead")
     }

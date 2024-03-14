@@ -7,6 +7,7 @@ import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { pathToFileURL } from "url"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive } from "./asar/asarFileChecker"
 import { AsarPackager } from "./asar/asarUtil"
@@ -59,7 +60,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  protected constructor(readonly info: Packager, readonly platform: Platform) {
+  protected constructor(
+    readonly info: Packager,
+    readonly platform: Platform
+  ) {
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
   }
@@ -169,8 +173,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const base = isResources
       ? this.getResourcesDir(appOutDir)
       : this.platform === Platform.MAC
-      ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
-      : appOutDir
+        ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents")
+        : appOutDir
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", base, options)
   }
 
@@ -272,8 +276,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       this.platform === Platform.MAC
         ? path.join(appOutDir, framework.distMacOsAppName, "Contents", "Resources")
         : isElectronBased(framework)
-        ? path.join(appOutDir, "resources")
-        : appOutDir
+          ? path.join(appOutDir, "resources")
+          : appOutDir
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     this.copyAppFiles(taskManager, asarOptions, resourcesPath, path.join(resourcesPath, "app"), packContext, platformSpecificBuildOptions, excludePatterns, macroExpander)
     await taskManager.awaitTasks()
@@ -312,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar, framework)
+    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
@@ -504,7 +508,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
-  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean) {
+  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean, disableSanityCheckAsar: boolean) {
+    if (isAsar && disableSanityCheckAsar) {
+      return
+    }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
       await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
@@ -542,7 +549,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework): Promise<any> {
+  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework, disableSanityCheckAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
@@ -555,8 +562,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesDir = this.getResourcesDir(appOutDir)
     const mainFile = (framework.getMainFile == null ? null : framework.getMainFile(this.platform)) || this.info.metadata.main || "index.js"
-    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar)
-    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
+    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar, disableSanityCheckAsar)
+    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar, disableSanityCheckAsar)
   }
 
   // tslint:disable-next-line:no-invalid-template-strings
@@ -758,7 +765,8 @@ async function resolveModule<T>(type: string | undefined, name: string): Promise
   const isModuleType = type === "module"
   try {
     if (extension === ".mjs" || (extension === ".js" && isModuleType)) {
-      return await eval("import('" + name + "')")
+      const fileUrl = pathToFileURL(name).href
+      return await eval("import('" + fileUrl + "')")
     }
   } catch (error) {
     log.debug({ moduleName: name }, "Unable to dynamically import hook, falling back to `require`")

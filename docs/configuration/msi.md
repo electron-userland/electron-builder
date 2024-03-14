@@ -3,6 +3,7 @@
 <li><code id="MsiOptions-upgradeCode">upgradeCode</code> String | “undefined” - The <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa372375(v=vs.85).aspx">upgrade code</a>. Optional, by default generated using app id.</li>
 <li><code id="MsiOptions-warningsAsErrors">warningsAsErrors</code> = <code>true</code> Boolean - If <code>warningsAsErrors</code> is <code>true</code> (default): treat warnings as errors. If <code>warningsAsErrors</code> is <code>false</code>: allow warnings.</li>
 <li><code id="MsiOptions-additionalWixArgs">additionalWixArgs</code> Array&lt;String&gt; | “undefined” - Any additional arguments to be passed to the WiX installer compiler, such as <code>[&quot;-ext&quot;, &quot;WixUtilExtension&quot;]</code></li>
+<li><code id="MsiOptions-additionalLightArgs">additionalLightArgs</code> Array&lt;String&gt; | “undefined” - Any additional arguments to be passed to the light.ext, such as <code>[&quot;-cultures:ja-jp&quot;]</code></li>
 <li><code id="MsiOptions-perMachine">perMachine</code> = <code>false</code> Boolean - Whether to install per all users (per-machine).</li>
 <li><code id="MsiOptions-runAfterFinish">runAfterFinish</code> = <code>true</code> Boolean - Whether to run the installed application after finish. For assisted installer corresponding checkbox will be removed.</li>
 </ul>

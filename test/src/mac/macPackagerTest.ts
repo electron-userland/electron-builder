@@ -103,13 +103,14 @@ test.ifMac(
   )
 )
 
-test.ifMac.skip("yarn two package.json w/ native module", () =>
+test.ifMac("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
       targets: Platform.MAC.createTarget("zip", Arch.universal),
       config: {
         npmRebuild: true,
+        nativeRebuilder: "sequential",
       },
     },
     {
