@@ -1277,7 +1277,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <ul>
 <li><a href="#module_dmg-builder.attachAndExecute"><code>.attachAndExecute(dmgPath, readWrite, task)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_dmg-builder.computeBackground"><code>.computeBackground(packager)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
-<li><a href="#module_dmg-builder.detach"><code>.detach(name)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_dmg-builder.detach"><code>.detach(name)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
 <li><a href="#module_dmg-builder.getDmgTemplatePath"><code>.getDmgTemplatePath()</code></a> ⇒ <code>String</code></li>
 <li><a href="#module_dmg-builder.getDmgVendorPath"><code>.getDmgVendorPath()</code></a> ⇒ <code>String</code></li>
 </ul>
@@ -1326,7 +1326,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tbody>
 </table>
 <p><a name="module_dmg-builder.detach"></a></p>
-<h2 id="dmg-builder.detach(name)-%E2%87%92-promise%3Cvoid%3E"><code>dmg-builder.detach(name)</code> ⇒ <code>Promise&lt;void&gt;</code></h2>
+<h2 id="dmg-builder.detach(name)-%E2%87%92-promise%3Cstring%3E"><code>dmg-builder.detach(name)</code> ⇒ <code>Promise&lt;String&gt;</code></h2>
 <p><strong>Kind</strong>: method of <a href="#module_dmg-builder"><code>dmg-builder</code></a><br/></p>
 <table>
 <thead>

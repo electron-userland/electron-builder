@@ -1,5 +1,16 @@
 # electron-builder
 
+## 25.0.0-alpha.4
+
+### Patch Changes
+
+- [#8135](https://github.com/electron-userland/electron-builder/pull/8135) [`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: unstable hdiutil retry mechanism
+
+- Updated dependencies [[`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88), [`44b04463`](https://github.com/electron-userland/electron-builder/commit/44b04463bf581b4c013586c9010733b518a802a4)]:
+  - app-builder-lib@25.0.0-alpha.4
+  - builder-util@25.0.0-alpha.4
+  - dmg-builder@25.0.0-alpha.4
+
 ## 25.0.0-alpha.3
 
 ### Patch Changes
