@@ -50,6 +50,7 @@ jobs:
         env:
           TEST_FILES: ${{ matrix.testFiles }}
           FORCE_COLOR: 1
+          USE_SYSTEM_MKSQUASHFS: true
 
   test-mac:
     runs-on: macos-latest
