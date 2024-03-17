@@ -18,23 +18,6 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-function findLongestCommonDirectory(path1: string, path2: string) {
-  const parts1 = path1.split(path.sep)
-  const parts2 = path2.split(path.sep)
-
-  const commonParts = []
-
-  for (let i = 0; i < Math.min(parts1.length, parts2.length); i++) {
-    if (parts1[i] === parts2[i]) {
-      commonParts.push(parts1[i])
-    } else {
-      break
-    }
-  }
-
-  return commonParts.length > 0 ? path.join(...commonParts, path.sep) : path.sep
-}
-
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
@@ -44,8 +27,17 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
       return dest + file.substring(src.length)
     } else {
-      const commonParts = findLongestCommonDirectory(file, dest)
-      return dest + file.substring(commonParts.length)
+      // hoisted node_modules
+      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
+      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
+      let index = file.indexOf(NODE_MODULES_PATTERN)
+      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
+        index = file.length - 13
+      }
+      if (index < 0) {
+        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
+      }
+      return dest + file.substring(index)
     }
   }
 }
