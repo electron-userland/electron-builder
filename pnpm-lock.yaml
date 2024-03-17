@@ -280,8 +280,8 @@ importers:
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-precompiled-bin:
-        specifier: 4.9.2
-        version: 4.9.2
+        specifier: 4.9.3
+        version: 4.9.3
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -3570,8 +3570,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  /app-builder-precompiled-bin@4.9.2:
-    resolution: {integrity: sha512-7NFGQZmWvv1linkOlrJp+7PrPG+H2OdFnWe9cti5kw4Qb0ASxgaNdoNcMKAb4Fdr8fHghh6yv3YkCKPGYlHcDA==}
+  /app-builder-precompiled-bin@4.9.3:
+    resolution: {integrity: sha512-MuZd3CXRe+duvrvfkFfs6gB6DLfeSw4bg/qWtXshVAeB5SpHholYnXLWM6ncQMNnVMwO5D6GaBSnkQVlgc4WJA==}
     dev: false
 
   /aproba@2.0.0:
