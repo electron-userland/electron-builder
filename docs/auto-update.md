@@ -40,6 +40,17 @@ All these targets are default, custom configuration is not required. (Though it 
     ```js
     import { autoUpdater } from "electron-updater"
     ```
+    ESM
+    ```ts
+    import electronUpdater, { type AppUpdater } from 'electron-updater';
+
+    export function getAutoUpdater(): AppUpdater {
+       // Using destructuring to access autoUpdater due to the CommonJS module of 'electron-updater'.
+       // It is a workaround for ESM compatibility issues, see https://github.com/electron-userland/electron-builder/issues/7976.
+       const { autoUpdater } = electronUpdater;
+       return autoUpdater;
+    }  
+    ```
 
 4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
@@ -201,74 +212,134 @@ Emitted on progress.
 <a name="module_builder-util-runtime"></a>
 ## builder-util-runtime
 
-* [builder-util-runtime](#module_builder-util-runtime)
-    * [`.BaseS3Options`](#BaseS3Options) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.BintrayOptions`](#BintrayOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.BlockMap`](#BlockMap)
-    * [`.BlockMapDataHolder`](#BlockMapDataHolder)
-    * [`.CustomPublishOptions`](#CustomPublishOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.DownloadOptions`](#DownloadOptions)
-    * [`.GenericServerOptions`](#GenericServerOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.GithubOptions`](#GithubOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.KeygenOptions`](#KeygenOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.PackageFileInfo`](#PackageFileInfo) ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
-    * [`.ProgressInfo`](#ProgressInfo)
-    * [`.PublishConfiguration`](#PublishConfiguration)
-    * [`.ReleaseNoteInfo`](#ReleaseNoteInfo)
-    * [`.RequestHeaders`](#RequestHeaders) ⇐ <code>[key: string]: string</code>
-    * [`.S3Options`](#S3Options) ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
-    * [`.SnapStoreOptions`](#SnapStoreOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.SpacesOptions`](#SpacesOptions) ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
-    * [`.UpdateFileInfo`](#UpdateFileInfo) ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
-    * [`.UpdateInfo`](#UpdateInfo)
-    * [`.WindowsUpdateInfo`](#WindowsUpdateInfo) ⇐ <code>[UpdateInfo](#UpdateInfo)</code>
-    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#CancellationToken) ⇐ <code>module:events.EventEmitter</code>
-        * [`.cancel()`](#module_builder-util-runtime.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_builder-util-runtime.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:builder-util-runtime/out/CancellationToken.R&gt;</code>
-        * [`.dispose()`](#module_builder-util-runtime.CancellationToken+dispose)
-    * [.DigestTransform](#DigestTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_builder-util-runtime.DigestTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_builder-util-runtime.DigestTransform+_transform)
-        * [`.validate()`](#module_builder-util-runtime.DigestTransform+validate) ⇒ <code>null</code>
-    * [.HttpError](#HttpError) ⇐ <code>Error</code>
-        * [`.isServerError()`](#module_builder-util-runtime.HttpError+isServerError) ⇒ <code>Boolean</code>
-    * [.HttpExecutor](#HttpExecutor)
-        * [`.addErrorAndTimeoutHandlers(request, reject)`](#module_builder-util-runtime.HttpExecutor+addErrorAndTimeoutHandlers)
-        * [`.createRequest(options, callback)`](#module_builder-util-runtime.HttpExecutor+createRequest) ⇒ <code>module:builder-util-runtime/out/httpExecutor.T</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_builder-util-runtime.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;String&gt;</code>
-        * [`.downloadToBuffer(url, options)`](#module_builder-util-runtime.HttpExecutor+downloadToBuffer) ⇒ <code>Promise&lt;module:global.Buffer&gt;</code>
-        * [`.prepareRedirectUrlOptions(redirectUrl, options)`](#module_builder-util-runtime.HttpExecutor+prepareRedirectUrlOptions) ⇒ <code>module:http.RequestOptions</code>
-        * [`.request(options, cancellationToken, data)`](#module_builder-util-runtime.HttpExecutor+request) ⇒ <code>Promise&lt; \| String&gt;</code>
-        * [`.retryOnServerError(task, maxRetries)`](#module_builder-util-runtime.HttpExecutor+retryOnServerError) ⇒ <code>Promise&lt;any&gt;</code>
-    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_builder-util-runtime.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_builder-util-runtime.ProgressCallbackTransform+_transform)
-    * [.UUID](#UUID)
-        * [`.check(uuid, offset)`](#module_builder-util-runtime.UUID+check) ⇒ <code>"undefined"</code> \| <code>module:builder-util-runtime/out/uuid.__object</code> \| <code>module:builder-util-runtime/out/uuid.__object</code>
-        * [`.inspect()`](#module_builder-util-runtime.UUID+inspect) ⇒ <code>String</code>
-        * [`.parse(input)`](#module_builder-util-runtime.UUID+parse) ⇒ <code>module:global.Buffer</code>
-        * [`.toString()`](#module_builder-util-runtime.UUID+toString) ⇒ <code>String</code>
-        * [`.v5(name, namespace)`](#module_builder-util-runtime.UUID+v5) ⇒ <code>any</code>
-    * [.XElement](#XElement)
-        * [`.attribute(name)`](#module_builder-util-runtime.XElement+attribute) ⇒ <code>String</code>
-        * [`.element(name, ignoreCase, errorIfMissed)`](#module_builder-util-runtime.XElement+element) ⇒ <code>[XElement](#XElement)</code>
-        * [`.elementOrNull(name, ignoreCase)`](#module_builder-util-runtime.XElement+elementOrNull) ⇒ <code>null</code> \| <code>[XElement](#XElement)</code>
-        * [`.getElements(name, ignoreCase)`](#module_builder-util-runtime.XElement+getElements) ⇒ <code>Array&lt;[XElement](#XElement)&gt;</code>
-        * [`.elementValueOrEmpty(name, ignoreCase)`](#module_builder-util-runtime.XElement+elementValueOrEmpty) ⇒ <code>String</code>
-        * [`.removeAttribute(name)`](#module_builder-util-runtime.XElement+removeAttribute)
-    * [`.asArray(v)`](#module_builder-util-runtime.asArray) ⇒ <code>Array&lt;module:builder-util-runtime.T&gt;</code>
-    * [`.configureRequestOptions(options, token, method)`](#module_builder-util-runtime.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
-    * [`.configureRequestOptionsFromUrl(url, options)`](#module_builder-util-runtime.configureRequestOptionsFromUrl) ⇒ <code>module:http.RequestOptions</code>
-    * [`.configureRequestUrl(url, options)`](#module_builder-util-runtime.configureRequestUrl)
-    * [`.createHttpError(response, description)`](#module_builder-util-runtime.createHttpError) ⇒ <code>[HttpError](#HttpError)</code>
-    * [`.getS3LikeProviderBaseUrl(configuration)`](#module_builder-util-runtime.getS3LikeProviderBaseUrl) ⇒ <code>String</code>
-    * [`.newError(message, code)`](#module_builder-util-runtime.newError) ⇒ <code>Error</code>
-    * [`.parseDn(seq)`](#module_builder-util-runtime.parseDn) ⇒ <code>Map&lt;String \| String&gt;</code>
-    * [`.parseJson(result)`](#module_builder-util-runtime.parseJson) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.parseXml(data)`](#module_builder-util-runtime.parseXml) ⇒ <code>[XElement](#XElement)</code>
-    * [`.safeGetHeader(response, headerKey)`](#module_builder-util-runtime.safeGetHeader) ⇒ <code>any</code>
-    * [`.safeStringifyJson(data, skippedNames)`](#module_builder-util-runtime.safeStringifyJson) ⇒ <code>String</code>
+- [Auto-updatable Targets](#auto-updatable-targets)
+- [Differences between electron-updater and built-in autoUpdater](#differences-between-electron-updater-and-built-in-autoupdater)
+- [Quick Setup Guide](#quick-setup-guide)
+- [Examples](#examples)
+  - [Custom Options instantiating updater Directly](#custom-options-instantiating-updater-directly)
+- [Debugging](#debugging)
+- [Compatibility](#compatibility)
+- [Staged Rollouts](#staged-rollouts)
+- [File Generated and Uploaded in Addition](#file-generated-and-uploaded-in-addition)
+- [Private GitHub Update Repo](#private-github-update-repo)
+- [Events](#events)
+    - [Event: `error`](#event-error)
+    - [Event: `checking-for-update`](#event-checking-for-update)
+    - [Event: `update-available`](#event-update-available)
+    - [Event: `update-not-available`](#event-update-not-available)
+    - [Event: `download-progress`](#event-download-progress)
+    - [Event: `update-downloaded`](#event-update-downloaded)
+- [API](#api)
+- [builder-util-runtime](#builder-util-runtime)
+  - [`BaseS3Options` ⇐ PublishConfiguration](#bases3options--publishconfiguration)
+  - [`BintrayOptions` ⇐ PublishConfiguration](#bintrayoptions--publishconfiguration)
+  - [`BlockMap`](#blockmap)
+  - [`BlockMapDataHolder`](#blockmapdataholder)
+  - [`CustomPublishOptions` ⇐ PublishConfiguration](#custompublishoptions--publishconfiguration)
+  - [`DownloadOptions`](#downloadoptions)
+  - [`GenericServerOptions` ⇐ PublishConfiguration](#genericserveroptions--publishconfiguration)
+  - [`GithubOptions` ⇐ PublishConfiguration](#githuboptions--publishconfiguration)
+  - [`KeygenOptions` ⇐ PublishConfiguration](#keygenoptions--publishconfiguration)
+  - [`PackageFileInfo` ⇐ BlockMapDataHolder](#packagefileinfo--blockmapdataholder)
+  - [`ProgressInfo`](#progressinfo)
+  - [`PublishConfiguration`](#publishconfiguration)
+  - [`ReleaseNoteInfo`](#releasenoteinfo)
+  - [`RequestHeaders` ⇐ \[key: string\]: OutgoingHttpHeader | undefined](#requestheaders--key-string-outgoinghttpheader--undefined)
+  - [`S3Options` ⇐ BaseS3Options](#s3options--bases3options)
+  - [`SnapStoreOptions` ⇐ PublishConfiguration](#snapstoreoptions--publishconfiguration)
+  - [`SpacesOptions` ⇐ BaseS3Options](#spacesoptions--bases3options)
+  - [`UpdateFileInfo` ⇐ BlockMapDataHolder](#updatefileinfo--blockmapdataholder)
+  - [`UpdateInfo`](#updateinfo)
+  - [`WindowsUpdateInfo` ⇐ UpdateInfo](#windowsupdateinfo--updateinfo)
+  - [CancellationError ⇐ Error](#cancellationerror--error)
+  - [CancellationToken ⇐ module:events.EventEmitter](#cancellationtoken--moduleeventseventemitter)
+    - [`cancellationToken.cancel()`](#cancellationtokencancel)
+    - [`cancellationToken.createPromise(callback)` ⇒ Promise\<module:builder-util-runtime/out/CancellationToken.R\>](#cancellationtokencreatepromisecallback--promisemodulebuilder-util-runtimeoutcancellationtokenr)
+    - [`cancellationToken.dispose()`](#cancellationtokendispose)
+  - [DigestTransform ⇐ internal:Transform](#digesttransform--internaltransform)
+    - [`digestTransform._flush(callback)`](#digesttransform_flushcallback)
+    - [`digestTransform._transform(chunk, encoding, callback)`](#digesttransform_transformchunk-encoding-callback)
+    - [`digestTransform.validate()` ⇒ null](#digesttransformvalidate--null)
+  - [HttpError ⇐ Error](#httperror--error)
+    - [`httpError.isServerError()` ⇒ Boolean](#httperrorisservererror--boolean)
+  - [HttpExecutor](#httpexecutor)
+    - [`httpExecutor.addErrorAndTimeoutHandlers(request, reject)`](#httpexecutoradderrorandtimeouthandlersrequest-reject)
+    - [`httpExecutor.createRequest(options, callback)` ⇒ module:builder-util-runtime/out/httpExecutor.T](#httpexecutorcreaterequestoptions-callback--modulebuilder-util-runtimeouthttpexecutort)
+    - [`httpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ Promise\<String\>](#httpexecutordoapirequestoptions-cancellationtoken-requestprocessor-redirectcount--promisestring)
+    - [`httpExecutor.downloadToBuffer(url, options)` ⇒ Promise\<module:global.Buffer\>](#httpexecutordownloadtobufferurl-options--promisemoduleglobalbuffer)
+    - [`httpExecutor.prepareRedirectUrlOptions(redirectUrl, options)` ⇒ module:http.RequestOptions](#httpexecutorprepareredirecturloptionsredirecturl-options--modulehttprequestoptions)
+    - [`httpExecutor.request(options, cancellationToken, data)` ⇒ Promise\< | String\>](#httpexecutorrequestoptions-cancellationtoken-data--promise--string)
+    - [`httpExecutor.retryOnServerError(task, maxRetries)` ⇒ Promise\<any\>](#httpexecutorretryonservererrortask-maxretries--promiseany)
+  - [ProgressCallbackTransform ⇐ internal:Transform](#progresscallbacktransform--internaltransform)
+    - [`progressCallbackTransform._flush(callback)`](#progresscallbacktransform_flushcallback)
+    - [`progressCallbackTransform._transform(chunk, encoding, callback)`](#progresscallbacktransform_transformchunk-encoding-callback)
+  - [UUID](#uuid)
+    - [`uuiD.check(uuid, offset)` ⇒ "undefined" | module:builder-util-runtime/out/uuid.\_\_object | module:builder-util-runtime/out/uuid.\_\_object](#uuidcheckuuid-offset--undefined--modulebuilder-util-runtimeoutuuid__object--modulebuilder-util-runtimeoutuuid__object)
+    - [`uuiD.inspect()` ⇒ String](#uuidinspect--string)
+    - [`uuiD.parse(input)` ⇒ module:global.Buffer](#uuidparseinput--moduleglobalbuffer)
+    - [`uuiD.toString()` ⇒ String](#uuidtostring--string)
+    - [`uuiD.v5(name, namespace)` ⇒ any](#uuidv5name-namespace--any)
+  - [XElement](#xelement)
+    - [`xElement.attribute(name)` ⇒ String](#xelementattributename--string)
+    - [`xElement.element(name, ignoreCase, errorIfMissed)` ⇒ XElement](#xelementelementname-ignorecase-errorifmissed--xelement)
+    - [`xElement.elementOrNull(name, ignoreCase)` ⇒ null | XElement](#xelementelementornullname-ignorecase--null--xelement)
+    - [`xElement.getElements(name, ignoreCase)` ⇒ Array\<XElement\>](#xelementgetelementsname-ignorecase--arrayxelement)
+    - [`xElement.elementValueOrEmpty(name, ignoreCase)` ⇒ String](#xelementelementvalueoremptyname-ignorecase--string)
+    - [`xElement.removeAttribute(name)`](#xelementremoveattributename)
+  - [`builder-util-runtime.asArray(v)` ⇒ Array\<module:builder-util-runtime.T\>](#builder-util-runtimeasarrayv--arraymodulebuilder-util-runtimet)
+  - [`builder-util-runtime.configureRequestOptions(options, token, method)` ⇒ module:http.RequestOptions](#builder-util-runtimeconfigurerequestoptionsoptions-token-method--modulehttprequestoptions)
+  - [`builder-util-runtime.configureRequestOptionsFromUrl(url, options)` ⇒ module:http.RequestOptions](#builder-util-runtimeconfigurerequestoptionsfromurlurl-options--modulehttprequestoptions)
+  - [`builder-util-runtime.configureRequestUrl(url, options)`](#builder-util-runtimeconfigurerequesturlurl-options)
+  - [`builder-util-runtime.createHttpError(response, description)` ⇒ HttpError](#builder-util-runtimecreatehttperrorresponse-description--httperror)
+  - [`builder-util-runtime.getS3LikeProviderBaseUrl(configuration)` ⇒ String](#builder-util-runtimegets3likeproviderbaseurlconfiguration--string)
+  - [`builder-util-runtime.newError(message, code)` ⇒ Error](#builder-util-runtimenewerrormessage-code--error)
+  - [`builder-util-runtime.parseDn(seq)` ⇒ Map\<String | String\>](#builder-util-runtimeparsednseq--mapstring--string)
+  - [`builder-util-runtime.parseJson(result)` ⇒ Promise\<any\>](#builder-util-runtimeparsejsonresult--promiseany)
+  - [`builder-util-runtime.parseXml(data)` ⇒ XElement](#builder-util-runtimeparsexmldata--xelement)
+  - [`builder-util-runtime.safeGetHeader(response, headerKey)` ⇒ any](#builder-util-runtimesafegetheaderresponse-headerkey--any)
+  - [`builder-util-runtime.safeStringifyJson(data, skippedNames)` ⇒ String](#builder-util-runtimesafestringifyjsondata-skippednames--string)
+- [electron-updater](#electron-updater)
+  - [`Logger`](#logger)
+    - [`logger.debug(message)`](#loggerdebugmessage)
+    - [`logger.error(message)`](#loggererrormessage)
+    - [`logger.info(message)`](#loggerinfomessage)
+    - [`logger.warn(message)`](#loggerwarnmessage)
+  - [`ResolvedUpdateFileInfo`](#resolvedupdatefileinfo)
+  - [`UpdateCheckResult`](#updatecheckresult)
+  - [`UpdateDownloadedEvent` ⇐ module:builder-util-runtime.UpdateInfo](#updatedownloadedevent--modulebuilder-util-runtimeupdateinfo)
+  - [AppImageUpdater ⇐ module:electron-updater/out/BaseUpdater.BaseUpdater](#appimageupdater--moduleelectron-updateroutbaseupdaterbaseupdater)
+    - [`appImageUpdater.isUpdaterActive()` ⇒ Boolean](#appimageupdaterisupdateractive--boolean)
+  - [AppUpdater ⇐ module:events.EventEmitter](#appupdater--moduleeventseventemitter)
+    - [`appUpdater.addAuthHeader(token)`](#appupdateraddauthheadertoken)
+    - [`appUpdater.checkForUpdates()` ⇒ Promise\<UpdateCheckResult\>](#appupdatercheckforupdates--promiseupdatecheckresult)
+    - [`appUpdater.checkForUpdatesAndNotify(downloadNotification)` ⇒ Promise\< | UpdateCheckResult\>](#appupdatercheckforupdatesandnotifydownloadnotification--promise--updatecheckresult)
+    - [`appUpdater.downloadUpdate(cancellationToken)` ⇒ Promise\<Array\<String\>\>](#appupdaterdownloadupdatecancellationtoken--promisearraystring)
+    - [`appUpdater.getFeedURL()` ⇒ undefined | null | String](#appupdatergetfeedurl--undefined--null--string)
+    - [`appUpdater.setFeedURL(options)`](#appupdatersetfeedurloptions)
+    - [`appUpdater.isUpdaterActive()` ⇒ Boolean](#appupdaterisupdateractive--boolean)
+    - [`appUpdater.quitAndInstall(isSilent, isForceRunAfter)`](#appupdaterquitandinstallissilent-isforcerunafter)
+  - [MacUpdater ⇐ AppUpdater](#macupdater--appupdater)
+    - [`macUpdater.quitAndInstall()`](#macupdaterquitandinstall)
+    - [`macUpdater.addAuthHeader(token)`](#macupdateraddauthheadertoken)
+    - [`macUpdater.checkForUpdates()` ⇒ Promise\<UpdateCheckResult\>](#macupdatercheckforupdates--promiseupdatecheckresult)
+    - [`macUpdater.checkForUpdatesAndNotify(downloadNotification)` ⇒ Promise\< | UpdateCheckResult\>](#macupdatercheckforupdatesandnotifydownloadnotification--promise--updatecheckresult)
+    - [`macUpdater.downloadUpdate(cancellationToken)` ⇒ Promise\<Array\<String\>\>](#macupdaterdownloadupdatecancellationtoken--promisearraystring)
+    - [`macUpdater.getFeedURL()` ⇒ undefined | null | String](#macupdatergetfeedurl--undefined--null--string)
+    - [`macUpdater.setFeedURL(options)`](#macupdatersetfeedurloptions)
+    - [`macUpdater.isUpdaterActive()` ⇒ Boolean](#macupdaterisupdateractive--boolean)
+  - [NsisUpdater ⇐ module:electron-updater/out/BaseUpdater.BaseUpdater](#nsisupdater--moduleelectron-updateroutbaseupdaterbaseupdater)
+  - [Provider](#provider)
+    - [`provider.getLatestVersion()` ⇒ Promise\<module:electron-updater/out/providers/Provider.T\>](#providergetlatestversion--promisemoduleelectron-updateroutprovidersprovidert)
+    - [`provider.setRequestHeaders(value)`](#providersetrequestheadersvalue)
+    - [`provider.resolveFiles(updateInfo)` ⇒ Array\<ResolvedUpdateFileInfo\>](#providerresolvefilesupdateinfo--arrayresolvedupdatefileinfo)
+  - [UpdaterSignal](#updatersignal)
+    - [`updaterSignal.login(handler)`](#updatersignalloginhandler)
+    - [`updaterSignal.progress(handler)`](#updatersignalprogresshandler)
+    - [`updaterSignal.updateCancelled(handler)`](#updatersignalupdatecancelledhandler)
+    - [`updaterSignal.updateDownloaded(handler)`](#updatersignalupdatedownloadedhandler)
+  - [`electron-updater.autoUpdater` : AppUpdater](#electron-updaterautoupdater--appupdater)
+  - [`electron-updater.DOWNLOAD_PROGRESS` : "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"](#electron-updaterdownload_progress--login--checking-for-update--update-available--update-not-available--update-cancelled--download-progress--update-downloaded--error)
+  - [`electron-updater.UPDATE_DOWNLOADED` : "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"](#electron-updaterupdate_downloaded--login--checking-for-update--update-available--update-not-available--update-cancelled--download-progress--update-downloaded--error)
 
 <a name="BaseS3Options"></a>
 ### `BaseS3Options` ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>

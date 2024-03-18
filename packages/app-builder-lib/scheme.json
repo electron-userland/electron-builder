@@ -7010,7 +7010,7 @@
           "type": "null"
         }
       ],
-      "default": "legacy",
+      "default": "sequential",
       "description": "Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes."
     },
     "nodeGypRebuild": {
