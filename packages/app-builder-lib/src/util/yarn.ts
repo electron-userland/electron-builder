@@ -182,7 +182,7 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
     buildFromSource: options.buildFromSource === true,
   }
-  if ([undefined, null, "legacy"].includes(config.nativeRebuilder)) {
+  if (config.nativeRebuilder === "legacy") {
     const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
     return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
   }
@@ -205,7 +205,7 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     arch,
     debug: log.isDebugEnabled,
     projectRootPath: await getProjectRootPath(appDir),
-    mode: config.nativeRebuilder as RebuildMode,
+    mode: (config.nativeRebuilder as RebuildMode) || "sequential",
   }
   if (buildFromSource) {
     rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
