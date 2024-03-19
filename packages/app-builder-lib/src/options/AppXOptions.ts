@@ -69,6 +69,18 @@ export interface AppXOptions extends TargetSpecificOptions {
    */
   readonly setBuildNumber?: boolean
 
+  /**
+   * Set the MinVersion field in the appx manifest.xml
+   * @default arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+   */
+  readonly minVersion?: string | null
+
+  /**
+   * Set the `MaxVersionTested` field in the appx manifest.xml
+   * @default arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+   */
+  readonly maxVersionTested?: string | null
+
   /** @private */
   readonly makeappxArgs?: Array<string> | null
 }

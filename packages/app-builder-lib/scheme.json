@@ -223,6 +223,22 @@
             }
           ]
         },
+        "maxVersionTested": {
+          "default": "arch === Arch.arm64 ? \"10.0.16299.0\" : \"10.0.14316.0\"",
+          "description": "Set the `MaxVersionTested` field in the appx manifest.xml",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "minVersion": {
+          "default": "arch === Arch.arm64 ? \"10.0.16299.0\" : \"10.0.14316.0\"",
+          "description": "Set the MinVersion field in the appx manifest.xml",
+          "type": [
+            "null",
+            "string"
+          ]
+        },
         "publish": {
           "anyOf": [
             {

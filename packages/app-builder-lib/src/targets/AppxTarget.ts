@@ -252,10 +252,10 @@ export default class AppXTarget extends Target {
           return extensions
 
         case "minVersion":
-          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.minVersion || arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
         case "maxVersionTested":
-          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.maxVersionTested || options.minVersion || arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
         default:
           throw new Error(`Macro ${p1} is not defined`)
