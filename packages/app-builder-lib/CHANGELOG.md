@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 25.0.0-alpha.5
+
+### Patch Changes
+
+- [#8140](https://github.com/electron-userland/electron-builder/pull/8140) [`99a6150e`](https://github.com/electron-userland/electron-builder/commit/99a6150ea02c91a7e7e657c667328eb734e29b8f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: update autoupdate docs to describe module-based support. set nativeRebuilder default value to use electron/rebuild
+
+- Updated dependencies []:
+  - dmg-builder@25.0.0-alpha.5
+  - electron-builder-squirrel-windows@25.0.0-alpha.5
+
 ## 25.0.0-alpha.4
 
 ### Patch Changes
