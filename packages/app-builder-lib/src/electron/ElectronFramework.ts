@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, executeAppBuilder, log } from "builder-util"
+import { Arch, InvalidConfigurationError, asArray, executeAppBuilder, log } from "builder-util"
 import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, readdir, rename } from "fs-extra"
 import * as path from "path"
@@ -190,6 +190,10 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       options.cache = resolvedDist
       dist = null
     }
+  } else if (prepareOptions.arch === Arch[Arch.riscv64]) {
+    throw new InvalidConfigurationError(
+      "Arch `riscv64` is selected but no custom electron distributable was provided via `electronDist` configuration. (Electron upstream does not distribute prebuilt riscv64 artifacts)"
+    )
   }
 
   let isFullCleanup = false
