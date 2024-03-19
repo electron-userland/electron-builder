@@ -189,11 +189,11 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       log.info({ resolvedDist, zipFile }, "resolved electronDist")
       options.cache = resolvedDist
       dist = null
+    } else if (prepareOptions.arch === Arch[Arch.riscv64]) {
+      throw new InvalidConfigurationError(
+        "Arch `riscv64` is selected but no custom electron distributable was provided via `electronDist` configuration. (Electron upstream does not distribute prebuilt riscv64 artifacts)"
+      )
     }
-  } else if (prepareOptions.arch === Arch[Arch.riscv64]) {
-    throw new InvalidConfigurationError(
-      "Arch `riscv64` is selected but no custom electron distributable was provided via `electronDist` configuration. (Electron upstream does not distribute prebuilt riscv64 artifacts)"
-    )
   }
 
   let isFullCleanup = false
