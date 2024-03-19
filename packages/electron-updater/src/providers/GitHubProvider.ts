@@ -16,7 +16,11 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   protected readonly baseUrl: URL
   protected readonly baseApiUrl: URL
 
-  protected constructor(protected readonly options: GithubOptions, defaultHost: string, runtimeOptions: ProviderRuntimeOptions) {
+  protected constructor(
+    protected readonly options: GithubOptions,
+    defaultHost: string,
+    runtimeOptions: ProviderRuntimeOptions
+  ) {
     super({
       ...runtimeOptions,
       /* because GitHib uses S3 */
@@ -36,7 +40,11 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
 }
 
 export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
-  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+  constructor(
+    protected readonly options: GithubOptions,
+    private readonly updater: AppUpdater,
+    runtimeOptions: ProviderRuntimeOptions
+  ) {
     super(options, "github.com", runtimeOptions)
   }
 
@@ -76,7 +84,7 @@ export class GitHubProvider extends BaseGitHubProvider<GithubUpdateInfo> {
             const hrefChannel = (semver.prerelease(hrefTag)?.[0] as string) || null
 
             const shouldFetchVersion = !currentChannel || ["alpha", "beta"].includes(currentChannel)
-            const isCustomChannel = !["alpha", "beta"].includes(String(hrefChannel))
+            const isCustomChannel = hrefChannel !== null && !["alpha", "beta"].includes(String(hrefChannel))
             // Allow moving from alpha to beta but not down
             const channelMismatch = currentChannel === "beta" && hrefChannel === "alpha"
 

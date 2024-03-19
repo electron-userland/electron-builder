@@ -22,7 +22,11 @@ export class BuildCacheManager {
 
   private newDigest: string | null = null
 
-  constructor(outDir: string, private readonly executableFile: string, arch: Arch) {
+  constructor(
+    outDir: string,
+    private readonly executableFile: string,
+    arch: Arch
+  ) {
     this.cacheDir = path.join(outDir, ".cache", Arch[arch])
     this.cacheFile = path.join(this.cacheDir, "app.exe")
     this.cacheInfoFile = path.join(this.cacheDir, "info.json")

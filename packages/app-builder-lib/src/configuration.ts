@@ -131,6 +131,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly npmRebuild?: boolean
+  /**
+   * Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes.
+   * @default sequential
+   */
+  readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
 
   /**
    * The build number. Maps to the `--iteration` flag for builds using FPM on Linux.
@@ -245,9 +250,9 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    */
   readonly appxManifestCreated?: ((path: string) => Promise<any> | any) | string | null
   /**
-   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file.
+   * The function (or path to file or module id) to be [run on each node module](#onnodemodulefile) file. Returning `true`/`false` will determine whether to force include or to use the default copier logic
    */
-  readonly onNodeModuleFile?: ((file: string) => void) | string | null
+  readonly onNodeModuleFile?: ((path: string) => void | boolean) | string | null
   /**
    * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    *
@@ -274,6 +279,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
    * @default true
    */
   readonly removePackageKeywords?: boolean
+
+  /**
+   * Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)
+   * @default false
+   */
+  readonly disableSanityCheckAsar?: boolean
 }
 
 interface PackContext {

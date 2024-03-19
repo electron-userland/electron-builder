@@ -1,4 +1,3 @@
-import { path7za } from "7zip-bin"
 import { appBuilderPath } from "app-builder-bin"
 import { safeStringifyJson } from "builder-util-runtime"
 import * as chalk from "chalk"
@@ -10,6 +9,7 @@ import { dump } from "js-yaml"
 import * as path from "path"
 import { debug, log } from "./log"
 import { install as installSourceMap } from "source-map-support"
+import { getPath7za } from "./7za"
 
 if (process.env.JEST_WORKER_ID == null) {
   installSourceMap()
@@ -26,6 +26,8 @@ export { copyFile, exists } from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"
+
+export { getPath7za, getPath7x } from "./7za"
 
 export const debug7z = _debug("electron-builder:7z")
 
@@ -259,7 +261,13 @@ function formatOut(text: string, title: string) {
 export class ExecError extends Error {
   alreadyLogged = false
 
-  constructor(command: string, readonly exitCode: number, out: string, errorOut: string, code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE") {
+  constructor(
+    command: string,
+    readonly exitCode: number,
+    out: string,
+    errorOut: string,
+    code = "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE"
+  ) {
     super(`${command} process failed ${code}${formatOut(String(exitCode), "Exit code")}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`)
     ;(this as NodeJS.ErrnoException).code = code
   }
@@ -349,7 +357,7 @@ export class InvalidConfigurationError extends Error {
   }
 }
 
-export function executeAppBuilder(
+export async function executeAppBuilder(
   args: Array<string>,
   childProcessConsumer?: (childProcess: ChildProcess) => void,
   extraOptions: SpawnOptions = {},
@@ -358,7 +366,7 @@ export function executeAppBuilder(
   const command = appBuilderPath
   const env: any = {
     ...process.env,
-    SZA_PATH: path7za,
+    SZA_PATH: await getPath7za(),
     FORCE_COLOR: chalk.level === 0 ? "0" : "1",
   }
   const cacheEnv = process.env.ELECTRON_BUILDER_CACHE
@@ -396,14 +404,14 @@ export function executeAppBuilder(
   }
 }
 
-export async function retry<T>(task: () => Promise<T>, retriesLeft: number, interval: number, backoff = 0, attempt = 0): Promise<T> {
+export async function retry<T>(task: () => Promise<T>, retryCount: number, interval: number, backoff = 0, attempt = 0, shouldRetry?: (e: any) => boolean): Promise<T> {
   try {
     return await task()
   } catch (error: any) {
-    log.info(`Above command failed, retrying ${retriesLeft} more times`)
-    if (retriesLeft > 0) {
+    log.info(`Above command failed, retrying ${retryCount} more times`)
+    if ((shouldRetry?.(error) ?? true) && retryCount > 0) {
       await new Promise(resolve => setTimeout(resolve, interval + backoff * attempt))
-      return await retry(task, retriesLeft - 1, interval, backoff, attempt + 1)
+      return await retry(task, retryCount - 1, interval, backoff, attempt + 1, shouldRetry)
     } else {
       throw error
     }

@@ -10,7 +10,6 @@ import os
 import os.path
 import stat
 import sys
-from unicodedata import normalize
 
 if sys.platform == 'darwin':
     from . import osx
@@ -389,10 +388,6 @@ class Alias (object):
         # Find the filesystem
         st = osx.statfs(path)
         vol_path = st.f_mntonname
-
-        # File and folder names in HFS+ are normalized to a form similar to NFD.
-        # Must be normalized (NFD->NFC) before use to avoid unicode string comparison issues.
-        vol_path = normalize("NFC", vol_path.decode('utf-8')).encode('utf-8')
 
         # Grab its attributes
         attrs = [osx.ATTR_CMN_CRTIME,

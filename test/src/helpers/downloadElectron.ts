@@ -45,8 +45,8 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
       platform === "mas" || platform === "darwin"
         ? ["x64"]
         : platform === "win32"
-        ? ["ia32", "x64"]
-        : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames()
+          ? ["ia32", "x64"]
+          : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames()
     for (const arch of archs) {
       if (arch === "riscv64") {
         // No prebuilt electron for riscv64

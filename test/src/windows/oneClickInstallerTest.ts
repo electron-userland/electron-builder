@@ -339,3 +339,19 @@ test.skip.ifWindows(
     },
   })
 )
+
+test.skip.ifWindows(
+  "top-level custom exec name",
+  app({
+    targets: nsisTarget,
+    config: {
+      publish: null,
+      productName: "foo",
+      executableName: "Boo",
+    },
+    effectiveOptionComputed: async it => {
+      expect(pickSnapshotDefines(it[0])).toMatchSnapshot()
+      return false
+    },
+  })
+)

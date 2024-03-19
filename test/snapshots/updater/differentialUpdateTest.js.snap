@@ -77,7 +77,7 @@ Object {
       "size": "@size",
     },
   ],
-  "path": "TestApp-1.0.1-x86_64.AppImage",
+  "path": "Test App ßW-1.0.1.AppImage",
   "releaseDate": "@releaseDate",
   "sha512": "@sha512",
   "version": "1.0.1",
@@ -86,7 +86,7 @@ Object {
 
 exports[`AppImage 4`] = `
 Array [
-  "TestApp-1.0.1-x86_64.AppImage",
+  "Test App ßW-1.0.1.AppImage",
 ]
 `;
 
@@ -167,7 +167,7 @@ Object {
       "size": "@size",
     },
   ],
-  "path": "TestApp-1.0.1-i386.AppImage",
+  "path": "Test App ßW-1.0.1-i386.AppImage",
   "releaseDate": "@releaseDate",
   "sha512": "@sha512",
   "version": "1.0.1",
@@ -176,44 +176,21 @@ Object {
 
 exports[`AppImage ia32 4`] = `
 Array [
-  "TestApp-1.0.1-i386.AppImage",
+  "Test App ßW-1.0.1-i386.AppImage",
 ]
 `;
 
-exports[`dmg 1`] = `
+exports[`Mac Intel 1`] = `
 Object {
   "mac": Array [
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.0.dmg",
-      "safeArtifactName": "TestApp-1.0.0.dmg",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "file": "Test App ßW-1.0.0.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.0.0.dmg.blockmap",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
     Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.0-mac.zip",
-          },
-          Object {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.0.dmg",
           },
         ],
         "path": "Test App ßW-1.0.0-mac.zip",
@@ -227,7 +204,14 @@ Object {
       "file": "Test App ßW-1.0.0-mac.zip",
       "safeArtifactName": "TestApp-1.0.0-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.0-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -236,11 +220,11 @@ Object {
 }
 `;
 
-exports[`dmg 2`] = `
+exports[`Mac Intel 2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -266,46 +250,25 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
 
-exports[`dmg 3`] = `
+exports[`Mac Intel 3`] = `
 Object {
   "mac": Array [
-    Object {
-      "arch": "x64",
-      "file": "Test App ßW-1.0.1.dmg",
-      "safeArtifactName": "TestApp-1.0.1.dmg",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "file": "Test App ßW-1.0.1.dmg.blockmap",
-      "safeArtifactName": "TestApp-1.0.1.dmg.blockmap",
-      "updateInfo": Object {
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
     Object {
       "file": "latest-mac.yml",
       "fileContent": Object {
         "files": Array [
           Object {
-            "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
             "url": "Test App ßW-1.0.1-mac.zip",
-          },
-          Object {
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.0.1.dmg",
           },
         ],
         "path": "Test App ßW-1.0.1-mac.zip",
@@ -319,7 +282,14 @@ Object {
       "file": "Test App ßW-1.0.1-mac.zip",
       "safeArtifactName": "TestApp-1.0.1-mac.zip",
       "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.1-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.1-mac.zip.blockmap",
+      "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
@@ -328,11 +298,11 @@ Object {
 }
 `;
 
-exports[`dmg 4`] = `
+exports[`Mac Intel 4`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
-  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIconFile": "icon.icns",
   "CFBundleIdentifier": "org.electron-builder.testApp",
   "CFBundleInfoDictionaryVersion": "6.0",
   "CFBundleName": "Test App ßW",
@@ -358,10 +328,387 @@ Object {
       },
     },
   },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
+`;
+
+exports[`Mac Intel 5`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-mac.zip",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`Mac Intel 6`] = `
+Array [
+  "Test App ßW-1.0.1-mac.zip",
+]
+`;
+
+exports[`Mac arm64 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-arm64-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-arm64-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    Object {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.0-arm64-mac.zip",
+      "safeArtifactName": "TestApp-1.0.0-arm64-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.0-arm64-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Mac arm64 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Mac arm64 3`] = `
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-arm64-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-arm64-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "arm64",
+      "file": "Test App ßW-1.0.1-arm64-mac.zip",
+      "safeArtifactName": "TestApp-1.0.1-arm64-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.1-arm64-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Mac arm64 4`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Mac arm64 5`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-arm64-mac.zip",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`Mac arm64 6`] = `
+Array [
+  "Test App ßW-1.0.1-arm64-mac.zip",
+]
+`;
+
+exports[`Mac universal 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.0-universal-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.0-universal-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.0",
+      },
+    },
+    Object {
+      "arch": "universal",
+      "file": "Test App ßW-1.0.0-universal-mac.zip",
+      "safeArtifactName": "TestApp-1.0.0-universal-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.0-universal-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Mac universal 2`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.0",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Mac universal 3`] = `
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "files": Array [
+          Object {
+            "sha512": "@sha512",
+            "size": "@size",
+            "url": "Test App ßW-1.0.1-universal-mac.zip",
+          },
+        ],
+        "path": "Test App ßW-1.0.1-universal-mac.zip",
+        "releaseDate": "@releaseDate",
+        "sha512": "@sha512",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "universal",
+      "file": "Test App ßW-1.0.1-universal-mac.zip",
+      "safeArtifactName": "TestApp-1.0.1-universal-mac.zip",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+    Object {
+      "file": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.0.1-universal-mac.zip.blockmap",
+      "updateInfo": Object {
+        "sha512": "@sha512",
+        "size": "@size",
+      },
+    },
+  ],
+}
+`;
+
+exports[`Mac universal 4`] = `
+Object {
+  "CFBundleDisplayName": "Test App ßW",
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "icon.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ßW",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.0.1",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "NSAppTransportSecurity": Object {
+    "NSAllowsLocalNetworking": true,
+    "NSExceptionDomains": Object {
+      "127.0.0.1": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+      "localhost": Object {
+        "NSIncludesSubdomains": false,
+        "NSTemporaryExceptionAllowsInsecureHTTPLoads": true,
+        "NSTemporaryExceptionAllowsInsecureHTTPSLoads": false,
+        "NSTemporaryExceptionMinimumTLSVersion": "1.0",
+        "NSTemporaryExceptionRequiresForwardSecrecy": false,
+      },
+    },
+  },
+  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
+  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
+  "NSHighResolutionCapable": true,
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;
+
+exports[`Mac universal 5`] = `
+Object {
+  "files": Array [
+    Object {
+      "sha512": "@sha512",
+      "size": "@size",
+    },
+  ],
+  "path": "Test App ßW-1.0.1-universal-mac.zip",
+  "releaseDate": "@releaseDate",
+  "sha512": "@sha512",
+  "version": "1.0.1",
+}
+`;
+
+exports[`Mac universal 6`] = `
+Array [
+  "Test App ßW-1.0.1-universal-mac.zip",
+]
 `;
 
 exports[`nsis 1`] = `

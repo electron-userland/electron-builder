@@ -1,4 +1,5 @@
 import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+
 import { InvalidConfigurationError, log } from "builder-util"
 import { parseXml } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
@@ -108,7 +109,7 @@ export async function computeElectronVersion(projectDir: string): Promise<string
     )
   }
 
-  return semver.coerce(version)!.toString()
+  return semver.coerce(version)!.format()
 }
 
 interface NameAndVersion {

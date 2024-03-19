@@ -3,7 +3,7 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <!-- do not edit. start of generated block -->
 <ul>
 <li>
-<p><code id="WindowsConfiguration-target">target</code> = <code>nsis</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - The target package type: list of <code>nsis</code>, <code>nsis-web</code> (Web installer), <code>portable</code> (<a href="/configuration/nsis#portable">portable</a> app without installation), <code>appx</code>, <code>msi</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. AppX package can be built only on Windows 10.</p>
+<p><code id="WindowsConfiguration-target">target</code> = <code>nsis</code> String | <a href="/cli#targetconfiguration">TargetConfiguration</a> - The target package type: list of <code>nsis</code>, <code>nsis-web</code> (Web installer), <code>portable</code> (<a href="/configuration/nsis#portable">portable</a> app without installation), <code>appx</code>, <code>msi</code>, <code>msi-wrapped</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. AppX package can be built only on Windows 10.</p>
 <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
 </li>
 <li>
@@ -31,7 +31,8 @@ The top-level [win](configuration.md#Configuration-win) key contains set of opti
 <li><code id="WindowsConfiguration-verifyUpdateCodeSignature">verifyUpdateCodeSignature</code> = <code>true</code> Boolean - Whether to verify the signature of an available update before installation. The <a href="#publisherName">publisher name</a> will be used for the signature verification.</li>
 <li><code id="WindowsConfiguration-requestedExecutionLevel">requestedExecutionLevel</code> = <code>asInvoker</code> “asInvoker” | “highestAvailable” | “requireAdministrator” | “undefined” - The <a href="https://msdn.microsoft.com/en-us/library/6ad1fshk.aspx#Anchor_9">security level</a> at which the application requests to be executed. Cannot be specified per target, allowed only in the <code>win</code>.</li>
 <li><code id="WindowsConfiguration-signAndEditExecutable">signAndEditExecutable</code> = <code>true</code> Boolean - Whether to sign and add metadata to executable. Advanced option.</li>
-<li><code id="WindowsConfiguration-signDlls">signDlls</code> = <code>false</code> Boolean - Whether to sign DLL files. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384">https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384</a></li>
+<li tag.description=""><code id="WindowsConfiguration-signDlls">signDlls</code> = <code>false</code> Boolean - Whether to sign DLL files. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384">https://github.com/electron-userland/electron-builder/issues/3101#issuecomment-404212384</a> Deprecated:</li>
+<li><code id="WindowsConfiguration-signExts">signExts</code> Array&lt;String&gt; | “undefined” - Explicit file extensions to also sign. Advanced option. See: <a href="https://github.com/electron-userland/electron-builder/issues/7329">https://github.com/electron-userland/electron-builder/issues/7329</a></li>
 </ul>
 
 <!-- end of generated block -->

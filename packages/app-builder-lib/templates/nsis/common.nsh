@@ -7,7 +7,11 @@ ShowInstDetails nevershow
   ShowUninstDetails nevershow
 !endif
 FileBufSize 64
-Name "${PRODUCT_NAME}"
+
+# Allows for a product name to display properly if it has an ampersand
+# Doesn't affect anything if there is no double ampersand
+!searchreplace DoubleAmpersand "${PRODUCT_NAME}" "&" "&&"
+Name "${PRODUCT_NAME}" "${DoubleAmpersand}"
 
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"

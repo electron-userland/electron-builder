@@ -41,5 +41,6 @@ module.exports = {
         // "allowExpressions": false,
       },
     ],
+    "@typescript-eslint/no-redundant-type-constituents": "off"
   },
 }

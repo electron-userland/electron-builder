@@ -1,7 +1,7 @@
 import { BinaryToTextEncoding, createHash, Hash } from "crypto"
 import _debug from "debug"
 import { createWriteStream } from "fs"
-import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
+import { IncomingMessage, OutgoingHttpHeader, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
@@ -12,7 +12,7 @@ import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 const debug = _debug("electron-builder")
 
 export interface RequestHeaders extends OutgoingHttpHeaders {
-  [key: string]: string
+  [key: string]: OutgoingHttpHeader | undefined
 }
 
 export interface DownloadOptions {
@@ -54,7 +54,11 @@ const HTTP_STATUS_CODES = new Map<number, string>([
 ])
 
 export class HttpError extends Error {
-  constructor(readonly statusCode: number, message = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`, readonly description: any | null = null) {
+  constructor(
+    readonly statusCode: number,
+    message = `HTTP error: ${HTTP_STATUS_CODES.get(statusCode) || statusCode}`,
+    readonly description: any | null = null
+  ) {
     super(message)
 
     this.name = "HttpError"
@@ -375,7 +379,11 @@ export class DigestTransform extends Transform {
 
   isValidateOnEnd = true
 
-  constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: BinaryToTextEncoding = "base64") {
+  constructor(
+    readonly expected: string,
+    private readonly algorithm: string = "sha512",
+    private readonly encoding: BinaryToTextEncoding = "base64"
+  ) {
     super()
 
     this.digester = createHash(algorithm)

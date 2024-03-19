@@ -5,7 +5,10 @@ import { mkdir, symlink } from "fs/promises"
 import * as path from "path"
 
 export abstract class BaseS3Publisher extends Publisher {
-  protected constructor(context: PublishContext, private options: BaseS3Options) {
+  protected constructor(
+    context: PublishContext,
+    private options: BaseS3Options
+  ) {
     super(context)
   }
 
@@ -29,7 +32,7 @@ export abstract class BaseS3Publisher extends Publisher {
     this.configureS3Options(args)
 
     if (process.env.__TEST_S3_PUBLISHER__ != null) {
-      const testFile = path.join(process.env.__TEST_S3_PUBLISHER__!, target)
+      const testFile = path.join(process.env.__TEST_S3_PUBLISHER__, target)
       await mkdir(path.dirname(testFile), { recursive: true })
       await symlink(task.file, testFile)
       return

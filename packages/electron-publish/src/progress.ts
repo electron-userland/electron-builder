@@ -43,7 +43,10 @@ export abstract class ProgressBar {
    *   - `:eta` eta in seconds
    *   - `:rate` rate of ticks per second
    */
-  constructor(private readonly format: string, options: any = {}) {
+  constructor(
+    private readonly format: string,
+    options: any = {}
+  ) {
     this.stream = options.stream || process.stderr
 
     this.total = options.total

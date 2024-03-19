@@ -9,8 +9,10 @@ import {
   DownloadOptions,
   CancellationError,
   ProgressInfo,
+  BlockMap,
 } from "builder-util-runtime"
 import { randomBytes } from "crypto"
+import { release } from "os"
 import { EventEmitter } from "events"
 import { mkdir, outputFile, readFile, rename, unlink } from "fs-extra"
 import { OutgoingHttpHeaders } from "http"
@@ -29,6 +31,10 @@ import { ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
 import { AuthInfo } from "electron"
+import { gunzipSync } from "zlib"
+import { blockmapFiles } from "./util"
+import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
+import { GenericDifferentialDownloader } from "./differentialDownloader/GenericDifferentialDownloader"
 
 export type AppUpdaterEvents = {
   error: (error: Error, message?: string) => void
@@ -90,6 +96,13 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
    * @default false
    */
   disableWebInstaller = false
+
+  /**
+   * *NSIS only* Disable differential downloads and always perform full download of installer.
+   *
+   * @default false
+   */
+  disableDifferentialDownload = false
 
   /**
    * Allows developer to force the updater to work in "dev" mode, looking for "dev-app-update.yml" instead of "app-update.yml"
@@ -378,6 +391,19 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return false
     }
 
+    const minimumSystemVersion = updateInfo?.minimumSystemVersion
+    const currentOSVersion = release()
+    if (minimumSystemVersion) {
+      try {
+        if (isVersionLessThan(currentOSVersion, minimumSystemVersion)) {
+          this._logger.info(`Current OS version ${currentOSVersion} is less than the minimum OS version required ${minimumSystemVersion} for version ${currentOSVersion}`)
+          return false
+        }
+      } catch (e: any) {
+        this._logger.warn(`Failed to compare current OS version(${currentOSVersion}) with minimum OS version(${minimumSystemVersion}): ${(e.message || e).toString()}`)
+      }
+    }
+
     const isStagingMatch = await this.isStagingMatch(updateInfo)
     if (!isStagingMatch) {
       return false
@@ -426,7 +452,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
       this._logger.info(
-        `Update for version ${this.currentVersion} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
       )
       this.emit("update-not-available", updateInfo)
       return {
@@ -493,6 +519,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
         requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
         cancellationToken,
         disableWebInstaller: this.disableWebInstaller,
+        disableDifferentialDownload: this.disableDifferentialDownload,
       }).catch((e: any) => {
         throw errorHandler(e)
       })
@@ -689,6 +716,63 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     log.info(`New version ${version} has been downloaded to ${updateFile}`)
     return await done(true)
   }
+  protected async differentialDownloadInstaller(
+    fileInfo: ResolvedUpdateFileInfo,
+    downloadUpdateOptions: DownloadUpdateOptions,
+    installerPath: string,
+    provider: Provider<any>,
+    oldInstallerFileName: string
+  ): Promise<boolean> {
+    try {
+      if (this._testOnlyOptions != null && !this._testOnlyOptions.isUseDifferentialDownload) {
+        return true
+      }
+      const blockmapFileUrls = blockmapFiles(fileInfo.url, this.app.version, downloadUpdateOptions.updateInfoAndProvider.info.version)
+      this._logger.info(`Download block maps (old: "${blockmapFileUrls[0]}", new: ${blockmapFileUrls[1]})`)
+
+      const downloadBlockMap = async (url: URL): Promise<BlockMap> => {
+        const data = await this.httpExecutor.downloadToBuffer(url, {
+          headers: downloadUpdateOptions.requestHeaders,
+          cancellationToken: downloadUpdateOptions.cancellationToken,
+        })
+
+        if (data == null || data.length === 0) {
+          throw new Error(`Blockmap "${url.href}" is empty`)
+        }
+
+        try {
+          return JSON.parse(gunzipSync(data).toString())
+        } catch (e: any) {
+          throw new Error(`Cannot parse blockmap "${url.href}", error: ${e}`)
+        }
+      }
+
+      const downloadOptions: DifferentialDownloaderOptions = {
+        newUrl: fileInfo.url,
+        oldFile: path.join(this.downloadedUpdateHelper!.cacheDir, oldInstallerFileName),
+        logger: this._logger,
+        newFile: installerPath,
+        isUseMultipleRangeRequest: provider.isUseMultipleRangeRequest,
+        requestHeaders: downloadUpdateOptions.requestHeaders,
+        cancellationToken: downloadUpdateOptions.cancellationToken,
+      }
+
+      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+        downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+      }
+
+      const blockMapDataList = await Promise.all(blockmapFileUrls.map(u => downloadBlockMap(u)))
+      await new GenericDifferentialDownloader(fileInfo.info, this.httpExecutor, downloadOptions).download(blockMapDataList[0], blockMapDataList[1])
+      return false
+    } catch (e: any) {
+      this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+      if (this._testOnlyOptions != null) {
+        // test mode
+        throw e
+      }
+      return true
+    }
+  }
 }
 
 export interface DownloadUpdateOptions {
@@ -696,6 +780,7 @@ export interface DownloadUpdateOptions {
   readonly requestHeaders: OutgoingHttpHeaders
   readonly cancellationToken: CancellationToken
   readonly disableWebInstaller?: boolean
+  readonly disableDifferentialDownload?: boolean
 }
 
 function hasPrereleaseComponents(version: SemVer) {

@@ -2,6 +2,7 @@
 pip3 install pipenv
 pipenv install
 echo "Installing pnpm"
-npx pnpm install --store=./node_modules/.pnpm-store
+npm i -g pnpm@latest-8
+pnpm install --store=./node_modules/.pnpm-store
 echo "Building site docs"
 mkdocs build

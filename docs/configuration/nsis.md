@@ -37,7 +37,7 @@ Two options are available — [include](#NsisOptions-include) and [script](#Nsis
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
-2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`.
+2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`, `customInstallMode`, `customWelcomePage`, `customUnWelcomePage`.
 
     !!! example
         ```nsis
@@ -66,6 +66,12 @@ Keep in mind — if you customize NSIS script, you should always state about it 
         !macro customWelcomePage
           # Welcome Page is not added by default for installer.
           !insertMacro MUI_PAGE_WELCOME
+        !macroend
+
+        !macro customUnWelcomePage
+          !define MUI_WELCOMEPAGE_TITLE "custom title for uninstaller welcome page"
+          !define MUI_WELCOMEPAGE_TEXT "custom text for uninstaller welcome page $\r$\n more"
+          !insertmacro MUI_UNPAGE_WELCOME
         !macroend
         ```
 

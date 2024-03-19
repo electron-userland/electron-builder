@@ -1,4 +1,5 @@
 import { PlatformSpecificBuildOptions, TargetConfiguration, TargetSpecificOptions } from "../index"
+import { CustomMacSign } from "../macPackager"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -153,21 +154,32 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly hardenedRuntime?: boolean
 
   /**
-   * Whether to let @electron/osx-sign validate the signing or not.
+   * Whether to let `@electron/osx-sign` validate the signing or not.
    * @default false
    */
   readonly gatekeeperAssess?: boolean
 
   /**
-   * Whether to let @electron/osx-sign verify the contents or not.
+   * Whether to let `@electron/osx-sign` verify the contents or not.
    * @default true
    */
   readonly strictVerify?: boolean
 
   /**
+   * Whether to enable entitlements automation from `@electron/osx-sign`.
+   * @default true
+   */
+  readonly preAutoEntitlements?: boolean
+
+  /**
    * Regex or an array of regex's that signal skipping signing a file.
    */
   readonly signIgnore?: Array<string> | string | null
+
+  /**
+   * The custom function (or path to file or module id) to sign an app bundle.
+   */
+  readonly sign?: CustomMacSign | string | null
 
   /**
    * Specify the URL of the timestamp authority server
@@ -204,12 +216,17 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
    * Supports both `legacy` and `notarytool` notarization tools. Use `false` to explicitly disable
    *
-   * Note: You MUST specify `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD` via environment variables to activate notarization step
+   * Note: In order to activate the notarization step You MUST specify one of the following via environment variables:
+   * 1. `APPLE_API_KEY`, `APPLE_API_KEY_ID` and `APPLE_API_ISSUER`.
+   * 2. `APPLE_ID` and `APPLE_APP_SPECIFIC_PASSWORD`
+   * 3. `APPLE_KEYCHAIN` and `APPLE_KEYCHAIN_PROFILE`
+   *
+   * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
-  readonly notarize?: NotarizeOptions | boolean | null
+  readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
 }
 
-export interface NotarizeOptions {
+export interface NotarizeLegacyOptions {
   /**
    * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
    * Only used by `legacy` notarization tool
@@ -220,11 +237,13 @@ export interface NotarizeOptions {
    * Your Team Short Name. Only used by `legacy` notarization tool
    */
   readonly ascProvider?: string | null
+}
 
+export interface NotarizeNotaryOptions {
   /**
-   * The team ID you want to notarize under. Only needed if using `notarytool`
+   * The team ID you want to notarize under for when using `notarytool`
    */
-  readonly teamId?: string | null
+  readonly teamId: string
 }
 
 export interface DmgOptions extends TargetSpecificOptions {

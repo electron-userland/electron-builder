@@ -1,4 +1,3 @@
-import { path7za } from "7zip-bin"
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
 import { outputFile, stat } from "fs-extra"
@@ -18,6 +17,7 @@ import { getLinuxToolsPath } from "./tools"
 import { hashFile } from "../util/hash"
 import { ArtifactCreated } from "../packagerApi"
 import { getAppUpdatePublishConfiguration } from "../publish/PublishManager"
+import { getPath7za } from "builder-util"
 
 interface FpmOptions {
   name: string
@@ -31,7 +31,12 @@ export default class FpmTarget extends Target {
 
   private readonly scriptFiles: Promise<Array<string>>
 
-  constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
+  constructor(
+    name: string,
+    private readonly packager: LinuxPackager,
+    private readonly helper: LinuxTargetHelper,
+    readonly outDir: string
+  ) {
     super(name, false)
 
     this.scriptFiles = this.createScripts()
@@ -150,7 +155,7 @@ export default class FpmTarget extends Target {
       "--after-remove",
       scripts[1],
       "--description",
-      smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
+      smarten(target === "rpm" ? this.helper.getDescription(options) : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--version",
       this.helper.getSanitizedVersion(target),
       "--package",
@@ -236,7 +241,7 @@ export default class FpmTarget extends Target {
 
     const env = {
       ...process.env,
-      SZA_PATH: path7za,
+      SZA_PATH: await getPath7za(),
       SZA_COMPRESSION_LEVEL: packager.compression === "store" ? "0" : "9",
     }
 

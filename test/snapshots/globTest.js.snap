@@ -6957,6 +6957,9 @@ Object {
                     "ar-ma.js": Object {
                       "size": "<size>",
                     },
+                    "ar-ps.js": Object {
+                      "size": "<size>",
+                    },
                     "ar-sa.js": Object {
                       "size": "<size>",
                     },
@@ -7156,6 +7159,9 @@ Object {
                       "size": "<size>",
                     },
                     "ko.js": Object {
+                      "size": "<size>",
+                    },
+                    "ku-kmr.js": Object {
                       "size": "<size>",
                     },
                     "ku.js": Object {
@@ -7374,6 +7380,9 @@ Object {
                 "ar-ma.js": Object {
                   "size": "<size>",
                 },
+                "ar-ps.js": Object {
+                  "size": "<size>",
+                },
                 "ar-sa.js": Object {
                   "size": "<size>",
                 },
@@ -7573,6 +7582,9 @@ Object {
                   "size": "<size>",
                 },
                 "ko.js": Object {
+                  "size": "<size>",
+                },
+                "ku-kmr.js": Object {
                   "size": "<size>",
                 },
                 "ku.js": Object {
@@ -8185,6 +8197,9 @@ Object {
                     "ar-ma.js": Object {
                       "size": "<size>",
                     },
+                    "ar-ps.js": Object {
+                      "size": "<size>",
+                    },
                     "ar-sa.js": Object {
                       "size": "<size>",
                     },
@@ -8384,6 +8399,9 @@ Object {
                       "size": "<size>",
                     },
                     "ko.js": Object {
+                      "size": "<size>",
+                    },
+                    "ku-kmr.js": Object {
                       "size": "<size>",
                     },
                     "ku.js": Object {
@@ -9774,7 +9792,7 @@ Object {
 
 exports[`outside link 2`] = `
 Object {
-  "offset": "5281",
+  "offset": "5135",
   "size": "@size",
 }
 `;
@@ -9816,7 +9834,7 @@ Object {
                 "dir-3": Object {
                   "files": Object {
                     "file-in-asar": Object {
-                      "offset": "1937",
+                      "offset": "0",
                       "size": 2,
                     },
                   },
@@ -9830,27 +9848,27 @@ Object {
           "unpacked": true,
         },
         "must-be-not-unpacked": Object {
-          "offset": "1935",
+          "offset": "2",
           "size": 2,
         },
       },
     },
     "index.html": Object {
-      "offset": "0",
+      "offset": "4",
       "size": 378,
     },
     "index.js": Object {
-      "offset": "378",
+      "offset": "382",
       "size": 619,
     },
     "package.json": Object {
-      "offset": "997",
+      "offset": "1001",
       "size": 224,
     },
     "path": Object {
       "files": Object {
         "app.asar": Object {
-          "offset": "1221",
+          "offset": "1225",
           "size": 714,
         },
       },
@@ -9873,13 +9891,13 @@ Object {
         "package.json": Object {
           "files": Object {
             "readme.md": Object {
-              "offset": "5363",
+              "offset": "0",
               "size": 32,
             },
           },
         },
         "readme.md": Object {
-          "offset": "5285",
+          "offset": "32",
           "size": 78,
         },
       },
@@ -9912,7 +9930,7 @@ Object {
                 "dir-3": Object {
                   "files": Object {
                     "file-in-asar": Object {
-                      "offset": "5283",
+                      "offset": "110",
                       "size": 2,
                     },
                   },
@@ -9926,21 +9944,21 @@ Object {
           "unpacked": true,
         },
         "must-be-not-unpacked": Object {
-          "offset": "5281",
+          "offset": "112",
           "size": 2,
         },
       },
     },
     "index.html": Object {
-      "offset": "0",
+      "offset": "114",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "841",
+      "offset": "955",
       "size": 4184,
     },
     "package.json": Object {
-      "offset": "5025",
+      "offset": "5139",
       "size": 256,
     },
   },

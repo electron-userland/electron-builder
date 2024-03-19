@@ -27,7 +27,10 @@ You can publish to multiple providers. For example, to publish Windows artifacts
 ```yaml
 win:
   publish:
-    - github
+      # an object provider for github with additional options
+    - provider: github
+      protocol: https
+      # a string provider for bitbucket that will use default options
     - bitbucket
 ```
 
@@ -187,7 +190,7 @@ Define <code>GH_TOKEN</code> environment variable.</p>
 </li>
 </ul>
 <h2 id="snapstoreoptions">SnapStoreOptions</h2>
-<p><a href="https://snapcraft.io/">Snap Store</a> options.</p>
+<p><a href="https://snapcraft.io/">Snap Store</a> options. To publish directly to Snapcraft, see <a href="https://snapcraft.io/docs/snapcraft-authentication">Snapcraft authentication options</a> for local or CI/CD authentication options.</p>
 <ul>
 <li><strong><code id="SnapStoreOptions-provider">provider</code></strong> “snapStore” - The provider. Must be <code>snapStore</code>.</li>
 <li><code id="SnapStoreOptions-repo">repo</code> String - snapcraft repo name</li>
@@ -254,7 +257,7 @@ Define <code>BITBUCKET_TOKEN</code> environment variable.</p>
 <ul>
 <li><strong><code id="BitbucketOptions-provider">provider</code></strong> “bitbucket” - The provider. Must be <code>bitbucket</code>.</li>
 <li><strong><code id="BitbucketOptions-owner">owner</code></strong> String - Repository owner</li>
-<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The app password (account&gt;settings&gt;app-passwords) to support auto-update from private bitbucket repositories.</li>
+<li><code id="BitbucketOptions-token">token</code> String | “undefined” - The <a href="https://bitbucket.org/account/settings/app-passwords">app password</a> to support auto-update from private bitbucket repositories.</li>
 <li><code id="BitbucketOptions-username">username</code> String | “undefined” - The user name to support auto-update from private bitbucket repositories.</li>
 <li><strong><code id="BitbucketOptions-slug">slug</code></strong> String - Repository slug/name</li>
 <li><code id="BitbucketOptions-channel">channel</code> = <code>latest</code> String | “undefined” - The channel.</li>
@@ -318,6 +321,25 @@ Or in the <a href="http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-gu
 </li>
 <li>
 <p><code id="S3Options-path">path</code> = <code>/</code> String | “undefined” - The directory path.</p>
+</li>
+</ul>
+<h2 id="custompublishoptions">CustomPublishOptions</h2>
+<p>undefined</p>
+<ul>
+<li><strong><code id="CustomPublishOptions-provider">provider</code></strong> “custom” - The provider. Must be <code>custom</code>.</li>
+<li><code id="CustomPublishOptions-updateProvider">updateProvider</code> module:builder-util-runtime/out/publishOptions.__type - The Provider to provide UpdateInfo regarding available updates.  Required to use custom providers with electron-updater.</li>
+</ul>
+<p>Inherited from <code>PublishConfiguration</code>:</p>
+<ul>
+<li>
+<p><code id="CustomPublishOptions-publishAutoUpdate">publishAutoUpdate</code> = <code>true</code> Boolean - Whether to publish auto update info files.</p>
+<p>Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.</p>
+</li>
+<li>
+<p><code id="CustomPublishOptions-requestHeaders">requestHeaders</code> module:http.OutgoingHttpHeaders - Any custom request headers</p>
+</li>
+<li>
+<p><code id="CustomPublishOptions-timeout">timeout</code> = <code>120000</code> Number | “undefined” - Request timeout in milliseconds. (Default is 2 minutes; O is ignored)</p>
 </li>
 </ul>
 
