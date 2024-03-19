@@ -180,6 +180,7 @@ export default class AppXTarget extends Target {
     const executable = `app\\${appInfo.productFilename}.exe`
     const displayName = options.displayName || appInfo.productName
     const extensions = await this.getExtensions(executable, displayName)
+    const archSpecificMinVersion = arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
     const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")).replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
@@ -252,10 +253,10 @@ export default class AppXTarget extends Target {
           return extensions
 
         case "minVersion":
-          return options.minVersion || arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.minVersion || archSpecificMinVersion
 
         case "maxVersionTested":
-          return options.maxVersionTested || options.minVersion || arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.maxVersionTested || options.minVersion || archSpecificMinVersion
 
         default:
           throw new Error(`Macro ${p1} is not defined`)
