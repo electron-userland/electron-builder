@@ -25,7 +25,7 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
     const src = fileSet.src
     const dest = fileSet.destination
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
+      return dest + file.substring(src.length).replace(`${path.sep}.pnpm`, "")
     } else {
       // hoisted node_modules
       // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
@@ -37,7 +37,7 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
       if (index < 0) {
         throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
       }
-      return dest + file.substring(index)
+      return (dest + file.substring(index)).replace(`${path.sep}.pnpm`, "")
     }
   }
 }
