@@ -67,7 +67,7 @@ function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
       if (index < 0) {
         throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
       }
-      return generateNewPath(file, dest)
+      return generateNewPath(file, dest).replace(`${path.sep}.pnpm`, "")
     }
   }
 }
