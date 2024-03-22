@@ -107,7 +107,7 @@ test.ifMac("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
-      targets: Platform.MAC.createTarget("zip", Arch.x64),
+      targets: Platform.MAC.createTarget("zip", Arch.universal),
       config: {
         npmRebuild: true,
         nativeRebuilder: "sequential",
@@ -115,7 +115,7 @@ test.ifMac("yarn two package.json w/ native module", () =>
     },
     {
       signed: false,
-      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.x64)),
+      packed: async context => await verifySmartUnpack(context.getResources(Platform.MAC, Arch.universal)),
     }
   )
 )
