@@ -223,7 +223,6 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   for (const info of deps) {
     const source = info.dir
     const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-    log.info({ test: "test" }, `copying ${source} ,${mainMatcher.from}, ${mainMatcher.to}, ${destination}`)
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work

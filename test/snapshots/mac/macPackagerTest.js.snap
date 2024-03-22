@@ -652,7 +652,6 @@ Object {
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
                 "node_gyp_bins": Object {
                   "files": Object {
@@ -661,7 +660,6 @@ Object {
                       "unpacked": true,
                     },
                   },
-                  "unpacked": true,
                 },
               },
             },
@@ -678,7 +676,6 @@ Object {
               "unpacked": true,
             },
           },
-          "unpacked": true,
         },
       },
     },
