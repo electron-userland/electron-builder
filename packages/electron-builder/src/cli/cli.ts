@@ -13,12 +13,14 @@ import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-de
 import { start } from "./start"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
+import { configurePublishCommand, publish } from "./publish"
 
 // tslint:disable:no-unused-expression
 void createYargs()
   .command(["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
   .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))
+  .command("publish", "Publish a directory of already packaged apps", configurePublishCommand, wrap(publish))
   .command(
     "create-self-signed-cert",
     "Create self-signed code signing cert for Windows apps",
