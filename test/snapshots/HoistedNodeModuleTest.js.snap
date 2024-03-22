@@ -22,7 +22,7 @@ Object {
         "foo": Object {
           "files": Object {
             "package.json": Object {
-              "offset": "0",
+              "offset": "4310",
               "size": 127,
             },
           },
