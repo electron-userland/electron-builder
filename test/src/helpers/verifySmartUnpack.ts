@@ -31,6 +31,7 @@ export async function verifySmartUnpack(resourceDir: string, additionalVerificat
   if (additionalVerifications) {
     await additionalVerifications(asarFs)
   }
+  console.log(JSON.stringify(asarFs.header))
   expect(removeUnstableProperties(asarFs.header)).toMatchSnapshot()
 
   const files = (await walk(resourceDir, file => !path.basename(file).startsWith(".") && !file.endsWith(`resources${path.sep}inspector`))).map(it => {

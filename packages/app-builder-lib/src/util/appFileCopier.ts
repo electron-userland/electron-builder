@@ -18,12 +18,30 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  if (file === fileSet.src) {
+function removePnpmAndNextTwoFolders(file: string) {
+  // Split the path into parts
+  const parts = file.split(path.sep)
+
+  // Find the index of the '.pnpm' folder
+  const pnpmIndex = parts.findIndex(part => part === ".pnpm")
+
+  // If '.pnpm' is found, and there are at least two more folders after it
+  if (pnpmIndex >= 0 && parts.length > pnpmIndex + 2) {
+    // Remove '.pnpm' and the next two folders from the parts array
+    parts.splice(pnpmIndex, 3)
+  }
+
+  // Rejoin the remaining parts back into a path string
+  return parts.join(path.sep)
+}
+
+export function getDestinationPath(ttt: string, fileSet: ResolvedFileSet) {
+  if (ttt === fileSet.src) {
     return fileSet.destination
   } else {
-    const src = fileSet.src
+    const src = removePnpmAndNextTwoFolders(fileSet.src)
     const dest = fileSet.destination
+    const file = removePnpmAndNextTwoFolders(ttt)
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
       return dest + file.substring(src.length)
     } else {

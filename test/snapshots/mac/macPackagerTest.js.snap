@@ -501,6 +501,19 @@ Object {
     },
     "node_modules": Object {
       "files": Object {
+        "bindings": Object {
+          "files": Object {
+            "LICENSE.md": Object {
+              "size": "<size>",
+            },
+            "bindings.js": Object {
+              "size": "<size>",
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+          },
+        },
         "debug": Object {
           "files": Object {
             "LICENSE": Object {
@@ -528,6 +541,92 @@ Object {
                   "size": "<size>",
                 },
                 "node.js": Object {
+                  "size": "<size>",
+                },
+              },
+            },
+          },
+        },
+        "file-uri-to-path": Object {
+          "files": Object {
+            "History.md": Object {
+              "size": "<size>",
+            },
+            "LICENSE": Object {
+              "size": "<size>",
+            },
+            "index.js": Object {
+              "size": "<size>",
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+          },
+        },
+        "ms": Object {
+          "files": Object {
+            "index.js": Object {
+              "size": "<size>",
+            },
+            "license.md": Object {
+              "size": "<size>",
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+          },
+        },
+        "node-addon-api": Object {
+          "files": Object {
+            "LICENSE.md": Object {
+              "size": "<size>",
+            },
+            "common.gypi": Object {
+              "size": "<size>",
+            },
+            "except.gypi": Object {
+              "size": "<size>",
+            },
+            "index.js": Object {
+              "size": "<size>",
+            },
+            "napi-inl.deprecated.h": Object {
+              "size": "<size>",
+            },
+            "napi-inl.h": Object {
+              "size": "<size>",
+            },
+            "napi.h": Object {
+              "size": "<size>",
+            },
+            "node_api.gyp": Object {
+              "size": "<size>",
+            },
+            "noexcept.gypi": Object {
+              "size": "<size>",
+            },
+            "nothing.c": Object {
+              "size": "<size>",
+            },
+            "package-support.json": Object {
+              "size": "<size>",
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+            "tools": Object {
+              "files": Object {
+                "README.md": Object {
+                  "size": "<size>",
+                },
+                "check-napi.js": Object {
+                  "size": "<size>",
+                },
+                "clang-format.js": Object {
+                  "size": "<size>",
+                },
+                "conversion.js": Object {
+                  "executable": true,
                   "size": "<size>",
                 },
               },
