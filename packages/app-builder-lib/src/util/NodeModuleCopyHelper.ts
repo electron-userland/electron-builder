@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { CONCURRENCY } from "builder-util/out/fs"
 import { lstat, readdir } from "fs-extra"
 import * as path from "path"
+import * as fs from "fs"
 import { excludedNames, FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
@@ -31,6 +32,28 @@ const topLevelExcludedFiles = new Set([
   ".bin",
 ])
 
+async function findNodeModulesWithFile(cwd: string, fileName: string) {
+  let nodeModulesPath = cwd
+  if (!cwd.endsWith(`${path.sep}node_modules`)) {
+    nodeModulesPath = path.join(cwd, "node_modules")
+  }
+
+  try {
+    await fs.promises.access(nodeModulesPath, fs.constants.F_OK)
+
+    const targetFilePath = path.join(nodeModulesPath, fileName)
+    await fs.promises.access(targetFilePath, fs.constants.F_OK)
+
+    return nodeModulesPath
+  } catch (error) {
+    const parentDir = path.dirname(cwd)
+    if (parentDir === cwd) {
+      throw new Error("File not found")
+    }
+    return findNodeModulesWithFile(parentDir, fileName)
+  }
+}
+
 /** @internal */
 export class NodeModuleCopyHelper extends FileCopyHelper {
   constructor(matcher: FileMatcher, packager: Packager) {
@@ -46,7 +69,11 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
     const result: Array<string> = []
     const queue: Array<string> = []
     for (const moduleName of moduleNames) {
-      const tmpPath = baseDir + path.sep + moduleName
+      let tmpPath = baseDir + path.sep + moduleName
+      if (!fs.existsSync(tmpPath)) {
+        tmpPath = (await findNodeModulesWithFile(baseDir, moduleName)) + path.sep + moduleName
+        console.log("xxxxx,", tmpPath)
+      }
       queue.length = 1
       // The path should be corrected in Windows that when the moduleName is Scoped packages named.
       const depPath = path.normalize(tmpPath)
