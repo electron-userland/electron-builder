@@ -18,14 +18,38 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  if (file === fileSet.src) {
+function removePnpmAndNextTwoFolders(file: string) {
+  // Split the path into parts
+  const parts = file.split(path.sep)
+
+  // Find the index of the '.pnpm' folder
+  const pnpmIndex = parts.findIndex(part => part === ".pnpm")
+
+  // If '.pnpm' is found, and there are at least two more folders after it
+  if (pnpmIndex >= 0 && parts.length > pnpmIndex + 2) {
+    // Remove '.pnpm' and the next two folders from the parts array
+    parts.splice(pnpmIndex, 3)
+  }
+
+  // Rejoin the remaining parts back into a path string
+  return parts.join(path.sep)
+}
+
+// Example usage
+const inputPath = "/test-project-6/app/node_modules/.pnpm/node-mac-permissions@2.3.0/node_modules/node-addon-api/package.json"
+const outputPath = removePnpmAndNextTwoFolders(inputPath)
+
+console.log(outputPath) // Output: "/test-project-6/app/node_modules/node-addon-api/package.json"
+
+export function getDestinationPath(ttt: string, fileSet: ResolvedFileSet) {
+  if (ttt === fileSet.src) {
     return fileSet.destination
   } else {
-    const src = fileSet.src
+    const src = removePnpmAndNextTwoFolders(fileSet.src)
+    const file = removePnpmAndNextTwoFolders(ttt)
     const dest = fileSet.destination
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length).replace(`${path.sep}.pnpm`, "")
+      return dest + file.substring(src.length)
     } else {
       // hoisted node_modules
       // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
@@ -37,7 +61,7 @@ export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
       if (index < 0) {
         throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
       }
-      return (dest + file.substring(index)).replace(`${path.sep}.pnpm`, "")
+      return dest + file.substring(index)
     }
   }
 }
@@ -199,6 +223,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   for (const info of deps) {
     const source = info.dir
     const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
+    log.info({ test: "test" }, `copying ${source} ,${mainMatcher.from}, ${mainMatcher.to}, ${destination}`)
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
