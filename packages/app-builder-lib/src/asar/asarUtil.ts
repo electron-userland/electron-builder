@@ -136,7 +136,6 @@ export class AsarPackager {
       }
 
       const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
-      log.info({ dest: "dest" }, file)
 
       if (stat.isSymbolicLink()) {
         const s = stat as any
