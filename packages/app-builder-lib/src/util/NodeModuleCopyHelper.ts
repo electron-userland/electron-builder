@@ -72,7 +72,6 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       let tmpPath = baseDir + path.sep + moduleName
       if (!fs.existsSync(tmpPath)) {
         tmpPath = (await findNodeModulesWithFile(baseDir, moduleName)) + path.sep + moduleName
-        console.log("xxxxx,", tmpPath)
       }
       queue.length = 1
       // The path should be corrected in Windows that when the moduleName is Scoped packages named.
