@@ -48,17 +48,12 @@ function generateNewPath(filePath: string, destination: string): string {
 }
 
 function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  if (file === fileSet.src) {
-    return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      return generateNewPath(file, dest)
-    }
+  const src = fileSet.src
+  const dest = fileSet.destination
+  if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
+    return dest + file.substring(src.length)
   }
+  return generateNewPath(file, dest)
 }
 
 /** @internal */
