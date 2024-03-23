@@ -35,27 +35,56 @@ function removePnpmAndNextTwoFolders(file: string) {
   return parts.join(path.sep)
 }
 
-export function getDestinationPath(ttt: string, fileSet: ResolvedFileSet) {
-  if (ttt === fileSet.src) {
+function getHoistedModulePath(filePath: string, destination: string): string {
+  const filePathParts: string[] = filePath.split(path.sep)
+  const destinationParts: string[] = destination.split(path.sep)
+
+  const nodeModulesIndicesFilePath: number[] = filePathParts.reduce((acc: number[], part: string, index: number) => {
+    if (part === "node_modules") acc.push(index)
+    return acc
+  }, [])
+
+  const nodeModulesIndicesDestination: number[] = destinationParts.reduce((acc: number[], part: string, index: number) => {
+    if (part === "node_modules") acc.push(index)
+    return acc
+  }, [])
+
+  if (nodeModulesIndicesDestination.length === 0) {
+    // If no 'node_modules' in destination, append from the first 'node_modules' in filePath
+    if (nodeModulesIndicesFilePath.length > 0) {
+      const firstNodeModulesIndexFilePath: number = nodeModulesIndicesFilePath[0]
+      return path.join(destination, ...filePathParts.slice(firstNodeModulesIndexFilePath))
+    }
+    // If also no 'node_modules' in filePath, return destination as is
+    return destination
+  }
+
+  const targetNodeModulesIndex: number = nodeModulesIndicesDestination[nodeModulesIndicesFilePath.length - 1] || nodeModulesIndicesDestination.slice(-1)[0]
+
+  if (nodeModulesIndicesFilePath.length === 0) {
+    return 'Error: The specified file path does not contain "node_modules"'
+  }
+
+  const basePath: string = destinationParts.slice(0, targetNodeModulesIndex + 1).join(path.sep)
+  const newPath: string = path.join(basePath, ...filePathParts.slice(nodeModulesIndicesFilePath.slice(-1)[0] + 1))
+
+  return newPath
+}
+
+export function getDestinationPath(filePath: string, fileSet: ResolvedFileSet) {
+  if (filePath === fileSet.src) {
     return fileSet.destination
   } else {
     const src = removePnpmAndNextTwoFolders(fileSet.src)
     const dest = fileSet.destination
-    const file = removePnpmAndNextTwoFolders(ttt)
+    const file = removePnpmAndNextTwoFolders(filePath)
     if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
       return dest + file.substring(src.length)
     } else {
       // hoisted node_modules
       // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
       // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      let index = file.indexOf(NODE_MODULES_PATTERN)
-      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
-        index = file.length - 13
-      }
-      if (index < 0) {
-        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
-      }
-      return dest + file.substring(index)
+      return getHoistedModulePath(file, dest)
     }
   }
 }
