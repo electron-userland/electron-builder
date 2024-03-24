@@ -32,7 +32,7 @@ const topLevelExcludedFiles = new Set([
   ".bin",
 ])
 
-async function findNodeModulesWithFile(cwd: string, fileName: string) {
+async function findNodeModulesWithFile(cwd: string, file: string) {
   let nodeModulesPath = cwd
   if (!cwd.endsWith(`${path.sep}node_modules`)) {
     nodeModulesPath = path.join(cwd, "node_modules")
@@ -41,16 +41,16 @@ async function findNodeModulesWithFile(cwd: string, fileName: string) {
   try {
     await fs.promises.access(nodeModulesPath, fs.constants.F_OK)
 
-    const targetFilePath = path.join(nodeModulesPath, fileName)
+    const targetFilePath = path.join(nodeModulesPath, file)
     await fs.promises.access(targetFilePath, fs.constants.F_OK)
 
     return nodeModulesPath
   } catch (error) {
     const parentDir = path.dirname(cwd)
     if (parentDir === cwd) {
-      throw new Error("File not found")
+      throw new Error(`File "${file}" not found in the source directory "${cwd}"`)
     }
-    return findNodeModulesWithFile(parentDir, fileName)
+    return findNodeModulesWithFile(parentDir, file)
   }
 }
 

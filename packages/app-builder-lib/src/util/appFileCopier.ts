@@ -35,8 +35,8 @@ function removePnpmAndNextTwoFolders(file: string) {
   return parts.join(path.sep)
 }
 
-function getHoistedModulePath(filePath: string, destination: string): string {
-  const filePathParts: string[] = filePath.split(path.sep)
+function getHoistedModulePath(file: string, destination: string): string {
+  const filePathParts: string[] = file.split(path.sep)
   const destinationParts: string[] = destination.split(path.sep)
 
   const nodeModulesIndicesFilePath: number[] = filePathParts.reduce((acc: number[], part: string, index: number) => {
@@ -62,7 +62,7 @@ function getHoistedModulePath(filePath: string, destination: string): string {
   const targetNodeModulesIndex: number = nodeModulesIndicesDestination[nodeModulesIndicesFilePath.length - 1] || nodeModulesIndicesDestination.slice(-1)[0]
 
   if (nodeModulesIndicesFilePath.length === 0) {
-    return 'Error: The specified file path does not contain "node_modules"'
+    throw new Error(` The specified file path: ${file} does not contain "node_modules" to destination: ${destination}`)
   }
 
   const basePath: string = destinationParts.slice(0, targetNodeModulesIndex + 1).join(path.sep)
@@ -74,19 +74,14 @@ function getHoistedModulePath(filePath: string, destination: string): string {
 export function getDestinationPath(filePath: string, fileSet: ResolvedFileSet) {
   if (filePath === fileSet.src) {
     return fileSet.destination
-  } else {
-    const src = removePnpmAndNextTwoFolders(fileSet.src)
-    const dest = fileSet.destination
-    const file = removePnpmAndNextTwoFolders(filePath)
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      // hoisted node_modules
-      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
-      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      return getHoistedModulePath(file, dest)
-    }
   }
+  const src = removePnpmAndNextTwoFolders(fileSet.src)
+  const dest = fileSet.destination
+  const file = removePnpmAndNextTwoFolders(filePath)
+  if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
+    return dest + file.substring(src.length)
+  }
+  return getHoistedModulePath(file, dest)
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
