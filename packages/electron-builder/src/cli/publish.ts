@@ -8,6 +8,7 @@ import { executeFinally, printErrorAndExit } from "builder-util/out/promise"
 import * as path from "path"
 import * as yargs from "yargs"
 import { BuildOptions, normalizeOptions } from "../builder"
+import { PublishConfiguration } from "builder-util-runtime"
 
 /** @internal */
 export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
@@ -37,7 +38,7 @@ export async function publish(args: { files: string[] }) {
   await publishArtifactsWithOptions(uploadTasks)
 }
 
-export async function publishArtifactsWithOptions(uploadOptions: { file: string; arch: string | null }[]) {
+export async function publishArtifactsWithOptions(uploadOptions: { file: string; arch: string | null }[], publishConfiguration?: PublishConfiguration[]) {
   try {
     log.info({ version: PACKAGE_VERSION }, "electron-builder")
   } catch (e: any) {
@@ -55,12 +56,13 @@ export async function publishArtifactsWithOptions(uploadOptions: { file: string;
     const filename = path.basename(file)
     return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
   })
-  return publishPackageWithTasks(options, tasks)
+  return publishPackageWithTasks(options, tasks, publishConfiguration)
 }
 
 async function publishPackageWithTasks(
   options: PackagerOptions & PublishOptions,
   uploadTasks: UploadTask[],
+  publishConfiguration?: PublishConfiguration[],
   cancellationToken: CancellationToken = new CancellationToken(),
   packager: Packager = new Packager(options, cancellationToken)
 ) {
@@ -74,7 +76,7 @@ async function publishPackageWithTasks(
   process.once("SIGINT", sigIntHandler)
 
   const uploadPromise = async () => {
-    const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+    const publishConfigurations = publishConfiguration ?? (await publishManager.getGlobalPublishConfigurations())
     if (publishConfigurations == null || publishConfigurations.length === 0) {
       throw new InvalidConfigurationError("unable to find any publish configuration")
     }
