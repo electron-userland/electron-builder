@@ -1,18 +1,13 @@
 #! /usr/bin/env node
 
-import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { computeDefaultAppDirectory, getConfig } from "app-builder-lib/out/util/config"
-import { installOrRebuild } from "app-builder-lib/out/util/yarn"
+import { CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions, UploadTask, checkBuildRequestOptions } from "app-builder-lib"
 import { PACKAGE_VERSION } from "app-builder-lib/out/version"
-import { createLazyProductionDeps } from "app-builder-lib/out/util/packageDependencies"
-import { InvalidConfigurationError, log, use } from "builder-util"
-import { printErrorAndExit } from "builder-util/out/promise"
-import { readJson, readdir } from "fs-extra"
-import { Lazy } from "lazy-val"
+import { computeSafeArtifactNameIfNeeded } from "app-builder-lib/out/platformPackager"
+import { InvalidConfigurationError, archFromString, log } from "builder-util"
+import { executeFinally, printErrorAndExit } from "builder-util/out/promise"
 import * as path from "path"
-import { orNullIfFileNotExist } from "read-config-file"
 import * as yargs from "yargs"
-import { CancellationToken, Packager, PackagerOptions, PublishManager, PublishOptions } from "app-builder-lib"
+import { BuildOptions, normalizeOptions } from "../builder"
 
 /** @internal */
 export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
@@ -22,17 +17,27 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
     .parserConfiguration({
       "camel-case-expansion": false,
     })
-    .option("distDir", {
-      alias: "d",
-      type: "string",
+    .option("files", {
+      alias: "f",
+      string: true,
+      type: "array",
       requiresArg: true,
-      description: "The path to the electron-builder artifacts",
+      description: "The file to upload to your publisher",
     })
     .demandOption("dist")
 }
 
-/** @internal */
-export async function publish(args: any) {
+export async function publish(args: { files: string[] }) {
+  const uploadTasks = args.files.map(f => {
+    return {
+      file: path.resolve(f),
+      arch: null,
+    }
+  })
+  await publishArtifactsWithOptions(uploadTasks)
+}
+
+export async function publishArtifactsWithOptions(uploadOptions: { file: string; arch: string | null }[]) {
   try {
     log.info({ version: PACKAGE_VERSION }, "electron-builder")
   } catch (e: any) {
@@ -42,68 +47,60 @@ export async function publish(args: any) {
     }
   }
 
-  const projectDir = process.cwd()
-  const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
-  const config = await getConfig(projectDir, null, null, packageMetadata)
+  const options: BuildOptions = normalizeOptions({})
+  checkBuildRequestOptions(options)
 
-  const prepackagedAppDir = args.distDir
-  const newArtifacts = await readdir(prepackagedAppDir)
-  await publishPackageWithOptions(config, newArtifacts)
-  // const [appDir, version] = await Promise.all<string>([
-  //   computeDefaultAppDirectory(
-  //     projectDir,
-  //     use(config.directories, it => it.app)
-  //   ),
-  //   getElectronVersion(projectDir, config),
-  // ])
-
-  // // if two package.json — force full install (user wants to install/update app deps in addition to dev)
-  // await installOrRebuild(
-  //   config,
-  //   appDir,
-  //   {
-  //     frameworkInfo: { version, useCustomDist: true },
-  //     platform: args.platform,
-  //     arch: args.arch,
-  //     productionDeps: createLazyProductionDeps(appDir, null),
-  //   },
-  //   appDir !== projectDir
-  // )
+  const uniqueUploads = Array.from(new Set(uploadOptions))
+  const tasks: UploadTask[] = uniqueUploads.map(({ file, arch }) => {
+    const filename = path.basename(file)
+    return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
+  })
+  return publishPackageWithTasks(options, tasks)
 }
 
-/** @internal */
-async function publishPackageWithOptions(
+async function publishPackageWithTasks(
   options: PackagerOptions & PublishOptions,
-  newArtifacts: string[],
+  uploadTasks: UploadTask[],
   cancellationToken: CancellationToken = new CancellationToken(),
-  packager: Packager = new Packager(options, cancellationToken),
+  packager: Packager = new Packager(options, cancellationToken)
 ) {
   const publishManager = new PublishManager(packager, options, cancellationToken)
-  const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
-  if (publishConfigurations == null || publishConfigurations.length === 0) {
-    throw new InvalidConfigurationError("unable to find any publish configuration")
-  }
 
-  const updateFile = newArtifacts.find((artifact) => artifact.includes('app-update.yml'))
-  if (!updateFile) {
-    throw new InvalidConfigurationError("no app-update.yml found, unable to proceed with publishing")
+  const sigIntHandler = () => {
+    log.warn("cancelled by SIGINT")
+    packager.cancellationToken.cancel()
+    publishManager.cancelTasks()
   }
+  process.once("SIGINT", sigIntHandler)
 
-  for (const newArtifact of newArtifacts) {
-    for (const publishConfiguration of publishConfigurations) {
-      publishManager.scheduleUpload(
-        publishConfiguration,
-        {
-          file: newArtifact,
-          arch: null,
-        },
-        packager.appInfo
-      )
+  const uploadPromise = async () => {
+    const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+    if (publishConfigurations == null || publishConfigurations.length === 0) {
+      throw new InvalidConfigurationError("unable to find any publish configuration")
+    }
+
+    for (const newArtifact of uploadTasks) {
+      for (const publishConfiguration of publishConfigurations) {
+        publishManager.scheduleUpload(publishConfiguration, newArtifact, packager.appInfo)
+      }
     }
   }
+
+  return executeFinally(Promise.resolve(uploadPromise), isErrorOccurred => {
+    let promise: Promise<any>
+    if (isErrorOccurred) {
+      publishManager.cancelTasks()
+      promise = Promise.resolve(null)
+    } else {
+      promise = publishManager.awaitTasks()
+    }
+
+    return promise.then(() => process.removeListener("SIGINT", sigIntHandler))
+  })
 }
+
 function main() {
-  return publish(configurePublishCommand(yargs).argv)
+  return publish(configurePublishCommand(yargs).argv as any)
 }
 
 if (require.main === module) {

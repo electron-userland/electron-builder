@@ -64,7 +64,7 @@ test.ifNotWindows.ifDevOrLinuxCi(
 )
 
 test.ifMac(
-  "mac artifactName ",
+  "mac artifactName",
   app(
     {
       targets: Platform.MAC.createTarget("zip", Arch.x64),

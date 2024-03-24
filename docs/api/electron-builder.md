@@ -22,6 +22,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#Arch"><code>.Arch</code></a> : <code>enum</code></li>
 <li><a href="#module_electron-builder.build"><code>.build(rawOptions)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-builder.createTargets"><code>.createTargets(platforms, type, arch)</code></a> ⇒ <code>Map&lt;Platform | Map&lt;<a href="#Arch">Arch</a> | Array&lt;String&gt;&gt;&gt;</code></li>
+<li><a href="#module_electron-builder.publish"><code>.publish(args)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
 </ul>
@@ -75,6 +76,23 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <tr>
 <td>arch</td>
 <td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_electron-builder.publish"></a></p>
+<h2 id="electron-builder.publish(args)-%E2%87%92-promise%3Cvoid%3E"><code>electron-builder.publish(args)</code> ⇒ <code>Promise&lt;void&gt;</code></h2>
+<p><strong>Kind</strong>: method of <a href="#module_electron-builder"><code>electron-builder</code></a><br/></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>args</td>
+<td><code>Object&lt;String, any&gt;</code></td>
 </tr>
 </tbody>
 </table>
@@ -161,6 +179,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.PublishManager+awaitTasks"><code>.awaitTasks()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PublishManager+cancelTasks"><code>.cancelTasks()</code></a></li>
 <li><a href="#module_app-builder-lib.PublishManager+getGlobalPublishConfigurations"><code>.getGlobalPublishConfigurations()</code></a> ⇒ <code>Promise&lt; | Array&gt;</code></li>
+<li><a href="#module_app-builder-lib.PublishManager+scheduleUpload"><code>.scheduleUpload(publishConfig, event, appInfo)</code></a></li>
 </ul>
 </li>
 <li><a href="#Target">.Target</a>
@@ -1180,6 +1199,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_app-builder-lib.PublishManager+awaitTasks"><code>.awaitTasks()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.PublishManager+cancelTasks"><code>.cancelTasks()</code></a></li>
 <li><a href="#module_app-builder-lib.PublishManager+getGlobalPublishConfigurations"><code>.getGlobalPublishConfigurations()</code></a> ⇒ <code>Promise&lt; | Array&gt;</code></li>
+<li><a href="#module_app-builder-lib.PublishManager+scheduleUpload"><code>.scheduleUpload(publishConfig, event, appInfo)</code></a></li>
 </ul>
 </li>
 </ul>
@@ -1189,6 +1209,30 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <h3 id="publishmanager.canceltasks()"><code>publishManager.cancelTasks()</code></h3>
 <p><a name="module_app-builder-lib.PublishManager+getGlobalPublishConfigurations"></a></p>
 <h3 id="publishmanager.getglobalpublishconfigurations()-%E2%87%92-promise%3C-%7C-array%3E"><code>publishManager.getGlobalPublishConfigurations()</code> ⇒ <code>Promise&lt; | Array&gt;</code></h3>
+<p><a name="module_app-builder-lib.PublishManager+scheduleUpload"></a></p>
+<h3 id="publishmanager.scheduleupload(publishconfig%2C-event%2C-appinfo)"><code>publishManager.scheduleUpload(publishConfig, event, appInfo)</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>publishConfig</td>
+<td><code><a href="/configuration/publish#publishconfiguration">PublishConfiguration</a></code></td>
+</tr>
+<tr>
+<td>event</td>
+<td><code>module:packages/electron-publish/out/publisher.UploadTask</code></td>
+</tr>
+<tr>
+<td>appInfo</td>
+<td><code><a href="#AppInfo">AppInfo</a></code></td>
+</tr>
+</tbody>
+</table>
 <p><a name="Target"></a></p>
 <h2 id="target">Target</h2>
 <p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
