@@ -7,7 +7,7 @@ import { InvalidConfigurationError, archFromString, log } from "builder-util"
 import { executeFinally, printErrorAndExit } from "builder-util/out/promise"
 import * as path from "path"
 import * as yargs from "yargs"
-import { BuildOptions, normalizeOptions } from "../builder"
+import { BuildOptions, normalizeOptions } from "./builder"
 import { PublishConfiguration } from "builder-util-runtime"
 
 /** @internal */

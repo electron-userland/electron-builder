@@ -13,7 +13,7 @@ import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-de
 import { start } from "./start"
 import { nodeGypRebuild } from "app-builder-lib/out/util/yarn"
 import { getElectronVersion } from "app-builder-lib/out/electron/electronVersion"
-import { configurePublishCommand, publish } from "./publish"
+import { configurePublishCommand, publish } from "../publish"
 
 // tslint:disable:no-unused-expression
 void createYargs()
