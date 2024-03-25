@@ -85,7 +85,7 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
+          TEST_FILES: ArtifactPublisherTest,nsisUpdaterTest,linuxUpdaterTest,PublishManagerTest,differentialUpdateTest
           KEYGEN_TOKEN: ${{ secrets.KEYGEN_TOKEN }}
           BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

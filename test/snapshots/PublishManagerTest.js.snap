@@ -4,24 +4,24 @@ exports[`custom provider 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": "arm64",
-      "file": "TestApp_1.1.0_arm64.deb",
+      "arch": "x64",
+      "file": "TestApp_1.1.0_amd64.deb",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "latest-linux-arm64.yml",
+      "file": "latest-linux.yml",
       "fileContent": Object {
         "files": Array [
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp_1.1.0_arm64.deb",
+            "url": "TestApp_1.1.0_amd64.deb",
           },
         ],
-        "path": "TestApp_1.1.0_arm64.deb",
+        "path": "TestApp_1.1.0_amd64.deb",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
@@ -114,8 +114,8 @@ exports[`dotted s3 bucket 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64.zip",
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
     },
   ],
 }
@@ -299,9 +299,9 @@ exports[`github and spaces (publishAutoUpdate) 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-arm64.AppImage",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
       "updateInfo": Object {
         "blockMapSize": "@blockMapSize",
         "sha512": "@sha512",
@@ -309,17 +309,17 @@ Object {
       },
     },
     Object {
-      "file": "latest-linux-arm64.yml",
+      "file": "latest-linux.yml",
       "fileContent": Object {
         "files": Array [
           Object {
             "blockMapSize": "@blockMapSize",
             "sha512": "@sha512",
             "size": "@size",
-            "url": "TestApp-1.1.0-arm64.AppImage",
+            "url": "TestApp-1.1.0-x86_64.AppImage",
           },
         ],
-        "path": "TestApp-1.1.0-arm64.AppImage",
+        "path": "TestApp-1.1.0-x86_64.AppImage",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
@@ -329,7 +329,7 @@ Object {
 }
 `;
 
-exports[`mac artifactName 1`] = `
+exports[`mac artifactName  1`] = `
 Object {
   "mac": Array [
     Object {
@@ -385,7 +385,7 @@ Object {
 }
 `;
 
-exports[`mac artifactName 2`] = `
+exports[`mac artifactName  2`] = `
 Object {
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleExecutable": "Test App ßW",
@@ -396,6 +396,7 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSRequiresNativeExecution": true,
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -415,8 +416,6 @@ Object {
       },
     },
   },
-  "NSBluetoothAlwaysUsageDescription": "This app needs access to Bluetooth",
-  "NSBluetoothPeripheralUsageDescription": "This app needs access to Bluetooth",
   "NSHighResolutionCapable": true,
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,
@@ -427,8 +426,8 @@ exports[`os macro 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": "arm64",
-      "file": "TestApp-1.1.0-arm64.zip",
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
     },
   ],
   "mac": Array [
@@ -439,27 +438,27 @@ Object {
           Object {
             "sha512": "@sha512",
             "size": "@size",
-            "url": "Test App ßW-1.1.0-arm64-mac.zip",
+            "url": "Test App ßW-1.1.0-mac.zip",
           },
         ],
-        "path": "Test App ßW-1.1.0-arm64-mac.zip",
+        "path": "Test App ßW-1.1.0-mac.zip",
         "releaseDate": "@releaseDate",
         "sha512": "@sha512",
         "version": "1.1.0",
       },
     },
     Object {
-      "arch": "arm64",
-      "file": "Test App ßW-1.1.0-arm64-mac.zip",
-      "safeArtifactName": "TestApp-1.1.0-arm64-mac.zip",
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
       },
     },
     Object {
-      "file": "Test App ßW-1.1.0-arm64-mac.zip.blockmap",
-      "safeArtifactName": "Test App ßW-1.1.0-arm64-mac.zip.blockmap",
+      "file": "Test App ßW-1.1.0-mac.zip.blockmap",
+      "safeArtifactName": "Test App ßW-1.1.0-mac.zip.blockmap",
       "updateInfo": Object {
         "sha512": "@sha512",
         "size": "@size",
@@ -509,9 +508,9 @@ Object {
 
 exports[`os macro 3`] = `
 Array [
-  "latest/mac/Test App ßW-1.1.0-arm64-mac.zip",
-  "latest/mac/Test App ßW-1.1.0-arm64-mac.zip.blockmap",
+  "latest/mac/Test App ßW-1.1.0-mac.zip",
+  "latest/mac/Test App ßW-1.1.0-mac.zip.blockmap",
   "latest/mac/latest-mac.yml",
-  "latest/linux/TestApp-1.1.0-arm64.zip",
+  "latest/linux/TestApp-1.1.0.zip",
 ]
 `;
