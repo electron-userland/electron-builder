@@ -35,7 +35,7 @@ export async function publish(args: { files: string[] }) {
       arch: null,
     }
   })
-  await publishArtifactsWithOptions(uploadTasks)
+  return publishArtifactsWithOptions(uploadTasks)
 }
 
 export async function publishArtifactsWithOptions(uploadOptions: { file: string; arch: string | null }[], publishConfiguration?: PublishConfiguration[]) {
@@ -97,8 +97,10 @@ async function publishPackageWithTasks(
       promise = publishManager.awaitTasks()
     }
 
-    return promise.then(() => process.removeListener("SIGINT", sigIntHandler))
-  })
+    return promise.then(() => {
+      process.removeListener("SIGINT", sigIntHandler)
+    })
+  }).then(() => uploadTasks)
 }
 
 function main() {

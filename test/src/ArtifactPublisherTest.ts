@@ -8,6 +8,7 @@ import { KeygenPublisher } from "app-builder-lib/out/publish/KeygenPublisher"
 import { Platform } from "app-builder-lib"
 import { createPublisher } from "app-builder-lib/out/publish/PublishManager"
 import { BitbucketPublisher } from "app-builder-lib/out/publish/BitbucketPublisher"
+import { publishArtifactsWithOptions } from "electron-builder"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -150,14 +151,20 @@ test.ifEnv(process.env.KEYGEN_TOKEN)("Keygen upload", async () => {
 
 test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   const timeout = 0
-  const publisher = new BitbucketPublisher(publishContext, {
+  const config: BitbucketOptions = {
     provider: "bitbucket",
     owner: "mike-m",
     slug: "electron-builder-test",
     timeout,
-  } as BitbucketOptions)
+  }
+  const publisher = new BitbucketPublisher(publishContext, config)
   const filename = await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })
   await publisher.deleteRelease(filename)
+
+  const uploadTasks = await publishArtifactsWithOptions([{ file: icoPath, arch: null }], [config])
+  for (const task of uploadTasks) {
+    await publisher.deleteRelease(task.file)
+  }
 })
 
 test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
