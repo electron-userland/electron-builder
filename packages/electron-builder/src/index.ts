@@ -63,6 +63,9 @@ export {
   PublishManager,
   PublishOptions,
   ProgressInfo,
+  MacPackager,
+  WinPackager,
+  LinuxPackager,
 } from "app-builder-lib"
 export { buildForge, ForgeOptions } from "app-builder-lib"
 export { CancellationToken } from "builder-util-runtime"

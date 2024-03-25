@@ -109,6 +109,51 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.AppInfo+getVersionInWeirdWindowsForm"><code>.getVersionInWeirdWindowsForm(isSetBuildNumber)</code></a> ⇒ <code>String</code></li>
 </ul>
 </li>
+<li><a href="#LinuxPackager">.LinuxPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.LinuxPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+</ul>
+</li>
+<li><a href="#MacPackager">.MacPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.MacPackager+applyCommonInfo"><code>.applyCommonInfo(appPlist, contentsPath)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.MacPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+</ul>
+</li>
 <li><a href="#Packager">.Packager</a>
 <ul>
 <li><a href="#module_app-builder-lib.Packager+_build"><code>._build(configuration, metadata, devMetadata, repositoryInfo)</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
@@ -167,6 +212,30 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><a href="#module_app-builder-lib.Target+build"><code>.build(appOutDir, arch)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Target+finishBuild"><code>.finishBuild()</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+</ul>
+</li>
+<li><a href="#WinPackager">.WinPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.WinPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.WinPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.WinPackager+sign"><code>.sign(file, logMessagePrefix)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
 </ul>
 </li>
 <li><a href="#module_app-builder-lib.build"><code>.build(options, packager)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
@@ -422,6 +491,887 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <tbody>
 <tr>
 <td>isSetBuildNumber</td>
+</tr>
+</tbody>
+</table>
+<p><a name="LinuxPackager"></a></p>
+<h2 id="linuxpackager-%E2%87%90-platformpackager">LinuxPackager ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
+<strong>Extends</strong>: <code><a href="#PlatformPackager">PlatformPackager</a></code><br>
+<strong>Properties</strong></p>
+<ul>
+<li><code id="LinuxPackager-executableName">executableName</code> String</li>
+<li><strong><code id="LinuxPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</li>
+</ul>
+<p><strong>Methods</strong></p>
+<ul>
+<li><a href="#LinuxPackager">.LinuxPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.LinuxPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_app-builder-lib.LinuxPackager+createTargets"></a></p>
+<h3 id="linuxpackager.createtargets(targets%2C-mapper)"><code>linuxPackager.createTargets(targets, mapper)</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+createTargets"><code>createTargets</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>mapper</td>
+<td><code>callback</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+artifactPatternConfig"></a></p>
+<h3 id="linuxpackager.artifactpatternconfig(targetspecificoptions%2C-defaultpattern)-%E2%87%92-module%3Aapp-builder-lib%2Fout%2Fplatformpackager.__object"><code>linuxPackager.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code> | <code>undefined</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+computeSafeArtifactName"></a></p>
+<h3 id="linuxpackager.computesafeartifactname(suggestedname%2C-ext%2C-arch%2C-skipdefaultarch%2C-defaultarch%2C-safepattern)-%E2%87%92-null-%7C-string"><code>linuxPackager.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code> ⇒ <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suggestedName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>safePattern</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
+<h3 id="linuxpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>linuxPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
+<p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
+<h3 id="linuxpackager.dispatchartifactcreated(file%2C-target%2C-arch%2C-safeartifactname)-%E2%87%92-promise%3Cvoid%3E"><code>linuxPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>target</td>
+<td><code><a href="#Target">Target</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>safeArtifactName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
+<h3 id="linuxpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>linuxPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getElectronSrcDir"></a></p>
+<h3 id="linuxpackager.getelectronsrcdir(dist)-%E2%87%92-string"><code>linuxPackager.getElectronSrcDir(dist)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dist</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"></a></p>
+<h3 id="linuxpackager.expandartifactbeautynamepattern(targetspecificoptions%2C-ext%2C-arch)-%E2%87%92-string"><code>linuxPackager.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"></a></p>
+<h3 id="linuxpackager.expandartifactnamepattern(targetspecificoptions%2C-ext%2C-arch%2C-defaultpattern%2C-skipdefaultarch%2C-defaultarch)-%E2%87%92-string"><code>linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandMacro"></a></p>
+<h3 id="linuxpackager.expandmacro(pattern%2C-arch%2C-extra%2C-isproductnamesanitized)-%E2%87%92-string"><code>linuxPackager.expandMacro(pattern, arch, extra, isProductNameSanitized)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>extra</td>
+<td><code>any</code></td>
+</tr>
+<tr>
+<td>isProductNameSanitized</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+generateName2"></a></p>
+<h3 id="linuxpackager.generatename2(ext%2C-classifier%2C-deployment)-%E2%87%92-string"><code>linuxPackager.generateName2(ext, classifier, deployment)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ext</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>classifier</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>deployment</td>
+<td><code>Boolean</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getIconPath"></a></p>
+<h3 id="linuxpackager.geticonpath()-%E2%87%92-promise%3C-%7C-string%3E"><code>linuxPackager.getIconPath()</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<p><a name="module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"></a></p>
+<h3 id="linuxpackager.getmacosresourcesdir(appoutdir)-%E2%87%92-string"><code>linuxPackager.getMacOsResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+pack"></a></p>
+<h3 id="linuxpackager.pack(outdir%2C-arch%2C-targets%2C-taskmanager)-%E2%87%92-promise%3Cany%3E"><code>linuxPackager.pack(outDir, arch, targets, taskManager)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>outDir</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code></td>
+</tr>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;<a href="#Target">Target</a>&gt;</code></td>
+</tr>
+<tr>
+<td>taskManager</td>
+<td><code>AsyncTaskManager</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+resolveIcon"></a></p>
+<h3 id="linuxpackager.resolveicon(sources%2C-fallbacksources%2C-outputformat)-%E2%87%92-promise%3Carray%3Cmodule%3Aapp-builder-lib%2Fout%2Fplatformpackager.iconinfo%3E%3E"><code>linuxPackager.resolveIcon(sources, fallbackSources, outputFormat)</code> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>fallbackSources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>outputFormat</td>
+<td><code>“set”</code> | <code>“icns”</code> | <code>“ico”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResource"></a></p>
+<h3 id="linuxpackager.getresource(custom%2C-names)-%E2%87%92-promise%3C-%7C-string%3E"><code>linuxPackager.getResource(custom, names)</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>custom</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>names</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResourcesDir"></a></p>
+<h3 id="linuxpackager.getresourcesdir(appoutdir)-%E2%87%92-string"><code>linuxPackager.getResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getTempFile"></a></p>
+<h3 id="linuxpackager.gettempfile(suffix)-%E2%87%92-promise%3Cstring%3E"><code>linuxPackager.getTempFile(suffix)</code> ⇒ <code>Promise&lt;String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suffix</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="MacPackager"></a></p>
+<h2 id="macpackager-%E2%87%90-platformpackager">MacPackager ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
+<strong>Extends</strong>: <code><a href="#PlatformPackager">PlatformPackager</a></code><br>
+<strong>Properties</strong></p>
+<ul>
+<li>
+<p>**&lt;code id=&quot;MacPackager-[codeSigningInfo=new Lazy<CodeSigningInfo>(() =&gt; {
+const cscLink = this.getCscLink()
+if (cscLink == null || process.platform !== “darwin”) {
+return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+}</p>
+<p>return createKeychain({
+tmpDir: this.info.tempDirManager,
+cscLink,
+cscKeyPassword: this.getCscPassword(),
+cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
+currentDir: this.projectDir,
+}).then(result =&gt; {
+const keychainFile = result.keychainFile
+if (keychainFile != null) {
+this.info.disposeOnBuildFinish(() =&gt; removeKeychain(keychainFile))
+}
+return result
+})
+})]&quot;&gt;[codeSigningInfo=new Lazy<CodeSigningInfo>(() =&gt; {
+const cscLink = this.getCscLink()
+if (cscLink == null || process.platform !== “darwin”) {
+return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+}</p>
+<p>return createKeychain({
+tmpDir: this.info.tempDirManager,
+cscLink,
+cscKeyPassword: this.getCscPassword(),
+cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
+currentDir: this.projectDir,
+}).then(result =&gt; {
+const keychainFile = result.keychainFile
+if (keychainFile != null) {
+this.info.disposeOnBuildFinish(() =&gt; removeKeychain(keychainFile))
+}
+return result
+})
+})]</code>** Lazy&lt;module:app-builder-lib/out/codeSign/macCodeSign.CodeSigningInfo&gt;</p>
+</li>
+<li>
+<p><strong><code id="MacPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</p>
+</li>
+</ul>
+<p><strong>Methods</strong></p>
+<ul>
+<li><a href="#MacPackager">.MacPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.MacPackager+applyCommonInfo"><code>.applyCommonInfo(appPlist, contentsPath)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.MacPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.MacPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_app-builder-lib.MacPackager+applyCommonInfo"></a></p>
+<h3 id="macpackager.applycommoninfo(appplist%2C-contentspath)-%E2%87%92-promise%3Cvoid%3E"><code>macPackager.applyCommonInfo(appPlist, contentsPath)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appPlist</td>
+<td><code>any</code></td>
+</tr>
+<tr>
+<td>contentsPath</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.MacPackager+createTargets"></a></p>
+<h3 id="macpackager.createtargets(targets%2C-mapper)"><code>macPackager.createTargets(targets, mapper)</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+createTargets"><code>createTargets</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>mapper</td>
+<td><code>callback</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.MacPackager+getElectronDestinationDir"></a></p>
+<h3 id="macpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>macPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>getElectronDestinationDir</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.MacPackager+getElectronSrcDir"></a></p>
+<h3 id="macpackager.getelectronsrcdir(dist)-%E2%87%92-string"><code>macPackager.getElectronSrcDir(dist)</code> ⇒ <code>String</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>getElectronSrcDir</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dist</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.MacPackager+getIconPath"></a></p>
+<h3 id="macpackager.geticonpath()-%E2%87%92-promise%3C-%7C-string%3E"><code>macPackager.getIconPath()</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+getIconPath"><code>getIconPath</code></a><br>
+<a name="module_app-builder-lib.MacPackager+pack"></a></p>
+<h3 id="macpackager.pack(outdir%2C-arch%2C-targets%2C-taskmanager)-%E2%87%92-promise%3Cvoid%3E"><code>macPackager.pack(outDir, arch, targets, taskManager)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+pack"><code>pack</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>outDir</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code></td>
+</tr>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;<a href="#Target">Target</a>&gt;</code></td>
+</tr>
+<tr>
+<td>taskManager</td>
+<td><code>AsyncTaskManager</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+artifactPatternConfig"></a></p>
+<h3 id="macpackager.artifactpatternconfig(targetspecificoptions%2C-defaultpattern)-%E2%87%92-module%3Aapp-builder-lib%2Fout%2Fplatformpackager.__object"><code>macPackager.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code> | <code>undefined</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+computeSafeArtifactName"></a></p>
+<h3 id="macpackager.computesafeartifactname(suggestedname%2C-ext%2C-arch%2C-skipdefaultarch%2C-defaultarch%2C-safepattern)-%E2%87%92-null-%7C-string"><code>macPackager.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code> ⇒ <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suggestedName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>safePattern</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
+<h3 id="macpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>macPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
+<p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
+<h3 id="macpackager.dispatchartifactcreated(file%2C-target%2C-arch%2C-safeartifactname)-%E2%87%92-promise%3Cvoid%3E"><code>macPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>target</td>
+<td><code><a href="#Target">Target</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>safeArtifactName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"></a></p>
+<h3 id="macpackager.expandartifactbeautynamepattern(targetspecificoptions%2C-ext%2C-arch)-%E2%87%92-string"><code>macPackager.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"></a></p>
+<h3 id="macpackager.expandartifactnamepattern(targetspecificoptions%2C-ext%2C-arch%2C-defaultpattern%2C-skipdefaultarch%2C-defaultarch)-%E2%87%92-string"><code>macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandMacro"></a></p>
+<h3 id="macpackager.expandmacro(pattern%2C-arch%2C-extra%2C-isproductnamesanitized)-%E2%87%92-string"><code>macPackager.expandMacro(pattern, arch, extra, isProductNameSanitized)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>extra</td>
+<td><code>any</code></td>
+</tr>
+<tr>
+<td>isProductNameSanitized</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+generateName2"></a></p>
+<h3 id="macpackager.generatename2(ext%2C-classifier%2C-deployment)-%E2%87%92-string"><code>macPackager.generateName2(ext, classifier, deployment)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ext</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>classifier</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>deployment</td>
+<td><code>Boolean</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"></a></p>
+<h3 id="macpackager.getmacosresourcesdir(appoutdir)-%E2%87%92-string"><code>macPackager.getMacOsResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+resolveIcon"></a></p>
+<h3 id="macpackager.resolveicon(sources%2C-fallbacksources%2C-outputformat)-%E2%87%92-promise%3Carray%3Cmodule%3Aapp-builder-lib%2Fout%2Fplatformpackager.iconinfo%3E%3E"><code>macPackager.resolveIcon(sources, fallbackSources, outputFormat)</code> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>fallbackSources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>outputFormat</td>
+<td><code>“set”</code> | <code>“icns”</code> | <code>“ico”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResource"></a></p>
+<h3 id="macpackager.getresource(custom%2C-names)-%E2%87%92-promise%3C-%7C-string%3E"><code>macPackager.getResource(custom, names)</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>custom</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>names</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResourcesDir"></a></p>
+<h3 id="macpackager.getresourcesdir(appoutdir)-%E2%87%92-string"><code>macPackager.getResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getTempFile"></a></p>
+<h3 id="macpackager.gettempfile(suffix)-%E2%87%92-promise%3Cstring%3E"><code>macPackager.getTempFile(suffix)</code> ⇒ <code>Promise&lt;String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suffix</td>
+<td><code>String</code></td>
 </tr>
 </tbody>
 </table>
@@ -1228,6 +2178,624 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </table>
 <p><a name="module_app-builder-lib.Target+finishBuild"></a></p>
 <h3 id="target.finishbuild()-%E2%87%92-promise%3Cany%3E"><code>target.finishBuild()</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<p><a name="WinPackager"></a></p>
+<h2 id="winpackager-%E2%87%90-platformpackager">WinPackager ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code></h2>
+<p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
+<strong>Extends</strong>: <code><a href="#PlatformPackager">PlatformPackager</a></code><br>
+<strong>Properties</strong></p>
+<ul>
+<li>
+<p>**&lt;code id=&quot;WinPackager-[cscInfo=new Lazy&lt;FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(() =&gt; {
+const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+return this.vm.value
+.then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
+.catch((e: any) =&gt; {
+// <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
+if (platformSpecificBuildOptions.sign == null) {
+throw e
+} else {
+log.debug({ error: e }, “getCertificateFromStoreInfo error”)
+return null
+}
+})
+}</p>
+<p>const certificateFile = platformSpecificBuildOptions.certificateFile
+if (certificateFile != null) {
+const certificatePassword = this.getCscPassword()
+return Promise.resolve({
+file: certificateFile,
+password: certificatePassword == null ? null : certificatePassword.trim(),
+})
+}</p>
+<p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
+if (cscLink == null) {
+return Promise.resolve(null)
+}</p>
+<p>return (
+importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+// before then
+.catch((e: any) =&gt; {
+if (e instanceof InvalidConfigurationError) {
+throw new InvalidConfigurationError(<code>Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}</code>)
+} else {
+throw e
+}
+})
+.then(path =&gt; {
+return {
+file: path,
+password: this.getCscPassword(),
+}
+})
+)
+})]&quot;&gt;[cscInfo=new Lazy&lt;FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(() =&gt; {
+const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+return this.vm.value
+.then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
+.catch((e: any) =&gt; {
+// <a href="https://github.com/electron-userland/electron-builder/pull/2397">https://github.com/electron-userland/electron-builder/pull/2397</a>
+if (platformSpecificBuildOptions.sign == null) {
+throw e
+} else {
+log.debug({ error: e }, “getCertificateFromStoreInfo error”)
+return null
+}
+})
+}</p>
+<p>const certificateFile = platformSpecificBuildOptions.certificateFile
+if (certificateFile != null) {
+const certificatePassword = this.getCscPassword()
+return Promise.resolve({
+file: certificateFile,
+password: certificatePassword == null ? null : certificatePassword.trim(),
+})
+}</p>
+<p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
+if (cscLink == null) {
+return Promise.resolve(null)
+}</p>
+<p>return (
+importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+// before then
+.catch((e: any) =&gt; {
+if (e instanceof InvalidConfigurationError) {
+throw new InvalidConfigurationError(<code>Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}</code>)
+} else {
+throw e
+}
+})
+.then(path =&gt; {
+return {
+file: path,
+password: this.getCscPassword(),
+}
+})
+)
+})]</code>** Lazy&lt; | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt;</p>
+</li>
+<li>
+<p><code id="WinPackager-vm">vm</code> = <code>new Lazy&lt;VmManager&gt;(() =&gt; (process.platform === &quot;win32&quot; ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))</code> Lazy&lt;module:app-builder-lib/out/vm/vm.VmManager&gt;</p>
+</li>
+<li>
+<p>**&lt;code id=&quot;WinPackager-[computedPublisherName=new Lazy&lt;Array<string> | null&gt;(async () =&gt; {
+const publisherName = this.platformSpecificBuildOptions.publisherName
+if (publisherName === null) {
+return null
+} else if (publisherName != null) {
+return asArray(publisherName)
+}</p>
+<p>const certInfo = await this.lazyCertInfo.value
+return certInfo == null ? null : [certInfo.commonName]
+})]&quot;&gt;[computedPublisherName=new Lazy&lt;Array<string> | null&gt;(async () =&gt; {
+const publisherName = this.platformSpecificBuildOptions.publisherName
+if (publisherName === null) {
+return null
+} else if (publisherName != null) {
+return asArray(publisherName)
+}</p>
+<p>const certInfo = await this.lazyCertInfo.value
+return certInfo == null ? null : [certInfo.commonName]
+})]</code>** Lazy&lt; | Array&gt;</p>
+</li>
+<li>
+<p>**&lt;code id=&quot;WinPackager-[lazyCertInfo=new Lazy&lt;CertificateInfo | null&gt;(async () =&gt; {
+const cscInfo = await this.cscInfo.value
+if (cscInfo == null) {
+return null
+}</p>
+<p>if (“subject” in cscInfo) {
+const bloodyMicrosoftSubjectDn = cscInfo.subject
+return {
+commonName: parseDn(bloodyMicrosoftSubjectDn).get(“CN”)!,
+bloodyMicrosoftSubjectDn,
+}
+}</p>
+<p>const cscFile = cscInfo.file
+if (cscFile == null) {
+return null
+}
+return await getCertInfo(cscFile, cscInfo.password || “”)
+})]&quot;&gt;[lazyCertInfo=new Lazy&lt;CertificateInfo | null&gt;(async () =&gt; {
+const cscInfo = await this.cscInfo.value
+if (cscInfo == null) {
+return null
+}</p>
+<p>if (“subject” in cscInfo) {
+const bloodyMicrosoftSubjectDn = cscInfo.subject
+return {
+commonName: parseDn(bloodyMicrosoftSubjectDn).get(“CN”)!,
+bloodyMicrosoftSubjectDn,
+}
+}</p>
+<p>const cscFile = cscInfo.file
+if (cscFile == null) {
+return null
+}
+return await getCertInfo(cscFile, cscInfo.password || “”)
+})]</code>** Lazy&lt; | module:app-builder-lib/out/codeSign/windowsCodeSign.CertificateInfo&gt;</p>
+</li>
+<li>
+<p><strong><code id="WinPackager-isForceCodeSigningVerification">isForceCodeSigningVerification</code></strong> Boolean</p>
+</li>
+<li>
+<p><strong><code id="WinPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</p>
+</li>
+</ul>
+<p><strong>Methods</strong></p>
+<ul>
+<li><a href="#WinPackager">.WinPackager</a> ⇐ <code><a href="#PlatformPackager">PlatformPackager</a></code>
+<ul>
+<li><a href="#module_app-builder-lib.WinPackager+createTargets"><code>.createTargets(targets, mapper)</code></a></li>
+<li><a href="#module_app-builder-lib.WinPackager+getIconPath"><code>.getIconPath()</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.WinPackager+sign"><code>.sign(file, logMessagePrefix)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_app-builder-lib.WinPackager+signAndEditResources"><code>.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+artifactPatternConfig"><code>.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code></a> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+computeSafeArtifactName"><code>.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"><code>.getDefaultFrameworkIcon()</code></a> ⇒ <code>null</code> | <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronDestinationDir"><code>.getElectronDestinationDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getElectronSrcDir"><code>.getElectronSrcDir(dist)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"><code>.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"><code>.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+expandMacro"><code>.expandMacro(pattern, arch, extra, isProductNameSanitized)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+generateName2"><code>.generateName2(ext, classifier, deployment)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"><code>.getMacOsResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+pack"><code>.pack(outDir, arch, targets, taskManager)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+resolveIcon"><code>.resolveIcon(sources, fallbackSources, outputFormat)</code></a> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResource"><code>.getResource(custom, names)</code></a> ⇒ <code>Promise&lt; | String&gt;</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getResourcesDir"><code>.getResourcesDir(appOutDir)</code></a> ⇒ <code>String</code></li>
+<li><a href="#module_app-builder-lib.PlatformPackager+getTempFile"><code>.getTempFile(suffix)</code></a> ⇒ <code>Promise&lt;String&gt;</code></li>
+</ul>
+</li>
+</ul>
+<p><a name="module_app-builder-lib.WinPackager+createTargets"></a></p>
+<h3 id="winpackager.createtargets(targets%2C-mapper)"><code>winPackager.createTargets(targets, mapper)</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+createTargets"><code>createTargets</code></a></p>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>mapper</td>
+<td><code>callback</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.WinPackager+getIconPath"></a></p>
+<h3 id="winpackager.geticonpath()-%E2%87%92-promise%3C-%7C-string%3E"><code>winPackager.getIconPath()</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<p><strong>Overrides</strong>: <a href="#module_app-builder-lib.PlatformPackager+getIconPath"><code>getIconPath</code></a><br>
+<a name="module_app-builder-lib.WinPackager+sign"></a></p>
+<h3 id="winpackager.sign(file%2C-logmessageprefix)-%E2%87%92-promise%3Cboolean%3E"><code>winPackager.sign(file, logMessagePrefix)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>logMessagePrefix</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.WinPackager+signAndEditResources"></a></p>
+<h3 id="winpackager.signandeditresources(file%2C-arch%2C-outdir%2C-internalname%2C-requestedexecutionlevel)-%E2%87%92-promise%3Cvoid%3E"><code>winPackager.signAndEditResources(file, arch, outDir, internalName, requestedExecutionLevel)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code></td>
+</tr>
+<tr>
+<td>outDir</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>internalName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>requestedExecutionLevel</td>
+<td><code>“asInvoker”</code> | <code>“highestAvailable”</code> | <code>“requireAdministrator”</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+artifactPatternConfig"></a></p>
+<h3 id="winpackager.artifactpatternconfig(targetspecificoptions%2C-defaultpattern)-%E2%87%92-module%3Aapp-builder-lib%2Fout%2Fplatformpackager.__object"><code>winPackager.artifactPatternConfig(targetSpecificOptions, defaultPattern)</code> ⇒ <code>module:app-builder-lib/out/platformPackager.__object</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code> | <code>undefined</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+computeSafeArtifactName"></a></p>
+<h3 id="winpackager.computesafeartifactname(suggestedname%2C-ext%2C-arch%2C-skipdefaultarch%2C-defaultarch%2C-safepattern)-%E2%87%92-null-%7C-string"><code>winPackager.computeSafeArtifactName(suggestedName, ext, arch, skipDefaultArch, defaultArch, safePattern)</code> ⇒ <code>null</code> | <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suggestedName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>safePattern</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getDefaultFrameworkIcon"></a></p>
+<h3 id="winpackager.getdefaultframeworkicon()-%E2%87%92-null-%7C-string"><code>winPackager.getDefaultFrameworkIcon()</code> ⇒ <code>null</code> | <code>String</code></h3>
+<p><a name="module_app-builder-lib.PlatformPackager+dispatchArtifactCreated"></a></p>
+<h3 id="winpackager.dispatchartifactcreated(file%2C-target%2C-arch%2C-safeartifactname)-%E2%87%92-promise%3Cvoid%3E"><code>winPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>file</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>target</td>
+<td><code><a href="#Target">Target</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>safeArtifactName</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getElectronDestinationDir"></a></p>
+<h3 id="winpackager.getelectrondestinationdir(appoutdir)-%E2%87%92-string"><code>winPackager.getElectronDestinationDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getElectronSrcDir"></a></p>
+<h3 id="winpackager.getelectronsrcdir(dist)-%E2%87%92-string"><code>winPackager.getElectronSrcDir(dist)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dist</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactBeautyNamePattern"></a></p>
+<h3 id="winpackager.expandartifactbeautynamepattern(targetspecificoptions%2C-ext%2C-arch)-%E2%87%92-string"><code>winPackager.expandArtifactBeautyNamePattern(targetSpecificOptions, ext, arch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandArtifactNamePattern"></a></p>
+<h3 id="winpackager.expandartifactnamepattern(targetspecificoptions%2C-ext%2C-arch%2C-defaultpattern%2C-skipdefaultarch%2C-defaultarch)-%E2%87%92-string"><code>winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipDefaultArch, defaultArch)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>targetSpecificOptions</td>
+<td><code><a href="#TargetSpecificOptions">TargetSpecificOptions</a></code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>ext</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>defaultPattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>skipDefaultArch</td>
+<td></td>
+</tr>
+<tr>
+<td>defaultArch</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+expandMacro"></a></p>
+<h3 id="winpackager.expandmacro(pattern%2C-arch%2C-extra%2C-isproductnamesanitized)-%E2%87%92-string"><code>winPackager.expandMacro(pattern, arch, extra, isProductNameSanitized)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pattern</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>extra</td>
+<td><code>any</code></td>
+</tr>
+<tr>
+<td>isProductNameSanitized</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+generateName2"></a></p>
+<h3 id="winpackager.generatename2(ext%2C-classifier%2C-deployment)-%E2%87%92-string"><code>winPackager.generateName2(ext, classifier, deployment)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ext</td>
+<td><code>String</code> | <code>“undefined”</code></td>
+</tr>
+<tr>
+<td>classifier</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>deployment</td>
+<td><code>Boolean</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getMacOsResourcesDir"></a></p>
+<h3 id="winpackager.getmacosresourcesdir(appoutdir)-%E2%87%92-string"><code>winPackager.getMacOsResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+pack"></a></p>
+<h3 id="winpackager.pack(outdir%2C-arch%2C-targets%2C-taskmanager)-%E2%87%92-promise%3Cany%3E"><code>winPackager.pack(outDir, arch, targets, taskManager)</code> ⇒ <code>Promise&lt;any&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>outDir</td>
+<td><code>String</code></td>
+</tr>
+<tr>
+<td>arch</td>
+<td><code><a href="#Arch">Arch</a></code></td>
+</tr>
+<tr>
+<td>targets</td>
+<td><code>Array&lt;<a href="#Target">Target</a>&gt;</code></td>
+</tr>
+<tr>
+<td>taskManager</td>
+<td><code>AsyncTaskManager</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+resolveIcon"></a></p>
+<h3 id="winpackager.resolveicon(sources%2C-fallbacksources%2C-outputformat)-%E2%87%92-promise%3Carray%3Cmodule%3Aapp-builder-lib%2Fout%2Fplatformpackager.iconinfo%3E%3E"><code>winPackager.resolveIcon(sources, fallbackSources, outputFormat)</code> ⇒ <code>Promise&lt;Array&lt;module:app-builder-lib/out/platformPackager.IconInfo&gt;&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>fallbackSources</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+<tr>
+<td>outputFormat</td>
+<td><code>“set”</code> | <code>“icns”</code> | <code>“ico”</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResource"></a></p>
+<h3 id="winpackager.getresource(custom%2C-names)-%E2%87%92-promise%3C-%7C-string%3E"><code>winPackager.getResource(custom, names)</code> ⇒ <code>Promise&lt; | String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>custom</td>
+<td><code>String</code> | <code>“undefined”</code> | <code>undefined</code></td>
+</tr>
+<tr>
+<td>names</td>
+<td><code>Array&lt;String&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getResourcesDir"></a></p>
+<h3 id="winpackager.getresourcesdir(appoutdir)-%E2%87%92-string"><code>winPackager.getResourcesDir(appOutDir)</code> ⇒ <code>String</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appOutDir</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
+<p><a name="module_app-builder-lib.PlatformPackager+getTempFile"></a></p>
+<h3 id="winpackager.gettempfile(suffix)-%E2%87%92-promise%3Cstring%3E"><code>winPackager.getTempFile(suffix)</code> ⇒ <code>Promise&lt;String&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>suffix</td>
+<td><code>String</code></td>
+</tr>
+</tbody>
+</table>
 <p><a name="module_app-builder-lib.build"></a></p>
 <h2 id="app-builder-lib.build(options%2C-packager)-%E2%87%92-promise%3Carray%3Cstring%3E%3E"><code>app-builder-lib.build(options, packager)</code> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></h2>
 <p><strong>Kind</strong>: method of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/></p>

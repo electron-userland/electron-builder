@@ -31,7 +31,7 @@ import {
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
-export default class MacPackager extends PlatformPackager<MacConfiguration> {
+export class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
     const cscLink = this.getCscLink()
     if (cscLink == null || process.platform !== "darwin") {
