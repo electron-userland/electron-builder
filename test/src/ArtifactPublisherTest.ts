@@ -161,7 +161,7 @@ test.ifEnv(process.env.BITBUCKET_TOKEN)("Bitbucket upload", async () => {
   const filename = await publisher.upload({ file: iconPath, arch: Arch.x64, timeout })
   await publisher.deleteRelease(filename)
 
-  const uploadTasks: any = await publishArtifactsWithOptions([{ file: icoPath, arch: null }], undefined, [config])
+  const uploadTasks: any = await publishArtifactsWithOptions([{ file: icoPath, arch: null }], undefined, undefined, [config])
   for (const task of uploadTasks) {
     await publisher.deleteRelease(task.file)
   }
