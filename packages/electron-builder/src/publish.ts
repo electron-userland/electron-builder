@@ -24,7 +24,12 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
       string: true,
       type: "array",
       requiresArg: true,
-      description: "The file to upload to your publisher",
+      description: "The file(s) to upload to your publisher",
+    })
+    .option("version", {
+      alias: ["v"],
+      type: "string",
+      description: "The app/build version used when searching for an upload release (used by some Publishers)",
     })
     .option("config", {
       alias: ["c"],
@@ -35,17 +40,22 @@ export function configurePublishCommand(yargs: yargs.Argv): yargs.Argv {
     .demandOption("files")
 }
 
-export async function publish(args: { files: string[]; config: string | undefined }) {
+export async function publish(args: { files: string[]; version: string | undefined; config: string | undefined }) {
   const uploadTasks = args.files.map(f => {
     return {
       file: path.resolve(f),
       arch: null,
     }
   })
-  return publishArtifactsWithOptions(uploadTasks, args.config)
+  return publishArtifactsWithOptions(uploadTasks, args.version, args.config)
 }
 
-export async function publishArtifactsWithOptions(uploadOptions: { file: string; arch: string | null }[], configurationFilePath?: string, publishConfiguration?: Publish) {
+export async function publishArtifactsWithOptions(
+  uploadOptions: { file: string; arch: string | null }[],
+  buildVersion?: string,
+  configurationFilePath?: string,
+  publishConfiguration?: Publish
+) {
   const projectDir = process.cwd()
   const config = await getConfig(projectDir, configurationFilePath || null, { publish: publishConfiguration, detectUpdateChannel: false })
 
@@ -58,17 +68,18 @@ export async function publishArtifactsWithOptions(uploadOptions: { file: string;
     return { file, arch: arch ? archFromString(arch) : null, safeArtifactName: computeSafeArtifactNameIfNeeded(filename, () => filename) }
   })
 
-  return publishPackageWithTasks(buildOptions, tasks)
+  return publishPackageWithTasks(buildOptions, tasks, buildVersion)
 }
 
 async function publishPackageWithTasks(
   options: PackagerOptions & PublishOptions,
   uploadTasks: UploadTask[],
+  buildVersion?: string,
   cancellationToken: CancellationToken = new CancellationToken(),
   packager: Packager = new Packager(options, cancellationToken)
 ) {
   await packager.validateConfig()
-  const appInfo = new AppInfo(packager, null)
+  const appInfo = new AppInfo(packager, buildVersion)
   const publishManager = new PublishManager(packager, options, cancellationToken)
 
   const sigIntHandler = () => {
