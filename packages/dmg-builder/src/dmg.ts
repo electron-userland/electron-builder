@@ -1,6 +1,6 @@
 import { DmgOptions, Target } from "app-builder-lib"
 import { findIdentity, isSignAllowed } from "app-builder-lib/out/codeSign/macCodeSign"
-import MacPackager from "app-builder-lib/out/macPackager"
+import { MacPackager } from "app-builder-lib/out/macPackager"
 import { createBlockmap } from "app-builder-lib/out/targets/differentialUpdateInfoBuilder"
 import { executeAppBuilderAsJson } from "app-builder-lib/out/util/appBuilder"
 import { sanitizeFileName } from "app-builder-lib/out/util/filename"

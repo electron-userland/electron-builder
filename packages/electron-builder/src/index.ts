@@ -1,4 +1,4 @@
-export { getArchSuffix, Arch, archFromString } from "builder-util"
+export { getArchSuffix, Arch, archFromString, log } from "builder-util"
 export { build, CliOptions, createTargets } from "./builder"
 export {
   TargetConfiguration,
@@ -63,6 +63,9 @@ export {
   PublishManager,
   PublishOptions,
   ProgressInfo,
+  MacPackager,
+  WinPackager,
+  LinuxPackager,
 } from "app-builder-lib"
 export { buildForge, ForgeOptions } from "app-builder-lib"
 export { CancellationToken } from "builder-util-runtime"

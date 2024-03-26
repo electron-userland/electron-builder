@@ -39,6 +39,7 @@ export { SnapOptions, PlugDescriptor, SlotDescriptor } from "./options/SnapOptio
 export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
 export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+
 export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
 export {
   WindowsSignOptions,
@@ -54,6 +55,9 @@ export { PublishManager } from "./publish/PublishManager"
 export { PlatformPackager } from "./platformPackager"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
+export { LinuxPackager } from "./linuxPackager"
+export { WinPackager } from "./winPackager"
+export { MacPackager } from "./macPackager"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 
