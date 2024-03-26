@@ -18,28 +18,61 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  if (file === fileSet.src) {
-    return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      // hoisted node_modules
-      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
-      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      let index = file.indexOf(NODE_MODULES_PATTERN)
-      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
-        index = file.length - 13
-      }
-      if (index < 0) {
-        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
-      }
-      return dest + file.substring(index)
-    }
+function removePnpmAndNextTwoFolders(file: string) {
+  const parts = file.split(path.sep)
+  const pnpmIndex = parts.findIndex(part => part === ".pnpm")
+
+  if (pnpmIndex >= 0 && parts.length > pnpmIndex + 2) {
+    parts.splice(pnpmIndex, 3)
   }
+  return parts.join(path.sep)
+}
+
+function getHoistedModulePath(file: string, destination: string): string {
+  const filePathParts: string[] = file.split(path.sep)
+  const destinationParts: string[] = destination.split(path.sep)
+
+  const nodeModulesIndicesFilePath: number[] = filePathParts.reduce((acc: number[], part: string, index: number) => {
+    if (part === "node_modules") acc.push(index)
+    return acc
+  }, [])
+
+  const nodeModulesIndicesDestination: number[] = destinationParts.reduce((acc: number[], part: string, index: number) => {
+    if (part === "node_modules") acc.push(index)
+    return acc
+  }, [])
+
+  if (nodeModulesIndicesDestination.length === 0) {
+    if (nodeModulesIndicesFilePath.length > 0) {
+      const firstNodeModulesIndexFilePath: number = nodeModulesIndicesFilePath[0]
+      return path.join(destination, ...filePathParts.slice(firstNodeModulesIndexFilePath))
+    }
+    return destination
+  }
+
+  const targetNodeModulesIndex: number = nodeModulesIndicesDestination[nodeModulesIndicesFilePath.length - 1] || nodeModulesIndicesDestination.slice(-1)[0]
+
+  if (nodeModulesIndicesFilePath.length === 0) {
+    throw new Error(` The specified file path: ${file} does not contain "node_modules" to destination: ${destination}`)
+  }
+
+  const basePath: string = destinationParts.slice(0, targetNodeModulesIndex + 1).join(path.sep)
+  const newPath: string = path.join(basePath, ...filePathParts.slice(nodeModulesIndicesFilePath.slice(-1)[0] + 1))
+
+  return newPath
+}
+
+export function getDestinationPath(filePath: string, fileSet: ResolvedFileSet) {
+  if (filePath === fileSet.src) {
+    return fileSet.destination
+  }
+  const src = removePnpmAndNextTwoFolders(fileSet.src)
+  const dest = fileSet.destination
+  const file = removePnpmAndNextTwoFolders(filePath)
+  if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
+    return dest + file.substring(src.length)
+  }
+  return getHoistedModulePath(file, dest)
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
