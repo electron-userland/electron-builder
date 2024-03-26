@@ -76,39 +76,42 @@ export function build(options: PackagerOptions & PublishOptions, packager: Packa
   }
   process.once("SIGINT", sigIntHandler)
 
-  const promise = packager.build().then(async buildResult => {
-    const afterAllArtifactBuild = await resolveFunction(packager.appInfo.type, buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
-    if (afterAllArtifactBuild != null) {
-      const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
-      if (newArtifacts.length === 0 || !publishManager.isPublish) {
-        return buildResult.artifactPaths
-      }
-
-      const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
-      if (publishConfigurations == null || publishConfigurations.length === 0) {
-        return buildResult.artifactPaths
-      }
-
-      for (const newArtifact of newArtifacts) {
-        if (buildResult.artifactPaths.includes(newArtifact)) {
-          log.warn({ newArtifact }, "skipping publish of artifact, already published")
-          continue
+  const promise = packager
+    .validateConfig()
+    .then(() => packager.build())
+    .then(async buildResult => {
+      const afterAllArtifactBuild = await resolveFunction(packager.appInfo.type, buildResult.configuration.afterAllArtifactBuild, "afterAllArtifactBuild")
+      if (afterAllArtifactBuild != null) {
+        const newArtifacts = asArray(await Promise.resolve(afterAllArtifactBuild(buildResult)))
+        if (newArtifacts.length === 0 || !publishManager.isPublish) {
+          return buildResult.artifactPaths
         }
-        buildResult.artifactPaths.push(newArtifact)
-        for (const publishConfiguration of publishConfigurations) {
-          publishManager.scheduleUpload(
-            publishConfiguration,
-            {
-              file: newArtifact,
-              arch: null,
-            },
-            packager.appInfo
-          )
+
+        const publishConfigurations = await publishManager.getGlobalPublishConfigurations()
+        if (publishConfigurations == null || publishConfigurations.length === 0) {
+          return buildResult.artifactPaths
+        }
+
+        for (const newArtifact of newArtifacts) {
+          if (buildResult.artifactPaths.includes(newArtifact)) {
+            log.warn({ newArtifact }, "skipping publish of artifact, already published")
+            continue
+          }
+          buildResult.artifactPaths.push(newArtifact)
+          for (const publishConfiguration of publishConfigurations) {
+            publishManager.scheduleUpload(
+              publishConfiguration,
+              {
+                file: newArtifact,
+                arch: null,
+              },
+              packager.appInfo
+            )
+          }
         }
       }
-    }
-    return buildResult.artifactPaths
-  })
+      return buildResult.artifactPaths
+    })
 
   return executeFinally(promise, isErrorOccurred => {
     let promise: Promise<any>
