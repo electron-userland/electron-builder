@@ -19,19 +19,12 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 function removePnpmAndNextTwoFolders(file: string) {
-  // Split the path into parts
   const parts = file.split(path.sep)
-
-  // Find the index of the '.pnpm' folder
   const pnpmIndex = parts.findIndex(part => part === ".pnpm")
 
-  // If '.pnpm' is found, and there are at least two more folders after it
   if (pnpmIndex >= 0 && parts.length > pnpmIndex + 2) {
-    // Remove '.pnpm' and the next two folders from the parts array
     parts.splice(pnpmIndex, 3)
   }
-
-  // Rejoin the remaining parts back into a path string
   return parts.join(path.sep)
 }
 
@@ -50,12 +43,10 @@ function getHoistedModulePath(file: string, destination: string): string {
   }, [])
 
   if (nodeModulesIndicesDestination.length === 0) {
-    // If no 'node_modules' in destination, append from the first 'node_modules' in filePath
     if (nodeModulesIndicesFilePath.length > 0) {
       const firstNodeModulesIndexFilePath: number = nodeModulesIndicesFilePath[0]
       return path.join(destination, ...filePathParts.slice(firstNodeModulesIndexFilePath))
     }
-    // If also no 'node_modules' in filePath, return destination as is
     return destination
   }
 
