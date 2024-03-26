@@ -1,4 +1,4 @@
-export { getArchSuffix, Arch, archFromString } from "builder-util"
+export { getArchSuffix, Arch, archFromString, log } from "builder-util"
 export { build, CliOptions, createTargets } from "./builder"
 export {
   TargetConfiguration,
