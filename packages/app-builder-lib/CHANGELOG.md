@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 25.0.0-alpha.6
+
+### Minor Changes
+
+- [#8142](https://github.com/electron-userland/electron-builder/pull/8142) [`8160363a`](https://github.com/electron-userland/electron-builder/commit/8160363ac2821242ab22e225a9038b56e4798cc6) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add config options for setting `MinVersion` and `MaxVersionTested` fields in appx manifest
+
+- [#8153](https://github.com/electron-userland/electron-builder/pull/8153) [`8e36be11`](https://github.com/electron-userland/electron-builder/commit/8e36be113489c1afa6ce5ee6cdda73049bc619a6) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: export Packager sub-classes from main electron-builder types
+
+### Patch Changes
+
+- Updated dependencies [[`a999da48`](https://github.com/electron-userland/electron-builder/commit/a999da48480b5024d97c3028a655bb33b00fc3bc), [`8e36be11`](https://github.com/electron-userland/electron-builder/commit/8e36be113489c1afa6ce5ee6cdda73049bc619a6)]:
+  - builder-util@25.0.0-alpha.6
+  - dmg-builder@25.0.0-alpha.6
+  - electron-builder-squirrel-windows@25.0.0-alpha.6
+  - electron-publish@25.0.0-alpha.6
+
 ## 25.0.0-alpha.5
 
 ### Patch Changes
