@@ -48,6 +48,10 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
           ? ["ia32", "x64"]
           : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames()
     for (const arch of archs) {
+      if (arch === "riscv64") {
+        // No prebuilt electron for riscv64
+        continue
+      }
       versions.push({
         version: ELECTRON_VERSION,
         arch,
