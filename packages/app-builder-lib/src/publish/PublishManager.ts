@@ -143,7 +143,6 @@ export class PublishManager implements PublishContext {
     return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
   }
 
-  /** @internal */
   scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): void {
     if (publishConfig.provider === "generic") {
       return
