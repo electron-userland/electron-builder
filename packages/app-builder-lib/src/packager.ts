@@ -19,7 +19,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config"
 import { expandMacro } from "./util/macroExpander"
 import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
@@ -337,7 +337,7 @@ export class Packager {
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
-    await validateConfig(configuration, this.debugLogger)
+    await validateConfiguration(configuration, this.debugLogger)
 
     this._configuration = configuration
     this._devMetadata = devMetadata
@@ -345,6 +345,8 @@ export class Packager {
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
   async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    await this.validateConfig()
+
     if (repositoryInfo != null) {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
     }
