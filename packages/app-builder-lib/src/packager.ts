@@ -19,7 +19,7 @@ import { ArtifactBuildStarted, ArtifactCreated, PackagerOptions } from "./packag
 import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
+import { computeDefaultAppDirectory, getConfig, validateConfiguration } from "./util/config"
 import { expandMacro } from "./util/macroExpander"
 import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
@@ -296,7 +296,7 @@ export class Packager {
     }
   }
 
-  async build(): Promise<BuildResult> {
+  async validateConfig(): Promise<void> {
     let configPath: string | null = null
     let configFromOptions = this.options.config
     if (typeof configFromOptions === "string") {
@@ -337,15 +337,15 @@ export class Packager {
     }
     checkMetadata(this.metadata, this.devMetadata, appPackageFile, devPackageFile)
 
-    return await this._build(configuration, this._metadata, this._devMetadata)
+    await validateConfiguration(configuration, this.debugLogger)
+
+    this._configuration = configuration
+    this._devMetadata = devMetadata
   }
 
   // external caller of this method always uses isTwoPackageJsonProjectLayoutUsed=false and appDir=projectDir, no way (and need) to use another values
-  async _build(configuration: Configuration, metadata: Metadata, devMetadata: Metadata | null, repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
-    await validateConfig(configuration, this.debugLogger)
-    this._configuration = configuration
-    this._metadata = metadata
-    this._devMetadata = devMetadata
+  async build(repositoryInfo?: SourceRepositoryInfo): Promise<BuildResult> {
+    await this.validateConfig()
 
     if (repositoryInfo != null) {
       this._repositoryInfo.value = Promise.resolve(repositoryInfo)
@@ -356,7 +356,7 @@ export class Packager {
 
     const commonOutDirWithoutPossibleOsMacro = path.resolve(
       this.projectDir,
-      expandMacro(configuration.directories!.output!, null, this._appInfo, {
+      expandMacro(this.config.directories!.output!, null, this._appInfo, {
         os: "",
       })
     )
@@ -364,7 +364,7 @@ export class Packager {
     if (!isCI && (process.stdout as any).isTTY) {
       const effectiveConfigFile = path.join(commonOutDirWithoutPossibleOsMacro, "builder-effective-config.yaml")
       log.info({ file: log.filePath(effectiveConfigFile) }, "writing effective config")
-      await outputFile(effectiveConfigFile, getSafeEffectiveConfig(configuration))
+      await outputFile(effectiveConfigFile, getSafeEffectiveConfig(this.config))
     }
 
     // because artifact event maybe dispatched several times for different publish providers
@@ -394,7 +394,7 @@ export class Packager {
       outDir: commonOutDirWithoutPossibleOsMacro,
       artifactPaths: Array.from(artifactPaths),
       platformToTargets,
-      configuration,
+      configuration: this.config,
     }
   }
 
@@ -439,7 +439,7 @@ export class Packager {
         }
 
         // support os and arch macro in output value
-        const outDir = path.resolve(this.projectDir, packager.expandMacro(this._configuration!.directories!.output!, Arch[arch]))
+        const outDir = path.resolve(this.projectDir, packager.expandMacro(this.config.directories!.output!, Arch[arch]))
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         await createOutDirIfNeed(targetList, createdOutDirs)
         await packager.pack(outDir, arch, targetList, taskManager)
