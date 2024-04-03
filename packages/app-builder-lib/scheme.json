@@ -3687,9 +3687,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "teamId"
-      ],
       "type": "object"
     },
     "NsisOptions": {

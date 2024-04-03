@@ -10,7 +10,7 @@ import { AppInfo } from "./appInfo"
 import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
+import { MacConfiguration, MasConfiguration, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
@@ -20,13 +20,7 @@ import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize, NotarizeOptions } from "@electron/notarize"
-import {
-  LegacyNotarizePasswordCredentials,
-  LegacyNotarizeStartOptions,
-  NotaryToolStartOptions,
-  NotaryToolCredentials,
-  NotaryToolKeychainCredentials,
-} from "@electron/notarize/lib/types"
+import { NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -510,9 +504,18 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     log.info(null, "notarization successful")
   }
 
-  private getNotarizeOptions(appPath: string) {
+  private getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
+    let teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    const options = this.platformSpecificBuildOptions.notarize
+    const tool = "notarytool"
+
+    const optionsTeamId = (options as NotarizeNotaryOptions)?.teamId
+    if (optionsTeamId) {
+      log.warn(null, "Please specify notarization Team ID in the `APPLE_TEAM_ID` env var instead of `notarize.teamId`")
+      teamId = optionsTeamId
+    }
 
     // option 1: app specific password
     if (appleId || appleIdPassword) {
@@ -522,7 +525,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!appleIdPassword) {
         throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
       }
-      return this.generateNotarizeOptions(appPath, { appleId, appleIdPassword })
+      if (!teamId) {
+        throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
+      }
+      return { tool, appPath, appleId, appleIdPassword, teamId }
     }
 
     // option 2: API key
@@ -533,7 +539,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
         throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
       }
-      return this.generateNotarizeOptions(appPath, undefined, { appleApiKey, appleApiKeyId, appleApiIssuer })
+      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
     }
 
     // option 3: keychain
@@ -544,48 +550,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
       if (keychain) {
         args = { ...args, keychain }
       }
-      return this.generateNotarizeOptions(appPath, undefined, args)
+      return { tool, appPath, ...args }
     }
 
     // if no credentials provided, skip silently
-    return undefined
-  }
-
-  private generateNotarizeOptions(appPath: string, legacyLogin?: LegacyNotarizePasswordCredentials, notaryToolLogin?: NotaryToolCredentials): NotarizeOptions | undefined {
-    const options = this.platformSpecificBuildOptions.notarize
-    if (typeof options === "boolean" && legacyLogin) {
-      const proj: LegacyNotarizeStartOptions = {
-        appPath,
-        ...legacyLogin,
-        appBundleId: this.appInfo.id,
-      }
-      return proj
-    }
-    const teamId = (options as NotarizeNotaryOptions)?.teamId
-    if ((teamId || options === true) && (legacyLogin || notaryToolLogin)) {
-      const proj: NotaryToolStartOptions = {
-        appPath,
-        ...(legacyLogin ?? notaryToolLogin!),
-        teamId,
-      }
-      return { tool: "notarytool", ...proj }
-    }
-    if (legacyLogin) {
-      const { appBundleId, ascProvider } = options as NotarizeLegacyOptions
-      return {
-        appPath,
-        ...legacyLogin,
-        appBundleId: appBundleId || this.appInfo.id,
-        ascProvider: ascProvider || undefined,
-      }
-    }
-    if (notaryToolLogin) {
-      return {
-        tool: "notarytool",
-        appPath,
-        ...notaryToolLogin,
-      }
-    }
     return undefined
   }
 }
