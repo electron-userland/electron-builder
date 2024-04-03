@@ -473,7 +473,7 @@ export class Packager {
 
     switch (platform) {
       case Platform.MAC: {
-        const helperClass = (await import("./macPackager")).default
+        const helperClass = (await import("./macPackager")).MacPackager
         return new helperClass(this)
       }
 
