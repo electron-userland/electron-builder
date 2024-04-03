@@ -22,7 +22,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#Arch"><code>.Arch</code></a> : <code>enum</code></li>
 <li><a href="#module_electron-builder.build"><code>.build(rawOptions)</code></a> ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code></li>
 <li><a href="#module_electron-builder.createTargets"><code>.createTargets(platforms, type, arch)</code></a> ⇒ <code>Map&lt;Platform | Map&lt;<a href="#Arch">Arch</a> | Array&lt;String&gt;&gt;&gt;</code></li>
-<li><a href="#module_electron-builder.publish"><code>.publish(args)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
+<li><a href="#module_electron-builder.publish"><code>.publish(args)</code></a> ⇒ <code>Promise&lt; | Array&gt;</code></li>
 </ul>
 </li>
 </ul>
@@ -80,7 +80,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </tbody>
 </table>
 <p><a name="module_electron-builder.publish"></a></p>
-<h2 id="electron-builder.publish(args)-%E2%87%92-promise%3Cvoid%3E"><code>electron-builder.publish(args)</code> ⇒ <code>Promise&lt;void&gt;</code></h2>
+<h2 id="electron-builder.publish(args)-%E2%87%92-promise%3C-%7C-array%3E"><code>electron-builder.publish(args)</code> ⇒ <code>Promise&lt; | Array&gt;</code></h2>
 <p><strong>Kind</strong>: method of <a href="#module_electron-builder"><code>electron-builder</code></a><br/></p>
 <table>
 <thead>
@@ -174,11 +174,10 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </li>
 <li><a href="#Packager">.Packager</a>
 <ul>
-<li><a href="#module_app-builder-lib.Packager+_build"><code>._build(configuration, metadata, devMetadata, repositoryInfo)</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+addAfterPackHandler"><code>.addAfterPackHandler(handler)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+artifactCreated"><code>.artifactCreated(handler)</code></a> ⇒ <code><a href="#Packager">Packager</a></code></li>
-<li><a href="#module_app-builder-lib.Packager+build"><code>.build()</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+build"><code>.build(repositoryInfo)</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callAppxManifestCreated"><code>.callAppxManifestCreated(path)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callArtifactBuildCompleted"><code>.callArtifactBuildCompleted(event)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callArtifactBuildStarted"><code>.callArtifactBuildStarted(event, logFields)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
@@ -187,6 +186,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.Packager+disposeOnBuildFinish"><code>.disposeOnBuildFinish(disposer)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+installAppDependencies"><code>.installAppDependencies(platform, arch)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+validateConfig"><code>.validateConfig()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
 <li><a href="#Platform">.Platform</a>
@@ -1427,11 +1427,10 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <ul>
 <li><a href="#Packager">.Packager</a>
 <ul>
-<li><a href="#module_app-builder-lib.Packager+_build"><code>._build(configuration, metadata, devMetadata, repositoryInfo)</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+addAfterPackHandler"><code>.addAfterPackHandler(handler)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+artifactCreated"><code>.artifactCreated(handler)</code></a> ⇒ <code><a href="#Packager">Packager</a></code></li>
-<li><a href="#module_app-builder-lib.Packager+build"><code>.build()</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+build"><code>.build(repositoryInfo)</code></a> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callAppxManifestCreated"><code>.callAppxManifestCreated(path)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callArtifactBuildCompleted"><code>.callArtifactBuildCompleted(event)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+callArtifactBuildStarted"><code>.callArtifactBuildStarted(event, logFields)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
@@ -1440,37 +1439,10 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_app-builder-lib.Packager+disposeOnBuildFinish"><code>.disposeOnBuildFinish(disposer)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+installAppDependencies"><code>.installAppDependencies(platform, arch)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+validateConfig"><code>.validateConfig()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
 </ul>
-<p><a name="module_app-builder-lib.Packager+_build"></a></p>
-<h3 id="packager._build(configuration%2C-metadata%2C-devmetadata%2C-repositoryinfo)-%E2%87%92-promise%3Cbuildresult%3E"><code>packager._build(configuration, metadata, devMetadata, repositoryInfo)</code> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></h3>
-<table>
-<thead>
-<tr>
-<th>Param</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>configuration</td>
-<td><code><a href="#Configuration">Configuration</a></code></td>
-</tr>
-<tr>
-<td>metadata</td>
-<td><code><a href="#Metadata">Metadata</a></code></td>
-</tr>
-<tr>
-<td>devMetadata</td>
-<td><code><a href="#Metadata">Metadata</a></code> | <code>“undefined”</code></td>
-</tr>
-<tr>
-<td>repositoryInfo</td>
-<td><code><a href="#SourceRepositoryInfo">SourceRepositoryInfo</a></code></td>
-</tr>
-</tbody>
-</table>
 <p><a name="module_app-builder-lib.Packager+addAfterPackHandler"></a></p>
 <h3 id="packager.addafterpackhandler(handler)"><code>packager.addAfterPackHandler(handler)</code></h3>
 <table>
@@ -1520,7 +1492,21 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tbody>
 </table>
 <p><a name="module_app-builder-lib.Packager+build"></a></p>
-<h3 id="packager.build()-%E2%87%92-promise%3Cbuildresult%3E"><code>packager.build()</code> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></h3>
+<h3 id="packager.build(repositoryinfo)-%E2%87%92-promise%3Cbuildresult%3E"><code>packager.build(repositoryInfo)</code> ⇒ <code>Promise&lt;<a href="#BuildResult">BuildResult</a>&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>repositoryInfo</td>
+<td><code><a href="#SourceRepositoryInfo">SourceRepositoryInfo</a></code></td>
+</tr>
+</tbody>
+</table>
 <p><a name="module_app-builder-lib.Packager+callAppxManifestCreated"></a></p>
 <h3 id="packager.callappxmanifestcreated(path)-%E2%87%92-promise%3Cvoid%3E"><code>packager.callAppxManifestCreated(path)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <table>
@@ -1658,6 +1644,8 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tr>
 </tbody>
 </table>
+<p><a name="module_app-builder-lib.Packager+validateConfig"></a></p>
+<h3 id="packager.validateconfig()-%E2%87%92-promise%3Cvoid%3E"><code>packager.validateConfig()</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <p><a name="Platform"></a></p>
 <h2 id="platform">Platform</h2>
 <p><strong>Kind</strong>: class of <a href="#module_app-builder-lib"><code>app-builder-lib</code></a><br/>
