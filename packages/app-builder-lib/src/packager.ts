@@ -21,7 +21,7 @@ import { ProtonFramework } from "./ProtonFramework"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { expandMacro } from "./util/macroExpander"
-import { createLazyProductionDeps, NodeModuleDirInfo } from "./util/packageDependencies"
+import { createLazyProductionDeps, NodeModuleDirInfo, NodeModuleInfo } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { installOrRebuild, nodeGypRebuild } from "./util/yarn"
@@ -119,7 +119,7 @@ export class Packager {
 
   private nodeDependencyInfo = new Map<string, Lazy<Array<any>>>()
 
-  getNodeDependencyInfo(platform: Platform | null): Lazy<Array<NodeModuleDirInfo>> {
+  getNodeDependencyInfo(platform: Platform | null): Lazy<Array<NodeModuleInfo | NodeModuleDirInfo>> {
     let key = ""
     let excludedDependencies: Array<string> | null = null
     if (platform != null && this.framework.getExcludedDependencies != null) {
@@ -529,7 +529,7 @@ export class Packager {
         frameworkInfo,
         platform: platform.nodeName,
         arch: Arch[arch],
-        productionDeps: this.getNodeDependencyInfo(null),
+        productionDeps: this.getNodeDependencyInfo(null) as Lazy<Array<NodeModuleDirInfo>>,
       })
     }
   }
