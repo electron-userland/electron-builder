@@ -6,71 +6,13 @@ import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { ResolvedFileSet } from "../util/appFileCopier"
+import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
-import { NODE_MODULES_PATTERN } from "../fileTransformer"
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pickle = require("chromium-pickle-js")
-
-function generateNewPath(filePath: string, destination: string): string {
-  // Split the paths into parts
-  const filePathParts: string[] = filePath.split(path.sep)
-  const destinationParts: string[] = destination.split(path.sep)
-
-  // Find all occurrences of 'node_modules' in both paths
-  const nodeModulesIndicesFilePath: number[] = filePathParts.reduce((acc: number[], part: string, index: number) => {
-    if (part === "node_modules") acc.push(index)
-    return acc
-  }, [])
-
-  const nodeModulesIndicesDestination: number[] = destinationParts.reduce((acc: number[], part: string, index: number) => {
-    if (part === "node_modules") acc.push(index)
-    return acc
-  }, [])
-
-  // Calculate the target index for 'node_modules' in the destination path
-  const targetNodeModulesIndex: number = nodeModulesIndicesDestination[nodeModulesIndicesFilePath.length - 1] || nodeModulesIndicesDestination.slice(-1)[0]
-
-  // If 'node_modules' is not found in the file path or destination, return an error message
-  if (nodeModulesIndicesFilePath.length === 0 || nodeModulesIndicesDestination.length === 0) {
-    return 'Error: The specified paths do not contain "node_modules"'
-  }
-
-  // Reconstruct the path from the destination to the targeted 'node_modules'
-  const basePath: string = destinationParts.slice(0, targetNodeModulesIndex + 1).join(path.sep)
-
-  // Append the part of the filePath after the last 'node_modules' to the basePath
-  const newPath: string = path.join(basePath, ...filePathParts.slice(nodeModulesIndicesFilePath.slice(-1)[0] + 1))
-
-  return newPath
-}
-
-function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
-  if (file === fileSet.src) {
-    return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return (dest + file.substring(src.length)).replace(`${path.sep}.pnpm`, "")
-    } else {
-      // hoisted node_modules
-      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
-      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      let index = file.indexOf(NODE_MODULES_PATTERN)
-      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
-        index = file.length - 13
-      }
-      if (index < 0) {
-        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
-      }
-      return generateNewPath(file, dest).replace(`${path.sep}.pnpm`, "")
-    }
-  }
-}
 
 /** @internal */
 export class AsarPackager {
