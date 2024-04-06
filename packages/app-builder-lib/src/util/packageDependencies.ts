@@ -16,6 +16,11 @@ export function createLazyProductionDeps(projectDir: string, excludedDependencie
   })
 }
 
+export interface NodeModuleDirInfo {
+  readonly dir: string
+  readonly deps: Array<NodeModuleInfo>
+}
+
 export interface NodeModuleInfo {
   readonly name: string
   readonly version: string

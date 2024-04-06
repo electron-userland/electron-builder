@@ -205,7 +205,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
     const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(source, info, nodeModuleExcludedExts)
+    const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (info.conflictDependency.length > 0) {
@@ -214,7 +214,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
         const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
         const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(source, dep, nodeModuleExcludedExts), metadata: copier.metadata })
+        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
     }
   }
