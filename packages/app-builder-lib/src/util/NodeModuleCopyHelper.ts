@@ -59,7 +59,6 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       const childNames = await readdir(dirPath)
       childNames.sort()
 
-      const isTopLevel = dirPath === depPath
       const dirs: Array<string> = []
       // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
       const sortedFilePaths = await BluebirdPromise.map(
@@ -81,7 +80,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             }
 
             // noinspection SpellCheckingInspection
-            if (isTopLevel && (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src")))) {
+            if (topLevelExcludedFiles.has(name) || (moduleName === "libui-node" && (name === "build" || name === "docs" || name === "src"))) {
               return null
             }
 

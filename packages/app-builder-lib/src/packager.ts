@@ -131,7 +131,7 @@ export class Packager {
 
     let result = this.nodeDependencyInfo.get(key)
     if (result == null) {
-      result = createLazyProductionDeps(this.appDir, excludedDependencies)
+      result = createLazyProductionDeps(this.appDir, excludedDependencies,platform===null?false:true)
       this.nodeDependencyInfo.set(key, result)
     }
     return result
