@@ -21,8 +21,28 @@ Object {
       "files": Object {
         "foo": Object {
           "files": Object {
+            "node_modules": Object {
+              "files": Object {
+                "ms": Object {
+                  "files": Object {
+                    "index.js": Object {
+                      "offset": "127",
+                      "size": 2764,
+                    },
+                    "license.md": Object {
+                      "offset": "2891",
+                      "size": 1077,
+                    },
+                    "package.json": Object {
+                      "offset": "3968",
+                      "size": 469,
+                    },
+                  },
+                },
+              },
+            },
             "package.json": Object {
-              "offset": "4310",
+              "offset": "0",
               "size": 127,
             },
           },
