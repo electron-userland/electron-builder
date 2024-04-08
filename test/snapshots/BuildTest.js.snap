@@ -1204,6 +1204,22 @@ Object {
             },
           },
         },
+        "node-abi": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": "<size>",
+            },
+            "abi_registry.json": Object {
+              "size": "<size>",
+            },
+            "index.js": Object {
+              "size": "<size>",
+            },
+            "package.json": Object {
+              "size": "<size>",
+            },
+          },
+        },
         "node-addon-api": Object {
           "files": Object {
             "LICENSE.md": Object {
