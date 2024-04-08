@@ -95,51 +95,51 @@ Object {
         "electron-log": Object {
           "files": Object {
             "LICENSE": Object {
-              "offset": "4310",
+              "offset": "0",
               "size": 1082,
             },
             "index.js": Object {
-              "offset": "5392",
+              "offset": "1082",
               "size": 140,
             },
             "lib": Object {
               "files": Object {
                 "format.js": Object {
-                  "offset": "5532",
+                  "offset": "1222",
                   "size": 1021,
                 },
                 "log.js": Object {
-                  "offset": "6553",
+                  "offset": "2243",
                   "size": 877,
                 },
                 "transports": Object {
                   "files": Object {
                     "console.js": Object {
-                      "offset": "7430",
+                      "offset": "3120",
                       "size": 343,
                     },
                     "file": Object {
                       "files": Object {
                         "find-log-path.js": Object {
-                          "offset": "7773",
+                          "offset": "3463",
                           "size": 2078,
                         },
                         "get-app-name.js": Object {
-                          "offset": "9851",
+                          "offset": "5541",
                           "size": 1780,
                         },
                         "index.js": Object {
-                          "offset": "11631",
+                          "offset": "7321",
                           "size": 2068,
                         },
                       },
                     },
                     "log-s.js": Object {
-                      "offset": "13699",
+                      "offset": "9389",
                       "size": 1751,
                     },
                     "renderer-console.js": Object {
-                      "offset": "15450",
+                      "offset": "11140",
                       "size": 544,
                     },
                   },
@@ -147,15 +147,15 @@ Object {
               },
             },
             "main.js": Object {
-              "offset": "15994",
+              "offset": "11684",
               "size": 1343,
             },
             "package.json": Object {
-              "offset": "17337",
+              "offset": "13027",
               "size": 745,
             },
             "renderer.js": Object {
-              "offset": "18082",
+              "offset": "13772",
               "size": 978,
             },
           },
@@ -163,15 +163,15 @@ Object {
         "ms": Object {
           "files": Object {
             "index.js": Object {
-              "offset": "0",
+              "offset": "14750",
               "size": 2764,
             },
             "license.md": Object {
-              "offset": "2764",
+              "offset": "17514",
               "size": 1077,
             },
             "package.json": Object {
-              "offset": "3841",
+              "offset": "18591",
               "size": 469,
             },
           },
