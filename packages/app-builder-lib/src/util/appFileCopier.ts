@@ -221,7 +221,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(path.dirname(platformPackager.info.appDir + path.sep + "node_modules"), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
@@ -230,7 +230,12 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       for (const dep of info.conflictDependency) {
         const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules" + path.sep + dep.name
         const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-        const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+        const matcher = new FileMatcher(
+          path.dirname(platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules"),
+          destination,
+          mainMatcher.macroExpander,
+          mainMatcher.patterns
+        )
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
         result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
