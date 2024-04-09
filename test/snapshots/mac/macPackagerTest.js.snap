@@ -504,7 +504,7 @@ Object {
         "bindings": Object {
           "files": Object {
             "LICENSE.md": Object {
-            "size": "<size>",
+              "size": "<size>",
             },
             "bindings.js": Object {
               "size": "<size>",
