@@ -9,6 +9,12 @@ If `GH_TOKEN` or `GITHUB_TOKEN` is defined — defaults to `[{provider: "github"
 
 If `KEYGEN_TOKEN` is defined and `GH_TOKEN` or `GITHUB_TOKEN` is not — defaults to `[{provider: "keygen"}]`.
 
+If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or `GITHUB_TOKEN`) to publish your release.
+- e.g. mac: ``` export GITHUB_RELEASE_TOKEN=<my token> ```
+- the `GITHUB_TOKEN` will still be used when your app checks for updates, etc.
+- you could make your `GITHUB_TOKEN` "Read-only" when creating a fine-grained personal access token, and "Read and write" for the `GITHUB_RELEASE_TOKEN`.
+- "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
+
 !!! info "Snap store"
     `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
 
