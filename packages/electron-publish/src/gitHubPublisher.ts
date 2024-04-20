@@ -46,8 +46,8 @@ export class GitHubPublisher extends HttpPublisher {
     super(context, true)
 
     let token = info.token
-    if (isEmptyOrSpaces(token)) {
-      token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+    if (isEmptyOrSpaces(token) || process.env.GITHUB_RELEASE_TOKEN) {
+      token = process.env.GITHUB_RELEASE_TOKEN ? process.env.GITHUB_RELEASE_TOKEN : (process.env.GH_TOKEN || process.env.GITHUB_TOKEN)
       if (isEmptyOrSpaces(token)) {
         throw new InvalidConfigurationError(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
       }
