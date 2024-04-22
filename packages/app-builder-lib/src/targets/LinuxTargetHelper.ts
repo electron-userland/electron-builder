@@ -207,4 +207,5 @@ const macToLinuxCategory: any = {
   "public.app-category.utilities": "Utility",
   "public.app-category.social-networking": "Network;Chat",
   "public.app-category.finance": "Office;Finance",
+  "public.app-category.music": "Audio;AudioVideo",
 }
