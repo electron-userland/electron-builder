@@ -2,6 +2,8 @@ The [publish](configuration.md#Configuration-publish) key contains a set of opti
 
 `String | Object | Array<Object | String>` where `Object` it is [Keygen](#keygenoptions), [Generic Server](#genericserveroptions), [GitHub](#githuboptions), [S3](#s3options), [Spaces](#spacesoptions) or [Snap Store](#snapstoreoptions) options. Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](configuration.md#configuration) or any platform- ([mac](mac.md), [linux](linux.md), [win](win.md)) or target- (e.g. [nsis](nsis.md)) specific configuration.
 
+Note that when using a generic server, you have to upload the built application and metadata files yourself.
+
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI and you need to configure what to publish.
 `electron-builder` makes publishing dead simple.
 
@@ -16,7 +18,7 @@ If `GITHUB_RELEASE_TOKEN` is defined, it will be used instead of (`GH_TOKEN` or 
 - "Contents" fine-grained permission was sufficient. (at time of writing - Apr 2024)
 
 !!! info "Snap store"
-    `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`. 
+    `snap` target by default publishes to snap store (the app store for Linux). To force publishing to another providers, explicitly specify publish configuration for `snap`.
 
 You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bitbucket (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
 
@@ -74,19 +76,19 @@ But please consider using automatic rules instead of explicitly specifying `publ
 * If [npm script](https://docs.npmjs.com/misc/scripts) named `release`, — `always`.
 
  Add to `scripts` in the development `package.json`:
- 
+
  ```json
  "release": "electron-builder"
  ```
 
  and if you run `yarn release`, a release will be drafted (if doesn't already exist) and artifacts published.
- 
+
 ### Recommended GitHub Releases Workflow
 
 1. [Draft a new release](https://help.github.com/articles/creating-releases/). Set the "Tag version" to the value of `version` in your application `package.json`, and prefix it with `v`. "Release title" can be anything you want.
- 
+
     For example, if your application `package.json` version is `1.0`, your draft's "Tag version" would be `v1.0`.
-  
+
 2. Push some commits. Every CI build will update the artifacts attached to this draft.
 3. Once you are done, publish the release. GitHub will tag the latest commit for you.
 
@@ -106,12 +108,12 @@ This example workflow is modelled on how releases are handled in maven (it is an
 Detected automatically using:
 
 * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
-* if not set, env 
-    * `TRAVIS_REPO_SLUG` 
-    * or `APPVEYOR_REPO_NAME` 
+* if not set, env
+    * `TRAVIS_REPO_SLUG`
+    * or `APPVEYOR_REPO_NAME`
     * or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
 * if no env, from `.git/config` origin url.
- 
+
 ## Publishers
 **Options Available:**
 - GenericServerOptions
