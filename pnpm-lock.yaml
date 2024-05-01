@@ -279,9 +279,9 @@ importers:
       '@types/debug':
         specifier: ^4.1.6
         version: 4.1.7
-      app-builder-precompiled-bin:
-        specifier: 4.9.6
-        version: 4.9.6
+      app-builder-bin:
+        specifier: v5.0.0-alpha.3
+        version: 5.0.0-alpha.3
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -3570,8 +3570,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  /app-builder-precompiled-bin@4.9.6:
-    resolution: {integrity: sha512-v5HKdFk6vj8bqoMXbCn3NYdwpS1FIj8qNRLQtOLywrOamMC+0Wh0W9KbAvjiuFMbuUIHvtTN8Ixk0pr0N+AbkA==}
+  /app-builder-bin@5.0.0-alpha.3:
+    resolution: {integrity: sha512-bWTAF50v4ZAVLq6EPZYhaLsFSJLfZz5s9MIeP5k1RkkBsibyJV/Dv6NxfaDO0I++iBmcLKsuzB5E8b1qaeXqew==}
     dev: false
 
   /aproba@2.0.0:
