@@ -6418,6 +6418,20 @@
       ],
       "description": "The function (or path to file or module id) to be [run after all artifacts are build](#afterAllArtifactBuild)."
     },
+    "afterExtract": {
+      "anyOf": [
+        {
+          "typeof": "function"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      ],
+      "description": "The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)"
+    },
     "afterPack": {
       "anyOf": [
         {
