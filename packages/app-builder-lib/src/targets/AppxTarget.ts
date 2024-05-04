@@ -200,13 +200,29 @@ export default class AppXTarget extends Target {
 
         case "applicationId": {
           const result = options.applicationId || options.identityName || appInfo.name
-          if (!isNaN(parseInt(result[0], 10))) {
-            let message = `AppX Application.Id can’t start with numbers: "${result}"`
-            if (options.applicationId == null) {
-              message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
-            }
+          if (result.length < 3 || result.length > 50) {
+            let message = `Appx Application.Id with a value between 3 and 50 characters in length`
             throw new InvalidConfigurationError(message)
           }
+          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/;
+          else if (!validCharactersRegex.test(result)) {
+            let message = `AppX Application.Id cat be consists of alpha-numeric, period, and dash characters"`
+            throw new InvalidConfigurationError(message)
+          }
+          const restrictedValues = [
+                  'CON', 'PRN', 'AUX', 'NUL',
+                  'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+                  'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+          ];
+          else if (restrictedValues.includes(result.toUpperCase())) {
+            let message = `AppX Application.Id cannot be some values`
+            throw new InvalidConfigurationError(message)
+          }
+          else if (options.applicationId == null) {
+            let message = `Please set appx.applicationId (or correct appx.identityName or name)`
+            throw new InvalidConfigurationError(message)
+          }
+          
           return result
         }
 
