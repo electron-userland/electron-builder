@@ -20,6 +20,31 @@ const vendorAssetsForDefaultAssets: { [key: string]: string } = {
   "Wide310x150Logo.png": "SampleAppx.310x150.png",
 }
 
+const restrictedApplicationIdValues = [
+  "CON",
+  "PRN",
+  "AUX",
+  "NUL",
+  "COM1",
+  "COM2",
+  "COM3",
+  "COM4",
+  "COM5",
+  "COM6",
+  "COM7",
+  "COM8",
+  "COM9",
+  "LPT1",
+  "LPT2",
+  "LPT3",
+  "LPT4",
+  "LPT5",
+  "LPT6",
+  "LPT7",
+  "LPT8",
+  "LPT9",
+]
+
 const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
@@ -200,29 +225,21 @@ export default class AppXTarget extends Target {
 
         case "applicationId": {
           const result = options.applicationId || options.identityName || appInfo.name
+          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
           if (result.length < 3 || result.length > 50) {
-            let message = `Appx Application.Id with a value between 3 and 50 characters in length`
+            const message = `Appx Application.Id with a value between 3 and 50 characters in length`
+            throw new InvalidConfigurationError(message)
+          } else if (!validCharactersRegex.test(result)) {
+            const message = `AppX Application.Id cat be consists of alpha-numeric, period, and dash characters"`
+            throw new InvalidConfigurationError(message)
+          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
+            const message = `AppX Application.Id cannot be some values`
+            throw new InvalidConfigurationError(message)
+          } else if (options.applicationId == null) {
+            const message = `Please set appx.applicationId (or correct appx.identityName or name)`
             throw new InvalidConfigurationError(message)
           }
-          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/;
-          else if (!validCharactersRegex.test(result)) {
-            let message = `AppX Application.Id cat be consists of alpha-numeric, period, and dash characters"`
-            throw new InvalidConfigurationError(message)
-          }
-          const restrictedValues = [
-                  'CON', 'PRN', 'AUX', 'NUL',
-                  'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
-                  'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
-          ];
-          else if (restrictedValues.includes(result.toUpperCase())) {
-            let message = `AppX Application.Id cannot be some values`
-            throw new InvalidConfigurationError(message)
-          }
-          else if (options.applicationId == null) {
-            let message = `Please set appx.applicationId (or correct appx.identityName or name)`
-            throw new InvalidConfigurationError(message)
-          }
-          
+
           return result
         }
 
