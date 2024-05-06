@@ -63,7 +63,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     }
 
     const cscLink = this.getCscLink("WIN_CSC_LINK")
-    if (cscLink == null || cscLink === '') {
+    if (cscLink == null || cscLink === "") {
       return Promise.resolve(null)
     }
 
