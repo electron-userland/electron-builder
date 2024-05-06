@@ -1,5 +1,11 @@
 # electron-publish
 
+## 25.0.0-alpha.7
+
+### Minor Changes
+
+- [#8173](https://github.com/electron-userland/electron-builder/pull/8173) [`3ae3589a`](https://github.com/electron-userland/electron-builder/commit/3ae3589a63c2d915b8456d9dc81a965a1366c73b) Thanks [@AndrewEQ](https://github.com/AndrewEQ)! - feat: Support for a separate Github publish token to the auto-update token
+
 ## 25.0.0-alpha.6
 
 ### Patch Changes
