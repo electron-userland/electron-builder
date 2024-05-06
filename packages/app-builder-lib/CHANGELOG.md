@@ -1,5 +1,18 @@
 # app-builder-lib
 
+## 25.0.0-alpha.7
+
+### Patch Changes
+
+- [#8182](https://github.com/electron-userland/electron-builder/pull/8182) [`b43490a2`](https://github.com/electron-userland/electron-builder/commit/b43490a274722aba398594bcf0156d1b3687e0d2) Thanks [@duzda](https://github.com/duzda)! - feat(linux): add music mac to linux category
+
+- [#8185](https://github.com/electron-userland/electron-builder/pull/8185) [`5e41c5e8`](https://github.com/electron-userland/electron-builder/commit/5e41c5e8e440f7c6d139fc0e311efa46bc2846c3) Thanks [@mifi](https://github.com/mifi)! - fix: Treat cscLink empty string same as null
+
+- Updated dependencies [[`3ae3589a`](https://github.com/electron-userland/electron-builder/commit/3ae3589a63c2d915b8456d9dc81a965a1366c73b)]:
+  - electron-publish@25.0.0-alpha.7
+  - dmg-builder@25.0.0-alpha.7
+  - electron-builder-squirrel-windows@25.0.0-alpha.7
+
 ## 25.0.0-alpha.6
 
 ### Minor Changes

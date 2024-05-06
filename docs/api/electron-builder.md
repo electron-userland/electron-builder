@@ -2241,7 +2241,7 @@ password: certificatePassword == null ? null : certificatePassword.trim(),
 })
 }</p>
 <p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
-if (cscLink == null) {
+if (cscLink == null || cscLink === “”) {
 return Promise.resolve(null)
 }</p>
 <p>return (
@@ -2285,7 +2285,7 @@ password: certificatePassword == null ? null : certificatePassword.trim(),
 })
 }</p>
 <p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
-if (cscLink == null) {
+if (cscLink == null || cscLink === “”) {
 return Promise.resolve(null)
 }</p>
 <p>return (
