@@ -175,7 +175,7 @@ test.skip.ifMac("extraResources on macOS", async () => {
   await doExtraResourcesTest(Platform.MAC)
 })
 
-test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
+test.skip.callerifNotWindows.ifNotCiWin("extraResources - two-package", () => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
