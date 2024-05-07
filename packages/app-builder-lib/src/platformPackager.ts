@@ -245,6 +245,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       version: framework.version,
     })
 
+    const afterExtract = await resolveFunction(this.appInfo.type, this.config.afterExtract, "afterExtract")
+    if (afterExtract != null) {
+      await afterExtract({
+        appOutDir,
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: platformName,
+      })
+    }
+
     const excludePatterns: Array<Minimatch> = []
 
     const computeParsedPatterns = (patterns: Array<FileMatcher> | null) => {
