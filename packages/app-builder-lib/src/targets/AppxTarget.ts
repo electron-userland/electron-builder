@@ -235,7 +235,7 @@ export default class AppXTarget extends Target {
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
             const message = `AppX Application.Id cannot be some values`
             throw new InvalidConfigurationError(message)
-          } else if (options.applicationId == null) {
+          } else if (result == null && options.applicationId == null) {
             const message = `Please set appx.applicationId (or correct appx.identityName or name)`
             throw new InvalidConfigurationError(message)
           }
