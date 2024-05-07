@@ -1,5 +1,17 @@
 # builder-util
 
+## 25.0.0-alpha.6
+
+### Patch Changes
+
+- [#8152](https://github.com/electron-userland/electron-builder/pull/8152) [`a999da48`](https://github.com/electron-userland/electron-builder/commit/a999da48480b5024d97c3028a655bb33b00fc3bc) Thanks [@beyondkmp](https://github.com/beyondkmp)! - should not chmod for 7za when process.env.USE_SYSTEM_7ZA is true
+
+## 25.0.0-alpha.4
+
+### Patch Changes
+
+- [#8135](https://github.com/electron-userland/electron-builder/pull/8135) [`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: unstable hdiutil retry mechanism
+
 ## 25.0.0-alpha.3
 
 ### Patch Changes

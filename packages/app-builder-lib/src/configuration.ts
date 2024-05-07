@@ -133,7 +133,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly npmRebuild?: boolean
   /**
    * Use `legacy` app-builder binary for installing native dependencies, or `@electron/rebuild` in `sequential` or `parallel` compilation modes.
-   * @default legacy
+   * @default sequential
    */
   readonly nativeRebuilder?: "legacy" | "sequential" | "parallel" | null
 

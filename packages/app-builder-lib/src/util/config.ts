@@ -217,7 +217,7 @@ function getDefaultConfig(): Configuration {
 
 const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
 
-export async function validateConfig(config: Configuration, debugLogger: DebugLogger) {
+export async function validateConfiguration(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata
   if (extraMetadata != null) {
     if (extraMetadata.build != null) {

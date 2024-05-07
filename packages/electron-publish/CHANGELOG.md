@@ -1,5 +1,27 @@
 # electron-publish
 
+## 25.0.0-alpha.7
+
+### Minor Changes
+
+- [#8173](https://github.com/electron-userland/electron-builder/pull/8173) [`3ae3589a`](https://github.com/electron-userland/electron-builder/commit/3ae3589a63c2d915b8456d9dc81a965a1366c73b) Thanks [@AndrewEQ](https://github.com/AndrewEQ)! - feat: Support for a separate Github publish token to the auto-update token
+
+## 25.0.0-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [[`a999da48`](https://github.com/electron-userland/electron-builder/commit/a999da48480b5024d97c3028a655bb33b00fc3bc)]:
+  - builder-util@25.0.0-alpha.6
+
+## 25.0.0-alpha.4
+
+### Patch Changes
+
+- [#8135](https://github.com/electron-userland/electron-builder/pull/8135) [`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: unstable hdiutil retry mechanism
+
+- Updated dependencies [[`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88)]:
+  - builder-util@25.0.0-alpha.4
+
 ## 25.0.0-alpha.3
 
 ### Patch Changes

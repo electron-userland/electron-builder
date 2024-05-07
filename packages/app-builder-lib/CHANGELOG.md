@@ -1,5 +1,63 @@
 # app-builder-lib
 
+## 25.0.0-alpha.7
+
+### Patch Changes
+
+- [#8182](https://github.com/electron-userland/electron-builder/pull/8182) [`b43490a2`](https://github.com/electron-userland/electron-builder/commit/b43490a274722aba398594bcf0156d1b3687e0d2) Thanks [@duzda](https://github.com/duzda)! - feat(linux): add music mac to linux category
+
+- [#8185](https://github.com/electron-userland/electron-builder/pull/8185) [`5e41c5e8`](https://github.com/electron-userland/electron-builder/commit/5e41c5e8e440f7c6d139fc0e311efa46bc2846c3) Thanks [@mifi](https://github.com/mifi)! - fix: Treat cscLink empty string same as null
+
+- Updated dependencies [[`3ae3589a`](https://github.com/electron-userland/electron-builder/commit/3ae3589a63c2d915b8456d9dc81a965a1366c73b)]:
+  - electron-publish@25.0.0-alpha.7
+  - dmg-builder@25.0.0-alpha.7
+  - electron-builder-squirrel-windows@25.0.0-alpha.7
+
+## 25.0.0-alpha.6
+
+### Minor Changes
+
+- [#8150](https://github.com/electron-userland/electron-builder/pull/8150) [`f4e6ae29`](https://github.com/electron-userland/electron-builder/commit/f4e6ae2931cbf79670b5f2c252a91bed03d96546) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add functionality to just publish artifacts
+
+- [#8159](https://github.com/electron-userland/electron-builder/pull/8159) [`15bffa00`](https://github.com/electron-userland/electron-builder/commit/15bffa00d429d9f333b737712fb3a13f5d26ea53) Thanks [@rotu](https://github.com/rotu)! - Use `APPLE_TEAM_ID` env var when using notarizing with `APPLE_ID`.
+  Deprecate legacy (`altool`) notarization API.
+
+- [#8142](https://github.com/electron-userland/electron-builder/pull/8142) [`8160363a`](https://github.com/electron-userland/electron-builder/commit/8160363ac2821242ab22e225a9038b56e4798cc6) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: add config options for setting `MinVersion` and `MaxVersionTested` fields in appx manifest
+
+- [#8153](https://github.com/electron-userland/electron-builder/pull/8153) [`8e36be11`](https://github.com/electron-userland/electron-builder/commit/8e36be113489c1afa6ce5ee6cdda73049bc619a6) Thanks [@mmaietta](https://github.com/mmaietta)! - feat: export Packager sub-classes from main electron-builder types
+
+### Patch Changes
+
+- Updated dependencies [[`a999da48`](https://github.com/electron-userland/electron-builder/commit/a999da48480b5024d97c3028a655bb33b00fc3bc), [`8e36be11`](https://github.com/electron-userland/electron-builder/commit/8e36be113489c1afa6ce5ee6cdda73049bc619a6)]:
+  - builder-util@25.0.0-alpha.6
+  - dmg-builder@25.0.0-alpha.6
+  - electron-builder-squirrel-windows@25.0.0-alpha.6
+  - electron-publish@25.0.0-alpha.6
+
+## 25.0.0-alpha.5
+
+### Patch Changes
+
+- [#8140](https://github.com/electron-userland/electron-builder/pull/8140) [`99a6150e`](https://github.com/electron-userland/electron-builder/commit/99a6150ea02c91a7e7e657c667328eb734e29b8f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: update autoupdate docs to describe module-based support. set nativeRebuilder default value to use electron/rebuild
+
+- Updated dependencies []:
+  - dmg-builder@25.0.0-alpha.5
+  - electron-builder-squirrel-windows@25.0.0-alpha.5
+
+## 25.0.0-alpha.4
+
+### Patch Changes
+
+- [#8135](https://github.com/electron-userland/electron-builder/pull/8135) [`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: unstable hdiutil retry mechanism
+
+- [#8133](https://github.com/electron-userland/electron-builder/pull/8133) [`44b04463`](https://github.com/electron-userland/electron-builder/commit/44b04463bf581b4c013586c9010733b518a802a4) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix: replace SYSTEMROOT with $SYSDIR
+
+- Updated dependencies [[`c2392de7`](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88)]:
+  - builder-util@25.0.0-alpha.4
+  - dmg-builder@25.0.0-alpha.4
+  - electron-builder-squirrel-windows@25.0.0-alpha.4
+  - electron-publish@25.0.0-alpha.4
+
 ## 25.0.0-alpha.3
 
 ### Patch Changes

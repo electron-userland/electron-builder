@@ -6,7 +6,7 @@ import { AfterPackContext } from "../configuration"
 import { Platform } from "../core"
 import { Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { LinuxPackager } from "../linuxPackager"
-import MacPackager from "../macPackager"
+import { MacPackager } from "../macPackager"
 import { executeAppBuilderAndWriteJson } from "../util/appBuilder"
 
 export class LibUiFramework implements Framework {

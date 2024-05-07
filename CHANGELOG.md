@@ -1,3 +1,64 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.6...v) (2024-05-06)
+
+
+### Bug Fixes
+
+* **appx:** Update `identityName` validation for windows 10 ([#8203](https://github.com/electron-userland/electron-builder/issues/8203)) ([66d6d6c](https://github.com/electron-userland/electron-builder/commit/66d6d6c73776b8a62ec30d569bf68c0f1eb83ce2))
+* disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related ([ac6d887](https://github.com/electron-userland/electron-builder/commit/ac6d8875463cba89c02a35baf347a1c2f76697e9))
+* disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related ([01a9c08](https://github.com/electron-userland/electron-builder/commit/01a9c08f2ddbd8d1b96c58089771a93fd695c753))
+* disable broken test, needs further debugging. It's broken on all previous versions of electron-builder, seems MacOS related ([dbd1fc5](https://github.com/electron-userland/electron-builder/commit/dbd1fc5510dca1da90a199fb34407573e464dba3))
+* **docs/multi-platform-build.md:** broken link of build.sh ([#8193](https://github.com/electron-userland/electron-builder/issues/8193)) ([3a2ccdd](https://github.com/electron-userland/electron-builder/commit/3a2ccdd9483afa3134198b3ef56ba6163b2aaec9))
+* treat cscLink empty string same as absent ([#8185](https://github.com/electron-userland/electron-builder/issues/8185)) ([5e41c5e](https://github.com/electron-userland/electron-builder/commit/5e41c5e8e440f7c6d139fc0e311efa46bc2846c3))
+
+
+### Features
+
+* Add Support for a separate Github release token to the auto-update token ([#8173](https://github.com/electron-userland/electron-builder/issues/8173)) ([3ae3589](https://github.com/electron-userland/electron-builder/commit/3ae3589a63c2d915b8456d9dc81a965a1366c73b))
+* **linux:** add music mac to linux category ([#8182](https://github.com/electron-userland/electron-builder/issues/8182)) ([b43490a](https://github.com/electron-userland/electron-builder/commit/b43490a274722aba398594bcf0156d1b3687e0d2))
+
+
+### Reverts
+
+* Revert "fix(appx): Update `identityName` validation for windows 10 (#8203)" (#8205) ([48e6b14](https://github.com/electron-userland/electron-builder/commit/48e6b14b767817f20af47df568423765cc5421d0)), closes [#8203](https://github.com/electron-userland/electron-builder/issues/8203) [#8205](https://github.com/electron-userland/electron-builder/issues/8205)
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.5...v) (2024-04-03)
+
+
+### Bug Fixes
+
+* do not chmod for 7za when `process.env.USE_SYSTEM_7ZA` is true ([#8152](https://github.com/electron-userland/electron-builder/issues/8152)) ([a999da4](https://github.com/electron-userland/electron-builder/commit/a999da48480b5024d97c3028a655bb33b00fc3bc))
+
+
+### Features
+
+* Add CLI and API for only publishing assets (skipping `build` flow) ([#8150](https://github.com/electron-userland/electron-builder/issues/8150)) ([f4e6ae2](https://github.com/electron-userland/electron-builder/commit/f4e6ae2931cbf79670b5f2c252a91bed03d96546))
+* add config options for setting `MinVersion` and `MaxVersionTested` fields in appx manifest ([#8142](https://github.com/electron-userland/electron-builder/issues/8142)) ([8160363](https://github.com/electron-userland/electron-builder/commit/8160363ac2821242ab22e225a9038b56e4798cc6))
+* export Packager sub-classes from main electron-builder types ([#8153](https://github.com/electron-userland/electron-builder/issues/8153)) ([8e36be1](https://github.com/electron-userland/electron-builder/commit/8e36be113489c1afa6ce5ee6cdda73049bc619a6))
+* Make notarization with Apple ID more usable (`altool` is no longer supported) ([#8159](https://github.com/electron-userland/electron-builder/issues/8159)) ([15bffa0](https://github.com/electron-userland/electron-builder/commit/15bffa00d429d9f333b737712fb3a13f5d26ea53))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.4...v) (2024-03-18)
+
+
+### Bug Fixes
+
+* update autoupdate docs to describe module-based support. set `nativeRebuilder` default value to use electron/rebuild ([#8140](https://github.com/electron-userland/electron-builder/issues/8140)) ([99a6150](https://github.com/electron-userland/electron-builder/commit/99a6150ea02c91a7e7e657c667328eb734e29b8f))
+
+
+
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.3...v) (2024-03-15)
+
+
+### Bug Fixes
+
+* attempting to wrap all `hdiutil`'s in a common retry mechanism for CI stability ([#8135](https://github.com/electron-userland/electron-builder/issues/8135)) ([c2392de](https://github.com/electron-userland/electron-builder/commit/c2392de71a8f7abc092a00452eac63dd24b34e88))
+* **nsis:** replace `SYSTEMROOT` with `SYSDIR` ([#8133](https://github.com/electron-userland/electron-builder/issues/8133)) ([44b0446](https://github.com/electron-userland/electron-builder/commit/44b04463bf581b4c013586c9010733b518a802a4))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.2...v) (2024-03-12)
 
 

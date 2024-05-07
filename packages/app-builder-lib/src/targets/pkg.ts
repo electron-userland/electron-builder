@@ -8,7 +8,7 @@ import * as path from "path"
 import { filterCFBundleIdentifier } from "../appInfo"
 import { findIdentity, Identity } from "../codeSign/macCodeSign"
 import { Target } from "../core"
-import MacPackager from "../macPackager"
+import { MacPackager } from "../macPackager"
 import { readdirSync } from "fs"
 
 const certType = "Developer ID Installer"

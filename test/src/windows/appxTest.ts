@@ -65,6 +65,8 @@ it(
       cscKeyPassword: "test",
       appx: {
         languages: ["de-DE", "ru-RU"],
+        minVersion: "10.0.16299.0",
+        maxVersionTested: "10.0.16299.0",
       },
     },
   })
