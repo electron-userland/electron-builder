@@ -2,7 +2,7 @@ import { TargetSpecificOptions } from "../core"
 
 export interface AppXOptions extends TargetSpecificOptions {
   /**
-   * The application id. Defaults to `identityName`. Can’t start with numbers.
+   * The application id. Defaults to `identityName`.
    */
   readonly applicationId?: string
 

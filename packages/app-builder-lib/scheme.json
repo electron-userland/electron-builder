@@ -153,7 +153,7 @@
           "type": "boolean"
         },
         "applicationId": {
-          "description": "The application id. Defaults to `identityName`. Can’t start with numbers.",
+          "description": "The application id. Defaults to `identityName`.",
           "type": "string"
         },
         "artifactName": {
