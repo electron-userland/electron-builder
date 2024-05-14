@@ -996,19 +996,6 @@ Object {
             },
           },
         },
-        "lru-cache": Object {
-          "files": Object {
-            "LICENSE": Object {
-              "size": "<size>",
-            },
-            "index.js": Object {
-              "size": "<size>",
-            },
-            "package.json": Object {
-              "size": "<size>",
-            },
-          },
-        },
         "lzma-native": Object {
           "files": Object {
             "LICENSE": Object {
@@ -1617,6 +1604,9 @@ Object {
                   "size": "<size>",
                 },
                 "identifiers.js": Object {
+                  "size": "<size>",
+                },
+                "lrucache.js": Object {
                   "size": "<size>",
                 },
                 "parse-options.js": Object {
@@ -5063,22 +5053,6 @@ Object {
               "size": "<size>",
             },
             "wrappy.js": Object {
-              "size": "<size>",
-            },
-          },
-        },
-        "yallist": Object {
-          "files": Object {
-            "LICENSE": Object {
-              "size": "<size>",
-            },
-            "iterator.js": Object {
-              "size": "<size>",
-            },
-            "package.json": Object {
-              "size": "<size>",
-            },
-            "yallist.js": Object {
               "size": "<size>",
             },
           },
