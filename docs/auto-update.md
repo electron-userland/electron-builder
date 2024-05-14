@@ -44,16 +44,16 @@ The `electron-updater` package offers a different functionality compared to Elec
 
 4. Use `autoUpdater` from `electron-updater` instead of `electron`:
 
-    JavaScript
+    CommonJS
     ```js
     const { autoUpdater } = require("electron-updater")
     ```
-    ES2015
+    ESM
     ```js
     import { autoUpdater } from "electron-updater"
     ```
-    ESM
-    ```ts
+    TypeScript
+    ```typescript
     import electronUpdater, { type AppUpdater } from 'electron-updater';
 
     export function getAutoUpdater(): AppUpdater {
