@@ -226,11 +226,17 @@ export default class AppXTarget extends Target {
         case "applicationId": {
           const result = options.applicationId || options.identityName || appInfo.name
           const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
-          if (result.length < 3 || result.length > 50) {
-            const message = `Appx Application.Id with a value between 3 and 50 characters in length`
+		  const identitynumber = parseInt(result, 10)
+          if (!isNaN(identitynumber)) {
+            log.warn(`Remove the ${identitynumber}`)
+            result = result.replace(identitynumber,'')
+          }
+
+          if (result.length < 1 || result.length > 64) {
+            const message = `Appx Application.Id with a value between 1 and 64 characters in length`
             throw new InvalidConfigurationError(message)
           } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX Application.Id cat be consists of alpha-numeric, period, and dash characters"`
+            const message = `AppX Application.Id cat be consists of alpha-numeric and period"`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
             const message = `AppX Application.Id cannot be some values`
@@ -243,8 +249,25 @@ export default class AppXTarget extends Target {
           return result
         }
 
-        case "identityName":
-          return options.identityName || appInfo.name
+        case "identityName": {
+		  const result = options.identityName || appInfo.name
+          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
+          if (result.length < 3 || result.length > 50) {
+            const message = `Appx identityName.Id with a value between 3 and 50 characters in length`
+            throw new InvalidConfigurationError(message)
+          } else if (!validCharactersRegex.test(result)) {
+            const message = `AppX identityName.Id cat be consists of alpha-numeric, period, and dash characters"`
+            throw new InvalidConfigurationError(message)
+          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
+            const message = `AppX identityName.Id cannot be some values`
+            throw new InvalidConfigurationError(message)
+          } else if (result == null && options.identityName == null) {
+            const message = `Please set appx.identityName or name`
+            throw new InvalidConfigurationError(message)
+          }
+
+          return result
+        }
 
         case "executable":
           return executable

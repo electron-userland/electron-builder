@@ -2,7 +2,7 @@ import { TargetSpecificOptions } from "../core"
 
 export interface AppXOptions extends TargetSpecificOptions {
   /**
-   * The application id. Defaults to `identityName`.
+   * The application id. Defaults to `identityName` This string contains alpha-numeric fields separated by periods. Each field must begin with an ASCII alphabetic character.
    */
   readonly applicationId?: string
 
