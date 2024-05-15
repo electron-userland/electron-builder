@@ -225,8 +225,8 @@ export default class AppXTarget extends Target {
 
         case "applicationId": {
           const result = options.applicationId || options.identityName || appInfo.name
-          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
-		  const identitynumber = parseInt(result, 10)
+          const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
+          const identitynumber = parseInt(result, 10)
           if (!isNaN(identitynumber)) {
             log.warn(`Remove the ${identitynumber}`)
             result = result.replace(identitynumber,'')
