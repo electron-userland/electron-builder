@@ -69,7 +69,7 @@
     "js-yaml": "^4.1.0",
     "lazy-val": "^1.0.5",
     "minimatch": "^5.1.1",
-    "read-config-file": "6.3.2",
+    "read-config-file": "6.4.0",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
