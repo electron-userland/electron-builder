@@ -221,6 +221,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly beforePack?: ((context: BeforePackContext) => Promise<any> | any) | string | null
 
   /**
+   * The function (or path to file or module id) to be [run after the prebuilt Electron binary has been extracted to the output directory](#afterextract)
+   */
+  readonly afterExtract?: ((context: AfterExtractContext) => Promise<any> | any) | string | null
+
+  /**
    * The function (or path to file or module id) to be [run after pack](#afterpack) (but before pack into distributable format and sign).
    */
   readonly afterPack?: ((context: AfterPackContext) => Promise<any> | any) | string | null
@@ -297,6 +302,7 @@ interface PackContext {
 }
 export type AfterPackContext = PackContext
 export type BeforePackContext = PackContext
+export type AfterExtractContext = PackContext
 
 export interface MetadataDirectories {
   /**
