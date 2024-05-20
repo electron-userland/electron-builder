@@ -213,6 +213,14 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly x64ArchFiles?: string | null
 
   /**
+   * Array of strings specifying additional arguments to pass to the `codesign` command used to sign a specific file.
+   *
+   * Some subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file.
+   * Usage Example: `['--deep']`
+   */
+  readonly additionalArguments?: Array<string> | null
+
+  /**
    * Options to use for @electron/notarize (ref: https://github.com/electron/notarize).
    * Use `false` to explicitly disable
    *
