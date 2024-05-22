@@ -147,6 +147,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li><code id="Configuration-launchUiVersion">launchUiVersion</code> Boolean | String | “undefined” - <em>libui-based frameworks only</em> The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.</li>
 <li><code id="Configuration-framework">framework</code> String | “undefined” - The framework name. One of <code>electron</code>, <code>proton</code>, <code>libui</code>. Defaults to <code>electron</code>.</li>
 <li><code id="Configuration-beforePack">beforePack</code> module:app-builder-lib/out/configuration.__type | String | “undefined” - The function (or path to file or module id) to be <a href="#beforepack">run before pack</a></li>
+<li><code id="Configuration-afterExtract">afterExtract</code> module:app-builder-lib/out/configuration.__type | String | “undefined” - The function (or path to file or module id) to be <a href="#afterextract">run after the prebuilt Electron binary has been extracted to the output directory</a></li>
 </ul>
 <hr>
 <ul>

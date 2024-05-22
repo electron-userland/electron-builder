@@ -378,6 +378,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         hardenedRuntime: hardenedRuntime ?? undefined,
         timestamp: customSignOptions.timestamp || undefined,
         requirements: requirements || undefined,
+        additionalArguments: customSignOptions.additionalArguments || [],
       }
       log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
       return args

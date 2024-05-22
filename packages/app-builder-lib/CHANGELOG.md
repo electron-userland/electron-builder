@@ -1,5 +1,21 @@
 # app-builder-lib
 
+## 25.0.0-alpha.8
+
+### Minor Changes
+
+- [#8218](https://github.com/electron-userland/electron-builder/pull/8218) [`22737b2b`](https://github.com/electron-userland/electron-builder/commit/22737b2b2db5a10785b1ed3fd05fd9d237fcd731) Thanks [@PBK-B](https://github.com/PBK-B)! - feat(mac): support macos signature `additionalArguments` parameter
+
+- [#8194](https://github.com/electron-userland/electron-builder/pull/8194) [`588c5db4`](https://github.com/electron-userland/electron-builder/commit/588c5db47c97e06b540bdc7f7a6de9a936a7603b) Thanks [@rafaberaldo](https://github.com/rafaberaldo)! - feat: add `afterExtract` hook to build process with the same payload interface as `beforePack` and `afterPack`
+
+### Patch Changes
+
+- [#8216](https://github.com/electron-userland/electron-builder/pull/8216) [`08852365`](https://github.com/electron-userland/electron-builder/commit/088523652934b87419c15c068459627dcf9a0535) Thanks [@mmaietta](https://github.com/mmaietta)! - chore: update read-config-file dependency
+
+- Updated dependencies []:
+  - dmg-builder@25.0.0-alpha.8
+  - electron-builder-squirrel-windows@25.0.0-alpha.8
+
 ## 25.0.0-alpha.7
 
 ### Patch Changes
