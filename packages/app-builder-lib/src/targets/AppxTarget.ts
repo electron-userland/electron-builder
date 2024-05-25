@@ -224,13 +224,13 @@ export default class AppXTarget extends Target {
           return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
 
         case "applicationId": {
-          const result = options.applicationId || options.identityName || appInfo.name
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
-          const identitynumber = parseInt(result, 10)
-          if (!isNaN(identitynumber)) {
+          const identitynumber =  parseInt(options.identityName as string, 10) || NaN
+          const result = (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) ? options.identityName.replace(identitynumber.toString(),'') : options.applicationId || options.identityName || appInfo.name
+
+          if (!isNaN(identitynumber) ) {
             log.warn(`Remove the ${identitynumber}`)
-            result = result.replace(identitynumber,'')
-          }
+          }			
 
           if (result.length < 1 || result.length > 64) {
             const message = `Appx Application.Id with a value between 1 and 64 characters in length`
