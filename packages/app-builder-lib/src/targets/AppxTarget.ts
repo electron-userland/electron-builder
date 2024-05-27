@@ -225,10 +225,18 @@ export default class AppXTarget extends Target {
 
         case "applicationId": {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
-          const identitynumber =  parseInt(options.identityName as string, 10) || NaN
-          const result = isNaN(identitynumber) ? options.applicationId || (options.identityName !== null && options.identityName !== undefined) || appInfo.name: options.identityName.replace(identitynumber.toString(), '')
-          if (!isNaN(identitynumber) ) {
-            log.warn(`Remove the ${identitynumber}`)
+          const identitynumber = parseInt(options.identityName as string, 10) || NaN
+		  let result
+          if (!isNaN(identitynumber)) {
+            if (options.identityName[0] === "0") {
+              log.warn(`Remove the 0${identitynumber}`)
+              result = options.identityName.replace("0"+identitynumber.toString(), "")
+            } else {
+              log.warn(`Remove the ${identitynumber}`)
+              result = options.identityName.replace(identitynumber.toString(), "")
+            }
+          } else {
+            result = options.applicationId || (options.identityName !== null && options.identityName !== undefined) || appInfo.name
           }
 
           if (result.length < 1 || result.length > 64) {
