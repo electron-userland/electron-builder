@@ -235,10 +235,10 @@ export default class AppXTarget extends Target {
             const message = `Appx Application.Id with a value between 1 and 64 characters in length`
             throw new InvalidConfigurationError(message)
           } else if (!validCharactersRegex.test(result)) {
-            const message = `AppX Application.Id cat be consists of alpha-numeric and period"`
+            const message = `AppX Application.Id can not be consists of alpha-numeric and period"`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX Application.Id cannot be some values`
+            const message = `AppX Application.Id can not be some values`
             throw new InvalidConfigurationError(message)
           } else if (result == null && options.applicationId == null) {
             const message = `Please set appx.applicationId (or correct appx.identityName or name)`
@@ -258,7 +258,7 @@ export default class AppXTarget extends Target {
             const message = `AppX identityName.Id cat be consists of alpha-numeric, period, and dash characters"`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX identityName.Id cannot be some values`
+            const message = `AppX identityName.Id can not be some values`
             throw new InvalidConfigurationError(message)
           } else if (result == null && options.identityName == null) {
             const message = `Please set appx.identityName or name`
