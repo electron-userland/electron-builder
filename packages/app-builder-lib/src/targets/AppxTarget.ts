@@ -226,11 +226,10 @@ export default class AppXTarget extends Target {
         case "applicationId": {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
           const identitynumber =  parseInt(options.identityName as string, 10) || NaN
-          const result = (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) ? options.identityName.replace(identitynumber.toString(),'') : options.applicationId || options.identityName || appInfo.name
-
+          const result = isNaN(identitynumber) ? options.applicationId || (options.identityName !== null && options.identityName !== undefined) || appInfo.name: options.identityName.replace(identitynumber.toString(), '')
           if (!isNaN(identitynumber) ) {
             log.warn(`Remove the ${identitynumber}`)
-          }			
+          }
 
           if (result.length < 1 || result.length > 64) {
             const message = `Appx Application.Id with a value between 1 and 64 characters in length`
@@ -250,7 +249,7 @@ export default class AppXTarget extends Target {
         }
 
         case "identityName": {
-		  const result = options.identityName || appInfo.name
+          const result = options.identityName || appInfo.name
           const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
           if (result.length < 3 || result.length > 50) {
             const message = `Appx identityName.Id with a value between 3 and 50 characters in length`
