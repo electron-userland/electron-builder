@@ -49,6 +49,8 @@ it.ifDevOrWinCi(
     {
       targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
       config: {
+        cscLink: protectedCscLink,
+        cscKeyPassword: "test",
         appx: {
           identityName: "01234Test.ApplicationDataSample",
         },
