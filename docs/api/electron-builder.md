@@ -3397,7 +3397,7 @@ return await getCertInfo(cscFile, cscInfo.password || “”)
 <p><code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.</p>
 </li>
 <li>
-<p><strong><code id="AppUpdater-channel">channel</code></strong> String | “undefined” - Get the update channel. Not applicable for GitHub. Doesn’t return <code>channel</code> from the update configuration, only if was previously set.</p>
+<p><strong><code id="AppUpdater-channel">channel</code></strong> String | “undefined” - Get the update channel. Doesn’t return <code>channel</code> from the update configuration, only if was previously set.</p>
 </li>
 <li>
 <p><strong><code id="AppUpdater-requestHeaders">requestHeaders</code></strong> [key: string]: string | “undefined” - The request headers.</p>

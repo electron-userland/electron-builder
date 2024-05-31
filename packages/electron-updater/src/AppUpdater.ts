@@ -123,14 +123,14 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   protected downloadedUpdateHelper: DownloadedUpdateHelper | null = null
 
   /**
-   * Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
+   * Get the update channel. Doesn't return `channel` from the update configuration, only if was previously set.
    */
   get channel(): string | null {
     return this._channel
   }
 
   /**
-   * Set the update channel. Not applicable for GitHub. Overrides `channel` in the update configuration.
+   * Set the update channel. Overrides `channel` in the update configuration.
    *
    * `allowDowngrade` will be automatically set to `true`. If this behavior is not suitable for you, simple set `allowDowngrade` explicitly after.
    */
