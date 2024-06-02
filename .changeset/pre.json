@@ -17,6 +17,7 @@
     "@electron-builder/test": "0.0.0"
   },
   "changesets": [
+    "brave-rats-tap",
     "brave-toys-fly",
     "breezy-pans-shop",
     "chatty-zebras-greet",
@@ -35,6 +36,8 @@
     "popular-jobs-protect",
     "pretty-lemons-trade",
     "selfish-experts-wonder",
+    "selfish-turtles-fold",
+    "serious-berries-knock",
     "serious-nails-shop",
     "serious-pumpkins-suffer",
     "spotty-foxes-count",

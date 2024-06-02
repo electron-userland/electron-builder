@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.3.0-alpha.4
+
+### Patch Changes
+
+- [#8227](https://github.com/electron-userland/electron-builder/pull/8227) [`48c59535`](https://github.com/electron-userland/electron-builder/commit/48c59535f84cd16fb2e44d71f6b75c25c739b993) Thanks [@rotu](https://github.com/rotu)! - fix(docs): update autoupdate docs noting that channels work with Github
+
 ## 6.3.0-alpha.3
 
 ### Patch Changes

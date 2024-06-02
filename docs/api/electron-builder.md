@@ -185,7 +185,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <li><a href="#module_app-builder-lib.Packager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(event)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+disposeOnBuildFinish"><code>.disposeOnBuildFinish(disposer)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+installAppDependencies"><code>.installAppDependencies(platform, arch)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo | module:app-builder-lib/out/util/packageDependencies.NodeModuleInfo&gt;&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+validateConfig"><code>.validateConfig()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
@@ -1438,7 +1438,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <li><a href="#module_app-builder-lib.Packager+dispatchArtifactCreated"><code>.dispatchArtifactCreated(event)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+disposeOnBuildFinish"><code>.disposeOnBuildFinish(disposer)</code></a></li>
 <li><a href="#module_app-builder-lib.Packager+installAppDependencies"><code>.installAppDependencies(platform, arch)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo&gt;&gt;</code></li>
+<li><a href="#module_app-builder-lib.Packager+getNodeDependencyInfo"><code>.getNodeDependencyInfo(platform)</code></a> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo | module:app-builder-lib/out/util/packageDependencies.NodeModuleInfo&gt;&gt;</code></li>
 <li><a href="#module_app-builder-lib.Packager+validateConfig"><code>.validateConfig()</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
@@ -1629,7 +1629,7 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 </tbody>
 </table>
 <p><a name="module_app-builder-lib.Packager+getNodeDependencyInfo"></a></p>
-<h3 id="packager.getnodedependencyinfo(platform)-%E2%87%92-lazy%3Carray%3Cmodule%3Aapp-builder-lib%2Fout%2Futil%2Fpackagedependencies.nodemoduledirinfo%3E%3E"><code>packager.getNodeDependencyInfo(platform)</code> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo&gt;&gt;</code></h3>
+<h3 id="packager.getnodedependencyinfo(platform)-%E2%87%92-lazy%3Carray%3Cmodule%3Aapp-builder-lib%2Fout%2Futil%2Fpackagedependencies.nodemoduledirinfo-%7C-module%3Aapp-builder-lib%2Fout%2Futil%2Fpackagedependencies.nodemoduleinfo%3E%3E"><code>packager.getNodeDependencyInfo(platform)</code> ⇒ <code>Lazy&lt;Array&lt;module:app-builder-lib/out/util/packageDependencies.NodeModuleDirInfo | module:app-builder-lib/out/util/packageDependencies.NodeModuleInfo&gt;&gt;</code></h3>
 <table>
 <thead>
 <tr>
