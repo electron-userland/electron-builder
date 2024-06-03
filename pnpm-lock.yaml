@@ -173,6 +173,9 @@ importers:
       read-config-file:
         specifier: 6.4.0
         version: 6.4.0
+      resedit:
+        specifier: ^2.0.2
+        version: 2.0.2
       sanitize-filename:
         specifier: ^1.6.3
         version: 1.6.3
@@ -9487,6 +9490,11 @@ packages:
       util: 0.10.4
     dev: true
 
+  /pe-library@1.0.1:
+    resolution: {integrity: sha512-nh39Mo1eGWmZS7y+mK/dQIqg7S1lp38DpRxkyoHf0ZcUs/HDc+yyTjuOtTvSMZHmfSLuSQaX945u05Y2Q6UWZg==}
+    engines: {node: '>=14', npm: '>=7'}
+    dev: false
+
   /pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
     dev: true
@@ -9998,6 +10006,13 @@ packages:
     dependencies:
       lodash: 4.17.21
     dev: true
+
+  /resedit@2.0.2:
+    resolution: {integrity: sha512-UKTnq602iVe+W5SyRAQx/WdWMnlDiONfXBLFg/ur4QE4EQQ8eP7Jgm5mNXdK12kKawk1vvXPja2iXKqZiGDW6Q==}
+    engines: {node: '>=14', npm: '>=7'}
+    dependencies:
+      pe-library: 1.0.1
+    dev: false
 
   /resolve-alpn@1.2.1:
     resolution: {integrity: sha512-0a1F4l73/ZFZOakJnQ3FvkJ2+gSTQWz/r2KE5OdDY0TxPm5h4GkqkWWfM47T7HsbnOtcJVEF4epCVy6u7Q3K+g==}
