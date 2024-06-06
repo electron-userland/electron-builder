@@ -1,11 +1,10 @@
 import { readFile, writeFile } from "fs/promises"
 import { log } from "builder-util"
+import { NtExecutable, NtExecutableResource, Resource } from "resedit"
 import { AsarIntegrity } from "../asar/integrity"
 
 /** @internal */
 export async function addWinAsarIntegrity(executablePath: string, asarIntegrity: AsarIntegrity) {
-  const { NtExecutable, NtExecutableResource, Resource } = await import("resedit")
-
   const buffer = await readFile(executablePath)
   const executable = NtExecutable.from(buffer)
   const resource = NtExecutableResource.from(executable)

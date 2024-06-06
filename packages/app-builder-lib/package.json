@@ -70,7 +70,7 @@
     "lazy-val": "^1.0.5",
     "minimatch": "^5.1.1",
     "read-config-file": "6.4.0",
-    "resedit": "^2.0.2",
+    "resedit": "^1.7.0",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
     "tar": "^6.1.12",
