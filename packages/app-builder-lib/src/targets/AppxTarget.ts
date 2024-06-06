@@ -226,7 +226,7 @@ export default class AppXTarget extends Target {
         case "applicationId": {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
           const identitynumber = parseInt(options.identityName as string, 10) || NaN
-		  let result
+		  let result:string
           if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
             if (options.identityName[0] === "0") {
               log.warn(`Remove the 0${identitynumber}`)
