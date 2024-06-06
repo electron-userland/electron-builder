@@ -236,7 +236,7 @@ export default class AppXTarget extends Target {
               result = options.identityName.replace(identitynumber.toString(), "")
             }
           } else {
-            result = options.applicationId || (options.identityName !== null && options.identityName !== undefined) || appInfo.name
+            result = options.applicationId || options.identityName || appInfo.name
           }
 
           if (result.length < 1 || result.length > 64) {
