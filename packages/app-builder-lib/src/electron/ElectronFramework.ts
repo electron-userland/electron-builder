@@ -10,6 +10,7 @@ import { LinuxPackager } from "../linuxPackager"
 import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
+import { addWinAsarIntegrity } from "./electronWin"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
 import injectFFMPEG from "./injectFFMPEG"
@@ -78,6 +79,9 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+    if (options.asarIntegrity) {
+      await addWinAsarIntegrity(executable, options.asarIntegrity)
+    }
   } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
   }
