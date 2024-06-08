@@ -16,12 +16,13 @@ import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
+const NODE_MODULES = "node_modules"
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 function extractPathAfterLastNodeModules(src: string, file: string) {
   const srcComponents = src.split(path.sep)
-  const lastNodeModulesIndex = srcComponents.lastIndexOf("node_modules")
+  const lastNodeModulesIndex = srcComponents.lastIndexOf(NODE_MODULES)
 
   if (lastNodeModulesIndex === -1 || lastNodeModulesIndex === srcComponents.length - 1) {
     return ""
@@ -215,23 +216,25 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const result = new Array<ResolvedFileSet>()
   let index = 0
   for (const info of deps) {
-    const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name
+    //const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name
+    const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name)
     // const source = platformPackager.info.appDir
     const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
 
     // use main matcher patterns, so, user can exclude some files in such hoisted node modules
     // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.dirname(platformPackager.info.appDir + path.sep + "node_modules"), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(path.join(platformPackager.info.appDir, NODE_MODULES), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (info.conflictDependency) {
       for (const dep of info.conflictDependency) {
-        const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules" + path.sep + dep.name
+        //const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules" + path.sep + dep.name
+        const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name, NODE_MODULES, dep.name)
         const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
         const matcher = new FileMatcher(
-          path.dirname(platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules"),
+          path.join(platformPackager.info.appDir, NODE_MODULES, info.name, NODE_MODULES, dep.name),
           destination,
           mainMatcher.macroExpander,
           mainMatcher.patterns
