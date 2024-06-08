@@ -226,11 +226,11 @@ export default class AppXTarget extends Target {
         case "applicationId": {
           const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
           const identitynumber = parseInt(options.identityName as string, 10) || NaN
-		  let result:string
+          let result: string
           if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
             if (options.identityName[0] === "0") {
               log.warn(`Remove the 0${identitynumber}`)
-              result = options.identityName.replace("0"+identitynumber.toString(), "")
+              result = options.identityName.replace("0" + identitynumber.toString(), "")
             } else {
               log.warn(`Remove the ${identitynumber}`)
               result = options.identityName.replace(identitynumber.toString(), "")
@@ -246,7 +246,7 @@ export default class AppXTarget extends Target {
             const message = `AppX Application.Id can not be consists of alpha-numeric and period"`
             throw new InvalidConfigurationError(message)
           } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
-            const message = `AppX Application.Id can not be some values`
+            const message = `AppX identityName.Id can not include restricted values: ${JSON.stringify(restrictedApplicationIdValues)}`
             throw new InvalidConfigurationError(message)
           } else if (result == null && options.applicationId == null) {
             const message = `Please set appx.applicationId (or correct appx.identityName or name)`
