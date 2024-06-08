@@ -35,6 +35,7 @@ export { UUID } from "./uuid"
 export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 export { parseXml, XElement } from "./xml"
 export { BlockMap } from "./blockMapApi"
+export { newError } from "./error"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"
@@ -49,10 +50,4 @@ export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   } else {
     return [v]
   }
-}
-
-export function newError(message: string, code: string) {
-  const error = new Error(message)
-  ;(error as NodeJS.ErrnoException).code = code
-  return error
 }
