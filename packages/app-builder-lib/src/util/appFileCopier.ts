@@ -16,13 +16,12 @@ import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
 import { NodeModuleInfo } from "./packageDependencies"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
-const NODE_MODULES = "node_modules"
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
 function extractPathAfterLastNodeModules(src: string, file: string) {
   const srcComponents = src.split(path.sep)
-  const lastNodeModulesIndex = srcComponents.lastIndexOf(NODE_MODULES)
+  const lastNodeModulesIndex = srcComponents.lastIndexOf("node_modules")
 
   if (lastNodeModulesIndex === -1 || lastNodeModulesIndex === srcComponents.length - 1) {
     return ""
@@ -215,6 +214,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
   const result = new Array<ResolvedFileSet>()
   let index = 0
+  const NODE_MODULES = "node_modules"
   for (const info of deps) {
     const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name)
     const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
