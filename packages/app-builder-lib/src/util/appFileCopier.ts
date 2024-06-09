@@ -217,11 +217,9 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   const NODE_MODULES = "node_modules"
   for (const info of deps) {
     const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name)
-    const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
+    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
 
-    // use main matcher patterns, so, user can exclude some files in such hoisted node modules
-    // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.join(platformPackager.info.appDir, NODE_MODULES), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(platformPackager.info.appDir, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
@@ -229,13 +227,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
     if (info.conflictDependency) {
       for (const dep of info.conflictDependency) {
         const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-        const matcher = new FileMatcher(
-          path.join(platformPackager.info.appDir, NODE_MODULES, info.name, NODE_MODULES),
-          destination,
-          mainMatcher.macroExpander,
-          mainMatcher.patterns
-        )
+        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
+        const matcher = new FileMatcher(path.join(platformPackager.info.appDir, NODE_MODULES, info.name), destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
         result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
