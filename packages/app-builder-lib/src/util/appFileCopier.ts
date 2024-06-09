@@ -19,44 +19,22 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-function extractPathAfterLastNodeModules(src: string, file: string) {
-  const srcComponents = src.split(path.sep)
-  const lastNodeModulesIndex = srcComponents.lastIndexOf("node_modules")
-
-  if (lastNodeModulesIndex === -1 || lastNodeModulesIndex === srcComponents.length - 1) {
-    return ""
-  }
-
-  const pathAfterNodeModules = srcComponents.slice(lastNodeModulesIndex + 1).join(path.sep)
-
-  const matchIndex = file.indexOf(pathAfterNodeModules)
-
-  if (matchIndex === -1) {
-    return ""
-  }
-
-  const remainingPathStartIndex = matchIndex + pathAfterNodeModules.length
-  if (remainingPathStartIndex >= file.length) {
-    return ""
-  }
-
-  const remainingPath = file.substring(remainingPathStartIndex).trim()
-  return remainingPath.startsWith(path.sep) ? remainingPath.substring(1) : remainingPath
-}
-
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      const e = extractPathAfterLastNodeModules(src, file)
-      return path.join(dest, e)
-    }
   }
+
+  const src = fileSet.src
+  const dest = fileSet.destination
+  if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
+    return dest + file.substring(src.length)
+  }
+
+  // get node_modules path relative to src and then append to dest
+  if (file.startsWith(src)) {
+    return path.join(dest, path.relative(src, file))
+  }
+  return dest
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
@@ -216,9 +194,8 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   let index = 0
   const NODE_MODULES = "node_modules"
   for (const info of deps) {
-    const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name)
+    const source = info.dir
     const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-
     const matcher = new FileMatcher(platformPackager.info.appDir, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
@@ -226,7 +203,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
 
     if (info.conflictDependency) {
       for (const dep of info.conflictDependency) {
-        const source = path.join(platformPackager.info.appDir, NODE_MODULES, info.name, NODE_MODULES, dep.name)
+        const source = dep.dir
         const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
         const matcher = new FileMatcher(path.join(platformPackager.info.appDir, NODE_MODULES, info.name), destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
