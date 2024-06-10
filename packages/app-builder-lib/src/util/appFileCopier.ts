@@ -192,7 +192,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   for (const info of deps) {
     const source = info.dir
     const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
-    const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const matcher = new FileMatcher(platformPackager.info.appDir, destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
@@ -201,7 +201,7 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
       for (const dep of info.conflictDependency) {
         const source = dep.dir
         const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
-        const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+        const matcher = new FileMatcher(platformPackager.info.appDir, destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
         result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
