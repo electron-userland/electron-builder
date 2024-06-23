@@ -65,7 +65,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       const sortedFilePaths = await BluebirdPromise.map(
         childNames,
         name => {
-          const filePath = dirPath + path.sep + name
+          const filePath = path.join(dirPath, name)
 
           const forceIncluded = onNodeModuleFile != null && !!onNodeModuleFile(filePath)
 

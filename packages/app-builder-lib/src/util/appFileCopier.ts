@@ -19,44 +19,18 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-function extractPathAfterLastNodeModules(src: string, file: string) {
-  const srcComponents = src.split(path.sep)
-  const lastNodeModulesIndex = srcComponents.lastIndexOf("node_modules")
-
-  if (lastNodeModulesIndex === -1 || lastNodeModulesIndex === srcComponents.length - 1) {
-    return ""
-  }
-
-  const pathAfterNodeModules = srcComponents.slice(lastNodeModulesIndex + 1).join(path.sep)
-
-  const matchIndex = file.indexOf(pathAfterNodeModules)
-
-  if (matchIndex === -1) {
-    return ""
-  }
-
-  const remainingPathStartIndex = matchIndex + pathAfterNodeModules.length
-  if (remainingPathStartIndex >= file.length) {
-    return ""
-  }
-
-  const remainingPath = file.substring(remainingPathStartIndex).trim()
-  return remainingPath.startsWith(path.sep) ? remainingPath.substring(1) : remainingPath
-}
-
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      const e = extractPathAfterLastNodeModules(src, file)
-      return path.join(dest, e)
-    }
   }
+
+  const src = fileSet.src
+  const dest = fileSet.destination
+  // get node_modules path relative to src and then append to dest
+  if (file.startsWith(src)) {
+    return path.join(dest, path.relative(src, file))
+  }
+  return dest
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
@@ -214,28 +188,21 @@ export async function computeNodeModuleFileSets(platformPackager: PlatformPackag
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
   const result = new Array<ResolvedFileSet>()
   let index = 0
+  const NODE_MODULES = "node_modules"
   for (const info of deps) {
-    const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name
-    // const source = platformPackager.info.appDir
-    const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-
-    // use main matcher patterns, so, user can exclude some files in such hoisted node modules
-    // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.dirname(platformPackager.info.appDir + path.sep + "node_modules"), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const source = info.dir
+    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
+    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+    const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
     const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
 
     if (info.conflictDependency) {
       for (const dep of info.conflictDependency) {
-        const source = platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules" + path.sep + dep.name
-        const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-        const matcher = new FileMatcher(
-          path.dirname(platformPackager.info.appDir + path.sep + "node_modules" + path.sep + info.name + path.sep + "node_modules"),
-          destination,
-          mainMatcher.macroExpander,
-          mainMatcher.patterns
-        )
+        const source = dep.dir
+        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
+        const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
         const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
         result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
       }
