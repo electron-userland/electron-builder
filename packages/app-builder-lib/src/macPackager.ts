@@ -19,8 +19,8 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
-import { notarize, NotarizeOptions } from "@electron/notarize"
-import { NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
@@ -505,7 +505,7 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
     log.info(null, "notarization successful")
   }
 
-  private getNotarizeOptions(appPath: string): NotarizeOptions | undefined {
+  private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
     let teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
