@@ -283,7 +283,7 @@ importers:
         specifier: ^4.1.6
         version: 4.1.7
       app-builder-bin:
-        specifier: v5.0.0-alpha.3
+        specifier: v5.0.0-alpha.4
         version: 5.0.0-alpha.3
       bluebird-lst:
         specifier: ^1.0.9
