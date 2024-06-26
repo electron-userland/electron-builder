@@ -231,21 +231,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
    *
    * For security reasons it is recommended to use the first option (see https://github.com/electron-userland/electron-builder/issues/7859)
    */
-  readonly notarize?: NotarizeLegacyOptions | NotarizeNotaryOptions | boolean | null
-}
-
-/** @deprecated */
-export interface NotarizeLegacyOptions {
-  /**
-   * The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).
-   * Only used by `legacy` notarization tool
-   */
-  readonly appBundleId?: string | null
-
-  /**
-   * Your Team Short Name. Only used by `legacy` notarization tool
-   */
-  readonly ascProvider?: string | null
+  readonly notarize?: NotarizeNotaryOptions | boolean | null
 }
 
 export interface NotarizeNotaryOptions {

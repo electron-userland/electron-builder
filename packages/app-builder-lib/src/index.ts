@@ -26,7 +26,7 @@ export { Configuration, AfterPackContext, MetadataDirectories } from "./configur
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
+export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
 export { WindowsConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
