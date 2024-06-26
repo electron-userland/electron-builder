@@ -2,6 +2,7 @@ import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import { Logger } from "./main"
+import path from "path"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
@@ -48,6 +49,12 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           }
           const data = parseOut(stdout)
           if (data.Status === 0) {
+            const updateFilePath = path.normalize(data.Path)
+            if (updateFilePath !== unescapedTempUpdateFile) {
+              handleError(logger, new Error(`LiteralPath of ${unescapedTempUpdateFile} is different than ${updateFilePath}`), stderr, reject)
+              resolve(null)
+              return
+            }
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
             for (const name of publisherNames) {
@@ -96,7 +103,6 @@ function parseOut(out: string): any {
     // duplicates data.SignerCertificate (contains RawData)
     delete signerCertificate.SubjectName
   }
-  delete data.Path
   return data
 }
 
