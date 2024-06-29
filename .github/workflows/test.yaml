@@ -91,6 +91,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           FORCE_COLOR: 1
 
+      - name: Verify Docs Generation
+        run: pnpm generate-all
+
   test-windows:
     runs-on: windows-latest
     strategy:
