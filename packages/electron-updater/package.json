@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "6.3.0-alpha.4",
+  "version": "6.3.0-alpha.5",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
