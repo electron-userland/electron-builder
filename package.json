@@ -30,7 +30,7 @@
     "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate-all": "pnpm generate-schema && pnpm generate-docs && pnpm prettier",
     "ci:test": "node ./test/out/helpers/runTests.js",
-    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm run compile && pnpm run generate-all && git add .",
+    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
     "ci:publish": "pnpm compile && pnpm publish -r && changeset tag",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater packages/dmg-builder",
     "jsdoc2md2html": "node scripts/jsdoc2md2html.js",
