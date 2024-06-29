@@ -31,7 +31,7 @@
     "generate-all": "pnpm generate-schema && pnpm generate-docs && pnpm prettier",
     "ci:test": "node ./test/out/helpers/runTests.js",
     "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
-    "ci:publish": "pnpm compile && pnpm publish -r && changeset tag",
+    "ci:publish": "pnpm compile && pnpm publish -r --tag next && changeset tag",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater packages/dmg-builder",
     "jsdoc2md2html": "node scripts/jsdoc2md2html.js",
     "prepare": "husky install"
