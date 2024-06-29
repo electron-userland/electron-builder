@@ -210,7 +210,6 @@ async function render2(files, jsdoc2MdOptions) {
 
     new Page("configuration/mac.md", null, {
       "MacConfiguration": "",
-      "NotarizeLegacyOptions" : "",
       "NotarizeNotaryOptions" : ""
     }),
     new Page("configuration/dmg.md", "DmgOptions"),

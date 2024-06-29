@@ -2533,9 +2533,6 @@
         "notarize": {
           "anyOf": [
             {
-              "$ref": "#/definitions/NotarizeLegacyOptions"
-            },
-            {
               "$ref": "#/definitions/NotarizeNotaryOptions"
             },
             {
@@ -3166,9 +3163,6 @@
         "notarize": {
           "anyOf": [
             {
-              "$ref": "#/definitions/NotarizeLegacyOptions"
-            },
-            {
               "$ref": "#/definitions/NotarizeNotaryOptions"
             },
             {
@@ -3679,26 +3673,6 @@
         },
         "wrappedInstallerArgs": {
           "description": "Extra arguments to provide to the wrapped installer (ie: /S for silent install)",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "NotarizeLegacyOptions": {
-      "additionalProperties": false,
-      "properties": {
-        "appBundleId": {
-          "description": "The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely).\nOnly used by `legacy` notarization tool",
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "ascProvider": {
-          "description": "Your Team Short Name. Only used by `legacy` notarization tool",
           "type": [
             "null",
             "string"
