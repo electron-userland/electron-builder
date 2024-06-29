@@ -1,5 +1,12 @@
 ## 4.3.0
 
+## 6.3.0-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [[`140e2f0e`](https://github.com/electron-userland/electron-builder/commit/140e2f0eb0df79c2a46e35024e96d0563355fc89)]:
+  - builder-util-runtime@9.2.5-alpha.3
+
 ## 6.3.0-alpha.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # builder-util-runtime
 
+## 9.2.5-alpha.3
+
+### Patch Changes
+
+- [#8251](https://github.com/electron-userland/electron-builder/pull/8251) [`140e2f0e`](https://github.com/electron-userland/electron-builder/commit/140e2f0eb0df79c2a46e35024e96d0563355fc89) Thanks [@m59peacemaker](https://github.com/m59peacemaker)! - Refactored to resolve circular dependency, eliminating warnings from tools such as Rollup
+
 ## 9.2.5-alpha.2
 
 ### Patch Changes

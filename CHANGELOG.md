@@ -1,3 +1,23 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.9...v) (2024-06-29)
+
+
+### Bug Fixes
+
+* @electron/remote wrongly into Windows app.asar ([#8254](https://github.com/electron-userland/electron-builder/issues/8254)) ([dc5d7c8](https://github.com/electron-userland/electron-builder/commit/dc5d7c8dafd4aca7192d05b2978c3e66f30e38f3))
+* **docs:** fix typo in default glob pattern ([#8256](https://github.com/electron-userland/electron-builder/issues/8256)) ([14942b7](https://github.com/electron-userland/electron-builder/commit/14942b70a5da79a5e36e330f64de66ec501b4ac6))
+* don't log ignored error when requiring custom publisher ([#8267](https://github.com/electron-userland/electron-builder/issues/8267)) ([9d55973](https://github.com/electron-userland/electron-builder/commit/9d55973879a045111c986ddb27b37f3c1fb5a0c0))
+* **refactor:** builder-util-runtime, separate newError to eliminate circular dependency ([#8251](https://github.com/electron-userland/electron-builder/issues/8251)) ([140e2f0](https://github.com/electron-userland/electron-builder/commit/140e2f0eb0df79c2a46e35024e96d0563355fc89))
+* resolve CI/CD docs generation issue ([#8281](https://github.com/electron-userland/electron-builder/issues/8281)) ([9a0b3c6](https://github.com/electron-userland/electron-builder/commit/9a0b3c6e0201ba32c26b2f96e2e9abf7af2ef666))
+
+
+### Features
+
+* **appx:** Update `identityName` for windows 10 ([#8206](https://github.com/electron-userland/electron-builder/issues/8206)) ([51111a8](https://github.com/electron-userland/electron-builder/commit/51111a87a541ccf826dcd11393b4b3a0e83ca368))
+* **deps:** updating app-builder to v5.0.0-alpha.4 ([#8274](https://github.com/electron-userland/electron-builder/issues/8274)) ([88bbbdb](https://github.com/electron-userland/electron-builder/commit/88bbbdbe81936df1701f26138170e0f337c4f0d4))
+* write asar integrity resource on windows ([#8245](https://github.com/electron-userland/electron-builder/issues/8245)) ([13e0e0d](https://github.com/electron-userland/electron-builder/commit/13e0e0d2a272e6111024a28e1c3619dd1769366c))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.8...v) (2024-06-02)
 
 
