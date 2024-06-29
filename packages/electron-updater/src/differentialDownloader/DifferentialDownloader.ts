@@ -233,6 +233,10 @@ export abstract class DifferentialDownloader {
 
         const request = this.httpExecutor.createRequest(requestOptions, response => {
           response.on("error", reject)
+          // for old nodejs:https://nodejs.org/docs/latest-v16.x/api/http.html#event-abort
+          response.on("abort", () => {
+            reject(new Error("response has been abort by the server"))
+          })
           response.on("aborted", () => {
             reject(new Error("response has been aborted by the server"))
           })
@@ -294,6 +298,15 @@ export abstract class DifferentialDownloader {
         if (!checkIsRangesSupported(response, reject)) {
           return
         }
+
+        response.on("error", reject)
+        // for old nodejs:https://nodejs.org/docs/latest-v16.x/api/http.html#event-abort
+        response.on("abort", () => {
+          reject(new Error("response has been abort by the server"))
+        })
+        response.on("aborted", () => {
+          reject(new Error("response has been aborted by the server"))
+        })
 
         response.on("data", dataHandler)
         response.on("end", () => resolve())
