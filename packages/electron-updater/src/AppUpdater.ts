@@ -699,7 +699,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       })
     }
 
-    const tempUpdateFile = await createTempUpdateFile(updateFileName, cacheDir, log)
+    const tempUpdateFile = await createTempUpdateFile(`temp-${updateFileName}`, cacheDir, log)
     try {
       await taskOptions.task(tempUpdateFile, downloadOptions, packageFile, removeFileIfAny)
       await rename(tempUpdateFile, updateFile)

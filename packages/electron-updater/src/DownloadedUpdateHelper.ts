@@ -178,10 +178,7 @@ function hashFile(file: string, algorithm = "sha512", encoding: "base64" | "hex"
   })
 }
 
-export async function createTempUpdateFile(filename: string, cacheDir: string, log: Logger): Promise<string> {
-  const hashCode = (s: string) => s.split("").reduce((a: number, b: string) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0)
-
-  const name = `temp-update-${hashCode(filename)}-${filename}`
+export async function createTempUpdateFile(name: string, cacheDir: string, log: Logger): Promise<string> {
   // https://github.com/electron-userland/electron-builder/pull/2474#issuecomment-366481912
   let nameCounter = 0
   let result = path.join(cacheDir, name)

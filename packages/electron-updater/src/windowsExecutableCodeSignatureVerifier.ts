@@ -49,9 +49,10 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           }
           const data = parseOut(stdout)
           if (data.Status === 0) {
-            const updateFilePath = path.normalize(data.Path)
-            if (updateFilePath !== unescapedTempUpdateFile) {
-              handleError(logger, new Error(`LiteralPath of ${unescapedTempUpdateFile} is different than ${updateFilePath}`), stderr, reject)
+            const normlaizedUpdateFilePath = path.normalize(data.Path)
+            const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+            if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
+              handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
               resolve(null)
               return
             }
