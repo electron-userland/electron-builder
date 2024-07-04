@@ -59,7 +59,7 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
                 return
               }
             } catch (error: any) {
-              logger.error(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Error: ${error.message ?? error.stack}`)
+              logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
             }
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
