@@ -1,5 +1,15 @@
 # app-builder-lib
 
+## 25.0.0-alpha.11
+
+### Patch Changes
+
+- [#8286](https://github.com/electron-userland/electron-builder/pull/8286) [`4a4023c3`](https://github.com/electron-userland/electron-builder/commit/4a4023c3661b9e190e526965b894f90bdcea87ab) Thanks [@beyondkmp](https://github.com/beyondkmp)! - fix Folder's named "constructor" not being included in asar
+
+- Updated dependencies []:
+  - dmg-builder@25.0.0-alpha.11
+  - electron-builder-squirrel-windows@25.0.0-alpha.11
+
 ## 25.0.0-alpha.10
 
 ### Patch Changes
