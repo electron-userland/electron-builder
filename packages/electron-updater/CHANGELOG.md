@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.3.0-alpha.6
+
+### Patch Changes
+
+- [#8295](https://github.com/electron-userland/electron-builder/pull/8295) [`ac2e6a25`](https://github.com/electron-userland/electron-builder/commit/ac2e6a25aa491c1ef5167a552c19fc2085cd427f) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: verify LiteralPath of update file during windows signature verification
+
 ## 6.3.0-alpha.5
 
 ### Patch Changes

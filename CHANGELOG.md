@@ -1,3 +1,14 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.10...v) (2024-07-05)
+
+
+### Bug Fixes
+
+* **deploy:** using `pnpm publish` cmd line arg to force `next` tag ([#8285](https://github.com/electron-userland/electron-builder/issues/8285)) ([81da7c1](https://github.com/electron-userland/electron-builder/commit/81da7c1491e2b3ff2f7b476f8128183f57074ff5))
+* Folder's named "constructor" not being included in asar  ([#8286](https://github.com/electron-userland/electron-builder/issues/8286)) ([4a4023c](https://github.com/electron-userland/electron-builder/commit/4a4023c3661b9e190e526965b894f90bdcea87ab))
+* verify LiteralPath of update file during windows signature verification ([#8295](https://github.com/electron-userland/electron-builder/issues/8295)) ([ac2e6a2](https://github.com/electron-userland/electron-builder/commit/ac2e6a25aa491c1ef5167a552c19fc2085cd427f))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.9...v) (2024-06-29)
 
 
