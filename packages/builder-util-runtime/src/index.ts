@@ -36,6 +36,7 @@ export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 export { parseXml, XElement } from "./xml"
 export { BlockMap } from "./blockMapApi"
 export { newError } from "./error"
+export { MemoLazy } from "./MemoLazy"
 
 // nsis
 export const CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe"

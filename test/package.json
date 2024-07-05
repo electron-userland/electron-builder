@@ -21,6 +21,7 @@
     "jest": "^27.5.1",
     "jest-junit": "^12.0.0",
     "js-yaml": "^4.1.0",
+    "lazy-val": "^1.0.5",
     "path-sort": "^0.1.0",
     "semver": "^7.3.8",
     "stat-mode": "^1.0.0",

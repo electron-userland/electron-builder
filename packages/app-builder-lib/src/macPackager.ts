@@ -21,7 +21,7 @@ import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
 import { notarize } from "@electron/notarize"
 import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
-import { MemoLazy } from "./util/MemoLazy"
+import { MemoLazy } from "builder-util-runtime"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
