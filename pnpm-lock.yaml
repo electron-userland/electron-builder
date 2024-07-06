@@ -284,7 +284,7 @@ importers:
         version: 4.1.7
       app-builder-bin:
         specifier: v5.0.0-alpha.4
-        version: 5.0.0-alpha.3
+        version: 5.0.0-alpha.4
       bluebird-lst:
         specifier: ^1.0.9
         version: 1.0.9
@@ -611,6 +611,9 @@ importers:
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
+      lazy-val:
+        specifier: ^1.0.5
+        version: 1.0.5
       path-sort:
         specifier: ^0.1.0
         version: 0.1.0
@@ -3594,8 +3597,8 @@ packages:
       normalize-path: 3.0.0
       picomatch: 2.3.1
 
-  /app-builder-bin@5.0.0-alpha.3:
-    resolution: {integrity: sha512-bWTAF50v4ZAVLq6EPZYhaLsFSJLfZz5s9MIeP5k1RkkBsibyJV/Dv6NxfaDO0I++iBmcLKsuzB5E8b1qaeXqew==}
+  /app-builder-bin@5.0.0-alpha.4:
+    resolution: {integrity: sha512-4MitKmOtfTdMONrtRoiaqJ6HtlVZXgrNX1PNdEzEHSAoXU85x7s+mo0IhAS9K9qgjyTVuLrM1E/HAMp5qGyoOA==}
     dev: false
 
   /aproba@2.0.0:

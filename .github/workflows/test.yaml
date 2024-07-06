@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest
+          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
