@@ -28,35 +28,10 @@ export class RpmUpdater extends BaseUpdater {
   }
 
   protected doInstall(options: InstallOptions): boolean {
-    const upgradePath = options.installerPath
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const packageManager = this.spawnSyncLog("which zypper")
-    let cmd: string[]
-    if (!packageManager) {
-      const packageManager = this.spawnSyncLog("which dnf || which yum")
-      cmd = [packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", upgradePath]
-    } else {
-      cmd = [
-        packageManager,
-        "remove",
-        "-y",
-        `'${this.app.name}'`,
-        ";",
-        packageManager,
-        "clean",
-        "--all",
-        ";",
-        packageManager,
-        "--no-refresh",
-        "install",
-        "--allow-unsigned-rpm",
-        "-y",
-        "-f",
-        upgradePath,
-      ]
-    }
+    const cmd = ["rpm", "-U", options.installerPath]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {
       this.app.relaunch()
