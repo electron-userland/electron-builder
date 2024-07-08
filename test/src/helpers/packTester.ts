@@ -142,7 +142,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const base = function (platform: Platform, arch?: Arch): string {
           return path.join(
             outDir,
-            `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
+            `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`,
             platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
           )
         }
