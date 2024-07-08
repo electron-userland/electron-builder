@@ -112,6 +112,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "LSMinimumSystemVersion": "10.12.0",
   "LSUIElement": true,
   "NSAppTransportSecurity": Object {
@@ -293,6 +296,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -341,6 +347,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -389,6 +398,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
