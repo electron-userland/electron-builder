@@ -82,7 +82,11 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     const moduleName = path.basename(packageDir)
     if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
-    } else {
+    }
+
+    const fileBaseName = path.basename(file)
+    const hasExtension = path.extname(fileBaseName)
+    if (!hasExtension) {
       shouldUnpack = !!isBinaryFileSync(file)
     }
 
