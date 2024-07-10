@@ -81,7 +81,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.ifNotWindows(
   "map resources",
   app(
     {
