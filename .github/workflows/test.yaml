@@ -99,7 +99,7 @@ jobs:
     strategy:
       matrix:
         testFiles:
-          - winCodeSignTest,differentialUpdateTest
+          - winCodeSignTest,differentialUpdateTest,filesTest
           - installerTest,appxTest,msiTest,portableTest,assistedInstallerTest,protonTest
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
