@@ -36,18 +36,9 @@ export class RpmUpdater extends BaseUpdater {
     let cmd: string[]
     if (!packageManager) {
       const packageManager = this.spawnSyncLog("which dnf || which yum")
-      cmd = [packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", upgradePath]
+      cmd = [packageManager, "-y", "install", upgradePath]
     } else {
       cmd = [
-        packageManager,
-        "remove",
-        "-y",
-        `'${this.app.name}'`,
-        ";",
-        packageManager,
-        "clean",
-        "--all",
-        ";",
         packageManager,
         "--no-refresh",
         "install",
