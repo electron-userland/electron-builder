@@ -80,9 +80,11 @@ export async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDir
     let shouldUnpack = false
     // ffprobe-static and ffmpeg-static are known packages to always unpack
     const moduleName = path.basename(packageDir)
+    const fileBaseName = path.basename(file)
+    const hasExtension = path.extname(fileBaseName)
     if (moduleName === "ffprobe-static" || moduleName === "ffmpeg-static" || isLibOrExe(file)) {
       shouldUnpack = true
-    } else if (!file.includes(".", nextSlashIndex)) {
+    } else if (!hasExtension) {
       shouldUnpack = !!isBinaryFileSync(file)
     }
 
