@@ -73,7 +73,7 @@
     "resedit": "^1.7.0",
     "sanitize-filename": "^1.6.3",
     "semver": "^7.3.8",
-    "tar": "^6.1.12",
+    "tar": "^7.0.0",
     "temp-file": "^3.4.0"
   },
   "///": "babel in devDependencies for proton tests",
