@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { log } from "builder-util"
-import { CONCURRENCY } from "builder-util/out/fs"
+import { CONCURRENCY } from "builder-util"
 import { mkdir } from "fs-extra"
 import { isBinaryFileSync } from "isbinaryfile"
 import * as path from "path"

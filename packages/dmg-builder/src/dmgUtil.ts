@@ -1,5 +1,5 @@
 import { PlatformPackager } from "app-builder-lib"
-import { executeFinally } from "builder-util/out/promise"
+import { executeFinally } from "builder-util"
 import * as path from "path"
 import { hdiUtil } from "./hdiuil"
 

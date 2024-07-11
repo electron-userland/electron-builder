@@ -1,4 +1,4 @@
-import { exists, statOrNull } from "builder-util/out/fs"
+import { exists, statOrNull } from "builder-util"
 import * as fs from "fs/promises"
 import * as path from "path"
 

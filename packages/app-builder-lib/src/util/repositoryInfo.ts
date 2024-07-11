@@ -1,4 +1,4 @@
-import { orNullIfFileNotExist } from "builder-util/out/promise"
+import { orNullIfFileNotExist } from "builder-util"
 import { readFile } from "fs-extra"
 import GitHost, { fromUrl } from "hosted-git-info"
 import * as path from "path"

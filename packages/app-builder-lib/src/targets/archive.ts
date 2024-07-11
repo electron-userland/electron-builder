@@ -1,5 +1,5 @@
 import { debug7z, exec, log } from "builder-util"
-import { exists, unlinkIfExists, statOrNull } from "builder-util/out/fs"
+import { exists, unlinkIfExists, statOrNull } from "builder-util"
 import { move } from "fs-extra"
 import * as path from "path"
 import { create, CreateOptions, FileOptions } from "tar"

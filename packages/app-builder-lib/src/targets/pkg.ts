@@ -1,5 +1,4 @@
-import { Arch, debug, exec, use } from "builder-util"
-import { statOrNull } from "builder-util/out/fs"
+import { Arch, debug, exec, use, statOrNull } from "builder-util"
 import { PkgOptions } from "../options/pkgOptions"
 import { executeAppBuilderAndWriteJson, executeAppBuilderAsJson } from "../util/appBuilder"
 import { getNotLocalizedLicenseFile } from "../util/license"

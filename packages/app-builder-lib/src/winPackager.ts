@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder } from "builder-util"
+import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk } from "builder-util"
 import { MemoLazy, parseDn } from "builder-util-runtime"
-import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"

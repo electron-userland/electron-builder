@@ -1,7 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, log } from "builder-util"
-import { copyFile } from "builder-util/out/fs"
-import { orNullIfFileNotExist } from "builder-util/out/promise"
+import { Arch, log, copyFile, orNullIfFileNotExist } from "builder-util"
 import { Hash } from "crypto"
 import { readJson, writeJson } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"

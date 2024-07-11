@@ -1,4 +1,4 @@
-import { Filter } from "builder-util/out/fs"
+import { Filter } from "builder-util"
 import { Stats } from "fs-extra"
 import { Minimatch } from "minimatch"
 import * as path from "path"
