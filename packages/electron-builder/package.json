@@ -58,7 +58,7 @@
     "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
-    "read-config-file": "6.3.2",
+    "read-config-file": "6.4.0",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"
   },
