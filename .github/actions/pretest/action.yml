@@ -50,4 +50,4 @@ runs:
 #   uses: ./.github/actions/pretest
 #   with:
 #     cache-path: ~/Library/Caches/electron
-#     cache-key: v-17.0.0-macos-electron
+#     cache-key: v-23.3.10-macos-electron

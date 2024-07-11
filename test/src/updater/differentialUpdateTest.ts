@@ -2,7 +2,7 @@ import { Arch, Configuration, Platform } from "app-builder-lib"
 import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { doSpawn, getArchSuffix } from "builder-util"
 import { GenericServerOptions, S3Options } from "builder-util-runtime"
-import { AppImageUpdater, BaseUpdater, MacUpdater, NsisUpdater } from "electron-updater"
+import { AppImageUpdater, BaseUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
 import { EventEmitter } from "events"
 import { move } from "fs-extra"
 import * as path from "path"
@@ -113,7 +113,8 @@ async function testLinux(arch: Arch) {
 
 test.ifDevOrLinuxCi("AppImage", () => testLinux(Arch.x64))
 
-test.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
+// Skipped, electron no longer ships ia32 linux binaries
+test.skip.ifDevOrLinuxCi("AppImage ia32", () => testLinux(Arch.ia32))
 
 async function testMac(arch: Arch) {
   process.env.TEST_UPDATER_ARCH = Arch[arch]
@@ -214,7 +215,7 @@ async function testBlockMap(oldDir: string, newDir: string, updaterClass: any, p
         platform: platform.nodeName as any,
         isUseDifferentialDownload: true,
       })
-      updater.logger = console
+      updater.logger = new NoOpLogger()
 
       const currentUpdaterCacheDirName = (await updater.configOnDisk.value).updaterCacheDirName
       if (currentUpdaterCacheDirName == null) {
