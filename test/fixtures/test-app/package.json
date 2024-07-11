@@ -1,7 +1,7 @@
 {
   "private": true,
   "build": {
-    "electronVersion": "27.3.11",
+    "electronVersion": "23.3.10",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,

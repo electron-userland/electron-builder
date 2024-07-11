@@ -30,7 +30,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-27.3.11-linux-electron
+          cache-key: v-23.3.10-linux-electron
 
       - name: Lint
         run: pnpm pretest
@@ -61,7 +61,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/Library/Caches/electron
-          cache-key: v-27.3.11-macos-electron
+          cache-key: v-23.3.10-macos-electron
 
       - name: Test
         run: pnpm ci:test
@@ -80,7 +80,7 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-27.3.11-update-electron
+          cache-key: v-23.3.10-update-electron
 
       - name: Test
         run: pnpm ci:test
@@ -109,7 +109,7 @@ jobs:
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-27.3.11-windows-electron
+          cache-key: v-23.3.10-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
 
       - name: Test
