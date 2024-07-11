@@ -197,7 +197,11 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
     BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
   ])
-  return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
+  const cscPasswords: Array<string> = [cscKeyPassword]
+  if (cscIKeyPassword) {
+    cscPasswords.push(cscIKeyPassword)
+  }
+  return await importCerts(keychainFile, certPaths, cscPasswords)
 }
 
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {

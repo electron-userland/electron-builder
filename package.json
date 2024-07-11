@@ -15,7 +15,7 @@
     "lint": "eslint packages --ext .ts",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
-    "pretest": "pnpm lint && pnpm lint-deps",
+    "pretest": "pnpm lint-deps && pnpm lint",
     "prettier": "prettier 'packages/**/*.{ts, js}' 'test/src/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher",
