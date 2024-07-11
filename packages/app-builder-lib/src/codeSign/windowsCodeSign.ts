@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, asArray, log } from "builder-util/out/util"
+import { InvalidConfigurationError, asArray, log } from "builder-util"
 import { getBin } from "../binDownload"
 import { WindowsConfiguration } from "../options/winOptions"
 import { executeAppBuilderAsJson } from "../util/appBuilder"

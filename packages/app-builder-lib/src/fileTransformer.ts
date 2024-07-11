@@ -1,5 +1,4 @@
-import { debug, log, deepAssign } from "builder-util"
-import { FileTransformer } from "builder-util/out/fs"
+import { debug, log, deepAssign, FileTransformer } from "builder-util"
 import { readFile } from "fs/promises"
 import * as path from "path"
 import { Configuration } from "./configuration"

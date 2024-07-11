@@ -1,4 +1,4 @@
-import { Filter, FileConsumer } from "builder-util/out/fs"
+import { Filter, FileConsumer } from "builder-util"
 import { readlink, stat, Stats } from "fs-extra"
 import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"

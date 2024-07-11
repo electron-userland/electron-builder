@@ -1,4 +1,4 @@
-import { copyOrLinkFile } from "builder-util/out/fs"
+import { copyOrLinkFile } from "builder-util"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"

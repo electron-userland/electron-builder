@@ -22,7 +22,7 @@ jobs:
           - snapTest,debTest,fpmTest,protonTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           fetch-depth: 2
 
@@ -30,14 +30,14 @@ jobs:
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-17.0.0-linux-electron
+          cache-key: v-23.3.10-linux-electron
 
       - name: Lint
         run: pnpm pretest
 
       - name: Determine if Dockerfiles changed
         id: changed-files-specific
-        uses: tj-actions/changed-files@aa08304bd477b800d468db44fe10f6c61f7f7b11 # v42
+        uses: tj-actions/changed-files@cc733854b1f224978ef800d29e4709d5ee2883e4 # v44
         with:
           files: docker/**/*
 
@@ -55,13 +55,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/Library/Caches/electron
-          cache-key: v-17.0.0-macos-electron
+          cache-key: v-23.3.10-macos-electron
 
       - name: Test
         run: pnpm ci:test
@@ -74,13 +74,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
           cache-path: ~/.cache/electron
-          cache-key: v-17.0.0-update-electron
+          cache-key: v-23.3.10-update-electron
 
       - name: Test
         run: pnpm ci:test
@@ -104,12 +104,12 @@ jobs:
           - BuildTest,oneClickInstallerTest,winPackagerTest,nsisUpdaterTest,webInstallerTest
     steps:
       - name: Checkout code repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Setup Tests
         uses: ./.github/actions/pretest
         with:
-          cache-key: v-17.0.0-windows-electron
+          cache-key: v-23.3.10-windows-electron
           cache-path: ~\AppData\Local\electron\Cache
 
       - name: Test

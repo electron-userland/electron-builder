@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, deepAssign, InvalidConfigurationError, log } from "builder-util"
-import { copyOrLinkFile, walk } from "builder-util/out/fs"
+import { copyOrLinkFile, walk } from "builder-util"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"

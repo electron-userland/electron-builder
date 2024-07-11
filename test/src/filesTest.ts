@@ -1,6 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { TmpDir, archFromString } from "builder-util"
-import { copyDir } from "builder-util/out/fs"
+import { TmpDir, archFromString, copyDir } from "builder-util"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -81,7 +80,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.ifNotWindows(
   "map resources",
   app(
     {
@@ -162,7 +161,7 @@ test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platfo
 
 // Squirrel.Windows is not supported on macOS anymore (32-bit)
 // Skipped due to bug in rimraf on Windows: `at fixWinEPERM (../node_modules/.pnpm/fs-extra@8.1.0/node_modules/fs-extra/lib/remove/rimraf.js:117:5)`
-test.ifNotMac.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
+test.ifDevOrLinuxCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
 
 test.ifMac("extraResources on macOS", () => doExtraResourcesTest(Platform.MAC))
 

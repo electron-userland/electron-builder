@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY } from "builder-util/out/fs"
+import { CONCURRENCY } from "builder-util"
 import { lstat, readdir } from "fs-extra"
 import * as path from "path"
 import { excludedNames, FileMatcher } from "../fileMatcher"

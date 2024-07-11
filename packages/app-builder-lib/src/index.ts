@@ -1,6 +1,5 @@
-import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish/out/publisher"
-import { log, InvalidConfigurationError } from "builder-util"
+import { log, InvalidConfigurationError, executeFinally } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"

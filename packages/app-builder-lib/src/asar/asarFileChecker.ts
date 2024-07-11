@@ -1,4 +1,4 @@
-import { statOrNull } from "builder-util/out/fs"
+import { statOrNull } from "builder-util"
 import { Node, readAsar } from "./asar"
 
 /** @internal */

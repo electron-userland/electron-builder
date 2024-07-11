@@ -1,12 +1,11 @@
 #! /usr/bin/env node
 
-import { InvalidConfigurationError, log } from "builder-util"
+import { InvalidConfigurationError, log, ExecError } from "builder-util"
 import * as chalk from "chalk"
 import { readJson } from "fs-extra"
 import * as isCi from "is-ci"
 import * as path from "path"
 import { loadEnv } from "read-config-file"
-import { ExecError } from "builder-util/out/util"
 import { build, configureBuildCommand, createYargs } from "../builder"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
