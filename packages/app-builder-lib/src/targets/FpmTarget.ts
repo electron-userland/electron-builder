@@ -1,5 +1,5 @@
 import { Arch, executeAppBuilder, getArchSuffix, log, TmpDir, toLinuxArchString, use, serializeToYaml, asArray } from "builder-util"
-import { unlinkIfExists } from "builder-util/out/fs"
+import { unlinkIfExists } from "builder-util"
 import { outputFile, stat } from "fs-extra"
 import { mkdir, readFile } from "fs/promises"
 import * as path from "path"

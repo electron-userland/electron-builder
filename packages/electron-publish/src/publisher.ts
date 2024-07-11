@@ -1,6 +1,5 @@
-import { Arch, log } from "builder-util"
+import { Arch, log, PADDING } from "builder-util"
 import { CancellationToken, ProgressCallbackTransform, PublishProvider } from "builder-util-runtime"
-import { PADDING } from "builder-util/out/log"
 import * as chalk from "chalk"
 import { createReadStream, stat, Stats } from "fs-extra"
 import { ClientRequest } from "http"

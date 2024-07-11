@@ -1,4 +1,4 @@
-import { FileTransformer } from "builder-util/out/fs"
+import { FileTransformer } from "builder-util"
 import { AsarIntegrity } from "./asar/integrity"
 import { Platform, PlatformPackager, ElectronPlatformName, AfterPackContext } from "./index"
 

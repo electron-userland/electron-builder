@@ -1,12 +1,25 @@
-import { addValue, Arch, archFromString, AsyncTaskManager, DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, serializeToYaml, TmpDir } from "builder-util"
+import {
+  addValue,
+  Arch,
+  archFromString,
+  AsyncTaskManager,
+  DebugLogger,
+  deepAssign,
+  InvalidConfigurationError,
+  log,
+  safeStringifyJson,
+  serializeToYaml,
+  TmpDir,
+  executeFinally,
+  orNullIfFileNotExist,
+  getArtifactArchName,
+} from "builder-util"
 import { CancellationToken } from "builder-util-runtime"
-import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { EventEmitter } from "events"
 import { mkdirs, chmod, outputFile } from "fs-extra"
 import * as isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getArtifactArchName } from "builder-util/out/arch"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar/asar"
 import { AfterPackContext, Configuration } from "./configuration"

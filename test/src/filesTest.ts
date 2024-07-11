@@ -1,6 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { TmpDir, archFromString } from "builder-util"
-import { copyDir } from "builder-util/out/fs"
+import { TmpDir, archFromString, copyDir } from "builder-util"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
