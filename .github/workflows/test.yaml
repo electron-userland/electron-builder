@@ -16,6 +16,7 @@ jobs:
   test-linux:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         testFiles:
           - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
@@ -97,6 +98,7 @@ jobs:
   test-windows:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         testFiles:
           - winCodeSignTest,differentialUpdateTest
