@@ -1,5 +1,11 @@
 # builder-util
 
+## 25.0.0-alpha.13
+
+### Patch Changes
+
+- [#8330](https://github.com/electron-userland/electron-builder/pull/8330) [`db1894d7`](https://github.com/electron-userland/electron-builder/commit/db1894d78a0bbf8377a787a25dddc17af22a4667) Thanks [@beyondkmp](https://github.com/beyondkmp)! - import builder-util from root instead of out
+
 ## 25.0.0-alpha.12
 
 ### Patch Changes

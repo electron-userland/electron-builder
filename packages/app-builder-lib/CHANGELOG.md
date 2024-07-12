@@ -1,5 +1,23 @@
 # app-builder-lib
 
+## 25.0.0-alpha.13
+
+### Patch Changes
+
+- [#8323](https://github.com/electron-userland/electron-builder/pull/8323) [`fa3275c0`](https://github.com/electron-userland/electron-builder/commit/fa3275c05b334f59453d04551fffa24bfa558e48) Thanks [@mmaietta](https://github.com/mmaietta)! - chore(deps): update dependency typescript to v5.5.3
+
+- [#8310](https://github.com/electron-userland/electron-builder/pull/8310) [`145ecb66`](https://github.com/electron-userland/electron-builder/commit/145ecb66baabd39ca523ebbba26ef484384fe8e7) Thanks [@beyondkmp](https://github.com/beyondkmp)! - update binary checking
+
+- [#8327](https://github.com/electron-userland/electron-builder/pull/8327) [`f9eae653`](https://github.com/electron-userland/electron-builder/commit/f9eae653985f332ead7545490c73aa27d90c35cd) Thanks [@mmaietta](https://github.com/mmaietta)! - fix(deps): update dependency minimatch to v10
+
+- [#8314](https://github.com/electron-userland/electron-builder/pull/8314) [`1337f158`](https://github.com/electron-userland/electron-builder/commit/1337f158c93d4c83ebaefb20833811fd90f05f16) Thanks [@beyondkmp](https://github.com/beyondkmp)! - change license file's encode to utf8 with BOM
+
+- Updated dependencies [[`db1894d7`](https://github.com/electron-userland/electron-builder/commit/db1894d78a0bbf8377a787a25dddc17af22a4667)]:
+  - builder-util@25.0.0-alpha.13
+  - dmg-builder@25.0.0-alpha.13
+  - electron-builder-squirrel-windows@25.0.0-alpha.13
+  - electron-publish@25.0.0-alpha.13
+
 ## 25.0.0-alpha.12
 
 ### Patch Changes
