@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log } from "builder-util"
-import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
+import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { mkdir, readlink } from "fs/promises"
 import { ensureSymlink } from "fs-extra"

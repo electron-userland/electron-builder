@@ -1,5 +1,4 @@
-import { Arch, debug, exec, log, spawn, isEmptyOrSpaces, getPath7za } from "builder-util"
-import { copyFile, walk } from "builder-util/out/fs"
+import { Arch, debug, exec, log, spawn, isEmptyOrSpaces, getPath7za, copyFile, walk } from "builder-util"
 import { compute7zCompressArgs } from "app-builder-lib/out/targets/archive"
 import { execWine, prepareWindowsExecutableArgs as prepareArgs } from "app-builder-lib/out/wine"
 import { WinPackager } from "app-builder-lib/out/winPackager"

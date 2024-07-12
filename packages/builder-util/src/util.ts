@@ -17,12 +17,15 @@ if (process.env.JEST_WORKER_ID == null) {
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export { log, debug } from "./log"
+export * from "./log"
 export { Arch, getArchCliNames, toLinuxArchString, getArchSuffix, ArchType, archFromString, defaultArchFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
+export { httpExecutor, NodeHttpExecutor } from "./nodeHttpExecutor"
+export * from "./promise"
+export * from "./arch"
 
-export { copyFile, exists } from "./fs"
+export * from "./fs"
 export { asArray } from "builder-util-runtime"
 
 export { deepAssign } from "./deepAssign"

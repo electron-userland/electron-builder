@@ -59,9 +59,6 @@ Array [
   "/opt/Test App ßW/resources/app-update.yml",
   "/opt/Test App ßW/resources/app.asar",
   "/opt/Test App ßW/resources/package-type",
-  "/opt/Test App ßW/swiftshader/",
-  "/opt/Test App ßW/swiftshader/libEGL.so",
-  "/opt/Test App ßW/swiftshader/libGLESv2.so",
   "/usr/share/applications/",
   "/usr/share/applications/testapp.desktop",
   "/usr/share/doc/",
@@ -268,6 +265,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {
@@ -479,6 +479,9 @@ Object {
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
   "LSApplicationCategoryType": "your.app.category.type",
+  "LSEnvironment": Object {
+    "MallocNanoZone": "0",
+  },
   "NSAppTransportSecurity": Object {
     "NSAllowsLocalNetworking": true,
     "NSExceptionDomains": Object {

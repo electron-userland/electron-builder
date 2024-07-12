@@ -1,7 +1,7 @@
 import { readFile } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as semver from "semver"
-import { log } from "builder-util/out/log"
+import { log } from "builder-util"
 import { release as osRelease } from "os"
 
 const macOsVersion = new Lazy<string>(async () => {

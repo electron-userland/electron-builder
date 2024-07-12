@@ -101,40 +101,6 @@ Object {
 }
 `;
 
-exports[`AppImage ia32 1`] = `
-Object {
-  "linux": Array [
-    Object {
-      "arch": "ia32",
-      "file": "Test App ßW-1.1.0-i386.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-i386.AppImage",
-      "updateInfo": Object {
-        "blockMapSize": "@blockMapSize",
-        "sha512": "@sha512",
-        "size": "@size",
-      },
-    },
-    Object {
-      "file": "latest-linux-ia32.yml",
-      "fileContent": Object {
-        "files": Array [
-          Object {
-            "blockMapSize": "@blockMapSize",
-            "sha512": "@sha512",
-            "size": "@size",
-            "url": "Test App ßW-1.1.0-i386.AppImage",
-          },
-        ],
-        "path": "Test App ßW-1.1.0-i386.AppImage",
-        "releaseDate": "@releaseDate",
-        "sha512": "@sha512",
-        "version": "1.1.0",
-      },
-    },
-  ],
-}
-`;
-
 exports[`forbid desktop.Exec 1`] = `"Please specify executable name as linux.executableName instead of linux.desktop.Exec"`;
 
 exports[`html license 1`] = `

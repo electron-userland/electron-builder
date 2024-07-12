@@ -10,7 +10,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended-requiring-type-checking",
   ],
   parserOptions: {
-    project: ["./packages/*/tsconfig.json", "./test/tsconfig.json"],
+    project: ["./packages/*/tsconfig.json"],
   },
   rules: {
     semi: "off",
@@ -41,6 +41,6 @@ module.exports = {
         // "allowExpressions": false,
       },
     ],
-    "@typescript-eslint/no-redundant-type-constituents": "off"
+    "@typescript-eslint/no-redundant-type-constituents": "off",
   },
 }
