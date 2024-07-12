@@ -1,3 +1,17 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.12...v) (2024-07-12)
+
+
+### Bug Fixes
+
+* binary checking for unpacked assets ([#8310](https://github.com/electron-userland/electron-builder/issues/8310)) ([145ecb6](https://github.com/electron-userland/electron-builder/commit/145ecb66baabd39ca523ebbba26ef484384fe8e7))
+* **deps:** update dependency minimatch to v10 ([#8327](https://github.com/electron-userland/electron-builder/issues/8327)) ([f9eae65](https://github.com/electron-userland/electron-builder/commit/f9eae653985f332ead7545490c73aa27d90c35cd))
+* **deps:** update dependency read-config-file to v6.4.0 ([#8324](https://github.com/electron-userland/electron-builder/issues/8324)) ([1f1f92c](https://github.com/electron-userland/electron-builder/commit/1f1f92c978acfde789abd740086be2e6398fe5e6))
+* Modify the import method of the builder-util package ([#8330](https://github.com/electron-userland/electron-builder/issues/8330)) ([db1894d](https://github.com/electron-userland/electron-builder/commit/db1894d78a0bbf8377a787a25dddc17af22a4667))
+* Nsis license file encode issue ([#8314](https://github.com/electron-userland/electron-builder/issues/8314)) ([1337f15](https://github.com/electron-userland/electron-builder/commit/1337f158c93d4c83ebaefb20833811fd90f05f16))
+* **rpm-updater:** stop uninstalling app before update ([#8311](https://github.com/electron-userland/electron-builder/issues/8311)) ([35a0784](https://github.com/electron-userland/electron-builder/commit/35a0784eb4cffc2fcbf33ec58fefbacf8e8e5125)), closes [#8305](https://github.com/electron-userland/electron-builder/issues/8305)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.11...v) (2024-07-10)
 
 

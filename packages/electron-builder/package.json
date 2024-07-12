@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "25.0.0-alpha.12",
+  "version": "25.0.0-alpha.13",
   "main": "out/index.js",
   "files": [
     "out"

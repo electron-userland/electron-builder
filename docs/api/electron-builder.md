@@ -111,7 +111,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><a href="#module_app-builder-lib.Framework+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Framework+beforeCopyExtraFiles"><code>.beforeCopyExtraFiles(options)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></li>
+<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></li>
 <li><a href="#module_app-builder-lib.Framework+getDefaultIcon"><code>.getDefaultIcon(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.Framework+getExcludedDependencies"><code>.getExcludedDependencies(platform)</code></a> ⇒ <code>null</code> | <code>Array</code></li>
 <li><a href="#module_app-builder-lib.Framework+getMainFile"><code>.getMainFile(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
@@ -341,7 +341,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><a href="#module_app-builder-lib.Framework+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Framework+beforeCopyExtraFiles"><code>.beforeCopyExtraFiles(options)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></li>
+<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></li>
 <li><a href="#module_app-builder-lib.Framework+getDefaultIcon"><code>.getDefaultIcon(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.Framework+getExcludedDependencies"><code>.getExcludedDependencies(platform)</code></a> ⇒ <code>null</code> | <code>Array</code></li>
 <li><a href="#module_app-builder-lib.Framework+getMainFile"><code>.getMainFile(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
@@ -382,7 +382,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </tbody>
 </table>
 <p><a name="module_app-builder-lib.Framework+createTransformer"></a></p>
-<h3 id="framework.createtransformer()-%E2%87%92-null-%7C-module%3Apackages%2Fbuilder-util%2Fout%2Ffs.__type"><code>framework.createTransformer()</code> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></h3>
+<h3 id="framework.createtransformer()-%E2%87%92-null-%7C-module%3Abuilder-util%2Fout%2Ffs.__type"><code>framework.createTransformer()</code> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></h3>
 <p><a name="module_app-builder-lib.Framework+getDefaultIcon"></a></p>
 <h3 id="framework.getdefaulticon(platform)-%E2%87%92-null-%7C-string"><code>framework.getDefaultIcon(platform)</code> ⇒ <code>null</code> | <code>String</code></h3>
 <table>
