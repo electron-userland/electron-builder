@@ -15,7 +15,7 @@
     "lint": "eslint packages --ext .ts",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
-    "pretest": "pnpm lint && pnpm lint-deps",
+    "pretest": "pnpm lint-deps && pnpm lint",
     "prettier": "prettier 'packages/**/*.{ts, js}' 'test/src/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher",
@@ -30,8 +30,8 @@
     "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate-all": "pnpm generate-schema && pnpm generate-docs && pnpm prettier",
     "ci:test": "node ./test/out/helpers/runTests.js",
-    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm run compile && pnpm run generate-schema && pnpm run generate-docs && pnpm run prettier && git add .",
-    "ci:publish": "pnpm compile && pnpm publish -r && changeset tag",
+    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
+    "ci:publish": "pnpm compile && pnpm publish -r --tag next && changeset tag",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater packages/dmg-builder",
     "jsdoc2md2html": "node scripts/jsdoc2md2html.js",
     "prepare": "husky install"
@@ -51,7 +51,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "catharsis": "0.9.0",
-    "conventional-changelog-cli": "2.2.2",
+    "conventional-changelog-cli": "5.0.0",
     "dmd": "6.1.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -60,21 +60,21 @@
     "globby": "11.1.0",
     "husky": "7.0.4",
     "jest-cli": "27.5.1",
-    "jsdoc-to-markdown": "7.0.1",
-    "lint-staged": "11.1.2",
+    "jsdoc-to-markdown": "8.0.1",
+    "lint-staged": "15.2.2",
     "markdown2html-pro": "1.0.6",
     "path-sort": "0.1.0",
     "prettier": "3.2.4",
     "replace-in-file": "6.2.0",
     "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
-    "typescript": "5.3.3",
-    "typescript-json-schema": "0.51.0",
+    "typescript": "5.5.3",
+    "typescript-json-schema": "0.63.0",
     "v8-compile-cache": "2.3.0"
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=8.0.0"
+    "pnpm": ">=8"
   },
   "pnpm": {
     "patchedDependencies": {

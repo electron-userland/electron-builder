@@ -1,17 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
-import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix } from "builder-util"
-import { signAsync } from "@electron/osx-sign"
+import { deepAssign, Arch, AsyncTaskManager, exec, InvalidConfigurationError, log, use, getArchSuffix, copyFile, statOrNull, unlinkIfExists, orIfFileNotExist } from "builder-util"
 import { PerFileSignOptions, SignOptions } from "@electron/osx-sign/dist/cjs/types"
 import { mkdir, readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
 import { AppInfo } from "./appInfo"
-import { CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, removeKeychain, reportError } from "./codeSign/macCodeSign"
+import { CertType, CodeSigningInfo, createKeychain, CreateKeychainOptions, findIdentity, Identity, isSignAllowed, removeKeychain, reportError, sign } from "./codeSign/macCodeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext, ElectronPlatformName } from "./index"
-import { MacConfiguration, MasConfiguration, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
+import { MacConfiguration, MasConfiguration, NotarizeNotaryOptions } from "./options/macOptions"
 import { Packager } from "./packager"
 import { chooseNotNull, resolveFunction, PlatformPackager } from "./platformPackager"
 import { ArchiveTarget } from "./targets/ArchiveTarget"
@@ -20,40 +17,46 @@ import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { isMacOsHighSierra } from "./util/macosVersion"
 import { getTemplatePath } from "./util/pathManager"
 import * as fs from "fs/promises"
-import { notarize, NotarizeOptions } from "@electron/notarize"
-import {
-  LegacyNotarizePasswordCredentials,
-  LegacyNotarizeStartOptions,
-  NotaryToolStartOptions,
-  NotaryToolCredentials,
-  NotaryToolKeychainCredentials,
-} from "@electron/notarize/lib/types"
+import { notarize } from "@electron/notarize"
+import { NotarizeOptionsNotaryTool, NotaryToolKeychainCredentials } from "@electron/notarize/lib/types"
+import { MemoLazy } from "builder-util-runtime"
 
 export type CustomMacSignOptions = SignOptions
 export type CustomMacSign = (configuration: CustomMacSignOptions, packager: MacPackager) => Promise<void>
 
-export default class MacPackager extends PlatformPackager<MacConfiguration> {
-  readonly codeSigningInfo = new Lazy<CodeSigningInfo>(() => {
-    const cscLink = this.getCscLink()
-    if (cscLink == null || process.platform !== "darwin") {
+export class MacPackager extends PlatformPackager<MacConfiguration> {
+  readonly codeSigningInfo = new MemoLazy<CreateKeychainOptions | null, CodeSigningInfo>(
+    () => {
+      const cscLink = this.getCscLink()
+      if (cscLink == null || process.platform !== "darwin") {
+        return null
+      }
+
+      const selected = {
+        tmpDir: this.info.tempDirManager,
+        cscLink,
+        cscKeyPassword: this.getCscPassword(),
+        cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+        cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
+        currentDir: this.projectDir,
+      }
+
+      return selected
+    },
+    async selected => {
+      if (selected) {
+        return createKeychain(selected).then(result => {
+          const keychainFile = result.keychainFile
+          if (keychainFile != null) {
+            this.info.disposeOnBuildFinish(() => removeKeychain(keychainFile))
+          }
+          return result
+        })
+      }
+
       return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
     }
-
-    return createKeychain({
-      tmpDir: this.info.tempDirManager,
-      cscLink,
-      cscKeyPassword: this.getCscPassword(),
-      cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
-      cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
-      currentDir: this.projectDir,
-    }).then(result => {
-      const keychainFile = result.keychainFile
-      if (keychainFile != null) {
-        this.info.disposeOnBuildFinish(() => removeKeychain(keychainFile))
-      }
-      return result
-    })
-  })
+  )
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("icns"))
 
@@ -385,6 +388,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
         hardenedRuntime: hardenedRuntime ?? undefined,
         timestamp: customSignOptions.timestamp || undefined,
         requirements: requirements || undefined,
+        additionalArguments: customSignOptions.additionalArguments || [],
       }
       log.debug({ file: log.filePath(filePath), ...args }, "selecting signing options")
       return args
@@ -408,7 +412,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       customSign ? "executing custom sign" : "signing"
     )
 
-    return customSign ? Promise.resolve(customSign(opts, this)) : signAsync(opts)
+    return customSign ? Promise.resolve(customSign(opts, this)) : sign(opts)
   }
 
   //noinspection JSMethodCanBeStatic
@@ -511,9 +515,18 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
     log.info(null, "notarization successful")
   }
 
-  private getNotarizeOptions(appPath: string) {
+  private getNotarizeOptions(appPath: string): NotarizeOptionsNotaryTool | undefined {
+    let teamId = process.env.APPLE_TEAM_ID
     const appleId = process.env.APPLE_ID
     const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD
+    const options = this.platformSpecificBuildOptions.notarize
+    const tool = "notarytool"
+
+    const optionsTeamId = (options as NotarizeNotaryOptions)?.teamId
+    if (optionsTeamId) {
+      log.warn(null, "Please specify notarization Team ID in the `APPLE_TEAM_ID` env var instead of `notarize.teamId`")
+      teamId = optionsTeamId
+    }
 
     // option 1: app specific password
     if (appleId || appleIdPassword) {
@@ -523,7 +536,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!appleIdPassword) {
         throw new InvalidConfigurationError(`APPLE_APP_SPECIFIC_PASSWORD env var needs to be set`)
       }
-      return this.generateNotarizeOptions(appPath, { appleId, appleIdPassword })
+      if (!teamId) {
+        throw new InvalidConfigurationError(`APPLE_TEAM_ID env var needs to be set`)
+      }
+      return { tool, appPath, appleId, appleIdPassword, teamId }
     }
 
     // option 2: API key
@@ -534,7 +550,7 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (!appleApiKey || !appleApiKeyId || !appleApiIssuer) {
         throw new InvalidConfigurationError(`Env vars APPLE_API_KEY, APPLE_API_KEY_ID and APPLE_API_ISSUER need to be set`)
       }
-      return this.generateNotarizeOptions(appPath, undefined, { appleApiKey, appleApiKeyId, appleApiIssuer })
+      return { tool, appPath, appleApiKey, appleApiKeyId, appleApiIssuer }
     }
 
     // option 3: keychain
@@ -545,48 +561,10 @@ export default class MacPackager extends PlatformPackager<MacConfiguration> {
       if (keychain) {
         args = { ...args, keychain }
       }
-      return this.generateNotarizeOptions(appPath, undefined, args)
+      return { tool, appPath, ...args }
     }
 
     // if no credentials provided, skip silently
-    return undefined
-  }
-
-  private generateNotarizeOptions(appPath: string, legacyLogin?: LegacyNotarizePasswordCredentials, notaryToolLogin?: NotaryToolCredentials): NotarizeOptions | undefined {
-    const options = this.platformSpecificBuildOptions.notarize
-    if (typeof options === "boolean" && legacyLogin) {
-      const proj: LegacyNotarizeStartOptions = {
-        appPath,
-        ...legacyLogin,
-        appBundleId: this.appInfo.id,
-      }
-      return proj
-    }
-    const teamId = (options as NotarizeNotaryOptions)?.teamId
-    if ((teamId || options === true) && (legacyLogin || notaryToolLogin)) {
-      const proj: NotaryToolStartOptions = {
-        appPath,
-        ...(legacyLogin ?? notaryToolLogin!),
-        teamId,
-      }
-      return { tool: "notarytool", ...proj }
-    }
-    if (legacyLogin) {
-      const { appBundleId, ascProvider } = options as NotarizeLegacyOptions
-      return {
-        appPath,
-        ...legacyLogin,
-        appBundleId: appBundleId || this.appInfo.id,
-        ascProvider: ascProvider || undefined,
-      }
-    }
-    if (notaryToolLogin) {
-      return {
-        tool: "notarytool",
-        appPath,
-        ...notaryToolLogin,
-      }
-    }
     return undefined
   }
 }

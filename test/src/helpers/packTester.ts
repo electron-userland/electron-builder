@@ -1,7 +1,6 @@
-import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za } from "builder-util"
+import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
-import { copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util/out/fs"
-import { executeFinally } from "builder-util/out/promise"
+import { executeFinally } from "builder-util"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
@@ -142,7 +141,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         const base = function (platform: Platform, arch?: Arch): string {
           return path.join(
             outDir,
-            `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`,
+            `${platform.buildConfigurationKey}${getArchSuffix(arch ?? Arch.x64)}${platform === Platform.MAC ? "" : "-unpacked"}`,
             platform === Platform.MAC ? `${packager.appInfo.productFilename}.app/Contents` : ""
           )
         }

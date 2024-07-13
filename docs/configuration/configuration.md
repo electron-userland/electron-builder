@@ -93,6 +93,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <p><code id="Configuration-npmRebuild">npmRebuild</code> = <code>true</code> Boolean - Whether to <a href="https://docs.npmjs.com/cli/rebuild">rebuild</a> native dependencies before starting to package the app.</p>
 </li>
 <li>
+<p><code id="Configuration-nativeRebuilder">nativeRebuilder</code> = <code>sequential</code> “legacy” | “sequential” | “parallel” | “undefined” - Use <code>legacy</code> app-builder binary for installing native dependencies, or <code>@electron/rebuild</code> in <code>sequential</code> or <code>parallel</code> compilation modes.</p>
+</li>
+<li>
 <p><code id="Configuration-buildNumber">buildNumber</code> String | “undefined” - The build number. Maps to the <code>--iteration</code> flag for builds using FPM on Linux. If not defined, then it will fallback to <code>BUILD_NUMBER</code> or <code>TRAVIS_BUILD_NUMBER</code> or <code>APPVEYOR_BUILD_NUMBER</code> or <code>CIRCLE_BUILD_NUM</code> or <code>BUILD_BUILDNUMBER</code> or <code>CI_PIPELINE_IID</code> env.</p>
 </li>
 </ul>
@@ -144,6 +147,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 <li><code id="Configuration-launchUiVersion">launchUiVersion</code> Boolean | String | “undefined” - <em>libui-based frameworks only</em> The version of LaunchUI you are packaging for. Applicable for Windows only. Defaults to version suitable for used framework version.</li>
 <li><code id="Configuration-framework">framework</code> String | “undefined” - The framework name. One of <code>electron</code>, <code>proton</code>, <code>libui</code>. Defaults to <code>electron</code>.</li>
 <li><code id="Configuration-beforePack">beforePack</code> module:app-builder-lib/out/configuration.__type | String | “undefined” - The function (or path to file or module id) to be <a href="#beforepack">run before pack</a></li>
+<li><code id="Configuration-afterExtract">afterExtract</code> module:app-builder-lib/out/configuration.__type | String | “undefined” - The function (or path to file or module id) to be <a href="#afterextract">run after the prebuilt Electron binary has been extracted to the output directory</a></li>
 </ul>
 <hr>
 <ul>
@@ -183,6 +187,9 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 </li>
 <li>
 <p><code id="Configuration-removePackageKeywords">removePackageKeywords</code> = <code>true</code> Boolean - Whether to remove <code>keywords</code> field from <code>package.json</code> files.</p>
+</li>
+<li>
+<p><code id="Configuration-disableSanityCheckAsar">disableSanityCheckAsar</code> = <code>false</code> Boolean - Whether to disable sanity check asar package (useful for custom electron forks that implement their own encrypted integrity validation)</p>
 </li>
 </ul>
 

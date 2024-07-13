@@ -5,7 +5,21 @@ import { WinPackager } from "../../winPackager"
 import { NsisOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { nsisTemplatesDir } from "./nsisUtil"
+import * as fs from "fs"
 
+function convertFileToUtf8WithBOMSync(filePath: string): boolean {
+  try {
+    const data = fs.readFileSync(filePath)
+    // UTF-8 BOM is EF BB BF
+    const BOM = Buffer.from([0xef, 0xbb, 0xbf])
+    const dataWithBOM = Buffer.concat([BOM, data])
+    fs.writeFileSync(filePath, dataWithBOM)
+    return true
+  } catch (err) {
+    console.error("Failed to convert file to UTF-8 with BOM: ", err)
+    return false
+  }
+}
 export async function computeLicensePage(packager: WinPackager, options: NsisOptions, scriptGenerator: NsisScriptGenerator, languages: Array<string>): Promise<void> {
   const license = await getNotLocalizedLicenseFile(options.license, packager)
   if (license != null) {
@@ -43,6 +57,7 @@ export async function computeLicensePage(packager: WinPackager, options: NsisOpt
   let defaultFile: string | null = null
   for (const item of licenseFiles) {
     unspecifiedLangs.delete(item.langWithRegion)
+    convertFileToUtf8WithBOMSync(item.file)
     if (defaultFile == null) {
       defaultFile = item.file
     }

@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { AsyncTaskManager, log } from "builder-util"
-import { CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util/out/fs"
+import { AsyncTaskManager, log, CONCURRENCY, FileCopier, FileTransformer, Link, MAX_FILE_REQUESTS, statOrNull, walk } from "builder-util"
 import { Stats } from "fs"
 import { mkdir, readlink } from "fs/promises"
 import { ensureSymlink } from "fs-extra"
@@ -13,6 +12,7 @@ import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { AppFileWalker } from "./AppFileWalker"
 import { NodeModuleCopyHelper } from "./NodeModuleCopyHelper"
+import { NodeModuleInfo } from "./packageDependencies"
 
 const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
@@ -21,25 +21,15 @@ export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
   if (file === fileSet.src) {
     return fileSet.destination
-  } else {
-    const src = fileSet.src
-    const dest = fileSet.destination
-    if (file.length > src.length && file.startsWith(src) && file[src.length] === path.sep) {
-      return dest + file.substring(src.length)
-    } else {
-      // hoisted node_modules
-      // not lastIndexOf, to ensure that nested module (top-level module depends on) copied to parent node_modules, not to top-level directory
-      // project https://github.com/angexis/punchcontrol/commit/cf929aba55c40d0d8901c54df7945e1d001ce022
-      let index = file.indexOf(NODE_MODULES_PATTERN)
-      if (index < 0 && file.endsWith(`${path.sep}node_modules`)) {
-        index = file.length - 13
-      }
-      if (index < 0) {
-        throw new Error(`File "${file}" not under the source directory "${fileSet.src}"`)
-      }
-      return dest + file.substring(index)
-    }
   }
+
+  const src = fileSet.src
+  const dest = fileSet.destination
+  // get node_modules path relative to src and then append to dest
+  if (file.startsWith(src)) {
+    return path.join(dest, path.relative(src, file))
+  }
+  return dest
 }
 
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager, transformer: FileTransformer) {
@@ -191,25 +181,31 @@ function validateFileSet(fileSet: ResolvedFileSet): ResolvedFileSet {
 
 /** @internal */
 export async function computeNodeModuleFileSets(platformPackager: PlatformPackager<any>, mainMatcher: FileMatcher): Promise<Array<ResolvedFileSet>> {
-  const deps = await platformPackager.info.getNodeDependencyInfo(platformPackager.platform).value
+  const deps = (await platformPackager.info.getNodeDependencyInfo(platformPackager.platform).value) as Array<NodeModuleInfo>
+
   const nodeModuleExcludedExts = getNodeModuleExcludedExts(platformPackager)
   // serial execution because copyNodeModules is concurrent and so, no need to increase queue/pressure
   const result = new Array<ResolvedFileSet>()
   let index = 0
+  const NODE_MODULES = "node_modules"
   for (const info of deps) {
     const source = info.dir
-    const destination = getDestinationPath(source, { src: mainMatcher.from, destination: mainMatcher.to, files: [], metadata: null as any })
-
-    // use main matcher patterns, so, user can exclude some files in such hoisted node modules
-    // source here includes node_modules, but pattern base should be without because users expect that pattern "!node_modules/loot-core/src{,/**/*}" will work
-    const matcher = new FileMatcher(path.dirname(source), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+    const destination = path.join(mainMatcher.to, NODE_MODULES, info.name)
+    // use main matcher patterns, so, user can exclude some files !node_modules/xxxx
+    const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
     const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
-    const files = await copier.collectNodeModules(
-      source,
-      info.deps.map(it => it.name),
-      nodeModuleExcludedExts
-    )
+    const files = await copier.collectNodeModules(info, nodeModuleExcludedExts)
     result[index++] = validateFileSet({ src: source, destination, files, metadata: copier.metadata })
+
+    if (info.conflictDependency) {
+      for (const dep of info.conflictDependency) {
+        const source = dep.dir
+        const destination = path.join(mainMatcher.to, NODE_MODULES, info.name, NODE_MODULES, dep.name)
+        const matcher = new FileMatcher(path.dirname(path.dirname(source)), destination, mainMatcher.macroExpander, mainMatcher.patterns)
+        const copier = new NodeModuleCopyHelper(matcher, platformPackager.info)
+        result[index++] = validateFileSet({ src: source, destination, files: await copier.collectNodeModules(dep, nodeModuleExcludedExts), metadata: copier.metadata })
+      }
+    }
   }
   return result
 }

@@ -2,6 +2,7 @@ import { isCI as isCi } from "ci-info"
 import * as path from "path"
 import * as fs from "fs/promises"
 import { ELECTRON_VERSION, getElectronCacheDir } from "./testConfig"
+import { gte } from "semver"
 
 const executeAppBuilder: (options: any) => Promise<any> = require(path.join(__dirname, "../../..", "packages/builder-util")).executeAppBuilder
 
@@ -41,13 +42,18 @@ export function downloadAllRequiredElectronVersions(): Promise<any> {
 
   const versions: Array<any> = []
   for (const platform of platforms) {
-    const archs =
+    const archs: string[] =
       platform === "mas" || platform === "darwin"
         ? ["x64"]
         : platform === "win32"
           ? ["ia32", "x64"]
           : require(`${path.join(__dirname, "../../..")}/packages/builder-util/out/util`).getArchCliNames()
     for (const arch of archs) {
+      if (gte(ELECTRON_VERSION, "19.0.0") && platform === "linux" && arch === "ia32") {
+        // Chromium dropped support for ia32 linux binaries in 102.0.4999.0
+        // https://www.electronjs.org/docs/latest/breaking-changes#removed-ia32-linux-binaries
+        continue
+      }
       versions.push({
         version: ELECTRON_VERSION,
         arch,

@@ -1,4 +1,12 @@
-See [publish configuration](configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
+Auto updates are enabled by the `electron-updater` package. Ideally, auto updates are configured to run in a CI pipeline to automatically provision new releases. See [publish configuration](configuration/publish.md) for information on how to configure your local or CI environment for automated deployments.
+
+Auto updates work as follows:
+
+- You configure the package to build release metadata (`latest.yml`)
+- Electron builder uploads the actual release targets and metadata files to the configured target (except for generic server, where you have to upload manually)
+- You configure the Electron application to use auto-updates, which queries the publish server for possible new releases
+
+Read the remainder of this guide to configure everything.
 
 !!! info "Code signing is required on macOS"
     macOS application must be [signed](code-signing.md) in order for auto updating to work.
@@ -17,31 +25,46 @@ All these targets are default, custom configuration is not required. (Though it 
 
 ## Differences between electron-updater and built-in autoUpdater
 
-* Dedicated release server is not required.
+The `electron-updater` package offers a different functionality compared to Electron's built-in auto-updater. Here are the differences:
+
+* A dedicated release server is not required.
 * Code signature validation not only on macOS, but also on Windows.
 * All required metadata files and artifacts are produced and published automatically.
 * Download progress and [staged rollouts](#staged-rollouts) supported on all platforms.
-* Different providers supported out of the box ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Keygen](https://keygen.sh/docs/api/#auto-updates-electron) and generic HTTP(s) server).
+* Different providers supported out of the box: ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Keygen](https://keygen.sh/docs/api/#auto-updates-electron) and generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
 
 ## Quick Setup Guide
 
 1. Install [electron-updater](https://yarn.pm/electron-updater) as an app dependency.
 
-2. [Configure publish](configuration/publish.md).
+2. Configure the [`publish`](configuration/publish.md) options depending on where you want to host your release files.
 
-3. Use `autoUpdater` from `electron-updater` instead of `electron`:
-    
-    JavaScript
+3. Build your application and check that the build directory contains the metadata `.yml` files next to the built application. For most publish targets, the building step will also upload the files, except for the generic server option, where you have to upload your built releases and metadata manually.
+
+4. Use `autoUpdater` from `electron-updater` instead of `electron`:
+
+    CommonJS
     ```js
     const { autoUpdater } = require("electron-updater")
     ```
-    ES2015
+    ESM
     ```js
     import { autoUpdater } from "electron-updater"
     ```
+    TypeScript
+    ```typescript
+    import electronUpdater, { type AppUpdater } from 'electron-updater';
 
-4. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
+    export function getAutoUpdater(): AppUpdater {
+       // Using destructuring to access autoUpdater due to the CommonJS module of 'electron-updater'.
+       // It is a workaround for ESM compatibility issues, see https://github.com/electron-userland/electron-builder/issues/7976.
+       const { autoUpdater } = electronUpdater;
+       return autoUpdater;
+    }
+    ```
+
+5. Call `autoUpdater.checkForUpdatesAndNotify()`. Or, if you need custom behaviour, implement `electron-updater` events, check examples below.
 
 !!! note
     1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it).
@@ -201,86 +224,146 @@ Emitted on progress.
 <a name="module_builder-util-runtime"></a>
 ## builder-util-runtime
 
-* [builder-util-runtime](#module_builder-util-runtime)
-    * [`.BaseS3Options`](#BaseS3Options) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.BintrayOptions`](#BintrayOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.BlockMap`](#BlockMap)
-    * [`.BlockMapDataHolder`](#BlockMapDataHolder)
-    * [`.CustomPublishOptions`](#CustomPublishOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.DownloadOptions`](#DownloadOptions)
-    * [`.GenericServerOptions`](#GenericServerOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.GithubOptions`](#GithubOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.KeygenOptions`](#KeygenOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.PackageFileInfo`](#PackageFileInfo) ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
-    * [`.ProgressInfo`](#ProgressInfo)
-    * [`.PublishConfiguration`](#PublishConfiguration)
-    * [`.ReleaseNoteInfo`](#ReleaseNoteInfo)
-    * [`.RequestHeaders`](#RequestHeaders) ⇐ <code>[key: string]: string</code>
-    * [`.S3Options`](#S3Options) ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
-    * [`.SnapStoreOptions`](#SnapStoreOptions) ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
-    * [`.SpacesOptions`](#SpacesOptions) ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
-    * [`.UpdateFileInfo`](#UpdateFileInfo) ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
-    * [`.UpdateInfo`](#UpdateInfo)
-    * [`.WindowsUpdateInfo`](#WindowsUpdateInfo) ⇐ <code>[UpdateInfo](#UpdateInfo)</code>
-    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#CancellationToken) ⇐ <code>module:events.EventEmitter</code>
-        * [`.cancel()`](#module_builder-util-runtime.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_builder-util-runtime.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:builder-util-runtime/out/CancellationToken.R&gt;</code>
-        * [`.dispose()`](#module_builder-util-runtime.CancellationToken+dispose)
-    * [.DigestTransform](#DigestTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_builder-util-runtime.DigestTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_builder-util-runtime.DigestTransform+_transform)
-        * [`.validate()`](#module_builder-util-runtime.DigestTransform+validate) ⇒ <code>null</code>
-    * [.HttpError](#HttpError) ⇐ <code>Error</code>
-        * [`.isServerError()`](#module_builder-util-runtime.HttpError+isServerError) ⇒ <code>Boolean</code>
-    * [.HttpExecutor](#HttpExecutor)
-        * [`.addErrorAndTimeoutHandlers(request, reject)`](#module_builder-util-runtime.HttpExecutor+addErrorAndTimeoutHandlers)
-        * [`.createRequest(options, callback)`](#module_builder-util-runtime.HttpExecutor+createRequest) ⇒ <code>module:builder-util-runtime/out/httpExecutor.T</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_builder-util-runtime.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;String&gt;</code>
-        * [`.downloadToBuffer(url, options)`](#module_builder-util-runtime.HttpExecutor+downloadToBuffer) ⇒ <code>Promise&lt;module:global.Buffer&gt;</code>
-        * [`.prepareRedirectUrlOptions(redirectUrl, options)`](#module_builder-util-runtime.HttpExecutor+prepareRedirectUrlOptions) ⇒ <code>module:http.RequestOptions</code>
-        * [`.request(options, cancellationToken, data)`](#module_builder-util-runtime.HttpExecutor+request) ⇒ <code>Promise&lt; \| String&gt;</code>
-        * [`.retryOnServerError(task, maxRetries)`](#module_builder-util-runtime.HttpExecutor+retryOnServerError) ⇒ <code>Promise&lt;any&gt;</code>
-    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_builder-util-runtime.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_builder-util-runtime.ProgressCallbackTransform+_transform)
-    * [.UUID](#UUID)
-        * [`.check(uuid, offset)`](#module_builder-util-runtime.UUID+check) ⇒ <code>"undefined"</code> \| <code>module:builder-util-runtime/out/uuid.__object</code> \| <code>module:builder-util-runtime/out/uuid.__object</code>
-        * [`.inspect()`](#module_builder-util-runtime.UUID+inspect) ⇒ <code>String</code>
-        * [`.parse(input)`](#module_builder-util-runtime.UUID+parse) ⇒ <code>module:global.Buffer</code>
-        * [`.toString()`](#module_builder-util-runtime.UUID+toString) ⇒ <code>String</code>
-        * [`.v5(name, namespace)`](#module_builder-util-runtime.UUID+v5) ⇒ <code>any</code>
-    * [.XElement](#XElement)
-        * [`.attribute(name)`](#module_builder-util-runtime.XElement+attribute) ⇒ <code>String</code>
-        * [`.element(name, ignoreCase, errorIfMissed)`](#module_builder-util-runtime.XElement+element) ⇒ <code>[XElement](#XElement)</code>
-        * [`.elementOrNull(name, ignoreCase)`](#module_builder-util-runtime.XElement+elementOrNull) ⇒ <code>null</code> \| <code>[XElement](#XElement)</code>
-        * [`.getElements(name, ignoreCase)`](#module_builder-util-runtime.XElement+getElements) ⇒ <code>Array&lt;[XElement](#XElement)&gt;</code>
-        * [`.elementValueOrEmpty(name, ignoreCase)`](#module_builder-util-runtime.XElement+elementValueOrEmpty) ⇒ <code>String</code>
-        * [`.removeAttribute(name)`](#module_builder-util-runtime.XElement+removeAttribute)
-    * [`.asArray(v)`](#module_builder-util-runtime.asArray) ⇒ <code>Array&lt;module:builder-util-runtime.T&gt;</code>
-    * [`.configureRequestOptions(options, token, method)`](#module_builder-util-runtime.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
-    * [`.configureRequestOptionsFromUrl(url, options)`](#module_builder-util-runtime.configureRequestOptionsFromUrl) ⇒ <code>module:http.RequestOptions</code>
-    * [`.configureRequestUrl(url, options)`](#module_builder-util-runtime.configureRequestUrl)
-    * [`.createHttpError(response, description)`](#module_builder-util-runtime.createHttpError) ⇒ <code>[HttpError](#HttpError)</code>
-    * [`.getS3LikeProviderBaseUrl(configuration)`](#module_builder-util-runtime.getS3LikeProviderBaseUrl) ⇒ <code>String</code>
-    * [`.newError(message, code)`](#module_builder-util-runtime.newError) ⇒ <code>Error</code>
-    * [`.parseDn(seq)`](#module_builder-util-runtime.parseDn) ⇒ <code>Map&lt;String \| String&gt;</code>
-    * [`.parseJson(result)`](#module_builder-util-runtime.parseJson) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.parseXml(data)`](#module_builder-util-runtime.parseXml) ⇒ <code>[XElement](#XElement)</code>
-    * [`.safeGetHeader(response, headerKey)`](#module_builder-util-runtime.safeGetHeader) ⇒ <code>any</code>
-    * [`.safeStringifyJson(data, skippedNames)`](#module_builder-util-runtime.safeStringifyJson) ⇒ <code>String</code>
+- [Auto-updatable Targets](#auto-updatable-targets)
+- [Differences between electron-updater and built-in autoUpdater](#differences-between-electron-updater-and-built-in-autoupdater)
+- [Quick Setup Guide](#quick-setup-guide)
+- [Examples](#examples)
+  - [Custom Options instantiating updater Directly](#custom-options-instantiating-updater-directly)
+- [Debugging](#debugging)
+- [Compatibility](#compatibility)
+- [Staged Rollouts](#staged-rollouts)
+- [File Generated and Uploaded in Addition](#file-generated-and-uploaded-in-addition)
+- [Private GitHub Update Repo](#private-github-update-repo)
+- [Events](#events)
+    - [Event: `error`](#event-error)
+    - [Event: `checking-for-update`](#event-checking-for-update)
+    - [Event: `update-available`](#event-update-available)
+    - [Event: `update-not-available`](#event-update-not-available)
+    - [Event: `download-progress`](#event-download-progress)
+    - [Event: `update-downloaded`](#event-update-downloaded)
+- [API](#api)
+- [builder-util-runtime](#builder-util-runtime)
+  - [`BaseS3Options` ⇐ PublishConfiguration](#bases3options--publishconfiguration)
+  - [`BintrayOptions` ⇐ PublishConfiguration](#bintrayoptions--publishconfiguration)
+  - [`BlockMap`](#blockmap)
+  - [`BlockMapDataHolder`](#blockmapdataholder)
+  - [`CustomPublishOptions` ⇐ PublishConfiguration](#custompublishoptions--publishconfiguration)
+  - [`DownloadOptions`](#downloadoptions)
+  - [`GenericServerOptions` ⇐ PublishConfiguration](#genericserveroptions--publishconfiguration)
+  - [`GithubOptions` ⇐ PublishConfiguration](#githuboptions--publishconfiguration)
+  - [`KeygenOptions` ⇐ PublishConfiguration](#keygenoptions--publishconfiguration)
+  - [`PackageFileInfo` ⇐ BlockMapDataHolder](#packagefileinfo--blockmapdataholder)
+  - [`ProgressInfo`](#progressinfo)
+  - [`PublishConfiguration`](#publishconfiguration)
+  - [`ReleaseNoteInfo`](#releasenoteinfo)
+  - [`RequestHeaders` ⇐ \[key: string\]: OutgoingHttpHeader | undefined](#requestheaders--key-string-outgoinghttpheader--undefined)
+  - [`S3Options` ⇐ BaseS3Options](#s3options--bases3options)
+  - [`SnapStoreOptions` ⇐ PublishConfiguration](#snapstoreoptions--publishconfiguration)
+  - [`SpacesOptions` ⇐ BaseS3Options](#spacesoptions--bases3options)
+  - [`UpdateFileInfo` ⇐ BlockMapDataHolder](#updatefileinfo--blockmapdataholder)
+  - [`UpdateInfo`](#updateinfo)
+  - [`WindowsUpdateInfo` ⇐ UpdateInfo](#windowsupdateinfo--updateinfo)
+  - [CancellationError ⇐ Error](#cancellationerror--error)
+  - [CancellationToken ⇐ module:events.EventEmitter](#cancellationtoken--moduleeventseventemitter)
+    - [`cancellationToken.cancel()`](#cancellationtokencancel)
+    - [`cancellationToken.createPromise(callback)` ⇒ Promise\<module:builder-util-runtime/out/CancellationToken.R\>](#cancellationtokencreatepromisecallback--promisemodulebuilder-util-runtimeoutcancellationtokenr)
+    - [`cancellationToken.dispose()`](#cancellationtokendispose)
+  - [DigestTransform ⇐ internal:Transform](#digesttransform--internaltransform)
+    - [`digestTransform._flush(callback)`](#digesttransform_flushcallback)
+    - [`digestTransform._transform(chunk, encoding, callback)`](#digesttransform_transformchunk-encoding-callback)
+    - [`digestTransform.validate()` ⇒ null](#digesttransformvalidate--null)
+  - [HttpError ⇐ Error](#httperror--error)
+    - [`httpError.isServerError()` ⇒ Boolean](#httperrorisservererror--boolean)
+  - [HttpExecutor](#httpexecutor)
+    - [`httpExecutor.addErrorAndTimeoutHandlers(request, reject)`](#httpexecutoradderrorandtimeouthandlersrequest-reject)
+    - [`httpExecutor.createRequest(options, callback)` ⇒ module:builder-util-runtime/out/httpExecutor.T](#httpexecutorcreaterequestoptions-callback--modulebuilder-util-runtimeouthttpexecutort)
+    - [`httpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ Promise\<String\>](#httpexecutordoapirequestoptions-cancellationtoken-requestprocessor-redirectcount--promisestring)
+    - [`httpExecutor.downloadToBuffer(url, options)` ⇒ Promise\<module:global.Buffer\>](#httpexecutordownloadtobufferurl-options--promisemoduleglobalbuffer)
+    - [`httpExecutor.prepareRedirectUrlOptions(redirectUrl, options)` ⇒ module:http.RequestOptions](#httpexecutorprepareredirecturloptionsredirecturl-options--modulehttprequestoptions)
+    - [`httpExecutor.request(options, cancellationToken, data)` ⇒ Promise\< | String\>](#httpexecutorrequestoptions-cancellationtoken-data--promise--string)
+    - [`httpExecutor.retryOnServerError(task, maxRetries)` ⇒ Promise\<any\>](#httpexecutorretryonservererrortask-maxretries--promiseany)
+  - [ProgressCallbackTransform ⇐ internal:Transform](#progresscallbacktransform--internaltransform)
+    - [`progressCallbackTransform._flush(callback)`](#progresscallbacktransform_flushcallback)
+    - [`progressCallbackTransform._transform(chunk, encoding, callback)`](#progresscallbacktransform_transformchunk-encoding-callback)
+  - [UUID](#uuid)
+    - [`uuiD.check(uuid, offset)` ⇒ "undefined" | module:builder-util-runtime/out/uuid.\_\_object | module:builder-util-runtime/out/uuid.\_\_object](#uuidcheckuuid-offset--undefined--modulebuilder-util-runtimeoutuuid__object--modulebuilder-util-runtimeoutuuid__object)
+    - [`uuiD.inspect()` ⇒ String](#uuidinspect--string)
+    - [`uuiD.parse(input)` ⇒ module:global.Buffer](#uuidparseinput--moduleglobalbuffer)
+    - [`uuiD.toString()` ⇒ String](#uuidtostring--string)
+    - [`uuiD.v5(name, namespace)` ⇒ any](#uuidv5name-namespace--any)
+  - [XElement](#xelement)
+    - [`xElement.attribute(name)` ⇒ String](#xelementattributename--string)
+    - [`xElement.element(name, ignoreCase, errorIfMissed)` ⇒ XElement](#xelementelementname-ignorecase-errorifmissed--xelement)
+    - [`xElement.elementOrNull(name, ignoreCase)` ⇒ null | XElement](#xelementelementornullname-ignorecase--null--xelement)
+    - [`xElement.getElements(name, ignoreCase)` ⇒ Array\<XElement\>](#xelementgetelementsname-ignorecase--arrayxelement)
+    - [`xElement.elementValueOrEmpty(name, ignoreCase)` ⇒ String](#xelementelementvalueoremptyname-ignorecase--string)
+    - [`xElement.removeAttribute(name)`](#xelementremoveattributename)
+  - [`builder-util-runtime.asArray(v)` ⇒ Array\<module:builder-util-runtime.T\>](#builder-util-runtimeasarrayv--arraymodulebuilder-util-runtimet)
+  - [`builder-util-runtime.configureRequestOptions(options, token, method)` ⇒ module:http.RequestOptions](#builder-util-runtimeconfigurerequestoptionsoptions-token-method--modulehttprequestoptions)
+  - [`builder-util-runtime.configureRequestOptionsFromUrl(url, options)` ⇒ module:http.RequestOptions](#builder-util-runtimeconfigurerequestoptionsfromurlurl-options--modulehttprequestoptions)
+  - [`builder-util-runtime.configureRequestUrl(url, options)`](#builder-util-runtimeconfigurerequesturlurl-options)
+  - [`builder-util-runtime.createHttpError(response, description)` ⇒ HttpError](#builder-util-runtimecreatehttperrorresponse-description--httperror)
+  - [`builder-util-runtime.getS3LikeProviderBaseUrl(configuration)` ⇒ String](#builder-util-runtimegets3likeproviderbaseurlconfiguration--string)
+  - [`builder-util-runtime.newError(message, code)` ⇒ Error](#builder-util-runtimenewerrormessage-code--error)
+  - [`builder-util-runtime.parseDn(seq)` ⇒ Map\<String | String\>](#builder-util-runtimeparsednseq--mapstring--string)
+  - [`builder-util-runtime.parseJson(result)` ⇒ Promise\<any\>](#builder-util-runtimeparsejsonresult--promiseany)
+  - [`builder-util-runtime.parseXml(data)` ⇒ XElement](#builder-util-runtimeparsexmldata--xelement)
+  - [`builder-util-runtime.safeGetHeader(response, headerKey)` ⇒ any](#builder-util-runtimesafegetheaderresponse-headerkey--any)
+  - [`builder-util-runtime.safeStringifyJson(data, skippedNames)` ⇒ String](#builder-util-runtimesafestringifyjsondata-skippednames--string)
+- [electron-updater](#electron-updater)
+  - [`Logger`](#logger)
+    - [`logger.debug(message)`](#loggerdebugmessage)
+    - [`logger.error(message)`](#loggererrormessage)
+    - [`logger.info(message)`](#loggerinfomessage)
+    - [`logger.warn(message)`](#loggerwarnmessage)
+  - [`ResolvedUpdateFileInfo`](#resolvedupdatefileinfo)
+  - [`UpdateCheckResult`](#updatecheckresult)
+  - [`UpdateDownloadedEvent` ⇐ module:builder-util-runtime.UpdateInfo](#updatedownloadedevent--modulebuilder-util-runtimeupdateinfo)
+  - [AppImageUpdater ⇐ module:electron-updater/out/BaseUpdater.BaseUpdater](#appimageupdater--moduleelectron-updateroutbaseupdaterbaseupdater)
+    - [`appImageUpdater.isUpdaterActive()` ⇒ Boolean](#appimageupdaterisupdateractive--boolean)
+  - [AppUpdater ⇐ module:events.EventEmitter](#appupdater--moduleeventseventemitter)
+    - [`appUpdater.addAuthHeader(token)`](#appupdateraddauthheadertoken)
+    - [`appUpdater.checkForUpdates()` ⇒ Promise\<UpdateCheckResult\>](#appupdatercheckforupdates--promiseupdatecheckresult)
+    - [`appUpdater.checkForUpdatesAndNotify(downloadNotification)` ⇒ Promise\< | UpdateCheckResult\>](#appupdatercheckforupdatesandnotifydownloadnotification--promise--updatecheckresult)
+    - [`appUpdater.downloadUpdate(cancellationToken)` ⇒ Promise\<Array\<String\>\>](#appupdaterdownloadupdatecancellationtoken--promisearraystring)
+    - [`appUpdater.getFeedURL()` ⇒ undefined | null | String](#appupdatergetfeedurl--undefined--null--string)
+    - [`appUpdater.setFeedURL(options)`](#appupdatersetfeedurloptions)
+    - [`appUpdater.isUpdaterActive()` ⇒ Boolean](#appupdaterisupdateractive--boolean)
+    - [`appUpdater.quitAndInstall(isSilent, isForceRunAfter)`](#appupdaterquitandinstallissilent-isforcerunafter)
+  - [MacUpdater ⇐ AppUpdater](#macupdater--appupdater)
+    - [`macUpdater.quitAndInstall()`](#macupdaterquitandinstall)
+    - [`macUpdater.addAuthHeader(token)`](#macupdateraddauthheadertoken)
+    - [`macUpdater.checkForUpdates()` ⇒ Promise\<UpdateCheckResult\>](#macupdatercheckforupdates--promiseupdatecheckresult)
+    - [`macUpdater.checkForUpdatesAndNotify(downloadNotification)` ⇒ Promise\< | UpdateCheckResult\>](#macupdatercheckforupdatesandnotifydownloadnotification--promise--updatecheckresult)
+    - [`macUpdater.downloadUpdate(cancellationToken)` ⇒ Promise\<Array\<String\>\>](#macupdaterdownloadupdatecancellationtoken--promisearraystring)
+    - [`macUpdater.getFeedURL()` ⇒ undefined | null | String](#macupdatergetfeedurl--undefined--null--string)
+    - [`macUpdater.setFeedURL(options)`](#macupdatersetfeedurloptions)
+    - [`macUpdater.isUpdaterActive()` ⇒ Boolean](#macupdaterisupdateractive--boolean)
+  - [NsisUpdater ⇐ module:electron-updater/out/BaseUpdater.BaseUpdater](#nsisupdater--moduleelectron-updateroutbaseupdaterbaseupdater)
+  - [Provider](#provider)
+    - [`provider.getLatestVersion()` ⇒ Promise\<module:electron-updater/out/providers/Provider.T\>](#providergetlatestversion--promisemoduleelectron-updateroutprovidersprovidert)
+    - [`provider.setRequestHeaders(value)`](#providersetrequestheadersvalue)
+    - [`provider.resolveFiles(updateInfo)` ⇒ Array\<ResolvedUpdateFileInfo\>](#providerresolvefilesupdateinfo--arrayresolvedupdatefileinfo)
+  - [UpdaterSignal](#updatersignal)
+    - [`updaterSignal.login(handler)`](#updatersignalloginhandler)
+    - [`updaterSignal.progress(handler)`](#updatersignalprogresshandler)
+    - [`updaterSignal.updateCancelled(handler)`](#updatersignalupdatecancelledhandler)
+    - [`updaterSignal.updateDownloaded(handler)`](#updatersignalupdatedownloadedhandler)
+  - [`electron-updater.autoUpdater` : AppUpdater](#electron-updaterautoupdater--appupdater)
+  - [`electron-updater.DOWNLOAD_PROGRESS` : "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"](#electron-updaterdownload_progress--login--checking-for-update--update-available--update-not-available--update-cancelled--download-progress--update-downloaded--error)
+  - [`electron-updater.UPDATE_DOWNLOADED` : "login" | "checking-for-update" | "update-available" | "update-not-available" | "update-cancelled" | "download-progress" | "update-downloaded" | "error"](#electron-updaterupdate_downloaded--login--checking-for-update--update-available--update-not-available--update-cancelled--download-progress--update-downloaded--error)
 
 <a name="BaseS3Options"></a>
 ### `BaseS3Options` ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * <code id="BaseS3Options-channel">channel</code> = `latest` String | "undefined" - The update channel.
 * <code id="BaseS3Options-path">path</code> = `/` String | "undefined" - The directory path.
 * <code id="BaseS3Options-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
 * **<code id="BaseS3Options-provider">provider</code>** "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" - The provider.
 * <code id="BaseS3Options-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="BaseS3Options-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -290,7 +373,7 @@ Emitted on progress.
 Define `BT_TOKEN` environment variable.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.
 * <code id="BintrayOptions-package">package</code> String | "undefined" - The Bintray package name.
@@ -301,7 +384,7 @@ Define `BT_TOKEN` environment variable.
 * <code id="BintrayOptions-user">user</code> String | "undefined" - The Bintray user account. Used in cases where the owner is an organization.
 * <code id="BintrayOptions-token">token</code> String | "undefined"
 * <code id="BintrayOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="BintrayOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -324,12 +407,12 @@ Define `BT_TOKEN` environment variable.
 <a name="CustomPublishOptions"></a>
 ### `CustomPublishOptions` ⇐ <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="CustomPublishOptions-provider">provider</code>** "custom" - The provider. Must be `custom`.
 * <code id="CustomPublishOptions-updateProvider">updateProvider</code> module:builder-util-runtime/out/publishOptions.__type - The Provider to provide UpdateInfo regarding available updates.  Required to use custom providers with electron-updater.
 * <code id="CustomPublishOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="CustomPublishOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -349,14 +432,14 @@ Generic (any HTTP(S) server) options.
 In all publish options [File Macros](/file-patterns#file-macros) are supported.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="GenericServerOptions-provider">provider</code>** "generic" - The provider. Must be `generic`.
 * **<code id="GenericServerOptions-url">url</code>** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`.
 * <code id="GenericServerOptions-channel">channel</code> = `latest` String | "undefined" - The channel.
 * <code id="GenericServerOptions-useMultipleRangeRequest">useMultipleRangeRequest</code> Boolean - Whether to use multiple range requests for differential update. Defaults to `true` if `url` doesn't contain `s3.amazonaws.com`.
 * <code id="GenericServerOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="GenericServerOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -368,7 +451,7 @@ GitHub [personal access token](https://help.github.com/articles/creating-an-acce
 Define `GH_TOKEN` environment variable.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="GithubOptions-provider">provider</code>** "github" - The provider. Must be `github`.
 * <code id="GithubOptions-repo">repo</code> String | "undefined" - The repository name. [Detected automatically](#github-repository-and-bintray-package).
@@ -379,10 +462,10 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-token">token</code> String | "undefined" - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update#appupdatersetfeedurloptions).
 * <code id="GithubOptions-private">private</code> Boolean | "undefined" - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update#private-github-update-repo).
 * <code id="GithubOptions-releaseType">releaseType</code> = `draft` "draft" | "prerelease" | "release" | "undefined" - The type of release. By default `draft` release will be created.
-  
+
   Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRE_RELEASE`is set to `true` — `prerelease`.
 * <code id="GithubOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="GithubOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -393,7 +476,7 @@ https://keygen.sh/
 Define `KEYGEN_TOKEN` environment variable.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="KeygenOptions-provider">provider</code>** "keygen" - The provider. Must be `keygen`.
 * **<code id="KeygenOptions-account">account</code>** String - Keygen account's UUID
@@ -401,14 +484,14 @@ Define `KEYGEN_TOKEN` environment variable.
 * <code id="KeygenOptions-channel">channel</code> = `stable` "stable" | "rc" | "beta" | "alpha" | "dev" | "undefined" - The channel.
 * <code id="KeygenOptions-platform">platform</code> String | "undefined" - The target Platform. Is set programmatically explicitly during publishing.
 * <code id="KeygenOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="KeygenOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
 <a name="PackageFileInfo"></a>
 ### `PackageFileInfo` ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>  
+**Extends**: <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
 **Properties**
 * **<code id="PackageFileInfo-path">path</code>** String
 
@@ -428,7 +511,7 @@ Define `KEYGEN_TOKEN` environment variable.
 **Properties**
 * **<code id="PublishConfiguration-provider">provider</code>** "github" | "bintray" | "s3" | "spaces" | "generic" | "custom" | "snapStore" | "keygen" - The provider.
 * <code id="PublishConfiguration-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="PublishConfiguration-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -442,17 +525,17 @@ Define `KEYGEN_TOKEN` environment variable.
 <a name="RequestHeaders"></a>
 ### `RequestHeaders` ⇐ <code>[key: string]: OutgoingHttpHeader | undefined</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[key: string]: OutgoingHttpHeader | undefined</code>  
+**Extends**: <code>[key: string]: OutgoingHttpHeader | undefined</code>
 <a name="S3Options"></a>
 ### `S3Options` ⇐ <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[BaseS3Options](electron-builder#BaseS3Options)</code>  
+**Extends**: <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
 **Properties**
 * **<code id="S3Options-provider">provider</code>** "s3" - The provider. Must be `s3`.
 * **<code id="S3Options-bucket">bucket</code>** String - The bucket name.
 * <code id="S3Options-region">region</code> String | "undefined" - The region. Is determined and set automatically when publishing.
 * <code id="S3Options-acl">acl</code> = `public-read` "private" | "public-read" | "undefined" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
-  
+
   Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
 * <code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | "undefined" - The type of storage to use for the object.
 * <code id="S3Options-encryption">encryption</code> "AES256" | "aws:kms" | "undefined" - Server-side encryption algorithm to use for the object.
@@ -463,13 +546,13 @@ Define `KEYGEN_TOKEN` environment variable.
 [Snap Store](https://snapcraft.io/) options.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>  
+**Extends**: <code>[PublishConfiguration](electron-builder#PublishConfiguration)</code>
 **Properties**
 * **<code id="SnapStoreOptions-provider">provider</code>** "snapStore" - The provider. Must be `snapStore`.
 * **<code id="SnapStoreOptions-repo">repo</code>** String - snapcraft repo name
 * <code id="SnapStoreOptions-channels">channels</code> = `["edge"]` String | Array&lt;String&gt; | "undefined" - The list of channels the snap would be released.
 * <code id="SnapStoreOptions-publishAutoUpdate">publishAutoUpdate</code> = `true` Boolean - Whether to publish auto update info files.
-  
+
   Auto update relies only on the first provider in the list (you can specify several publishers). Thus, probably, there`s no need to upload the metadata files for the other configured providers. But by default will be uploaded.
 * <code id="SnapStoreOptions-requestHeaders">requestHeaders</code> [key: string]: string - Any custom request headers
 
@@ -479,7 +562,7 @@ Define `KEYGEN_TOKEN` environment variable.
 Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.
 
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[BaseS3Options](electron-builder#BaseS3Options)</code>  
+**Extends**: <code>[BaseS3Options](electron-builder#BaseS3Options)</code>
 **Properties**
 * **<code id="SpacesOptions-provider">provider</code>** "spaces" - The provider. Must be `spaces`.
 * **<code id="SpacesOptions-name">name</code>** String - The space name.
@@ -488,7 +571,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="UpdateFileInfo"></a>
 ### `UpdateFileInfo` ⇐ <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>  
+**Extends**: <code>[BlockMapDataHolder](#BlockMapDataHolder)</code>
 **Properties**
 * **<code id="UpdateFileInfo-url">url</code>** String
 
@@ -508,18 +591,18 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="WindowsUpdateInfo"></a>
 ### `WindowsUpdateInfo` ⇐ <code>[UpdateInfo](#UpdateInfo)</code>
 **Kind**: interface of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>[UpdateInfo](#UpdateInfo)</code>  
+**Extends**: <code>[UpdateInfo](#UpdateInfo)</code>
 **Properties**
 * <code id="WindowsUpdateInfo-packages">packages</code> Object&lt;String, any&gt; | "undefined"
 
 <a name="CancellationError"></a>
 ### CancellationError ⇐ <code>Error</code>
 **Kind**: class of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>Error</code>  
+**Extends**: <code>Error</code>
 <a name="CancellationToken"></a>
 ### CancellationToken ⇐ <code>module:events.EventEmitter</code>
 **Kind**: class of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>module:events.EventEmitter</code>  
+**Extends**: <code>module:events.EventEmitter</code>
 **Properties**
 * **<code id="CancellationToken-cancelled">cancelled</code>** Boolean
 
@@ -541,7 +624,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="DigestTransform"></a>
 ### DigestTransform ⇐ <code>internal:Transform</code>
 **Kind**: class of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>internal:Transform</code>  
+**Extends**: <code>internal:Transform</code>
 **Properties**
 * <code id="DigestTransform-actual">actual</code> String
 * <code id="DigestTransform-isValidateOnEnd">isValidateOnEnd</code> = `true` Boolean
@@ -569,7 +652,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="HttpError"></a>
 ### HttpError ⇐ <code>Error</code>
 **Kind**: class of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>Error</code>  
+**Extends**: <code>Error</code>
 <a name="module_builder-util-runtime.HttpError+isServerError"></a>
 #### `httpError.isServerError()` ⇒ <code>Boolean</code>
 <a name="HttpExecutor"></a>
@@ -633,7 +716,7 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="ProgressCallbackTransform"></a>
 ### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
 **Kind**: class of [<code>builder-util-runtime</code>](#module_builder-util-runtime)<br/>
-**Extends**: <code>internal:Transform</code>  
+**Extends**: <code>internal:Transform</code>
 
 * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
     * [`._flush(callback)`](#module_builder-util-runtime.ProgressCallbackTransform+_flush)
@@ -915,29 +998,29 @@ Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment varia
 <a name="UpdateDownloadedEvent"></a>
 ### `UpdateDownloadedEvent` ⇐ <code>module:builder-util-runtime.UpdateInfo</code>
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>module:builder-util-runtime.UpdateInfo</code>  
+**Extends**: <code>module:builder-util-runtime.UpdateInfo</code>
 **Properties**
 * **<code id="UpdateDownloadedEvent-downloadedFile">downloadedFile</code>** String
 
 <a name="AppImageUpdater"></a>
 ### AppImageUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>  
+**Extends**: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
 <a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a>
 #### `appImageUpdater.isUpdaterActive()` ⇒ <code>Boolean</code>
 <a name="AppUpdater"></a>
 ### AppUpdater ⇐ <code>module:events.EventEmitter</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>module:events.EventEmitter</code>  
+**Extends**: <code>module:events.EventEmitter</code>
 **Properties**
 * <code id="AppUpdater-autoDownload">autoDownload</code> = `true` Boolean - Whether to automatically download an update when it is found.
 * <code id="AppUpdater-autoInstallOnAppQuit">autoInstallOnAppQuit</code> = `true` Boolean - Whether to automatically install a downloaded update on app quit (if `quitAndInstall` was not called before).
 * <code id="AppUpdater-allowPrerelease">allowPrerelease</code> = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
-  
+
   If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
 * <code id="AppUpdater-fullChangelog">fullChangelog</code> = `false` Boolean - *GitHub provider only.* Get all release notes (from current version to latest), not just the latest.
 * <code id="AppUpdater-allowDowngrade">allowDowngrade</code> = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
-  
+
   Taken in account only if channel differs (pre-release version component in terms of semantic versioning).
 * <code id="AppUpdater-currentVersion">currentVersion</code> SemVer - The current application version.
 * **<code id="AppUpdater-channel">channel</code>** String | "undefined" - Get the update channel. Not applicable for GitHub. Doesn't return `channel` from the update configuration, only if was previously set.
@@ -980,7 +1063,7 @@ Asks the server whether there is an update.
 #### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.  
+**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.
 
 - cancellationToken <code>CancellationToken</code>
 
@@ -1010,7 +1093,7 @@ This is different from the normal quit event sequence.
 <a name="MacUpdater"></a>
 ### MacUpdater ⇐ <code>[AppUpdater](#AppUpdater)</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>[AppUpdater](#AppUpdater)</code>  
+**Extends**: <code>[AppUpdater](#AppUpdater)</code>
 
 * [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](#AppUpdater)</code>
     * [`.quitAndInstall()`](#module_electron-updater.MacUpdater+quitAndInstall)
@@ -1024,7 +1107,7 @@ This is different from the normal quit event sequence.
 
 <a name="module_electron-updater.MacUpdater+quitAndInstall"></a>
 #### `macUpdater.quitAndInstall()`
-**Overrides**: [<code>quitAndInstall</code>](#module_electron-updater.AppUpdater+quitAndInstall)  
+**Overrides**: [<code>quitAndInstall</code>](#module_electron-updater.AppUpdater+quitAndInstall)
 <a name="module_electron-updater.AppUpdater+addAuthHeader"></a>
 #### `macUpdater.addAuthHeader(token)`
 Shortcut for explicitly adding auth tokens to request headers
@@ -1045,7 +1128,7 @@ Asks the server whether there is an update.
 #### `macUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.  
+**Returns**: <code>Promise&lt;Array&lt;String&gt;&gt;</code> - Paths to downloaded files.
 
 - cancellationToken <code>CancellationToken</code>
 
@@ -1063,7 +1146,7 @@ Configure update provider. If value is `string`, [GenericServerOptions](/configu
 <a name="NsisUpdater"></a>
 ### NsisUpdater ⇐ <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>  
+**Extends**: <code>module:electron-updater/out/BaseUpdater.BaseUpdater</code>
 <a name="Provider"></a>
 ### Provider
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)<br/>

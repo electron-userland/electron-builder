@@ -4,11 +4,15 @@ import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Configuration } from "../configuration"
-import { executeAppBuilderAndWriteJson } from "./appBuilder"
 import { NodeModuleDirInfo } from "./packageDependencies"
+import * as electronRebuild from "@electron/rebuild"
+import { getProjectRootPath } from "@electron/rebuild/lib/search-module"
+import { rebuild as remoteRebuild } from "./rebuild/rebuild"
+import { executeAppBuilderAndWriteJson } from "./appBuilder"
+import { RebuildMode } from "@electron/rebuild/lib/types"
 
 export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall = false) {
-  const effectiveOptions = {
+  const effectiveOptions: RebuildOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs),
     ...options,
@@ -24,9 +28,9 @@ export async function installOrRebuild(config: Configuration, appDir: string, op
   }
 
   if (forceInstall || !isDependenciesInstalled) {
-    await installDependencies(appDir, effectiveOptions)
+    await installDependencies(config, appDir, effectiveOptions)
   } else {
-    await rebuild(appDir, effectiveOptions)
+    await rebuild(config, appDir, effectiveOptions)
   }
 }
 
@@ -83,7 +87,7 @@ function checkYarnBerry() {
   return yarnMajorVersion >= 2
 }
 
-function installDependencies(appDir: string, options: RebuildOptions): Promise<any> {
+async function installDependencies(config: Configuration, appDir: string, options: RebuildOptions): Promise<any> {
   const platform = options.platform || process.platform
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
@@ -113,10 +117,14 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   if (additionalArgs != null) {
     execArgs.push(...additionalArgs)
   }
-  return spawn(execPath, execArgs, {
+  await spawn(execPath, execArgs, {
     cwd: appDir,
     env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
   })
+
+  // Some native dependencies no longer use `install` hook for building their native module, (yarn 3+ removed implicit link of `install` and `rebuild` steps)
+  // https://github.com/electron-userland/electron-builder/issues/8024
+  return rebuild(config, appDir, options)
 }
 
 export async function nodeGypRebuild(platform: NodeJS.Platform, arch: string, frameworkInfo: DesktopFrameworkInfo) {
@@ -164,8 +172,8 @@ export interface RebuildOptions {
 }
 
 /** @internal */
-export async function rebuild(appDir: string, options: RebuildOptions) {
-  const configuration: any = {
+export async function rebuild(config: Configuration, appDir: string, options: RebuildOptions) {
+  const configuration = {
     dependencies: await options.productionDeps.value,
     nodeExecPath: process.execPath,
     platform: options.platform || process.platform,
@@ -174,7 +182,33 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     execPath: process.env.npm_execpath || process.env.NPM_CLI_JS,
     buildFromSource: options.buildFromSource === true,
   }
+  if (config.nativeRebuilder === "legacy") {
+    const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
+    return executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
+  }
 
-  const env = getGypEnv(options.frameworkInfo, configuration.platform, configuration.arch, options.buildFromSource === true)
-  await executeAppBuilderAndWriteJson(["rebuild-node-modules"], configuration, { env, cwd: appDir })
+  const {
+    frameworkInfo: { version: electronVersion },
+  } = options
+  const { arch, buildFromSource } = configuration
+  const logInfo = {
+    electronVersion,
+    arch,
+    buildFromSource,
+    appDir: log.filePath(appDir) || "./",
+  }
+  log.info(logInfo, "executing @electron/rebuild")
+
+  const rebuildOptions: electronRebuild.RebuildOptions = {
+    buildPath: appDir,
+    electronVersion,
+    arch,
+    debug: log.isDebugEnabled,
+    projectRootPath: await getProjectRootPath(appDir),
+    mode: (config.nativeRebuilder as RebuildMode) || "sequential",
+  }
+  if (buildFromSource) {
+    rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
+  }
+  return remoteRebuild(rebuildOptions)
 }

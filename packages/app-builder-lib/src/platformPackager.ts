@@ -1,8 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { defaultArchFromString, getArtifactArchName } from "builder-util/out/arch"
-import { FileTransformer, statOrNull } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
+import { defaultArchFromString, getArtifactArchName, FileTransformer, statOrNull, orIfFileNotExist } from "builder-util"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -245,6 +243,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       version: framework.version,
     })
 
+    const afterExtract = await resolveFunction(this.appInfo.type, this.config.afterExtract, "afterExtract")
+    if (afterExtract != null) {
+      await afterExtract({
+        appOutDir,
+        outDir,
+        arch,
+        targets,
+        packager: this,
+        electronPlatformName: platformName,
+      })
+    }
+
     const excludePatterns: Array<Minimatch> = []
 
     const computeParsedPatterns = (patterns: Array<FileMatcher> | null) => {
@@ -316,7 +326,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const isAsar = asarOptions != null
-    await this.sanityCheckPackage(appOutDir, isAsar, framework)
+    await this.sanityCheckPackage(appOutDir, isAsar, framework, !!this.config.disableSanityCheckAsar)
     if (sign) {
       await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
     }
@@ -508,7 +518,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
-  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean) {
+  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean, disableSanityCheckAsar: boolean) {
+    if (isAsar && disableSanityCheckAsar) {
+      return
+    }
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
       await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
@@ -546,7 +559,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework): Promise<any> {
+  private async sanityCheckPackage(appOutDir: string, isAsar: boolean, framework: Framework, disableSanityCheckAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
@@ -559,8 +572,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesDir = this.getResourcesDir(appOutDir)
     const mainFile = (framework.getMainFile == null ? null : framework.getMainFile(this.platform)) || this.info.metadata.main || "index.js"
-    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar)
-    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
+    await this.checkFileInPackage(resourcesDir, mainFile, "Application entry file", isAsar, disableSanityCheckAsar)
+    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar, disableSanityCheckAsar)
   }
 
   // tslint:disable-next-line:no-invalid-template-strings

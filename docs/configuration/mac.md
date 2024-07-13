@@ -80,13 +80,13 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p><code id="MacConfiguration-hardenedRuntime">hardenedRuntime</code> = <code>true</code> Boolean - Whether your app has to be signed with hardened runtime.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let @electron/osx-sign validate the signing or not.</p>
+<p><code id="MacConfiguration-gatekeeperAssess">gatekeeperAssess</code> = <code>false</code> Boolean - Whether to let <code>@electron/osx-sign</code> validate the signing or not.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Boolean - Whether to let @electron/osx-sign verify the contents or not.</p>
+<p><code id="MacConfiguration-strictVerify">strictVerify</code> = <code>true</code> Boolean - Whether to let <code>@electron/osx-sign</code> verify the contents or not.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-preAutoEntitlements">preAutoEntitlements</code> = <code>true</code> Boolean - Whether to enable entitlements automation from @electron/osx-sign.</p>
+<p><code id="MacConfiguration-preAutoEntitlements">preAutoEntitlements</code> = <code>true</code> Boolean - Whether to enable entitlements automation from <code>@electron/osx-sign</code>.</p>
 </li>
 <li>
 <p><code id="MacConfiguration-signIgnore">signIgnore</code> Array&lt;String&gt; | String | “undefined” - Regex or an array of regex’s that signal skipping signing a file.</p>
@@ -110,21 +110,19 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
 <p>This option has no effect unless building for “universal” arch and applies only if <code>mergeASARs</code> is <code>true</code>.</p>
 </li>
 <li>
-<p><code id="MacConfiguration-notarize">notarize</code> <a href="#NotarizeLegacyOptions">NotarizeLegacyOptions</a> | <a href="#NotarizeNotaryOptions">NotarizeNotaryOptions</a> | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Supports both <code>legacy</code> and <code>notarytool</code> notarization tools. Use <code>false</code> to explicitly disable</p>
-<p>Note: In order to activate the notarization step You MUST specify one of the following via environment variables: 1. <code>APPLE_API_KEY</code>, <code>APPLE_API_KEY_ID</code> and <code>APPLE_API_ISSUER</code>. 2. <code>APPLE_ID</code> and <code>APPLE_APP_SPECIFIC_PASSWORD</code> 3. <code>APPLE_KEYCHAIN</code> and <code>APPLE_KEYCHAIN_PROFILE</code></p>
+<p><code id="MacConfiguration-additionalArguments">additionalArguments</code> Array&lt;String&gt; | “undefined” - Array of strings specifying additional arguments to pass to the <code>codesign</code> command used to sign a specific file.</p>
+<p>Some subresources that you may include in your Electron app may need to be signed with --deep, this is not typically safe to apply to the entire Electron app and therefore should be applied to just your file. Usage Example: <code>['--deep']</code></p>
+</li>
+<li>
+<p><code id="MacConfiguration-notarize">notarize</code> <a href="#NotarizeNotaryOptions">NotarizeNotaryOptions</a> | Boolean | “undefined” - Options to use for @electron/notarize (ref: <a href="https://github.com/electron/notarize">https://github.com/electron/notarize</a>). Use <code>false</code> to explicitly disable</p>
+<p>Note: In order to activate the notarization step You MUST specify one of the following via environment variables: 1. <code>APPLE_API_KEY</code>, <code>APPLE_API_KEY_ID</code> and <code>APPLE_API_ISSUER</code>. 2. <code>APPLE_ID</code>, <code>APPLE_APP_SPECIFIC_PASSWORD</code>, and <code>APPLE_TEAM_ID</code> 3. <code>APPLE_KEYCHAIN</code> and <code>APPLE_KEYCHAIN_PROFILE</code></p>
 <p>For security reasons it is recommended to use the first option (see <a href="https://github.com/electron-userland/electron-builder/issues/7859">https://github.com/electron-userland/electron-builder/issues/7859</a>)</p>
 </li>
-</ul>
-<h2 id="notarizelegacyoptions">NotarizeLegacyOptions</h2>
-<p>undefined</p>
-<ul>
-<li><code id="NotarizeLegacyOptions-appBundleId">appBundleId</code> String | “undefined” - The app bundle identifier your Electron app is using. E.g. com.github.electron. Useful if notarization ID differs from app ID (unlikely). Only used by <code>legacy</code> notarization tool</li>
-<li><code id="NotarizeLegacyOptions-ascProvider">ascProvider</code> String | “undefined” - Your Team Short Name. Only used by <code>legacy</code> notarization tool</li>
 </ul>
 <h2 id="notarizenotaryoptions">NotarizeNotaryOptions</h2>
 <p>undefined</p>
 <ul>
-<li><strong><code id="NotarizeNotaryOptions-teamId">teamId</code></strong> String - The team ID you want to notarize under for when using <code>notarytool</code></li>
+<li tag.description=""><code id="NotarizeNotaryOptions-teamId">teamId</code> String - The team ID you want to notarize under for when using <code>notarytool</code> Deprecated:</li>
 </ul>
 
 <!-- end of generated block -->

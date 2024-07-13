@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, log } from "builder-util"
-import { copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util/out/fs"
+import { asArray, log, copyDir, copyOrLinkFile, Filter, statOrNull, FileTransformer, USE_HARD_LINKS } from "builder-util"
 import { mkdir } from "fs/promises"
 import { Minimatch } from "minimatch"
 import * as path from "path"

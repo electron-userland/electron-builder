@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir } from "builder-util/out/util"
-import { copyFile, unlinkIfExists } from "builder-util/out/fs"
-import { Fields, Logger } from "builder-util/out/log"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util"
+import { copyFile, unlinkIfExists } from "builder-util"
+import { Fields, Logger } from "builder-util"
 import { randomBytes, createHash } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -11,6 +11,8 @@ import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "../util/flags"
 import { importCertificate } from "./codesign"
 import { Identity as _Identity } from "@electron/osx-sign/dist/cjs/util-identities"
+import { SignOptions } from "@electron/osx-sign/dist/cjs/types"
+import { signAsync } from "@electron/osx-sign"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -195,7 +197,11 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
     BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
   ])
-  return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
+  const cscPasswords: Array<string> = [cscKeyPassword]
+  if (cscIKeyPassword) {
+    cscPasswords.push(cscIKeyPassword)
+  }
+  return await importCerts(keychainFile, certPaths, cscPasswords)
 }
 
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
@@ -213,13 +219,8 @@ async function importCerts(keychainFile: string, paths: Array<string>, keyPasswo
   }
 }
 
-/** @private */
-export function sign(path: string, name: string, keychain: string): Promise<any> {
-  const args = ["--deep", "--force", "--sign", name, path]
-  if (keychain != null) {
-    args.push("--keychain", keychain)
-  }
-  return exec("/usr/bin/codesign", args)
+export async function sign(opts: SignOptions): Promise<void> {
+  return retry(() => signAsync(opts), 3, 5000, 5000)
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null

@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, log, deepAssign } from "builder-util"
 import { UUID } from "builder-util-runtime"
 import { getBinFromUrl } from "../binDownload"
-import { walk } from "builder-util/out/fs"
+import { walk } from "builder-util"
 import { createHash } from "crypto"
 import * as ejs from "ejs"
 import { readFile, writeFile } from "fs/promises"
@@ -126,7 +126,9 @@ export default class MsiTarget extends Target {
       "-sw1076",
       `-dappDir=${vm.toVmFile(appOutDir)}`,
       // "-dcl:high",
-    ].concat(this.getCommonWixArgs())
+    ]
+      .concat(this.getCommonWixArgs())
+      .concat(this.getAdditionalLightArgs())
 
     // http://windows-installer-xml-wix-toolset.687559.n2.nabble.com/Build-3-5-2229-0-give-me-the-following-error-error-LGHT0216-An-unexpected-Win32-exception-with-errorn-td5707443.html
     if (process.platform !== "win32") {
@@ -143,6 +145,14 @@ export default class MsiTarget extends Target {
     await vm.exec(vm.toVmFile(path.join(vendorPath, "light.exe")), lightArgs, {
       cwd: tempDir,
     })
+  }
+
+  private getAdditionalLightArgs() {
+    const args: Array<string> = []
+    if (this.options.additionalLightArgs != null) {
+      args.push(...this.options.additionalLightArgs)
+    }
+    return args
   }
 
   private getCommonWixArgs() {

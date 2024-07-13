@@ -2,6 +2,7 @@ import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
 import * as os from "os"
 import { Logger } from "./main"
+import * as path from "path"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
 // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
@@ -48,6 +49,18 @@ export function verifySignature(publisherNames: Array<string>, unescapedTempUpda
           }
           const data = parseOut(stdout)
           if (data.Status === 0) {
+            try {
+              const normlaizedUpdateFilePath = path.normalize(data.Path)
+              const normalizedTempUpdateFile = path.normalize(unescapedTempUpdateFile)
+              logger.info(`LiteralPath: ${normlaizedUpdateFilePath}. Update Path: ${normalizedTempUpdateFile}`)
+              if (normlaizedUpdateFilePath !== normalizedTempUpdateFile) {
+                handleError(logger, new Error(`LiteralPath of ${normlaizedUpdateFilePath} is different than ${normalizedTempUpdateFile}`), stderr, reject)
+                resolve(null)
+                return
+              }
+            } catch (error: any) {
+              logger.warn(`Unable to verify LiteralPath of update asset due to missing data.Path. Skipping this step of validation. Message: ${error.message ?? error.stack}`)
+            }
             const subject = parseDn(data.SignerCertificate.Subject)
             let match = false
             for (const name of publisherNames) {
@@ -96,7 +109,6 @@ function parseOut(out: string): any {
     // duplicates data.SignerCertificate (contains RawData)
     delete signerCertificate.SubjectName
   }
-  delete data.Path
   return data
 }
 

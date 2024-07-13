@@ -4,7 +4,7 @@ All options are optional. All required for AppX configuration is inferred and co
 
 <!-- do not edit. start of generated block -->
 <ul>
-<li><code id="AppXOptions-applicationId">applicationId</code> String - The application id. Defaults to <code>identityName</code>. Can’t start with numbers.</li>
+<li><code id="AppXOptions-applicationId">applicationId</code> String - The application id. Defaults to <code>identityName</code>. This string contains alpha-numeric fields separated by periods. Each field must begin with an ASCII alphabetic character.</li>
 <li><code id="AppXOptions-backgroundColor">backgroundColor</code> = <code>#464646</code> String | “undefined” - The background color of the app tile. See <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx">Visual Elements</a>.</li>
 <li><code id="AppXOptions-displayName">displayName</code> String | “undefined” - A friendly name that can be displayed to users. Corresponds to <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx">Properties.DisplayName</a>. Defaults to the application product name.</li>
 <li><code id="AppXOptions-identityName">identityName</code> String | “undefined” - The name. Corresponds to <a href="https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx">Identity.Name</a>. Defaults to the <a href="/configuration/configuration#Metadata-name">application name</a>.</li>
@@ -15,6 +15,8 @@ All options are optional. All required for AppX configuration is inferred and co
 <li><code id="AppXOptions-customExtensionsPath">customExtensionsPath</code> String - Relative path to custom extensions xml to be included in an <code>appmanifest.xml</code>.</li>
 <li><code id="AppXOptions-showNameOnTiles">showNameOnTiles</code> = <code>false</code> Boolean - Whether to overlay the app’s name on top of tile images on the Start screen. Defaults to <code>false</code>. (<a href="https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles">https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-shownameontiles</a>) in the dependencies.</li>
 <li><code id="AppXOptions-setBuildNumber">setBuildNumber</code> = <code>false</code> Boolean - Whether to set build number. See <a href="https://github.com/electron-userland/electron-builder/issues/3875">https://github.com/electron-userland/electron-builder/issues/3875</a></li>
+<li><code id="AppXOptions-minVersion">minVersion</code> = <code>arch === Arch.arm64 ? &quot;10.0.16299.0&quot; : &quot;10.0.14316.0&quot;</code> String | “undefined” - Set the MinVersion field in the appx manifest.xml</li>
+<li><code id="AppXOptions-maxVersionTested">maxVersionTested</code> = <code>arch === Arch.arm64 ? &quot;10.0.16299.0&quot; : &quot;10.0.14316.0&quot;</code> String | “undefined” - Set the <code>MaxVersionTested</code> field in the appx manifest.xml</li>
 </ul>
 <p>Inherited from <code>TargetSpecificOptions</code>:</p>
 <ul>

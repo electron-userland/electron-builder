@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-green.svg)](https://www.electron.build/donate) [![project chat](https://img.shields.io/badge/chat-on_zulip-brightgreen.svg)](https://electron-builder.zulipchat.com)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/donate-donorbox-green.svg)](https://www.electron.build/donate)
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
@@ -25,7 +25,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | Question | Answer |
 |--------|-------|
 | “I want to configure electron-builder” | [See options](configuration/configuration.md) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.zulipchat.com/) |
+| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to support development” | [Donate](donate.md) |
 
@@ -98,7 +98,7 @@ will declare to use node-modules instead of PnP.
     To ensure your native dependencies always matched the electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
-   
+
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](code-signing.md#where-to-buy-code-signing-certificate).
@@ -130,7 +130,7 @@ builder.build({
 
 ## Pack Only in a Distributable Format
 
-You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`) 
+You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`)
 and other distributable formats.
 
 ```
@@ -153,13 +153,9 @@ DEBUG=electron-builder
     ```bash
     set DEBUG=electron-builder
     ```
-    
+
 !!! tip "PowerShell"
     PowerShell uses different syntax to set environment variables.
     ```bash
     $env:DEBUG=electron-builder
     ```
-
-## Community
-
-[electron-builder](https://electron-builder.zulipchat.com/) on Zulip.

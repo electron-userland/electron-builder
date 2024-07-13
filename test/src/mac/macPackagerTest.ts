@@ -1,4 +1,4 @@
-import { copyOrLinkFile } from "builder-util/out/fs"
+import { copyOrLinkFile } from "builder-util"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -103,13 +103,14 @@ test.ifMac(
   )
 )
 
-test.ifMac.skip("yarn two package.json w/ native module", () =>
+test.ifMac("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
       targets: Platform.MAC.createTarget("zip", Arch.universal),
       config: {
         npmRebuild: true,
+        nativeRebuilder: "sequential",
       },
     },
     {

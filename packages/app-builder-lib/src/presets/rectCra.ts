@@ -1,5 +1,5 @@
 import { log } from "builder-util"
-import { statOrNull } from "builder-util/out/fs"
+import { statOrNull } from "builder-util"
 import * as path from "path"
 import { Configuration } from "../configuration"
 

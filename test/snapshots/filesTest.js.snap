@@ -57,8 +57,6 @@ Array [
   "lib/net45/locales/en-US.pak",
   "lib/net45/resources/app.asar",
   "lib/net45/resources/platformSpecificR",
-  "lib/net45/swiftshader/libEGL.dll",
-  "lib/net45/swiftshader/libGLESv2.dll",
   "lib/net45/resources/bar/hello.txt",
   "lib/net45/resources/bar/x64.txt",
   "lib/net45/resources/dir-relative/f.txt",
