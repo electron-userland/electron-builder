@@ -74,8 +74,9 @@
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=8"
+    "pnpm": ">=9"
   },
+  "packageManager": "pnpm@9.4.0",
   "pnpm": {
     "patchedDependencies": {
       "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
