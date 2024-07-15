@@ -20,22 +20,11 @@ test.ifNotWindows(
   app({
     targets: appImageTarget,
     config: {
-      downloadAlternateFFmpeg: true,
-      publish: testPublishConfig,
-    },
-  })
-)
-
-// also test os macro in output dir
-test.ifAll.ifNotWindows.ifNotCiMac(
-  "AppImage ia32",
-  app({
-    targets: Platform.LINUX.createTarget("Appimage", Arch.ia32),
-    config: {
       directories: {
         // tslint:disable:no-invalid-template-strings
         output: "dist/${os}",
       },
+      downloadAlternateFFmpeg: true,
       publish: testPublishConfig,
     },
   })
@@ -107,7 +96,7 @@ test.ifNotWindows.ifNotCiMac.ifAll(
         <html lang="en">
         <body>
           <a href="https://example.com">Test link</a>
-        </body>      
+        </body>
         </html>`
         )
       },

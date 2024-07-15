@@ -1,4 +1,4 @@
-import { copyDir } from "builder-util/out/fs"
+import { copyDir } from "builder-util"
 import { Arch, Platform } from "electron-builder"
 import { app, AssertPackOptions } from "./helpers/packTester"
 

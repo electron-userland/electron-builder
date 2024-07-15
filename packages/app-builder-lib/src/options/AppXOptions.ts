@@ -2,7 +2,7 @@ import { TargetSpecificOptions } from "../core"
 
 export interface AppXOptions extends TargetSpecificOptions {
   /**
-   * The application id. Defaults to `identityName`. Can’t start with numbers.
+   * The application id. Defaults to `identityName`. This string contains alpha-numeric fields separated by periods. Each field must begin with an ASCII alphabetic character.
    */
   readonly applicationId?: string
 
@@ -68,6 +68,18 @@ export interface AppXOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly setBuildNumber?: boolean
+
+  /**
+   * Set the MinVersion field in the appx manifest.xml
+   * @default arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+   */
+  readonly minVersion?: string | null
+
+  /**
+   * Set the `MaxVersionTested` field in the appx manifest.xml
+   * @default arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+   */
+  readonly maxVersionTested?: string | null
 
   /** @private */
   readonly makeappxArgs?: Array<string> | null

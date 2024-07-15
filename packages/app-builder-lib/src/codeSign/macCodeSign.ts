@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util/out/util"
-import { copyFile, unlinkIfExists } from "builder-util/out/fs"
-import { Fields, Logger } from "builder-util/out/log"
+import { exec, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isPullRequest, log, TmpDir, retry } from "builder-util"
+import { copyFile, unlinkIfExists } from "builder-util"
+import { Fields, Logger } from "builder-util"
 import { randomBytes, createHash } from "crypto"
 import { rename } from "fs/promises"
 import { Lazy } from "lazy-val"
@@ -197,7 +197,11 @@ export async function createKeychain({ tmpDir, cscLink, cscKeyPassword, cscILink
     BluebirdPromise.map(certLinks, (link, i) => importCertificate(link, tmpDir, currentDir).then(it => (certPaths[i] = it))),
     BluebirdPromise.mapSeries(securityCommands, it => exec("/usr/bin/security", it)),
   ])
-  return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
+  const cscPasswords: Array<string> = [cscKeyPassword]
+  if (cscIKeyPassword) {
+    cscPasswords.push(cscIKeyPassword)
+  }
+  return await importCerts(keychainFile, certPaths, cscPasswords)
 }
 
 async function importCerts(keychainFile: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {

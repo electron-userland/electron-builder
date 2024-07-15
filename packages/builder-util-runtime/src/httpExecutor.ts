@@ -6,7 +6,7 @@ import { Socket } from "net"
 import { Transform } from "stream"
 import { URL } from "url"
 import { CancellationToken } from "./CancellationToken"
-import { newError } from "./index"
+import { newError } from "./error"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
 const debug = _debug("electron-builder")

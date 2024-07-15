@@ -67,7 +67,7 @@ The destination path relative to and defaults to:
 
 `Array<String> | String`
 
-The [glob patterns](../file-patterns.md). Defaults to `*/**`.
+The [glob patterns](../file-patterns.md). Defaults to `**/*`.
 
 ## extraResources
 

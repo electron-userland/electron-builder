@@ -1,5 +1,5 @@
 import { Arch, InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext } from "electron-publish"
 import { KeygenOptions } from "builder-util-runtime/out/publishOptions"

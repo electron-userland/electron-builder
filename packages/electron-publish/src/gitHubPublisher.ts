@@ -1,7 +1,6 @@
-import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log } from "builder-util"
+import { Arch, InvalidConfigurationError, isEmptyOrSpaces, isEnvTrue, isTokenCharValid, log, Fields } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
-import { Fields } from "builder-util/out/log"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { httpExecutor } from "builder-util"
 import { ClientRequest } from "http"
 import { Lazy } from "lazy-val"
 import * as mime from "mime"
@@ -46,8 +45,8 @@ export class GitHubPublisher extends HttpPublisher {
     super(context, true)
 
     let token = info.token
-    if (isEmptyOrSpaces(token)) {
-      token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+    if (isEmptyOrSpaces(token) || process.env.GITHUB_RELEASE_TOKEN) {
+      token = process.env.GITHUB_RELEASE_TOKEN ? process.env.GITHUB_RELEASE_TOKEN : process.env.GH_TOKEN || process.env.GITHUB_TOKEN
       if (isEmptyOrSpaces(token)) {
         throw new InvalidConfigurationError(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
       }

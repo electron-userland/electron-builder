@@ -42,6 +42,24 @@ it.ifDevOrWinCi(
   )
 )
 
+// use identityName and same setting for applicationId
+it.ifDevOrWinCi(
+  "application id",
+  app(
+    {
+      targets: Platform.WINDOWS.createTarget(["appx"], Arch.x64),
+      config: {
+        cscLink: protectedCscLink,
+        cscKeyPassword: "test",
+        appx: {
+          identityName: "01234Test.ApplicationDataSample",
+        },
+      },
+    },
+    {}
+  )
+)
+
 const it2 = isEnvTrue(process.env.DO_APPX_CERT_STORE_AWARE_TEST) ? test : test.skip
 it2.ifNotCi(
   "certificateSubjectName",
@@ -65,6 +83,8 @@ it(
       cscKeyPassword: "test",
       appx: {
         languages: ["de-DE", "ru-RU"],
+        minVersion: "10.0.16299.0",
+        maxVersionTested: "10.0.16299.0",
       },
     },
   })

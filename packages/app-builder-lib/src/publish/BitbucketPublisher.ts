@@ -1,5 +1,5 @@
 import { Arch, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { httpExecutor } from "builder-util"
 import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext } from "electron-publish"
 import { BitbucketOptions } from "builder-util-runtime/out/publishOptions"

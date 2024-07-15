@@ -3,7 +3,7 @@ import { executeAppBuilderAsJson } from "./appBuilder"
 
 export function createLazyProductionDeps(projectDir: string, excludedDependencies: Array<string> | null) {
   return new Lazy(async () => {
-    const args = ["node-dep-tree", "--dir", projectDir]
+    const args = ["node-dep-tree", "--flatten", "--dir", projectDir]
     if (excludedDependencies != null) {
       for (const name of excludedDependencies) {
         args.push("--exclude-dep", name)
@@ -20,4 +20,7 @@ export interface NodeModuleDirInfo {
 
 export interface NodeModuleInfo {
   readonly name: string
+  readonly version: string
+  readonly dir: string
+  readonly conflictDependency: Array<NodeModuleInfo>
 }

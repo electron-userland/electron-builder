@@ -1,15 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, InvalidConfigurationError, asArray, executeAppBuilder, log } from "builder-util"
-import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { asArray, executeAppBuilder, log } from "builder-util"
+import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename } from "fs-extra"
 import * as path from "path"
 import { Configuration } from "../configuration"
 import { BeforeCopyExtraFilesOptions, Framework, PrepareApplicationStageDirectoryOptions } from "../Framework"
 import { Packager, Platform } from "../index"
 import { LinuxPackager } from "../linuxPackager"
-import MacPackager from "../macPackager"
+import { MacPackager } from "../macPackager"
 import { getTemplatePath } from "../util/pathManager"
 import { createMacApp } from "./electronMac"
+import { addWinAsarIntegrity } from "./electronWin"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./electronVersion"
 import * as fs from "fs/promises"
 import injectFFMPEG from "./injectFFMPEG"
@@ -78,6 +79,9 @@ async function beforeCopyExtraFiles(options: BeforeCopyExtraFilesOptions) {
   } else if (packager.platform === Platform.WINDOWS) {
     const executable = path.join(appOutDir, `${packager.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, `${electronBranding.projectName}.exe`), executable)
+    if (options.asarIntegrity) {
+      await addWinAsarIntegrity(executable, options.asarIntegrity)
+    }
   } else {
     await createMacApp(packager as MacPackager, appOutDir, options.asarIntegrity, (options.platformName as ElectronPlatformName) === "mas")
   }
@@ -189,10 +193,6 @@ async function unpack(prepareOptions: PrepareApplicationStageDirectoryOptions, o
       log.info({ resolvedDist, zipFile }, "resolved electronDist")
       options.cache = resolvedDist
       dist = null
-    } else if (prepareOptions.arch === Arch[Arch.riscv64]) {
-      throw new InvalidConfigurationError(
-        "Arch `riscv64` is selected but no custom electron distributable was provided via `electronDist` configuration. (Electron upstream does not distribute prebuilt riscv64 artifacts)"
-      )
     }
   }
 

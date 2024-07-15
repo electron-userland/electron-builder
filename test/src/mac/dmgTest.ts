@@ -1,5 +1,4 @@
-import { Arch, exec } from "builder-util"
-import { copyFile } from "builder-util/out/fs"
+import { Arch, exec, copyFile } from "builder-util"
 import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "app-builder-lib"

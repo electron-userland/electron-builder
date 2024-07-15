@@ -1,5 +1,4 @@
-import { FileTransformer } from "builder-util/out/fs"
-import { log } from "builder-util"
+import { log, FileTransformer } from "builder-util"
 import { safeStringifyJson } from "builder-util-runtime"
 import { Platform } from "./core"
 import { NODE_MODULES_PATTERN } from "./fileTransformer"

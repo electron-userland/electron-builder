@@ -1,6 +1,5 @@
-import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish/out/publisher"
-import { log, InvalidConfigurationError } from "builder-util"
+import { log, InvalidConfigurationError, executeFinally } from "builder-util"
 import { asArray } from "builder-util-runtime"
 import { Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
@@ -26,7 +25,7 @@ export { Configuration, AfterPackContext, MetadataDirectories } from "./configur
 export { ElectronBrandingOptions, ElectronDownloadOptions, ElectronPlatformName } from "./electron/ElectronFramework"
 export { PlatformSpecificBuildOptions, AsarOptions, FileSet, Protocol, ReleaseInfo } from "./options/PlatformSpecificBuildOptions"
 export { FileAssociation } from "./options/FileAssociation"
-export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeLegacyOptions, NotarizeNotaryOptions } from "./options/macOptions"
+export { MacConfiguration, DmgOptions, MasConfiguration, MacOsTargetName, DmgContent, DmgWindow, NotarizeNotaryOptions } from "./options/macOptions"
 export { PkgOptions, PkgBackgroundOptions, BackgroundAlignment, BackgroundScaling } from "./options/pkgOptions"
 export { WindowsConfiguration } from "./options/winOptions"
 export { AppXOptions } from "./options/AppXOptions"
@@ -39,6 +38,7 @@ export { SnapOptions, PlugDescriptor, SlotDescriptor } from "./options/SnapOptio
 export { Metadata, AuthorMetadata, RepositoryInfo } from "./options/metadata"
 export { AppInfo } from "./appInfo"
 export { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+
 export { CustomMacSign, CustomMacSignOptions } from "./macPackager"
 export {
   WindowsSignOptions,
@@ -54,6 +54,9 @@ export { PublishManager } from "./publish/PublishManager"
 export { PlatformPackager } from "./platformPackager"
 export { Framework, PrepareApplicationStageDirectoryOptions } from "./Framework"
 export { buildForge, ForgeOptions } from "./forge-maker"
+export { LinuxPackager } from "./linuxPackager"
+export { WinPackager } from "./winPackager"
+export { MacPackager } from "./macPackager"
 
 const expectedOptions = new Set(["publish", "targets", "mac", "win", "linux", "projectDir", "platformPackagerFactory", "config", "effectiveOptionComputed", "prepackaged"])
 

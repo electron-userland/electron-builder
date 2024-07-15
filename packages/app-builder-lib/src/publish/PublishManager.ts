@@ -143,7 +143,6 @@ export class PublishManager implements PublishContext {
     return await resolvePublishConfigurations(publishers, null, this.packager, null, true)
   }
 
-  /** @internal */
   scheduleUpload(publishConfig: PublishConfiguration, event: UploadTask, appInfo: AppInfo): void {
     if (publishConfig.provider === "generic") {
       return
@@ -347,7 +346,7 @@ function requireProviderClass(provider: string, packager: Packager): any | null 
       try {
         module = require(path.join(packager.buildResourcesDir, name + ".js"))
       } catch (ignored) {
-        console.log(ignored)
+        log.debug({ path: path.join(packager.buildResourcesDir, name + ".js") }, "Unable to find publish provider in build resources")
       }
 
       if (module == null) {

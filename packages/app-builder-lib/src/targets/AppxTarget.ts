@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, deepAssign, InvalidConfigurationError, log } from "builder-util"
-import { copyOrLinkFile, walk } from "builder-util/out/fs"
+import { copyOrLinkFile, walk } from "builder-util"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra"
 import * as path from "path"
 import { AppXOptions } from "../"
@@ -19,6 +19,31 @@ const vendorAssetsForDefaultAssets: { [key: string]: string } = {
   "Square44x44Logo.png": "SampleAppx.44x44.png",
   "Wide310x150Logo.png": "SampleAppx.310x150.png",
 }
+
+const restrictedApplicationIdValues = [
+  "CON",
+  "PRN",
+  "AUX",
+  "NUL",
+  "COM1",
+  "COM2",
+  "COM3",
+  "COM4",
+  "COM5",
+  "COM6",
+  "COM7",
+  "COM8",
+  "COM9",
+  "LPT1",
+  "LPT2",
+  "LPT3",
+  "LPT4",
+  "LPT5",
+  "LPT6",
+  "LPT7",
+  "LPT8",
+  "LPT9",
+]
 
 const DEFAULT_RESOURCE_LANG = "en-US"
 
@@ -180,6 +205,7 @@ export default class AppXTarget extends Target {
     const executable = `app\\${appInfo.productFilename}.exe`
     const displayName = options.displayName || appInfo.productName
     const extensions = await this.getExtensions(executable, displayName)
+    const archSpecificMinVersion = arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
 
     const manifest = (await readFile(path.join(getTemplatePath("appx"), "appxmanifest.xml"), "utf8")).replace(/\${([a-zA-Z0-9]+)}/g, (match, p1): string => {
       switch (p1) {
@@ -198,19 +224,57 @@ export default class AppXTarget extends Target {
           return appInfo.getVersionInWeirdWindowsForm(options.setBuildNumber === true)
 
         case "applicationId": {
-          const result = options.applicationId || options.identityName || appInfo.name
-          if (!isNaN(parseInt(result[0], 10))) {
-            let message = `AppX Application.Id can’t start with numbers: "${result}"`
-            if (options.applicationId == null) {
-              message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
+          const validCharactersRegex = /^([A-Za-z][A-Za-z0-9]*)(\.[A-Za-z][A-Za-z0-9]*)*$/
+          const identitynumber = parseInt(options.identityName as string, 10) || NaN
+          let result: string
+          if (!isNaN(identitynumber) && options.identityName !== null && options.identityName !== undefined) {
+            if (options.identityName[0] === "0") {
+              log.warn(`Remove the 0${identitynumber}`)
+              result = options.identityName.replace("0" + identitynumber.toString(), "")
+            } else {
+              log.warn(`Remove the ${identitynumber}`)
+              result = options.identityName.replace(identitynumber.toString(), "")
             }
+          } else {
+            result = options.applicationId || options.identityName || appInfo.name
+          }
+
+          if (result.length < 1 || result.length > 64) {
+            const message = `Appx Application.Id with a value between 1 and 64 characters in length`
+            throw new InvalidConfigurationError(message)
+          } else if (!validCharactersRegex.test(result)) {
+            const message = `AppX Application.Id can not be consists of alpha-numeric and period"`
+            throw new InvalidConfigurationError(message)
+          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
+            const message = `AppX identityName.Id can not include restricted values: ${JSON.stringify(restrictedApplicationIdValues)}`
+            throw new InvalidConfigurationError(message)
+          } else if (result == null && options.applicationId == null) {
+            const message = `Please set appx.applicationId (or correct appx.identityName or name)`
             throw new InvalidConfigurationError(message)
           }
+
           return result
         }
 
-        case "identityName":
-          return options.identityName || appInfo.name
+        case "identityName": {
+          const result = options.identityName || appInfo.name
+          const validCharactersRegex = /^[a-zA-Z0-9.-]+$/
+          if (result.length < 3 || result.length > 50) {
+            const message = `Appx identityName.Id with a value between 3 and 50 characters in length`
+            throw new InvalidConfigurationError(message)
+          } else if (!validCharactersRegex.test(result)) {
+            const message = `AppX identityName.Id cat be consists of alpha-numeric, period, and dash characters"`
+            throw new InvalidConfigurationError(message)
+          } else if (restrictedApplicationIdValues.includes(result.toUpperCase())) {
+            const message = `AppX identityName.Id can not be some values`
+            throw new InvalidConfigurationError(message)
+          } else if (result == null && options.identityName == null) {
+            const message = `Please set appx.identityName or name`
+            throw new InvalidConfigurationError(message)
+          }
+
+          return result
+        }
 
         case "executable":
           return executable
@@ -252,10 +316,10 @@ export default class AppXTarget extends Target {
           return extensions
 
         case "minVersion":
-          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.minVersion || archSpecificMinVersion
 
         case "maxVersionTested":
-          return arch === Arch.arm64 ? "10.0.16299.0" : "10.0.14316.0"
+          return options.maxVersionTested || options.minVersion || archSpecificMinVersion
 
         default:
           throw new Error(`Macro ${p1} is not defined`)
