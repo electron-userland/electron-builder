@@ -296,10 +296,6 @@ export abstract class DifferentialDownloader {
         }
 
         response.on("error", reject)
-        // for old nodejs:https://nodejs.org/docs/latest-v16.x/api/http.html#event-abort
-        response.on("abort", () => {
-          reject(new Error("response has been abort by the server"))
-        })
         response.on("aborted", () => {
           reject(new Error("response has been aborted by the server"))
         })
