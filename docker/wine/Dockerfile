@@ -5,6 +5,11 @@ FROM electronuserland/builder:$IMAGE_VERSION
 ENV WINEARCH=win64
 ENV WINEPREFIX=/root/.wine64
 
+# Set locale to support UTF-8
+ENV LANG C.UTF-8
+ENV LANGUAGE C.UTF-8
+ENV LC_ALL C.UTF-8
+
 RUN dpkg --add-architecture i386 && \
   curl -Lo /usr/share/keyrings/winehq.asc https://dl.winehq.org/wine-builds/winehq.key && \
   echo 'deb [signed-by=/usr/share/keyrings/winehq.asc] https://dl.winehq.org/wine-builds/ubuntu/ focal main' > /etc/apt/sources.list.d/winehq.list && \
@@ -16,6 +21,10 @@ RUN dpkg --add-architecture i386 && \
     wine-stable-i386=6.0.4~focal-1 \
     wine-stable-amd64=6.0.4~focal-1 \
   && \
+    # Generate locale for UTF-8
+    locale-gen en_US.UTF-8 && \
+    # Configure Wine and verify setup
+    winecfg && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
