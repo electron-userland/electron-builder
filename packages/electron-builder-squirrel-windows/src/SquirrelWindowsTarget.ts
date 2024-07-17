@@ -110,7 +110,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      nuspecTemplate: path.join(__dirname, "template.nuspectemplate"),
+      nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
       ...(this.options as any),
     }
 
