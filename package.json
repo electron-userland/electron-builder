@@ -79,7 +79,8 @@
   "packageManager": "pnpm@9.4.0",
   "pnpm": {
     "patchedDependencies": {
-      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"
+      "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch",
+      "electron-winstaller@5.3.1": "patches/electron-winstaller@5.3.1.patch"
     }
   }
 }

@@ -8,6 +8,9 @@ patchedDependencies:
   '@changesets/cli@2.25.0':
     hash: nye7dcohy6yzxjscpnrszvchra
     path: patches/@changesets__cli@2.25.0.patch
+  electron-winstaller@5.3.1:
+    hash: wrmysg5dioqx5kgs33o3ht6p5a
+    path: patches/electron-winstaller@5.3.1.patch
 
 importers:
 
@@ -448,7 +451,7 @@ importers:
         version: link:../builder-util
       electron-winstaller:
         specifier: 5.3.1
-        version: 5.3.1
+        version: 5.3.1(patch_hash=wrmysg5dioqx5kgs33o3ht6p5a)
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -598,7 +601,7 @@ importers:
         version: link:../packages/electron-updater
       electron-winstaller:
         specifier: 5.3.1
-        version: 5.3.1
+        version: 5.3.1(patch_hash=wrmysg5dioqx5kgs33o3ht6p5a)
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -9572,7 +9575,7 @@ snapshots:
 
   electron-to-chromium@1.4.690: {}
 
-  electron-winstaller@5.3.1:
+  electron-winstaller@5.3.1(patch_hash=wrmysg5dioqx5kgs33o3ht6p5a):
     dependencies:
       '@electron/asar': 3.2.8
       debug: 4.3.5
