@@ -6,7 +6,7 @@ import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsT
 import { PublishManager } from "app-builder-lib"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
 import { getLinuxToolsPath } from "app-builder-lib/out/targets/tools"
-import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
+import { convertVersion } from "electron-winstaller"
 import { PublishPolicy } from "electron-publish"
 import { emptyDir, writeJson } from "fs-extra"
 import * as fs from "fs/promises"
