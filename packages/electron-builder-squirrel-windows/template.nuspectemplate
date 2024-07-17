@@ -21,6 +21,8 @@
     <file src="*.exe.sig" target="lib\net45" />
     <file src="icudtl.dat" target="lib\net45\icudtl.dat" />
     <file src="Squirrel.exe" target="lib\net45\squirrel.exe" />
+    <file src="LICENSE.electron.txt" target="lib\net45\LICENSE.electron.txt" />
+    <file src="LICENSES.chromium.html" target="lib\net45\LICENSES.chromium.html" />
     <file src="<%- exe %>" target="lib\net45\<%- exe %>" />
     <% additionalFiles.forEach(function(f) { %>
     <file src="<%- f.src %>" target="<%- f.target %>" />
