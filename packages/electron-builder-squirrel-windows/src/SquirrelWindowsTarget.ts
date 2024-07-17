@@ -4,7 +4,7 @@ import { getBinFromUrl } from "app-builder-lib/out/binDownload"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
-import { convertVersion, SquirrelBuilder, SquirrelOptions } from "./squirrelPack"
+import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -22,10 +22,7 @@ export default class SquirrelWindowsTarget extends Target {
     const version = packager.appInfo.version
     const sanitizedName = sanitizeFileName(this.appName)
 
-    // tslint:disable-next-line:no-invalid-template-strings
     const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
-    const packageFile = `${sanitizedName}-${convertVersion(version)}-full.nupkg`
-
     const installerOutDir = path.join(this.outDir, `squirrel-windows${getArchSuffix(arch)}`)
     const artifactPath = path.join(installerOutDir, setupFile)
 
@@ -40,8 +37,11 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const distOptions = await this.computeEffectiveDistOptions()
-    const squirrelBuilder = new SquirrelBuilder(distOptions, installerOutDir, packager)
-    await squirrelBuilder.buildInstaller({ setupFile, packageFile }, appOutDir, this.outDir, arch)
+    await createWindowsInstaller({
+      ...distOptions,
+      appDirectory: appOutDir,
+      outputDirectory: this.outDir,
+    })
 
     await packager.info.callArtifactBuildCompleted({
       file: artifactPath,
@@ -102,7 +102,6 @@ export default class SquirrelWindowsTarget extends Target {
     const appName = this.appName
     const options: SquirrelOptions = {
       name: appName,
-      productName: this.options.name || appInfo.productName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
       version: appInfo.version,
       description: appInfo.description,
@@ -117,7 +116,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (isEmptyOrSpaces(options.description)) {
-      options.description = options.productName
+      options.description = this.options.name || appInfo.productName
     }
 
     if (options.remoteToken == null) {
