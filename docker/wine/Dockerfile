@@ -20,11 +20,6 @@ RUN dpkg --add-architecture i386 && \
     wine-stable=6.0.4~focal-1 \
     wine-stable-i386=6.0.4~focal-1 \
     wine-stable-amd64=6.0.4~focal-1 \
-  && \
-    # Generate locale for UTF-8
-    locale-gen en_US.UTF-8 && \
-    # Configure Wine and verify setup
-    winecfg && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
