@@ -20,6 +20,7 @@ RUN dpkg --add-architecture i386 && \
     wine-stable=6.0.4~focal-1 \
     wine-stable-i386=6.0.4~focal-1 \
     wine-stable-amd64=6.0.4~focal-1 \
+  && \
   # clean
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
