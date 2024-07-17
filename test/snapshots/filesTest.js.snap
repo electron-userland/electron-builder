@@ -60,14 +60,14 @@ Array [
   "lib/net45/resources/",
   "lib/net45/resources/app.asar",
   "lib/net45/resources/platformSpecificR",
-  "lib/net45/resources/bar/"
+  "lib/net45/resources/bar/",
   "lib/net45/resources/bar/hello.txt",
   "lib/net45/resources/bar/x64.txt",
-  "lib/net45/resources/dir-relative",
+  "lib/net45/resources/dir-relative/",
   "lib/net45/resources/dir-relative/f.txt",
-  "lib/net45/resources/foo",
+  "lib/net45/resources/foo/",
   "lib/net45/resources/foo/nameWithoutDot",
-  "lib/net45/resources/win",
+  "lib/net45/resources/win/",
   "lib/net45/resources/win/x64.txt",
   "package/",
   "package/services/",
@@ -75,7 +75,7 @@ Array [
   "package/services/metadata/core-properties/",
   "TestApp.nuspec",
   "[Content_Types].xml",
-  "_rels",
+  "_rels/",
   "_rels/.rels",
 ]
 `;
