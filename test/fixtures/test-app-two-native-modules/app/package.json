@@ -3,7 +3,9 @@
   "main": "index.js",
   "version": "1.1.1",
   "dependencies": {
-    "debug": "4.1.1"
+    "debug": "4.1.1",
+    "node-pty": "1.1.0-beta14",
+    "node-addon-api": "7.1.1"
   },
   "optionalDependencies": {
     "node-mac-permissions": "2.3.0"

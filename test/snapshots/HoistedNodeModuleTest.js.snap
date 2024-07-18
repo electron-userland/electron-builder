@@ -196,11 +196,11 @@ exports[`yarn two package.json w/ native module 2`] = `
 Object {
   "files": Object {
     "index.html": Object {
-      "offset": "50776",
+      "offset": "423182",
       "size": 841,
     },
     "index.js": Object {
-      "offset": "51617",
+      "offset": "424023",
       "size": 2501,
     },
     "node_modules": Object {
@@ -261,11 +261,840 @@ Object {
             },
           },
         },
+        "node-addon-api": Object {
+          "files": Object {
+            "LICENSE.md": Object {
+              "offset": "50776",
+              "size": 1150,
+            },
+            "common.gypi": Object {
+              "offset": "51926",
+              "size": 724,
+            },
+            "except.gypi": Object {
+              "offset": "52650",
+              "size": 560,
+            },
+            "index.js": Object {
+              "offset": "53210",
+              "size": 377,
+            },
+            "napi-inl.deprecated.h": Object {
+              "offset": "53587",
+              "size": 6323,
+            },
+            "napi-inl.h": Object {
+              "offset": "59910",
+              "size": 219411,
+            },
+            "napi.h": Object {
+              "offset": "279321",
+              "size": 115423,
+            },
+            "node_addon_api.gyp": Object {
+              "offset": "394744",
+              "size": 793,
+            },
+            "node_api.gyp": Object {
+              "offset": "395537",
+              "size": 132,
+            },
+            "noexcept.gypi": Object {
+              "offset": "395669",
+              "size": 639,
+            },
+            "nothing.c": Object {
+              "offset": "396308",
+              "size": 0,
+            },
+            "package-support.json": Object {
+              "offset": "396308",
+              "size": 467,
+            },
+            "package.json": Object {
+              "offset": "396775",
+              "size": 928,
+            },
+            "tools": Object {
+              "files": Object {
+                "README.md": Object {
+                  "offset": "397703",
+                  "size": 3217,
+                },
+                "check-napi.js": Object {
+                  "offset": "400920",
+                  "size": 3176,
+                },
+                "clang-format.js": Object {
+                  "offset": "404096",
+                  "size": 2002,
+                },
+                "conversion.js": Object {
+                  "executable": true,
+                  "offset": "406098",
+                  "size": 15013,
+                },
+                "eslint-format.js": Object {
+                  "offset": "421111",
+                  "size": 2071,
+                },
+              },
+            },
+          },
+        },
+        "node-pty": Object {
+          "files": Object {
+            "LICENSE": Object {
+              "size": 3326,
+              "unpacked": true,
+            },
+            "build": Object {
+              "files": Object {
+                "Release": Object {
+                  "files": Object {
+                    "node-addon-api": Object {
+                      "files": Object {
+                        "node_addon_api_except.stamp": Object {
+                          "size": 0,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "pty.node": Object {
+                      "size": 72880,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "node_gyp_bins": Object {
+                  "files": Object {
+                    "python3": Object {
+                      "size": 5490456,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+            },
+            "deps": Object {
+              "files": Object {
+                ".editorconfig": Object {
+                  "size": 55,
+                  "unpacked": true,
+                },
+                "winpty": Object {
+                  "files": Object {
+                    ".drone.yml": Object {
+                      "size": 439,
+                      "unpacked": true,
+                    },
+                    "LICENSE": Object {
+                      "size": 1085,
+                      "unpacked": true,
+                    },
+                    "Makefile": Object {
+                      "size": 4722,
+                      "unpacked": true,
+                    },
+                    "README.md": Object {
+                      "size": 5551,
+                      "unpacked": true,
+                    },
+                    "RELEASES.md": Object {
+                      "size": 13667,
+                      "unpacked": true,
+                    },
+                    "VERSION.txt": Object {
+                      "size": 10,
+                      "unpacked": true,
+                    },
+                    "configure": Object {
+                      "size": 6478,
+                      "unpacked": true,
+                    },
+                    "misc": Object {
+                      "files": Object {
+                        "ConinMode.ps1": Object {
+                          "size": 3228,
+                          "unpacked": true,
+                        },
+                        "DebugClient.py": Object {
+                          "size": 1558,
+                          "unpacked": true,
+                        },
+                        "DebugServer.py": Object {
+                          "size": 2396,
+                          "unpacked": true,
+                        },
+                        "DumpLines.py": Object {
+                          "size": 97,
+                          "unpacked": true,
+                        },
+                        "EnableExtendedFlags.txt": Object {
+                          "size": 1974,
+                          "unpacked": true,
+                        },
+                        "Font-Report-June2016": Object {
+                          "files": Object {
+                            "CP437-Consolas.txt": Object {
+                              "size": 16408,
+                              "unpacked": true,
+                            },
+                            "CP437-Lucida.txt": Object {
+                              "size": 19641,
+                              "unpacked": true,
+                            },
+                            "CP932.txt": Object {
+                              "size": 19593,
+                              "unpacked": true,
+                            },
+                            "CP936.txt": Object {
+                              "size": 19650,
+                              "unpacked": true,
+                            },
+                            "CP949.txt": Object {
+                              "size": 19588,
+                              "unpacked": true,
+                            },
+                            "CP950.txt": Object {
+                              "size": 19656,
+                              "unpacked": true,
+                            },
+                            "MinimumWindowWidths.txt": Object {
+                              "size": 870,
+                              "unpacked": true,
+                            },
+                            "Results.txt": Object {
+                              "size": 147,
+                              "unpacked": true,
+                            },
+                            "Windows10SetFontBugginess.txt": Object {
+                              "size": 7851,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "FormatChar.h": Object {
+                          "size": 529,
+                          "unpacked": true,
+                        },
+                        "IdentifyConsoleWindow.ps1": Object {
+                          "size": 1952,
+                          "unpacked": true,
+                        },
+                        "MouseInputNotes.txt": Object {
+                          "size": 4325,
+                          "unpacked": true,
+                        },
+                        "Notes.txt": Object {
+                          "size": 9856,
+                          "unpacked": true,
+                        },
+                        "Spew.py": Object {
+                          "size": 65,
+                          "unpacked": true,
+                        },
+                        "build32.sh": Object {
+                          "size": 213,
+                          "unpacked": true,
+                        },
+                        "build64.sh": Object {
+                          "size": 217,
+                          "unpacked": true,
+                        },
+                        "color-test.sh": Object {
+                          "size": 6068,
+                          "unpacked": true,
+                        },
+                        "font-notes.txt": Object {
+                          "size": 14988,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "ship": Object {
+                      "files": Object {
+                        "build-pty4j-libpty.bat": Object {
+                          "size": 1230,
+                          "unpacked": true,
+                        },
+                        "common_ship.py": Object {
+                          "size": 1698,
+                          "unpacked": true,
+                        },
+                        "make_msvc_package.py": Object {
+                          "size": 5415,
+                          "unpacked": true,
+                        },
+                        "ship.py": Object {
+                          "size": 4022,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "src": Object {
+                      "files": Object {
+                        "agent": Object {
+                          "files": Object {
+                            "Agent.h": Object {
+                              "size": 3520,
+                              "unpacked": true,
+                            },
+                            "AgentCreateDesktop.h": Object {
+                              "size": 1283,
+                              "unpacked": true,
+                            },
+                            "ConsoleFont.h": Object {
+                              "size": 1266,
+                              "unpacked": true,
+                            },
+                            "ConsoleInput.h": Object {
+                              "size": 3950,
+                              "unpacked": true,
+                            },
+                            "ConsoleInputReencoding.h": Object {
+                              "size": 1444,
+                              "unpacked": true,
+                            },
+                            "ConsoleLine.h": Object {
+                              "size": 1524,
+                              "unpacked": true,
+                            },
+                            "Coord.h": Object {
+                              "size": 2204,
+                              "unpacked": true,
+                            },
+                            "DebugShowInput.h": Object {
+                              "size": 1434,
+                              "unpacked": true,
+                            },
+                            "DefaultInputMap.h": Object {
+                              "size": 1271,
+                              "unpacked": true,
+                            },
+                            "DsrSender.h": Object {
+                              "size": 1242,
+                              "unpacked": true,
+                            },
+                            "EventLoop.h": Object {
+                              "size": 1603,
+                              "unpacked": true,
+                            },
+                            "InputMap.h": Object {
+                              "size": 3369,
+                              "unpacked": true,
+                            },
+                            "LargeConsoleRead.h": Object {
+                              "size": 2411,
+                              "unpacked": true,
+                            },
+                            "NamedPipe.h": Object {
+                              "size": 4130,
+                              "unpacked": true,
+                            },
+                            "Scraper.h": Object {
+                              "size": 3760,
+                              "unpacked": true,
+                            },
+                            "SimplePool.h": Object {
+                              "size": 2365,
+                              "unpacked": true,
+                            },
+                            "SmallRect.h": Object {
+                              "size": 4437,
+                              "unpacked": true,
+                            },
+                            "Terminal.h": Object {
+                              "size": 2262,
+                              "unpacked": true,
+                            },
+                            "UnicodeEncoding.h": Object {
+                              "size": 5298,
+                              "unpacked": true,
+                            },
+                            "Win32Console.h": Object {
+                              "size": 2347,
+                              "unpacked": true,
+                            },
+                            "Win32ConsoleBuffer.h": Object {
+                              "size": 3244,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "configurations.gypi": Object {
+                          "size": 2378,
+                          "unpacked": true,
+                        },
+                        "include": Object {
+                          "files": Object {
+                            "winpty.h": Object {
+                              "size": 9420,
+                              "unpacked": true,
+                            },
+                            "winpty_constants.h": Object {
+                              "size": 5697,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "libwinpty": Object {
+                          "files": Object {
+                            "AgentLocation.h": Object {
+                              "size": 1278,
+                              "unpacked": true,
+                            },
+                            "LibWinptyException.h": Object {
+                              "size": 1961,
+                              "unpacked": true,
+                            },
+                            "WinptyInternal.h": Object {
+                              "size": 2379,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "shared": Object {
+                          "files": Object {
+                            "AgentMsg.h": Object {
+                              "size": 1418,
+                              "unpacked": true,
+                            },
+                            "BackgroundDesktop.h": Object {
+                              "size": 2836,
+                              "unpacked": true,
+                            },
+                            "Buffer.h": Object {
+                              "size": 3376,
+                              "unpacked": true,
+                            },
+                            "DebugClient.h": Object {
+                              "size": 1696,
+                              "unpacked": true,
+                            },
+                            "GenRandom.h": Object {
+                              "size": 2015,
+                              "unpacked": true,
+                            },
+                            "GetCommitHash.bat": Object {
+                              "size": 274,
+                              "unpacked": true,
+                            },
+                            "Mutex.h": Object {
+                              "size": 2183,
+                              "unpacked": true,
+                            },
+                            "OsModule.h": Object {
+                              "size": 2282,
+                              "unpacked": true,
+                            },
+                            "OwnedHandle.h": Object {
+                              "size": 1870,
+                              "unpacked": true,
+                            },
+                            "PrecompiledHeader.h": Object {
+                              "size": 1528,
+                              "unpacked": true,
+                            },
+                            "StringBuilder.h": Object {
+                              "size": 8506,
+                              "unpacked": true,
+                            },
+                            "StringUtil.h": Object {
+                              "size": 2677,
+                              "unpacked": true,
+                            },
+                            "TimeMeasurement.h": Object {
+                              "size": 2171,
+                              "unpacked": true,
+                            },
+                            "UnixCtrlChars.h": Object {
+                              "size": 2019,
+                              "unpacked": true,
+                            },
+                            "UpdateGenVersion.bat": Object {
+                              "size": 578,
+                              "unpacked": true,
+                            },
+                            "WindowsSecurity.h": Object {
+                              "size": 3465,
+                              "unpacked": true,
+                            },
+                            "WindowsVersion.h": Object {
+                              "size": 1345,
+                              "unpacked": true,
+                            },
+                            "WinptyAssert.h": Object {
+                              "size": 2829,
+                              "unpacked": true,
+                            },
+                            "WinptyException.h": Object {
+                              "size": 1643,
+                              "unpacked": true,
+                            },
+                            "WinptyVersion.h": Object {
+                              "size": 1246,
+                              "unpacked": true,
+                            },
+                            "winpty_snprintf.h": Object {
+                              "size": 3668,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "unix-adapter": Object {
+                          "files": Object {
+                            "InputHandler.h": Object {
+                              "size": 2058,
+                              "unpacked": true,
+                            },
+                            "OutputHandler.h": Object {
+                              "size": 1943,
+                              "unpacked": true,
+                            },
+                            "Util.h": Object {
+                              "size": 1410,
+                              "unpacked": true,
+                            },
+                            "WakeupFd.h": Object {
+                              "size": 1549,
+                              "unpacked": true,
+                            },
+                          },
+                          "unpacked": true,
+                        },
+                        "winpty.gyp": Object {
+                          "size": 7684,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
+                    "vcbuild.bat": Object {
+                      "size": 2425,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "lib": Object {
+              "files": Object {
+                "conpty_console_list_agent.js": Object {
+                  "size": 775,
+                  "unpacked": true,
+                },
+                "conpty_console_list_agent.js.map": Object {
+                  "size": 564,
+                  "unpacked": true,
+                },
+                "eventEmitter2.js": Object {
+                  "size": 1600,
+                  "unpacked": true,
+                },
+                "eventEmitter2.js.map": Object {
+                  "size": 1155,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js": Object {
+                  "size": 1266,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.js.map": Object {
+                  "size": 1396,
+                  "unpacked": true,
+                },
+                "index.js": Object {
+                  "size": 1972,
+                  "unpacked": true,
+                },
+                "index.js.map": Object {
+                  "size": 964,
+                  "unpacked": true,
+                },
+                "interfaces.js": Object {
+                  "size": 233,
+                  "unpacked": true,
+                },
+                "interfaces.js.map": Object {
+                  "size": 124,
+                  "unpacked": true,
+                },
+                "shared": Object {
+                  "files": Object {
+                    "conout.js": Object {
+                      "size": 348,
+                      "unpacked": true,
+                    },
+                    "conout.js.map": Object {
+                      "size": 204,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "terminal.js": Object {
+                  "size": 7454,
+                  "unpacked": true,
+                },
+                "terminal.js.map": Object {
+                  "size": 5844,
+                  "unpacked": true,
+                },
+                "terminal.test.js": Object {
+                  "size": 6250,
+                  "unpacked": true,
+                },
+                "terminal.test.js.map": Object {
+                  "size": 4150,
+                  "unpacked": true,
+                },
+                "testUtils.test.js": Object {
+                  "size": 807,
+                  "unpacked": true,
+                },
+                "testUtils.test.js.map": Object {
+                  "size": 622,
+                  "unpacked": true,
+                },
+                "types.js": Object {
+                  "size": 228,
+                  "unpacked": true,
+                },
+                "types.js.map": Object {
+                  "size": 114,
+                  "unpacked": true,
+                },
+                "unixTerminal.js": Object {
+                  "size": 10231,
+                  "unpacked": true,
+                },
+                "unixTerminal.js.map": Object {
+                  "size": 7978,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js": Object {
+                  "size": 19444,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.js.map": Object {
+                  "size": 11472,
+                  "unpacked": true,
+                },
+                "utils.js": Object {
+                  "size": 580,
+                  "unpacked": true,
+                },
+                "utils.js.map": Object {
+                  "size": 443,
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js": Object {
+                  "size": 6017,
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.js.map": Object {
+                  "size": 1593,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js": Object {
+                  "size": 12461,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.js.map": Object {
+                  "size": 8889,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js": Object {
+                  "size": 4147,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.js.map": Object {
+                  "size": 2951,
+                  "unpacked": true,
+                },
+                "windowsTerminal.js": Object {
+                  "size": 7988,
+                  "unpacked": true,
+                },
+                "windowsTerminal.js.map": Object {
+                  "size": 5127,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js": Object {
+                  "size": 9832,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.js.map": Object {
+                  "size": 8006,
+                  "unpacked": true,
+                },
+                "worker": Object {
+                  "files": Object {
+                    "conoutSocketWorker.js": Object {
+                      "size": 848,
+                      "unpacked": true,
+                    },
+                    "conoutSocketWorker.js.map": Object {
+                      "size": 638,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "node-addon-api": Object {
+              "files": Object {
+                "node_addon_api.Makefile": Object {
+                  "size": 159,
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "package.json": Object {
+              "size": 884,
+              "unpacked": true,
+            },
+            "scripts": Object {
+              "files": Object {
+                "post-install.js": Object {
+                  "size": 1213,
+                  "unpacked": true,
+                },
+                "publish.js": Object {
+                  "size": 2369,
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+            "src": Object {
+              "files": Object {
+                "conpty_console_list_agent.ts": Object {
+                  "size": 696,
+                  "unpacked": true,
+                },
+                "eventEmitter2.test.ts": Object {
+                  "size": 975,
+                  "unpacked": true,
+                },
+                "eventEmitter2.ts": Object {
+                  "size": 1111,
+                  "unpacked": true,
+                },
+                "index.ts": Object {
+                  "size": 2115,
+                  "unpacked": true,
+                },
+                "interfaces.ts": Object {
+                  "size": 2845,
+                  "unpacked": true,
+                },
+                "shared": Object {
+                  "files": Object {
+                    "conout.ts": Object {
+                      "size": 291,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "terminal.test.ts": Object {
+                  "size": 4346,
+                  "unpacked": true,
+                },
+                "terminal.ts": Object {
+                  "size": 6665,
+                  "unpacked": true,
+                },
+                "testUtils.test.ts": Object {
+                  "size": 567,
+                  "unpacked": true,
+                },
+                "tsconfig.json": Object {
+                  "size": 323,
+                  "unpacked": true,
+                },
+                "types.ts": Object {
+                  "size": 306,
+                  "unpacked": true,
+                },
+                "unixTerminal.test.ts": Object {
+                  "size": 13205,
+                  "unpacked": true,
+                },
+                "unixTerminal.ts": Object {
+                  "size": 8195,
+                  "unpacked": true,
+                },
+                "utils.ts": Object {
+                  "size": 292,
+                  "unpacked": true,
+                },
+                "win": Object {
+                  "files": Object {
+                    "path_util.h": Object {
+                      "size": 695,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+                "windowsConoutConnection.ts": Object {
+                  "size": 2683,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.test.ts": Object {
+                  "size": 3419,
+                  "unpacked": true,
+                },
+                "windowsPtyAgent.ts": Object {
+                  "size": 10359,
+                  "unpacked": true,
+                },
+                "windowsTerminal.test.ts": Object {
+                  "size": 7551,
+                  "unpacked": true,
+                },
+                "windowsTerminal.ts": Object {
+                  "size": 5784,
+                  "unpacked": true,
+                },
+                "worker": Object {
+                  "files": Object {
+                    "conoutSocketWorker.ts": Object {
+                      "size": 724,
+                      "unpacked": true,
+                    },
+                  },
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
+          },
+          "unpacked": true,
+        },
       },
     },
     "package.json": Object {
-      "offset": "54118",
-      "size": 203,
+      "offset": "426524",
+      "size": 266,
     },
   },
 }
