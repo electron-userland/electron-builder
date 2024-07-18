@@ -103,7 +103,7 @@ test.ifMac(
   )
 )
 
-test.only("yarn two package.json w/ native module", () =>
+test.ifMac("yarn two package.json w/ native module", () =>
   assertPack(
     "test-app-two-native-modules",
     {
