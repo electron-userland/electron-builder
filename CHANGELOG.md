@@ -1,3 +1,15 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.0...v) (2024-07-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @electron/osx-sign to v1.3.1 ([#8341](https://github.com/electron-userland/electron-builder/issues/8341)) ([578a7e1](https://github.com/electron-userland/electron-builder/commit/578a7e1a0fcf2a700fe5fadcb1567c1193bd978d))
+* resolve CI flakiness due to lzma-native dependency ([#8342](https://github.com/electron-userland/electron-builder/issues/8342)) ([60774a3](https://github.com/electron-userland/electron-builder/commit/60774a3883d021f27ecce7a37608f025f1a80ce3))
+* setting `disablePreGypCopy: true` and updating unit test with `node-pty` native module ([#8352](https://github.com/electron-userland/electron-builder/issues/8352)) ([372b046](https://github.com/electron-userland/electron-builder/commit/372b046bec23ba0390a6cdb3b4390f033796c833))
+* updating app-builder dependency ([#8353](https://github.com/electron-userland/electron-builder/issues/8353)) ([089dd63](https://github.com/electron-userland/electron-builder/commit/089dd6396c9638910967c1968d9b8056acd952a9))
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.0-alpha.13...v) (2024-07-15)
 
 
