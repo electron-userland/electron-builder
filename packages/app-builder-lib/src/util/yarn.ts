@@ -206,9 +206,8 @@ export async function rebuild(config: Configuration, appDir: string, options: Re
     debug: log.isDebugEnabled,
     projectRootPath: await getProjectRootPath(appDir),
     mode: (config.nativeRebuilder as RebuildMode) || "sequential",
-  }
-  if (buildFromSource) {
-    rebuildOptions.prebuildTagPrefix = "totally-not-a-real-prefix-to-force-rebuild"
+    buildFromSource: buildFromSource,
+    disablePreGypCopy: true,
   }
   return remoteRebuild(rebuildOptions)
 }
