@@ -104,7 +104,7 @@ export default class SquirrelWindowsTarget extends Target {
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
       version: appInfo.version,
       description: appInfo.description,
-      // better to explicitly set to empty string, to avoid any nugget errors
+      exe: `${this.packager.platformSpecificBuildOptions.executableName || this.options.name || appInfo.productName}.exe`,
       authors: appInfo.companyName || "",
       iconUrl,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
