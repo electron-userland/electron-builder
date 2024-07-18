@@ -1489,7 +1489,7 @@ Array [
   \\"author\\": {
     \\"name\\": \\"Microsoft Corporation\\"
   },
-  \\"version\\": \\"1.1.0-beta9\\",
+  \\"version\\": \\"1.1.0-beta14\\",
   \\"license\\": \\"MIT\\",
   \\"main\\": \\"./lib/index.js\\",
   \\"types\\": \\"./typings/node-pty.d.ts\\",
@@ -1517,7 +1517,7 @@ Array [
     \\"cross-env\\": \\"^5.1.4\\",
     \\"eslint\\": \\"^6.8.0\\",
     \\"mocha\\": \\"10\\",
-    \\"node-gyp\\": \\"^9.4.0\\",
+    \\"node-gyp\\": \\"^10.0.1\\",
     \\"ps-list\\": \\"^6.0.0\\",
     \\"typescript\\": \\"^3.8.3\\"
   }

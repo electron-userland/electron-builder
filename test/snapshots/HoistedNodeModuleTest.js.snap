@@ -352,6 +352,15 @@ Object {
               "files": Object {
                 "Release": Object {
                   "files": Object {
+                    "node-addon-api": Object {
+                      "files": Object {
+                        "node_addon_api_except.stamp": Object {
+                          "size": 0,
+                          "unpacked": true,
+                        },
+                      },
+                      "unpacked": true,
+                    },
                     "pty.node": Object {
                       "size": 72880,
                       "unpacked": true,
@@ -948,6 +957,15 @@ Object {
               },
               "unpacked": true,
             },
+            "node-addon-api": Object {
+              "files": Object {
+                "node_addon_api.Makefile": Object {
+                  "size": 159,
+                  "unpacked": true,
+                },
+              },
+              "unpacked": true,
+            },
             "package.json": Object {
               "size": 884,
               "unpacked": true,
@@ -1076,7 +1094,7 @@ Object {
     },
     "package.json": Object {
       "offset": "426524",
-      "size": 235,
+      "size": 266,
     },
   },
 }
