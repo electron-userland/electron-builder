@@ -60,7 +60,7 @@
     "globby": "11.1.0",
     "husky": "7.0.4",
     "jest-cli": "27.5.1",
-    "jsdoc-to-markdown": "8.0.1",
+    "jsdoc-to-markdown": "8.0.2",
     "lint-staged": "15.2.2",
     "markdown2html-pro": "1.0.6",
     "path-sort": "0.1.0",
