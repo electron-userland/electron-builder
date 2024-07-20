@@ -57,7 +57,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "fs-extra": "10.1.0",
-    "globby": "11.1.0",
+    "globby": "14.0.2",
     "husky": "7.0.4",
     "jest-cli": "27.5.1",
     "jsdoc-to-markdown": "8.0.1",
