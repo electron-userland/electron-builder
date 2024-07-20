@@ -17,7 +17,7 @@
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
-    "electron-winstaller": "5.3.1"
+    "electron-winstaller": "github:beyondkmp/windows-installer#7zip"
   },
   "devDependencies": {
     "@types/archiver": "5.3.1",

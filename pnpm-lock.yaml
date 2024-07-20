@@ -447,8 +447,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util
       electron-winstaller:
-        specifier: 5.3.1
-        version: 5.3.1
+        specifier: github:beyondkmp/windows-installer#7zip
+        version: https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -3197,6 +3197,11 @@ packages:
 
   electron-winstaller@5.3.1:
     resolution: {integrity: sha512-oM8BW3a8NEqG0XW+Vx3xywhk0DyDV4T0jT0zZfWt0IczNT3jHAAvQWBorF8osQDplSsCyXXyxrsrQ8cY0Slb/A==}
+    engines: {node: '>=8.0.0'}
+
+  electron-winstaller@https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c:
+    resolution: {tarball: https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c}
+    version: 0.0.0-development
     engines: {node: '>=8.0.0'}
 
   emittery@0.8.1:
@@ -9573,6 +9578,18 @@ snapshots:
   electron-to-chromium@1.4.690: {}
 
   electron-winstaller@5.3.1:
+    dependencies:
+      '@electron/asar': 3.2.8
+      debug: 4.3.5
+      fs-extra: 7.0.1
+      lodash: 4.17.21
+      temp: 0.9.4
+    optionalDependencies:
+      '@electron/windows-sign': 1.1.3
+    transitivePeerDependencies:
+      - supports-color
+
+  electron-winstaller@https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c:
     dependencies:
       '@electron/asar': 3.2.8
       debug: 4.3.5
