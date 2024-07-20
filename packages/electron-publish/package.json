@@ -21,10 +21,10 @@
     "chalk": "^4.1.2",
     "fs-extra": "^10.1.0",
     "lazy-val": "^1.0.5",
-    "mime": "^2.5.2"
+    "mime": "^4.0.0"
   },
   "typings": "./out/publisher.d.ts",
   "devDependencies": {
-    "@types/mime": "2.0.3"
+    "@types/mime": "4.0.0"
   }
 }
