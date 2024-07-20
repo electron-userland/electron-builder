@@ -1,7 +1,6 @@
 import { addValue, deepAssign, exec, log, spawn, getPath7x, getPath7za, copyDir, FileCopier, USE_HARD_LINKS, walk } from "builder-util"
 import { CancellationToken, UpdateFileInfo } from "builder-util-runtime"
 import { executeFinally } from "builder-util"
-import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, Configuration, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { PublishManager } from "app-builder-lib"
 import { computeArchToTargetNamesMap } from "app-builder-lib/out/targets/targetFactory"
@@ -376,6 +375,47 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   }
 }
 
+async function listNupkgContents(nupkgPath: string) {
+  try {
+    const { exec } = require("child_process")
+    const util = require("util")
+    const execPromise = util.promisify(exec)
+    let zPath = await getPath7za()
+    const { stdout, stderr } = await execPromise(`${zPath} l -slt "${nupkgPath}"`)
+    if (stderr) {
+      console.error("7z command error:", stderr)
+    }
+
+    const files = stdout
+      .split("\n")
+      .filter((line: string) => line.startsWith("Path = "))
+      .map((line: string) => line.replace("Path = ", "").trim())
+      .filter((path: string) => path !== "")
+    return files
+  } catch (error) {
+    throw new Error(`run 7z failed: ${error}`)
+  }
+}
+
+async function getFileContentFrom7Zip(zipFilePath: string, fileToRead: string): Promise<string> {
+  try {
+    const { exec } = require("child_process")
+    const util = require("util")
+    const execPromise = util.promisify(exec)
+    let zPath = await getPath7za()
+    const command = `${zPath} e -so "${zipFilePath}" "${fileToRead}"`
+
+    const { stdout, stderr } = await execPromise(command, { encoding: "utf8", maxBuffer: 50 * 1024 * 1024 })
+
+    if (stderr) {
+      throw new Error(`Stderr: ${stderr}`)
+    }
+    return stdout
+  } catch (error) {
+    throw new Error(`Error: ${error}`)
+  }
+}
+
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
   const appInfo = packager.appInfo
   let squirrel = false
@@ -390,15 +430,12 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
-  const unZipper = new DecompressZip(packageFile)
-  const fileDescriptors = await unZipper.getFiles()
-
-  // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
+  const allFiles: string[] = await listNupkgContents(packageFile)
   const files = pathSorter(
-    fileDescriptors
-      .map(it => toSystemIndependentPath(it.path))
+    allFiles
+      .map((it: string) => toSystemIndependentPath(it))
       .filter(
-        it =>
+        (it: string) =>
           (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml") && !it.includes("/inspector/")
       )
   )
@@ -406,10 +443,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   expect(files).toMatchSnapshot()
 
   if (checkOptions == null) {
-    await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
-      path: path.dirname(packageFile),
-    })
-    const expectedSpec = (await fs.readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
+    const expectedSpec = (await getFileContentFrom7Zip(packageFile, "TestApp.nuspec")).replace(/\r\n/g, "\n")
+
     // console.log(expectedSpec)
     expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">

@@ -10,7 +10,6 @@
     "builder-util-runtime": "workspace:*",
     "chalk": "^4.1.2",
     "ci-info": "^3.7.0",
-    "decompress-zip": "^0.3.3",
     "depcheck": "1.4.3",
     "dmg-builder": "workspace:*",
     "electron-builder": "workspace:*",
