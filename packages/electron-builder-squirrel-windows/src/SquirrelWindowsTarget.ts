@@ -3,7 +3,7 @@ import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
-import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
+import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-squirrel-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion

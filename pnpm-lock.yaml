@@ -446,9 +446,9 @@ importers:
       builder-util:
         specifier: workspace:*
         version: link:../builder-util
-      electron-winstaller:
-        specifier: github:beyondkmp/windows-installer#7zip
-        version: https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c
+      electron-squirrel-winstaller:
+        specifier: 1.0.2
+        version: 1.0.2
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -3192,16 +3192,15 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
+  electron-squirrel-winstaller@1.0.2:
+    resolution: {integrity: sha512-vJoFoYNsKTJjU17zufSlAJ6ioYNRLrD7/VQyktmjoMTZd3CRG40EGMNE8kgD/70NXVYBgJwjKLGo2zG5shAnZg==}
+    engines: {node: '>=8.0.0'}
+
   electron-to-chromium@1.4.690:
     resolution: {integrity: sha512-+2OAGjUx68xElQhydpcbqH50hE8Vs2K6TkAeLhICYfndb67CVH0UsZaijmRUE3rHlIxU1u0jxwhgVe6fK3YANA==}
 
   electron-winstaller@5.3.1:
     resolution: {integrity: sha512-oM8BW3a8NEqG0XW+Vx3xywhk0DyDV4T0jT0zZfWt0IczNT3jHAAvQWBorF8osQDplSsCyXXyxrsrQ8cY0Slb/A==}
-    engines: {node: '>=8.0.0'}
-
-  electron-winstaller@https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c:
-    resolution: {tarball: https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c}
-    version: 0.0.0-development
     engines: {node: '>=8.0.0'}
 
   emittery@0.8.1:
@@ -9575,9 +9574,7 @@ snapshots:
     dependencies:
       jake: 10.8.7
 
-  electron-to-chromium@1.4.690: {}
-
-  electron-winstaller@5.3.1:
+  electron-squirrel-winstaller@1.0.2:
     dependencies:
       '@electron/asar': 3.2.8
       debug: 4.3.5
@@ -9589,7 +9586,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron-winstaller@https://codeload.github.com/beyondkmp/windows-installer/tar.gz/d7f43a17e89cfc45355ed8455f7b27819de1c67c:
+  electron-to-chromium@1.4.690: {}
+
+  electron-winstaller@5.3.1:
     dependencies:
       '@electron/asar': 3.2.8
       debug: 4.3.5
