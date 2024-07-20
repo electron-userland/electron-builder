@@ -36,8 +36,6 @@ Object {
 
 exports[`extraResources on Windows 2`] = `
 Array [
-  "lib/",
-  "lib/net45/",
   "lib/net45/chrome_100_percent.pak",
   "lib/net45/chrome_200_percent.pak",
   "lib/net45/d3dcompiler_47.dll",
@@ -57,25 +55,17 @@ Array [
   "lib/net45/vk_swiftshader_icd.json",
   "lib/net45/vulkan-1.dll",
   "lib/net45/locales/en-US.pak",
-  "lib/net45/resources/",
   "lib/net45/resources/app.asar",
   "lib/net45/resources/platformSpecificR",
-  "lib/net45/resources/bar/",
   "lib/net45/resources/bar/hello.txt",
   "lib/net45/resources/bar/x64.txt",
   "lib/net45/resources/dir-relative/",
   "lib/net45/resources/dir-relative/f.txt",
-  "lib/net45/resources/foo/",
   "lib/net45/resources/foo/nameWithoutDot",
-  "lib/net45/resources/win/",
   "lib/net45/resources/win/x64.txt",
-  "package/",
-  "package/services/",
-  "package/services/metadata/",
   "package/services/metadata/core-properties/",
   "TestApp.nuspec",
   "[Content_Types].xml",
-  "_rels/",
   "_rels/.rels",
 ]
 `;

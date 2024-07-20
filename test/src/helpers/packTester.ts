@@ -386,11 +386,19 @@ async function listNupkgContents(nupkgPath: string) {
       console.error("7z command error:", stderr)
     }
 
-    const files = stdout
-      .split("\n")
-      .filter((line: string) => line.startsWith("Path = "))
-      .map((line: string) => line.replace("Path = ", "").trim())
-      .filter((path: string) => path !== "")
+    const lines = stdout.split("\n")
+    const files = []
+
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith("Path = ")) {
+        const path = lines[i].replace("Path = ", "").trim()
+        const nextLine = lines[i + 1]
+        if (nextLine && nextLine.startsWith("Folder = -")) {
+          files.push(path)
+        }
+      }
+    }
+
     return files
   } catch (error) {
     throw new Error(`run 7z failed: ${error}`)
