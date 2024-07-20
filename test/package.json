@@ -27,7 +27,7 @@
     "stat-mode": "^1.0.0",
     "temp-file": "^3.4.0",
     "yargs": "^17.6.2",
-    "electron-winstaller": "5.3.1"
+    "electron-squirrel-winstaller": "1.0.3"
   },
   "devDependencies": {
     "@babel/core": "7.15.5",
