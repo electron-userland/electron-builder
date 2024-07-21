@@ -143,8 +143,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
-  get shouldSign(): boolean {
-    if (this.cscInfo) {
+  async shouldSign(): Promise<boolean> {
+    if (await this.cscInfo.value) {
       return true
     }
     return false
