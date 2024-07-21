@@ -93,8 +93,8 @@ importers:
         specifier: 5.5.3
         version: 5.5.3
       typescript-json-schema:
-        specifier: 0.63.0
-        version: 0.63.0
+        specifier: 0.64.0
+        version: 0.64.0
       v8-compile-cache:
         specifier: 2.3.0
         version: 2.3.0
@@ -6052,8 +6052,8 @@ packages:
   typedarray@0.0.6:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
 
-  typescript-json-schema@0.63.0:
-    resolution: {integrity: sha512-vBfMBq4U/rZ5FIRi7u4o/YAdeRHsSabdGHogUlCPi0cYU0CGvS4Bdu8bSzyUsF+Kf5PTQUGh2TictJuQTDK6eQ==}
+  typescript-json-schema@0.64.0:
+    resolution: {integrity: sha512-Sew8llkYSzpxaMoGjpjD6NMFCr6DoWFHLs7Bz1LU48pzzi8ok8W+GZs9cG87IMBpC0UI7qwBMUI2um0LGxxLOg==}
     hasBin: true
 
   typescript@5.1.6:
@@ -13036,7 +13036,7 @@ snapshots:
 
   typedarray@0.0.6: {}
 
-  typescript-json-schema@0.63.0:
+  typescript-json-schema@0.64.0:
     dependencies:
       '@types/json-schema': 7.0.15
       '@types/node': 16.18.55
