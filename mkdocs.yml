@@ -40,8 +40,8 @@ nav:
   - Introduction: index.md
   - Command Line Interface (CLI): cli.md
   - Programmatic API:
-      - API: api/electron-builder.md
-      - Example: api/programmatic-usage.md
+      API: api/electron-builder.md
+      Example: api/programmatic-usage.md
   - Donate: donate.md
 
   - Configuration:
