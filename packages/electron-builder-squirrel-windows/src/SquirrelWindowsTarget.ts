@@ -100,6 +100,11 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
+    const vendorDirectory = await getBin(
+      "Squirrel.Windows-2.0.1",
+      "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
+      "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
+    )
     const options: SquirrelOptions = {
       name: appName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
@@ -111,15 +116,15 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      vendorDirectory: await getBin(
-        "Squirrel.Windows-2.0.1",
-        "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
-        "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
-      ),
+      vendorDirectory,
+      windowsSign: {
+        hookFunction: async (file: string) => {
+          await packager.sign(file)
+        },
+      },
       nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
       ...(this.options as any),
     }
-
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName
     }
