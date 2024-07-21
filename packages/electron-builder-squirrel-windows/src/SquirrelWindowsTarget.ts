@@ -117,14 +117,18 @@ export default class SquirrelWindowsTarget extends Target {
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
       vendorDirectory,
-      windowsSign: {
-        hookFunction: async (file: string) => {
-          await packager.sign(file)
-        },
-      },
       nuspecTemplate: path.join(__dirname, "..", "template.nuspectemplate"),
       ...(this.options as any),
     }
+
+    if (packager.shouldSign) {
+      options.windowsSign = {
+        hookFunction: async (file: string) => {
+          await packager.sign(file)
+        },
+      }
+    }
+
     if (isEmptyOrSpaces(options.description)) {
       options.description = this.options.name || appInfo.productName
     }

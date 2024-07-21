@@ -143,6 +143,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return chooseNotNull(chooseNotNull(this.platformSpecificBuildOptions.certificatePassword, process.env.WIN_CSC_KEY_PASSWORD), super.doGetCscPassword())
   }
 
+  get shouldSign(): boolean {
+    if (this.cscInfo) {
+      return true
+    }
+    return false
+  }
+
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     let copyElevateHelper: CopyElevateHelper | null
     const getCopyElevateHelper = () => {
