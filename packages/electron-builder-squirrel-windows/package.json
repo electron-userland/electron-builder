@@ -17,7 +17,7 @@
   "dependencies": {
     "app-builder-lib": "workspace:*",
     "builder-util": "workspace:*",
-    "electron-squirrel-winstaller":"1.0.3"
+    "electron-squirrel-winstaller":"1.0.4"
   },
   "devDependencies": {
     "@types/archiver": "5.3.1",

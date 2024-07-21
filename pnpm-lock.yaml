@@ -447,8 +447,8 @@ importers:
         specifier: workspace:*
         version: link:../builder-util
       electron-squirrel-winstaller:
-        specifier: 1.0.3
-        version: 1.0.3
+        specifier: 1.0.4
+        version: 1.0.4
     devDependencies:
       '@types/archiver':
         specifier: 5.3.1
@@ -591,8 +591,8 @@ importers:
         specifier: workspace:*
         version: link:../packages/electron-publish
       electron-squirrel-winstaller:
-        specifier: 1.0.3
-        version: 1.0.3
+        specifier: 1.0.4
+        version: 1.0.4
       electron-updater:
         specifier: workspace:*
         version: link:../packages/electron-updater
@@ -3174,8 +3174,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-  electron-squirrel-winstaller@1.0.3:
-    resolution: {integrity: sha512-6U+GWkvT60GA79L5Ei+JP6hyUJNBgnUoP5U3p5zoDc3RDFNYDLRNSnLJTk1fOsOvU5ds+JNWnbtlDCtFqz57ng==}
+  electron-squirrel-winstaller@1.0.4:
+    resolution: {integrity: sha512-a+ktD9QS6b6QO7aRarBCcFGljq4V/K4v/RKgJEYo/4qRWkAzLqn1gMt3iz8TDP8GCO5ymFsIvo5UsjgAY+17vg==}
     engines: {node: '>=8.0.0'}
 
   electron-to-chromium@1.4.690:
@@ -9496,7 +9496,7 @@ snapshots:
     dependencies:
       jake: 10.8.7
 
-  electron-squirrel-winstaller@1.0.3:
+  electron-squirrel-winstaller@1.0.4:
     dependencies:
       '@electron/asar': 3.2.8
       debug: 4.3.5
