@@ -1,7 +1,7 @@
 import { sanitizeFileName } from "app-builder-lib/out/util/filename"
 import { InvalidConfigurationError, log, isEmptyOrSpaces } from "builder-util"
 import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder-lib"
-import { getBinFromUrl } from "app-builder-lib/out/binDownload"
+import { getBin } from "app-builder-lib/out/binDownload"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
 import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-squirrel-winstaller"
@@ -111,7 +111,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.compression === "store" ? 0 : 9) as any, 10),
-      vendorDirectory: await getBinFromUrl(
+      vendorDirectory: await getBin(
         "Squirrel.Windows-2.0.1",
         "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
         "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
