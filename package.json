@@ -44,7 +44,7 @@
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "7.15.4",
+    "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
     "@types/node": "16.18.55",
@@ -61,7 +61,7 @@
     "husky": "7.0.4",
     "jest-cli": "27.5.1",
     "jsdoc-to-markdown": "8.0.1",
-    "lint-staged": "15.2.2",
+    "lint-staged": "15.2.7",
     "markdown2html-pro": "1.0.6",
     "path-sort": "0.1.0",
     "prettier": "3.2.4",
