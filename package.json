@@ -44,7 +44,7 @@
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "7.15.4",
+    "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
     "@types/node": "16.18.55",
