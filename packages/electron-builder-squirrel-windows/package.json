@@ -12,7 +12,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "out",
+    "template.nuspectemplate"
   ],
   "dependencies": {
     "app-builder-lib": "workspace:*",

@@ -121,7 +121,7 @@ export default class SquirrelWindowsTarget extends Target {
       ...(this.options as any),
     }
 
-    if (await packager.shouldSign()) {
+    if (await packager.isSignAllowed()) {
       options.windowsSign = {
         hookFunction: async (file: string) => {
           await packager.sign(file)
