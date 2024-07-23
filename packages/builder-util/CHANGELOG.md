@@ -1,5 +1,11 @@
 # builder-util
 
+## 25.0.2
+
+### Patch Changes
+
+- [#8375](https://github.com/electron-userland/electron-builder/pull/8375) [`54c1059b`](https://github.com/electron-userland/electron-builder/commit/54c1059b961f7c2a493d26b7e6ef674911069cad) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: checking cancellation token during pack and any retry tasks to exit early on process "cancel"
+
 ## 25.0.1
 
 ### Patch Changes
