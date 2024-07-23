@@ -1,5 +1,5 @@
 import { DownloadOptions, HttpExecutor, configureRequestOptions, configureRequestUrl } from "builder-util-runtime"
-import { AuthInfo } from "electron"
+import type { AuthInfo } from "electron"
 import { RequestOptions } from "http"
 import Session = Electron.Session
 import ClientRequest = Electron.ClientRequest
