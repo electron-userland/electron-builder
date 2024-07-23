@@ -9,6 +9,5 @@
         "../../typings/*.d.ts"
     ],
     "exclude": [
-        "../../typings/electron.d.ts"
     ]
 }

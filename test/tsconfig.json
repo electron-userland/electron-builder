@@ -30,6 +30,5 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "../typings/electron.d.ts"
   ]
 }

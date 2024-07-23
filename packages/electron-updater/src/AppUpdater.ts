@@ -30,7 +30,7 @@ import { createClient, isUrlProbablySupportMultiRangeRequests } from "./provider
 import { ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
-import { AuthInfo } from "electron"
+import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"

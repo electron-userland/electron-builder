@@ -31,7 +31,7 @@ function doLoadAutoUpdater(): AppUpdater {
   } else {
     _autoUpdater = new (require("./AppImageUpdater").AppImageUpdater)()
     try {
-      const identity = path.join(process.resourcesPath!, "package-type")
+      const identity = path.join(process.resourcesPath, "package-type")
       if (!existsSync(identity)) {
         return _autoUpdater
       }
