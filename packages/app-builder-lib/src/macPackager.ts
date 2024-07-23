@@ -125,9 +125,19 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
         const x64Arch = Arch.x64
         const x64AppOutDir = outDirName(x64Arch)
         await super.doPack(outDir, x64AppOutDir, platformName, x64Arch, platformSpecificBuildOptions, targets, false, true)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
+
         const arm64Arch = Arch.arm64
         const arm64AppOutPath = outDirName(arm64Arch)
         await super.doPack(outDir, arm64AppOutPath, platformName, arm64Arch, platformSpecificBuildOptions, targets, false, true)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
+
         const framework = this.info.framework
         log.info(
           {
@@ -162,6 +172,10 @@ export class MacPackager extends PlatformPackager<MacConfiguration> {
           electronPlatformName: platformName,
         }
         await this.info.afterPack(packContext)
+
+        if (this.info.cancellationToken.cancelled) {
+          return
+        }
 
         await this.doSignAfterPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)
         break
