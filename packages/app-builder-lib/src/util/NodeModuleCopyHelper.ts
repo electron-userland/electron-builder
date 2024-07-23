@@ -7,6 +7,7 @@ import { Packager } from "../packager"
 import { resolveFunction } from "../platformPackager"
 import { FileCopyHelper } from "./AppFileWalker"
 import { NodeModuleInfo } from "./packageDependencies"
+import { realpathSync } from "fs"
 
 const excludedFiles = new Set(
   [".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "Changelog.md", "Changelog", "binding.gyp", ".npmignore"].concat(
@@ -46,6 +47,8 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
     const result: Array<string> = []
     const queue: Array<string> = []
+    const emptyDirs: Set<string> = new Set()
+    const symlinkFiles: Map<string, number> = new Map()
     const tmpPath = moduleInfo.dir
     const moduleName = moduleInfo.name
     queue.length = 1
@@ -130,17 +133,29 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         CONCURRENCY
       )
 
+      let isEmpty = true
       for (const child of sortedFilePaths) {
         if (child != null) {
           result.push(child)
+          this.metadata.get(child)?.isSymbolicLink() && symlinkFiles.set(child, result.length - 1)
+          isEmpty = false
         }
       }
+      isEmpty && emptyDirs.add(dirPath)
 
       dirs.sort()
       for (const child of dirs) {
         queue.push(dirPath + path.sep + child)
       }
     }
-    return result
+
+    for (const [file, index] of symlinkFiles) {
+      const resolvedPath = realpathSync(file)
+      if (emptyDirs.has(resolvedPath)) {
+        // delete symlink file if target is a empty dir
+        result[index] = ""
+      }
+    }
+    return result.filter(it => it !== "")
   }
 }
