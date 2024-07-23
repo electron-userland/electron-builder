@@ -1,6 +1,6 @@
 import { AsyncTaskManager, log } from "builder-util"
+import { createPackageFromFiles } from "@electron/asar"
 import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
-import { symlink, createReadStream, createWriteStream, Stats } from "fs"
 import { writeFile, readFile, mkdir } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"
@@ -10,9 +10,6 @@ import { getDestinationPath, ResolvedFileSet } from "../util/appFileCopier"
 import { AsarFilesystem, Node } from "./asar"
 import { hashFile, hashFileContents } from "./integrity"
 import { detectUnpackedDirs } from "./unpackDetector"
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pickle = require("chromium-pickle-js")
 
 /** @internal */
 export class AsarPackager {
@@ -30,7 +27,6 @@ export class AsarPackager {
     this.unpackedDest = `${this.outFile}.unpacked`
   }
 
-  // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
     if (this.options.ordering != null) {
       // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
@@ -47,12 +43,12 @@ export class AsarPackager {
     ].map(orderFileSet)
 
     for (const fileSet of orderedFileSets) {
-      unpackedFileIndexMap.set(fileSet, await this.createPackageFromFiles(fileSet, packager.info))
+      unpackedFileIndexMap.set(fileSet, await this.createPackageFromFilesOld(fileSet, packager.info))
     }
-    await this.writeAsarFile(orderedFileSets, unpackedFileIndexMap)
+    await createPackageFromFiles(this.src, path.join(this.destination, "app"), [], {}, {})
   }
 
-  private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
+  private async createPackageFromFilesOld(fileSet: ResolvedFileSet, packager: Packager) {
     const metadata = fileSet.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
@@ -151,85 +147,6 @@ export class AsarPackager {
     }
 
     return unpackedFileIndexSet
-  }
-
-  private writeAsarFile(fileSets: Array<ResolvedFileSet>, unpackedFileIndexMap: Map<ResolvedFileSet, Set<number>>): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const headerPickle = pickle.createEmpty()
-      headerPickle.writeString(JSON.stringify(this.fs.header))
-      const headerBuf = headerPickle.toBuffer()
-
-      const sizePickle = pickle.createEmpty()
-      sizePickle.writeUInt32(headerBuf.length)
-
-      const sizeBuf = sizePickle.toBuffer()
-      const writeStream = createWriteStream(this.outFile)
-      writeStream.on("error", reject)
-      writeStream.on("close", resolve)
-      writeStream.write(sizeBuf)
-
-      let fileSetIndex = 0
-
-      let files = fileSets[0].files
-      let metadata = fileSets[0].metadata
-      let transformedFiles = fileSets[0].transformedFiles
-      let unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[0])!
-      const w = (index: number) => {
-        while (true) {
-          if (index >= files.length) {
-            if (++fileSetIndex >= fileSets.length) {
-              writeStream.end()
-              return
-            } else {
-              files = fileSets[fileSetIndex].files
-              metadata = fileSets[fileSetIndex].metadata
-              transformedFiles = fileSets[fileSetIndex].transformedFiles
-              unpackedFileIndexSet = unpackedFileIndexMap.get(fileSets[fileSetIndex])!
-              index = 0
-            }
-          }
-
-          if (!unpackedFileIndexSet.has(index)) {
-            break
-          } else {
-            const stat = metadata.get(files[index])
-            if (stat != null && stat.isSymbolicLink()) {
-              symlink((stat as any).linkRelativeToFile, path.join(this.unpackedDest, (stat as any).pathInArchive), () => w(index + 1))
-              return
-            }
-          }
-          index++
-        }
-
-        const data = transformedFiles == null ? null : transformedFiles.get(index)
-        const file = files[index]
-        if (data !== null && data !== undefined) {
-          writeStream.write(data, () => w(index + 1))
-          return
-        }
-
-        // https://github.com/yarnpkg/yarn/pull/3539
-        const stat = metadata.get(file)
-        if (stat != null && stat.size < 2 * 1024 * 1024) {
-          readFile(file)
-            .then(it => {
-              writeStream.write(it, () => w(index + 1))
-            })
-            .catch((e: any) => reject(`Cannot read file ${file}: ${e.stack || e}`))
-        } else {
-          const readStream = createReadStream(file)
-          readStream.on("error", reject)
-          readStream.once("end", () => w(index + 1))
-          readStream.on("open", () => {
-            readStream.pipe(writeStream, {
-              end: false,
-            })
-          })
-        }
-      }
-
-      writeStream.write(headerBuf, () => w(0))
-    })
   }
 }
 
