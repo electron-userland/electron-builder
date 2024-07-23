@@ -152,7 +152,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await subTaskManager.awaitTasks()
 
       for (const target of targets) {
-        if (!target.isAsyncSupported) {
+        if (!target.isAsyncSupported && !this.info.cancellationToken.cancelled) {
           await target.build(appOutDir, arch)
         }
       }
