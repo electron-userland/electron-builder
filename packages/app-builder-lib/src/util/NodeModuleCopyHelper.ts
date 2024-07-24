@@ -161,7 +161,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
         result[index] = undefined
       }
     }
-    const finalResult = result.filter(it => it !== undefined)
+    const finalResult: Array<string> = result.filter(it => it !== undefined)
     return finalResult
   }
 }
