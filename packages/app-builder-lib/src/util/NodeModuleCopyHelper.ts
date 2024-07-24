@@ -137,11 +137,16 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       for (const child of sortedFilePaths) {
         if (child != null) {
           result.push(child)
-          this.metadata.get(child)?.isSymbolicLink() && symlinkFiles.set(child, result.length - 1)
+          if (this.metadata.get(child)?.isSymbolicLink()) {
+            symlinkFiles.set(child, result.length - 1)
+          }
           isEmpty = false
         }
       }
-      isEmpty && emptyDirs.add(dirPath)
+
+      if (isEmpty) {
+        emptyDirs.add(dirPath)
+      }
 
       dirs.sort()
       for (const child of dirs) {
