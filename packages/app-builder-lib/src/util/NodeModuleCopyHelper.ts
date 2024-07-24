@@ -45,7 +45,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
 
     const onNodeModuleFile = await resolveFunction(this.packager.appInfo.type, this.packager.config.onNodeModuleFile, "onNodeModuleFile")
 
-    const result: Array<string | null> = []
+    const result: Array<string | undefined> = []
     const queue: Array<string> = []
     const emptyDirs: Set<string> = new Set()
     const symlinkFiles: Map<string, number> = new Map()
@@ -158,9 +158,9 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
       const resolvedPath = realpathSync(file)
       if (emptyDirs.has(resolvedPath)) {
         // delete symlink file if target is a empty dir
-        result[index] = null
+        result[index] = undefined
       }
     }
-    return result.filter(it => it !== null) as Array<string>
+    return result.filter(it => it !== undefined)
   }
 }
