@@ -521,24 +521,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
-    try {
-      this.downloadPromise = this.doDownloadUpdate({
-        updateInfoAndProvider,
-        requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
-        cancellationToken,
-        disableWebInstaller: this.disableWebInstaller,
-        disableDifferentialDownload: this.disableDifferentialDownload,
+    this.downloadPromise = this.doDownloadUpdate({
+      updateInfoAndProvider,
+      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      cancellationToken,
+      disableWebInstaller: this.disableWebInstaller,
+      disableDifferentialDownload: this.disableDifferentialDownload,
+    })
+      .catch((e: any) => {
+        throw errorHandler(e)
       })
-        .catch((e: any) => {
-          throw errorHandler(e)
-        })
-        .finally(() => {
-          this.downloadPromise = null
-        })
-      return this.downloadPromise
-    } catch (e: any) {
-      return Promise.reject(errorHandler(e))
-    }
+      .finally(() => {
+        this.downloadPromise = null
+      })
+
+    return this.downloadPromise
   }
 
   protected dispatchError(e: Error): void {
