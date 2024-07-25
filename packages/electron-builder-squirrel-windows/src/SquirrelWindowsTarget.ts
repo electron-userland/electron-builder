@@ -4,7 +4,8 @@ import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "app-builder
 import { getBin } from "app-builder-lib/out/binDownload"
 import { WinPackager } from "app-builder-lib/out/winPackager"
 import * as path from "path"
-import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-squirrel-winstaller"
+import * as fs from "fs"
+import { Options as SquirrelOptions, createWindowsInstaller, convertVersion } from "electron-winstaller"
 
 export default class SquirrelWindowsTarget extends Target {
   //tslint:disable-next-line:no-object-literal-type-assertion
@@ -37,6 +38,10 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     const distOptions = await this.computeEffectiveDistOptions()
+    if (distOptions.vendorDirectory) {
+      this.select7zipArch(distOptions.vendorDirectory, arch)
+    }
+
     await createWindowsInstaller({
       ...distOptions,
       appDirectory: appOutDir,
@@ -79,6 +84,12 @@ export default class SquirrelWindowsTarget extends Target {
     return this.options.name || this.packager.appInfo.name
   }
 
+  private select7zipArch(vendorDirectory: string, arch: Arch) {
+    // Copy the 7-Zip executable for the configured architecture.
+    fs.copyFileSync(path.join(vendorDirectory, "7z-" + getArchSuffix(arch) + ".exe"), path.join(vendorDirectory, "7z.exe"))
+    fs.copyFileSync(path.join(vendorDirectory, "7z-" + getArchSuffix(arch) + ".dll"), path.join(vendorDirectory, "7z.dll"))
+  }
+
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = this.options.iconUrl
@@ -100,11 +111,13 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
-    const vendorDirectory = await getBin(
-      "Squirrel.Windows-2.0.1",
-      "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
-      "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
-    )
+    const vendorDirectory =
+      this.options.vendorDirectory ||
+      (await getBin(
+        "Squirrel.Windows-2.0.1",
+        "https://github.com/beyondkmp/electron-builder-binaries/releases/download/Squirrel.Windows-2.0.1/Squirrel.Windows-2.0.1.7z",
+        "IGIosfkJ25mhpGS6LREBbaSq4uysb3lwXUzt0psM9UBeaVvpOfDz0ZUqat6WAaji35n0oXJqw63WXT24/7ksLA=="
+      ))
     const options: SquirrelOptions = {
       name: appName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
