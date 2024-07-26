@@ -86,9 +86,9 @@ export default class SquirrelWindowsTarget extends Target {
 
   private select7zipArch(vendorDirectory: string, arch: Arch) {
     // Copy the 7-Zip executable for the configured architecture.
-    const realArch = getArchSuffix(arch) === "" ? process.arch : getArchSuffix(arch)
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${realArch}.exe`), path.join(vendorDirectory, "7z.exe"))
-    fs.copyFileSync(path.join(vendorDirectory, `7z-${realArch}.dll`), path.join(vendorDirectory, "7z.dll"))
+    const resolvedArch = getArchSuffix(arch) === "" ? process.arch : getArchSuffix(arch)
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.exe`), path.join(vendorDirectory, "7z.exe"))
+    fs.copyFileSync(path.join(vendorDirectory, `7z-${resolvedArch}.dll`), path.join(vendorDirectory, "7z.dll"))
   }
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
