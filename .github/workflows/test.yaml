@@ -19,8 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         testFiles:
-          - ArtifactPublisherTest,BuildTest,ExtraBuildTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,filesTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
+          - ArtifactPublisherTest,RepoSlugTest,binDownloadTest,configurationValidationTest,filenameUtilTest,globTest,ignoreTest,macroExpanderTest,mainEntryTest,urlUtilTest,extraMetadataTest,linuxArchiveTest,linuxPackagerTest,HoistedNodeModuleTest,MemoLazyTest
           - snapTest,debTest,fpmTest,protonTest
+          - filesTest,BuildTest,ExtraBuildTest,oneClickInstallerTest,winCodeSignTest,winPackagerTest,webInstallerTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -50,10 +51,17 @@ jobs:
         run: pnpm test-linux
         env:
           TEST_FILES: ${{ matrix.testFiles }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           FORCE_COLOR: 1
 
   test-mac:
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testFiles:
+          - macPackagerTest,differentialUpdateTest,winCodeSignTest
+          - masTest,dmgTest,filesTest
     steps:
       - name: Checkout code repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -67,7 +75,8 @@ jobs:
       - name: Test
         run: pnpm ci:test
         env:
-          TEST_FILES: masTest,dmgTest,filesTest,macPackagerTest,differentialUpdateTest
+          TEST_FILES: ${{ matrix.testFiles }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           FORCE_COLOR: 1
 
   # Need to separate from other tests because logic is specific to when TOKEN env vars are set
