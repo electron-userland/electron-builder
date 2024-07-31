@@ -1,5 +1,19 @@
 # app-builder-lib
 
+## 25.0.3
+
+### Patch Changes
+
+- [#8384](https://github.com/electron-userland/electron-builder/pull/8384) [`f8fbdd12`](https://github.com/electron-userland/electron-builder/commit/f8fbdd122ecdc7a967f3fbeef3572dfd133cc5e3) Thanks [@BlackHole1](https://github.com/BlackHole1)! - Fix the issue of being unable to sign binary files in the Windows runner on Github Actions
+
+- [#8371](https://github.com/electron-userland/electron-builder/pull/8371) [`afd81326`](https://github.com/electron-userland/electron-builder/commit/afd813265d346b7bddba7ea63563c876f630088e) Thanks [@beyondkmp](https://github.com/beyondkmp)! - delete the symlink file when the target is empty
+
+- Updated dependencies [[`553c737b`](https://github.com/electron-userland/electron-builder/commit/553c737b2cf1ad835690f7db3c1907ae88944d15)]:
+  - builder-util@25.0.3
+  - dmg-builder@25.0.3
+  - electron-builder-squirrel-windows@25.0.3
+  - electron-publish@25.0.3
+
 ## 25.0.2
 
 ### Patch Changes

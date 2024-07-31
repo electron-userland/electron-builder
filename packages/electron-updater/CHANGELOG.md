@@ -1,5 +1,11 @@
 ## 4.3.0
 
+## 6.3.2
+
+### Patch Changes
+
+- [#8378](https://github.com/electron-userland/electron-builder/pull/8378) [`c8fe1462`](https://github.com/electron-userland/electron-builder/commit/c8fe1462d529edeed0ad3fe0b7e99e8af1ca61ac) Thanks [@s77rt](https://github.com/s77rt)! - Limit concurrent downloads to 1
+
 ## 6.3.1
 
 ### Patch Changes

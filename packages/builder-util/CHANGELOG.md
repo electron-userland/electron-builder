@@ -1,5 +1,11 @@
 # builder-util
 
+## 25.0.3
+
+### Patch Changes
+
+- [#8387](https://github.com/electron-userland/electron-builder/pull/8387) [`553c737b`](https://github.com/electron-userland/electron-builder/commit/553c737b2cf1ad835690f7db3c1907ae88944d15) Thanks [@mmaietta](https://github.com/mmaietta)! - fix: upgrade app-builder-bin with downgraded appimage tool
+
 ## 25.0.2
 
 ### Patch Changes

@@ -1,3 +1,15 @@
+# [](https://github.com/electron-userland/electron-builder/compare/v25.0.2...v) (2024-07-31)
+
+
+### Bug Fixes
+
+* delete the file symlink when the target is empty ([#8371](https://github.com/electron-userland/electron-builder/issues/8371)) ([afd8132](https://github.com/electron-userland/electron-builder/commit/afd813265d346b7bddba7ea63563c876f630088e))
+* **updater:** Add global download promise to limit concurrent update downloads to 1 ([#8378](https://github.com/electron-userland/electron-builder/issues/8378)) ([c8fe146](https://github.com/electron-userland/electron-builder/commit/c8fe1462d529edeed0ad3fe0b7e99e8af1ca61ac))
+* upgrade app-builder-bin version (with downgraded appimage tool) ([#8387](https://github.com/electron-userland/electron-builder/issues/8387)) ([553c737](https://github.com/electron-userland/electron-builder/commit/553c737b2cf1ad835690f7db3c1907ae88944d15))
+* **windows,code-sign:** cannot sign binary files in Github Actions ([#8384](https://github.com/electron-userland/electron-builder/issues/8384)) ([f8fbdd1](https://github.com/electron-userland/electron-builder/commit/f8fbdd122ecdc7a967f3fbeef3572dfd133cc5e3)), closes [#7729](https://github.com/electron-userland/electron-builder/issues/7729) [#8055](https://github.com/electron-userland/electron-builder/issues/8055)
+
+
+
 # [](https://github.com/electron-userland/electron-builder/compare/v25.0.1...v) (2024-07-23)
 
 
