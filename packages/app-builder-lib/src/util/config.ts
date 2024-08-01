@@ -1,5 +1,4 @@
-import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson } from "builder-util"
-import { statOrNull } from "builder-util/out/fs"
+import { DebugLogger, deepAssign, InvalidConfigurationError, log, safeStringifyJson, statOrNull } from "builder-util"
 import { readJson } from "fs-extra"
 import { Lazy } from "lazy-val"
 import * as path from "path"

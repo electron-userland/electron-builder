@@ -4,7 +4,7 @@ import * as depCheck from "depcheck"
 import { readJson } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { printErrorAndExit } from "builder-util/out/promise"
+import { printErrorAndExit } from "builder-util"
 
 const knownUnusedDevDependencies = new Set<string>([])
 const knownMissedDependencies = new Set<string>(["babel-core", "babel-preset-env", "babel-preset-stage-0", "babel-preset-react"])

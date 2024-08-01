@@ -1,6 +1,5 @@
 import { DIR_TARGET, Platform } from "electron-builder"
-import { TmpDir } from "builder-util"
-import { copyDir } from "builder-util/out/fs"
+import { TmpDir, archFromString, copyDir } from "builder-util"
 import { outputFile } from "fs-extra"
 import * as fs from "fs/promises"
 import * as path from "path"
@@ -81,7 +80,7 @@ test.ifDevOrLinuxCi(
   )
 )
 
-test.ifDevOrLinuxCi(
+test.ifNotWindows(
   "map resources",
   app(
     {
@@ -103,7 +102,7 @@ test.ifDevOrLinuxCi(
     {
       projectDirCreated: projectDir => Promise.all([outputFile(path.join(projectDir, "foo", "old"), "data"), outputFile(path.join(projectDir, "license.txt"), "data")]),
       packed: context => {
-        const resources = path.join(context.getResources(Platform.LINUX))
+        const resources = context.getResources(Platform.LINUX)
         return Promise.all([
           assertThat(path.join(resources, "app", "foo", "old")).doesNotExist(),
           assertThat(path.join(resources, "foo", "new")).isFile(),
@@ -116,7 +115,6 @@ test.ifDevOrLinuxCi(
 
 async function doExtraResourcesTest(platform: Platform) {
   const osName = platform.buildConfigurationKey
-  //noinspection SpellCheckingInspection
   await assertPack(
     "test-app-one",
     {
@@ -131,33 +129,28 @@ async function doExtraResourcesTest(platform: Platform) {
       },
     },
     {
-      projectDirCreated: projectDir => {
+      projectDirCreated: async projectDir => {
         return Promise.all([
-          outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-          outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.join(projectDir, "dir-relative/f.txt"), "data"),
-          outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
-          outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+          outputFile(path.resolve(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          outputFile(path.resolve(projectDir, "bar/hello.txt"), "data"),
+          outputFile(path.resolve(projectDir, "dir-relative/f.txt"), "data"),
+          outputFile(path.resolve(projectDir, `bar/${process.arch}.txt`), "data"),
+          outputFile(path.resolve(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          outputFile(path.resolve(projectDir, "platformSpecificR"), "platformSpecificR"),
+          outputFile(path.resolve(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
-      packed: context => {
-        const base = path.join(context.outDir, `${platform.buildConfigurationKey}${platform === Platform.MAC ? "" : "-unpacked"}`)
-        let resourcesDir = path.join(base, "resources")
-        if (platform === Platform.MAC) {
-          resourcesDir = path.join(base, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
-        }
-
+      packed: async context => {
+        const resourcesDir = context.getResources(platform, archFromString(process.arch))
         return Promise.all([
-          assertThat(path.join(resourcesDir, "foo")).isDirectory(),
-          assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
-          assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
-          assertThat(path.join(resourcesDir, "dir-relative", "f.txt")).isFile(),
-          assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
-          assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
-          assertThat(path.join(resourcesDir, "platformSpecificR")).isFile(),
-          assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
+          assertThat(path.resolve(resourcesDir, "foo")).isDirectory(),
+          assertThat(path.resolve(resourcesDir, "foo", "nameWithoutDot")).isFile(),
+          assertThat(path.resolve(resourcesDir, "bar", "hello.txt")).isFile(),
+          assertThat(path.resolve(resourcesDir, "dir-relative", "f.txt")).isFile(),
+          assertThat(path.resolve(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
+          assertThat(path.resolve(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
+          assertThat(path.resolve(resourcesDir, "platformSpecificR")).isFile(),
+          assertThat(path.resolve(resourcesDir, "ignoreMe.txt")).doesNotExist(),
         ])
       },
     }
@@ -168,14 +161,11 @@ test.ifDevOrLinuxCi("extraResources on Linux", () => doExtraResourcesTest(Platfo
 
 // Squirrel.Windows is not supported on macOS anymore (32-bit)
 // Skipped due to bug in rimraf on Windows: `at fixWinEPERM (../node_modules/.pnpm/fs-extra@8.1.0/node_modules/fs-extra/lib/remove/rimraf.js:117:5)`
-test.skip.ifNotMac.ifDevOrWinCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
+test.ifDevOrLinuxCi("extraResources on Windows", () => doExtraResourcesTest(Platform.WINDOWS))
 
-// TODO FIX ME
-test.skip.ifMac("extraResources on macOS", async () => {
-  await doExtraResourcesTest(Platform.MAC)
-})
+test.ifMac("extraResources on macOS", () => doExtraResourcesTest(Platform.MAC))
 
-test.skip.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
+test.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
   const platform = Platform.LINUX
   const osName = platform.buildConfigurationKey
 
@@ -208,11 +198,7 @@ test.skip.ifNotWindows.ifNotCiWin("extraResources - two-package", () => {
         ])
       },
       packed: async context => {
-        const base = path.join(context.outDir, `${platform.buildConfigurationKey}-unpacked`)
-        let resourcesDir = path.join(base, "resources")
-        if (platform === Platform.MAC) {
-          resourcesDir = path.join(base, "TestApp.app", "Contents", "Resources")
-        }
+        const resourcesDir = context.getResources(platform, archFromString(process.arch))
         const appDir = path.join(resourcesDir, "app")
 
         await Promise.all([

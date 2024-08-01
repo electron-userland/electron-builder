@@ -36,26 +36,9 @@ export class RpmUpdater extends BaseUpdater {
     let cmd: string[]
     if (!packageManager) {
       const packageManager = this.spawnSyncLog("which dnf || which yum")
-      cmd = [packageManager, "-y", "remove", `'${this.app.name}'`, ";", packageManager, "-y", "install", upgradePath]
+      cmd = [packageManager, "-y", "install", upgradePath]
     } else {
-      cmd = [
-        packageManager,
-        "remove",
-        "-y",
-        `'${this.app.name}'`,
-        ";",
-        packageManager,
-        "clean",
-        "--all",
-        ";",
-        packageManager,
-        "--no-refresh",
-        "install",
-        "--allow-unsigned-rpm",
-        "-y",
-        "-f",
-        upgradePath,
-      ]
+      cmd = [packageManager, "--no-refresh", "install", "--allow-unsigned-rpm", "-y", "-f", upgradePath]
     }
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
     if (options.isForceRunAfter) {

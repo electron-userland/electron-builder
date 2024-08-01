@@ -334,13 +334,13 @@ test.ifDevOrLinuxCi(
         copyright: "Copyright © 2018 ${author}",
         npmRebuild: true,
         onNodeModuleFile: filePath => {
-          // Force include this directory in the pakage
+          // Force include this directory in the package
           return filePath.includes("node_modules/three/examples")
         },
         files: [
           // test ignore pattern for node_modules defined as file set filter
           {
-            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*"],
+            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
           },
         ],
       },
@@ -350,7 +350,6 @@ test.ifDevOrLinuxCi(
         it.dependencies = {
           debug: "4.1.1",
           "edge-cs": "1.2.1",
-          "lzma-native": "8.0.6",
           keytar: "7.9.0",
           three: "0.160.0",
         }

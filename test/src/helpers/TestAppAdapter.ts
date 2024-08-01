@@ -6,7 +6,7 @@ export class TestAppAdapter extends ElectronAppAdapter {
     version: string,
     private _baseCachePath: string
   ) {
-    super(new MockApp(version))
+    super(new MockApp(version) as any)
   }
 
   get baseCachePath(): string {

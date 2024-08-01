@@ -111,7 +111,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><a href="#module_app-builder-lib.Framework+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Framework+beforeCopyExtraFiles"><code>.beforeCopyExtraFiles(options)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></li>
+<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></li>
 <li><a href="#module_app-builder-lib.Framework+getDefaultIcon"><code>.getDefaultIcon(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.Framework+getExcludedDependencies"><code>.getExcludedDependencies(platform)</code></a> ⇒ <code>null</code> | <code>Array</code></li>
 <li><a href="#module_app-builder-lib.Framework+getMainFile"><code>.getMainFile(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
@@ -341,7 +341,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <ul>
 <li><a href="#module_app-builder-lib.Framework+afterPack"><code>.afterPack(context)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
 <li><a href="#module_app-builder-lib.Framework+beforeCopyExtraFiles"><code>.beforeCopyExtraFiles(options)</code></a> ⇒ <code>Promise&lt;any&gt;</code></li>
-<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></li>
+<li><a href="#module_app-builder-lib.Framework+createTransformer"><code>.createTransformer()</code></a> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></li>
 <li><a href="#module_app-builder-lib.Framework+getDefaultIcon"><code>.getDefaultIcon(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
 <li><a href="#module_app-builder-lib.Framework+getExcludedDependencies"><code>.getExcludedDependencies(platform)</code></a> ⇒ <code>null</code> | <code>Array</code></li>
 <li><a href="#module_app-builder-lib.Framework+getMainFile"><code>.getMainFile(platform)</code></a> ⇒ <code>null</code> | <code>String</code></li>
@@ -382,7 +382,7 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 </tbody>
 </table>
 <p><a name="module_app-builder-lib.Framework+createTransformer"></a></p>
-<h3 id="framework.createtransformer()-%E2%87%92-null-%7C-module%3Apackages%2Fbuilder-util%2Fout%2Ffs.__type"><code>framework.createTransformer()</code> ⇒ <code>null</code> | <code>module:packages/builder-util/out/fs.__type</code></h3>
+<h3 id="framework.createtransformer()-%E2%87%92-null-%7C-module%3Abuilder-util%2Fout%2Ffs.__type"><code>framework.createTransformer()</code> ⇒ <code>null</code> | <code>module:builder-util/out/fs.__type</code></h3>
 <p><a name="module_app-builder-lib.Framework+getDefaultIcon"></a></p>
 <h3 id="framework.getdefaulticon(platform)-%E2%87%92-null-%7C-string"><code>framework.getDefaultIcon(platform)</code> ⇒ <code>null</code> | <code>String</code></h3>
 <table>
@@ -927,45 +927,69 @@ Developer API only. See [Configuration](../configuration/configuration.md) for u
 <strong>Properties</strong></p>
 <ul>
 <li>
-<p>**&lt;code id=&quot;MacPackager-[codeSigningInfo=new Lazy<CodeSigningInfo>(() =&gt; {
+<p>**&lt;code id=&quot;MacPackager-[codeSigningInfo=new MemoLazy&lt;CreateKeychainOptions | null, CodeSigningInfo&gt;(
+() =&gt; {
 const cscLink = this.getCscLink()
 if (cscLink == null || process.platform !== “darwin”) {
-return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+return null
 }</p>
-<p>return createKeychain({
-tmpDir: this.info.tempDirManager,
-cscLink,
-cscKeyPassword: this.getCscPassword(),
-cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
-cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
-currentDir: this.projectDir,
-}).then(result =&gt; {
+<pre><code class="hljs">const selected = {
+  tmpDir: this.info.tempDirManager,
+  cscLink,
+  cscKeyPassword: this.getCscPassword(),
+  cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+  cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
+  currentDir: this.projectDir,
+}
+
+return selected
+</code></pre>
+<p>},
+async selected =&gt; {
+if (selected) {
+return createKeychain(selected).then(result =&gt; {
 const keychainFile = result.keychainFile
 if (keychainFile != null) {
 this.info.disposeOnBuildFinish(() =&gt; removeKeychain(keychainFile))
 }
 return result
 })
-})]&quot;&gt;[codeSigningInfo=new Lazy<CodeSigningInfo>(() =&gt; {
+}</p>
+<pre><code class="hljs">return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+</code></pre>
+<p>}
+)]&quot;&gt;[codeSigningInfo=new MemoLazy&lt;CreateKeychainOptions | null, CodeSigningInfo&gt;(
+() =&gt; {
 const cscLink = this.getCscLink()
 if (cscLink == null || process.platform !== “darwin”) {
-return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+return null
 }</p>
-<p>return createKeychain({
-tmpDir: this.info.tempDirManager,
-cscLink,
-cscKeyPassword: this.getCscPassword(),
-cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
-cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
-currentDir: this.projectDir,
-}).then(result =&gt; {
+<pre><code class="hljs">const selected = {
+  tmpDir: this.info.tempDirManager,
+  cscLink,
+  cscKeyPassword: this.getCscPassword(),
+  cscILink: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerLink, process.env.CSC_INSTALLER_LINK),
+  cscIKeyPassword: chooseNotNull(this.platformSpecificBuildOptions.cscInstallerKeyPassword, process.env.CSC_INSTALLER_KEY_PASSWORD),
+  currentDir: this.projectDir,
+}
+
+return selected
+</code></pre>
+<p>},
+async selected =&gt; {
+if (selected) {
+return createKeychain(selected).then(result =&gt; {
 const keychainFile = result.keychainFile
 if (keychainFile != null) {
 this.info.disposeOnBuildFinish(() =&gt; removeKeychain(keychainFile))
 }
 return result
 })
-})]</code>** Lazy&lt;module:app-builder-lib/out/codeSign/macCodeSign.CodeSigningInfo&gt;</p>
+}</p>
+<pre><code class="hljs">return Promise.resolve({ keychainFile: process.env.CSC_KEYCHAIN || null })
+</code></pre>
+<p>}
+)]</code>** MemoLazy&lt; | module:app-builder-lib/out/codeSign/macCodeSign.CreateKeychainOptions | module:app-builder-lib/out/codeSign/macCodeSign.CodeSigningInfo&gt;</p>
 </li>
 <li>
 <p><strong><code id="MacPackager-defaultTarget">defaultTarget</code></strong> Array&lt;String&gt;</p>
@@ -2217,8 +2241,9 @@ return path.join(target.outDir, <code>__${target.name}-${getArtifactArchName(arc
 <strong>Properties</strong></p>
 <ul>
 <li>
-<p>**&lt;code id=&quot;WinPackager-[cscInfo=new Lazy&lt;FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(() =&gt; {
-const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+<p>**&lt;code id=&quot;WinPackager-[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
+() =&gt; this.platformSpecificBuildOptions,
+platformSpecificBuildOptions =&gt; {
 if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
 return this.vm.value
 .then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
@@ -2232,37 +2257,42 @@ return null
 }
 })
 }</p>
-<p>const certificateFile = platformSpecificBuildOptions.certificateFile
+<pre><code class="hljs">const certificateFile = platformSpecificBuildOptions.certificateFile
 if (certificateFile != null) {
-const certificatePassword = this.getCscPassword()
-return Promise.resolve({
-file: certificateFile,
-password: certificatePassword == null ? null : certificatePassword.trim(),
-})
-}</p>
-<p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
-if (cscLink == null || cscLink === “”) {
-return Promise.resolve(null)
-}</p>
-<p>return (
-importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-// before then
-.catch((e: any) =&gt; {
-if (e instanceof InvalidConfigurationError) {
-throw new InvalidConfigurationError(<code>Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}</code>)
-} else {
-throw e
+  const certificatePassword = this.getCscPassword()
+  return Promise.resolve({
+    file: certificateFile,
+    password: certificatePassword == null ? null : certificatePassword.trim(),
+  })
 }
-})
-.then(path =&gt; {
-return {
-file: path,
-password: this.getCscPassword(),
+
+const cscLink = this.getCscLink(&quot;WIN_CSC_LINK&quot;)
+if (cscLink == null || cscLink === &quot;&quot;) {
+  return Promise.resolve(null)
 }
-})
+
+return (
+  importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+    // before then
+    .catch((e: any) =&gt; {
+      if (e instanceof InvalidConfigurationError) {
+        throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
+      } else {
+        throw e
+      }
+    })
+    .then(path =&gt; {
+      return {
+        file: path,
+        password: this.getCscPassword(),
+      }
+    })
 )
-})]&quot;&gt;[cscInfo=new Lazy&lt;FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(() =&gt; {
-const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+</code></pre>
+<p>}
+)]&quot;&gt;[cscInfo=new MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;(
+() =&gt; this.platformSpecificBuildOptions,
+platformSpecificBuildOptions =&gt; {
 if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
 return this.vm.value
 .then(vm =&gt; getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
@@ -2276,36 +2306,40 @@ return null
 }
 })
 }</p>
-<p>const certificateFile = platformSpecificBuildOptions.certificateFile
+<pre><code class="hljs">const certificateFile = platformSpecificBuildOptions.certificateFile
 if (certificateFile != null) {
-const certificatePassword = this.getCscPassword()
-return Promise.resolve({
-file: certificateFile,
-password: certificatePassword == null ? null : certificatePassword.trim(),
-})
-}</p>
-<p>const cscLink = this.getCscLink(“WIN_CSC_LINK”)
-if (cscLink == null || cscLink === “”) {
-return Promise.resolve(null)
-}</p>
-<p>return (
-importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-// before then
-.catch((e: any) =&gt; {
-if (e instanceof InvalidConfigurationError) {
-throw new InvalidConfigurationError(<code>Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}</code>)
-} else {
-throw e
+  const certificatePassword = this.getCscPassword()
+  return Promise.resolve({
+    file: certificateFile,
+    password: certificatePassword == null ? null : certificatePassword.trim(),
+  })
 }
-})
-.then(path =&gt; {
-return {
-file: path,
-password: this.getCscPassword(),
+
+const cscLink = this.getCscLink(&quot;WIN_CSC_LINK&quot;)
+if (cscLink == null || cscLink === &quot;&quot;) {
+  return Promise.resolve(null)
 }
-})
+
+return (
+  importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+    // before then
+    .catch((e: any) =&gt; {
+      if (e instanceof InvalidConfigurationError) {
+        throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
+      } else {
+        throw e
+      }
+    })
+    .then(path =&gt; {
+      return {
+        file: path,
+        password: this.getCscPassword(),
+      }
+    })
 )
-})]</code>** Lazy&lt; | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt;</p>
+</code></pre>
+<p>}
+)]</code>** MemoLazy&lt;<a href="#WindowsConfiguration">WindowsConfiguration</a> |  | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt;</p>
 </li>
 <li>
 <p><code id="WinPackager-vm">vm</code> = <code>new Lazy&lt;VmManager&gt;(() =&gt; (process.platform === &quot;win32&quot; ? Promise.resolve(new VmManager()) : getWindowsVm(this.debugLogger)))</code> Lazy&lt;module:app-builder-lib/out/vm/vm.VmManager&gt;</p>
@@ -2332,41 +2366,51 @@ return certInfo == null ? null : [certInfo.commonName]
 })]</code>** Lazy&lt; | Array&gt;</p>
 </li>
 <li>
-<p>**&lt;code id=&quot;WinPackager-[lazyCertInfo=new Lazy&lt;CertificateInfo | null&gt;(async () =&gt; {
-const cscInfo = await this.cscInfo.value
+<p>**&lt;code id=&quot;WinPackager-[lazyCertInfo=new MemoLazy&lt;MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;, CertificateInfo | null&gt;(
+() =&gt; this.cscInfo,
+async csc =&gt; {
+const cscInfo = await csc.value
 if (cscInfo == null) {
 return null
 }</p>
-<p>if (“subject” in cscInfo) {
-const bloodyMicrosoftSubjectDn = cscInfo.subject
-return {
-commonName: parseDn(bloodyMicrosoftSubjectDn).get(“CN”)!,
-bloodyMicrosoftSubjectDn,
+<pre><code class="hljs">if (&quot;subject&quot; in cscInfo) {
+  const bloodyMicrosoftSubjectDn = cscInfo.subject
+  return {
+    commonName: parseDn(bloodyMicrosoftSubjectDn).get(&quot;CN&quot;)!,
+    bloodyMicrosoftSubjectDn,
+  }
 }
-}</p>
-<p>const cscFile = cscInfo.file
+
+const cscFile = cscInfo.file
 if (cscFile == null) {
-return null
+  return null
 }
-return await getCertInfo(cscFile, cscInfo.password || “”)
-})]&quot;&gt;[lazyCertInfo=new Lazy&lt;CertificateInfo | null&gt;(async () =&gt; {
-const cscInfo = await this.cscInfo.value
+return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
+</code></pre>
+<p>}
+)]&quot;&gt;[lazyCertInfo=new MemoLazy&lt;MemoLazy&lt;WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null&gt;, CertificateInfo | null&gt;(
+() =&gt; this.cscInfo,
+async csc =&gt; {
+const cscInfo = await csc.value
 if (cscInfo == null) {
 return null
 }</p>
-<p>if (“subject” in cscInfo) {
-const bloodyMicrosoftSubjectDn = cscInfo.subject
-return {
-commonName: parseDn(bloodyMicrosoftSubjectDn).get(“CN”)!,
-bloodyMicrosoftSubjectDn,
+<pre><code class="hljs">if (&quot;subject&quot; in cscInfo) {
+  const bloodyMicrosoftSubjectDn = cscInfo.subject
+  return {
+    commonName: parseDn(bloodyMicrosoftSubjectDn).get(&quot;CN&quot;)!,
+    bloodyMicrosoftSubjectDn,
+  }
 }
-}</p>
-<p>const cscFile = cscInfo.file
+
+const cscFile = cscInfo.file
 if (cscFile == null) {
-return null
+  return null
 }
-return await getCertInfo(cscFile, cscInfo.password || “”)
-})]</code>** Lazy&lt; | module:app-builder-lib/out/codeSign/windowsCodeSign.CertificateInfo&gt;</p>
+return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
+</code></pre>
+<p>}
+)]</code>** MemoLazy&lt;MemoLazy&lt;<a href="#WindowsConfiguration">WindowsConfiguration</a> |  | <a href="#FileCodeSigningInfo">FileCodeSigningInfo</a> | <a href="#CertificateFromStoreInfo">CertificateFromStoreInfo</a>&gt; |  | module:app-builder-lib/out/codeSign/windowsCodeSign.CertificateInfo&gt;</p>
 </li>
 <li>
 <p><strong><code id="WinPackager-isForceCodeSigningVerification">isForceCodeSigningVerification</code></strong> Boolean</p>

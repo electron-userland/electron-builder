@@ -1,8 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, deepAssign, getArchSuffix, InvalidConfigurationError, isEmptyOrSpaces, log } from "builder-util"
-import { defaultArchFromString, getArtifactArchName } from "builder-util/out/arch"
-import { FileTransformer, statOrNull } from "builder-util/out/fs"
-import { orIfFileNotExist } from "builder-util/out/promise"
+import { defaultArchFromString, getArtifactArchName, FileTransformer, statOrNull, orIfFileNotExist } from "builder-util"
 import { readdir } from "fs/promises"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -154,7 +152,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await subTaskManager.awaitTasks()
 
       for (const target of targets) {
-        if (!target.isAsyncSupported) {
+        if (!target.isAsyncSupported && !this.info.cancellationToken.cancelled) {
           await target.build(appOutDir, arch)
         }
       }
@@ -780,10 +778,15 @@ async function resolveModule<T>(type: string | undefined, name: string): Promise
       const fileUrl = pathToFileURL(name).href
       return await eval("import('" + fileUrl + "')")
     }
-  } catch (error) {
-    log.debug({ moduleName: name }, "Unable to dynamically import hook, falling back to `require`")
+  } catch (error: any) {
+    log.debug({ moduleName: name, message: error.message ?? error.stack }, "Unable to dynamically import hook, falling back to `require`")
   }
-  return require(name)
+  try {
+    return require(name)
+  } catch (error: any) {
+    log.error({ moduleName: name, message: error.message ?? error.stack }, "Unable to `require` hook")
+    throw new Error(error.message ?? error.stack)
+  }
 }
 
 export async function resolveFunction<T>(type: string | undefined, executor: T | string, name: string): Promise<T> {

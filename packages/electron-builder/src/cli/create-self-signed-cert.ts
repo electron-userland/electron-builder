@@ -1,6 +1,5 @@
 import { sanitizeFileName } from "app-builder-lib/out/util/filename"
-import { exec, log, spawn, TmpDir } from "builder-util"
-import { unlinkIfExists } from "builder-util/out/fs"
+import { exec, log, spawn, TmpDir, unlinkIfExists } from "builder-util"
 import * as chalk from "chalk"
 import { getSignVendorPath } from "app-builder-lib/out/codeSign/windowsCodeSign"
 import { mkdir } from "fs/promises"

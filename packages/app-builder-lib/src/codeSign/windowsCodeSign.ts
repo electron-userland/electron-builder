@@ -1,4 +1,4 @@
-import { InvalidConfigurationError, asArray, log } from "builder-util/out/util"
+import { InvalidConfigurationError, asArray, log } from "builder-util"
 import { getBin } from "../binDownload"
 import { WindowsConfiguration } from "../options/winOptions"
 import { executeAppBuilderAsJson } from "../util/appBuilder"
@@ -110,9 +110,9 @@ export interface CertificateFromStoreInfo {
 export async function getCertificateFromStoreInfo(options: WindowsConfiguration, vm: VmManager): Promise<CertificateFromStoreInfo> {
   const certificateSubjectName = options.certificateSubjectName
   const certificateSha1 = options.certificateSha1 ? options.certificateSha1.toUpperCase() : options.certificateSha1
-  // ExcludeProperty doesn't work, so, we cannot exclude RawData, it is ok
-  // powershell can return object if the only item
-  const rawResult = await vm.exec("powershell.exe", [
+
+  const ps = await getPSCmd(vm)
+  const rawResult = await vm.exec(ps, [
     "-NoProfile",
     "-NonInteractive",
     "-Command",
@@ -318,4 +318,17 @@ async function getToolPath(isWin = process.platform === "win32"): Promise<ToolIn
   } else {
     return { path: path.join(vendorPath, process.platform, "osslsigncode") }
   }
+}
+
+async function getPSCmd(vm: VmManager): Promise<string> {
+  return await vm
+    .exec("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", `Get-Command pwsh.exe`])
+    .then(() => {
+      log.debug(null, "identified pwsh.exe for executing code signing")
+      return "pwsh.exe"
+    })
+    .catch(() => {
+      log.debug(null, "unable to find pwsh.exe, falling back to powershell.exe")
+      return "powershell.exe"
+    })
 }

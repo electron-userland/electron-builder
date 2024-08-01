@@ -1,6 +1,6 @@
 import { serializeToYaml, TmpDir } from "builder-util"
 import { AllPublishOptions, DownloadOptions } from "builder-util-runtime"
-import { NodeHttpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { NodeHttpExecutor } from "builder-util"
 import { AppUpdater, MacUpdater, NoOpLogger, NsisUpdater } from "electron-updater"
 import { TestOnlyUpdaterOptions } from "electron-updater/out/AppUpdater"
 import { outputFile, writeFile } from "fs-extra"

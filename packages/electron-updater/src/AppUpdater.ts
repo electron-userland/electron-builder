@@ -30,7 +30,7 @@ import { createClient, isUrlProbablySupportMultiRangeRequests } from "./provider
 import { ProviderPlatform } from "./providers/Provider"
 import type { TypedEmitter } from "tiny-typed-emitter"
 import Session = Electron.Session
-import { AuthInfo } from "electron"
+import type { AuthInfo } from "electron"
 import { gunzipSync } from "zlib"
 import { blockmapFiles } from "./util"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
@@ -209,6 +209,7 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
   configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null = null
+  private downloadPromise: Promise<Array<string>> | null = null
 
   protected readonly app: AppAdapter
 
@@ -452,7 +453,9 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
     const updateInfo = result.info
     if (!(await this.isUpdateAvailable(updateInfo))) {
       this._logger.info(
-        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`
+        `Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${
+          this.allowDowngrade ? "allowed" : "disallowed"
+        }).`
       )
       this.emit("update-not-available", updateInfo)
       return {
@@ -495,6 +498,11 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return Promise.reject(error)
     }
 
+    if (this.downloadPromise != null) {
+      this._logger.info("Downloading update (already in progress)")
+      return this.downloadPromise
+    }
+
     this._logger.info(
       `Downloading update from ${asArray(updateInfoAndProvider.info.files)
         .map(it => it.url)
@@ -513,19 +521,21 @@ export abstract class AppUpdater extends (EventEmitter as new () => TypedEmitter
       return e
     }
 
-    try {
-      return this.doDownloadUpdate({
-        updateInfoAndProvider,
-        requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
-        cancellationToken,
-        disableWebInstaller: this.disableWebInstaller,
-        disableDifferentialDownload: this.disableDifferentialDownload,
-      }).catch((e: any) => {
+    this.downloadPromise = this.doDownloadUpdate({
+      updateInfoAndProvider,
+      requestHeaders: this.computeRequestHeaders(updateInfoAndProvider.provider),
+      cancellationToken,
+      disableWebInstaller: this.disableWebInstaller,
+      disableDifferentialDownload: this.disableDifferentialDownload,
+    })
+      .catch((e: any) => {
         throw errorHandler(e)
       })
-    } catch (e: any) {
-      return Promise.reject(errorHandler(e))
-    }
+      .finally(() => {
+        this.downloadPromise = null
+      })
+
+    return this.downloadPromise
   }
 
   protected dispatchError(e: Error): void {

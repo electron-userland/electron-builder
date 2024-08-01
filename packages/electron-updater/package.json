@@ -1,6 +1,6 @@
 {
   "name": "electron-updater",
-  "version": "6.3.0-alpha.4",
+  "version": "6.3.2",
   "description": "Cross platform updater for electron applications",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
@@ -30,7 +30,8 @@
     "@types/js-yaml": "4.0.3",
     "@types/lodash.escaperegexp": "4.1.6",
     "@types/lodash.isequal": "4.5.5",
-    "@types/semver": "^7.3.13"
+    "@types/semver": "^7.3.13",
+    "electron": "^31.2.1"
   },
   "typings": "./out/main.d.ts",
   "publishConfig": {

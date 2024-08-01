@@ -15,12 +15,12 @@
     "lint": "eslint packages --ext .ts",
     "lint-staged": "lint-staged",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
-    "pretest": "pnpm lint && pnpm lint-deps",
+    "pretest": "pnpm lint-deps && pnpm lint",
     "prettier": "prettier 'packages/**/*.{ts, js}' 'test/src/**/*.ts' --write",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher",
     "test-all": "pnpm compile && pnpm pretest && pnpm ci:test",
-    "test-linux": "docker run --rm -e DEBUG=${DEBUG:-} -e UPDATE_SNAPSHOT=${UPDATE_SNAPSHOT:-false} -e TEST_FILES=\"${TEST_FILES:-HoistedNodeModuleTest}\" -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:18-wine-mono /bin/bash -c \"pnpm install && node ./test/out/helpers/runTests.js\"",
+    "test-linux": "docker run --rm -e DEBUG=${DEBUG:-} -e UPDATE_SNAPSHOT=${UPDATE_SNAPSHOT:-false} -e TEST_FILES=\"${TEST_FILES:-HoistedNodeModuleTest}\" -v $(pwd):/project -v $(pwd)-node-modules:/project/node_modules -v $HOME/Library/Caches/electron:/root/.cache/electron -v $HOME/Library/Caches/electron-builder:/root/.cache/electron-builder electronuserland/builder:20-wine-mono /bin/bash -c \"pnpm install && node ./test/out/helpers/runTests.js\"",
     "test-update": "UPDATE_SNAPSHOT=true pnpm test-all",
     "docker-images": "docker/build.sh",
     "docker-push": "docker/push.sh",
@@ -30,8 +30,8 @@
     "generate-schema": "typescript-json-schema packages/app-builder-lib/tsconfig-scheme.json Configuration --out packages/app-builder-lib/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --required && node ./scripts/fix-schema.js",
     "generate-all": "pnpm generate-schema && pnpm generate-docs && pnpm prettier",
     "ci:test": "node ./test/out/helpers/runTests.js",
-    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm run compile && pnpm run generate-schema && pnpm run generate-docs && pnpm run prettier && git add .",
-    "ci:publish": "pnpm compile && pnpm publish -r && changeset tag",
+    "ci:version": "pnpm changelog && changeset version && node scripts/update-package-version-export.js && pnpm compile && pnpm generate-all && git add .",
+    "ci:publish": "pnpm compile && pnpm publish -r --tag next && changeset tag",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/builder-util packages/app-builder-lib packages/electron-builder packages/electron-publish packages/electron-updater packages/dmg-builder",
     "jsdoc2md2html": "node scripts/jsdoc2md2html.js",
     "prepare": "husky install"
@@ -44,14 +44,14 @@
     "dmg-license": "1.0.11"
   },
   "devDependencies": {
-    "@babel/plugin-transform-modules-commonjs": "7.15.4",
+    "@babel/plugin-transform-modules-commonjs": "7.24.8",
     "@changesets/changelog-github": "0.4.7",
     "@changesets/cli": "2.25.0",
     "@types/node": "16.18.55",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "catharsis": "0.9.0",
-    "conventional-changelog-cli": "2.2.2",
+    "conventional-changelog-cli": "5.0.0",
     "dmd": "6.1.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -60,22 +60,23 @@
     "globby": "11.1.0",
     "husky": "7.0.4",
     "jest-cli": "27.5.1",
-    "jsdoc-to-markdown": "8.0.1",
-    "lint-staged": "15.2.2",
+    "jsdoc-to-markdown": "8.0.2",
+    "lint-staged": "15.2.7",
     "markdown2html-pro": "1.0.6",
     "path-sort": "0.1.0",
     "prettier": "3.2.4",
     "replace-in-file": "6.2.0",
     "source-map-support": "0.5.21",
     "ts-jsdoc": "3.2.2",
-    "typescript": "5.4.2",
-    "typescript-json-schema": "0.63.0",
+    "typescript": "5.5.3",
+    "typescript-json-schema": "0.64.0",
     "v8-compile-cache": "2.3.0"
   },
   "engines": {
     "node": ">=14.14",
-    "pnpm": ">=8.0.0"
+    "pnpm": ">=9"
   },
+  "packageManager": "pnpm@9.4.0",
   "pnpm": {
     "patchedDependencies": {
       "@changesets/cli@2.25.0": "patches/@changesets__cli@2.25.0.patch"

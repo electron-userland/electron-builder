@@ -64,7 +64,7 @@ will declare to use node-modules instead of PnP.
 * [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
 * [Vue CLI 3 plugin for Electron](https://nklayman.github.io/vue-cli-plugin-electron-builder) A Vue CLI 3 plugin for Electron with no required configuration.
-* [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite2 boilerplate.
+* [electron-vue-vite](https://github.com/caoxiemeihao/electron-vue-vite) A real simple Electron + Vue3 + Vite5 boilerplate.
 * [vite-electron-builder](https://github.com/cawa-93/vite-electron-builder) Secure boilerplate for Electron app based on Vite. TypeScript + Vue/React/Angular/Svelte/Vanilla
 
 ## Quick Setup Guide
@@ -98,7 +98,7 @@ will declare to use node-modules instead of PnP.
     To ensure your native dependencies always matched the electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
-   
+
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](code-signing.md#where-to-buy-code-signing-certificate).
@@ -130,7 +130,7 @@ builder.build({
 
 ## Pack Only in a Distributable Format
 
-You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`) 
+You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`)
 and other distributable formats.
 
 ```
@@ -153,13 +153,9 @@ DEBUG=electron-builder
     ```bash
     set DEBUG=electron-builder
     ```
-    
+
 !!! tip "PowerShell"
     PowerShell uses different syntax to set environment variables.
     ```bash
     $env:DEBUG=electron-builder
     ```
-
-## Community
-
-[electron-builder](https://electron-builder.zulipchat.com/) on Zulip.

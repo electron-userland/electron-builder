@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "25.0.0-alpha.9",
+  "version": "25.0.3",
   "main": "out/index.js",
   "files": [
     "out"
@@ -58,7 +58,7 @@
     "fs-extra": "^10.1.0",
     "is-ci": "^3.0.0",
     "lazy-val": "^1.0.5",
-    "read-config-file": "6.3.2",
+    "read-config-file": "6.4.0",
     "simple-update-notifier": "2.0.0",
     "yargs": "^17.6.2"
   },

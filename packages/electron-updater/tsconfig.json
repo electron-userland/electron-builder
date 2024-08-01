@@ -10,7 +10,6 @@
     "access": "public"
   },
   "files": [
-    "../../typings/electron.d.ts"
   ],
   "include": [
     "src/**/*.ts"

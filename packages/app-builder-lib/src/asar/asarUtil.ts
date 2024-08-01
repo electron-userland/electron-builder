@@ -1,6 +1,7 @@
 import { AsyncTaskManager, log } from "builder-util"
 import { createPackageFromFiles } from "@electron/asar"
-import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util/out/fs"
+import { FileCopier, Filter, MAX_FILE_REQUESTS } from "builder-util"
+import { Stats } from "fs"
 import { writeFile, readFile, mkdir } from "fs/promises"
 import * as path from "path"
 import { AsarOptions } from "../options/PlatformSpecificBuildOptions"

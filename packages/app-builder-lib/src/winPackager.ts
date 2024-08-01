@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder } from "builder-util"
-import { parseDn } from "builder-util-runtime"
-import { CopyFileTransformer, FileTransformer, walk } from "builder-util/out/fs"
+import { Arch, asArray, InvalidConfigurationError, log, use, executeAppBuilder, CopyFileTransformer, FileTransformer, walk } from "builder-util"
+import { MemoLazy, parseDn } from "builder-util-runtime"
 import { createHash } from "crypto"
 import { readdir } from "fs/promises"
 import * as isCI from "is-ci"
@@ -37,54 +36,56 @@ import { getWindowsVm, VmManager } from "./vm/vm"
 import { execWine } from "./wine"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
-  readonly cscInfo = new Lazy<FileCodeSigningInfo | CertificateFromStoreInfo | null>(() => {
-    const platformSpecificBuildOptions = this.platformSpecificBuildOptions
-    if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
-      return this.vm.value
-        .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
-        .catch((e: any) => {
-          // https://github.com/electron-userland/electron-builder/pull/2397
-          if (platformSpecificBuildOptions.sign == null) {
-            throw e
-          } else {
-            log.debug({ error: e }, "getCertificateFromStoreInfo error")
-            return null
-          }
-        })
-    }
+  readonly cscInfo = new MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>(
+    () => this.platformSpecificBuildOptions,
+    platformSpecificBuildOptions => {
+      if (platformSpecificBuildOptions.certificateSubjectName != null || platformSpecificBuildOptions.certificateSha1 != null) {
+        return this.vm.value
+          .then(vm => getCertificateFromStoreInfo(platformSpecificBuildOptions, vm))
+          .catch((e: any) => {
+            // https://github.com/electron-userland/electron-builder/pull/2397
+            if (platformSpecificBuildOptions.sign == null) {
+              throw e
+            } else {
+              log.debug({ error: e }, "getCertificateFromStoreInfo error")
+              return null
+            }
+          })
+      }
 
-    const certificateFile = platformSpecificBuildOptions.certificateFile
-    if (certificateFile != null) {
-      const certificatePassword = this.getCscPassword()
-      return Promise.resolve({
-        file: certificateFile,
-        password: certificatePassword == null ? null : certificatePassword.trim(),
-      })
-    }
-
-    const cscLink = this.getCscLink("WIN_CSC_LINK")
-    if (cscLink == null || cscLink === "") {
-      return Promise.resolve(null)
-    }
-
-    return (
-      importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
-        // before then
-        .catch((e: any) => {
-          if (e instanceof InvalidConfigurationError) {
-            throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
-          } else {
-            throw e
-          }
+      const certificateFile = platformSpecificBuildOptions.certificateFile
+      if (certificateFile != null) {
+        const certificatePassword = this.getCscPassword()
+        return Promise.resolve({
+          file: certificateFile,
+          password: certificatePassword == null ? null : certificatePassword.trim(),
         })
-        .then(path => {
-          return {
-            file: path,
-            password: this.getCscPassword(),
-          }
-        })
-    )
-  })
+      }
+
+      const cscLink = this.getCscLink("WIN_CSC_LINK")
+      if (cscLink == null || cscLink === "") {
+        return Promise.resolve(null)
+      }
+
+      return (
+        importCertificate(cscLink, this.info.tempDirManager, this.projectDir)
+          // before then
+          .catch((e: any) => {
+            if (e instanceof InvalidConfigurationError) {
+              throw new InvalidConfigurationError(`Env WIN_CSC_LINK is not correct, cannot resolve: ${e.message}`)
+            } else {
+              throw e
+            }
+          })
+          .then(path => {
+            return {
+              file: path,
+              password: this.getCscPassword(),
+            }
+          })
+      )
+    }
+  )
 
   private _iconPath = new Lazy(() => this.getOrConvertIcon("ico"))
 
@@ -102,26 +103,29 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     return certInfo == null ? null : [certInfo.commonName]
   })
 
-  readonly lazyCertInfo = new Lazy<CertificateInfo | null>(async () => {
-    const cscInfo = await this.cscInfo.value
-    if (cscInfo == null) {
-      return null
-    }
-
-    if ("subject" in cscInfo) {
-      const bloodyMicrosoftSubjectDn = cscInfo.subject
-      return {
-        commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
-        bloodyMicrosoftSubjectDn,
+  readonly lazyCertInfo = new MemoLazy<MemoLazy<WindowsConfiguration, FileCodeSigningInfo | CertificateFromStoreInfo | null>, CertificateInfo | null>(
+    () => this.cscInfo,
+    async csc => {
+      const cscInfo = await csc.value
+      if (cscInfo == null) {
+        return null
       }
-    }
 
-    const cscFile = cscInfo.file
-    if (cscFile == null) {
-      return null
+      if ("subject" in cscInfo) {
+        const bloodyMicrosoftSubjectDn = cscInfo.subject
+        return {
+          commonName: parseDn(bloodyMicrosoftSubjectDn).get("CN")!,
+          bloodyMicrosoftSubjectDn,
+        }
+      }
+
+      const cscFile = cscInfo.file
+      if (cscFile == null) {
+        return null
+      }
+      return await getCertInfo(cscFile, cscInfo.password || "")
     }
-    return await getCertInfo(cscFile, cscInfo.password || "")
-  })
+  )
 
   get isForceCodeSigningVerification(): boolean {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false

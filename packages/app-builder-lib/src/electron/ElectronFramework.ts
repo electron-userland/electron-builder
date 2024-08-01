@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, executeAppBuilder, log } from "builder-util"
-import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { CONCURRENCY, copyDir, DO_NOT_USE_HARD_LINKS, statOrNull, unlinkIfExists } from "builder-util"
 import { emptyDir, readdir, rename } from "fs-extra"
 import * as path from "path"
 import { Configuration } from "../configuration"
