@@ -18,7 +18,7 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
 }
 
 export function isLibOrExe(file: string): boolean {
-  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so")
+  return file.endsWith(".dll") || file.endsWith(".exe") || file.endsWith(".dylib") || file.endsWith(".so") || file.endsWith(".node")
 }
 
 /** @internal */
