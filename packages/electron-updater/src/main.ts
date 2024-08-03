@@ -12,6 +12,7 @@ export { CancellationToken, PackageFileInfo, ProgressInfo, UpdateFileInfo, Updat
 export { Provider } from "./providers/Provider"
 export { AppImageUpdater } from "./AppImageUpdater"
 export { DebUpdater } from "./DebUpdater"
+export { PacmanUpdater } from "./PacmanUpdater"
 export { RpmUpdater } from "./RpmUpdater"
 export { MacUpdater } from "./MacUpdater"
 export { NsisUpdater } from "./NsisUpdater"
@@ -44,6 +45,9 @@ function doLoadAutoUpdater(): AppUpdater {
           break
         case "rpm":
           _autoUpdater = new (require("./RpmUpdater").RpmUpdater)()
+          break
+        case "pacman":
+          _autoUpdater = new (require("./PacmanUpdater").PacmanUpdater)()
           break
         default:
           break

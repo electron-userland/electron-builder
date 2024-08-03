@@ -104,7 +104,7 @@ const options = {
       Encoding: "UTF-8",
       MimeType: "x-scheme-handler/deeplink"
     },
-    target: ["AppImage", "rpm", "deb"]
+    target: ["AppImage", "rpm", "deb", "pacman"]
   },
   deb: {
     priority: "optional",

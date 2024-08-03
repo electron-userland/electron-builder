@@ -278,7 +278,7 @@ export default class FpmTarget extends Target {
   }
 
   private supportsAutoUpdate(target: string) {
-    return ["deb", "rpm"].includes(target)
+    return ["deb", "rpm", "pacman"].includes(target)
   }
 }
 
