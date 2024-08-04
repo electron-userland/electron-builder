@@ -76,7 +76,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             return null
           }
 
-          if (!forceIncluded) {
+          if (!forceIncluded && this.matcher.isEmpty()) {
             for (const ext of nodeModuleExcludedExts) {
               if (name.endsWith(ext)) {
                 return null
