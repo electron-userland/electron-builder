@@ -340,7 +340,23 @@ test.ifDevOrLinuxCi(
         files: [
           // test ignore pattern for node_modules defined as file set filter
           {
-            filter: ["!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz", "!node_modules/node-abi/*", "!node_modules/**/eslint-format.js"],
+            filter: [
+              "**/*",
+              "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+              "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+              "!**/node_modules/*.d.ts",
+              "!**/node_modules/.bin",
+              "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+              "!.editorconfig",
+              "!**/._*",
+              "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+              "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+              "!**/{appveyor.yml,.travis.yml,circle.yml}",
+              "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+              "!node_modules/napi-build-utils/napi-build-utils-1.0.0.tgz",
+              "!node_modules/node-abi/*",
+              "!node_modules/**/eslint-format.js"
+            ],
           },
         ],
       },
