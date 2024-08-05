@@ -29,10 +29,8 @@ export class DebUpdater extends BaseUpdater {
 
   protected doInstall(options: InstallOptions): boolean {
     const sudo = this.wrapSudo()
-    // pkexec doesn't want the command to be wrapped in " quotes
-    const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    const cmd = ["dpkg", "-i", options.installerPath, "||", "apt-get", "install", "-f", "-y"]
-    this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
+    const installCommand = `'dpkg -i ${options.installerPath} || apt-get install -f -y'`
+    this.spawnSyncLog(sudo, ["/bin/bash", "-c", installCommand])
     if (options.isForceRunAfter) {
       this.app.relaunch()
     }
