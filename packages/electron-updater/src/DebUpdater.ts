@@ -31,7 +31,8 @@ export class DebUpdater extends BaseUpdater {
     const sudo = this.wrapSudo()
     // pkexec doesn't want the command to be wrapped in " quotes
     const wrapper = /pkexec/i.test(sudo) ? "" : `"`
-    // application artifact names may includes spaces in their name which will cause error when executing install command.
+    // application artifact names may include spaces in their name which leads
+   // to an error when the install command is executed
     const installerPath = options.installerPath.replace(/ /g, "\\ ")
     const cmd = ["dpkg", "-i", installerPath, "||", "apt-get", "install", "-f", "-y"]
     this.spawnSyncLog(sudo, [`${wrapper}/bin/bash`, "-c", `'${cmd.join(" ")}'${wrapper}`])
