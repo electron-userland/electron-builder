@@ -51,11 +51,11 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly compression?: CompressionLevel | null
 
   /**
-   * Whether to ignore all default files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.
+   * Whether to exclude all default files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.
    *
    * @default false
    */
-  ignoreDefaultFiles?: boolean
+  excludeDefaultFiles?: boolean
 
   files?: Array<FileSet | string> | FileSet | string | null
   extraResources?: Array<FileSet | string> | FileSet | string | null
