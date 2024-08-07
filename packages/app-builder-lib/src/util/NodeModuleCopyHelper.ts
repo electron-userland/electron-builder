@@ -77,7 +77,8 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
           }
 
           // check if filematcher matches the files array as more important than the default excluded files.
-          if (!forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles || (filter != null && filter(dirPath, lstatSync(dirPath)))) {
+          const fileMatched = filter != null && filter(dirPath, lstatSync(dirPath))
+          if (!fileMatched || !forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
             for (const ext of nodeModuleExcludedExts) {
               if (name.endsWith(ext)) {
                 return null
