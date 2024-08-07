@@ -76,7 +76,7 @@ export class NodeModuleCopyHelper extends FileCopyHelper {
             return null
           }
 
-          if (!forceIncluded || !!this.packager.config.excludeDefaultFiles) {
+          if (!forceIncluded || !!this.packager.config.disableDefaultIgnoredFiles) {
             for (const ext of nodeModuleExcludedExts) {
               if (name.endsWith(ext)) {
                 return null
