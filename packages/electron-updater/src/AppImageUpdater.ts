@@ -1,14 +1,17 @@
-import { AllPublishOptions, newError } from "builder-util-runtime"
-import { execFileSync } from "child_process"
+import { promisify } from "util"
+import { execFile as execFileCallback } from "child_process"
 import { chmod } from "fs-extra"
 import { unlinkSync } from "fs"
 import * as path from "path"
+import { AllPublishOptions, newError } from "builder-util-runtime"
 import { DownloadUpdateOptions } from "./AppUpdater"
 import { BaseUpdater, InstallOptions } from "./BaseUpdater"
 import { DifferentialDownloaderOptions } from "./differentialDownloader/DifferentialDownloader"
 import { FileWithEmbeddedBlockMapDifferentialDownloader } from "./differentialDownloader/FileWithEmbeddedBlockMapDifferentialDownloader"
 import { DOWNLOAD_PROGRESS } from "./main"
 import { findFile } from "./providers/Provider"
+
+const execFile = promisify(execFileCallback)
 
 export class AppImageUpdater extends BaseUpdater {
   constructor(options?: AllPublishOptions | null, app?: any) {
@@ -73,7 +76,7 @@ export class AppImageUpdater extends BaseUpdater {
     })
   }
 
-  protected doInstall(options: InstallOptions): boolean {
+  protected async doInstall(options: InstallOptions): Promise<boolean> {
     const appImageFile = process.env["APPIMAGE"]!
     if (appImageFile == null) {
       throw newError("APPIMAGE env is not defined", "ERR_UPDATER_OLD_FILE_NOT_FOUND")
@@ -93,7 +96,7 @@ export class AppImageUpdater extends BaseUpdater {
       destination = path.join(path.dirname(appImageFile), path.basename(options.installerPath))
     }
 
-    execFileSync("mv", ["-f", options.installerPath, destination])
+    await execFile("mv", ["-f", options.installerPath, destination])
     if (destination !== appImageFile) {
       this.emit("appimage-filename-updated", destination)
     }
@@ -105,10 +108,10 @@ export class AppImageUpdater extends BaseUpdater {
 
     if (options.isForceRunAfter) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.spawnLog(destination, [], env)
+      await this.spawnLogAsync(destination, [], env)
     } else {
       env.APPIMAGE_EXIT_AFTER_INSTALL = "true"
-      execFileSync(destination, [], { env })
+      await execFile(destination, [], { env })
     }
     return true
   }

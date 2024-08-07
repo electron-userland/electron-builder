@@ -11,10 +11,10 @@ export abstract class BaseUpdater extends AppUpdater {
     super(options, app)
   }
 
-  quitAndInstall(isSilent = false, isForceRunAfter = false): void {
+  async quitAndInstall(isSilent = false, isForceRunAfter = false): Promise<void> {
     this._logger.info(`Install on explicit quitAndInstall`)
     // If NOT in silent mode use `autoRunAppAfterInstall` to determine whether to force run the app
-    const isInstalled = this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
+    const isInstalled = await this.install(isSilent, isSilent ? isForceRunAfter : this.autoRunAppAfterInstall)
     if (isInstalled) {
       setImmediate(() => {
         // this event is normally emitted when calling quitAndInstall, this emulates that
@@ -38,17 +38,17 @@ export abstract class BaseUpdater extends AppUpdater {
   }
 
   // must be sync
-  protected abstract doInstall(options: InstallOptions): boolean
+  protected abstract doInstall(options: InstallOptions): Promise<boolean>
 
   // must be sync (because quit even handler is not async)
-  install(isSilent = false, isForceRunAfter = false): boolean {
+  async install(isSilent = false, isForceRunAfter = false): Promise<boolean> {
     if (this.quitAndInstallCalled) {
       this._logger.warn("install call ignored: quitAndInstallCalled is set to true")
       return false
     }
 
     const downloadedUpdateHelper = this.downloadedUpdateHelper
-    
+
     // Get the installer path, ensuring spaces are escaped on Linux
     // 1. Check if downloadedUpdateHelper is not null
     // 2. Check if downloadedUpdateHelper.file is not null
@@ -56,10 +56,11 @@ export abstract class BaseUpdater extends AppUpdater {
     //    a. If the platform is Linux, replace spaces with '\ ' for shell compatibility
     //    b. If the platform is not Linux, use the original path
     // 4. If any check fails, set installerPath to null
-    const installerPath = downloadedUpdateHelper && downloadedUpdateHelper.file 
-      ? (process.platform === 'linux' 
-        ? downloadedUpdateHelper.file.replace(/ /g, '\\ ') 
-        : downloadedUpdateHelper.file) 
+    const installerPath =
+      downloadedUpdateHelper && downloadedUpdateHelper.file
+      ? (process.platform === 'linux'
+        ? downloadedUpdateHelper.file.replace(/ /g, '\\ ')
+        : downloadedUpdateHelper.file)
       : null;
 
     const downloadedFileInfo = downloadedUpdateHelper == null ? null : downloadedUpdateHelper.downloadedFileInfo
@@ -92,7 +93,7 @@ export abstract class BaseUpdater extends AppUpdater {
 
     this.quitHandlerAdded = true
 
-    this.app.onQuit(exitCode => {
+    this.app.onQuit(async () => {
       if (this.quitAndInstallCalled) {
         this._logger.info("Update installer has already been triggered. Quitting application.")
         return
@@ -103,20 +104,15 @@ export abstract class BaseUpdater extends AppUpdater {
         return
       }
 
-      if (exitCode !== 0) {
-        this._logger.info(`Update will be not installed on quit because application is quitting with exit code ${exitCode}`)
-        return
-      }
-
       this._logger.info("Auto install update on quit")
-      this.install(true, false)
+      await this.install(true, false)
     })
   }
 
-  protected wrapSudo() {
+  protected async wrapSudo() {
     const { name } = this.app
     const installComment = `"${name} would like to update"`
-    const sudo = this.spawnSyncLog("which gksudo || which kdesudo || which pkexec || which beesu")
+    const sudo = (await this.spawnLogAsync("which gksudo || which kdesudo || which pkexec || which beesu")).stdout
     const command = [sudo]
     if (/kdesudo/i.test(sudo)) {
       command.push("--comment", installComment)
@@ -146,23 +142,70 @@ export abstract class BaseUpdater extends AppUpdater {
    */
   // https://github.com/electron-userland/electron-builder/issues/1129
   // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-  protected async spawnLog(cmd: string, args: string[] = [], env: any = undefined, stdio: StdioOptions = "ignore"): Promise<boolean> {
-    this._logger.info(`Executing: ${cmd} with args: ${args}`)
-    return new Promise<boolean>((resolve, reject) => {
-      try {
-        const params: SpawnOptions = { stdio, env, detached: true }
-        const p = spawn(cmd, args, params)
-        p.on("error", error => {
-          reject(error)
-        })
-        p.unref()
-        if (p.pid !== undefined) {
-          resolve(true)
-        }
-      } catch (error) {
-        reject(error)
+
+  protected async spawnLogAsync(
+    cmd: string,
+    args: string[] = [],
+    env: any = undefined,
+    stdio: StdioOptions = ["pipe", "pipe", "pipe"]
+  ): Promise<{ stdout: string; stderr: string; success: boolean }> {
+    this._logger.info(`Executing: ${cmd} with args: ${args.join(" ")}`)
+
+    try {
+      const params: SpawnOptions = {
+        stdio, // Capture stdout and stderr
+        env: { ...process.env, ...env },
+        shell: true,
+        detached: true,
       }
-    })
+
+      const p = spawn(cmd, args, params)
+
+      let stdout = ""
+      let stderr = ""
+
+      if (p.stdout) {
+        p.stdout.on("data", data => {
+          stdout += data.toString()
+        })
+      }
+
+      if (p.stderr) {
+        p.stderr.on("data", data => {
+          stderr += data.toString()
+        })
+      }
+
+      return await new Promise<{ stdout: string; stderr: string; success: boolean }>((resolve, reject) => {
+        p.on("error", (error: unknown) => {
+          let errorMessage = "Unknown error"
+          if (error instanceof Error) {
+            errorMessage = error.message
+          }
+          reject({ stdout: "", stderr: errorMessage, success: false })
+        })
+        p.on("spawn", () => {
+          this._logger.info(`Command spawned successfully`)
+        })
+        p.on("close", code => {
+          if (code === 0) {
+            resolve({ stdout: stdout.trim(), stderr: stderr.trim(), success: true })
+          } else {
+            this._logger.error(`Process exited with code: ${code}, stderr: ${stderr.trim()}`)
+            resolve({ stdout: stdout.trim(), stderr: stderr.trim(), success: false })
+          }
+        })
+
+        p.unref()
+      })
+    } catch (error: unknown) {
+      let errorMessage = "Unknown error"
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      this._logger.error(`Error executing ${cmd}: ${errorMessage}`)
+      return { stdout: "", stderr: errorMessage, success: false }
+    }
   }
 }
 

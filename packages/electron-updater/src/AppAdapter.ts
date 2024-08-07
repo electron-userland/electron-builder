@@ -28,7 +28,7 @@ export interface AppAdapter {
 
   quit(): void
 
-  onQuit(handler: (exitCode: number) => void): void
+  onQuit(handler: () => Promise<void>): void
 }
 
 export function getAppCacheDir() {
