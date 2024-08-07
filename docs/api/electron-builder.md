@@ -3149,8 +3149,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 <li><a href="#AppImageUpdater">.AppImageUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
 <li><a href="#AppUpdater">.AppUpdater</a> ⇐ <code>module:tiny-typed-emitter/lib/index.TypedEmitter</code>
@@ -3167,8 +3167,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </li>
 <li><a href="#BaseUpdater">.BaseUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3180,8 +3180,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </li>
 <li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3205,8 +3205,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </li>
 <li><a href="#NsisUpdater">.NsisUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3225,8 +3225,8 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </li>
 <li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3360,15 +3360,15 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 <li><a href="#AppImageUpdater">.AppImageUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
 <li><a href="#module_electron-updater.AppImageUpdater+isUpdaterActive"><code>.isUpdaterActive()</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 </ul>
 </li>
 </ul>
 <p><a name="module_electron-updater.AppImageUpdater+isUpdaterActive"></a></p>
 <h3 id="appimageupdater.isupdateractive()-%E2%87%92-boolean"><code>appImageUpdater.isUpdaterActive()</code> ⇒ <code>Boolean</code></h3>
 <p><a name="module_electron-updater.BaseUpdater+install"></a></p>
-<h3 id="appimageupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>appImageUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<h3 id="appimageupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cboolean%3E"><code>appImageUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3385,7 +3385,7 @@ return await getCertInfo(cscFile, cscInfo.password || &quot;&quot;)
 </tbody>
 </table>
 <p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
-<h3 id="appimageupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>appImageUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<h3 id="appimageupdater.quitandinstall(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cvoid%3E"><code>appImageUpdater.quitAndInstall(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3591,8 +3591,8 @@ This is different from the normal quit event sequence.</p>
 <ul>
 <li><a href="#BaseUpdater">.BaseUpdater</a> ⇐ <code><a href="#AppUpdater">AppUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3604,7 +3604,7 @@ This is different from the normal quit event sequence.</p>
 </li>
 </ul>
 <p><a name="module_electron-updater.BaseUpdater+install"></a></p>
-<h3 id="baseupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>baseUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<h3 id="baseupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cboolean%3E"><code>baseUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3621,7 +3621,7 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
-<h3 id="baseupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>baseUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<h3 id="baseupdater.quitandinstall(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cvoid%3E"><code>baseUpdater.quitAndInstall(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <p><strong>Overrides</strong>: <a href="#module_electron-updater.AppUpdater+quitAndInstall"><code>quitAndInstall</code></a></p>
 <table>
 <thead>
@@ -3722,8 +3722,8 @@ This is different from the normal quit event sequence.</p>
 <ul>
 <li><a href="#DebUpdater">.DebUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3735,7 +3735,7 @@ This is different from the normal quit event sequence.</p>
 </li>
 </ul>
 <p><a name="module_electron-updater.BaseUpdater+install"></a></p>
-<h3 id="debupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>debUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<h3 id="debupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cboolean%3E"><code>debUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3752,7 +3752,7 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
-<h3 id="debupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>debUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<h3 id="debupdater.quitandinstall(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cvoid%3E"><code>debUpdater.quitAndInstall(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3956,8 +3956,8 @@ This is different from the normal quit event sequence.</p>
 <ul>
 <li><a href="#NsisUpdater">.NsisUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -3969,7 +3969,7 @@ This is different from the normal quit event sequence.</p>
 </li>
 </ul>
 <p><a name="module_electron-updater.BaseUpdater+install"></a></p>
-<h3 id="nsisupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>nsisUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<h3 id="nsisupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cboolean%3E"><code>nsisUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -3986,7 +3986,7 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
-<h3 id="nsisupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>nsisUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<h3 id="nsisupdater.quitandinstall(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cvoid%3E"><code>nsisUpdater.quitAndInstall(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -4138,8 +4138,8 @@ This is different from the normal quit event sequence.</p>
 <ul>
 <li><a href="#RpmUpdater">.RpmUpdater</a> ⇐ <code><a href="#BaseUpdater">BaseUpdater</a></code>
 <ul>
-<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Boolean</code></li>
-<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a></li>
+<li><a href="#module_electron-updater.BaseUpdater+install"><code>.install(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;Boolean&gt;</code></li>
+<li><a href="#module_electron-updater.BaseUpdater+quitAndInstall"><code>.quitAndInstall(isSilent, isForceRunAfter)</code></a> ⇒ <code>Promise&lt;void&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+addAuthHeader"><code>.addAuthHeader(token)</code></a></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdates"><code>.checkForUpdates()</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
 <li><a href="#module_electron-updater.AppUpdater+checkForUpdatesAndNotify"><code>.checkForUpdatesAndNotify(downloadNotification)</code></a> ⇒ <code>Promise&lt; | <a href="#UpdateCheckResult">UpdateCheckResult</a>&gt;</code></li>
@@ -4151,7 +4151,7 @@ This is different from the normal quit event sequence.</p>
 </li>
 </ul>
 <p><a name="module_electron-updater.BaseUpdater+install"></a></p>
-<h3 id="rpmupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-boolean"><code>rpmUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Boolean</code></h3>
+<h3 id="rpmupdater.install(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cboolean%3E"><code>rpmUpdater.install(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;Boolean&gt;</code></h3>
 <table>
 <thead>
 <tr>
@@ -4168,7 +4168,7 @@ This is different from the normal quit event sequence.</p>
 </tbody>
 </table>
 <p><a name="module_electron-updater.BaseUpdater+quitAndInstall"></a></p>
-<h3 id="rpmupdater.quitandinstall(issilent%2C-isforcerunafter)"><code>rpmUpdater.quitAndInstall(isSilent, isForceRunAfter)</code></h3>
+<h3 id="rpmupdater.quitandinstall(issilent%2C-isforcerunafter)-%E2%87%92-promise%3Cvoid%3E"><code>rpmUpdater.quitAndInstall(isSilent, isForceRunAfter)</code> ⇒ <code>Promise&lt;void&gt;</code></h3>
 <table>
 <thead>
 <tr>
