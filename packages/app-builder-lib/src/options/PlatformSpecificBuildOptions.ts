@@ -55,7 +55,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
    *
    * @default false
    */
-  disableDefaultIgnoredFiles?: boolean
+  disableDefaultIgnoredFiles?: boolean | null
 
   files?: Array<FileSet | string> | FileSet | string | null
   extraResources?: Array<FileSet | string> | FileSet | string | null

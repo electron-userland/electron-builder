@@ -1652,6 +1652,14 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -2274,6 +2282,14 @@
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
+        },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "electronLanguages": {
           "anyOf": [
@@ -2904,6 +2920,14 @@
           "default": true,
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
+        },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
         },
         "electronLanguages": {
           "anyOf": [
@@ -6057,6 +6081,14 @@
           "description": "Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.",
           "type": "boolean"
         },
+        "disableDefaultIgnoredFiles": {
+          "default": false,
+          "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
         "electronLanguages": {
           "anyOf": [
             {
@@ -6693,6 +6725,14 @@
         {
           "type": "null"
         }
+      ]
+    },
+    "disableDefaultIgnoredFiles": {
+      "default": false,
+      "description": "Whether to exclude all default ignored files(https://www.electron.build/configuration/contents#files) and options. Defaults to `false`.",
+      "type": [
+        "null",
+        "boolean"
       ]
     },
     "disableSanityCheckAsar": {

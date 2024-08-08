@@ -12,6 +12,9 @@
 <p><code id="PlatformSpecificBuildOptions-compression">compression</code> = <code>normal</code> “store” | “normal” | “maximum” | “undefined” - The compression level. If you want to rapidly test build, <code>store</code> can reduce build time significantly. <code>maximum</code> doesn’t lead to noticeable size difference, but increase build time.</p>
 </li>
 <li>
+<p><code id="PlatformSpecificBuildOptions-disableDefaultIgnoredFiles">disableDefaultIgnoredFiles</code> = <code>false</code> Boolean | “undefined” - Whether to exclude all default ignored files(<a href="https://www.electron.build/configuration/contents#files">https://www.electron.build/configuration/contents#files</a>) and options. Defaults to <code>false</code>.</p>
+</li>
+<li>
 <p><code id="PlatformSpecificBuildOptions-files">files</code> The <a href="/configuration/contents#files">files</a> configuration.</p>
 </li>
 <li>
